@@ -1,0 +1,27 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    name: ${{ matrix.os }} py${{ matrix.python }} ${{ matrix.extras }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-14, windows-latest]
+        python: ["3.10", "3.14"]
+        extras: ["test,verify"]
+        include:
+          - os: ubuntu-latest       # core install, without OR-Tools
+            python: "3.14"
+            extras: "test"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install ".[${{ matrix.extras }}]"
+      - run: python -m pytest tests -q

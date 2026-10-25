@@ -1,0 +1,16 @@
+{
+ "const": -5.680144439351226,
+ "k_effort": 0.2928757863026029,
+ "k_empty": 0.7440917970074564,
+ "k_geometry": {
+  "blob_cells": 0.385,
+  "extra_area_pc": 1.108
+ },
+ "t0": 0.0408,
+ "compress": {
+  "k": 0.15,
+  "c": 0.4
+ },
+ "minutes_per_unit": 11.8,
+ "p80_factor": 1.53
+}

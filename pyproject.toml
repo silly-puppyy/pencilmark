@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=69", "pybind11>=2.12"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pencilmark"
+version = "1.0.0"
+description = "Human-like difficulty grader, solver and generator for classic and variant sudoku"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "pencilmark contributors" }]
+keywords = ["sudoku", "puzzle", "difficulty", "grader", "solver", "generator"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: C++",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Topic :: Games/Entertainment :: Puzzle Games",
+]
+dependencies = [
+    "lzstring>=1.0.4",
+]
+
+[project.optional-dependencies]
+verify = ["ortools>=9.8"]
+test = ["pytest>=7"]
+
+[project.scripts]
+pencilmark = "pencilmark.__main__:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+pencilmark = ["data/*.json", "data/*.csv"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.cibuildwheel]
+build = "cp310-* cp311-* cp312-* cp313-* cp314-*"
+skip = "*-win32 *_i686 *-musllinux_*"
+test-requires = ["pytest"]   # core install (no OR-Tools); tests.yml also runs with the [verify] extra
+test-command = "pytest {project}/tests -q -x"
+build-verbosity = 1
+
+[tool.cibuildwheel.macos]
+environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }

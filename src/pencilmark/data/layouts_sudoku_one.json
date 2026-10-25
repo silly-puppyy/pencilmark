@@ -1,0 +1,510 @@
+{
+ "twodoku": {
+  "origins": [
+   [
+    0,
+    0
+   ],
+   [
+    6,
+    6
+   ]
+  ],
+  "rows": 15,
+  "cols": 15,
+  "grids": 2,
+  "cells": 153,
+  "puzzle": "sudoku, twodoku",
+  "example": "https://sudoku.one/twodoku/twodoku-120"
+ },
+ "doubledoku": {
+  "origins": [
+   [
+    0,
+    0
+   ],
+   [
+    3,
+    3
+   ]
+  ],
+  "rows": 12,
+  "cols": 12,
+  "grids": 2,
+  "cells": 126,
+  "puzzle": "sudoku, double",
+  "example": "https://sudoku.one/doubledoku/doubledoku-120"
+ },
+ "twins": {
+  "origins": [
+   [
+    0,
+    0
+   ],
+   [
+    0,
+    10
+   ]
+  ],
+  "rows": 9,
+  "cols": 19,
+  "grids": 2,
+  "cells": 162,
+  "puzzle": "sudoku, twin",
+  "example": "https://sudoku.one/twins/twin-corresponding-sudoku-120"
+ },
+ "tridoku": {
+  "origins": [
+   [
+    0,
+    3
+   ],
+   [
+    3,
+    6
+   ],
+   [
+    6,
+    0
+   ]
+  ],
+  "rows": 15,
+  "cols": 15,
+  "grids": 3,
+  "cells": 180,
+  "puzzle": "sudoku, gattai-3",
+  "example": "https://sudoku.one/tridoku/tridoku-100"
+ },
+ "wing-3": {
+  "origins": [
+   [
+    0,
+    0
+   ],
+   [
+    0,
+    12
+   ],
+   [
+    6,
+    6
+   ]
+  ],
+  "rows": 15,
+  "cols": 21,
+  "grids": 3,
+  "cells": 225,
+  "puzzle": "sudoku, wing-3",
+  "example": "https://sudoku.one/wing-3/wing-3-sudoku-100"
+ },
+ "butterfly": {
+  "origins": [
+   [
+    0,
+    0
+   ],
+   [
+    0,
+    3
+   ],
+   [
+    3,
+    0
+   ],
+   [
+    3,
+    3
+   ]
+  ],
+  "rows": 12,
+  "cols": 12,
+  "grids": 4,
+  "cells": 144,
+  "puzzle": "sudoku, butterfly",
+  "example": "https://sudoku.one/butterfly/butterfly-sudoku-100"
+ },
+ "flower-4": {
+  "origins": [
+   [
+    0,
+    3
+   ],
+   [
+    3,
+    0
+   ],
+   [
+    3,
+    3
+   ],
+   [
+    3,
+    6
+   ],
+   [
+    6,
+    3
+   ]
+  ],
+  "rows": 15,
+  "cols": 15,
+  "grids": 5,
+  "cells": 189,
+  "puzzle": "sudoku, flower-4",
+  "example": "https://sudoku.one/flower-4/flower-4-sudoku-100"
+ },
+ "sohei": {
+  "origins": [
+   [
+    0,
+    6
+   ],
+   [
+    6,
+    0
+   ],
+   [
+    6,
+    12
+   ],
+   [
+    12,
+    6
+   ]
+  ],
+  "rows": 21,
+  "cols": 21,
+  "grids": 4,
+  "cells": 288,
+  "puzzle": "sudoku, sohei",
+  "example": "https://sudoku.one/sohei/sohei-sudoku-100"
+ },
+ "samurai": {
+  "origins": [
+   [
+    0,
+    0
+   ],
+   [
+    0,
+    12
+   ],
+   [
+    6,
+    6
+   ],
+   [
+    12,
+    0
+   ],
+   [
+    12,
+    12
+   ]
+  ],
+  "rows": 21,
+  "cols": 21,
+  "grids": 5,
+  "cells": 369,
+  "puzzle": "sudoku, samurai",
+  "example": "https://sudoku.one/samurai/samurai-sudoku-160"
+ },
+ "windmill": {
+  "origins": [
+   [
+    0,
+    3
+   ],
+   [
+    3,
+    12
+   ],
+   [
+    6,
+    6
+   ],
+   [
+    9,
+    0
+   ],
+   [
+    12,
+    9
+   ]
+  ],
+  "rows": 21,
+  "cols": 21,
+  "grids": 5,
+  "cells": 333,
+  "puzzle": "sudoku, windmill",
+  "example": "https://sudoku.one/windmill/windmill-sudoku-100"
+ },
+ "super-samurai": {
+  "origins": [
+   [
+    0,
+    0
+   ],
+   [
+    0,
+    12
+   ],
+   [
+    0,
+    24
+   ],
+   [
+    6,
+    6
+   ],
+   [
+    6,
+    18
+   ],
+   [
+    12,
+    0
+   ],
+   [
+    12,
+    12
+   ],
+   [
+    12,
+    24
+   ]
+  ],
+  "rows": 21,
+  "cols": 33,
+  "grids": 8,
+  "cells": 576,
+  "puzzle": "sudoku, gattai-8",
+  "example": "https://sudoku.one/super-samurai/super-samurai-sudoku-100"
+ },
+ "clueless-1": {
+  "origins": [
+   [
+    0,
+    0
+   ],
+   [
+    0,
+    9
+   ],
+   [
+    0,
+    18
+   ],
+   [
+    9,
+    0
+   ],
+   [
+    9,
+    9
+   ],
+   [
+    9,
+    18
+   ],
+   [
+    18,
+    0
+   ],
+   [
+    18,
+    9
+   ],
+   [
+    18,
+    18
+   ]
+  ],
+  "rows": 27,
+  "cols": 27,
+  "grids": 9,
+  "cells": 729,
+  "puzzle": "sudoku, clueless-1",
+  "example": "https://sudoku.one/clueless-1/clueless-explosion-sudoku-80"
+ },
+ "clueless-2": {
+  "origins": [
+   [
+    0,
+    0
+   ],
+   [
+    0,
+    9
+   ],
+   [
+    0,
+    18
+   ],
+   [
+    9,
+    0
+   ],
+   [
+    9,
+    9
+   ],
+   [
+    9,
+    18
+   ],
+   [
+    18,
+    0
+   ],
+   [
+    18,
+    9
+   ],
+   [
+    18,
+    18
+   ]
+  ],
+  "rows": 27,
+  "cols": 27,
+  "grids": 9,
+  "cells": 729,
+  "puzzle": "sudoku, clueless-2",
+  "example": "https://sudoku.one/clueless-2/clueless-special-sudoku-80"
+ },
+ "shogun": {
+  "origins": [
+   [
+    0,
+    0
+   ],
+   [
+    0,
+    12
+   ],
+   [
+    0,
+    24
+   ],
+   [
+    0,
+    36
+   ],
+   [
+    6,
+    6
+   ],
+   [
+    6,
+    18
+   ],
+   [
+    6,
+    30
+   ],
+   [
+    12,
+    0
+   ],
+   [
+    12,
+    12
+   ],
+   [
+    12,
+    24
+   ],
+   [
+    12,
+    36
+   ]
+  ],
+  "rows": 21,
+  "cols": 45,
+  "grids": 11,
+  "cells": 783,
+  "puzzle": "sudoku, shogun",
+  "example": "https://sudoku.one/shogun/shogun-sudoku-80"
+ },
+ "sumo": {
+  "origins": [
+   [
+    0,
+    0
+   ],
+   [
+    0,
+    12
+   ],
+   [
+    0,
+    24
+   ],
+   [
+    6,
+    6
+   ],
+   [
+    6,
+    18
+   ],
+   [
+    12,
+    0
+   ],
+   [
+    12,
+    12
+   ],
+   [
+    12,
+    24
+   ],
+   [
+    18,
+    6
+   ],
+   [
+    18,
+    18
+   ],
+   [
+    24,
+    0
+   ],
+   [
+    24,
+    12
+   ],
+   [
+    24,
+    24
+   ]
+  ],
+  "rows": 33,
+  "cols": 33,
+  "grids": 13,
+  "cells": 909,
+  "puzzle": "sudoku, sumo",
+  "example": "https://sudoku.one/sumo/sumo-sudoku-80"
+ },
+ "sensei": {
+  "origins": [
+   [
+    0,
+    0
+   ],
+   [
+    6,
+    3
+   ]
+  ],
+  "rows": 15,
+  "cols": 12,
+  "grids": 2,
+  "cells": 144,
+  "puzzle": "sudoku, sensei",
+  "example": "https://sudoku.one/sensei/sensei-sudoku-120"
+ }
+}

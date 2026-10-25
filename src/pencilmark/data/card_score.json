@@ -1,0 +1,27 @@
+{
+ "version": 3,
+ "beta": 4.583363490170559,
+ "delta": {},
+ "a": -3.0906227715570402,
+ "b": 1.211884362424338,
+ "c": -0.024120012368288125,
+ "disabled": [
+  "MentalChain(direct)",
+  "MentalSingle(direct)",
+  "MentalNotesSingle",
+  "WhatIf",
+  "EitherWay",
+  "ShortTrial"
+ ],
+ "enum_w": 0.1,
+ "stat": "per_cell",
+ "price_params": "price_params.json",
+ "beta_time": 3.806986787524209,
+ "refute_w": 2.0,
+ "map": {
+  "form": "A * w * softplus((r - r0) / w)",
+  "A": 0.8257774766330751,
+  "r0": 2.117172767264659,
+  "w": 0.30000000000000004
+ }
+}

@@ -1,0 +1,372 @@
+{
+ "https://en.wikipedia.org/wiki/Killer_sudoku": {
+  "checked": "2026-10-08T19:18:38+00:00",
+  "status": 200,
+  "title": "Killer sudoku - Wikipedia"
+ },
+ "https://hodoku.sourceforge.net/en/tech_als.php": {
+  "checked": "2026-10-08T19:16:08+00:00",
+  "status": 200,
+  "title": "HoDoKu: Solving Techniques - ALS (Almost Locked Sets)"
+ },
+ "https://hodoku.sourceforge.net/en/tech_chains.php": {
+  "checked": "2026-10-08T19:16:09+00:00",
+  "status": 200,
+  "title": "HoDoKu: Solving Techniques - Chains and Loops"
+ },
+ "https://hodoku.sourceforge.net/en/tech_col.php": {
+  "checked": "2026-10-08T19:16:21+00:00",
+  "status": 200,
+  "title": "HoDoKu: Solving Techniques - Coloring (Simple Colors, Multi Colors, Color Wrap, Color Trap)"
+ },
+ "https://hodoku.sourceforge.net/en/tech_fishb.php": {
+  "checked": "2026-10-08T19:16:22+00:00",
+  "status": 200,
+  "title": "HoDoKu: Solving Techniques - Basic Fish (X-Wing, Swordfish, Jellyfish)"
+ },
+ "https://hodoku.sourceforge.net/en/tech_fishc.php": {
+  "checked": "2026-10-08T19:16:24+00:00",
+  "status": 200,
+  "title": "HoDoKu: Solving Techniques - Complex Fish (Franken/Mutant Fish)"
+ },
+ "https://hodoku.sourceforge.net/en/tech_fishfs.php": {
+  "checked": "2026-10-08T19:16:25+00:00",
+  "status": 200,
+  "title": "HoDoKu: Solving Techniques - Finned/Sashimi Fish"
+ },
+ "https://hodoku.sourceforge.net/en/tech_fishg.php": {
+  "checked": "2026-10-08T19:16:26+00:00",
+  "status": 200,
+  "title": "HoDoKu: Solving Techniques - Fish (General Explanation) - X-Wing, Swordfish, Jellyfish"
+ },
+ "https://hodoku.sourceforge.net/en/tech_hidden.php": {
+  "checked": "2026-10-08T19:16:27+00:00",
+  "status": 200,
+  "title": "HoDoKu: Solving Techniques - Hidden Subsets (Hidden Pair, Hidden Triple, Hidden Quadruple)"
+ },
+ "https://hodoku.sourceforge.net/en/tech_intersections.php": {
+  "checked": "2026-10-08T19:16:29+00:00",
+  "status": 200,
+  "title": "HoDoKu: Solving Techniques - Intersections (Locked Candidates - pointing and claiming)"
+ },
+ "https://hodoku.sourceforge.net/en/tech_last.php": {
+  "checked": "2026-10-08T19:16:30+00:00",
+  "status": 200,
+  "title": "HoDoKu: Solving Techniques - Last Resort (Forcing Chain, Forcing Net, Templates, Kraken Fish...)"
+ },
+ "https://hodoku.sourceforge.net/en/tech_naked.php": {
+  "checked": "2026-10-08T19:16:31+00:00",
+  "status": 200,
+  "title": "HoDoKu: Solving Techniques - Naked Subsets (Naked Pair, Naked Triple, Naked Quadruple, Locked Pair, Locked Triple)"
+ },
+ "https://hodoku.sourceforge.net/en/tech_sdp.php": {
+  "checked": "2026-10-08T19:16:33+00:00",
+  "status": 200,
+  "title": "HoDoKu: Solving Techniques - Single Digit Patterns (Skyscraper, 2-String-Kite, Turbot Fish, Empty Rectangle)"
+ },
+ "https://hodoku.sourceforge.net/en/tech_singles.php": {
+  "checked": "2026-10-08T19:16:34+00:00",
+  "status": 200,
+  "title": "HoDoKu: Solving Techniques - Singles (Hidden Single, Naked Single, Full House)"
+ },
+ "https://hodoku.sourceforge.net/en/tech_ur.php": {
+  "checked": "2026-10-08T19:16:35+00:00",
+  "status": 200,
+  "title": "HoDoKu: Solving Techniques - Uniqueness (Unique Rectangle, Avoidable Rectangle, BUG+1)"
+ },
+ "https://hodoku.sourceforge.net/en/tech_wings.php": {
+  "checked": "2026-10-08T19:16:36+00:00",
+  "status": 200,
+  "title": "HoDoKu: Solving Techniques - Wings (XY-Wing, XYZ-Wing, W-Wing)"
+ },
+ "https://www.sudokusnake.com/claiming.php": {
+  "checked": "2026-10-08T19:16:38+00:00",
+  "status": 200,
+  "title": "Sudoku Snake - Solving Technique - Claiming"
+ },
+ "https://www.sudokusnake.com/coloring.php": {
+  "checked": "2026-10-08T19:16:40+00:00",
+  "status": 200,
+  "title": "Sudoku Snake - Solving Technique - Coloring"
+ },
+ "https://www.sudokusnake.com/deathblossom.php": {
+  "checked": "2026-10-08T19:16:41+00:00",
+  "status": 200,
+  "title": "Sudoku Snake - Solving Technique - Death Blossom"
+ },
+ "https://www.sudokusnake.com/finnedjellyfish.php": {
+  "checked": "2026-10-08T19:16:43+00:00",
+  "status": 200,
+  "title": "Sudoku Snake - Solving Technique - Finned Jellyfish"
+ },
+ "https://www.sudokusnake.com/finnedswordfish.php": {
+  "checked": "2026-10-08T19:16:44+00:00",
+  "status": 200,
+  "title": "Sudoku Snake - Solving Technique - Finned Swordfish"
+ },
+ "https://www.sudokusnake.com/finnedxwings.php": {
+  "checked": "2026-10-08T19:16:46+00:00",
+  "status": 200,
+  "title": "Sudoku Snake - Solving Technique - Finned X Wings"
+ },
+ "https://www.sudokusnake.com/forcingchains.php": {
+  "checked": "2026-10-08T19:16:47+00:00",
+  "status": 200,
+  "title": "Sudoku Snake - Solving Technique - Forcing Chains"
+ },
+ "https://www.sudokusnake.com/hiddensingles.php": {
+  "checked": "2026-10-08T19:16:49+00:00",
+  "status": 200,
+  "title": "Sudoku Snake - Solving Technique - Hidden Singles"
+ },
+ "https://www.sudokusnake.com/hiddensinglesbybox.php": {
+  "checked": "2026-10-08T19:16:50+00:00",
+  "status": 200,
+  "title": "Sudoku Snake - Solving Technique - Hidden Singles by Box"
+ },
+ "https://www.sudokusnake.com/hiddensubsets.php": {
+  "checked": "2026-10-08T19:16:52+00:00",
+  "status": 200,
+  "title": "Sudoku Snake - Solving Technique - Hidden Subsets"
+ },
+ "https://www.sudokusnake.com/jellyfish.php": {
+  "checked": "2026-10-08T19:16:54+00:00",
+  "status": 200,
+  "title": "Sudoku Snake - Solving Technique - Jellyfish"
+ },
+ "https://www.sudokusnake.com/mutantswordfish.php": {
+  "checked": "2026-10-08T19:16:55+00:00",
+  "status": 200,
+  "title": "Sudoku Snake - Solving Technique - Mutant Swordfish"
+ },
+ "https://www.sudokusnake.com/nakedsingles.php": {
+  "checked": "2026-10-08T19:16:57+00:00",
+  "status": 200,
+  "title": "Sudoku Snake - Solving Technique - Naked Singles"
+ },
+ "https://www.sudokusnake.com/nakedsubsets.php": {
+  "checked": "2026-10-08T19:16:58+00:00",
+  "status": 200,
+  "title": "Sudoku Snake - Solving Technique - Naked Subsets"
+ },
+ "https://www.sudokusnake.com/nakedxychains.php": {
+  "checked": "2026-10-08T19:17:00+00:00",
+  "status": 200,
+  "title": "Sudoku Snake - Solving Technique - Naked XY Chains"
+ },
+ "https://www.sudokusnake.com/pointing.php": {
+  "checked": "2026-10-08T19:17:01+00:00",
+  "status": 200,
+  "title": "Sudoku Snake - Solving Technique - Pointing"
+ },
+ "https://www.sudokusnake.com/remotepairs.php": {
+  "checked": "2026-10-08T19:17:03+00:00",
+  "status": 200,
+  "title": "Sudoku Snake - Solving Technique - Remote Pairs"
+ },
+ "https://www.sudokusnake.com/swordfish.php": {
+  "checked": "2026-10-08T19:17:04+00:00",
+  "status": 200,
+  "title": "Sudoku Snake - Solving Technique - Swordfish"
+ },
+ "https://www.sudokusnake.com/xwings.php": {
+  "checked": "2026-10-08T19:17:06+00:00",
+  "status": 200,
+  "title": "Sudoku Snake - Solving Technique - X Wings"
+ },
+ "https://www.sudokusnake.com/xywings.php": {
+  "checked": "2026-10-08T19:17:08+00:00",
+  "status": 200,
+  "title": "Sudoku Snake - Solving Technique - XY Wings"
+ },
+ "https://www.sudokusnake.com/xyzwings.php": {
+  "checked": "2026-10-08T19:17:09+00:00",
+  "status": 200,
+  "title": "Sudoku Snake - Solving Technique - XYZ Wings"
+ },
+ "https://www.sudokuwiki.org/AIC_with_ALSs": {
+  "checked": "2026-10-08T19:17:10+00:00",
+  "status": 200,
+  "title": "AIC with ALSs - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/Almost_Locked_Sets": {
+  "checked": "2026-10-08T19:17:12+00:00",
+  "status": 200,
+  "title": "Almost Locked Sets - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/Alternating_Inference_Chains": {
+  "checked": "2026-10-08T19:17:13+00:00",
+  "status": 200,
+  "title": "Alternating Inference Chains - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/BUG": {
+  "checked": "2026-10-08T19:17:14+00:00",
+  "status": 200,
+  "title": "BUG - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/Bowmans_Bingo": {
+  "checked": "2026-10-08T19:17:16+00:00",
+  "status": 200,
+  "title": "Bowman's Bingo - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/Brute_Force_vs_Logical_Strategies": {
+  "checked": "2026-10-08T19:17:17+00:00",
+  "status": 200,
+  "title": "Brute Force vs Logical Strategies - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/Cage_Unit_Overlap": {
+  "checked": "2026-10-08T19:17:18+00:00",
+  "status": 200,
+  "title": "Cage Unit Overlap - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/Cell_Forcing_Chains": {
+  "checked": "2026-10-08T19:17:19+00:00",
+  "status": 200,
+  "title": "Cell Forcing Chains - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/Death_Blossom": {
+  "checked": "2026-10-08T19:17:20+00:00",
+  "status": 200,
+  "title": "Death Blossom - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/Empty_Rectangles": {
+  "checked": "2026-10-08T19:17:22+00:00",
+  "status": 200,
+  "title": "Empty Rectangles - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/Finned_Swordfish": {
+  "checked": "2026-10-08T19:17:23+00:00",
+  "status": 200,
+  "title": "Finned Swordfish - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/Finned_X_Wing": {
+  "checked": "2026-10-08T19:17:24+00:00",
+  "status": 200,
+  "title": "Finned X-Wing - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/Franken_Sword_Fish": {
+  "checked": "2026-10-08T19:17:25+00:00",
+  "status": 200,
+  "title": "Franken Sword-Fish - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/Getting_Started": {
+  "checked": "2026-10-08T19:17:26+00:00",
+  "status": 200,
+  "title": "Getting Started - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/Hidden_Candidates": {
+  "checked": "2026-10-08T19:17:27+00:00",
+  "status": 200,
+  "title": "Hidden Candidates - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/Hidden_Unique_Rectangles": {
+  "checked": "2026-10-08T19:17:29+00:00",
+  "status": 200,
+  "title": "Hidden Unique Rectangles - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/Innies_and_Outies": {
+  "checked": "2026-10-08T19:17:30+00:00",
+  "status": 200,
+  "title": "Innies and Outies - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/Intersection_Removal": {
+  "checked": "2026-10-08T19:17:31+00:00",
+  "status": 200,
+  "title": "Intersection Removal - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/Jelly_Fish_Strategy": {
+  "checked": "2026-10-08T19:17:33+00:00",
+  "status": 200,
+  "title": "Jellyfish Strategy - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/Killer_Cage_Combination_Example": {
+  "checked": "2026-10-08T19:17:34+00:00",
+  "status": 200,
+  "title": "Killer Cage Combination Example - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/Killer_Combinations": {
+  "checked": "2026-10-08T19:17:35+00:00",
+  "status": 200,
+  "title": "Killer Combinations - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/Law_of_Leftovers": {
+  "checked": "2026-10-08T19:17:37+00:00",
+  "status": 200,
+  "title": "Law of Leftovers - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/Naked_Candidates": {
+  "checked": "2026-10-08T19:17:38+00:00",
+  "status": 200,
+  "title": "Naked Candidates - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/Nishio_Forcing_Chains": {
+  "checked": "2026-10-08T19:17:39+00:00",
+  "status": 200,
+  "title": "Nishio Forcing Chains - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/Rectangle_Elimination": {
+  "checked": "2026-10-08T19:17:40+00:00",
+  "status": 200,
+  "title": "Rectangle Elimination - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/Remote_Pairs": {
+  "checked": "2026-10-08T19:17:41+00:00",
+  "status": 200,
+  "title": "Remote Pairs - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/Simple_Colouring": {
+  "checked": "2026-10-08T19:17:43+00:00",
+  "status": 200,
+  "title": "Simple Colouring - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/Sword_Fish_Strategy": {
+  "checked": "2026-10-08T19:17:44+00:00",
+  "status": 200,
+  "title": "Swordfish Strategy - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/Unique_Rectangles": {
+  "checked": "2026-10-08T19:17:45+00:00",
+  "status": 200,
+  "title": "Unique Rectangles - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/Unit_Forcing_Chains": {
+  "checked": "2026-10-08T19:17:46+00:00",
+  "status": 200,
+  "title": "Unit Forcing Chains - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/W_Wing_Strategy": {
+  "checked": "2026-10-08T19:17:47+00:00",
+  "status": 200,
+  "title": "W-Wing Strategy - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/Windoku_Strategy": {
+  "checked": "2026-10-08T19:17:48+00:00",
+  "status": 200,
+  "title": "Windoku Strategy - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/XYZ_Wing": {
+  "checked": "2026-10-08T19:17:50+00:00",
+  "status": 200,
+  "title": "XYZ-Wing - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/XY_Chains": {
+  "checked": "2026-10-08T19:17:51+00:00",
+  "status": 200,
+  "title": "XY-Chains - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/X_Cycles": {
+  "checked": "2026-10-08T19:17:52+00:00",
+  "status": 200,
+  "title": "X-Cycles - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/X_Wing_Strategy": {
+  "checked": "2026-10-08T19:17:53+00:00",
+  "status": 200,
+  "title": "X-Wing Strategy - SudokuWiki.org"
+ },
+ "https://www.sudokuwiki.org/Y_Wing_Strategy": {
+  "checked": "2026-10-08T19:17:54+00:00",
+  "status": 200,
+  "title": "Y-Wing Strategy - SudokuWiki.org"
+ }
+}

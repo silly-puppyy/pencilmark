@@ -1,0 +1,221 @@
+"""Command-line front end (SE-style).
+
+  python -m pencilmark rate [FILE|-] [--format FMT] [--json] [--steps]
+      One puzzle per line: a classic string ('.'/'0' blanks; 16 / 36 / 81 / 256 / 625 symbols), a JSON object in the
+      pencilmark.puzzle_json format or the sudoku-puzzle exchange format (pencilmark.export), or a path to a .json file. Prints one
+      result line per puzzle. Card "sudoku-grade": FMT fields %d difficulty (continuous, floor 0, no ceiling; ~5 = typical medium),
+      %m time in minutes for today's average player, %p 80th-percentile minutes, %b band, %h hardest technique met,
+      %c contents chips (band > 0, with uses), %n notes, %s status, %u unique?, %i line number.
+      Default: "%b\t%d\t%m\t%h". --json prints the full card (add --steps for the step list); --report a readable
+      summary. --legacy prints the legacy card (time grade %t, work minutes %w).
+  python -m pencilmark solve [FILE|-]      the solution (or 'not unique' / 'no solution') per puzzle
+  python -m pencilmark json  [FILE|-]      validate + normalise to canonical JSON (adds "hash")
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+from . import puzzle_json as PJ
+
+def _params():
+    """the engine parameters shipped with the package (data/params.json), completed with defaults."""
+    from .scoring import complete_params
+    from . import _data
+    return complete_params(_data.load_params("params.json"))
+
+
+def _inputs(src):
+    fh = sys.stdin if src in (None, "-") else open(src, encoding="utf-8")
+    for k, line in enumerate(fh, 1):
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("{"):
+            yield k, _to_puzzle_json(json.loads(line))
+        elif line.endswith(".json") and Path(line).exists():
+            yield k, _to_puzzle_json(json.load(open(line, encoding="utf-8")))
+        else:
+            yield k, {"numbers": line.split()[0]}
+
+
+def _to_puzzle_json(obj):
+    """accept puzzle JSON, the sudoku-puzzle exchange format ("sudoku-puzzle", older files "sudoku-puzzle/2"), or a
+    sample-pack line {"puzzle": ..., "grade": ...}."""
+    if "puzzle" in obj and isinstance(obj["puzzle"], dict):
+        obj = obj["puzzle"]
+    if obj.get("format") in ("sudoku-puzzle", "sudoku-puzzle/2"):
+        from .export import import_puzzle
+        return import_puzzle(obj)
+    return obj
+
+
+def _fmt2(fmt, g, k, unique):
+    cont = g.get("contains") or []
+    hard = [c for c in cont if c.get("band", 0) > 0]
+    vals = {"d": "" if g.get("difficulty") is None else f"{g['difficulty']:.1f}",
+            "m": "" if g.get("time") is None else f"{g['time']:.1f}", "p": "" if g.get("time_p80") is None else f"{g['time_p80']:.1f}",
+            "b": g.get("band", g.get("status", "")), "h": hard[-1]["name"] if hard else (cont[-1]["name"] if cont else ""),
+            "c": " ".join(c["chip"] + (f"x{c['uses']}" if c.get("uses", 0) > 1 else "") for c in hard),
+            "n": ";".join(n.get("code") or n["text"] for n in g.get("notes") or []), "s": g.get("status", "ok"), "u": str(unique), "i": str(k)}
+    return _subst(fmt, vals)
+
+
+def _subst(fmt, vals):
+    out, i = [], 0
+    while i < len(fmt):
+        if fmt[i] == "%" and i + 1 < len(fmt):
+            out.append(vals.get(fmt[i + 1], "%" + fmt[i + 1])); i += 2
+        elif fmt[i] == "\\" and fmt[i + 1:i + 2] == "t":
+            out.append("\t"); i += 2
+        else:
+            out.append(fmt[i]); i += 1
+    return "".join(out)
+
+
+def report2(g, k=None):
+    """Readable summary of the sudoku-grade/2 card."""
+    if "band" not in g:
+        return f"[{k}] {g.get('status')}"
+    L = [f"{'#' + str(k) + '  ' if k else ''}{g['band']}  -  difficulty {g.get('difficulty')}  -  time {g.get('time')} min"
+         f" (80% of players within {g.get('time_p80')} min)"]
+    hard = [c for c in g.get("contains") or [] if c.get("band", 0) > 0]
+    L.append("   contains: " + (", ".join(f"{c['name']}{' x' + str(c['uses']) if c.get('uses', 0) > 1 else ''}"
+                                         f"{' (or ' + '/'.join(c['alternatives']) + ')' if c.get('alternatives') else ''}" for c in hard)
+                                if hard else "singles only"))
+    if g.get("contents_truncated"):
+        L.append("   (time cap hit: contents not minimised; joint alternatives may be missing)")
+    if g.get("contains_complete") is False:
+        L.append(f"   human logic ran out at step {g.get('stopped_at_step')}; contents incomplete")
+    for n in g.get("notes") or []:
+        L.append(f"   note: {n['text']}")
+    return "\n".join(L)
+
+
+def _fmt(fmt, card, k, unique):
+    chips = card.get("chips") or []
+    req = [c for c in chips if c.get("required")] or chips
+    hardest = max(req, key=lambda c: c.get("family_i", 0))["name"] if req else ""
+    vals = {"t": "" if card.get("time_grade") is None else f"{card['time_grade']:.1f}",
+            "d": "" if card.get("score") is None else f"{card['score']:.1f}", "b": card.get("label", card.get("status", "")),
+            "w": "" if card.get("tediousness_min") is None else f"{card['tediousness_min']:.1f}", "h": hardest,
+            "c": " ".join(c["code"] + (f"x{c['forced']}" if c.get("forced", 0) > 1 else "") for c in chips),
+            "n": ";".join(f"{f[0]}" for f in card.get("flags") or []), "s": card.get("status", ""), "u": str(unique), "i": str(k)}
+    out, i = [], 0
+    while i < len(fmt):
+        if fmt[i] == "%" and i + 1 < len(fmt):
+            out.append(vals.get(fmt[i + 1], "%" + fmt[i + 1])); i += 2
+        elif fmt[i] == "\\" and fmt[i + 1:i + 2] == "t":
+            out.append("\t"); i += 2
+        else:
+            out.append(fmt[i]); i += 1
+    return "".join(out)
+
+
+def report(card, k=None):
+    """Readable grade report: Stuart-style breakdown plus our two numbers."""
+    if "label" not in card:
+        return f"[{k}] {card.get('status')}"
+    if card.get("status") in ("beyond engine", "beyond human logic"):
+        return (f"{'#' + str(k) + '  ' if k else ''}{card['label']}  -  {card.get('meaning')}\n   techniques before that: "
+                + ", ".join(c["name"] for c in card.get("chips") or []))
+    L = [f"{'#' + str(k) + '  ' if k else ''}{card['label']}  -  difficulty {card.get('score')}  -  time {card.get('time_grade')}"
+         f"  ({card.get('n_steps')} steps, ~{card.get('tediousness_min')} min of routine work)",
+         f"   {card.get('meaning', '')}",
+         f"   balance: {card.get('balance')} ({card.get('forced_total')} forced band-level steps){'; ' + card['score_fit'] if card.get('score_fit') else ''}"]
+    req = [c for c in card.get("chips") or [] if c.get("required")]
+    if req:
+        L.append("   required techniques: " + ", ".join(
+            f"{c['name']}{' (' + '/'.join(c['specific'][:3]) + ')' if c.get('specific') else ''}{' x' + str(c['forced']) if c.get('forced') else ''}"
+            f" [{c['family']}]" for c in sorted(req, key=lambda c: -c["family_i"])))
+    tech = card.get("techniques") or {}
+    if tech:
+        L.append("   technique counts: " + ", ".join(f"{n} {v}" for n, v in tech.items()))
+    for h in card.get("hardest_steps") or []:
+        L.append(f"   hardest: step {h['step']}  {h['technique']}  price {h['price']}{'  -> ' + h['place'] if h.get('place') else ''}")
+    for fl in card.get("flags") or []:
+        L.append(f"   {fl}")
+    return "\n".join(L)
+
+
+def _rate_one(args):
+    """one input line -> its output text (runs in a worker process with -j)."""
+    k, obj, a = args
+    from .card import grade_card
+    from . import cpsat_verify as V
+    from .export import grade
+    P = dict(_params(), search="computer" if a.computer else "human")
+    fmt = a.format or ("%b\\t%d\\t%t\\t%h" if a.legacy else "%b\\t%d\\t%m\\t%h")
+    try:
+        p = PJ.from_json(obj)
+        p.finalize()
+        sols, decided = V.decide(p, limit=2)
+        if len(sols) != 1 or not decided:
+            st = ("not unique" if len(sols) > 1 else "undecided (" + V.VERIFY_HINT + ")" if not decided
+                  else "no solution")
+            return ((_fmt if a.legacy else _fmt2)(fmt, {"status": st}, k, False) if not a.json
+                    else json.dumps({"line": k, "status": st}))
+        if not a.legacy:
+            g = grade(p, P, with_steps=a.steps, max_seconds=a.max_seconds)
+            return json.dumps({"line": k, **g}, default=str) if a.json else report2(g, k) if a.report else _fmt2(fmt, g, k, True)
+        card = grade_card(p, P, check_rules=a.notes)
+        if a.json:
+            return json.dumps({"line": k, **card}, default=str)
+        return report(card, k) if a.report else _fmt(fmt, card, k, True)
+    except Exception as e:
+        return f"error\t{k}\t{type(e).__name__}: {e}"
+
+
+def cmd_rate(a):
+    items = ((k, obj, a) for k, obj in _inputs(a.file))
+    if a.jobs <= 1:
+        for it in items:
+            print(_rate_one(it), flush=True)
+        return
+    from .api import _mp_context
+    with _mp_context().Pool(a.jobs, maxtasksperchild=50) as pool:   # output stays in input order
+        for out in pool.imap(_rate_one, items, chunksize=1):
+            print(out, flush=True)
+
+
+def cmd_solve(a):
+    from . import cpsat_verify as V
+    for k, obj in _inputs(a.file):
+        p = PJ.from_json(obj)
+        p.finalize()
+        sols, decided = V.decide(p, limit=2)
+        print("not unique" if len(sols) > 1 else "undecided" if not decided else
+              "".join(PJ._sym(v) for v in sols[0]) if sols else "no solution", flush=True)
+
+
+def cmd_json(a):
+    for k, obj in _inputs(a.file):
+        from .export import read_meta
+        d = PJ.to_json(PJ.from_json(obj), meta=read_meta(obj))
+        d["hash"] = PJ.canonical_hash(d)
+        print(json.dumps(d, separators=(",", ":")), flush=True)
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(prog="python -m pencilmark", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    r = sub.add_parser("rate"); r.add_argument("file", nargs="?"); r.add_argument("--format", default=None)
+    r.add_argument("--json", action="store_true"); r.add_argument("--report", action="store_true")
+    r.add_argument("--computer", action="store_true", help="allow pure computer search (forcing chains / nets, trial); default: human mode")
+    r.add_argument("--notes", action="store_true", help="legacy card: run the publishing-rule checks (slower)")
+    r.add_argument("--steps", action="store_true", help="with --json: include the step-by-step solve")
+    r.add_argument("-j", "--jobs", type=int, default=1, help="rate puzzles in N parallel processes (output in input order)")
+    r.add_argument("--max-seconds", type=float, default=None,
+                   help="cap the contents search (opt-in; the card then says contents_truncated and may differ run to run)")
+    r.add_argument("--legacy", action="store_true", help="print the legacy card (time grade instead of minutes)")
+    r.set_defaults(fn=cmd_rate)
+    s = sub.add_parser("solve"); s.add_argument("file", nargs="?"); s.set_defaults(fn=cmd_solve)
+    j = sub.add_parser("json"); j.add_argument("file", nargs="?"); j.set_defaults(fn=cmd_json)
+    a = ap.parse_args(argv)
+    a.fn(a)
+
+
+if __name__ == "__main__":
+    main()
