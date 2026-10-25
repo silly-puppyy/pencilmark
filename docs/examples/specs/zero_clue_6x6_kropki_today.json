@@ -1,0 +1,45 @@
+{
+ "format": "sudoku-spec",
+ "format_version": 1,
+ "meta": {
+  "title": "0-clue 6x6 kropki (runs today)",
+  "description": "No givens, a minimal set of kropki dots, difficulty at least 3."
+ },
+ "grid": {
+  "rows": 6,
+  "cols": 6
+ },
+ "digits": 6,
+ "givens": {
+  "count": 0
+ },
+ "rules": [
+  {
+   "type": "box_grid",
+   "origin": "r1c1",
+   "box": [
+    2,
+    3
+   ],
+   "count": [
+    3,
+    2
+   ]
+  },
+  {
+   "type": "edge",
+   "kind": "kropki",
+   "count": "min"
+  }
+ ],
+ "where": {
+  "difficulty": [
+   3,
+   99
+  ]
+ },
+ "limits": {
+  "time": 600,
+  "seed": 5
+ }
+}

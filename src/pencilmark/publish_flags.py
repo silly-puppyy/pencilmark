@@ -67,10 +67,11 @@ def _rule_notes(puzzle, P):
         n_used = sum(v for k, v in use.items() if str(k) == c or str(k).startswith(c)
                      or (c.endswith(" relation") and str(k) in rel_aliases))
         needed = need.get(c)
+        # (code, severity, text, element class, uses): the card names the rules of the class (export.grade "issues")
         if needed is False and n_used == 0:
-            out.append(("decorative", "reject", f"decorative {c}: not needed for uniqueness and never used"))
+            out.append(("decorative", "reject", f"decorative {c}: not needed for uniqueness and never used", c, n_used))
         elif needed is False:
-            out.append(("redundant", "note", f"{c} used {n_used}x but the puzzle is unique without it"))
+            out.append(("redundant", "note", f"{c} used {n_used}x but the puzzle is unique without it", c, n_used))
         elif n_used < 3:
-            out.append(("barely used", "reject" if n_used == 0 else "note", f"{c} used in only {n_used} step{'s' if n_used != 1 else ''}"))
+            out.append(("barely used", "reject" if n_used == 0 else "note", f"{c} used in only {n_used} step{'s' if n_used != 1 else ''}", c, n_used))
     return out

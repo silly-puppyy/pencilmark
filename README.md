@@ -49,16 +49,18 @@ More in [docs/USAGE.md](docs/USAGE.md).
 
 ## The card
 
-`rate` returns a dict (format `"sudoku-grade"`):
+`rate` returns a dict (format `"sudoku-grade"`) with these fields by default (`grader`, `format`, `format_version` are
+always there); `rate(puzzle, fields=[...])` / `--fields` asks for others, and only requested fields are computed
+([docs/FORMAT.md](docs/FORMAT.md) 13.1):
 
 | Field | Meaning |
 |---|---|
 | `difficulty` | how hard each step feels, continuous from 0 (one empty cell) with no ceiling; a typical newspaper medium is about 5 |
-| `time`, `time_p80` | expected minutes for an average player; 80% of players finish within `time_p80` |
+| `time` | expected minutes for an average player (`time.p80` on request: 80% of players finish within it) |
 | `band`, `band_index` | Very Easy (0), Easy, Medium, Hard, Very Hard, Extreme (5), or `"Unknown"` (null) when human logic runs out |
 | `contains` | techniques met going easy to hard: `code`, `chip`, `name`, `band`, `uses`, `alternatives` |
-| `notes` | publishing notes such as a difficulty spike or an unused rule (`code`, `severity`, `text`) |
-| `steps` | with `steps=True`: technique, placement (`r2c8=3`) or eliminations (`r4c5#7`), explanation |
+| `issues`, `reject` | publishing checks such as a difficulty spike or an unused rule (`code`, `severity` reject / warning, `text`, and `rules`: the offending rules' indices in the exported puzzle); `reject` is true when any issue is a reject |
+| on request | `steps` (technique, placement `r2c8=3` or eliminations `r4c5#7`) with `steps.explanation.short` / `.teach`, `se` / `se.diuf`, `describe`, `symmetry` |
 
 A chip like `XWG/KTE/SCL` means any one of those techniques gets you through at that point. Unknown puzzles carry
 `contains_complete: false` and `stopped_at_step`. With `max_seconds` set, the contents search is capped and the card
@@ -77,13 +79,14 @@ may say `contents_truncated`.
  "givens":   [0, 0, 5, 4, 0, ...],
  "solution": [6, 1, 5, 4, 2, ...],
  "rules": [
-  {"type": "subgrid", "size": 9, "box": [3, 3], "origin": "r1c1"},
+  {"type": "box_grid", "origin": "r1c1", "box": [3, 3], "count": [3, 3]},
   {"type": "cage", "sum": 15, "cells": ["r1c4", "r1c5", "r2c4"]},
   {"type": "edge", "kind": "kropki", "color": "white", "cells": ["r5c5", "r5c6"]}]}
 ```
 
-- Every constraint is a rule, houses included: one `subgrid` rule gives a grid's rows, columns and boxes; nothing is
-  implied. Cells are named `r{row}c{col}`, 1-based. `givens`: `0` = empty, `null` = no cell (multi-grid gaps).
+- Every constraint is a rule: one `box_grid` gives a grid's rows, columns and boxes; rows / columns of other cells are
+  inferred from the board shape, so a jigsaw is its grid plus `box` rules. Cells are named `r{row}c{col}`, 1-based.
+  `givens`: `0` = empty, `null` = no cell (multi-grid gaps).
 - Each rule has one exact meaning and a default drawing, so a renderer needs nothing else; `style` and `decorations`
   are cosmetic only. `meta` is free-form information that never changes solving.
 - Strict reading: an unknown key or rule type makes the reader refuse the file (`FormatError`) instead of dropping a

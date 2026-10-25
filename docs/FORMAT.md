@@ -155,7 +155,7 @@ clues competing for one gap) is the renderer's business; the semantics never dep
 | outside clues (`sandwich`, `xsum`, `skyscraper`, `rossini`, `first_seen`, `sum` kinds `little_killer` / `frame`, `distinct_count` with `side`): from the cell next to the clue outwards | `equal_sum` segments (each a set; the segment list is unordered) |
 | `clone` / `isomorphic` regions: corresponding positions | `edge` pairs except `less`, `relation` pairs of symmetric operators |
 | `edge` kind `less` and `relation` pairs of `less` / `less_equal` / `allowed` / `any_of`: `[a, b]` in operator order | `corner` cells (written TL, TR, BL, BR = reading order) |
-| `vudoku` cells (vertex first), `table` cells (columns of `allowed`), `subgrid` `cells` | `neighbours` / `negative` scope `cells`, `except` pairs |
+| `vudoku` cells (vertex first), `table` cells (columns of `allowed`), `box` / `row` / `column` `cells` | `neighbours` / `negative` scope `cells`, `except` pairs |
 
 The order of the `rules` array carries **no meaning**. Writers SHOULD keep the order they were given (the
 fingerprint sorts, section 9.2).
@@ -187,7 +187,7 @@ these holds:
    a missing cell; an edge pair is not orthogonally adjacent; a corner set is not a 2×2 block; an outside clue's
    cells are not collinear and contiguous, or the position next to `cells[0]` on `side` is a cell; an arrow shaft
    does not start next to a bulb cell; a digit lies outside 1..D; a required parameter is missing (e.g. `whisper`
-   without `value` when D ≠ 9); a `subgrid` window is not fully made of existing cells.
+   without `value` when D ≠ 9); a `box_grid` area is not fully made of existing cells.
 
 pencilmark raises `FormatError` (a `ValueError`) for these. A file can also be valid and still use something the
 pencilmark engine cannot build (e.g. a modular line with modulus 4); then it raises `NotSupportedError` (also a
@@ -243,41 +243,38 @@ stated default are omitted by canonical writers when they equal the default.
 
 "Repeats" says whether digits may repeat among a rule's cells **because of that rule**; houses still apply.
 
-### 6.1 Houses: `subgrid`, `box_grid`, `box`, `row`, `column`
+### 6.1 Houses: `box_grid`, `box`, `row`, `column`
 
 ```json
-{"type": "subgrid", "size": 9, "box": [3, 3], "origin": "r1c1"}
-{"type": "subgrid", "size": 9, "origin": "r1c1"}
-{"type": "box_grid", "size": [3, 3], "repeat": [3, 3], "origin": "r1c1"}
+{"type": "box_grid", "origin": "r1c1", "box": [3, 3], "count": [3, 3]}
+{"type": "box_grid", "origin": "r1c1", "box": [2, 3], "count": [3, 2]}
 {"type": "box", "cells": ["r1c1", "r1c2", "r2c1", "r2c2", "r2c3", "r3c2"]}
+{"type": "row", "cells": ["r1c1", "r1c2", "…"]}
 ```
 
-A house holds no repeated digit; a house of exactly D cells holds every digit once. **Nothing is implied**: a board
-has exactly the houses its rules state.
+A house holds no repeated digit; a house of exactly D cells holds every digit once.
 
-- **`subgrid`** is the way to state rows and columns. `size` MUST equal D. With `origin`, it is the size×size window
-  whose top-left cell is `origin`; it gives that window's `size` rows (top to bottom), then its `size` columns (left
-  to right), then, if `box` = [box height, box width] is present, its boxes (a regular tiling, in reading order of
-  their top-left cells). Without `box` it gives rows and columns only: a jigsaw is a `subgrid` without `box` plus one
-  `box` rule per piece; a Latin square is a `subgrid` without `box` and nothing else. Every cell of the window MUST
-  exist.
-  - Instead of `origin`, a subgrid MAY list `cells`: exactly size² cells, the sub-grid in its own reading order (row
-    i = `cells[i·size … i·size+size−1]`). This covers sub-grids that are not windows of the board, such as the extra
-    grid of a Clueless sudoku made of the centre cells of nine boxes.
-  - A classic is the single rule `{"type": "subgrid", "size": 9, "box": [3, 3], "origin": "r1c1"}`. A samurai is 5
-    such rules.
-- **`box_grid`**: a regular tiling of boxes without rows or columns. `size` = [box height, box width], `repeat` =
-  [boxes down, boxes across], `origin` = top-left cell of the first box. Boxes in reading order of their top-left
-  cells.
-- **`box`**: one box with explicit `cells`, any shape (jigsaw pieces).
-- **`row`** / **`column`**: a single row or column house with explicit `cells`, only for boards where a row or column
-  is not part of any subgrid (irregular boards). Cells are listed left to right / top to bottom.
-- A house with the same cell set as an earlier house is the same house (overlapping sub-grids share boxes).
+- **`box_grid`**: a regular tiling. `box` = [box height, box width], `count` = [boxes down, boxes across], `origin` =
+  the top-left cell. Its area is box height × boxes down rows by box width × boxes across columns, so every
+  `box_grid` is consistent by construction (a 6×6 is `box` [2,3] `count` [3,2] or `box` [3,2] `count` [2,3]). It
+  gives the area's **boxes** (reading order of their top-left cells) **and its rows and columns** (each must hold
+  exactly D cells, i.e. box height × boxes down = box width × boxes across = D). A classic is one `box_grid`; a samurai
+  is five; a super samurai is one per grid. Every cell of the area MUST exist. Optional `"lines": false` gives the
+  boxes only (a tiling of boxes that are not a sub-grid's).
+- **`box`**: one box with explicit `cells`, any shape (jigsaw pieces). Any number of them.
+- **Rows and columns of cells not covered by a `box_grid` are inferred from the board's shape**: every maximal straight
+  horizontal or vertical run of exactly D existing cells is a row / column house (rows top to bottom, then columns left
+  to right). A jigsaw is therefore just its givens grid plus one `box` rule per piece. Runs of other lengths give no
+  house.
+- **`row`** / **`column`**: explicit houses for boards whose rows / columns are not straight runs of D cells (staircase,
+  toroidal, sujiken). Inference skips cells that an explicit `row` (for rows) or `column` (for
+  columns) rule already covers. To drop inference entirely (puzzles without row / column houses) use
+  `"grid": {"rows": R, "cols": C, "infer_lines": false}`.
+- A house with the same cell set as an earlier house is the same house (overlapping grids share boxes / lines).
 - Boxes, from any of these rules, are what a renderer draws with thick lines.
 
-Canonical writers emit a `subgrid` for every size×size set of full rows and columns, with `box` when its boxes form a
-regular tiling (and, for pencilmark's writer, when the source listed them together, see 9.1); `box_grid` for a regular
-tiling of boxes outside any subgrid; `box` for each remaining box; `row` / `column` only for what nothing else covers.
+Canonical writers emit a `box_grid` for every regular tiling whose rows and columns are houses, `box` for each remaining
+box, and `row` / `column` only for houses the shape inference would not produce.
 
 ### 6.2 `region`
 
@@ -490,16 +487,16 @@ States exactly which clues are "all shown".
 | `xv` | `letter` (omitted = both) | orthogonal pairs | does not sum to 10 (X covered) / 5 (V covered) |
 | `difference` / `ratio` / `product` | `value` (REQUIRED) | orthogonal pairs | does not satisfy that clue |
 | `sum` | `sum` (REQUIRED) | orthogonal pairs | does not sum to `sum` |
-| `rossini` | – | the first 3 cells inwards from each end of every full row and column of a subgrid | is not monotone |
-| `battenburg` | – | every 2×2 block of a subgrid | is not a parity checkerboard |
+| `rossini` | – | the first 3 cells inwards from each end of every full row and column house | is not monotone |
+| `battenburg` | – | every 2×2 block whose cells share a `box_grid` area (or of the whole board without one) | is not a parity checkerboard |
 | `digits` | `kind` `odd` / `even` / `low` / `high` (+ `split` for low / high) | every cell | does not satisfy that clue (so it is even / odd / high / low) |
 
 - **A negative covers exactly what its selector names.** With a selector it covers a single value:
   `{"of": "xv", "letter": "X"}` says only "pairs without a clue do not sum to 10"; V clues may be partial.
 - **Exemption**: a position carrying **any** rule of the same family (any kropki dot of either colour; any X or V;
   any edge clue of that kind; any rossini arrow; any battenburg mark; any `digits` rule of that kind) is exempt.
-- **Adjacency is only within one subgrid**: two cells form a pair only if some `subgrid` contains both (on a board
-  without subgrids, all existing cells).
+- **Adjacency is only within one grid**: two cells form a pair only if some `box_grid` area contains both (on a board
+  without `box_grid`, all orthogonally adjacent existing cells).
 - Optional `cells`: only positions whose cells are all in this set are covered.
 - With no clue of the family in the file at all, the negative still applies (e.g. "no two adjacent digits sum to 10
   or 5").
@@ -530,7 +527,7 @@ edge / corner clues, digits, outside clues.
 | Rule | Default drawing |
 |---|---|
 | grid | Thin lines between existing cells only; nothing at `null` positions. |
-| boxes (`subgrid` with `box`, `box_grid`, `box`) | Thick line wherever two adjacent existing cells lie in different boxes, and around the outside of the existing cells. |
+| boxes (`box_grid`, `box`) | Thick line wherever two adjacent existing cells lie in different boxes, and around the outside of the existing cells. |
 | rows / columns | Nothing beyond the grid lines. |
 | `region` `diagonal` | Thin grey line through the cell centres, extended to the outer corners of the end cells. |
 | `region` `window` / `extra` | Light grey shading (`#d8d8d8`). |
@@ -608,8 +605,8 @@ Coordinates are cell units `[row, col]` with the origin at the top-left corner o
   then `side`, then the cell keys (`origin`, `source`, `bulb`, `lines`, `cells`, `regions`, `segments`, `pairs`,
   `except`, `allowed`), then `id`, `label`, `style`.
 - Houses as described in 6.1. Rules in the order given: pencilmark's writer keeps the order of the engine's houses,
-  relations and constraints (that order can change tie-breaks and so a grade), so a board whose source listed all rows
-  and columns before all boxes is written as `subgrid` rules without `box` followed by `box_grid` / `box` rules.
+  relations and constraints (that order can change tie-breaks and so a grade), and a `box_grid` expands to rows, then columns, then boxes; where a source's
+  house order differs, the writer uses `box_grid` with `"lines": false` / `box` rules placed to reproduce it.
   Candidate lists ascending; `candidates` keys in reading order. Cells of sets as the source listed them (the
   fingerprint sorts them).
 - Defaults omitted (`closed: false`; whisper `value` 5, entropic `groups`, modular `value` 3, lockout `value` 4 on
@@ -624,9 +621,9 @@ Coordinates are cell units `[row, col]` with the origin at the top-left corner o
 1. Read the puzzle and write it canonically (9.1).
 2. Keep only `format`, `format_version`, `grid`, `digits`, `givens`, `candidates`, `rules`; in every rule drop `id`,
    `label`, `style`.
-3. Replace all house rules (`subgrid`, `box_grid`, `box`, `row`, `column`) by the houses they state, one
+3. Replace all house rules (`box_grid`, `box`, `row`, `column`, and the inferred rows / columns) by the houses they state, one
    `{"type": "row" | "column" | "box", "cells": [...]}` per distinct house, so every spelling of the same houses (a
-   `subgrid` with boxes, a `subgrid` plus a `box_grid`, single rules, in any order) gives the same result.
+   `box_grid`, inferred lines plus `box` rules, single rules, in any order) gives the same result.
 4. Sort the cells of set-like lists (3.3: region, cage, digits, contains, appears, count, sum group / corner,
    edge clues other than `less`, scope and `except` lists, the pairs of symmetric `relation` operators, `equal_sum`
    segments) in reading order.
@@ -675,7 +672,7 @@ decompressed text is a normal `sudoku-puzzle` file.
     6, 8, 3, 5, 4, 9, 7, 1, 2,
     1, 5, 7, 8, 2, 6, 4, 3, 9],
  "rules": [
-  {"type": "subgrid", "size": 9, "box": [3, 3], "origin": "r1c1"}]}
+  {"type": "box_grid", "origin": "r1c1", "box": [3, 3], "count": [3, 3]}]}
 ```
 
 Made by the pencilmark generator (unique, graded Easy). As an interop string (12.1):
@@ -699,7 +696,7 @@ Made by the pencilmark generator (unique, graded Easy). As an interop string (12
     2, 1, 4, 3,
     3, 4, 2, 1],
  "rules": [
-  {"type": "subgrid", "size": 4, "box": [2, 2], "origin": "r1c1"},
+  {"type": "box_grid", "origin": "r1c1", "box": [2, 2], "count": [2, 2]},
   {"type": "cage", "sum": 3, "cells": ["r1c1", "r1c2"]},
   {"type": "cage", "sum": 4, "cells": ["r1c3", "r2c3"]},
   {"type": "cage", "sum": 6, "cells": ["r1c4", "r2c4"]},
@@ -725,7 +722,6 @@ Made by the generator (zero givens, unique). `describe()` names it "Tiny Killer 
     0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0],
  "rules": [
-  {"type": "subgrid", "size": 6, "origin": "r1c1"},
   {"type": "box", "cells": ["r1c1", "r1c2", "r1c3", "r2c1", "r2c2", "r3c1"]},
   {"type": "box", "cells": ["r1c4", "r1c5", "r1c6", "r2c5", "r2c6", "r3c6"]},
   {"type": "box", "cells": ["r2c3", "r2c4", "r3c2", "r3c3", "r3c4", "r4c3"]},
@@ -734,7 +730,7 @@ Made by the generator (zero givens, unique). `describe()` names it "Tiny Killer 
   {"type": "box", "cells": ["r5c3", "r5c4", "r6c3", "r6c4", "r6c5", "r6c6"]}]}
 ```
 
-The `subgrid` without `box` gives the rows and columns; each piece is a `box`. (A shape example, no givens.)
+Rows and columns are inferred from the shape (straight runs of 6 cells); each piece is a `box`. (A shape example, no givens.)
 
 ### 10.4 Samurai (structure)
 
@@ -754,11 +750,11 @@ The `subgrid` without `box` gives the rows and columns; each piece is a `box`. (
     0, 0, 0, 0, 0, 0, 0, 0, 0, null, null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     …rows 17 to 21 the same…],
  "rules": [
-  {"type": "subgrid", "size": 9, "box": [3, 3], "origin": "r1c1"},
-  {"type": "subgrid", "size": 9, "box": [3, 3], "origin": "r1c13"},
-  {"type": "subgrid", "size": 9, "box": [3, 3], "origin": "r7c7"},
-  {"type": "subgrid", "size": 9, "box": [3, 3], "origin": "r13c1"},
-  {"type": "subgrid", "size": 9, "box": [3, 3], "origin": "r13c13"}]}
+  {"type": "box_grid", "origin": "r1c1", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r1c13", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r7c7", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r13c1", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r13c13", "box": [3, 3], "count": [3, 3]}]}
 ```
 
 (`…` marks rows left out of this document; a real file lists all 441 entries.) The centre grid shares one box with
@@ -769,7 +765,7 @@ c13–c21).
 
 ```json
 "rules": [
-  {"type": "subgrid", "size": 9, "box": [3, 3], "origin": "r1c1"},
+  {"type": "box_grid", "origin": "r1c1", "box": [3, 3], "count": [3, 3]},
   {"type": "region", "kind": "diagonal", "cells": ["r1c1", "r2c2", "r3c3", "r4c4", "r5c5", "r6c6", "r7c7", "r8c8", "r9c9"]},
   {"type": "region", "kind": "diagonal", "cells": ["r1c9", "r2c8", "r3c7", "r4c6", "r5c5", "r6c4", "r7c3", "r8c2", "r9c1"]}]
 ```
@@ -781,7 +777,7 @@ Argyle has 8 shorter diagonals instead, all `region` kind `diagonal`, e.g.
 
 ```json
 "rules": [
-  {"type": "subgrid", "size": 9, "box": [3, 3], "origin": "r1c1"},
+  {"type": "box_grid", "origin": "r1c1", "box": [3, 3], "count": [3, 3]},
   {"type": "line", "kind": "thermo", "cells": ["r9c1", "r8c1", "r7c1", "r7c2"]},
   {"type": "line", "kind": "thermo", "cells": ["r9c1", "r9c2", "r9c3"]},
   {"type": "arrow", "bulb": ["r2c2"], "lines": [["r3c3", "r4c4", "r5c5"]]},
@@ -796,7 +792,7 @@ The two thermos share the bulb r9c1. The second arrow's pill reads as 10·r1c7 +
 
 ```json
 "rules": [
-  {"type": "subgrid", "size": 9, "box": [3, 3], "origin": "r1c1"},
+  {"type": "box_grid", "origin": "r1c1", "box": [3, 3], "count": [3, 3]},
   {"type": "edge", "kind": "xv", "letter": "X", "cells": ["r1c1", "r1c2"]},
   {"type": "edge", "kind": "xv", "letter": "V", "cells": ["r4c5", "r5c5"]},
   {"type": "negative", "of": "xv"}]
@@ -809,7 +805,7 @@ every X is shown but V clues may be partial. With no XV clues at all, the negati
 
 ```json
 "rules": [
-  {"type": "subgrid", "size": 9, "box": [3, 3], "origin": "r1c1"},
+  {"type": "box_grid", "origin": "r1c1", "box": [3, 3], "count": [3, 3]},
   {"type": "sandwich", "sum": 12, "side": "left", "cells": ["r3c1", "r3c2", "r3c3", "r3c4", "r3c5", "r3c6", "r3c7", "r3c8", "r3c9"]},
   {"type": "xsum", "sum": 24, "side": "top", "cells": ["r1c9", "r2c9", "r3c9", "r4c9", "r5c9", "r6c9", "r7c9", "r8c9", "r9c9"]},
   {"type": "sum", "kind": "little_killer", "sum": 15, "side": "top", "cells": ["r1c4", "r2c5", "r3c6", "r4c7", "r5c8", "r6c9"]},
@@ -823,7 +819,7 @@ below r9c2 and runs up-left.
 
 ```json
 "rules": [
-  {"type": "subgrid", "size": 9, "box": [3, 3], "origin": "r1c1"},
+  {"type": "box_grid", "origin": "r1c1", "box": [3, 3], "count": [3, 3]},
   {"type": "neighbours", "kind": "antiknight", "within": "box"}]
 ```
 
@@ -836,7 +832,7 @@ Readers SHOULD read these older forms; writers never emit them.
 | Legacy form | How it reads |
 |---|---|
 | `sudoku-puzzle` without `format_version`, and `"sudoku-puzzle/2"`: flat 0-based cell indices (`row*cols + col`), `boxes`, `units`, `regions` | Indices become cell names. `units` (rows / columns of multi-grid boards) are the row and column houses; without `units`, the full rows and columns of the bounding grid are houses (also for a jigsaw without `boxes`); `boxes` are boxes; `regions` kind `cage` are cages, other kinds regions. |
-| `sudoku-puzzle` with `format_version` 1 from the pre-release drafts (2026-10-25): houses as `box` / `row` / `column` / `cage` / `region` rules, rows and columns implied on a gap-free D×D board, old rule vocabulary. A file is read as a draft when it has no `subgrid` / `box_grid` rule and either uses an old rule type (`kropki`, `xv`, `less`, `pairs`, `parity`, `lowhigh`, `antiknight`, `frame`, `set`, …, or `total` / `circle` / `rel` keys) or has `box` rules on a gap-free D×D board without any `row` / `column` rule | Same houses with rows and columns implied, then the rules as below. |
+| `sudoku-puzzle` with `format_version` 1 from the pre-release drafts (2026-10-25): houses as `box` / `row` / `column` / `cage` / `region` rules, rows and columns implied on a gap-free D×D board, old rule vocabulary. A file is read as a draft when it has no `box_grid` rule and uses an old rule type (`kropki`, `xv`, `less`, `pairs`, `parity`, `lowhigh`, `antiknight`, `frame`, `set`, …, or `total` / `circle` / `rel` keys); a draft that relied on implied rows / columns reads the same through the shape inference | Same houses with rows and columns implied, then the rules as below. |
 | Metadata at the top level (`title`, `author`, `rules_text`, `source` as a string or as `{"site", "id", "author"}`) | Moved into `meta`. |
 | `candidates` as digit strings (`{"7": "13579"}`, `{"r1c1": "137"}`) | Integer lists. (Packs from before 2026-10-25 also carried odd / even shading as candidates; those read as candidates.) |
 | Old rule types | `kropki` / `xv` / `less` → `edge`; `pairs` with `cells` → `edge`, `relation` or `negative`; `pairs` with `where` / `except` → `neighbours` or `negative`; `nonconsecutive` / `antiknight` / `antiking` → `neighbours`; `parity` / `digit_class` / `exclude` → `digits` (or `corner`); `lowhigh` → `digits` high + `negative`; `arrow` `{circle, line}` → `arrow`; `little_killer` / `sandwich` / `xsum` / `skyscraper` / `distinct_count` / `first_seen` `{cells, total / count}` → the current type with `sum` / `value` and `side`; `frame` / `rossini` `{side, index}` → `sum` frame / `rossini` + `negative`; `sum` → `sum`; `set` consecutive → `line` renban; bare `between` → `line` between; `equal_sum` → `line` zipper / region_sum / double_arrow when it is one, else `equal_sum`; `quadruple` → `contains`; `contains` (source first) → `appears`; `counting_circles` → `count` circles; `increasing` → `line` thermo; `global_entropy`, `vudoku`, `isomorphic`, `clone`, `count`, `table` keep their names. |
@@ -889,11 +885,11 @@ against his solver, 2026-10-08 and 2026-10-25: his solutions matched ours):
 
 | pencilmark | ipuz |
 |---|---|
-| one `subgrid` with `box` | kind `http://ipuz.org/sudoku#1`, `boxes: true` |
-| one `subgrid` without boxes (Latin square) | `http://ipuz.org/sudoku/latinsquare#1`, `boxes: false` |
+| one `box_grid` covering the board | kind `http://ipuz.org/sudoku#1`, `boxes: true` |
+| no boxes, rows / columns only (Latin square) | `http://ipuz.org/sudoku/latinsquare#1`, `boxes: false` |
 | + both main diagonals | `http://ipuz.org/sudoku/diagonalsudoku#1`, `zones` |
 | + `region` window | `http://ipuz.org/sudoku/hypersudoku#1`, `zones` with `rect` |
-| `subgrid` without `box` + `box` rules | `http://ipuz.org/sudoku/jigsawsudoku#1`, `boxes: false`, one zone per box |
+| inferred rows / columns + `box` rules (jigsaw) | `http://ipuz.org/sudoku/jigsawsudoku#1`, `boxes: false`, one zone per box |
 | + `cage` | `http://ipuz.org/sudoku/killersudoku#1`, `cages` (`value`), `showoperators: false`, `cageborder: "dashed"` |
 
 `puzzle` and `solution` are row arrays (0 = empty); ipuz coordinates are `[col, row]`, 1-based. `meta` title /
@@ -908,62 +904,108 @@ exported with `to_export`. Writing those formats is not supported.
 
 ## 13. Generator spec: `sudoku-spec`
 
-A request to the generator: a puzzle file with blanks. It shares the rule vocabulary and has its own `format`, so no
-puzzle reader mistakes it for a puzzle.
+A request to the generator **is a puzzle file with blanks**: the same envelope and rule vocabulary, its own `format` (no
+puzzle reader mistakes it for a puzzle), plus four blocks that say what the result must satisfy and how long to try.
 
 ```json
 {"format": "sudoku-spec", "format_version": 1,
- "meta": {"title": "Hard killer"},
+ "meta": {"title": "Whisper showcase"},
  "grid": {"rows": 9, "cols": 9},
  "digits": 9,
+ "givens": {"count": [0, 6]},
  "rules": [
-  {"type": "subgrid", "size": 9, "box": [3, 3], "origin": "r1c1"},
-  {"type": "cage", "count": "partition"}],
- "target": {"band": "Hard", "requires": ["XWG"], "symmetry": "rot180"},
- "run": {"solver": "logic", "seed": 1, "time_limit": 120, "grade_seconds": 60}}
+  {"type": "box_grid", "origin": "r1c1", "box": [3, 3], "count": [3, 3]},
+  {"type": "line", "kind": "whisper", "value": 5, "cells": ["r1c1", "r2c2", "r3c2", "r4c3"]},
+  {"type": "line", "kind": "whisper", "value": 5, "cells": ["r9c1", "r8c2", "r7c2"]},
+  {"type": "line", "kind": "whisper", "value": 5, "cells": ["r5c4", "r5c5", "r5c6"]},
+  {"type": "cage", "count": "auto", "size": [2, 5]}],
+ "symmetry": [{"kind": "rot180", "of": "givens"}],
+ "where": {"band": "Hard", "difficulty": [6.5, 8], "contains": ["XWG"]},
+ "quality": {"preset": "standard"},
+ "limits": {"results": 3, "attempts": 2000, "time": 600, "seed": 42},
+ "fields": ["difficulty", "band", "contains", "issues"]}
 ```
 
-| Key | Meaning |
+**Fixed vs open.** A rule **with cells is locked**: copied into every result exactly as drawn (`"lock": false` = a
+starting point the generator may move or drop). A rule **with `count` and no cells** is a template the generator fills;
+`count` is a number, `[min, max]` (`max` may be `null`), `"auto"` (as many as needed), `"all"` (every true clue: for
+edge kinds this adds the matching `negative`), `"min"` (a minimal set) or `"tile"` (cages / boxes partitioning the
+area). Templates take shape limits where meaningful: `size` (cells per cage / box), `length` (cells per line), `value`
+(e.g. whisper difference), `displaced` (jigsaw: cells moved out of the regular boxes). Any template or locked rule may
+carry `"area"`: a `box_grid` `id`, a list of ids, or a cell list, limiting where it lives.
+
+**Givens.** `"givens"` is either the puzzle form (a flat list: digits are locked givens, `0` = must stay empty, `null`
+= no cell) or an object: `count` (number or range), `mask` (flat list, `1` = must be given, `0` = must be empty,
+`null` = generator decides), `values` (`{"r1c1": 5, …}` locked digits).
+
+**Symmetry** is a list; each entry has `kind` (`rot180`, `rot90`, `mirror` with `axis` `horizontal` | `vertical` |
+`diagonal` | `antidiagonal`) and `of`: `"givens"`, `"all"` (givens and every rule), or a rule selector such as
+`{"type": "line"}` / `{"type": "line", "kind": "whisper"}`. The same entries are a quality check and are reported by
+`describe()`.
+
+**`where`: targets on the card**, using the card's field paths (section 13.1): `band` (value or list), `difficulty`
+(`[lo, hi]` or `"max"` / `"min"`), `time` (`{"max": minutes}`), `contains` (codes that must appear; `{"codes": [...],
+"strict": true}` = as the code itself, not only as an alternative in a chip; `{"only": [...]}` to allow nothing else, and
+per-code `{"uses": n}`), `not_contains`, `issues` (`"none"` or a list of allowed codes), `elements` (`{"max": n}`: at most
+n placed rule elements in total).
+**Per-area targets**: `"areas": [{"area": "G12", "where": {"band": "Medium"}}]`, measured on the **joint** solve (the
+steps that place or eliminate in that area on the whole-board route), never on the area generated alone.
+
+**`quality`: explicit, named checks.** Nothing is filtered unless asked. `{"preset": "standard"}` expands to: no spike,
+no decorative element (every element needed), no unused rule, no `reject` issue. Overrides and additions go next to it
+(`{"preset": "standard", "spike": "off", "max_spike": 1.5}`) or stand alone (`{"checks": {"every_element_needed":
+true}}`). The checks are the same list the card reports as `issues`, so anything the grader flags can be filtered.
+
+**`limits`** bound every run: `results` (puzzles to return), `attempts`, `time` (seconds), `seed` (reproducible runs).
+The run stops at the first limit; `"max"` / `"min"` targets are best-so-far and the result reports achieved vs
+requested.
+
+**`fields`**: which card fields to return with each result (section 13.1).
+
+Generator coverage in 1.0 (`spec_to_gen` / `gen_support`): what `pencilmark.gen` supports today, everything else is
+refused with a clear message, never silently ignored:
+
+| Spec part | Supported today |
 |---|---|
-| `grid`, `digits` | As in a puzzle. The generator supports gap-free boards of size 4, 6, 8, 9, 10, 12, 16 with standard boxes. |
-| `rules` | Rules **with cells** are fixed and copied into every result; format_version 1 accepts only the board's `subgrid`. Rules **with `count` and no cells** are placeholders the generator fills. |
-| `target` | What the result must satisfy (below). |
-| `run` | How to run: `solver` (`"logic"`: every step solvable by human logic within the band cap, unique by construction; `"cpsat"`: uniqueness only), `seed`, `time_limit` (seconds), `grade_seconds`. Not part of the spec's fingerprint. |
-| `givens` | Reserved for a mask (`1` must be given, `0` must be empty, `null` no cell); refused in format_version 1. |
+| board | a gap-free D×D grid (D = 4, 6, 8, 9, 10, 12, 16) whose only locked rule is the standard `box_grid` |
+| templates | `cage`, `line` thermo / whisper / renban / between, `arrow`, `edge` kropki / xv, `digits` `parity` (odd / even cells); `count` `[n, null]` (at least n needed), `"auto"` (allowed, not required), `"all"` / `"min"` (kropki), `"tile"` (cages), an exact number only for cages with 0 givens; whisper `value` only at the generator's gap (5 on 9×9) |
+| givens | `{"count": n | [min, max]}` |
+| symmetry | one entry with `of: "givens"` |
+| where | `band` (one), `difficulty` `[lo, hi]`, `contains` (codes, optionally strict), `elements.max` |
+| limits | `time`, `seed`; `results` 1 |
+| ext | `{"io.github.silly-puppyy.pencilmark": {"solver": "logic" \| "cpsat", "grade_seconds": s}}`: generator knobs |
 
-Placeholders:
+Not yet: locked clue rules, masks / locked givens, `size` / `length` / `displaced` / `area`, upper count bounds,
+`"max"` / `"min"` difficulty, time / issues / not_contains / per-area targets, `quality`, several results, attempts. `spec_from_gen` / `spec_to_gen` convert to and from the
+generator's `Spec` dicts. Showcase specs (super samurai with a variant per row of grids and difficulty rising per column,
+one-X-Wing classic, killer + whispers with 2 givens, picture masks, hardest 0-clue 6×6 kropki, 9 variants on one 9×9,
+16×16 with 32 cages) are written in this language in `docs/examples/specs/`; those the generator cannot run yet say so.
 
-| Placeholder | Meaning |
+A run's result is an ordinary `sudoku-puzzle`; `meta.generated_from` may carry the spec's fingerprint.
+
+### 13.1 Card fields and the field mask
+
+`rate(puzzle, fields=[...])`, CLI `--fields a,b,c`. Only requested fields are computed. Default (no `fields`):
+`grader`, `format`, `format_version`, `difficulty`, `time`, `band`, `band_index`, `contains`, `issues`, `reject`.
+
+| Path | Content |
 |---|---|
-| `{"type": "cage", "count": N}` | At least N needed cages; with `target.givens` `[0, 0]`: exactly N cages and no givens |
-| `{"type": "cage", "count": "partition"}` | Killer tiled by cages, few givens |
-| `{"type": "line", "kind": "thermo" \| "whisper" \| "renban" \| "between", "count": N}` | At least N needed lines |
-| `{"type": "arrow", "count": N}` | At least N needed arrows |
-| `{"type": "edge", "kind": "kropki" \| "xv", "count": N}` | At least N needed clues |
-| `{"type": "edge", "kind": "kropki", "count": "all"}` | Zero-given full kropki: every true dot drawn; the result carries `{"type": "negative", "of": "kropki"}` |
-| `{"type": "edge", "kind": "kropki", "count": "min"}` | Zero-given minimal dot set |
-| `{"type": "digits", "kind": "parity", "count": N}` | At least N needed odd / even cells |
-| `"count": 0` | Allowed, not required |
+| `grader`, `format`, `format_version` | always present |
+| `difficulty`, `time`, `band`, `band_index` | headline numbers |
+| `time.p80` | 80th-percentile time (field `time_p80`) |
+| `contains` | techniques on the easy-to-hard route |
+| `issues` | `[{"code", "severity": "reject" \| "warning", "text", "rules"?}]` (spike, decoration, unused rule …; `rules` points at the offending rule indices) |
+| `reject` | `true` when any issue is a reject |
+| `se` / `se.diuf` | Sudoku Explainer-style ER / EP / ED |
+| `steps` | the step-by-step route (trace) |
+| `steps.explanation.short` / `steps.explanation.teach` | explanation text at two levels: each step gets `"explanation": {"short": …, "teach": …}` with the requested levels |
+| `describe` | the `describe()` output (name + keyed rules) |
+| `symmetry` | symmetries present (same entries as the spec's `symmetry`); 1.0 detects symmetries of the givens pattern (`of: "givens"`), not of rules |
 
-`target`: `band` (`"Very Easy"` … `"Extreme"`; the card's band must equal it), `difficulty` (`[lo, hi]`), `requires`
-(technique codes the card must contain) with `requires_strict` (as the code itself, not only as an alternative),
-`each_kind` (every placeholder kind keeps at least one needed element), `symmetry` (`rot180` | `rot90` | `mirror` |
-`mirror_v` | `diagonal` | `antidiagonal`), `givens` (`[min, max]`, `max` may be `null`), `max_elements`.
-
-`spec_from_gen(spec)` / `spec_to_gen(doc)` convert losslessly to and from the generator's `Spec` dicts:
-
-| `Spec` field | `sudoku-spec` |
-|---|---|
-| `size` | `grid`, `digits`, and the board's `subgrid` rule |
-| `elements` `{kind: N}` | one placeholder per kind (`cage`; `thermo` / `whisper` / `renban` / `between` → `line`; `arrow`; `kropki` / `xv` → `edge`; `parity` → `digits` parity) with `count` N (`null` → 0) |
-| `elements` `"full"` / `"min"` / `"partition"` | `count` `"all"` / `"min"` / `"partition"` |
-| `kinds` `[…]` | placeholders with `count` 1 and `target.each_kind: true` |
-| `target_band`, `target_difficulty`, `require`, `strict_require` | `target.band`, `.difficulty`, `.requires`, `.requires_strict` |
-| `symmetry`, `min_givens` / `max_givens`, `max_elements` | `target.symmetry`, `.givens`, `.max_elements` |
-| `solver`, `seed`, `time_limit`, `grade_seconds` | `run.*` |
-
-A run's result is an ordinary `sudoku-puzzle`; `meta.generated_from` may carry the spec's fingerprint (SHA-256 of the
-JCS form of `grid`, `digits`, `rules`, `target`).
+`issues[].rules` are indices into the puzzle's `rules` as `to_export` writes them, e.g.
+`{"code": "barely used", "severity": "reject", "text": "thermo lines (rules 3, 4, 5, 6): used in only 0 steps of the
+solve", "rules": [3, 4, 5, 6]}`. Codes: `spike`, `trivial`, `tedious`, `uniqueness`, `trial`, `decorative`, `redundant`,
+`barely used`.
 
 ## 14. describe(): variant name and rules
 
@@ -994,16 +1036,16 @@ come from a registry in code (`pencilmark/variants.py`), so they generalise acro
   9×9 is `"Sudoku"`, a plain 6×6 `"Mini Sudoku"`.
 - The houses of a variant (windoku windows, X diagonals) and its own negative rules belong to that variant and do not
   count as extra variants.
-- Boards with several subgrids use their layout name: "Samurai Sudoku", "Twodoku", "Butterfly Sudoku", … ("Multi-Grid
+- Boards with several `box_grid` areas use their layout name: "Samurai Sudoku", "Twodoku", "Butterfly Sudoku", … ("Multi-Grid
   Sudoku" for an unknown layout); with one variant it goes in front ("Killer Samurai Sudoku"), with more "Variant
   Samurai Sudoku".
-- A subgrid without boxes and nothing else is a "Latin Square".
+- A board with rows / columns but no boxes and nothing else is a "Latin Square".
 - The first key of `rules` is the base: "Sudoku" (with the size word: "Mini Sudoku", "16x16 Sudoku"), or the layout name.
 
 ### 14.2 Recognition
 
-- **Placement variants** are functions of ONE subgrid that return the rules the variant adds there, or nothing where
-  the variant is not defined for that size or box shape. For each subgrid of the puzzle, every placement variant is
+- **Placement variants** are functions of ONE grid area (a `box_grid`, or the whole board) that return the rules the variant adds there, or nothing where
+  the variant is not defined for that size or box shape. For each grid area of the puzzle, every placement variant is
   run; if all the rules it returns are present in the puzzle (compared as type, kind and cell set; region kinds are
   drawing hints and are ignored), the variant applies and those rules are explained.
 - **Rule families** (killer, thermo, kropki, …) are recognised by rule type and kind; a family's negative rules join
@@ -1013,9 +1055,9 @@ come from a registry in code (`pencilmark/variants.py`), so they generalise acro
 
 ### 14.3 Placement variants (geometric definitions)
 
-For porting: a subgrid has size n, boxes bh × bw, local rows and columns 0 … n−1.
+For porting: a grid area has size n, boxes bh × bw, local rows and columns 0 … n−1.
 
-| Name (aliases) | Defined for | Rules added to the subgrid |
+| Name (aliases) | Defined for | Rules added to the grid area |
 |---|---|---|
 | X (Diagonal) | any n | `region` diagonal on (i, i) and on (i, n−1−i), i = 0 … n−1 |
 | Windoku (Hyper, NRC) | boxes, n/bh ≥ 2 and n/bw ≥ 2 | a bh × bw `region` window at every (1 + i(bh+1), 1 + j(bw+1)), i < n/bh − 1, j < n/bw − 1, that fits inside the grid's inner border (9×9: 4 windows at r2c2, r2c6, r6c2, r6c6; 16×16: 9) |
@@ -1053,14 +1095,15 @@ build (groups and their order, relations, constraints, domains, givens, coordina
 
 | Rule | Engine |
 |---|---|
-| `subgrid` | `row` / `col` / `box` groups (rows, then columns, then boxes; an already present house is skipped) |
-| `box_grid` / `box` / `row` / `column` | `box` / `row` / `col` groups |
+| `box_grid` | `row` / `col` / `box` groups of its area (rows, then columns, then boxes; an already present house is skipped); with `"lines": false` boxes only |
+| inferred lines | `row` / `col` groups (rows top to bottom, then columns), placed before the first `box` rule |
+| `box` / `row` / `column` | `box` / `row` / `col` groups |
 | `region` | groups of kind `diag` (diagonal), `window` (window), `region` (the other kinds) |
 | `cage` | a `cage` group with its total |
 | `line` | `{"type": "line", "kind": …}` (whisper `value` → `k`; closed: the first cell repeated at the end); `double_arrow` → `equal_sum` `[[ends], middle]`; `lockout` → `diffge` on the ends plus a 3-cell table per middle cell |
 | `arrow` | one `arrow` constraint per shaft |
-| `edge` | relations `diff 1` / `ratio 2` (kropki), `sum 10` / `sum 5` (xv), `diff k`, `sum s`, `ratio k`, `allowed` (product), `lt` |
-| `corner` | battenburg: a 4-cell table; mathrax: a relation per diagonal pair (`sum`, `diff`, `allowed` for ×, `ratio`), even / odd: a `digits` clue; exclude: a `digits` exclude clue |
+| `edge` | relations `diff 1` / `ratio 2` (kropki), `sum 10` / `sum 5` (xv), `lt` (less); difference / sum / product / ratio: a 2-cell table of the allowed pairs (unification 8) |
+| `corner` | battenburg: a 4-cell table; mathrax: a 2-cell table per diagonal pair (TL–BR, then TR–BL), even / odd: a `digits` clue; exclude: a `digits` exclude clue |
 | `sum` | `little_killer` / `sum` constraints |
 | outside clues | `sandwich` / `xsum` / `skyscraper` / `first_seen` constraints; rossini: `lt` relations and, with its negative, 3-cell tables |
 | `neighbours` | `neq` / `nonconsec` / the operator's relations per pair |
@@ -1080,12 +1123,14 @@ were measured on real puzzles before adoption (see the CHANGELOG).
 6. f-puzzles disjoint groups (kind `extra`) → kind `region`; SudokuPad explicit-house boards (kinds `house` / `partial`)
    → `row` / `col` / `box` / `region` by shape.
 7. "Not consecutive" relations of a white-kropki negative (`notdiff 1`) → `nonconsec` (identical to the solver).
-8. 2-cell tables that are an edge clue (sudoku.today differences / sums / products / quotients) and the diagonal pairs of
-   mathrax corners → pair relations. A table equal to a clue's digit pairs is written as that clue; when two clues have
-   the same pairs (a 7:6 quotient and a ×42 product) the first in the order difference, sum, ratio, product is used.
-   This one shifts cards (products / quotients about +2.6 difficulty) and fits the players' times worse than the
-   tables did; pencilmark can switch it off (`exchange.UNIFY_TABLE_EDGES = False`), which keeps such tables as `table`
-   rules.
+8. Numbered pair clues (edge `difference` / `sum` / `product` / `ratio`) and `corner` `mathrax` clues expand to 2-cell
+   tables of the allowed digit pairs (in digit order; equal digits allowed only when the two cells share no house) for
+   every source: the sudoku.today translator's form, whose pricing fits players' times (as pair relations, products /
+   quotients came out about +2.6 difficulty and fitted worse). Pair relations of these kinds from other importers
+   (f-puzzles differences / ratios) become tables. A 2-cell table equal to a clue's digit pairs is written as that clue
+   (first match in the order difference, sum, ratio, product: a 7:6 quotient and a ×42 product have the same pairs);
+   kropki dots, XV and inequality signs stay pair relations. (`exchange.NUMBERED_PAIR_FORM = "relation"` switches to pair
+   relations.)
 9. `sum` constraints with distinct digits whose cells share no house → `cage` groups.
 10. A house listed twice (sudoku.today's extra-region translations listed every row, column and box twice) is one house.
 11. Negative and neighbour rules expand in board order (cell by cell); importers that listed the pairs in another order
@@ -1099,8 +1144,10 @@ Not unified: sudoku.today "parity lines" mean *same parity along the line*, a di
 
 Taken on 2026-10-25 on the open points of the research report and the draft:
 
-- Houses: `subgrid` is the way to state rows and columns; nothing is implied (no `implied_houses`). `box_grid` and
-  `box` state boxes no subgrid covers; a jigsaw is a `subgrid` without `box` plus `box` rules.
+- Houses (round 3, 2026-10-26): `box_grid` (`box` + `count`, consistent by construction) states a grid area's boxes,
+  rows and columns; rows / columns of other cells are inferred from the shape (straight runs of D cells); a jigsaw is
+  its grid plus `box` rules; explicit `row` / `column` only for bent / wrapping houses; `infer_lines: false` opt-out.
+  (`subgrid` from round 2 is gone.)
 - Outside clues are anchored by `side` and `cells[0]`; no virtual cells. Where the clue is drawn is the renderer's
   business.
 - Explicit pairs that are not edge clues use `relation`, with readable operator names (5.1).
@@ -1113,7 +1160,7 @@ Taken on 2026-10-25 on the open points of the research report and the draft:
 - Digit sets other than 1..D and display symbols are reserved.
 - No uniqueness flag. No language maps in text fields. `label` is optional.
 - Low / high clues require `split`.
-- Negatives: positions carrying any clue of the family are exempt; adjacency only within one subgrid.
+- Negatives: positions carrying any clue of the family are exempt; adjacency only within one `box_grid` area.
 - Number keys: `sum` for sums of digits, `value` otherwise.
 - The fingerprint is not symmetry-invariant in 1.0.
 - sudokuwiki windoku reads as the 4 windows.

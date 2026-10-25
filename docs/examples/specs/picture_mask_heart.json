@@ -1,0 +1,120 @@
+{
+ "format": "sudoku-spec",
+ "format_version": 1,
+ "meta": {
+  "title": "Givens in the shape of a heart",
+  "description": "Givens exactly on the heart cells, every other cell empty; Medium."
+ },
+ "grid": {
+  "rows": 9,
+  "cols": 9
+ },
+ "digits": 9,
+ "givens": {
+  "mask": [
+   0,
+   1,
+   1,
+   0,
+   0,
+   0,
+   1,
+   1,
+   0,
+   1,
+   1,
+   1,
+   1,
+   0,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   0,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   0,
+   0,
+   0,
+   1,
+   1,
+   1,
+   1,
+   1,
+   0,
+   0,
+   0,
+   0,
+   0,
+   1,
+   1,
+   1,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   1,
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ "rules": [
+  {
+   "type": "box_grid",
+   "origin": "r1c1",
+   "box": [
+    3,
+    3
+   ],
+   "count": [
+    3,
+    3
+   ]
+  }
+ ],
+ "where": {
+  "band": "Medium"
+ },
+ "limits": {
+  "results": 1,
+  "time": 1200,
+  "seed": 11
+ }
+}

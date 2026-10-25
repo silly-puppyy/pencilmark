@@ -196,7 +196,7 @@ def grade_card(puzzle, P, specific=True, check_rules=True, band=None):
     from . import publish_flags as PF
     wm = g["grade"]["work_time"] / 60 if g.get("grade") else None
     pnotes = PF.notes(puzzle, P, steps, tier, forced, req, wm, check_rules=check_rules)
-    flags = [("would not be chosen for publishing: " if sev == "reject" else "note: ") + txt for code, sev, txt in pnotes]
+    flags = [("would not be chosen for publishing: " if sev == "reject" else "note: ") + txt for code, sev, txt, *_ in pnotes]
     shape = "singles only" if nf == 0 else ("spike" if nf <= 2 else "sustained")   # balance: label resting on 1-2 forced steps
     from .scoring import time_grade
     tg = time_grade(steps, puzzle, P)
@@ -209,7 +209,7 @@ def grade_card(puzzle, P, specific=True, check_rules=True, band=None):
             "time_grade": tg, "techniques": dict(used.most_common()), "hardest_steps": hardest, "n_steps": len(real),
             "score": sc_, "effort_l1": round(effort_, 3) if effort_ is not None else None, "score_fit": MT.score_fit(MT.BANDS.index(tier), sc_) if (sc_ is not None and tier in MT.BANDS) else "",
             "flags": flags, "difficulty": round(lvl, 1), "tediousness_min": round(g["grade"]["work_time"] / 60, 1),
-            "think_min": round(g["grade"]["think_time"] / 60, 1), "chips": chips}
+            "think_min": round(g["grade"]["think_time"] / 60, 1), "chips": chips, "_notes_raw": pnotes}
 
 
 def card_text(card):

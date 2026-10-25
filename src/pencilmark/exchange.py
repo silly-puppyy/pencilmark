@@ -32,6 +32,11 @@ SCHEMA_URL = "https://silly-puppyy.github.io/pencilmark/schema/sudoku-puzzle-1.j
 # products / quotients cards +2.6 difficulty and a worse fit to players' times.
 # False keeps such tables as "table" rules (engine form unchanged).
 UNIFY_TABLE_EDGES = True
+# Engine form of NUMBERED pair clues (edge difference / sum / product / ratio, mathrax corners) -- one form for every source.
+# "table" (2026-10-25, user decision): 2-cell tables of the allowed digit pairs, the form whose pricing fits players' times
+# (sudoku.today products / quotients bias +1.22 / +1.60 log2 as pair relations vs +0.62 / +0.54 as tables); kropki, XV and
+# less stay pair relations (their calibrated path). "relation" = generic pair relations. Revisit when R7 fixes pair pricing.
+NUMBERED_PAIR_FORM = "table"
 
 
 class FormatError(ValueError):
@@ -230,20 +235,97 @@ def window(B, r0, c0, n):
     return out
 
 
-def box_grid_units(B, r0, c0, size, repeat):
-    bh, bw = size
+def box_grid_units(B, r0, c0, box, count, lines=True):
+    """houses of a box_grid: its area's rows (top to bottom), columns (left to right), then boxes (reading order of their
+    top-left cells); boxes only with lines=False. None if a cell of the area is missing."""
+    bh, bw = box
+    H, W = bh * count[0], bw * count[1]
+    grid = []
+    for r in range(r0, r0 + H):
+        for c in range(c0, c0 + W):
+            if (r, c) not in B.cid:
+                return None
+            grid.append(B.cid[(r, c)])
     out = []
-    for i in range(repeat[0]):
-        for j in range(repeat[1]):
-            cs = []
-            for a in range(bh):
-                for b in range(bw):
-                    rc = (r0 + i * bh + a, c0 + j * bw + b)
-                    if rc not in B.cid:
-                        return None
-                    cs.append(B.cid[rc])
-            out.append(("box", tuple(cs)))
+    if lines:
+        out += [("row", tuple(grid[i * W:(i + 1) * W])) for i in range(H)]
+        out += [("col", tuple(grid[j::W])) for j in range(W)]
+    out += [("box", tuple(grid[(br + a) * W + bc + b_] for a in range(bh) for b_ in range(bw)))
+            for br in range(0, H, bh) for bc in range(0, W, bw)]
     return out
+
+
+def box_grid_area(B, r0, c0, box, count):
+    return {B.cid[(r, c)] for r in range(r0, r0 + box[0] * count[0]) for c in range(c0, c0 + box[1] * count[1])}
+
+
+def infer_lines(B, cov_r, cov_c):
+    """rows / columns inferred from the board's shape: every maximal straight run of exactly D existing cells, leaving out
+    cells whose rows (cov_r) / columns (cov_c) are already stated -> [("row", cells), ...] + [("col", cells), ...]"""
+    D = B.D
+    out = []
+    for kind, cov, outer, inner in (("row", cov_r, B.R, B.C), ("col", cov_c, B.C, B.R)):
+        for x in range(outer):
+            run = []
+            for y in range(inner + 1):
+                rc = (x, y) if kind == "row" else (y, x)
+                i = B.cid.get(rc) if y < inner else None
+                if i is not None and i not in cov:
+                    run.append(i)
+                    continue
+                if len(run) == D:
+                    out.append((kind, tuple(run)))
+                run = []
+    return out
+
+
+def read_houses(rules, B, infer=True):
+    """the house groups a rule list states, in engine order -> (houses [(kind, cells, extra)], areas [cell sets])
+    (FORMAT.md 6.1): box_grid / box / row / column rules in file order, a house equal to an earlier one skipped; inferred
+    rows / columns inserted before the groups of the first rule other than a box_grid with lines or an explicit row /
+    column (a box, a box_grid with lines false, a region or a cage), else at the end."""
+    out, seen, areas = [], set(), []
+    cov_r, cov_c = set(), set()
+    at = None
+    def add(kind, cells, **kw):
+        fs = frozenset(cells)
+        if kind in ("row", "col", "box"):
+            if fs in seen:
+                return
+            seen.add(fs)
+        out.append((kind, tuple(cells), kw))
+    for r in rules:
+        t = r["type"]
+        if t == "box_grid":
+            r0, c0 = parse_cell(r["origin"])
+            lines = r.get("lines", True)
+            if not lines and at is None:
+                at = len(out)
+            areas.append(box_grid_area(B, r0, c0, r["box"], r["count"]))
+            if lines:
+                cov_r |= areas[-1]
+                cov_c |= areas[-1]
+            for kind, cells in box_grid_units(B, r0, c0, r["box"], r["count"], lines):
+                add(kind, cells)
+        elif t in ("row", "column"):
+            cells = [B.idx(c) for c in r["cells"]]
+            (cov_r if t == "row" else cov_c).update(cells)
+            add({"column": "col"}.get(t, t), cells)
+        elif t in ("box", "region", "cage"):
+            if at is None:
+                at = len(out)
+            cells = [B.idx(c) for c in r["cells"]]
+            if t == "box":
+                add("box", cells)
+            elif t == "region":
+                add({"diagonal": "diag", "window": "window"}.get(r["kind"], "region"), cells)
+            else:
+                add("cage", cells, **({"sum": r["sum"]} if "sum" in r else {}))
+    if infer:
+        lines = [(k, c, {}) for k, c in infer_lines(B, cov_r, cov_c) if frozenset(c) not in seen]
+        at = len(out) if at is None else at
+        out = out[:at] + lines + out[at:]
+    return out, areas
 
 
 # battenburg tables (sudoku.today's engine form, kept: TL != TR, TL != BL, TR != BR, BL != BR included)
@@ -329,6 +411,12 @@ def edge_relation(rule, D):
     raise FormatError(f"unknown edge kind {k!r}")
 
 
+_MATHRAX_OK = {"+": lambda v: (lambda x, y: x + y == v), "-": lambda v: (lambda x, y: abs(x - y) == v),
+               "/": lambda v: (lambda x, y: max(x, y) == v * min(x, y)), "x": lambda v: (lambda x, y: x * y == v)}
+_NUMBERED_OK = {"difference": lambda r: _MATHRAX_OK["-"](r["value"]), "sum": lambda r: _MATHRAX_OK["+"](r["sum"]),
+                "ratio": lambda r: _MATHRAX_OK["/"](r["value"]), "product": lambda r: _MATHRAX_OK["x"](r["value"])}
+
+
 def edge_family(kind, args, D):
     """(family, value) a pair relation is written as when it is an edge clue, or None"""
     if kind == "diff" and args == (1,):
@@ -396,8 +484,7 @@ NEG_SELECTOR = {"kropki": "color", "xv": "letter", "difference": "value", "sum":
 # -------------------------------------------------------------------------------------------------------- validation
 COMMON = {"type", "id", "label", "style"}
 RULE_KEYS = {
-    "subgrid": ({"size"}, {"box", "origin", "cells"}),
-    "box_grid": ({"size", "repeat", "origin"}, set()),
+    "box_grid": ({"origin", "box", "count"}, {"lines"}),
     "box": ({"cells"}, set()), "row": ({"cells"}, set()), "column": ({"cells"}, set()),
     "region": ({"kind", "cells"}, set()),
     "cage": ({"cells"}, {"sum"}),
@@ -467,8 +554,10 @@ def validate(doc):
         if k not in doc:
             raise FormatError(f"{k!r} missing")
     g = doc["grid"]
-    if not isinstance(g, dict) or set(g) != {"rows", "cols"}:
-        raise FormatError('"grid" must be exactly {"rows": R, "cols": C}')
+    if not isinstance(g, dict) or not {"rows", "cols"} <= set(g) or set(g) - {"rows", "cols", "infer_lines"}:
+        raise FormatError('"grid" must be {"rows": R, "cols": C} (optional "infer_lines": false)')
+    if "infer_lines" in g and not isinstance(g["infer_lines"], bool):
+        raise FormatError("grid.infer_lines must be true / false")
     R, C = _int(g["rows"], "grid.rows", 1), _int(g["cols"], "grid.cols", 1)
     D = _int(doc["digits"], "digits", 1)
     giv = doc["givens"]
@@ -534,32 +623,17 @@ def _validate_rule(r, B):
     kind = r.get("kind")
     if t in KINDS and (kind is not None or t not in ("neighbours", "count")) and kind not in KINDS[t]:
         raise FormatError(f"unknown kind {kind!r}")
-    if t == "subgrid":
-        n = _int(r["size"], "size", 1)
-        if n != D:
-            raise FormatError(f"subgrid size {n} must equal digits {D}")
-        if ("origin" in r) == ("cells" in r):
-            raise FormatError("subgrid needs exactly one of origin / cells")
-        if "box" in r:
-            bx = r["box"]
-            if not (isinstance(bx, list) and len(bx) == 2 and all(isinstance(x, int) and x >= 1 for x in bx)
-                    and n % bx[0] == 0 and n % bx[1] == 0 and bx[0] * bx[1] == n):
-                raise FormatError("box must be [height, width] with height * width = size")
-        if "origin" in r:
-            r0, c0 = parse_cell(r["origin"])
-            if window(B, r0, c0, n) is None:
-                raise FormatError(f"subgrid window at {r['origin']} has a missing cell")
-        else:
-            cs = _cells(B, r["cells"], n=n * n)
-            if len(set(cs)) != n * n:
-                raise FormatError("subgrid cells repeat")
-    elif t == "box_grid":
-        size, rep = r["size"], r["repeat"]
-        if not (isinstance(size, list) and len(size) == 2 and isinstance(rep, list) and len(rep) == 2
-                and all(isinstance(x, int) and x >= 1 for x in size + rep)):
-            raise FormatError("size and repeat must be [rows, cols] of positive integers")
+    if t == "box_grid":
+        bx, cnt = r["box"], r["count"]
+        if not (isinstance(bx, list) and len(bx) == 2 and isinstance(cnt, list) and len(cnt) == 2
+                and all(isinstance(x, int) and not isinstance(x, bool) and x >= 1 for x in bx + cnt)):
+            raise FormatError("box and count must be [rows, cols] of positive integers")
+        if "lines" in r and not isinstance(r["lines"], bool):
+            raise FormatError("lines must be true / false")
+        if r.get("lines", True) and not (bx[0] * cnt[0] == bx[1] * cnt[1] == D):
+            raise FormatError(f"a box_grid with lines needs box height x count down = box width x count across = digits ({D})")
         r0, c0 = parse_cell(r["origin"])
-        if box_grid_units(B, r0, c0, size, rep) is None:
+        if box_grid_units(B, r0, c0, bx, cnt, False) is None:
             raise FormatError("box_grid covers a missing cell")
     elif t in ("box", "row", "column", "region", "contains", "appears", "digits", "count", "vudoku"):
         cs = _cells(B, r["cells"])
@@ -757,42 +831,12 @@ def to_internal(doc):
     if doc.get("solution"):
         out["solution"] = "".join("#" if v is None else sym(v) for v in doc["solution"])
     rules = doc["rules"]
-    # houses (in file order; a house equal to an earlier one is the same house)
-    regions, seen, subgrids, boxes = [], set(), [], []
-    def add(kind, cells, **kw):
-        fs = frozenset(cells)
-        if kind in ("row", "col", "box"):
-            if fs in seen:
-                return
-            seen.add(fs)
-        if kind == "box":
-            boxes.append(set(cells))
-        regions.append(dict({"kind": kind, "cells": [B.name(c) for c in cells]}, **kw))
-    for r in rules:
-        t = r["type"]
-        if t == "subgrid":
-            n = r["size"]
-            if "origin" in r:
-                r0, c0 = parse_cell(r["origin"])
-                grid = window(B, r0, c0, n)
-            else:
-                grid = [B.idx(c) for c in r["cells"]]
-            subgrids.append(set(grid))
-            for kind, cells in subgrid_units(grid, n, r.get("box")):
-                add(kind, cells)
-        elif t == "box_grid":
-            r0, c0 = parse_cell(r["origin"])
-            for kind, cells in box_grid_units(B, r0, c0, r["size"], r["repeat"]):
-                add(kind, cells)
-        elif t in ("box", "row", "column"):
-            add({"column": "col"}.get(t, t), [B.idx(c) for c in r["cells"]])
-        elif t == "region":
-            add({"diagonal": "diag", "window": "window"}.get(r["kind"], "region"), [B.idx(c) for c in r["cells"]])
-        elif t == "cage":
-            kw = {"sum": r["sum"]} if "sum" in r else {}
-            add("cage", [B.idx(c) for c in r["cells"]], **kw)
+    # houses (FORMAT.md 6.1; a house equal to an earlier one is the same house; inferred rows / columns)
+    houses, areas = read_houses(rules, B, doc["grid"].get("infer_lines", True))
+    regions = [dict({"kind": k, "cells": [B.name(c) for c in cells]}, **kw) for k, cells, kw in houses]
+    boxes = [set(cells) for k, cells, kw in houses if k == "box"]
     out["regions"] = regions
-    ctx = _ReadCtx(B, rules, subgrids, boxes, regions)
+    ctx = _ReadCtx(B, rules, areas, boxes, regions)
     internal = []
     done = set()
     for i, r in enumerate(rules):
@@ -815,6 +859,7 @@ def read(doc):
 
 class _ReadCtx:
     def __init__(self, B, rules, subgrids, boxes, regions):
+        """subgrids: the box_grid areas (negative adjacency and battenburg windows stay inside one area)"""
         self.B, self.rules, self.D = B, rules, B.D
         self.subgrids = subgrids
         self.boxes = boxes
@@ -829,6 +874,19 @@ class _ReadCtx:
                 a, b = (B.idx(c) for c in r["cells"])
                 fam.setdefault(r["kind"], set()).add(frozenset((a, b)))
         self.family = fam
+        self.houses = [set(B.idx(c) for c in g["cells"]) for g in regions
+                       if g["kind"] in ("row", "col", "box", "diag", "window", "region")]
+
+    def share_house(self, a, b):
+        return any(a in h and b in h for h in self.houses)
+
+    def pair_table(self, a, b, ok):
+        """numbered pair clue as a 2-cell table (sudoku.today translator form: product order, equal digits only when the cells
+        share no house)"""
+        same = self.share_house(a, b)
+        D = self.D
+        allowed = [[u, v] for u in range(1, D + 1) for v in range(1, D + 1) if (u != v or not same) and ok(u, v)]
+        return {"type": "table", "cells": [self.B.name(a), self.B.name(b)], "allowed": allowed}
 
     def n(self, cells):
         return [self.B.name(c) for c in cells]
@@ -850,7 +908,7 @@ class _ReadCtx:
     def rule(self, i, r, done):
         B, D, t = self.B, self.D, r["type"]
         idx = lambda xs: [B.idx(c) for c in xs]
-        if t in ("subgrid", "box_grid", "box", "row", "column", "region", "cage"):
+        if t in ("box_grid", "box", "row", "column", "region", "cage"):
             return []
         if t == "line":
             k = r["kind"]
@@ -886,6 +944,8 @@ class _ReadCtx:
                 return [{"type": "xv", "letter": r["letter"], "cells": list(r["cells"])}]
             if k == "less":
                 return [{"type": "less", "cells": list(r["cells"])}]
+            if NUMBERED_PAIR_FORM == "table":
+                return [self.pair_table(a, b, _NUMBERED_OK[k](r))]
             rel = edge_relation(r, D)
             return [self.pairs_rule(rel[0], tuple(rel[1:]), [(a, b)])]
         if t == "corner":
@@ -898,6 +958,9 @@ class _ReadCtx:
                 if op in ("even", "odd"):
                     return [{"type": "parity", "parity": op, "cells": list(r["cells"])}]
                 v = r["value"]
+                if NUMBERED_PAIR_FORM == "table":
+                    ok = _MATHRAX_OK[op](v)
+                    return [self.pair_table(tl, br, ok), self.pair_table(tr, bl, ok)]
                 rel = {"+": ("sum", v), "-": ("diff", v), "/": ("ratio", v),
                        "x": ("allowed", product_pairs(D, v))}[op]
                 return [self.pairs_rule(rel[0], tuple(rel[1:]), [(tl, br)]), self.pairs_rule(rel[0], tuple(rel[1:]), [(tr, bl)])]
@@ -1079,10 +1142,13 @@ def _engine_params_json(kind, args):
 
 
 # ----------------------------------------------------------------------------------------------------------- writing
-def write(p, meta=None, solution=None):
+def write(p, meta=None, solution=None, provenance=False):
     """engine Puzzle -> sudoku-puzzle dict (format_version 1). Raises NotSupportedError for engine structures the format
-    cannot express."""
-    return _Writer(p).run(meta, solution)
+    cannot express. provenance=True returns (doc, prov): prov[i] = the engine objects rule i was written from
+    ({"groups", "relations", "constraints", "clues"}: indices into p.groups / p.relations / p.constraints / p.cell_clues)."""
+    w = _Writer(p)
+    doc = w.run(meta, solution)
+    return (doc, w.prov) if provenance else doc
 
 
 class _Writer:
@@ -1102,6 +1168,7 @@ class _Writer:
         box; SudokuPad explicit houses -> row / column / box / region)."""
         p, B, D = self.p, self.B, self.D
         gs = [g for g in p.groups if not (self.key and set(g.cells) & self.key)]
+        self.gidx = [k for k, g in enumerate(p.groups) if not (self.key and set(g.cells) & self.key)]
         out = []
         boxes = [g for g in gs if g.kind == "box"]
         cand = [g for g in gs if g.kind in ("region", "jigsaw") and g.complete and g.total is None and len(g.cells) == D
@@ -1137,12 +1204,16 @@ class _Writer:
         return None
 
     def write_groups(self):
+        """engine groups -> house / region / cage rules (FORMAT.md 6.1), reproducing the engine's group order: box_grid
+        for every regular grid whose rows, columns and boxes appear in box_grid order; rows / columns left to the shape
+        inference when the reader would infer exactly them at exactly their place, else explicit row / column rules (and
+        grid.infer_lines false when the reader would infer lines the engine does not have); box_grid "lines": false or
+        box rules for the remaining boxes."""
         B, D = self.B, self.D
         gs = self.eff_groups()
-        rules, seen, i = [], set(), 0
-        self.subgrids, self.box_sets = [], []
+        items, seen, i = [], set(), 0
+        self.merged_duplicates = 0
         def match(units, i):
-            U = [u for u in units if frozenset(u[1]) not in seen or u[0] not in ("row", "col", "box")]
             seen_local = set(seen)
             V = []
             for u in units:
@@ -1151,78 +1222,96 @@ class _Writer:
                     continue
                 seen_local.add(fs)
                 V.append(u)
-            if i + len(V) > len(gs):
+            if not V or i + len(V) > len(gs):
                 return None
             for (k, cells), g in zip(V, gs[i:i + len(V)]):
                 if g[0] != k or g[1] != cells or g[2] is not None or not g[3]:
                     return None
             return V
-        self.merged_duplicates = 0
         while i < len(gs):
             kind, cells, total, complete = gs[i]
             if kind in ("row", "col", "box") and frozenset(cells) in seen:
                 self.merged_duplicates += 1            # unification: a house listed twice is one house
                 i += 1
                 continue
-            done = False
+            hit = None
             if kind in ("row", "col") and len(cells) == D and total is None:
-                cand = []
                 co = [B.coords[c] for c in cells]
                 st = self.straight(cells)
-                # every window this row / column belongs to (on overlapping boards a grid's first new unit can be any of
-                # its rows, or a column when all its rows were already listed)
+                # every D x D area this row / column belongs to (on overlapping boards a grid's first new unit can be any
+                # of its rows, or a column when all its rows were already listed)
                 origins = [(co[0][0] - k, co[0][1]) for k in range(D)] if st == "row" and kind == "row" else \
                           [(co[0][0], co[0][1] - k) for k in range(D)] if st == "col" and kind == "col" else []
                 for r0, c0 in origins:
-                    grid = window(B, r0, c0, D)
-                    if grid:
-                        cand.append(({"origin": cell_name(r0, c0)}, grid))
-                rows = gs[i:i + D]
-                if kind == "row" and len(rows) == D and all(g[0] == "row" and len(g[1]) == D for g in rows):
-                    grid = [c for g in rows for c in g[1]]
-                    if len(set(grid)) == D * D:
-                        cand.append(({"cells": [B.name(c) for c in grid]}, grid))
-                for where, grid in cand:
-                    for box in _factor_shapes(D) + [None]:
-                        V = match(subgrid_units(grid, D, box), i)
+                    for box in _factor_shapes(D):
+                        cnt = (D // box[0], D // box[1])
+                        units = box_grid_units(B, r0, c0, box, cnt, True)
+                        V = match(units, i) if units else None
                         if V:
-                            rule = {"type": "subgrid", "size": D}
-                            if box:
-                                rule["box"] = list(box)
-                            rule.update(where)
-                            rules.append(rule)
-                            for u in V:
-                                seen.add(frozenset(u[1]))
-                                if u[0] == "box":
-                                    self.box_sets.append(set(u[1]))
-                            self.subgrids.append(set(grid))
-                            i += len(V)
-                            done = True
+                            hit = ({"type": "box_grid", "origin": cell_name(r0, c0), "box": list(box), "count": list(cnt)}, V,
+                                   box_grid_area(B, r0, c0, box, cnt))
                             break
-                    if done:
+                    if hit:
                         break
-            if done:
+            if hit:
+                rule, V, area = hit
+                items.append({"t": "grid", "rule": rule, "area": area, "V": V, "gi": list(range(i, i + len(V)))})
+                for u in V:
+                    seen.add(frozenset(u[1]))
+                i += len(V)
                 continue
             if kind == "box" and total is None and complete:
                 bg = self.box_grid_at(gs, i, seen)
                 if bg:
-                    rule, V = bg
-                    rules.append(rule)
+                    rule, V, area = bg
+                    items.append({"t": "boxes", "rule": rule, "area": area, "V": V, "gi": list(range(i, i + len(V)))})
                     for u in V:
                         seen.add(frozenset(u[1]))
-                        self.box_sets.append(set(u[1]))
                     i += len(V)
                     continue
-            r = self.group_rule(kind, cells, total)
             if kind in ("row", "col", "box"):
                 seen.add(frozenset(cells))
+            items.append({"t": "line" if kind in ("row", "col") else "group", "g": gs[i], "gi": [i]})
+            i += 1
+        # rows / columns: inferred from the shape when that reproduces them, else explicit
+        cov = set().union(*[it["area"] for it in items if it["t"] == "grid"]) if any(it["t"] == "grid" for it in items) else set()
+        L = infer_lines(B, cov, cov)
+        li = [k for k, it in enumerate(items) if it["t"] == "line"]
+        infer_ok = False
+        if li:
+            seq = [(items[k]["g"][0], items[k]["g"][1]) for k in li]
+            after = items[li[-1] + 1:]
+            infer_ok = (li == list(range(li[0], li[0] + len(li))) and seq == L
+                        and all(it["t"] == "grid" for it in items[:li[0]]) and (not after or after[0]["t"] != "grid"))
+        self.infer_lines = True
+        if not li:
+            self.infer_lines = not L
+        elif not infer_ok:
+            er = {c for k in li if items[k]["g"][0] == "row" for c in items[k]["g"][1]}
+            ec = {c for k in li if items[k]["g"][0] == "col" for c in items[k]["g"][1]}
+            if infer_lines(B, cov | er, cov | ec):
+                self.infer_lines = False
+        rules = []
+        self.group_prov = []
+        self.subgrids = [it["area"] for it in items if it["t"] in ("grid", "boxes")]      # box_grid areas
+        self.box_sets = []
+        gp = lambda it: {"groups": {self.gidx[k] for k in it["gi"]}}
+        for it in items:
+            if it["t"] in ("grid", "boxes"):
+                rules.append(it["rule"]); self.group_prov.append(gp(it))
+                self.box_sets += [set(u[1]) for u in it["V"] if u[0] == "box"]
+            elif it["t"] == "line":
+                if not infer_ok:
+                    rules.append(self.group_rule(it["g"][0], it["g"][1], None)); self.group_prov.append(gp(it))
+            else:
+                kind, cells, total, _ = it["g"]
                 if kind == "box":
                     self.box_sets.append(set(cells))
-            rules.append(r)
-            i += 1
+                rules.append(self.group_rule(kind, cells, total)); self.group_prov.append(gp(it))
         return rules
 
     def box_grid_at(self, gs, i, seen):
+        """a run of regular boxes at gs[i:] -> (box_grid rule with lines false, units, area) or None"""
         B = self.B
         kind, cells, total, complete = gs[i]
         co = [B.coords[c] for c in cells]
@@ -1236,15 +1325,16 @@ class _Writer:
             for n in range(1, B.C // bw + 1):
                 if m * n < 2:
                     continue
-                units = box_grid_units(B, r0, c0, (bh, bw), (m, n))
+                units = box_grid_units(B, r0, c0, (bh, bw), (m, n), False)
                 if units is None or i + len(units) > len(gs):
                     continue
                 if any(frozenset(u[1]) in seen for u in units):
                     continue
                 if all(g[0] == "box" and g[1] == u[1] and g[2] is None and g[3] for u, g in zip(units, gs[i:i + len(units)])):
                     if best is None or m * n > best[0]:
-                        best = (m * n, {"type": "box_grid", "size": [bh, bw], "repeat": [m, n], "origin": cell_name(r0, c0)}, units)
-        return (best[1], best[2]) if best else None
+                        best = (m * n, {"type": "box_grid", "origin": cell_name(r0, c0), "box": [bh, bw], "count": [m, n],
+                                        "lines": False}, units, box_grid_area(B, r0, c0, (bh, bw), (m, n)))
+        return best[1:] if best else None
 
     def group_rule(self, kind, cells, total):
         B = self.B
@@ -1291,12 +1381,19 @@ class _Writer:
                 sol[flat[i]] = int(v)
             d["solution"] = sol
         rules = self.write_groups()
+        if not self.infer_lines:
+            d["grid"]["infer_lines"] = False
+        prov = list(self.group_prov)
         cands, clue_rules = self.cell_clues()
-        rules += clue_rules
-        rules += self.write_rules()
+        rules += [r for r, _ in clue_rules]
+        prov += [pr for _, pr in clue_rules]
+        rest = self.write_rules()
+        rules += [r for r, _ in rest]
+        prov += [pr for _, pr in rest]
         if cands:
             d["candidates"] = cands
         d["rules"] = rules
+        self.prov = prov
         return d
 
     def cell_clues(self):
@@ -1304,10 +1401,10 @@ class _Writer:
         n = len(B.coords)
         implied = [(1 << D) - 1] * len(p.domains)
         out = []
-        for r_, masks in getattr(p, "cell_clues", []):
+        for k, (r_, masks) in enumerate(getattr(p, "cell_clues", [])):
             for c_, m_ in masks.items():
                 implied[c_] &= m_
-            out += self.clue_rule(r_)
+            out += [(x, {"clues": {k}}) for x in self.clue_rule(r_)]
         cands = {}
         for i, m in enumerate(p.domains[:n]):
             if m != implied[i]:
@@ -1375,7 +1472,8 @@ class _Writer:
                     raise NotSupportedError(f"named rule {rule.get('type')} relations not found")
                 for s in range(pos, pos + len(nrels)):
                     used[s] = True
-            named_items.append({"rule": rule, "rel": pos, "con": None, "nrel": len(nrels)})
+            named_items.append({"rule": rule, "rel": pos, "con": None, "nrel": len(nrels),
+                                "prov": {"relations": set(range(pos, pos + len(nrels))) if nrels else set()}})
         nk = 0
         named_cons = [k for k, c in enumerate(cons) if c.get("_named") and not drop_con[k]]
         # assign named constraints to named rules in order (each named rule's constraints are contiguous)
@@ -1386,6 +1484,7 @@ class _Writer:
                 if cursor + n_c > len(named_cons):
                     raise NotSupportedError(f"named rule {it['rule'].get('type')} constraints not found")
                 it["con"] = named_cons[cursor]
+                it["prov"]["constraints"] = set(named_cons[cursor:cursor + n_c])
                 cursor += n_c
         self.family = self.family_positions(rels, [u or d for u, d in zip(used, drop_rel)], cons, drop_con)
         rel_items = self.relation_items(rels, [u or d for u, d in zip(used, drop_rel)])
@@ -1395,7 +1494,7 @@ class _Writer:
                     key=lambda z: z[0])
         sc = sorted([(x["pos"], "c", x) for x in con_items] + [(it["con"], "n", it) for it in named_items if it["con"] is not None],
                     key=lambda z: z[0])
-        out = [r for it in named_items if it["rel"] is None and it["con"] is None for r in self.named_rule(it["rule"])]
+        out = [(r, it["prov"]) for it in named_items if it["rel"] is None and it["con"] is None for r in self.named_rule(it["rule"])]
         emitted = set()
         i = j = 0
         def emit(kind, x):
@@ -1403,9 +1502,10 @@ class _Writer:
                 if id(x) in emitted:
                     return
                 emitted.add(id(x))
-                out.extend(self.named_rule(x["rule"]))
+                out.extend((r, x["prov"]) for r in self.named_rule(x["rule"]))
             else:
-                out.extend(x["rules"])
+                pr = {"relations": set(x.get("rel") or ()), "constraints": set(x.get("con") or ())}
+                out.extend((r, pr) for r in x["rules"])
         while i < len(sr) or j < len(sc):
             while i < len(sr) and (sr[i][1] == "r" or id(sr[i][2]) in emitted):
                 emit(sr[i][1], sr[i][2]); i += 1
@@ -1492,9 +1592,8 @@ class _Writer:
         if m is None:
             return None
         op, v = m
-        if op == "x":
-            return ("product", v)
-        return edge_family({"+": "sum", "-": "diff", "/": "ratio"}[op], (v,), self.D)
+        # a table is a NUMBERED clue (sudoku.today form): never re-read as a kropki dot / XV letter (2026-10-25)
+        return ({"x": "product", "+": "sum", "-": "difference", "/": "ratio"}[op], v)
 
     def relation_items(self, rels, skip):
         """runs of engine relations -> v1 rule items {"pos", "rules"} keeping the relation order"""
@@ -1526,21 +1625,22 @@ class _Writer:
                 hit = self.whole_rule(kind, args, prs, pos)
                 if hit:
                     rule, n = hit
-                    items.append({"pos": run[pos], "rules": [rule]})
+                    items.append({"pos": run[pos], "rules": [rule], "rel": run[pos:pos + n]})
                     pos += n
                     continue
                 a, b = prs[pos]
                 f = edge_family(kind, args, D) if B.adjacent(a, b) else None
                 if f:
-                    items.append({"pos": run[pos], "rules": [edge_rule(f[0], f[1], a, b, B)]})
+                    items.append({"pos": run[pos], "rules": [edge_rule(f[0], f[1], a, b, B)], "rel": [run[pos]]})
                 else:
                     op = REL_OP[kind]
                     params = _engine_params_to_op(kind, args)
                     last = items[-1]["rules"][-1] if items else None
                     if last and last.get("type") == "relation" and last["op"] == op and last["params"] == params:
                         last["pairs"].append([B.name(a), B.name(b)])
+                        items[-1]["rel"].append(run[pos])
                     else:
-                        items.append({"pos": run[pos],
+                        items.append({"pos": run[pos], "rel": [run[pos]],
                                       "rules": [{"type": "relation", "op": op, "params": params, "pairs": [[B.name(a), B.name(b)]]}]})
                 pos += 1
         return items
@@ -1628,7 +1728,7 @@ class _Writer:
                 blk = self.table_block(cons, live, i)
                 if blk:
                     rules, n = blk
-                    items.append({"pos": live[i], "rules": rules})
+                    items.append({"pos": live[i], "rules": rules, "con": live[i:i + n]})
                     i += n
                     continue
             if t == "arrow":
@@ -1637,10 +1737,11 @@ class _Writer:
                 while j < len(live) and cons[live[j]].get("type") == "arrow" and cons[live[j]]["circle"] == c["circle"]:
                     lines.append([B.name(x) for x in cons[live[j]]["line"]])
                     j += 1
-                items.append({"pos": live[i], "rules": [{"type": "arrow", "bulb": [B.name(x) for x in c["circle"]], "lines": lines}]})
+                items.append({"pos": live[i], "rules": [{"type": "arrow", "bulb": [B.name(x) for x in c["circle"]], "lines": lines}],
+                              "con": live[i:j]})
                 i = j
                 continue
-            items.append({"pos": live[i], "rules": self.constraint_rule(c)})
+            items.append({"pos": live[i], "rules": self.constraint_rule(c), "con": [live[i]]})
             i += 1
         return items
 
@@ -1944,29 +2045,18 @@ def _norm_rule(r, D):
 
 
 def semantic_subset(doc):
-    """the fingerprinted content: grid, digits, givens, candidates and rules, with houses expanded to their cell sets (so
-    a subgrid, a box_grid or single box / row / column rules give the same result) and set-like cell lists sorted"""
-    keep = {k: doc[k] for k in ("format", "format_version", "grid", "digits", "givens", "candidates") if k in doc}
+    """the fingerprinted content: grid, digits, givens, candidates and rules, with the houses replaced by the houses they
+    state (box_grid, box / row / column rules and the inferred rows / columns), so every spelling of the same houses gives
+    the same result, and set-like cell lists sorted"""
+    keep = {k: doc[k] for k in ("format", "format_version", "digits", "givens", "candidates") if k in doc}
+    keep["grid"] = {"rows": doc["grid"]["rows"], "cols": doc["grid"]["cols"]}
     D = doc.get("digits")
-    B = None
-    rules, houses = [], set()
-    for r in doc.get("rules", []):
-        t = r["type"]
-        if t in ("subgrid", "box_grid", "box", "row", "column"):
-            if B is None:
-                B = Board([divmod(k, doc["grid"]["cols"]) for k, v in enumerate(doc["givens"]) if v is not None], D)
-            if t == "subgrid":
-                grid = window(B, *parse_cell(r["origin"]), r["size"]) if "origin" in r else [B.idx(c) for c in r["cells"]]
-                units = subgrid_units(grid, r["size"], r.get("box"))
-            elif t == "box_grid":
-                units = box_grid_units(B, *parse_cell(r["origin"]), r["size"], r["repeat"])
-            else:
-                units = [({"column": "col"}.get(t, t), [B.idx(c) for c in r["cells"]])]
-            for kind, cells in units:
-                houses.add((kind, tuple(sorted(B.name(c) for c in cells))))
-        else:
-            rules.append(_norm_rule(r, D))
-    rules += [{"type": {"col": "column"}.get(k, k), "cells": sorted(c, key=_rc)} for k, c in houses]
+    B = Board([divmod(k, doc["grid"]["cols"]) for k, v in enumerate(doc["givens"]) if v is not None], D)
+    house_rules = [r for r in doc.get("rules", []) if r["type"] in ("box_grid", "box", "row", "column")]
+    houses, _ = read_houses(house_rules, B, doc["grid"].get("infer_lines", True))
+    rules = [_norm_rule(r, D) for r in doc.get("rules", []) if r["type"] not in ("box_grid", "box", "row", "column")]
+    hs = {(k, tuple(sorted((B.name(c) for c in cells), key=_rc))) for k, cells, _ in houses}
+    rules += [{"type": {"col": "column"}.get(k, k), "cells": list(c)} for k, c in hs]
     keep["rules"] = sorted(rules, key=lambda r: jcs(r))
     return keep
 

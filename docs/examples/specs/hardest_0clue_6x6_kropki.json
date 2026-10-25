@@ -1,0 +1,43 @@
+{
+ "format": "sudoku-spec",
+ "format_version": 1,
+ "meta": {
+  "title": "Hardest 0-clue 6x6 kropki",
+  "description": "No givens, a minimal set of kropki dots, as hard as the search can find in the time."
+ },
+ "grid": {
+  "rows": 6,
+  "cols": 6
+ },
+ "digits": 6,
+ "givens": {
+  "count": 0
+ },
+ "rules": [
+  {
+   "type": "box_grid",
+   "origin": "r1c1",
+   "box": [
+    2,
+    3
+   ],
+   "count": [
+    3,
+    2
+   ]
+  },
+  {
+   "type": "edge",
+   "kind": "kropki",
+   "count": "min"
+  }
+ ],
+ "where": {
+  "difficulty": "max"
+ },
+ "limits": {
+  "results": 1,
+  "time": 1800,
+  "seed": 5
+ }
+}

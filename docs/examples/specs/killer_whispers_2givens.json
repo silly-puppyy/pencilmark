@@ -1,0 +1,60 @@
+{
+ "format": "sudoku-spec",
+ "format_version": 1,
+ "meta": {
+  "title": "Killer with German whispers and two givens",
+  "description": "Cages and whisper lines, exactly two givens, Hard."
+ },
+ "grid": {
+  "rows": 9,
+  "cols": 9
+ },
+ "digits": 9,
+ "givens": {
+  "count": 2
+ },
+ "rules": [
+  {
+   "type": "box_grid",
+   "origin": "r1c1",
+   "box": [
+    3,
+    3
+   ],
+   "count": [
+    3,
+    3
+   ]
+  },
+  {
+   "type": "cage",
+   "count": [
+    1,
+    null
+   ]
+  },
+  {
+   "type": "line",
+   "kind": "whisper",
+   "count": [
+    1,
+    null
+   ],
+   "value": 5
+  }
+ ],
+ "where": {
+  "band": "Hard"
+ },
+ "limits": {
+  "results": 1,
+  "time": 900,
+  "seed": 3
+ },
+ "fields": [
+  "difficulty",
+  "band",
+  "contains",
+  "issues"
+ ]
+}

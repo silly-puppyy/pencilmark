@@ -69,17 +69,20 @@ def load(puzzle):
     return p
 
 
-def rate(puzzle, steps=False, max_seconds=None, mode="human", se=False):
-    """the "sudoku-grade" card of one puzzle (a dict). steps=True adds the step-by-step solve; se=True (or se="diuf") adds
-    Sudoku Explainer-style ER / EP / ED from our route (pencilmark/se.py; meaningful for classic sudoku)."""
-    from .export import grade
+def rate(puzzle, steps=False, max_seconds=None, mode="human", se=False, fields=None):
+    """the "sudoku-grade" card of one puzzle (a dict), with the requested fields only (docs/FORMAT.md 13.1). Default fields:
+    pencilmark, format, format_version, difficulty, time, band, band_index, contains, issues, reject. Opt-in: "time.p80",
+    "steps", "steps.explanation.short", "steps.explanation.teach", "se", "se.diuf", "describe", "symmetry".
+    steps=True / se=True (or se="diuf") are the older keyword forms."""
+    from .export import grade, card_fields
+    want = card_fields(fields, steps=steps, se=se)
     p = load(puzzle)
     P = _params(mode)
-    card = grade(p, P, with_steps=steps, max_seconds=max_seconds)
-    if se:
+    card = grade(p, P, max_seconds=max_seconds, fields=sorted(want - {"se", "se.diuf"}))
+    if want & {"se", "se.diuf"}:
         from . import band_path as BP, se as SE
         bp = BP.band_path(load(puzzle), P)
-        card["se"] = SE.ratings(bp["steps"], scale=se if isinstance(se, str) else "classic") if bp["solved"] else None
+        card["se"] = SE.ratings(bp["steps"], scale="diuf" if "se.diuf" in want else "classic") if bp["solved"] else None
     return card
 
 
@@ -90,16 +93,16 @@ def _mp_context():
 
 
 def _rate_job(args):
-    puzzle, steps, max_seconds, mode, se = args
+    puzzle, steps, max_seconds, mode, se, fields = args
     try:
-        return rate(puzzle, steps=steps, max_seconds=max_seconds, mode=mode, se=se)
+        return rate(puzzle, steps=steps, max_seconds=max_seconds, mode=mode, se=se, fields=fields)
     except Exception as e:                       # one bad puzzle must not sink the batch
         return {"error": f"{type(e).__name__}: {e}"}
 
 
-def rate_many(puzzles, jobs=1, steps=False, max_seconds=None, mode="human", se=False):
+def rate_many(puzzles, jobs=1, steps=False, max_seconds=None, mode="human", se=False, fields=None):
     """cards for many puzzles, in input order; jobs > 1 uses worker processes. A failing puzzle gives {"error": ...}."""
-    items = [(p, steps, max_seconds, mode, se) for p in puzzles]
+    items = [(p, steps, max_seconds, mode, se, fields) for p in puzzles]
     if jobs <= 1:
         return [_rate_job(it) for it in items]
     with _mp_context().Pool(jobs) as pool:

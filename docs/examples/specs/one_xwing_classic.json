@@ -1,0 +1,55 @@
+{
+ "format": "sudoku-spec",
+ "format_version": 1,
+ "meta": {
+  "title": "Classic with exactly one X-Wing",
+  "description": "Singles everywhere except one X-Wing; nothing else allowed."
+ },
+ "grid": {
+  "rows": 9,
+  "cols": 9
+ },
+ "digits": 9,
+ "rules": [
+  {
+   "type": "box_grid",
+   "origin": "r1c1",
+   "box": [
+    3,
+    3
+   ],
+   "count": [
+    3,
+    3
+   ]
+  }
+ ],
+ "symmetry": [
+  {
+   "kind": "rot180",
+   "of": "givens"
+  }
+ ],
+ "where": {
+  "contains": {
+   "only": [
+    "FHS",
+    "HSI",
+    "NSI",
+    "PPR",
+    "XWG"
+   ],
+   "XWG": {
+    "uses": 1
+   }
+  }
+ },
+ "quality": {
+  "preset": "standard"
+ },
+ "limits": {
+  "results": 5,
+  "time": 600,
+  "seed": 1
+ }
+}

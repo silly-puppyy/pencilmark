@@ -4,7 +4,8 @@ accepted).
 puzzle (format "sudoku-puzzle", format_version 1): specified in docs/FORMAT.md, implemented in grader/exchange.py (strict
   reader, order-preserving writer, canonical text, fingerprint), schema docs/sudoku-puzzle.schema.json. In short: "grid",
   "digits", flat "givens" (0 empty, null no cell), optional "solution" / "candidates", and "rules" holding every constraint,
-  houses included ({"type": "subgrid", "size": 9, "box": [3, 3], "origin": "r1c1"} for a classic; nothing is implied), cells
+  houses included ({"type": "box_grid", "origin": "r1c1", "box": [3, 3], "count": [3, 3]} for a classic; rows / columns of
+  other cells inferred from the shape), cells
   named "r{row}c{col}"; "meta" is free-form information that never changes solving. Unknown keys / rule types are refused.
   Older files (no format_version: flat cell indices, "boxes" / "units" / "regions", metadata at the top level) and the
   pre-release drafts are still read (import_puzzle).
@@ -335,12 +336,9 @@ def _is_draft(d):
     types = {r.get("type") for r in rules if isinstance(r, dict)}
     if types & {"subgrid", "box_grid"}:
         return False
-    if types & DRAFT_TYPES or any(isinstance(r, dict) and ("total" in r or "circle" in r or "rel" in r) for r in rules):
-        return True
-    g = d.get("grid") or {}
-    giv = d.get("givens") or []
-    plain = g.get("rows") == g.get("cols") == d.get("digits") and None not in giv
-    return plain and "box" in types and not types & {"row", "column"}
+    # (box rules without row / column rules on a gap-free board need no draft reading: the round-3 shape inference gives
+    # the rows / columns the drafts implied)
+    return bool(types & DRAFT_TYPES or any(isinstance(r, dict) and ("total" in r or "circle" in r or "rel" in r) for r in rules))
 
 
 def import_puzzle(d):
@@ -475,17 +473,128 @@ def time_units(effort_l1, empty_cells, difficulty=None, geometry=None):
     return round(math.exp(_TIME["const"] + _TIME["k_difficulty"] * difficulty + _TIME["k_empty"] * math.log(empty_cells)), 2)
 
 
-def grade(p, P, card=None, with_steps=True, max_seconds=None):
-    """sudoku-grade: two headline numbers (difficulty, time), the band and what the puzzle contains, from the
-    band-by-band solve (pencilmark/band_path): Very Easy moves until stuck, then Easy, ... The contents are what a solver
-    meets going easy-to-hard: one entry per technique code, named by its most specific shape."""
+DEFAULT_FIELDS = ("grader", "format", "format_version", "difficulty", "time", "band", "band_index", "contains", "issues",
+                  "reject")
+OPTIONAL_FIELDS = ("time.p80", "se", "se.diuf", "steps", "steps.explanation.short", "steps.explanation.teach", "describe",
+                   "symmetry")
+FIELD_ALIASES = {"time_p80": "time.p80", "notes": "issues"}
+
+
+def card_fields(fields=None, steps=False, se=False):
+    """the field mask (FORMAT.md 13.1): None = the default fields; pencilmark / format / format_version always; a
+    steps.explanation.* field implies steps. steps=True / se=True are the older keyword forms."""
+    out = set(DEFAULT_FIELDS) if fields is None else {FIELD_ALIASES.get(f, f) for f in fields} | {"grader", "format", "format_version"}
+    bad = out - set(DEFAULT_FIELDS) - set(OPTIONAL_FIELDS)
+    if bad:
+        raise ValueError(f"unknown card field(s) {sorted(bad)}; known: {list(DEFAULT_FIELDS) + list(OPTIONAL_FIELDS)}")
+    if steps:
+        out |= {"steps", "steps.explanation.short", "steps.explanation.teach"}
+    if se:
+        out.add("se.diuf" if se == "diuf" else "se")
+    if out & {"steps.explanation.short", "steps.explanation.teach"}:
+        out.add("steps")
+    return out
+
+
+RULE_NOUN = {("line", None): "line", ("edge", "kropki"): "kropki dot", ("edge", "xv"): "X / V clue", ("edge", "less"): "inequality sign",
+             ("edge", "difference"): "difference clue", ("edge", "sum"): "sum clue", ("edge", "product"): "product clue",
+             ("edge", "ratio"): "ratio clue", ("region", "diagonal"): "diagonal", ("region", "window"): "window",
+             ("region", "disjoint"): "disjoint group", ("region", "extra"): "extra region", ("region", "colour"): "colour group",
+             ("cage", None): "cage", ("arrow", None): "arrow", ("digits", None): "shaded cell", ("neighbours", None): "neighbour rule",
+             ("negative", None): "negative constraint", ("table", None): "table rule", ("relation", None): "pair rule",
+             ("corner", None): "corner clue", ("sum", None): "sum clue", ("contains", None): "quadruple", ("appears", None): "arrow clue"}
+
+
+def _noun(rules):
+    names = []
+    for r in rules:
+        t, k = r["type"], r.get("kind")
+        n = RULE_NOUN.get((t, k)) or (f"{k.replace('_', ' ')} line" if t == "line" else
+                                      {"antiknight": "anti-knight rule", "antiking": "anti-king rule",
+                                       "nonconsecutive": "non-consecutive rule"}.get(k) if t == "neighbours" and k else None) \
+            or RULE_NOUN.get((t, None)) or t.replace("_", " ")
+        if n not in names:
+            names.append(n)
+    return " / ".join(names) or "rule"
+
+
+def _issues(p, card, doc, prov):
+    """card notes -> issues [{"code", "severity": "reject" | "warning", "text", "rules"?}] (FORMAT.md 13.1). Rule notes
+    point at the exported file's rule indices (doc = exchange.write(p) as to_export writes it)."""
+    out = []
+    raw = card.get("_notes_raw")
+    if raw is None:                       # cards made without the raw notes: parse the flags
+        raw = [("note", "reject" if f.startswith("would not") else "note", f.split(": ", 1)[-1]) for f in card.get("flags") or []]
+    cls_map = None
+    for n in raw:
+        code, sev, text = n[0], n[1], n[2]
+        e = {"code": code, "severity": "reject" if sev == "reject" else "warning", "text": text}
+        if len(n) >= 5 and doc is not None:
+            c, used = n[3], n[4]
+            if cls_map is None:
+                from . import usage as U
+                try:
+                    cls_map = U.element_classes(p)
+                except Exception:
+                    cls_map = {}
+            obj = cls_map.get(c) or {}
+            gnames = set(obj.get("groups") or [])
+            gidx = {k for k, g in enumerate(p.groups) if g.name in gnames}
+            cons = set(obj.get("constraints") or [])
+            want = Counter(tuple(r) for r in obj.get("relations") or [])
+            rpos = set()
+            for k, r in enumerate(p.relations):
+                if want[tuple(r)] > 0:
+                    want[tuple(r)] -= 1
+                    rpos.add(k)
+            idx = [i for i, pr in enumerate(prov) if (pr.get("groups", set()) & gidx) or (pr.get("constraints", set()) & cons)
+                   or (pr.get("relations", set()) & rpos) or (c.startswith("shading") and pr.get("clues"))]
+            if idx:
+                rs = [doc["rules"][i] for i in idx]
+                what = _noun(rs) + ("s" if len(idx) > 1 and " / " not in _noun(rs) else "")
+                where = f"rule {idx[0]}" if len(idx) == 1 else "rules " + ", ".join(map(str, idx))
+                if code == "decorative":
+                    e["text"] = f"{what} ({where}): not needed for uniqueness and never used by the solve"
+                elif code == "redundant":
+                    e["text"] = f"{what} ({where}): used in {used} step{'s' if used != 1 else ''}, but the puzzle is unique without it"
+                else:
+                    e["text"] = f"{what} ({where}): used in only {used} step{'s' if used != 1 else ''} of the solve"
+                e["rules"] = idx
+        out.append(e)
+    return out
+
+
+def symmetry_of(p):
+    """symmetries of the givens pattern (and board shape): [{"kind", "axis"?, "of": "givens"}]. Rule symmetry ("of": "all")
+    is not detected yet."""
+    co = [tuple(x) for x in p.coords]
+    R = max(r for r, _ in co) + 1; C = max(c for _, c in co) + 1
+    cells = set(co)
+    giv = {co[i] for i in p.givens}
+    tf = {("rot180", None): lambda r, c: (R - 1 - r, C - 1 - c), ("mirror", "vertical"): lambda r, c: (r, C - 1 - c),
+          ("mirror", "horizontal"): lambda r, c: (R - 1 - r, c)}
+    if R == C:
+        tf.update({("rot90", None): lambda r, c: (c, R - 1 - r), ("mirror", "diagonal"): lambda r, c: (c, r),
+                   ("mirror", "antidiagonal"): lambda r, c: (C - 1 - c, R - 1 - r)})
+    out = []
+    for (kind, axis), f in tf.items():
+        if all(f(*x) in cells for x in cells) and all(f(*x) in giv for x in giv):
+            out.append(dict({"kind": kind}, **({"axis": axis} if axis else {}), of="givens"))
+    return out
+
+
+def grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None):
+    """sudoku-grade card (FORMAT.md 13.1), only the requested fields: difficulty, time, band, contains, issues / reject by
+    default; time.p80, steps (+ steps.explanation.short / .teach), describe, symmetry on request (se is added by api.rate).
+    with_steps=True is the older form of fields + steps with both explanation levels."""
     from . import card as K, band_path as BP
+    want = card_fields(fields, steps=bool(with_steps))
     P = dict(P, search=P.get("search", "human"))
     import time
     bp = BP.contents(p, P, deadline=None if max_seconds is None else time.time() + max_seconds)
     if card is None:        # band / required from the band path (skips the deletion test inside grade_card)
         req_b = list(dict.fromkeys(st["technique"] for st in bp["steps"] if st["band"] > 0))
-        card = K.grade_card(p, P, specific=False, check_rules=True,     # specific names only feed the legacy chips
+        card = K.grade_card(p, P, specific=False, check_rules=bool(want & {"issues", "reject"}),     # specific names only feed the legacy chips
                             band=(bp["band"] if bp["solved"] else "Unknown", req_b))
     unknown = not bp["solved"]
     names = {}
@@ -506,23 +615,47 @@ def grade(p, P, card=None, with_steps=True, max_seconds=None):
     tg = card.get("time_grade")
     tm = time_units(card.get("effort_l1"), p.N - len(p.givens), difficulty=card.get("score"), geometry=region_geometry(p))
     g = {"format": "sudoku-grade", "format_version": FORMAT_VERSION,
-         "grader": {"name": GRADER_NAME, "version": GRADER_VERSION},
-         "difficulty": card.get("score"),
-         # 2026-10-22 (user): time in MINUTES for today's average player (classic units x minutes_per_unit, data/time_model.json)
-         "time": round(tm * _TIME.get("minutes_per_unit", 1.0), 1) if tm is not None else (round(2 ** (tg - 5), 2) if tg is not None else None),
-         "time_p80": round(tm * _TIME.get("p80_factor", 1.53) * _TIME.get("minutes_per_unit", 1.0), 1) if tm is not None else None,
-         "band": "Unknown" if unknown else bp["band"], "band_index": None if unknown else bp["band_index"],
-         "contains": contains,
-         "notes": [{"code": n[0], "severity": n[1], "text": n[2]} for n in card.get("_notes_raw", [])] or
-                  [{"severity": "reject" if f.startswith("would not") else "note", "text": f.split(": ", 1)[-1]} for f in card.get("flags") or []]}
-    if bp.get("truncated"):     # opt-in time cap hit: route complete, the list may not be minimal / may miss alternatives
-        g["contents_truncated"] = True
-    if unknown:     # what's in it up to where human logic ran out; the rest is unknown
-        g["contains_complete"] = False
-        g["stopped_at_step"] = len(bp["steps"]) + 1
-    if with_steps:
+         "grader": {"name": GRADER_NAME, "version": GRADER_VERSION}}
+    if "difficulty" in want:
+        g["difficulty"] = card.get("score")
+    if "time" in want:
+        # 2026-10-22 (user): time in MINUTES for today's average player (classic units x minutes_per_unit, data/time_model.json)
+        g["time"] = round(tm * _TIME.get("minutes_per_unit", 1.0), 1) if tm is not None else (round(2 ** (tg - 5), 2) if tg is not None else None)
+    if "time.p80" in want:
+        g["time_p80"] = round(tm * _TIME.get("p80_factor", 1.53) * _TIME.get("minutes_per_unit", 1.0), 1) if tm is not None else None
+    if "band" in want:
+        g["band"] = "Unknown" if unknown else bp["band"]
+    if "band_index" in want:
+        g["band_index"] = None if unknown else bp["band_index"]
+    if "contains" in want:
+        g["contains"] = contains
+        if bp.get("truncated"):     # opt-in time cap hit: route complete, the list may not be minimal / may miss alternatives
+            g["contents_truncated"] = True
+        if unknown:     # what's in it up to where human logic ran out; the rest is unknown
+            g["contains_complete"] = False
+            g["stopped_at_step"] = len(bp["steps"]) + 1
+    doc = prov = None
+    if want & {"issues", "reject", "describe"}:
+        try:
+            from . import exchange as X
+            doc, prov = X.write(p, provenance=True)
+        except Exception:
+            doc = prov = None
+    if want & {"issues", "reject"}:
+        issues = _issues(p, card, doc, prov or [])
+        if "issues" in want:
+            g["issues"] = issues
+        if "reject" in want:
+            g["reject"] = any(i["severity"] == "reject" for i in issues)
+    if "describe" in want:
+        from .variants import describe as _describe
+        g["describe"] = _describe(doc) if doc is not None else None
+    if "symmetry" in want:
+        g["symmetry"] = symmetry_of(p)
+    if "steps" in want:
         cn = lambda c: f"r{p.coords[c][0] + 1}c{p.coords[c][1] + 1}"
-        expl = BP.explain_steps(p, P, bp["steps"])
+        levels = [x for x in ("short", "teach") if f"steps.explanation.{x}" in want]
+        expl = BP.explain_steps(p, P, bp["steps"]) if levels else [None] * len(bp["steps"])
         rows = []
         for i, st in enumerate(bp["steps"]):
             r = {"n": i + 1, "technique": st["name"], "code": st["code"], "band": st["band"]}
@@ -530,8 +663,8 @@ def grade(p, P, card=None, with_steps=True, max_seconds=None):
                 r["placement"] = f"{cn(st['place'][0])}={st['place'][1]}"
             if st["elims"]:
                 r["eliminations"] = [f"{cn(c)}#{d}" for c, d in st["elims"]]
-            if expl[i]:
-                r["explanation"], r["detail"] = expl[i]["short"], expl[i]["teach"]
+            if levels and expl[i]:
+                r["explanation"] = {x: expl[i][x] for x in levels}
             rows.append(r)
         g["steps"] = rows
     return g

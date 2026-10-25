@@ -5,7 +5,7 @@
       pencilmark.puzzle_json format or the sudoku-puzzle exchange format (pencilmark.export), or a path to a .json file. Prints one
       result line per puzzle. Card "sudoku-grade": FMT fields %d difficulty (continuous, floor 0, no ceiling; ~5 = typical medium),
       %m time in minutes for today's average player, %p 80th-percentile minutes, %b band, %h hardest technique met,
-      %c contents chips (band > 0, with uses), %n notes, %s status, %u unique?, %i line number.
+      %c contents chips (band > 0, with uses), %n issue codes, %s status, %u unique?, %i line number.
       Default: "%b\t%d\t%m\t%h". --json prints the full card (add --steps for the step list); --report a readable
       summary. --legacy prints the legacy card (time grade %t, work minutes %w).
   python -m pencilmark solve [FILE|-]      the solution (or 'not unique' / 'no solution') per puzzle
@@ -66,7 +66,7 @@ def _fmt2(fmt, g, k, unique):
             "m": "" if g.get("time") is None else f"{g['time']:.1f}", "p": "" if g.get("time_p80") is None else f"{g['time_p80']:.1f}",
             "b": g.get("band", g.get("status", "")), "h": hard[-1]["name"] if hard else (cont[-1]["name"] if cont else ""),
             "c": " ".join(c["chip"] + (f"x{c['uses']}" if c.get("uses", 0) > 1 else "") for c in hard),
-            "n": ";".join(n.get("code") or n["text"] for n in g.get("notes") or []), "s": g.get("status", "ok"), "u": str(unique), "i": str(k)}
+            "n": ";".join(n.get("code") or n["text"] for n in g.get("issues") or []), "s": g.get("status", "ok"), "u": str(unique), "i": str(k)}
     return _subst(fmt, vals)
 
 
@@ -87,7 +87,7 @@ def report2(g, k=None):
     if "band" not in g:
         return f"[{k}] {g.get('status')}"
     L = [f"{'#' + str(k) + '  ' if k else ''}{g['band']}  -  difficulty {g.get('difficulty')}  -  time {g.get('time')} min"
-         f" (80% of players within {g.get('time_p80')} min)"]
+         + (f" (80% of players within {g.get('time_p80')} min)" if g.get("time_p80") is not None else "")]
     hard = [c for c in g.get("contains") or [] if c.get("band", 0) > 0]
     L.append("   contains: " + (", ".join(f"{c['name']}{' x' + str(c['uses']) if c.get('uses', 0) > 1 else ''}"
                                          f"{' (or ' + '/'.join(c['alternatives']) + ')' if c.get('alternatives') else ''}" for c in hard)
@@ -96,8 +96,8 @@ def report2(g, k=None):
         L.append("   (time cap hit: contents not minimised; joint alternatives may be missing)")
     if g.get("contains_complete") is False:
         L.append(f"   human logic ran out at step {g.get('stopped_at_step')}; contents incomplete")
-    for n in g.get("notes") or []:
-        L.append(f"   note: {n['text']}")
+    for n in g.get("issues") or []:
+        L.append(f"   {'reject' if n['severity'] == 'reject' else 'note'}: {n['text']}")
     return "\n".join(L)
 
 
@@ -165,7 +165,16 @@ def _rate_one(args):
             return ((_fmt if a.legacy else _fmt2)(fmt, {"status": st}, k, False) if not a.json
                     else json.dumps({"line": k, "status": st}))
         if not a.legacy:
-            g = grade(p, P, with_steps=a.steps, max_seconds=a.max_seconds)
+            from .export import card_fields
+            fl = a.fields.split(",") if a.fields else None
+            if fl is None and ("%p" in fmt or a.report):
+                fl = list(card_fields(None)) + ["time.p80"]
+            want = card_fields(fl, steps=a.steps)
+            g = grade(p, P, max_seconds=a.max_seconds, fields=sorted(want - {"se", "se.diuf"}))
+            if want & {"se", "se.diuf"}:
+                from . import band_path as BP, se as SE
+                bp = BP.band_path(p, P)
+                g["se"] = SE.ratings(bp["steps"], scale="diuf" if "se.diuf" in want else "classic") if bp["solved"] else None
             return json.dumps({"line": k, **g}, default=str) if a.json else report2(g, k) if a.report else _fmt2(fmt, g, k, True)
         card = grade_card(p, P, check_rules=a.notes)
         if a.json:
@@ -235,6 +244,8 @@ def main(argv=None):
     r.add_argument("--computer", action="store_true", help="allow pure computer search (forcing chains / nets, trial); default: human mode")
     r.add_argument("--notes", action="store_true", help="legacy card: run the publishing-rule checks (slower)")
     r.add_argument("--steps", action="store_true", help="with --json: include the step-by-step solve")
+    r.add_argument("--fields", default=None, help="card fields, comma-separated (docs/FORMAT.md 13.1), e.g. "
+                                                    "difficulty,band,time.p80,steps,steps.explanation.short")
     r.add_argument("-j", "--jobs", type=int, default=1, help="rate puzzles in N parallel processes (output in input order)")
     r.add_argument("--max-seconds", type=float, default=None,
                    help="cap the contents search (opt-in; the card then says contents_truncated and may differ run to run)")

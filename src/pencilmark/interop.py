@@ -38,12 +38,9 @@ def _doc(D, givens, rules, meta=None):
     return d
 
 
-def _subgrid(D, box=True):
-    r = {"type": "subgrid", "size": D}
-    if box:
-        r["box"] = list(PJ.BOXES[D])
-    r["origin"] = "r1c1"
-    return r
+def _box_grid(D):
+    bh, bw = PJ.BOXES[D]
+    return {"type": "box_grid", "origin": "r1c1", "box": [bh, bw], "count": [D // bh, D // bw]}
 
 
 # ------------------------------------------------------------------------------------------------------------ reading
@@ -77,7 +74,7 @@ def _from_plain(t, symbols=None):
             if not 1 <= v <= D:
                 raise FormatError(f"symbol {ch!r} is not a digit of a {D}x{D} puzzle")
             giv.append(v)
-    return _doc(D, giv, [_subgrid(D)])
+    return _doc(D, giv, [_box_grid(D)])
 
 
 def _from_sudokuwiki(kind, D, ver, body):
@@ -115,7 +112,6 @@ def _from_sudokuwiki(kind, D, ver, body):
             raise NotSupportedError(f"sudokuwiki cell value {n} (placed digit or candidate mask) is not supported")
     rules = []
     if kind in ("J", "M"):
-        rules.append(_subgrid(D, box=False))
         groups = {}
         for i, lab in enumerate(box_lab):
             groups.setdefault(lab, []).append(i)
@@ -124,7 +120,7 @@ def _from_sudokuwiki(kind, D, ver, body):
         for lab, cells in sorted(groups.items(), key=lambda kv: min(kv[1])):
             rules.append({"type": "box", "cells": [cell_name(*divmod(c, D)) for c in cells]})
     else:
-        rules.append(_subgrid(D))
+        rules.append(_box_grid(D))
     nm = lambda i: cell_name(*divmod(i, D))
     if kind == "X":
         rules += [{"type": "region", "kind": "diagonal", "cells": [nm(i * D + i) for i in range(D)]},
@@ -395,10 +391,14 @@ def to_ipuz(puzzle):
     if not (R == C == D) or None in doc["givens"]:
         raise NotSupportedError("ipuz sudoku needs one gap-free D x D grid")
     rules = doc["rules"]
-    subs = [r for r in rules if r["type"] == "subgrid"]
-    if len(subs) != 1 or subs[0].get("origin") != "r1c1":
-        raise NotSupportedError("ipuz sudoku needs exactly one subgrid covering the board")
-    sub = subs[0]
+    if doc["grid"].get("infer_lines") is False or any(r["type"] in ("row", "column") for r in rules):
+        raise NotSupportedError("ipuz sudoku needs plain rows and columns")
+    grids = [r for r in rules if r["type"] == "box_grid"]
+    std = PJ.BOXES.get(D)
+    standard = len(grids) == 1 and grids[0]["origin"] == "r1c1" and grids[0].get("lines", True) and std and \
+        list(grids[0]["box"]) == list(std)
+    if grids and not standard:
+        raise NotSupportedError("ipuz infers box shapes; only one box_grid of the standard shape covering the board exports")
     kinds = ["http://ipuz.org/sudoku#1"]
     zones, cages = [], []
     boxes = [r for r in rules if r["type"] == "box"]
@@ -408,7 +408,7 @@ def to_ipuz(puzzle):
     diags = []
     for r in rules:
         t = r["type"]
-        if t in ("subgrid", "box"):
+        if t in ("box_grid", "box"):
             continue
         if t == "region" and r["kind"] == "diagonal" and r["cells"] in (diag_main, diag_anti, diag_main[::-1], diag_anti[::-1]):
             diags.append(r)
@@ -426,14 +426,12 @@ def to_ipuz(puzzle):
     if len(diags) not in (0, 2):
         raise NotSupportedError("ipuz diagonal sudoku needs both main diagonals")
     if boxes:
-        if "box" in sub:
+        if standard:
             raise NotSupportedError("extra box rules on a board with standard boxes")
         kinds.append("http://ipuz.org/sudoku/jigsawsudoku#1")
         zones = [{"cells": [rc(c) for c in b["cells"]]} for b in boxes] + zones
-    elif "box" not in sub:
+    elif not standard:
         kinds.append("http://ipuz.org/sudoku/latinsquare#1")
-    elif list(sub["box"]) != list(PJ.BOXES.get(D, (0, 0))):
-        raise NotSupportedError("ipuz infers box shapes; only the standard shape exports")
     if diags:
         kinds.append("http://ipuz.org/sudoku/diagonalsudoku#1")
     if any(r["type"] == "region" and r["kind"] == "window" for r in rules):
@@ -449,7 +447,7 @@ def to_ipuz(puzzle):
     if m.get("date") and re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(m["date"])):
         y, mo, da = m["date"].split("-")
         out["date"] = f"{mo}/{da}/{y}"
-    out["boxes"] = "box" in sub
+    out["boxes"] = bool(standard)
     out["puzzle"] = rows(doc["givens"])
     if doc.get("solution"):
         out["solution"] = rows(doc["solution"])

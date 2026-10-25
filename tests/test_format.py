@@ -128,6 +128,8 @@ def test_strict_refusal():
     bad = copy.deepcopy(d); bad["rules"].append({"type": "edge", "kind": "xv", "letter": "X", "cells": ["r1c1", "r1c10"]})
     _refuses(bad, "does not exist")
     bad = copy.deepcopy(d); bad["grid"]["implied_houses"] = False; _refuses(bad, "grid")
+    bad = copy.deepcopy(d); bad["rules"][0]["count"] = [2, 3]; _refuses(bad, "box_grid with lines")
+    bad = copy.deepcopy(d); bad["rules"].append({"type": "subgrid", "size": 9, "origin": "r1c1"}); _refuses(bad, "unknown rule type")
     bad = copy.deepcopy(d); bad["rules"].append({"type": "sandwich", "sum": 5, "side": "top", "cells": ["r2c1", "r3c1"]})
     _refuses(bad, "is a cell")
     # ignorable containers and rule id / label / style are accepted
@@ -181,10 +183,16 @@ def test_fingerprint_stable():
     # metadata, style and solution do not matter; another spelling of the same houses does not matter
     d2 = copy.deepcopy(d); d2["meta"] = {"title": "x"}; d2["style"] = {"a": 1}
     assert pencilmark.fingerprint(d2) == f
-    d3 = copy.deepcopy(d)
-    d3["rules"] = [{"type": "subgrid", "size": 9, "origin": "r1c1"},
-                   {"type": "box_grid", "size": [3, 3], "repeat": [3, 3], "origin": "r1c1"}]
+    d3 = copy.deepcopy(d)                  # rows / columns inferred, boxes as single rules
+    d3["rules"] = [{"type": "box", "cells": [X.cell_name(br + i, bc + j) for i in range(3) for j in range(3)]}
+                   for br in (0, 3, 6) for bc in (0, 3, 6)]
     assert pencilmark.fingerprint(d3) == f
+    d5 = copy.deepcopy(d)                  # explicit rows / columns, no inference, boxes-only box_grid
+    d5["grid"]["infer_lines"] = False
+    d5["rules"] = ([{"type": "row", "cells": [X.cell_name(r, c) for c in range(9)]} for r in range(9)] +
+                   [{"type": "column", "cells": [X.cell_name(r, c) for r in range(9)]} for c in range(9)] +
+                   [{"type": "box_grid", "origin": "r1c1", "box": [3, 3], "count": [3, 3], "lines": False}])
+    assert pencilmark.fingerprint(d5) == f
     d4 = copy.deepcopy(d); d4["givens"][2] = 5
     assert pencilmark.fingerprint(d4) != f
 
@@ -200,7 +208,7 @@ def test_dumps_layout():
 def test_plain_string_round_trip():
     d = pencilmark.from_string(CLASSIC)
     assert pencilmark.to_string(d, "plain") == CLASSIC
-    assert d["rules"] == [{"type": "subgrid", "size": 9, "box": [3, 3], "origin": "r1c1"}]
+    assert d["rules"] == [{"type": "box_grid", "origin": "r1c1", "box": [3, 3], "count": [3, 3]}]
 
 
 def _semantic(p):
@@ -228,7 +236,7 @@ def test_sudokuwiki_round_trip():
         d = pencilmark.from_string(giv)
         d["rules"] += extra
         kinds.setdefault(k, pencilmark.load(d))
-    d = pencilmark.from_string(giv); d["rules"] = [{"type": "subgrid", "size": 9, "origin": "r1c1"}] + boxes
+    d = pencilmark.from_string(giv); d["rules"] = boxes                 # jigsaw: rows / columns inferred
     kinds["jigsaw"] = pencilmark.load(d)
     d = copy.deepcopy(d); d["rules"].append(cage)
     kinds["killer_jigsaw"] = pencilmark.load(d)
@@ -314,6 +322,60 @@ def test_describe_names():
 
 
 # ---------------------------------------------------------------------------------------------------------- sudoku-spec
+def test_card_fields():
+    """field mask and the issues / reject shape (FORMAT.md 13.1)"""
+    c = pencilmark.rate(CLASSIC)
+    assert list(c) == ["format", "format_version", "grader", "difficulty", "time", "band", "band_index", "contains", "issues",
+                       "reject"], list(c)
+    assert c["grader"] == {"name": "pencilmark", "version": "1.0.0"} and c["reject"] is False
+    m = pencilmark.rate(CLASSIC, fields=["difficulty", "time.p80", "steps", "steps.explanation.short", "symmetry"])
+    assert set(m) == {"format", "format_version", "grader", "difficulty", "time_p80", "steps", "symmetry"}
+    assert m["difficulty"] == c["difficulty"] and set(m["steps"][0]["explanation"]) == {"short"}
+    assert {"kind": "rot180", "of": "givens"} in m["symmetry"]
+    try:
+        pencilmark.rate(CLASSIC, fields=["nope"])
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("unknown field accepted")
+    d = pencilmark.from_string(CLASSIC)
+    d["rules"].append({"type": "line", "kind": "thermo", "cells": ["r1c5", "r1c4"]})      # true, but never needed
+    i = pencilmark.rate(d, fields=["issues", "reject"])
+    assert i["reject"] is True and i["issues"][0]["rules"] == [1] and "rule 1" in i["issues"][0]["text"], i
+
+
+def _houses(doc):
+    p = X.read(doc)
+    return [(g.kind, g.cells) for g in p.groups]
+
+
+def test_houses_round3():
+    """box_grid gives rows, columns, boxes; rows / columns of uncovered cells are inferred from the shape (before the
+    first box rule); infer_lines false; explicit bent rows; boxes-only box_grid (FORMAT.md 6.1)"""
+    classic = pencilmark.from_string(CLASSIC)
+    h = _houses(classic)
+    assert [k for k, _ in h] == ["row"] * 9 + ["col"] * 9 + ["box"] * 9
+    jig = copy.deepcopy(classic)
+    boxes = [{"type": "box", "cells": [X.cell_name(br + i, bc + j) for i in range(3) for j in range(3)]}
+             for br in (0, 3, 6) for bc in (0, 3, 6)]
+    jig["rules"] = [{"type": "region", "kind": "diagonal", "cells": [X.cell_name(i, i) for i in range(9)]}] + boxes
+    assert [k for k, _ in _houses(jig)] == ["row"] * 9 + ["col"] * 9 + ["diag"] + ["box"] * 9     # inferred before the region
+    assert sorted(_houses(jig)) == sorted(h + [("diag", tuple(i * 10 for i in range(9)))])
+    none = copy.deepcopy(jig); none["grid"]["infer_lines"] = False
+    assert [k for k, _ in _houses(none)] == ["diag"] + ["box"] * 9
+    bent = copy.deepcopy(none); bent["grid"].pop("infer_lines")
+    bent["rules"].insert(0, {"type": "row", "cells": ["r1c1", "r1c2", "r1c3", "r1c4", "r1c5", "r1c6", "r1c7", "r1c8", "r2c9"]})
+    hs = _houses(bent)
+    assert hs[0][0] == "row" and sum(1 for k, _ in hs if k == "row") == 8      # bent row + rows 3-9 (rows 1 / 2 now short runs)
+    only_boxes = copy.deepcopy(classic)
+    only_boxes["rules"] = [{"type": "box_grid", "origin": "r1c1", "box": [3, 3], "count": [3, 3], "lines": False}]
+    assert sorted(_houses(only_boxes)) == sorted(h)
+    sam = pencilmark.load({"layout": "samurai", "numbers": ""})
+    d = X.write(sam)
+    assert [r["type"] for r in d["rules"]] == ["box_grid"] * 5 and "infer_lines" not in d["grid"]
+    assert len(X.read(d).groups) == len(sam.groups)
+
+
 def test_spec_round_trip():
     from pencilmark.gen.api import Spec
     specs = [{"size": 9, "target_band": "Hard", "seed": 3},
@@ -325,15 +387,35 @@ def test_spec_round_trip():
         doc = pencilmark.spec_from_gen(s)
         assert doc["format"] == "sudoku-spec"
         back = pencilmark.spec_to_gen(json.loads(json.dumps(doc)))
-        assert Spec.from_any(back) == Spec.from_any(s), (s, back)
+        norm = lambda x: _plan_of(Spec.from_any(x))
+        assert norm(back) == norm(s), (s, back)
     bad = pencilmark.spec_from_gen(specs[0])
     bad["rules"].append({"type": "line", "kind": "thermo", "cells": ["r1c1", "r1c2"]})
+    for extra in ({"rules": bad["rules"]}, {"quality": {"preset": "standard"}}, {"givens": {"mask": [1] * 81}},
+                  {"where": {"difficulty": "max"}}, {"limits": {"results": 3}}):
+        d = dict(pencilmark.spec_from_gen(specs[0]), **extra)
+        try:
+            pencilmark.spec_to_gen(d)
+        except pencilmark.NotSupportedError:
+            continue
+        raise AssertionError(f"must be refused: {extra}")
+    from pencilmark import spec_format as SF2
     try:
-        pencilmark.spec_to_gen(bad)
-    except pencilmark.NotSupportedError:
+        SF2.validate_spec(dict(pencilmark.spec_from_gen(specs[0]), target={"band": "Hard"}))
+    except pencilmark.FormatError:
         pass
     else:
-        raise AssertionError("fixed rules are not supported yet")
+        raise AssertionError("round-2 'target' must be refused")
+
+
+def _plan_of(s):
+    """what the generator does with a Spec (kinds is shorthand for elements {k: 1})"""
+    from pencilmark.gen import api as GA
+    d = {f: getattr(s, f) for f in ("size", "target_band", "target_difficulty", "require", "strict_require", "symmetry",
+                                    "min_givens", "max_givens", "max_elements", "solver", "seed", "time_limit", "grade_seconds")}
+    d["target_difficulty"] = list(d["target_difficulty"]) if d["target_difficulty"] else None
+    d["plan"] = GA._plan(s)
+    return d
 
 
 if __name__ == "__main__":

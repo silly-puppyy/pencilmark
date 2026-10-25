@@ -1,0 +1,107 @@
+{
+ "format": "sudoku-spec",
+ "format_version": 1,
+ "meta": {
+  "title": "Nine variants on one 9x9",
+  "description": "At least one cage, thermo, whisper, renban, between line, arrow, kropki dot, XV clue and odd / even cell, each needed by the solve."
+ },
+ "grid": {
+  "rows": 9,
+  "cols": 9
+ },
+ "digits": 9,
+ "rules": [
+  {
+   "type": "box_grid",
+   "origin": "r1c1",
+   "box": [
+    3,
+    3
+   ],
+   "count": [
+    3,
+    3
+   ]
+  },
+  {
+   "type": "cage",
+   "count": [
+    1,
+    null
+   ]
+  },
+  {
+   "type": "line",
+   "kind": "thermo",
+   "count": [
+    1,
+    null
+   ]
+  },
+  {
+   "type": "line",
+   "kind": "whisper",
+   "count": [
+    1,
+    null
+   ]
+  },
+  {
+   "type": "line",
+   "kind": "renban",
+   "count": [
+    1,
+    null
+   ]
+  },
+  {
+   "type": "line",
+   "kind": "between",
+   "count": [
+    1,
+    null
+   ]
+  },
+  {
+   "type": "arrow",
+   "count": [
+    1,
+    null
+   ]
+  },
+  {
+   "type": "edge",
+   "kind": "kropki",
+   "count": [
+    1,
+    null
+   ]
+  },
+  {
+   "type": "edge",
+   "kind": "xv",
+   "count": [
+    1,
+    null
+   ]
+  },
+  {
+   "type": "digits",
+   "kind": "parity",
+   "count": [
+    1,
+    null
+   ]
+  }
+ ],
+ "where": {
+  "band": "Hard",
+  "elements": {
+   "max": 20
+  }
+ },
+ "limits": {
+  "time": 1800,
+  "seed": 9
+ }
+}

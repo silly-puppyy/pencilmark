@@ -5,12 +5,12 @@ names appear only in meta.type and in describe() output.
     rules_text(described) -> "Sudoku: ...\\nKiller: ..."
 
 Two kinds of entries:
-  @variant(name, aliases=..., text=...)   a PLACEMENT variant: fn(g) -> the rules it adds to ONE subgrid g, or None where the
-                                          variant is not defined for that subgrid (size / box shape). Works for any size:
-                                          windoku(g) on a 16x16 subgrid places its 9 windows.
+  @variant(name, aliases=..., text=...)   a PLACEMENT variant: fn(g) -> the rules it adds to ONE grid area g, or None where the
+                                          variant is not defined for that area (size / box shape). Works for any size:
+                                          windoku(g) on a 16x16 grid places its 9 windows.
   @family(name, match=..., text=...)      a RULE-FAMILY variant (killer, thermo, kropki, ...): recognised by rule type / kind;
                                           text(rules, ctx) writes its sentence.
-Recognition: for each subgrid, every placement variant's rules are compared with the puzzle's rules as sets of (type, kind,
+Recognition: for each grid area, every placement variant's rules are compared with the puzzle's rules as sets of (type, kind,
 cell set) -- region kinds are drawing hints and are ignored; if all are present the variant applies and those rules are
 explained. Remaining rules get their family names; anything unknown falls back to a generic name.
 Generator presets: the placement functions are also the presets a generator can use (preset_rules(name, size)); the current
@@ -27,7 +27,7 @@ from .exchange import cell_name, parse_cell
 
 # ---------------------------------------------------------------------------------------------------------- subgrid view
 class Grid:
-    """one subgrid: n x n cells, box bh x bw (None for a jigsaw / Latin square). Local coordinates are 0-based."""
+    """one grid area (a box_grid, or the whole board): n x n cells, box bh x bw (None for a jigsaw / Latin square). Local coordinates are 0-based."""
 
     def __init__(self, n, box=None, origin=(0, 0), cells=None):
         self.n = n
@@ -359,38 +359,46 @@ def describe(puzzle):
         else to_export(puzzle, describe=False)
     D = doc["digits"]
     rules = [r for r in doc["rules"]]
-    subs = [r for r in rules if r["type"] == "subgrid"]
-    grids = []
-    for s in subs:
-        if "origin" in s:
-            grids.append(Grid(s["size"], s.get("box"), parse_cell(s["origin"])))
-        else:
-            grids.append(Grid(s["size"], s.get("box"), cells=list(s["cells"])))
-    explained = [r["type"] in ("subgrid", "box_grid") for r in rules]
-    # boxes stated outside a subgrid (box_grid / box rules, e.g. files that list all boxes after all rows and columns): a
-    # subgrid whose cells they tile regularly counts as a boxed subgrid, and those box rules are not a jigsaw
-    box_sets = {}
-    for i, r in enumerate(rules):
-        if r["type"] == "box":
-            box_sets.setdefault(frozenset(r["cells"]), []).append(i)
-        elif r["type"] == "box_grid":
-            (r0, c0), (bh, bw), (m, n) = parse_cell(r["origin"]), r["size"], r["repeat"]
-            for a in range(m):
-                for b in range(n):
-                    box_sets.setdefault(frozenset(cell_name(r0 + a * bh + x, c0 + b * bw + y) for x in range(bh) for y in range(bw)), []).append(None)
-    for g in grids:
-        if g.box:
+    # grid areas from the houses the rules state (any spelling): every D x D area whose D rows and D columns are houses,
+    # with a box shape when its regular boxes are houses too
+    from .exchange import Board, read_houses
+    B = Board([divmod(k, doc["grid"]["cols"]) for k, v in enumerate(doc["givens"]) if v is not None], D)
+    houses, _ = read_houses([r for r in rules if r["type"] in ("box_grid", "box", "row", "column")], B,
+                            doc["grid"].get("infer_lines", True))
+    hset = {(k, frozenset(B.name(c) for c in cells)) for k, cells, _ in houses}
+    origins = []
+    for k, cells, _ in houses:
+        if k != "row" or len(cells) != D:
             continue
-        for shape in ([tuple(PJ.BOXES[g.n])] if g.n in PJ.BOXES else []) + [(h, g.n // h) for h in range(2, g.n) if g.n % h == 0]:
-            gg = Grid(g.n, shape, (g.r0, g.c0), g._cells)
+        r, c0 = B.coords[cells[0]]
+        if [B.coords[x] for x in cells] != [(r, c0 + j) for j in range(D)]:
+            continue
+        for r0 in range(r - D + 1, r + 1):
+            if (r0, c0) in origins:
+                continue
+            g = Grid(D, None, (r0, c0))
+            try:
+                ok = all(("row", frozenset(g.block(i, 0, 1, D))) in hset for i in range(D)) and \
+                    all(("col", frozenset(g.block(0, j, D, 1))) in hset for j in range(D))
+            except Exception:
+                ok = False
+            if ok:
+                origins.append((r0, c0))
+    grids = []
+    tiled = set()
+    for (r0, c0) in sorted(origins):
+        g = Grid(D, None, (r0, c0))
+        for shape in ([tuple(PJ.BOXES[D])] if D in PJ.BOXES else []) + [(h, D // h) for h in range(2, D) if D % h == 0]:
+            gg = Grid(D, shape, (r0, c0))
             tiles = [frozenset(gg.block(br, bc, gg.bh, gg.bw)) for br, bc in gg.boxes()]
-            if all(t in box_sets for t in tiles):
-                g.bh, g.bw, g.box = gg.bh, gg.bw, gg.box
-                for t in tiles:
-                    for i in box_sets[t]:
-                        if i is not None:
-                            explained[i] = True
+            if all(("box", t) in hset for t in tiles):
+                g = gg
+                tiled |= set(tiles)
                 break
+        grids.append(g)
+    explained = [r["type"] in ("box_grid", "row", "column") or (r["type"] == "box" and frozenset(r["cells"]) in tiled)
+                 for r in rules]
+    subs = grids
     sigs = {}
     for i, r in enumerate(rules):
         sigs.setdefault(_sig(r), []).append(i)
@@ -416,7 +424,8 @@ def describe(puzzle):
                 hit = True
     # jigsaw: box rules
     boxes = [i for i, r in enumerate(rules) if r["type"] == "box" and not explained[i]]
-    if boxes:
+    loose = [h for h in hset if h[0] == "box" and h[1] not in tiled]
+    if boxes or loose:
         for i in boxes:
             explained[i] = True
         found.append(("Jigsaw", f"Digits 1–{D} appear once in every bold-outlined region."))
@@ -454,7 +463,7 @@ def describe(puzzle):
     if doc.get("candidates"):
         found.append(("Sukaku", "The small digits in a cell are all the digits that cell may contain."))
     sw = size_word(D)
-    layout = layout_name([parse_cell(s["origin"]) for s in subs if "origin" in s]) if len(subs) > 1 else None
+    layout = layout_name([(g.r0, g.c0) for g in grids]) if len(grids) > 1 else None
     if len(subs) > 1:
         base_key = layout or "Multi-Grid"
         base = f"Each {D}×{D} grid follows normal sudoku rules: place 1–{D} in every row, column and box; shared cells belong to both grids."
@@ -472,7 +481,7 @@ def describe(puzzle):
     for nm, txt in found:
         out[nm] = txt
     names = [f[0] for f in found]
-    if len(subs) == 1 and not grids[0].box and not boxes and not names:
+    if len(subs) == 1 and not grids[0].box and not boxes and not loose and not names:
         typ = (sw + " Latin Square").strip()
     elif layout or len(subs) > 1:
         lay = layout or "Multi-Grid"

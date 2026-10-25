@@ -12,7 +12,9 @@ CLASSIC_SOLUTION = None
 def test_classic_card():
     card = pencilmark.rate(CLASSIC)
     assert card["format"] == "sudoku-grade"
-    assert (card["band"], card["band_index"], card["difficulty"], card["time"], card["time_p80"]) == ("Medium", 2, 5.9, 10.7, 16.4)
+    assert (card["band"], card["band_index"], card["difficulty"], card["time"]) == ("Medium", 2, 5.9, 10.7)
+    assert "time_p80" not in card and card["reject"] is False and card["issues"] == []
+    assert pencilmark.rate(CLASSIC, fields=["time.p80"])["time_p80"] == 16.4
     chips = [c["chip"] for c in card["contains"] if c["band"] > 0]
     assert chips == ["NPR/PPR/HPR", "XWG/KTE/SCL"]
 
@@ -34,7 +36,7 @@ def test_deterministic_and_input_forms(tmp_path):
 def test_steps_and_se():
     card = pencilmark.rate(CLASSIC, steps=True, se=True)
     st = card["steps"]
-    assert st[0]["n"] == 1 and st[0]["explanation"]
+    assert st[0]["n"] == 1 and set(st[0]["explanation"]) == {"short", "teach"}
     filled = sum(1 for s in st if "placement" in s)
     assert filled == 81 - sum(ch != "." for ch in CLASSIC)
     assert card["se"]["scale"] == "classic" and card["se"]["er"] >= card["se"]["ep"]
@@ -111,7 +113,7 @@ def test_rate_without_ortools(variants):
 def test_meta_kept_and_ignored_for_rating():
     exp = pencilmark.to_export(CLASSIC, meta={"author": "someone", "x-custom": 1}, title="T", date="2026-10-25", describe=False)
     assert exp["meta"] == {"title": "T", "author": "someone", "date": "2026-10-25", "x-custom": 1}
-    assert exp["format_version"] == 1 and exp["rules"] == [{"type": "subgrid", "size": 9, "box": [3, 3], "origin": "r1c1"}]
+    assert exp["format_version"] == 1 and exp["rules"] == [{"type": "box_grid", "origin": "r1c1", "box": [3, 3], "count": [3, 3]}]
     again = pencilmark.to_export(exp, describe=False)       # metadata already in the input is kept
     assert again["meta"] == exp["meta"] and again["givens"] == exp["givens"]
     filled = pencilmark.to_export(exp)                      # an empty meta.type / rules_text is filled, nothing overwritten

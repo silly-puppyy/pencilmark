@@ -1,0 +1,38 @@
+{
+ "format": "sudoku-spec",
+ "format_version": 1,
+ "meta": {
+  "title": "16x16 killer with exactly 32 cages",
+  "description": "No givens, 32 cages tiling part of the board, unique by CP-SAT."
+ },
+ "grid": {
+  "rows": 16,
+  "cols": 16
+ },
+ "digits": 16,
+ "givens": {
+  "count": 0
+ },
+ "rules": [
+  {
+   "type": "box_grid",
+   "origin": "r1c1",
+   "box": [
+    4,
+    4
+   ],
+   "count": [
+    4,
+    4
+   ]
+  },
+  {
+   "type": "cage",
+   "count": 32
+  }
+ ],
+ "limits": {
+  "time": 3600,
+  "seed": 2
+ }
+}

@@ -1,0 +1,433 @@
+{
+ "format": "sudoku-spec",
+ "format_version": 1,
+ "meta": {
+  "title": "Super samurai: a variant per row of grids",
+  "description": "X sudoku on the top three grids, windoku in the middle two, anti-knight (within boxes) on the bottom three; the grids get harder from left to right, measured on the joint solve."
+ },
+ "grid": {
+  "rows": 21,
+  "cols": 33
+ },
+ "digits": 9,
+ "givens": {
+  "count": [
+   80,
+   140
+  ]
+ },
+ "rules": [
+  {
+   "type": "box_grid",
+   "origin": "r1c1",
+   "box": [
+    3,
+    3
+   ],
+   "count": [
+    3,
+    3
+   ],
+   "id": "G11"
+  },
+  {
+   "type": "box_grid",
+   "origin": "r1c13",
+   "box": [
+    3,
+    3
+   ],
+   "count": [
+    3,
+    3
+   ],
+   "id": "G12"
+  },
+  {
+   "type": "box_grid",
+   "origin": "r1c25",
+   "box": [
+    3,
+    3
+   ],
+   "count": [
+    3,
+    3
+   ],
+   "id": "G13"
+  },
+  {
+   "type": "box_grid",
+   "origin": "r7c7",
+   "box": [
+    3,
+    3
+   ],
+   "count": [
+    3,
+    3
+   ],
+   "id": "G21"
+  },
+  {
+   "type": "box_grid",
+   "origin": "r7c19",
+   "box": [
+    3,
+    3
+   ],
+   "count": [
+    3,
+    3
+   ],
+   "id": "G22"
+  },
+  {
+   "type": "box_grid",
+   "origin": "r13c1",
+   "box": [
+    3,
+    3
+   ],
+   "count": [
+    3,
+    3
+   ],
+   "id": "G31"
+  },
+  {
+   "type": "box_grid",
+   "origin": "r13c13",
+   "box": [
+    3,
+    3
+   ],
+   "count": [
+    3,
+    3
+   ],
+   "id": "G32"
+  },
+  {
+   "type": "box_grid",
+   "origin": "r13c25",
+   "box": [
+    3,
+    3
+   ],
+   "count": [
+    3,
+    3
+   ],
+   "id": "G33"
+  },
+  {
+   "type": "region",
+   "kind": "diagonal",
+   "cells": [
+    "r1c1",
+    "r2c2",
+    "r3c3",
+    "r4c4",
+    "r5c5",
+    "r6c6",
+    "r7c7",
+    "r8c8",
+    "r9c9"
+   ],
+   "area": "G11"
+  },
+  {
+   "type": "region",
+   "kind": "diagonal",
+   "cells": [
+    "r1c9",
+    "r2c8",
+    "r3c7",
+    "r4c6",
+    "r5c5",
+    "r6c4",
+    "r7c3",
+    "r8c2",
+    "r9c1"
+   ],
+   "area": "G11"
+  },
+  {
+   "type": "region",
+   "kind": "diagonal",
+   "cells": [
+    "r1c13",
+    "r2c14",
+    "r3c15",
+    "r4c16",
+    "r5c17",
+    "r6c18",
+    "r7c19",
+    "r8c20",
+    "r9c21"
+   ],
+   "area": "G12"
+  },
+  {
+   "type": "region",
+   "kind": "diagonal",
+   "cells": [
+    "r1c21",
+    "r2c20",
+    "r3c19",
+    "r4c18",
+    "r5c17",
+    "r6c16",
+    "r7c15",
+    "r8c14",
+    "r9c13"
+   ],
+   "area": "G12"
+  },
+  {
+   "type": "region",
+   "kind": "diagonal",
+   "cells": [
+    "r1c25",
+    "r2c26",
+    "r3c27",
+    "r4c28",
+    "r5c29",
+    "r6c30",
+    "r7c31",
+    "r8c32",
+    "r9c33"
+   ],
+   "area": "G13"
+  },
+  {
+   "type": "region",
+   "kind": "diagonal",
+   "cells": [
+    "r1c33",
+    "r2c32",
+    "r3c31",
+    "r4c30",
+    "r5c29",
+    "r6c28",
+    "r7c27",
+    "r8c26",
+    "r9c25"
+   ],
+   "area": "G13"
+  },
+  {
+   "type": "region",
+   "kind": "window",
+   "cells": [
+    "r8c8",
+    "r8c9",
+    "r8c10",
+    "r9c8",
+    "r9c9",
+    "r9c10",
+    "r10c8",
+    "r10c9",
+    "r10c10"
+   ],
+   "area": "G21"
+  },
+  {
+   "type": "region",
+   "kind": "window",
+   "cells": [
+    "r8c12",
+    "r8c13",
+    "r8c14",
+    "r9c12",
+    "r9c13",
+    "r9c14",
+    "r10c12",
+    "r10c13",
+    "r10c14"
+   ],
+   "area": "G21"
+  },
+  {
+   "type": "region",
+   "kind": "window",
+   "cells": [
+    "r12c8",
+    "r12c9",
+    "r12c10",
+    "r13c8",
+    "r13c9",
+    "r13c10",
+    "r14c8",
+    "r14c9",
+    "r14c10"
+   ],
+   "area": "G21"
+  },
+  {
+   "type": "region",
+   "kind": "window",
+   "cells": [
+    "r12c12",
+    "r12c13",
+    "r12c14",
+    "r13c12",
+    "r13c13",
+    "r13c14",
+    "r14c12",
+    "r14c13",
+    "r14c14"
+   ],
+   "area": "G21"
+  },
+  {
+   "type": "region",
+   "kind": "window",
+   "cells": [
+    "r8c20",
+    "r8c21",
+    "r8c22",
+    "r9c20",
+    "r9c21",
+    "r9c22",
+    "r10c20",
+    "r10c21",
+    "r10c22"
+   ],
+   "area": "G22"
+  },
+  {
+   "type": "region",
+   "kind": "window",
+   "cells": [
+    "r8c24",
+    "r8c25",
+    "r8c26",
+    "r9c24",
+    "r9c25",
+    "r9c26",
+    "r10c24",
+    "r10c25",
+    "r10c26"
+   ],
+   "area": "G22"
+  },
+  {
+   "type": "region",
+   "kind": "window",
+   "cells": [
+    "r12c20",
+    "r12c21",
+    "r12c22",
+    "r13c20",
+    "r13c21",
+    "r13c22",
+    "r14c20",
+    "r14c21",
+    "r14c22"
+   ],
+   "area": "G22"
+  },
+  {
+   "type": "region",
+   "kind": "window",
+   "cells": [
+    "r12c24",
+    "r12c25",
+    "r12c26",
+    "r13c24",
+    "r13c25",
+    "r13c26",
+    "r14c24",
+    "r14c25",
+    "r14c26"
+   ],
+   "area": "G22"
+  },
+  {
+   "type": "neighbours",
+   "kind": "antiknight",
+   "within": "box",
+   "area": "G31"
+  },
+  {
+   "type": "neighbours",
+   "kind": "antiknight",
+   "within": "box",
+   "area": "G32"
+  },
+  {
+   "type": "neighbours",
+   "kind": "antiknight",
+   "within": "box",
+   "area": "G33"
+  }
+ ],
+ "symmetry": [
+  {
+   "kind": "rot180",
+   "of": "givens"
+  }
+ ],
+ "where": {
+  "areas": [
+   {
+    "area": "G11",
+    "where": {
+     "band": "Easy"
+    }
+   },
+   {
+    "area": "G31",
+    "where": {
+     "band": "Easy"
+    }
+   },
+   {
+    "area": "G21",
+    "where": {
+     "band": "Medium"
+    }
+   },
+   {
+    "area": "G12",
+    "where": {
+     "band": "Medium"
+    }
+   },
+   {
+    "area": "G32",
+    "where": {
+     "band": "Medium"
+    }
+   },
+   {
+    "area": "G22",
+    "where": {
+     "band": "Hard"
+    }
+   },
+   {
+    "area": "G13",
+    "where": {
+     "band": "Hard"
+    }
+   },
+   {
+    "area": "G33",
+    "where": {
+     "band": "Hard"
+    }
+   }
+  ]
+ },
+ "quality": {
+  "preset": "standard"
+ },
+ "limits": {
+  "results": 1,
+  "time": 3600,
+  "seed": 7
+ }
+}

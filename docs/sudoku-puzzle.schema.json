@@ -41,6 +41,9 @@
     "cols": {
      "type": "integer",
      "minimum": 1
+    },
+    "infer_lines": {
+     "type": "boolean"
     }
    }
   },
@@ -119,11 +122,11 @@
   "style": {
    "type": "object"
   },
-  "rule_subgrid": {
+  "rule_box_grid": {
    "type": "object",
    "properties": {
     "type": {
-     "const": "subgrid"
+     "const": "box_grid"
     },
     "id": {
      "type": "string"
@@ -143,54 +146,7 @@
      "minItems": 2,
      "maxItems": 2
     },
-    "cells": {
-     "$ref": "#/$defs/cells"
-    },
-    "origin": {
-     "$ref": "#/$defs/cell"
-    },
-    "size": {
-     "type": "integer",
-     "minimum": 1
-    }
-   },
-   "required": [
-    "type",
-    "size"
-   ],
-   "additionalProperties": false,
-   "oneOf": [
-    {
-     "required": [
-      "origin"
-     ]
-    },
-    {
-     "required": [
-      "cells"
-     ]
-    }
-   ]
-  },
-  "rule_box_grid": {
-   "type": "object",
-   "properties": {
-    "type": {
-     "const": "box_grid"
-    },
-    "id": {
-     "type": "string"
-    },
-    "label": {
-     "type": "string"
-    },
-    "style": {
-     "$ref": "#/$defs/style"
-    },
-    "origin": {
-     "$ref": "#/$defs/cell"
-    },
-    "repeat": {
+    "count": {
      "type": "array",
      "items": {
       "type": "integer",
@@ -199,21 +155,18 @@
      "minItems": 2,
      "maxItems": 2
     },
-    "size": {
-     "type": "array",
-     "items": {
-      "type": "integer",
-      "minimum": 1
-     },
-     "minItems": 2,
-     "maxItems": 2
+    "lines": {
+     "type": "boolean"
+    },
+    "origin": {
+     "$ref": "#/$defs/cell"
     }
    },
    "required": [
     "type",
-    "origin",
-    "repeat",
-    "size"
+    "box",
+    "count",
+    "origin"
    ],
    "additionalProperties": false
   },
@@ -1479,9 +1432,6 @@
   },
   "rule": {
    "oneOf": [
-    {
-     "$ref": "#/$defs/rule_subgrid"
-    },
     {
      "$ref": "#/$defs/rule_box_grid"
     },
