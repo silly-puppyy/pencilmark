@@ -10,6 +10,11 @@
       summary. --legacy prints the legacy card (time grade %t, work minutes %w).
   python -m pencilmark solve [FILE|-]      the solution (or 'not unique' / 'no solution') per puzzle
   python -m pencilmark json  [FILE|-]      validate + normalise to canonical JSON (adds "hash")
+  python -m pencilmark export [FILE|-] [--pretty] [--no-solution]
+                                       each puzzle as a "sudoku-puzzle" file (format_version 1, docs/FORMAT.md), canonical
+  python -m pencilmark fingerprint [FILE|-]  the content fingerprint ("sha256:...") per puzzle
+  python -m pencilmark describe [FILE|-]     variant name and rules per puzzle (JSON)
+Inputs may also be sudokuwiki.org packed strings (S9B..., L9B..., J9B...).
 """
 from __future__ import annotations
 
@@ -38,7 +43,9 @@ def _inputs(src):
         elif line.endswith(".json") and Path(line).exists():
             yield k, _to_puzzle_json(json.load(open(line, encoding="utf-8")))
         else:
-            yield k, {"numbers": line.split()[0]}
+            tok = line.split()[0]
+            from .interop import _PACKED, from_string
+            yield k, (_to_puzzle_json(from_string(tok)) if _PACKED.fullmatch(tok) else {"numbers": tok})
 
 
 def _to_puzzle_json(obj):
@@ -198,6 +205,28 @@ def cmd_json(a):
         print(json.dumps(d, separators=(",", ":")), flush=True)
 
 
+def cmd_export(a):
+    from .api import to_export, dumps
+    for k, obj in _inputs(a.file):
+        try:
+            d = to_export(obj, with_solution=not a.no_solution)
+            print(dumps(d, pretty=a.pretty), end="" if a.pretty else "\n", flush=True)
+        except Exception as e:
+            print(f"error\t{k}\t{type(e).__name__}: {e}", flush=True)
+
+
+def cmd_fingerprint(a):
+    from .api import fingerprint
+    for k, obj in _inputs(a.file):
+        print(fingerprint(obj), flush=True)
+
+
+def cmd_describe(a):
+    from .api import describe, to_export
+    for k, obj in _inputs(a.file):
+        print(json.dumps(describe(to_export(obj, with_solution=False, describe=False)), ensure_ascii=False), flush=True)
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="python -m pencilmark", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -213,6 +242,10 @@ def main(argv=None):
     r.set_defaults(fn=cmd_rate)
     s = sub.add_parser("solve"); s.add_argument("file", nargs="?"); s.set_defaults(fn=cmd_solve)
     j = sub.add_parser("json"); j.add_argument("file", nargs="?"); j.set_defaults(fn=cmd_json)
+    e = sub.add_parser("export"); e.add_argument("file", nargs="?"); e.add_argument("--pretty", action="store_true")
+    e.add_argument("--no-solution", action="store_true", help="do not solve to add the solution"); e.set_defaults(fn=cmd_export)
+    f = sub.add_parser("fingerprint"); f.add_argument("file", nargs="?"); f.set_defaults(fn=cmd_fingerprint)
+    ds = sub.add_parser("describe"); ds.add_argument("file", nargs="?"); ds.set_defaults(fn=cmd_describe)
     a = ap.parse_args(argv)
     a.fn(a)
 

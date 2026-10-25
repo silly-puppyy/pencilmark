@@ -22,7 +22,7 @@ def test_deterministic_and_input_forms(tmp_path):
     assert pencilmark.rate(CLASSIC) == a
     exp = pencilmark.to_export(CLASSIC, title="t")
     assert exp["format"] == "sudoku-puzzle" and exp["givens"][4] == 4 and exp["givens"][0] == 0
-    assert exp["meta"] == {"title": "t"}
+    assert exp["meta"]["title"] == "t" and exp["meta"]["type"] == "Sudoku"      # empty type / rules_text filled by describe
     assert pencilmark.rate(exp) == a
     assert pencilmark.rate(json.dumps({"numbers": CLASSIC})) == a
     f = tmp_path / "p.json"
@@ -109,13 +109,17 @@ def test_rate_without_ortools(variants):
 
 
 def test_meta_kept_and_ignored_for_rating():
-    exp = pencilmark.to_export(CLASSIC, meta={"author": "someone", "x-custom": 1}, title="T", date="2026-10-25")
+    exp = pencilmark.to_export(CLASSIC, meta={"author": "someone", "x-custom": 1}, title="T", date="2026-10-25", describe=False)
     assert exp["meta"] == {"title": "T", "author": "someone", "date": "2026-10-25", "x-custom": 1}
-    again = pencilmark.to_export(exp)                       # metadata already in the input is kept
+    assert exp["format_version"] == 1 and exp["rules"] == [{"type": "subgrid", "size": 9, "box": [3, 3], "origin": "r1c1"}]
+    again = pencilmark.to_export(exp, describe=False)       # metadata already in the input is kept
     assert again["meta"] == exp["meta"] and again["givens"] == exp["givens"]
-    legacy = {k: v for k, v in exp.items() if k != "meta"}
-    legacy.update(title="T", source={"site": "example.org", "id": "7"})      # older top-level form
-    assert pencilmark.to_export(legacy)["meta"] == {"title": "T", "source": "example.org", "id": "7"}
+    filled = pencilmark.to_export(exp)                      # an empty meta.type / rules_text is filled, nothing overwritten
+    assert filled["meta"]["type"] == "Sudoku" and filled["meta"]["author"] == "someone"
+    boxes = [[(br + i) * 9 + bc + j for i in range(3) for j in range(3)] for br in (0, 3, 6) for bc in (0, 3, 6)]
+    legacy = {"format": "sudoku-puzzle/2", "grid": exp["grid"], "digits": 9, "givens": exp["givens"], "boxes": boxes,
+              "title": "T", "source": {"site": "example.org", "id": "7"}}      # an older file: top-level metadata
+    assert pencilmark.to_export(legacy, describe=False)["meta"] == {"title": "T", "source": "example.org", "id": "7"}
     assert pencilmark.rate(exp) == pencilmark.rate(legacy) == pencilmark.rate(CLASSIC)
 
 

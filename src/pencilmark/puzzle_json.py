@@ -205,8 +205,10 @@ def from_json(obj) -> M.Puzzle:
         for ch in s:
             m |= 1 << (_val(ch) - 1)
         p.domains[ci(cell)] = m
+    marks = []                                       # (rule, relations / constraints before it): named rules are remembered
     for r in d.get("rules") or []:
         t = r["type"]
+        marks.append((r, len(p.relations), len(p.constraints)))
         if t == "kropki":
             a, b = (ci(x) for x in r["cells"])
             p.relations.append(("diff", a, b, 1) if r.get("color", "white") == "white" else ("ratio", a, b, 2))
@@ -266,6 +268,7 @@ def from_json(obj) -> M.Puzzle:
             for x in range(D):
                 p.coords.append((kr, x)); p.domains.append((1 << D) - 1); key.append(len(p.coords) - 1)
             p.N = len(p.coords)
+            p.iso_key = list(getattr(p, "iso_key", [])) + key       # 2026-10-25: the exchange writer leaves these out
             p.groups.append(M.Group("digit key", tuple(key), "region", True))
             for a, b in pairs:
                 for x in range(1, D + 1):
@@ -301,6 +304,16 @@ def from_json(obj) -> M.Puzzle:
                 for dr, dc in ((0, 1), (1, 0)):
                     if (r_ + dr, c_ + dc) in cid:
                         p.relations.append(("nonconsec", a, cid[(r_ + dr, c_ + dc)]))
+        elif t == "global_entropy":                     # every 2x2 window holds a low, a middle and a high digit (thirds)
+            allowed = entropy_table(D)
+            for (r_, c_) in sorted(cid):
+                win = [(r_, c_), (r_, c_ + 1), (r_ + 1, c_), (r_ + 1, c_ + 1)]
+                if all(x in cid for x in win):
+                    p.constraints.append({"type": "table", "cells": [cid[x] for x in win], "allowed": allowed})
+        elif t == "quadruple":                          # the listed digits (repeats allowed) all appear in these cells
+            cs = [ci(x) for x in r["cells"]]
+            need = [int(v) for v in r["digits"]]
+            p.constraints.append({"type": "table", "cells": cs, "allowed": quadruple_table(D, len(cs), need)})
         else:
             con = {k: v for k, v in r.items()}
             for k in CELL_KEYS:
@@ -312,6 +325,52 @@ def from_json(obj) -> M.Puzzle:
             if "allowed" in con:
                 con["allowed"] = [tuple(x) for x in con["allowed"]]
             p.constraints.append(con)
+    ends = [(m[1], m[2]) for m in marks[1:]] + [(len(p.relations), len(p.constraints))]
+    for (r, a, b), (a2, b2) in zip(marks, ends):
+        if r["type"] in NAMED_RULES:
+            _remember(p, r, p.relations[a:a2], p.constraints[b:b2])
+    return p
+
+
+# well-known rules that expand into engine relations / tables when read; the puzzle remembers them so they are written back
+# by name, not as their expansion (2026-10-25: a global-entropy puzzle was 64 copies of a 2,916-row table). One-off rules
+# belong to the planned custom rule language, not here.
+NAMED_RULES = {"global_entropy", "quadruple", "rossini", "vudoku", "increasing", "isomorphic"}
+
+
+def _remember(p, rule, rels, cons):
+    for c in cons:
+        c["_named"] = True              # expansion of a named rule: written back as the rule (underscore keys never reach C++)
+    p.named_rules = getattr(p, "named_rules", []) + [(dict(rule), list(rels))]
+
+
+def entropy_table(D):
+    """2x2 window (TL, TR, BL, BR) with a low, a middle and a high digit, classes = thirds of 1..D (sudoku.coach's rule)."""
+    import itertools
+    third = lambda v: (v - 1) * 3 // D
+    return [t for t in itertools.product(range(1, D + 1), repeat=4) if len({third(v) for v in t}) == 3]
+
+
+def quadruple_table(D, n, need):
+    import itertools
+    return [t for t in itertools.product(range(1, D + 1), repeat=n) if all(t.count(v) >= need.count(v) for v in set(need))]
+
+
+def add_named(p, rule):
+    """apply a named rule (cells as engine indices or "r1c1" names) to an engine Puzzle and remember it (for importers that
+    build Puzzles directly)."""
+    coords = list(p.coords)
+    cname = lambda i: f"r{coords[i][0] + 1}c{coords[i][1] + 1}" if isinstance(i, int) else i
+    r = {k: ([cname(x) for x in v] if k in CELL_KEYS else v) for k, v in rule.items()}
+    width = max(c for _, c in coords) + 1; height = max(rr for rr, _ in coords) + 1
+    shape = ["".join("#" if (y, x) in set(coords) else "." for x in range(width)) for y in range(height)]
+    q = from_json({"digits": p.D, "shape": shape, "regions": [], "rules": [r]})
+    a, b = len(p.relations), len(p.constraints)
+    p.relations += q.relations
+    p.constraints += q.constraints
+    if getattr(q, "domains", None) and p.domains:
+        p.domains = [x & y for x, y in zip(p.domains, q.domains)]
+    _remember(p, r, p.relations[a:], p.constraints[b:])
     return p
 
 
@@ -405,8 +464,10 @@ def to_json(p: M.Puzzle, solution=None, meta=None) -> dict:
         out["candidates"] = cands
     # rules: relations minus those compiled from lines / clones
     comp, comp_cons, _ = _compiled_extras(p)
-    rels = Counter(p.relations) - comp
-    rules = list(clue_rules)
+    named = getattr(p, "named_rules", [])
+    named_rels = Counter(x for _, rels_ in named for x in rels_)
+    rels = Counter(p.relations) - comp - named_rels
+    rules = list(clue_rules) + [dict(r_) for r_, _ in named]
     ak = {("neq", a, b) for a, b in _pairs(coords, [(1, 2), (2, 1), (1, -2), (2, -1)])}
     akg = {("neq", a, b) for a, b in _pairs(coords, [(1, 1), (1, -1)])}
     for name, S in (("antiknight", ak), ("antiking", akg)):
@@ -435,11 +496,13 @@ def to_json(p: M.Puzzle, solution=None, meta=None) -> dict:
         rules.append(_compact_pairs(kind, json.loads(params), cells, coords, cname))
     comp_set = Counter(comp_cons)
     for c in p.constraints:
-        key = json.dumps({k: v for k, v in c.items() if k != "_compiled"}, sort_keys=True, default=list)
+        if c.get("_named"):
+            continue
+        key = json.dumps({k: v for k, v in c.items() if not k.startswith("_")}, sort_keys=True, default=list)
         if comp_set[key] > 0:
             comp_set[key] -= 1
             continue
-        r = {k: v for k, v in c.items() if k != "_compiled"}
+        r = {k: v for k, v in c.items() if not k.startswith("_")}
         for k in CELL_KEYS:
             if k in r:
                 r[k] = [cname(x) for x in r[k]]

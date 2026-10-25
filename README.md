@@ -28,11 +28,11 @@ card["band"], card["difficulty"], card["time"]          # ('Medium', 5.9, 10.7)
 card  = pencilmark.rate(puzzle, steps=True)             # add the step-by-step solve with explanations
 cards = pencilmark.rate_many(puzzles, jobs=4)           # several puzzles in parallel, input order kept
 sol   = pencilmark.solve(puzzle)                        # list of digits; raises NotUnique / NoSolution
-exp   = pencilmark.to_export(puzzle, title="My puzzle") # "sudoku-puzzle" exchange format, metadata under "meta"
+exp   = pencilmark.to_export(puzzle, title="My puzzle") # "sudoku-puzzle" exchange format (docs/FORMAT.md)
 ```
 
-A puzzle can be a classic string (`.` or `0` for blanks), a puzzle JSON dict or string, a `sudoku-puzzle` dict, or a
-path to a `.json` file.
+A puzzle can be a classic string (`.` or `0` for blanks), a sudokuwiki.org packed string, a puzzle JSON dict or string,
+a `sudoku-puzzle` dict, or a path to a `.json` file.
 
 Command line:
 
@@ -66,33 +66,31 @@ may say `contents_truncated`.
 
 ## Exchange format
 
-`to_export` writes, and every entry point reads, the `"sudoku-puzzle"` format:
+`to_export` writes, and every entry point reads, the `"sudoku-puzzle"` format, **format_version 1**, specified in
+[docs/FORMAT.md](docs/FORMAT.md) (JSON Schema: [docs/sudoku-puzzle.schema.json](docs/sudoku-puzzle.schema.json)):
 
 ```json
-{"format": "sudoku-puzzle",
- "meta": {"title": "Heartstring", "author": "...", "source": "example.org", "date": "2026-10-25"},
- "grid": {"rows": 9, "cols": 9}, "digits": 9,
+{"format": "sudoku-puzzle", "format_version": 1,
+ "meta": {"title": "Heartstring", "author": "...", "source": "example.org", "type": "Killer Sudoku"},
+ "grid": {"rows": 9, "cols": 9},
+ "digits": 9,
  "givens":   [0, 0, 5, 4, 0, ...],
  "solution": [6, 1, 5, 4, 2, ...],
- "boxes": [[0, 1, 2, 9, 10, 11, 18, 19, 20], ...],
- "regions": [{"kind": "cage", "cells": [3, 4, 12], "sum": 15}],
- "rules": [{"type": "kropki", "color": "white", "cells": [40, 41]}]}
+ "rules": [
+  {"type": "subgrid", "size": 9, "box": [3, 3], "origin": "r1c1"},
+  {"type": "cage", "sum": 15, "cells": ["r1c4", "r1c5", "r2c4"]},
+  {"type": "edge", "kind": "kropki", "color": "white", "cells": ["r5c5", "r5c6"]}]}
 ```
 
-- `meta` is optional, like EXIF: information about the puzzle that never changes how it is solved or rated. All keys
-  are optional and free-form, and tools keep keys they don't know. Common keys: `title`, `author`, `source` (website
-  domain), `id`, `url`, `date` (ISO 8601), `rules_text`, `type`, `license`, `tags`. Older files with these keys at the
-  top level are still read.
-- Cells are flat indices in reading order: `index = row * cols + col`.
-- `givens`: `0` = empty cell, `null` = no cell at that position (the gaps of multi-grid boards such as samurai).
-- `boxes` are always listed. `units` (rows / columns per sub-grid) appear only when the board is not one plain grid.
-- `regions` holds other no-repeat groups: diagonals, extra regions, killer cages with `sum`.
-- `rules` holds everything else with cell indices; `candidates` holds given pencil marks (Sukaku).
-- A pair rule that covers the whole grid is written compactly: `{"type": "pairs", "rel": "notsum", "params": [10],
-  "where": "orthogonal", "except": [[0, 1]]}` means every orthogonal neighbour pair except those listed (`where` is
-  `orthogonal`, `diagonal`, `king` or `knight`). Full-grid non-consecutive is written `{"type": "nonconsecutive"}`.
-
-The richer input format (`pencilmark.puzzle_json`, with `r1c1` cell names) is described in that module.
+- Every constraint is a rule, houses included: one `subgrid` rule gives a grid's rows, columns and boxes; nothing is
+  implied. Cells are named `r{row}c{col}`, 1-based. `givens`: `0` = empty, `null` = no cell (multi-grid gaps).
+- Each rule has one exact meaning and a default drawing, so a renderer needs nothing else; `style` and `decorations`
+  are cosmetic only. `meta` is free-form information that never changes solving.
+- Strict reading: an unknown key or rule type makes the reader refuse the file (`FormatError`) instead of dropping a
+  rule. Older files (no `format_version`, `sudoku-puzzle/2`) are still read.
+- `pencilmark.dumps` writes the canonical text (one grid row per line, one rule per line); `pencilmark.fingerprint`
+  gives a content hash that ignores metadata and styling; `pencilmark.describe` names the variant and lists its rules;
+  `pencilmark.to_ipuz`, `from_string` / `to_string` (plain and sudokuwiki.org strings) convert to other formats.
 
 ## Supported rules
 

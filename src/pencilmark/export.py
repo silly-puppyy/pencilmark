@@ -1,24 +1,16 @@
 """Human-oriented exchange formats: one for the puzzle, one for its grade (the older "/2" format strings are also
 accepted).
 
-puzzle (format "sudoku-puzzle"):
-  meta       optional, like EXIF: information ABOUT the puzzle that never changes how it is solved or graded. Every key is
-             optional and free-form; tools keep keys they don't know. Common keys: title, author, source (the website's
-             domain, e.g. "fed-sudoku.eu"), id (the site's id), url, date (ISO 8601), rules_text (the setter's wording), type
-             (display label, e.g. "Killer Sudoku"), license, tags. Older files with these keys at the top level,
-             or source as {"site", "id", "author"}, are still read.
-  grid       {"rows": R, "cols": C}  bounding grid
-  digits     D (cells hold 1..D)
-  givens     flat list of R*C in reading order: 0 = empty cell, null = no cell (gaps of multi-grid boards)
-  solution   same shape, digits everywhere a cell exists
-  boxes      every box as a list of flat cell indices (always explicit, also for a classic 9x9)
-  units      rows / columns per sub-grid as lists of flat indices -- only for boards that are not one plain D x D grid
-  regions    other no-repeat groups (diagonals, extra regions, cages with "sum"), flat indices
-  rules      readable rules with flat cell indices (kropki, xv, line kinds, arrows, outside clues, isomorphic, and the graphical
-             cell clues parity / digit_class / exclude / lowhigh …)
-  candidates given pencil marks {"index": "137"} (Sukaku) -- shaded clues such as odd / even are rules (2026-10-25)
+puzzle (format "sudoku-puzzle", format_version 1): specified in docs/FORMAT.md, implemented in grader/exchange.py (strict
+  reader, order-preserving writer, canonical text, fingerprint), schema docs/sudoku-puzzle.schema.json. In short: "grid",
+  "digits", flat "givens" (0 empty, null no cell), optional "solution" / "candidates", and "rules" holding every constraint,
+  houses included ({"type": "subgrid", "size": 9, "box": [3, 3], "origin": "r1c1"} for a classic; nothing is implied), cells
+  named "r{row}c{col}"; "meta" is free-form information that never changes solving. Unknown keys / rule types are refused.
+  Older files (no format_version: flat cell indices, "boxes" / "units" / "regions", metadata at the top level) and the
+  pre-release drafts are still read (import_puzzle).
 
-grade (format "sudoku-grade"):
+grade (format "sudoku-grade", format_version 1):
+  grader      {"name": "pencilmark", "version": "1.0.0"}: the engine that made the card; a card from another version can differ
   difficulty  what a human feels per cell: continuous, floor 0 (one empty cell), no ceiling; classic medians track Stuart's
               scale (data/card_score.json "map", 2026-10-22)
   time        minutes for today's average player (classic units x minutes_per_unit, data/time_model.json); time_p80 = the
@@ -40,6 +32,8 @@ from pathlib import Path
 
 from . import _data, cbackend as CB, solver as S, metrics as MT, puzzle_json as PJ
 
+GRADER_NAME, GRADER_VERSION = "pencilmark", "1.0.0"   # on every card: a grade is only meaningful with the engine that made it
+FORMAT_VERSION = 1          # of both formats; bumped only on a breaking change (additive fields don't bump it)
 BANDS = ["Very Easy", "Easy", "Medium", "Hard", "Very Hard", "Extreme"]
 SITES = {"fed": "fed-sudoku.eu", "lisudoku": "lisudoku.com", "sudoku.coach": "sudoku.coach", "LMD": "logic-masters.de",
          "puzzleduel": "puzzleduel.club", "sudoku-variants": "sudoku-variants.com", "sudoku.one": "sudoku.one",
@@ -313,51 +307,93 @@ def read_meta(d):
 
 
 def export_puzzle(p, meta=None, solution=None, source=None, title=None, rules_text=None):
-    """engine Puzzle -> "sudoku-puzzle" dict. meta: free-form metadata dict (see the module docstring); source / title /
-    rules_text are the older keyword form and are merged into meta."""
-    coords = list(p.coords)
-    R = max(r for r, _ in coords) + 1; C = max(c for _, c in coords) + 1
-    flat = {i: rc[0] * C + rc[1] for i, rc in enumerate(coords)}
-    givens = [None] * (R * C); sol = [None] * (R * C)
-    for i in range(len(coords)):
-        givens[flat[i]] = p.givens.get(i, 0)
-    if solution is not None:
-        for i, v in enumerate(solution[:len(coords)]):
-            sol[flat[i]] = int(v)
-    plain = R == C == p.D and len(coords) == p.D * p.D
-    d = {"format": "sudoku-puzzle"}
+    """engine Puzzle -> "sudoku-puzzle" dict (format_version 1, docs/FORMAT.md; pencilmark/exchange.py). meta: free-form metadata
+    dict; source / title / rules_text are the older keyword form and are merged into meta."""
+    from . import exchange as X
     m = read_meta({"source": source, "title": title, "rules_text": rules_text, "meta": meta})
-    if m: d["meta"] = m
-    d.update({"grid": {"rows": R, "cols": C}, "digits": p.D, "givens": givens})
-    if solution is not None: d["solution"] = sol
-    d["boxes"] = [[flat[c] for c in g.cells] for g in p.groups if g.kind == "box"]
-    if not plain:
-        d["units"] = [{"kind": g.kind, "cells": [flat[c] for c in g.cells]} for g in p.groups if g.kind in ("row", "col")]
-    regs = [{"kind": g.kind, "cells": [flat[c] for c in g.cells], **({"sum": g.total} if g.total is not None else {})}
-            for g in p.groups if g.kind not in ("row", "col", "box")]
-    if regs: d["regions"] = regs
-    # readable rules with flat indices: reuse the puzzle-JSON encoder, then translate rXcY -> flat index
-    pj = PJ.to_json(p)
-    def tr(x):
-        if isinstance(x, str) and x[:1] == "r" and "c" in x:
-            try:
-                r_, c_ = x[1:].split("c"); return (int(r_) - 1) * C + int(c_) - 1
-            except ValueError:
-                return x
-        if isinstance(x, list): return [tr(y) for y in x]
-        if isinstance(x, dict): return {k: tr(v) for k, v in x.items()}
-        return x
-    if pj.get("rules"): d["rules"] = tr(pj["rules"])
-    if pj.get("candidates"): d["candidates"] = {str(tr(k)): v for k, v in pj["candidates"].items()}
-    return d
+    return X.write(p, meta=m, solution=solution)
 
 
 _CELL_KEYS = ("cells", "circle", "line", "segments", "high", "low", "except")
 
 
+_HOUSE = {"row": "row", "column": "col", "box": "box", "cage": "cage"}
+
+
+def _cell(x):
+    return x.lower() if isinstance(x, str) else x
+
+
+DRAFT_TYPES = {"kropki", "xv", "less", "pairs", "parity", "digit_class", "exclude", "lowhigh", "antiknight", "antiking",
+               "nonconsecutive", "frame", "little_killer", "increasing", "quadruple", "set", "between", "counting_circles"}
+
+
+def _is_draft(d):
+    """a format_version 1 file written before the specification was frozen (implied rows / columns, the puzzle_json rule
+    vocabulary)"""
+    rules = d.get("rules") or []
+    types = {r.get("type") for r in rules if isinstance(r, dict)}
+    if types & {"subgrid", "box_grid"}:
+        return False
+    if types & DRAFT_TYPES or any(isinstance(r, dict) and ("total" in r or "circle" in r or "rel" in r) for r in rules):
+        return True
+    g = d.get("grid") or {}
+    giv = d.get("givens") or []
+    plain = g.get("rows") == g.get("cols") == d.get("digits") and None not in giv
+    return plain and "box" in types and not types & {"row", "column"}
+
+
 def import_puzzle(d):
     """sudoku-puzzle -> puzzle JSON (pencilmark.puzzle_json), so any exported puzzle can be read back (python -m pencilmark rate
-    accepts both). Flat indices become rXcY; null givens become voids of the shape."""
+    accepts both). format_version 1 (docs/FORMAT.md) is read strictly by pencilmark/exchange.py; older files (no format_version:
+    flat cell indices, "boxes" / "units" / "regions") go through _import_legacy, pre-release drafts through _import_draft."""
+    if "format_version" not in d and ("boxes" in d or "units" in d or "regions" in d):
+        return _import_legacy(d)
+    if "format_version" in d:
+        from . import exchange as X
+        if not isinstance(d["format_version"], int) or d["format_version"] > FORMAT_VERSION:
+            raise X.FormatError(f"sudoku-puzzle format_version {d['format_version']!r} is newer than this reader ({FORMAT_VERSION})")
+        if not _is_draft(d):
+            return X.to_internal(d)
+    return _import_draft(d)
+
+
+def _import_draft(d):
+    """pre-release format_version 1 drafts and files without format_version and without boxes: houses as rules, rows / columns
+    of a gap-free D x D grid implied, puzzle_json rule vocabulary."""
+    R, C = d["grid"]["rows"], d["grid"]["cols"]
+    giv = d["givens"]; D = d.get("digits") or max(R, C)
+    sym = lambda v: "." if not v else PJ._sym(v)
+    out = {"digits": D, "numbers": "".join("#" if v is None else sym(v) for v in giv)}
+    plain = R == C == D and None not in giv
+    if not plain:           # gaps, or a bounding grid bigger than D x D (butterfly, clueless): the shape fixes the coordinates
+        out["shape"] = ["".join("." if giv[r * C + c] is None else "#" for c in range(C)) for r in range(R)]
+    if d.get("solution"): out["solution"] = "".join("#" if v is None else sym(v) for v in d["solution"])
+    lower = lambda x: [lower(y) for y in x] if isinstance(x, list) else _cell(x)
+    regions, rules = [], []
+    for r in d.get("rules") or []:
+        t = r.get("type")
+        if t in _HOUSE or t == "region":
+            g = {"kind": _HOUSE.get(t) or r.get("kind") or "region", "cells": lower(r["cells"])}
+            for k in ("sum", "complete"):
+                if k in r: g[k] = r[k]
+            regions.append(g)
+        else:
+            rules.append({k: (lower(v) if k in _CELL_KEYS or k in PJ.NESTED_KEYS else v) for k, v in r.items()})
+    if plain and not any(g["kind"] in ("row", "col") for g in regions):
+        rc = lambda r, c: f"r{r + 1}c{c + 1}"
+        regions = ([{"kind": "row", "cells": [rc(r, c) for c in range(C)]} for r in range(R)] +
+                   [{"kind": "col", "cells": [rc(r, c) for r in range(R)]} for c in range(C)] + regions)
+    out["regions"] = regions
+    if rules: out["rules"] = rules
+    if d.get("candidates"): out["candidates"] = {_cell(k): v for k, v in d["candidates"].items()}
+    m = read_meta(d)
+    if m: out["meta"] = m
+    return out
+
+
+def _import_legacy(d):
+    """older sudoku-puzzle files (before format_version: flat cell indices, "boxes" / "units" / "regions")."""
     R, C = d["grid"]["rows"], d["grid"]["cols"]
     rc = lambda i: f"r{i // C + 1}c{i % C + 1}"
     def tr(x, cell=False):
@@ -374,7 +410,7 @@ def import_puzzle(d):
         out["shape"] = ["".join("." if giv[r * C + c] is None else "#" for c in range(C)) for r in range(R)]
     if d.get("solution"): out["solution"] = "".join("#" if v is None else sym(v) for v in d["solution"])
     regs = [{"kind": "box", "cells": [rc(i) for i in b]} for b in d.get("boxes") or []]
-    if not plain or regs:
+    if True:            # rows / columns always (a jigsaw without "boxes" keeps them)
         units = d.get("units") or ([{"kind": "row", "cells": list(range(r * C, r * C + C))} for r in range(R)] +
                                    [{"kind": "col", "cells": list(range(c, R * C, C))} for c in range(C)])
         regs = [{"kind": u["kind"], "cells": [rc(i) for i in u["cells"]]} for u in units] + regs
@@ -469,7 +505,8 @@ def grade(p, P, card=None, with_steps=True, max_seconds=None):
         contains.append(e)
     tg = card.get("time_grade")
     tm = time_units(card.get("effort_l1"), p.N - len(p.givens), difficulty=card.get("score"), geometry=region_geometry(p))
-    g = {"format": "sudoku-grade",
+    g = {"format": "sudoku-grade", "format_version": FORMAT_VERSION,
+         "grader": {"name": GRADER_NAME, "version": GRADER_VERSION},
          "difficulty": card.get("score"),
          # 2026-10-22 (user): time in MINUTES for today's average player (classic units x minutes_per_unit, data/time_model.json)
          "time": round(tm * _TIME.get("minutes_per_unit", 1.0), 1) if tm is not None else (round(2 ** (tg - 5), 2) if tg is not None else None),

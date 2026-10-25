@@ -274,9 +274,8 @@ def translate(fp, line_kinds=None):
         if not all(str(v).strip().isdigit() for v in q.get("values", [])):
             return None, "unsupported: quadruple with non-digit values"
         need = [int(v) for v in q.get("values", [])]
-        allowed = [t for t in itertools.product(range(1, n + 1), repeat=len(cells))
-                   if all(t.count(v) >= need.count(v) for v in set(need))]
-        p.constraints.append({"type": "table", "cells": cells, "allowed": allowed})
+        from .. import puzzle_json as PJ
+        PJ.add_named(p, {"type": "quadruple", "cells": cells, "digits": need})
     for k, v in fp.items():
         if v and k not in DECORATIVE and k != "negative" and not k.startswith("_"):
             used.setdefault(k, len(v) if isinstance(v, list) else True)

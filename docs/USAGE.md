@@ -9,14 +9,18 @@ pencilmark rate puzzles.txt --json       # full card (sudoku-grade); add --steps
 pencilmark rate - --format '%b|%d|%m|%p|%c' < puzzles.txt
 pencilmark solve puzzles.txt             # the solution, or 'not unique' / 'no solution' / 'undecided'
 pencilmark json puzzles.txt              # validate + normalise to canonical puzzle JSON
+pencilmark export puzzles.txt --pretty   # each puzzle as a sudoku-puzzle file (docs/FORMAT.md), canonical
+pencilmark fingerprint puzzles.txt       # content fingerprint "sha256:..." per puzzle
+pencilmark describe puzzles.txt          # variant name and rules, e.g. {"type": "Killer Sudoku", "rules": {...}}
 ```
 
 `python -m pencilmark ...` does the same.
 
 **Input:** one puzzle per line. Each line can be any of these:
-- a classic string, with `.` or `0` for blanks;
+- a classic string, with `.` or `0` for blanks, or a sudokuwiki.org packed string (`S9B…`, `J9B…`, `L9B…`, …);
 - a JSON object in the `pencilmark.puzzle_json` format (variants, multi-grids, rules);
-- a `sudoku-puzzle` object (the exchange format, see the README; `sudoku-puzzle/2` is also accepted);
+- a `sudoku-puzzle` object: the exchange format, format_version 1 (docs/FORMAT.md); older files without
+  `format_version` and `sudoku-puzzle/2` are also read;
 - a sample-pack line `{"puzzle": ..., "grade": ...}`;
 - a path to a `.json` file.
 
@@ -24,9 +28,9 @@ Metadata (title, author, source, date, ...) lives in an optional `"meta"` object
 used for solving or rating; `pencilmark json` and `to_export` keep it. Older files with these keys at the top level
 are still read.
 
-Whole-grid pair rules are written compactly: `{"type": "pairs", "rel": "notsum", "params": [10], "where": "orthogonal",
-"except": [["r1c1", "r1c2"]]}` = every orthogonal neighbour pair except the listed ones (`where`: orthogonal, diagonal,
-king or knight). In the exchange format the cells in `except` are flat indices.
+In the exchange format, whole-board pair rules are `neighbours` rules (`{"type": "neighbours", "kind": "antiknight"}`,
+or an operator with `where` and `except`), and "all clues shown" is a `negative` rule (`{"type": "negative", "of": "xv"}`);
+see docs/FORMAT.md section 6.
 
 **Format fields:**
 
@@ -61,7 +65,16 @@ card  = pencilmark.rate(puzzle, se=True)            # + card["se"] = {"er", "ep"
 sol   = pencilmark.solve(puzzle)                    # digits; raises NotUnique / NoSolution (Undecided if the search
                                                     #   hits its limit and OR-Tools is not installed)
 exp   = pencilmark.to_export(puzzle, title="Escargot", author="Arto Inkala", source="example.org", id="42")
-                                                    # metadata goes under exp["meta"]; meta={...} takes a dict of any keys
+                                                    # metadata goes under exp["meta"]; meta={...} takes a dict of any keys;
+                                                    #   an empty meta.type / rules_text is filled from describe()
+text  = pencilmark.dumps(exp)                       # canonical text (one grid row per line, one rule per line)
+fp    = pencilmark.fingerprint(puzzle)              # "sha256:..." of rules + grid + givens (no meta / style / solution)
+pencilmark.validate(exp)                            # strict reading checks; raises pencilmark.FormatError
+pencilmark.describe(puzzle)                         # {"type": "Killer Sudoku", "rules": {"Sudoku": "...", "Killer": "..."}}
+pencilmark.to_ipuz(puzzle)                          # ipuz 2 (classic, Latin square, diagonal, windoku, jigsaw, killer)
+pencilmark.from_string("S9B...")                    # plain / sudokuwiki.org packed string -> sudoku-puzzle dict
+pencilmark.to_string(puzzle, "sudokuwiki")          # ... and back ("plain" for classic strings)
+pencilmark.spec_from_gen({"size": 9, "target_band": "Hard"})   # generator spec <-> "sudoku-spec" (spec_to_gen)
 p     = pencilmark.load(puzzle)                     # the engine's Puzzle object
 ```
 `rate` returns the same card as `pencilmark rate --json`.

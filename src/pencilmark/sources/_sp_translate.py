@@ -842,14 +842,8 @@ def global_rules(n, p, rules, used):
     import itertools
     t = (rules or "").lower()
     if n % 3 == 0 and re.search(r"global entropy|every 2 ?x ?2[^.]{0,80}(?:low|entrop)|each 2 ?x ?2[^.]{0,80}(?:low|entrop)", t):
-        third = lambda v: (v - 1) * 3 // n
-        allowed = [tup for tup in itertools.product(range(1, n + 1), repeat=4)
-                   if tup[0] != tup[1] and tup[2] != tup[3] and tup[0] != tup[2] and tup[1] != tup[3]
-                   and len({third(v) for v in tup}) == 3]
-        for r in range(n - 1):
-            for c in range(n - 1):
-                p.constraints.append({"type": "table", "cells": [r * n + c, r * n + c + 1, (r + 1) * n + c, (r + 1) * n + c + 1],
-                                      "allowed": allowed})
+        from .. import puzzle_json as PJ
+        PJ.add_named(p, {"type": "global_entropy"})     # the named rule (one table definition for every source)
         used["global_entropy"] += 1
     m = None
     if re.search(r"dutch flat|flat ?mate", t):   # the sentence with every / above / below: its first three digits = A, B, C
@@ -932,13 +926,8 @@ def quadruples(P, n, p, used, unknown, idx, inside):
             unknown.append("quadruple clue")
             continue
         cs = [idx((rx - 1, ry - 1)), idx((rx - 1, ry)), idx((rx, ry - 1)), idx((rx, ry))]
-        allowed = []
-        for tup in itertools.product(range(1, D + 1), repeat=4):
-            if tup[0] == tup[1] or tup[2] == tup[3] or tup[0] == tup[2] or tup[1] == tup[3]:
-                continue
-            if all(tup.count(d) >= need.count(d) for d in set(need)):
-                allowed.append(tup)
-        p.constraints.append({"type": "table", "cells": cs, "allowed": allowed})
+        from .. import puzzle_json as PJ
+        PJ.add_named(p, {"type": "quadruple", "cells": cs, "digits": need})   # the named rule
         used["quadruple"] += 1
 
 

@@ -5,7 +5,9 @@
     card  = pencilmark.rate(puzzle, steps=True)                 #   a sample-pack line {"puzzle": ...}, or a path to a .json file
     cards = pencilmark.rate_many(puzzles, jobs=4)               # parallel, input order kept
     sol   = pencilmark.solve(puzzle)                            # list of digits; raises NotUnique / NoSolution
-    exp   = pencilmark.to_export(puzzle, title=..., author=..., date=...)  # -> "sudoku-puzzle" dict, metadata under "meta"
+    exp   = pencilmark.to_export(puzzle, title=..., author=..., date=...)  # -> "sudoku-puzzle" dict (docs/FORMAT.md)
+    text  = pencilmark.dumps(exp); pencilmark.fingerprint(puzzle); pencilmark.describe(puzzle)
+    pencilmark.to_ipuz(puzzle); pencilmark.from_string("S9B..."); pencilmark.to_string(puzzle, "sudokuwiki")  # -> "sudoku-puzzle" dict, metadata under "meta"
 
 `rate` returns the "sudoku-grade" card: difficulty, time (minutes), time_p80, band, band_index, contains, notes (+ steps with
 steps=True, + "se": {er, ep, ed, scale} with se=True / se="diuf").
@@ -16,7 +18,11 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-__all__ = ["rate", "rate_many", "solve", "to_export", "load", "NotUnique", "NoSolution", "Undecided"]
+__all__ = ["rate", "rate_many", "solve", "to_export", "load", "NotUnique", "NoSolution", "Undecided", "dumps", "fingerprint",
+           "validate", "describe", "rules_text", "to_ipuz", "from_string", "to_string", "spec_from_gen", "spec_to_gen",
+           "FormatError", "NotSupportedError"]
+
+from .exchange import FormatError, NotSupportedError  # noqa: E402
 
 
 class NotUnique(ValueError):
@@ -47,7 +53,9 @@ def load(puzzle):
     elif isinstance(puzzle, str) and puzzle.lstrip().startswith("{"):
         obj = json.loads(puzzle)
     elif isinstance(puzzle, str):
-        obj = {"numbers": puzzle.split()[0]}
+        from .interop import _PACKED
+        tok = puzzle.split()[0]
+        obj = _from_string_doc(tok) if _PACKED.fullmatch(tok) else {"numbers": tok}
     elif isinstance(puzzle, dict):
         obj = puzzle
     elif hasattr(puzzle, "groups") and hasattr(puzzle, "coords"):    # already an engine Puzzle
@@ -117,10 +125,11 @@ def solve(puzzle):
     return list(sols[0])
 
 
-def to_export(puzzle, meta=None, with_solution=True, **meta_kw):
-    """the "sudoku-puzzle" exchange dict (flat cell indices). Metadata goes in its own optional "meta" object: pass a dict
-    (meta={"title": ..., "author": ..., "date": ...}) and / or keywords (title=..., author=..., source=..., id=..., url=...,
-    date=..., rules_text=...); metadata already in a JSON input is kept."""
+def to_export(puzzle, meta=None, with_solution=True, describe=True, **meta_kw):
+    """the "sudoku-puzzle" exchange dict (format_version 1, docs/FORMAT.md): canonical, houses and rules with "r1c1" cells.
+    Metadata goes in its own optional "meta" object: pass a dict (meta={"title": ..., "author": ..., "date": ...}) and / or
+    keywords (title=..., author=..., source=..., id=..., url=..., date=..., rules_text=...); metadata already in a JSON input is
+    kept. describe=True fills an EMPTY meta.type / meta.rules_text from describe(); it never overwrites them."""
     from .export import export_puzzle, read_meta
     p = load(puzzle)
     sol = None
@@ -131,7 +140,79 @@ def to_export(puzzle, meta=None, with_solution=True, **meta_kw):
             sol = None
     m = {}
     if isinstance(puzzle, dict):
-        m.update(read_meta(puzzle))
+        m.update(read_meta(puzzle.get("puzzle") if isinstance(puzzle.get("puzzle"), dict) else puzzle))
     m.update(meta or {})
     m.update({k: v for k, v in meta_kw.items() if v not in (None, "")})
-    return export_puzzle(p, meta=m, solution=sol)
+    doc = export_puzzle(p, meta=m, solution=sol)
+    if describe and not (m.get("type") and m.get("rules_text")):
+        from .variants import describe as _describe, rules_text as _rt
+        dsc = _describe(doc)
+        meta2 = dict(doc.get("meta") or {})
+        meta2.setdefault("type", dsc["type"])
+        meta2.setdefault("rules_text", _rt(dsc))
+        from .export import read_meta as _rm
+        doc = dict(doc)
+        doc["meta"] = _rm({"meta": meta2})
+        from .exchange import canonical
+        doc = canonical(doc)
+    return doc
+
+
+def _from_string_doc(s):
+    from .interop import from_string as fs
+    return fs(s)
+
+
+def dumps(doc, pretty=True):
+    """canonical JSON text of a sudoku-puzzle dict (fixed key order; pretty: one grid row per line, one rule per line)"""
+    from .exchange import dumps as d
+    return d(doc, pretty=pretty)
+
+
+def fingerprint(puzzle):
+    """content fingerprint "sha256:<hex>" of the canonical form (rules, grid, givens, candidates; no meta / style / solution)"""
+    from .exchange import fingerprint_of_doc
+    return fingerprint_of_doc(to_export(puzzle, with_solution=False, describe=False))
+
+
+def validate(doc):
+    """strict reading checks of a format_version 1 dict (docs/FORMAT.md section 4); raises FormatError"""
+    from .exchange import validate as v
+    v(doc)
+    return True
+
+
+def describe(puzzle):
+    """{"type": variant name, "rules": {short name: one-sentence rule, ...}} from the rules alone (pencilmark/variants.py)"""
+    from .variants import describe as d
+    return d(puzzle)
+
+
+def rules_text(described):
+    from .variants import rules_text as r
+    return r(described)
+
+
+def to_ipuz(puzzle):
+    from .interop import to_ipuz as t
+    return t(puzzle)
+
+
+def from_string(s, symbols=None):
+    from .interop import from_string as f
+    return f(s, symbols=symbols)
+
+
+def to_string(puzzle, form="plain"):
+    from .interop import to_string as t
+    return t(puzzle, form)
+
+
+def spec_from_gen(spec):
+    from .spec_format import spec_from_gen as f
+    return f(spec)
+
+
+def spec_to_gen(doc):
+    from .spec_format import spec_to_gen as f
+    return f(doc)

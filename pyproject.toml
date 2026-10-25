@@ -26,7 +26,7 @@ dependencies = [
 
 [project.optional-dependencies]
 verify = ["ortools>=9.8"]
-test = ["pytest>=7"]
+test = ["pytest>=7", "jsonschema>=4.18"]
 
 [project.scripts]
 pencilmark = "pencilmark.__main__:main"
