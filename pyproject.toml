@@ -62,4 +62,5 @@ test-command = "python {project}/tests/smoke.py"   # quick check of every wheel;
 build-verbosity = 1
 
 [tool.cibuildwheel.macos]
+archs = ["x86_64", "arm64"]     # arm64 cross-built on the Intel runner (arm64 runners rarely got a machine); not smoke-tested
 environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
