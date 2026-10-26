@@ -1,30 +1,30 @@
-/* pencilmark docs: blue-tinted greys (slate) aligned with the brand blue, Inter + JetBrains Mono, high contrast. */
+/* pencilmark docs: warm paper greys and the logo's tan / brown / espresso, Inter + JetBrains Mono, high contrast. */
 @import '@fontsource-variable/inter/index.css';
 @import '@fontsource-variable/jetbrains-mono/index.css';
 
 :root {
-  --ifm-color-primary: #1d4ed8;
-  --ifm-color-primary-dark: #1a46c2;
-  --ifm-color-primary-darker: #1942b8;
-  --ifm-color-primary-darkest: #143697;
-  --ifm-color-primary-light: #3563e0;
-  --ifm-color-primary-lighter: #4570e3;
-  --ifm-color-primary-lightest: #6b8fe9;
+  --ifm-color-primary: #7a5230;
+  --ifm-color-primary-dark: #6e4a2b;
+  --ifm-color-primary-darker: #684628;
+  --ifm-color-primary-darkest: #563a21;
+  --ifm-color-primary-light: #875b35;
+  --ifm-color-primary-lighter: #8d5f38;
+  --ifm-color-primary-lightest: #a07045;
 
-  /* slate greys: every neutral leans slightly blue */
-  --pm-ink: #0f172a;
-  --pm-ink-soft: #334155;
-  --pm-muted: #5b6b85;
-  --pm-line: #dbe3ef;
-  --pm-surface: #f4f7fc;
-  --pm-surface-2: #eaf0f9;
+  /* warm greys: every neutral leans slightly toward paper */
+  --pm-ink: #1f1b17;
+  --pm-ink-soft: #3d342b;
+  --pm-muted: #6e6253;
+  --pm-line: #e6dfd3;
+  --pm-surface: #f8f6f1;
+  --pm-surface-2: #f0ebe1;
 
   --ifm-font-family-base: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --ifm-font-family-monospace: 'JetBrains Mono Variable', ui-monospace, 'SFMono-Regular', Menlo, monospace;
   --ifm-font-color-base: var(--pm-ink);
   --ifm-font-color-secondary: var(--pm-muted);
   --ifm-heading-color: var(--pm-ink);
-  --ifm-background-color: #ffffff;
+  --ifm-background-color: #fffdf8;
   --ifm-background-surface-color: var(--pm-surface);
   --ifm-font-size-base: 17px;
   --ifm-line-height-base: 1.7;
@@ -41,32 +41,32 @@
   --ifm-table-head-background: var(--pm-surface-2);
   --ifm-table-stripe-background: var(--pm-surface);
   --ifm-code-background: var(--pm-surface-2);
-  --ifm-navbar-background-color: rgba(255, 255, 255, 0.92);
-  --ifm-footer-background-color: #0f172a;
-  --docusaurus-highlighted-code-line-bg: rgba(29, 78, 216, 0.10);
+  --ifm-navbar-background-color: rgba(255, 253, 248, 0.92);
+  --ifm-footer-background-color: #3b2a1a;
+  --docusaurus-highlighted-code-line-bg: rgba(122, 82, 48, 0.10);
 }
 
 html[data-theme='dark'] {
-  --ifm-color-primary: #8ab4ff;
-  --ifm-color-primary-dark: #6aa0ff;
-  --ifm-color-primary-darker: #5a95ff;
-  --ifm-color-primary-darkest: #2b77ff;
-  --ifm-color-primary-light: #aac8ff;
-  --ifm-color-primary-lighter: #bad3ff;
-  --ifm-color-primary-lightest: #e9f1ff;
+  --ifm-color-primary: #d2b48c;
+  --ifm-color-primary-dark: #c9a677;
+  --ifm-color-primary-darker: #c49f6d;
+  --ifm-color-primary-darkest: #b38a52;
+  --ifm-color-primary-light: #dbc29f;
+  --ifm-color-primary-lighter: #e0cba9;
+  --ifm-color-primary-lightest: #f1e8da;
 
-  --pm-ink: #e8eef8;
-  --pm-ink-soft: #c3cede;
-  --pm-muted: #94a3bb;
-  --pm-line: #263247;
-  --pm-surface: #121a28;
-  --pm-surface-2: #182234;
+  --pm-ink: #ecebe8;
+  --pm-ink-soft: #cfc9c0;
+  --pm-muted: #a39a8d;
+  --pm-line: #36312b;
+  --pm-surface: #23201d;
+  --pm-surface-2: #2b2723;
 
-  --ifm-background-color: #0b111c;
+  --ifm-background-color: #1b1916;
   --ifm-background-surface-color: var(--pm-surface);
-  --ifm-navbar-background-color: rgba(11, 17, 28, 0.92);
-  --ifm-footer-background-color: #070b13;
-  --docusaurus-highlighted-code-line-bg: rgba(138, 180, 255, 0.14);
+  --ifm-navbar-background-color: rgba(27, 25, 22, 0.92);
+  --ifm-footer-background-color: #13110f;
+  --docusaurus-highlighted-code-line-bg: rgba(210, 180, 140, 0.14);
 }
 
 body { font-feature-settings: 'cv11', 'ss01'; -webkit-font-smoothing: antialiased; }
