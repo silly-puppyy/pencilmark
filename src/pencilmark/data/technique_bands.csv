@@ -73,16 +73,16 @@ AXY,ALS-XY-Wing,ALS-XY-Wing,Very Hard,Very Hard,4,10,8,2,,-,Extreme,-,ALS,
 SDC,Sue de Coq,SueDeCoq,Very Hard,Very Hard,5,4,4,0,,-,Extreme,-,Miscellaneous,
 APE,Aligned Pair Exclusion,AlignedPairExclusion,Very Hard,Very Hard,6,6,3,3,,6.2,Diabolical,-,-,
 CAS,Case analysis,CaseAnalysis,Very Hard,Very Hard,7,0,0,0,,-,-,-,-,human case work
-AAC,ALS chain,ALS-AIC,Very Hard,Extreme,1,9,8,1,,-,Extreme,-,ALS,
-DEB,Death Blossom,DeathBlossom,Very Hard,Extreme,2,10,8,2,,-,Extreme,-,ALS,
-EWY,Either way (case split),EitherWay,Extreme,Extreme,3,8,4,4,,-,-,-,-,bounded human case split
-WIF,What if…,WhatIf,Extreme,Extreme,4,11,4,7,,-,-,-,-,bounded
-STR,Short trial,ShortTrial,Extreme,Extreme,5,14,9,5,,-,-,-,-,<= 4 rounds ~ short Bowman's Bingo
-TRL,Trial and error,Trial,Extreme,Unknown (computer),0,0,0,0,,-,-,-,-,off in human mode
-FCH,Forcing Chains,ForcingChains,Extreme,Unknown (computer),0,0,0,0,,7+,Extreme,Beyond Hell,Last Resort,
-FNT,Forcing Nets,DynamicForcingChains,Extreme,Unknown (computer),0,0,0,0,,8+,Extreme,Beyond Hell,Last Resort,
-NFC,Nested Forcing Chains,NestedForcingChains,Extreme,Unknown (computer),0,0,0,0,,-,-,-,-,
-POM,Pattern Overlay,PatternOverlay,Extreme,Unknown (computer),0,0,0,0,,-,Extreme,-,Last Resort (Templates),
-NIS,Nishio,NishioForcingNet,Extreme,Unknown (computer),0,0,0,0,,7.5,Extreme,-,-,
+AAC,ALS chain,ALS-AIC,Very Hard,Very Hard,8,9,8,1,,-,Extreme,-,ALS,R6 2026-10-26: Very Hard (expert hobby limit)
+DEB,Death Blossom,DeathBlossom,Very Hard,Very Hard,9,10,8,2,,-,Extreme,-,ALS,R6 2026-10-26: Very Hard (expert hobby limit)
+EWY,Either way (case split),EitherWay,Extreme,Very Hard,10,8,4,4,,-,-,-,-,bounded human case split; R6 2026-10-26: Very Hard (expert hobby limit)
+WIF,What if…,WhatIf,Extreme,Very Hard,11,11,4,7,,-,-,-,-,bounded; R6 2026-10-26: Very Hard (expert hobby limit)
+STR,Short trial,ShortTrial,Extreme,Very Hard,12,14,9,5,,-,-,-,-,<= 4 rounds ~ short Bowman's Bingo; R6 2026-10-26: Very Hard (expert hobby limit)
+TRL,Trial and error,Trial,Extreme,Extreme,0,0,0,0,,-,-,-,-,"2026-10-26: last-resort proof by full search when guessing is off (default); Unknown = guessing (allow_guess) only"
+FCH,Forcing Chains,ForcingChains,Extreme,Extreme,0,0,0,0,,7+,Extreme,Beyond Hell,Last Resort,"R6 2026-10-26: Extreme (borderline-computer human logic), was Unknown"
+FNT,Forcing Nets,DynamicForcingChains,Extreme,Extreme,0,0,0,0,,8+,Extreme,Beyond Hell,Last Resort,"R6 2026-10-26: Extreme (borderline-computer human logic), was Unknown"
+NFC,Nested Forcing Chains,NestedForcingChains,Extreme,Extreme,0,0,0,0,,-,-,-,-,"R6 2026-10-26: Extreme (borderline-computer human logic), was Unknown"
+POM,Pattern Overlay,PatternOverlay,Extreme,Extreme,0,0,0,0,,-,Extreme,-,Last Resort (Templates),"R6 2026-10-26: Extreme (borderline-computer human logic), was Unknown"
+NIS,Nishio,NishioForcingNet,Extreme,Extreme,0,0,0,0,,7.5,Extreme,-,-,"R6 2026-10-26: Extreme (borderline-computer human logic), was Unknown"
 IOV,Innies & outies as a virtual cage,Innie/Outie(notes),Medium,Medium,8.5,,,,,,,,,set-theory form of innies & outies
 IOM,Innies & outies over several houses,Innie/Outie(sum),Medium,Medium,8.6,,,,,,,,,set-theory form of innies & outies

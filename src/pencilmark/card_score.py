@@ -26,7 +26,10 @@ def steps(p):
     if not ok or any(s.move.feat[0] == S.GUESS for s in st):
         st, ok = CB.solve(p, P, disabled=gate)
         if not ok or any(s.move.feat[0] == S.GUESS for s in st):
-            return []                      # beyond engine: no score
+            # guessing off (2026-10-26): where it would guess, prove by full search (Trial and error, priced as that guess)
+            st, ok = CB.solve(p, dict(P, exhaust_fallback=1), disabled=gate | {S.GUESS})
+            if not ok:
+                return []                  # beyond engine: no score
     out, cells_, xs_ = [], [], []
     for s in st:
         t = s.move.feat[0]

@@ -26,3 +26,8 @@ First public release.
 - Puzzle generator (`pencilmark.gen`) with band, difficulty, technique and rule-element targets.
 - Puzzle importers (`pencilmark.sources`) for SudokuPad, f-puzzles, penpa-edit and Logic Masters links.
 - C++ engine built with pybind11; OR-Tools is optional (`pencilmark[verify]`).
+- No guessing by default: where no technique applies, the engine proves an elimination by full search (Trial and error,
+  band Extreme), so every uniquely solvable puzzle gets a band; `allow_guessing=True` / `--allow-guessing` guesses there
+  instead (band Unknown).
+- Bands: forcing chains / nets, Nishio, pattern overlay and trial and error are Extreme; bounded case splits (either
+  way, what if, short trial) and ALS chains / Death Blossom are Very Hard.

@@ -12,5 +12,10 @@
   "c": 0.4
  },
  "minutes_per_unit": 11.8,
- "p80_factor": 1.53
+ "p80_factor": 1.53,
+ "size_curve": {
+  "q": 0.2148,
+  "c": 4.5199
+ },
+ "size_curve_note": "2026-10-26 R9 (runs/nlp/time_size_curve_prod.json, scratchpad size_prod.py): log t += q * max(0, ln(empty) - c)^2 after everything else; boards above ~92 empty cells only (multi-grid, big grids). Fitted on production residuals, grandgames 5-fold CV R2 0.854 -> 0.874; coach transfer 0.814 -> 0.814 (boards below the hinge); samuraisudoku.com held out 0.653 -> 0.715 (clueless real/pred 1.55 / 1.50 -> 0.96 / 0.95). Over-corrects grandgames samurai 1.03 -> 0.83, supersamurai 1.39 -> 0.82. Backup data/time_model_pre_sizecurve_20261026.json."
 }

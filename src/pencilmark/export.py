@@ -467,6 +467,9 @@ def time_units(effort_l1, empty_cells, difficulty=None, geometry=None):
         if cmp_ and t > 0:
             lt = math.log(t)
             t = math.exp(lt - cmp_["k"] * max(0.0, lt - cmp_["c"]))
+        szc = _TIME.get("size_curve")                    # 2026-10-26 R9: very large boards are slower per cell than the power law
+        if szc and t > 0:                                # (3 sources); 0 below ~92 empty cells
+            t *= math.exp(szc["q"] * max(0.0, math.log(empty_cells) - szc["c"]) ** 2)
         return round(t, 2)
     if difficulty is None:
         return None

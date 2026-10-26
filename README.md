@@ -57,13 +57,17 @@ always there); `rate(puzzle, fields=[...])` / `--fields` asks for others, and on
 |---|---|
 | `difficulty` | how hard each step feels, continuous from 0 (one empty cell) with no ceiling; a typical newspaper medium is about 5 |
 | `time` | expected minutes for an average player (`time.p80` on request: 80% of players finish within it) |
-| `band`, `band_index` | Very Easy (0), Easy, Medium, Hard, Very Hard, Extreme (5), or `"Unknown"` (null) when human logic runs out |
+| `band`, `band_index` | Very Easy (0), Easy, Medium, Hard, Very Hard, Extreme (5); `"Unknown"` (null) only with `allow_guessing=True`, when the engine had to guess |
 | `contains` | techniques met going easy to hard: `code`, `chip`, `name`, `band`, `uses`, `alternatives` |
 | `issues`, `reject` | publishing checks such as a difficulty spike or an unused rule (`code`, `severity` reject / warning, `text`, and `rules`: the offending rules' indices in the exported puzzle); `reject` is true when any issue is a reject |
 | on request | `steps` (technique, placement `r2c8=3` or eliminations `r4c5#7`) with `steps.explanation.short` / `.teach`, `se` / `se.diuf`, `describe`, `symmetry` |
 
-A chip like `XWG/KTE/SCL` means any one of those techniques gets you through at that point. Unknown puzzles carry
-`contains_complete: false` and `stopped_at_step`. With `max_seconds` set, the contents search is capped and the card
+A chip like `XWG/KTE/SCL` means any one of those techniques gets you through at that point.
+
+Guessing is off by default: where no technique applies, the engine proves an elimination by full search (Trial and
+error, band Extreme), so every uniquely solvable puzzle gets a band. `allow_guessing=True` (CLI `--allow-guessing`) lets it
+guess there instead, which is faster on the hardest puzzles; the card then says Unknown, with `contains_complete: false`
+and `stopped_at_step`. With `max_seconds` set, the contents search is capped and the card
 may say `contents_truncated`.
 
 ## Exchange format
@@ -131,8 +135,10 @@ the `PENCILMARK_UA` environment variable.
 
 - Difficulty and time are models fitted to human solving data. Differences under one point of difficulty are not
   meaningful, and a single solve can vary a lot from the predicted time.
-- Bands depend on the technique catalogue; puzzles that need techniques the engine does not have are rated Unknown.
-- A few very hard killers can take many minutes while the contents list is minimised; use `max_seconds` to cap it.
+- Bands depend on the technique catalogue; a puzzle that needs a technique the engine does not have is solved with
+  Trial and error at that point and rated Extreme.
+- Very hard puzzles with many-cell rules (killers, arrows, palindromes, thermos) can take minutes while the contents list
+  is minimised; use `max_seconds` to cap it (the card then says `contents_truncated`).
 - The Sudoku Explainer-style ratings (`se=True`) are approximate and meaningful for classic sudoku only.
 
 ## Benchmark

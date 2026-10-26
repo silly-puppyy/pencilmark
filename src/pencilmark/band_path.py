@@ -17,6 +17,9 @@ import copy
 from . import solver as S, cbackend as CB, export as E2
 
 BANDS = E2.BANDS
+FORCING_FALLBACK = True     # R6: when no listed move exists, take the solver's forcing step (Extreme)
+FISH_CAP = True            # below Hard, list finned fish of size 2 only (larger are Hard; 2026-10-26 speed)
+FORCING_TECHS = {S.FORCING, S.DYN_FORCING, S.NESTED_FORCING, S.NISHIO, S.POM, S.TRIAL}
 
 # most specific shape of an engine move -> (code, display name, band)
 _X_CHAIN = {"SKY": ("SKY", "Skyscraper", 2), "2SK": ("KTE", "2-String Kite", 2), "TUR": ("TUR", "Turbot Fish", 2),
@@ -154,10 +157,11 @@ def _lb(t, tb):
     return (tb, _order(E2.chip_of(t)[0]))
 
 
-def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes=(), guard=None, prefix=()):
+def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes=(), guard=None, prefix=(), max_band=5):
     """solve band by band (see module doc). Moves are taken in full-notes mode: each placement clears its peers.
     target = a cell: stop once it is placed, preferring (within the current band) a move that places it -- "what does
-    it take to place this cell from here"."""
+    it take to place this cell from here". max_band: stop (unsolved) where only a harder move would continue -- contents()
+    reruns can only count if they stay in the card's band, so they never list above it."""
     if not hasattr(p, "groups_of"):
         p.finalize()
     P = dict(P or {}, search="human")
@@ -246,7 +250,7 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
             if moved:
                 continue
         pick = None
-        for b in range(1 if allowed0 and rng is None else 0, 6):
+        for b in range(1 if allowed0 and rng is None else 0, max_band + 1):
             allowed = {t for t in human if tband[t] <= b}
             if not allowed:
                 continue
@@ -266,10 +270,13 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
             for k_, lbk in enumerate(tiers):
                 run = groups[lbk] if lbk is not None else allowed   # each group runs once; its moves are merged
                 enabled |= run
-                key = (tuple(vals), tuple(cand), frozenset(run)) if _CACHE is not None else None
+                # below Hard only size-2 finned fish can be picked (larger ones are Hard): don't list them (windoku 2026-10-26:
+                # sizes 3-4 were 90% of a listing over 58 houses)
+                Pb = dict(P, fish_max_n=2) if b <= 2 and FISH_CAP else P
+                key = (tuple(vals), tuple(cand), frozenset(run), b <= 2) if _CACHE is not None else None
                 mv = _CACHE.get(key) if key is not None else None
                 if mv is None:
-                    mv = CB.state_moves(q, P, disabled=set(S.TECH_NAMES) - run, limit_per_tech=8, details=True,
+                    mv = CB.state_moves(q, Pb, disabled=set(S.TECH_NAMES) - run, limit_per_tech=8, details=True,
                                         cpuzzle=cp, cand=mask)
                     if key is not None:
                         _CACHE[key] = mv
@@ -293,6 +300,22 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
             if cands:
                 pick = min(cands, key=lambda x: x[0])
                 break
+        if pick is None and FORCING_FALLBACK and P.get("r6_extreme", True) and rng is None and max_band >= 5:
+            # R6 (2026-10-26): nothing listed in any band -> one solver step from this state. The solver's stuck-fallback
+            # tries forcing chains / dynamic / nested forcing / Nishio / pattern overlay (state_moves never lists them);
+            # such a step is an Extreme move. A guess means really stuck -> Unknown as before.
+            st1, _ = CB.solve(q, P, cpuzzle=cp, cand=mask, max_steps=4, assume_unique=False)   # first steps may be notes
+            x = next((y for y in st1 if y.move.feat[0] not in notes), None)
+            # guessing off (default): the solver's last resort is a proof by full search (TRIAL), an Extreme step too
+            stop = (S.GUESS, S.TRIAL) if P.get("allow_guess", False) else (S.GUESS,)
+            if x is not None and x.move.feat[0] not in stop and (x.move.place or x.move.elim):
+                m = {"tech": x.move.feat[0], "name": S.TECH_NAMES.get(x.move.feat[0], "?"), "code": x.move.code,
+                     "place": tuple(x.move.place) if x.move.place else None,
+                     "elim": [tuple(e) for e in (x.move.elim or ())], "xmeta": getattr(x.move, "xmeta", None),
+                     "d": float(x.move.d) if x.move.d is not None else None}
+                code, name, mb = classify(m, p)
+                # a forcing step is Extreme; any other human step the move listing missed keeps its own band
+                pick = ((mb, 1, 0, m["d"]), code, name, max(mb, 5) if m["tech"] in FORCING_TECHS else mb, m)
         if pick is None:
             break
         _, code, name, mb, m = pick
@@ -435,7 +458,7 @@ def _contents(p, P, alternatives, deadline=None):
                 truncated = True
                 break
             g_, _ = _check(bp, code, ban | {code})
-            alt = band_path(p, P, ban_codes=ban | {code}, guard=g_)
+            alt = band_path(p, P, ban_codes=ban | {code}, guard=g_, max_band=bp["band_index"])
             if _route_ok(bp, alt, code):
                 ban.add(code)
                 removed.append(code)
@@ -461,7 +484,8 @@ def _contents(p, P, alternatives, deadline=None):
             for st, q in spots[:6]:                 # what else of this band was on offer where X was used
                 g = copy.copy(p)
                 g.givens = q.givens
-                for m in CB.state_moves(g, P, disabled=set(S.TECH_NAMES) - {t for t in allowed_t if E2.tech_band(t) <= b},
+                for m in CB.state_moves(g, dict(P, fish_max_n=2) if b <= 2 and FISH_CAP else P,
+                                        disabled=set(S.TECH_NAMES) - {t for t in allowed_t if E2.tech_band(t) <= b},
                                         limit_per_tech=8, details=True, cpuzzle=getattr(p, "_bp_cpuzzle", None),
                                         cand=q.domains):
                     c2, _, b2 = classify(m, p)
@@ -474,14 +498,14 @@ def _contents(p, P, alternatives, deadline=None):
                 base = (ban - {y}) | {code}         # a technique dropped in the shrink may still be an alternative
                 if y not in ban:
                     if alt0 is None:     # no guard: shared by every candidate y (each may differ in what's allowed)
-                        alt0 = band_path(p, P, ban_codes=base)
+                        alt0 = band_path(p, P, ban_codes=base, max_band=bp["band_index"])
                     if alt0["profile"].get(y) and _route_ok(bp, alt0, code, extra={y}):
                         alts.setdefault(code, []).append(y)
                         continue
                 # the route may have taken another candidate first; ban the others to test y alone
                 others = seen - {y, code} - set(bp["profile"])
                 g_, _ = _check(bp, code, base | others, extra={y})
-                alt = band_path(p, P, ban_codes=base | others, guard=g_)
+                alt = band_path(p, P, ban_codes=base | others, guard=g_, max_band=bp["band_index"])
                 if alt["profile"].get(y) and _route_ok(bp, alt, code, extra={y}):
                     alts.setdefault(code, []).append(y)
     for code, ys in list(alts.items()):     # keep the most specific: drop an alternative that generalises another

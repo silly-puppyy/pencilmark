@@ -174,7 +174,9 @@ def grade_card(puzzle, P, specific=True, check_rules=True, band=None):
                     c["specific"] = [k for k, _ in names_.most_common()]
     lvl = g["report"]["level"]
     gi = [i for i, st in enumerate(steps) if st.move.feat[0] == S.GUESS]
-    if gi:   # a guess is not a grade: report what the engine could do and where it ran out of logic
+    # the band path is the user-facing solve: when it finished without guessing, a guess in this route (its forcing budget
+    # ran out) does not make the card Unknown -- band and score stay consistent (2026-10-26)
+    if gi and (band is None or band[0] == "Unknown"):   # a guess is not a grade: report where logic ran out
         pre = steps[:gi[0]]
         band = max((MT.band_of(st.move.feat[0]) for st in pre if st.move.feat[0] not in getattr(S, "NOTE_TECHS", (S.TAKE_NOTES,))), default=0)
         human = (P or {}).get("search") == "human"

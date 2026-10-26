@@ -56,6 +56,8 @@ void meta_vector(const Move& m, double x[10]) {
 
 double Params::difficulty(const Move& m, const Cover* covers, int D) const {
     if (m.tech == TAKE_NOTES || m.tech == SNYDER_MARKS) return B[m.tech];
+    // proof by full search where a guess would go (exhaust(), extra = -1): at least what guessing that cell costs
+    if (m.tech == TRIAL && m.extra < 0) return B[GUESS] * size(D) * (1.0 + guess_k * (double)m.meta[0] / 10.0);
     // params mental_floor: a move done in the head (no notes) costs at least its written counterpart -- the same
     // pattern priced with notes (MentalNotesSingle: the notes technique it runs in the head, its 'extra')
     static thread_local bool in_floor = false;
@@ -2281,6 +2283,53 @@ done:
     return result;
 }
 
+// Guessing switched off: the last resort is a proof, not a guess. Take the cell a guess would take (fewest candidates)
+// and refute one of its wrong candidates by full search from the current state (no solution with it = eliminated).
+// Recorded as TRIAL ('Trial and error', band Extreme); the solver never places a value it has not proved.
+bool Solver::exhaust(MoveBuf& out) {
+    std::vector<int> sol;
+    if (!opt.solution.empty()) {
+        sol = opt.solution;
+    } else {
+        auto sols = brute_solve(p, {}, 1, 2000000, &vals, &cand);
+        if (sols.empty()) return false;
+        sol = sols[0];
+    }
+    if (canon) compute_labels();
+    std::vector<int> order;
+    for (int x = 0; x < p.N; ++x)
+        if (!vals[x] && popc(cand[x]) > 1) order.push_back(x);
+    std::sort(order.begin(), order.end(), [&](int a, int b) {
+        const int pa = popc(cand[a]), pb = popc(cand[b]);
+        if (pa != pb) return pa < pb;
+        return canon ? cell_label[a] < cell_label[b] : a < b;
+    });
+    for (int c : order) {
+        for (uint32_t mm = cand[c]; mm; mm &= mm - 1) {
+            const int v = lowdigit(mm);
+            if (v == sol[c]) continue;
+            std::vector<uint32_t> cc = cand;
+            cc[c] = bit(v);
+            bool complete = true;
+            pm_long nodes = 0;
+            auto sols = brute_solve(p, {}, 1, 2000000, &vals, &cc, &complete, &nodes);
+            if (!sols.empty() || !complete) continue;  // not refuted (another solution, or the search ran out)
+            MoveBuf g;                       // priced as the guess on this cell would be (expected refutation work)
+            const bool priced = guess(g) && !g.moves.empty() && g.moves[0].has_meta;
+            Move& m = new_move(out, TRIAL, 1.0, -1);
+            if (priced) {
+                m.has_meta = true;
+                std::copy(g.moves[0].meta, g.moves[0].meta + 8, m.meta);
+                std::copy(g.moves[0].xm, g.moves[0].xm + XM_N, m.xm);
+            }
+            add_elim(out, m, c, v);
+            add_expl(out, m, EX_TRIAL, {2, 1, c, v});
+            return true;
+        }
+    }
+    return false;
+}
+
 bool Solver::guess(MoveBuf& out) {
     std::vector<int> sol;
     if (!opt.solution.empty()) {
@@ -2728,6 +2777,8 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
                 MoveBuf fb;
                 if (fallback_open() && forcing_fallback(fb)) {
                     std::swap(buf, fb);
+                } else if (disabled[GUESS] && P.exhaust_fallback) {
+                    if (!exhaust(buf)) break;
                 } else {
                     if (disabled[GUESS]) break;
                     if (!guess(buf)) break;
@@ -2831,6 +2882,9 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
                 MoveBuf fb;
                 if (fallback_open() && forcing_fallback(fb)) {
                     std::swap(buf, fb);
+                } else if (disabled[GUESS] && P.exhaust_fallback) {
+                    buf.clear();
+                    if (!exhaust(buf)) break;
                 } else {
                     if (disabled[GUESS]) break;
                     buf.clear();

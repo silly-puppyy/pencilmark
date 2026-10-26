@@ -291,6 +291,10 @@ struct Params {
     int band_wide_cells = 32;  // params band_wide_cells: escalation regions with rules taken whole, <= this many cells (0 = off)  // params band_escalate (budget factor, <= 1 = off), band_escalate_max (per solve)
     pm_long fc_fallback = 50000;    // params forcing_fallback: work budget (branch steps per solve; default 5e4) for dynamic / nested
                                  // forcing tried when a step would otherwise guess (0 = off)
+    int fish_max_n = 4;          // params fish_max_n: largest finned fish listed (the band path lists Medium with 2: larger
+                                 // finned fish are Hard, so they can't be picked there)
+    int exhaust_fallback = 0;    // params exhaust_fallback: 1 = where a step would guess (GUESS disabled), refute one
+                                 // candidate by full search instead (tech TRIAL, 'Trial and error', band Extreme)
     double fc_fallback_s = 600.0;  // params forcing_fallback_s: wall-time safety per solve (checked between calls; the
                                    // deterministic work budget is meant to bind first)
     int fc_kmax[3] = {4, 3, 2};
@@ -435,6 +439,7 @@ public:
     void coloring(MoveBuf& out);
     void trial(MoveBuf& out);
     bool guess(MoveBuf& out);
+    bool exhaust(MoveBuf& out);
     // n-ary constraints
     void nary_combination(MoveBuf& out, int part = 0);  // part 0: all but set equivalences, 1: only those, 2: all
     void combo_lock(MoveBuf& out);

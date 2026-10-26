@@ -54,9 +54,17 @@ def test_solve():
         pencilmark.solve("11" + "." * 79)
 
 
-def test_unknown_band():
-    easter_monster = "1.......2.9.4...5...6...7...5.9.3.......7.......85..4.7.....6...3...9.8...2.....1"
-    card = pencilmark.rate(easter_monster, max_seconds=30)
+EASTER_MONSTER = "1.......2.9.4...5...6...7...5.9.3.......7.......85..4.7.....6...3...9.8...2.....1"
+
+
+def test_no_guessing_by_default():
+    # guessing is off by default: where no technique applies the engine proves by full search (Extreme), never Unknown
+    card = pencilmark.rate(EASTER_MONSTER, max_seconds=30)
+    assert card["band"] == "Extreme" and card["band_index"] == 5 and card["difficulty"] is not None
+
+
+def test_unknown_band_when_guessing():
+    card = pencilmark.rate(EASTER_MONSTER, max_seconds=30, allow_guessing=True)
     assert card["band"] == "Unknown" and card["band_index"] is None and card["contains_complete"] is False
 
 

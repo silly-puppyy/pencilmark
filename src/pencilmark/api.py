@@ -12,6 +12,9 @@
 `rate` returns the "sudoku-grade" card: difficulty, time (minutes), time_p80, band, band_index, contains, notes (+ steps with
 steps=True, + "se": {er, ep, ed, scale} with se=True / se="diuf").
 mode="human" (default) is the human route; mode="computer" also allows forcing chains / trial.
+Guessing is off by default: where no technique applies, the engine refutes a candidate by full search (Trial and error,
+band Extreme), so every unique puzzle gets a band. allow_guessing=True lets it guess there instead (faster); the card
+then says band "Unknown".
 """
 from __future__ import annotations
 
@@ -69,15 +72,16 @@ def load(puzzle):
     return p
 
 
-def rate(puzzle, steps=False, max_seconds=None, mode="human", se=False, fields=None):
+def rate(puzzle, steps=False, max_seconds=None, mode="human", se=False, fields=None, allow_guessing=False):
     """the "sudoku-grade" card of one puzzle (a dict), with the requested fields only (docs/FORMAT.md 13.1). Default fields:
     pencilmark, format, format_version, difficulty, time, band, band_index, contains, issues, reject. Opt-in: "time.p80",
     "steps", "steps.explanation.short", "steps.explanation.teach", "se", "se.diuf", "describe", "symmetry".
-    steps=True / se=True (or se="diuf") are the older keyword forms."""
+    steps=True / se=True (or se="diuf") are the older keyword forms. allow_guessing=True: guess where no technique applies
+    (band "Unknown") instead of proving by full search (Trial and error, Extreme)."""
     from .export import grade, card_fields
     want = card_fields(fields, steps=steps, se=se)
     p = load(puzzle)
-    P = _params(mode)
+    P = dict(_params(mode), allow_guess=bool(allow_guessing))
     card = grade(p, P, max_seconds=max_seconds, fields=sorted(want - {"se", "se.diuf"}))
     if want & {"se", "se.diuf"}:
         from . import band_path as BP, se as SE
@@ -93,16 +97,17 @@ def _mp_context():
 
 
 def _rate_job(args):
-    puzzle, steps, max_seconds, mode, se, fields = args
+    puzzle, steps, max_seconds, mode, se, fields, allow_guessing = args
     try:
-        return rate(puzzle, steps=steps, max_seconds=max_seconds, mode=mode, se=se, fields=fields)
+        return rate(puzzle, steps=steps, max_seconds=max_seconds, mode=mode, se=se, fields=fields,
+                    allow_guessing=allow_guessing)
     except Exception as e:                       # one bad puzzle must not sink the batch
         return {"error": f"{type(e).__name__}: {e}"}
 
 
-def rate_many(puzzles, jobs=1, steps=False, max_seconds=None, mode="human", se=False, fields=None):
+def rate_many(puzzles, jobs=1, steps=False, max_seconds=None, mode="human", se=False, fields=None, allow_guessing=False):
     """cards for many puzzles, in input order; jobs > 1 uses worker processes. A failing puzzle gives {"error": ...}."""
-    items = [(p, steps, max_seconds, mode, se, fields) for p in puzzles]
+    items = [(p, steps, max_seconds, mode, se, fields, allow_guessing) for p in puzzles]
     if jobs <= 1:
         return [_rate_job(it) for it in items]
     with _mp_context().Pool(jobs) as pool:

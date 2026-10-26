@@ -153,7 +153,7 @@ def _rate_one(args):
     from .card import grade_card
     from . import cpsat_verify as V
     from .export import grade
-    P = dict(_params(), search="computer" if a.computer else "human")
+    P = dict(_params(), search="computer" if a.computer else "human", allow_guess=bool(a.allow_guessing))
     fmt = a.format or ("%b\\t%d\\t%t\\t%h" if a.legacy else "%b\\t%d\\t%m\\t%h")
     try:
         p = PJ.from_json(obj)
@@ -242,6 +242,8 @@ def main(argv=None):
     r = sub.add_parser("rate"); r.add_argument("file", nargs="?"); r.add_argument("--format", default=None)
     r.add_argument("--json", action="store_true"); r.add_argument("--report", action="store_true")
     r.add_argument("--computer", action="store_true", help="allow pure computer search (forcing chains / nets, trial); default: human mode")
+    r.add_argument("--allow-guessing", action="store_true", help="guess where no technique applies (faster; band Unknown) "
+                   "instead of proving by full search (Trial and error, band Extreme)")
     r.add_argument("--notes", action="store_true", help="legacy card: run the publishing-rule checks (slower)")
     r.add_argument("--steps", action="store_true", help="with --json: include the step-by-step solve")
     r.add_argument("--fields", default=None, help="card fields, comma-separated (docs/FORMAT.md 13.1), e.g. "

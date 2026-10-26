@@ -53,6 +53,8 @@ static Params params_from(const py::dict& P) {
     }
     if (P.contains("forcing_level") && !P["forcing_level"].is_none()) pr.fc_level = P["forcing_level"].cast<int>();
     if (P.contains("forcing_fallback") && !P["forcing_fallback"].is_none()) pr.fc_fallback = P["forcing_fallback"].cast<pm_long>();
+    if (P.contains("exhaust_fallback") && !P["exhaust_fallback"].is_none()) pr.exhaust_fallback = P["exhaust_fallback"].cast<int>();
+    if (P.contains("fish_max_n") && !P["fish_max_n"].is_none()) pr.fish_max_n = P["fish_max_n"].cast<int>();
     if (P.contains("band_escalate") && !P["band_escalate"].is_none()) pr.band_escalate = P["band_escalate"].cast<int>();
     if (P.contains("band_wide_cells") && !P["band_wide_cells"].is_none()) pr.band_wide_cells = P["band_wide_cells"].cast<int>();
     if (P.contains("band_wide_max") && !P["band_wide_max"].is_none()) pr.band_wide_max = P["band_wide_max"].cast<int>();

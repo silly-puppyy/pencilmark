@@ -318,8 +318,9 @@ def solve(puzzle, params=None, disabled=(), solution=None, allow_direct=True, ma
     sc = Scorer(params)
     cp = cpuzzle if cpuzzle is not None else to_cpuzzle(puzzle)
     sol = [int(x) for x in solution] if solution is not None else None
+    cp_p = no_guess_params(sc.p, params, disabled)
     disabled = [int(t) for t in _extra_disabled(set(disabled) | search_disabled(params))]  # env: experiments, e.g. "58,59,60"
-    args = [cp, list(puzzle.givens.items()), sc.p, disabled, sol, bool(allow_direct), int(max_steps),
+    args = [cp, list(puzzle.givens.items()), cp_p, disabled, sol, bool(allow_direct), int(max_steps),
             bool(assume_unique), bool(all_tiers)]
     if _SOLVE_HAS["explain"]:
         args.append(bool(explain))
@@ -952,8 +953,23 @@ def search_disabled(params):
     p = params or {}
     out = set(p.get("disabled_techniques") or ())
     if p.get("search") == "human":
-        out |= computer_search()
+        # R6 (user 2026-10-26): forcing chains / nets / nested, Nishio and pattern overlay are borderline-computer HUMAN logic
+        # (band Extreme); Unknown is for guessing only, so human mode switches off unbounded trial alone
+        out |= {S.TRIAL} if p.get("r6_extreme", True) else computer_search()
+        if not p.get("allow_guess", False):
+            out.add(S.GUESS)        # guessing off (default): the stuck fallback proves instead (no_guess_params)
     return out
+
+
+def no_guess_params(sc_p, params, disabled=()):
+    """user 2026-10-26: guessing is off by default. Human mode without params['allow_guess']: where a step would guess,
+    the solver refutes one candidate by full search instead (Trial and error, band Extreme), so every unique puzzle gets a
+    band. allow_guess=True: the solver guesses there and the card says Unknown.
+    A caller that switches TRIAL off explicitly (a singles-only batch, a one-technique probe) stops where it is stuck."""
+    p = params or {}
+    if p.get("search") == "human" and not p.get("allow_guess", False) and S.TRIAL not in set(disabled):
+        return dict(sc_p, exhaust_fallback=1)
+    return sc_p
 
 
 def _extra_disabled(disabled):

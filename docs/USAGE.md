@@ -48,7 +48,8 @@ see docs/FORMAT.md section 6.
 | `%i` | line number |
 
 Other options: `-j N` rates N puzzles in parallel (output stays in input order); `--max-seconds N` caps the contents
-search; `--computer` allows computer search (forcing chains, trial); `--legacy` prints the older card format.
+search; `--computer` allows computer search (forcing chains, trial); `--allow-guessing` guesses where no technique applies
+(band Unknown) instead of proving by full search (Trial and error, Extreme); `--legacy` prints the older card format.
 
 ## Python
 
@@ -94,7 +95,9 @@ $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7..
   - The median 9x9 classic takes about 12 min.
   - `time_p80` (field `time.p80`, on request) = 80% of players finish within this.
   - Typical error: about 20-26%.
-- **band** is fixed by the techniques required on the easiest route (Very Easy ... Extreme), or **Unknown** when human logic runs out.
+- **band** is fixed by the techniques required on the easiest route (Very Easy ... Extreme).
+  - Guessing is off by default: where no technique applies, the engine proves an elimination by full search (Trial and error, Extreme).
+  - `allow_guessing=True` (CLI `--allow-guessing`) guesses there instead; the band is then **Unknown**.
 - **contains** lists what a solver meets going easy to hard.
   - A chip like `XWG/KTE/SCL` means each of those alone also works at that point.
   - Singles are listed without counts.
@@ -228,14 +231,14 @@ Machine-readable version: `pencilmark/data/technique_bands.csv` (installed with 
 | SDC | Sue de Coq | Very Hard |  |
 | APE | Aligned Pair Exclusion | Very Hard |  |
 | CAS | Case analysis | Very Hard |  |
-| AAC | ALS chain | Extreme |  |
-| DEB | Death Blossom | Extreme |  |
-| EWY | Either way (case split) | Extreme |  |
-| WIF | What if… | Extreme |  |
-| STR | Short trial | Extreme |  |
-| FCH | Forcing Chains | Unknown (computer) |  |
-| FNT | Forcing Nets | Unknown (computer) |  |
-| NFC | Nested Forcing Chains | Unknown (computer) |  |
-| NIS | Nishio | Unknown (computer) |  |
-| POM | Pattern Overlay | Unknown (computer) |  |
-| TRL | Trial and error | Unknown (computer) |  |
+| AAC | ALS chain | Very Hard |  |
+| DEB | Death Blossom | Very Hard |  |
+| EWY | Either way (case split) | Very Hard |  |
+| WIF | What if… | Very Hard |  |
+| STR | Short trial | Very Hard |  |
+| FCH | Forcing Chains | Extreme |  |
+| FNT | Forcing Nets | Extreme |  |
+| NFC | Nested Forcing Chains | Extreme |  |
+| NIS | Nishio | Extreme |  |
+| POM | Pattern Overlay | Extreme |  |
+| TRL | Trial and error | Extreme |  |

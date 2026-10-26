@@ -306,10 +306,11 @@ for _band, _names in {
         "WXYZ-Wing", "XY-Chain", "MultiColouring", "3DMedusa", "ChuteRemotePairs", "MentalChain(direct)", "SumAlgebra",
         "WeightedSums", "BandLogic", "Fireworks", "GurthSymmetry", "ColourAlgebra", "ComboPositions", "CliqueHouse",
         "LineSets", "LineClues"],
-    4: ["AIC", "NiceLoop(discontinuous)", "ALS-XZ", "ALS-XY-Wing", "SueDeCoq", "AlignedPairExclusion", "CaseAnalysis"],
-    5: ["ALS-AIC", "DeathBlossom", "EitherWay", "WhatIf", "ShortTrial",
-        # computer search: only reachable with search='computer' (human mode grades such puzzles Unknown)
-        "Trial", "ForcingChains", "DynamicForcingChains", "NestedForcingChains", "NishioForcingNet", "PatternOverlay"],
+    # R6 (user 2026-10-26): bounded case splits and ALS chains are within the expert hobby limit (Very Hard); Extreme =
+    # borderline-computer logic: forcing chains / nets, Nishio, pattern overlay, trial and error (the no-guess last resort)
+    4: ["AIC", "NiceLoop(discontinuous)", "ALS-XZ", "ALS-XY-Wing", "SueDeCoq", "AlignedPairExclusion", "CaseAnalysis",
+        "ALS-AIC", "DeathBlossom", "EitherWay", "WhatIf", "ShortTrial"],
+    5: ["Trial", "ForcingChains", "DynamicForcingChains", "NestedForcingChains", "NishioForcingNet", "PatternOverlay"],
 }.items():
     for _n in _names:
         _BAND_BY_NAME[_n] = _band

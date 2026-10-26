@@ -29,7 +29,7 @@ inline void set_meta9(Move& m, int a, int b, int c, int d, int e, int f, int g, 
 // code = 1000 + 100*n + 10*kind + fin(0 none, 1 finned, 2 sashimi)
 void Solver::gfish(MoveBuf& out, int n, bool finless, bool finned) {
     finless = finless && !disabled[JELLYFISH];
-    finned = finned && !disabled[FINNED_FISH];
+    finned = finned && !disabled[FINNED_FISH] && n <= P.fish_max_n;
     if (!finless && !finned) return;
     const int W = p.W, H = (int)p.houses.size();
     std::vector<uint64_t> pos((size_t)H * W);
@@ -165,6 +165,8 @@ void Solver::gfish(MoveBuf& out, int n, bool finless, bool finned) {
                 int h = covers[i];
                 bool bad = false;
                 for (int j = 0; j < depth && !bad; ++j) bad = ov(cov[j], h);
+                if (n > 2 && !bad && line(h) < 2)      // a row with a column among the covers: mutant (rejected at the leaf)
+                    for (int j = 0; j < depth && !bad; ++j) bad = line(cov[j]) < 2 && line(cov[j]) != line(h);
                 if (bad) continue;
                 cov[depth] = h;
                 const uint64_t* gb = p.gbits(p.houses[h]);
@@ -182,11 +184,17 @@ void Solver::gfish(MoveBuf& out, int n, bool finless, bool finned) {
                     base_types |= 1 << line(combo[i]);
                 }
                 if (n > 2 && (base_types & 3) == 3) return;  // would be mutant
+                // n > 2 allows basic / franken only: rows-only bases (no columns) can't take row covers, and the
+                // reverse -- exact pre-filter of covers the leaf would reject as mutant (windoku: 2026-10-26 speed)
+                int ban_line = -1;
+                if (n > 2 && (base_types & 1) && !(base_types & 2)) ban_line = 0;
+                if (n > 2 && (base_types & 2) && !(base_types & 1)) ban_line = 1;
                 covers.clear();
                 for (int h = 0; h < H; ++h) {
                     bool inb = false;
                     for (int i = 0; i < n; ++i) inb |= combo[i] == h;
                     if (inb) continue;
+                    if (ban_line >= 0 && line(h) == ban_line) continue;
                     const uint64_t* ph = &pos[(size_t)h * W];
                     bool hit = false;
                     for (int w = 0; w < W && !hit; ++w) hit = ph[w] & U[w];
