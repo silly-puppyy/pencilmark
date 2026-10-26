@@ -13,3 +13,6 @@ dist/
 # docs build
 site/
 docs/index.md
+website/node_modules/
+website/build/
+website/.docusaurus/

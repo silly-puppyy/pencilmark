@@ -1,0 +1,38 @@
+"""Write docs/api.md from the docstrings of pencilmark's public API (read from the source with ast, so the C++ engine
+need not be built).
+  python tools/gen_api_md.py"""
+import ast
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+NAMES = ["rate", "rate_many", "solve", "load", "to_export", "dumps", "fingerprint", "validate", "describe",
+         "NotUnique", "NoSolution", "Undecided"]
+
+
+def signature(node):
+    seg = ast.unparse(node.args)
+    return f"{node.name}({seg})"
+
+
+def main():
+    src = (ROOT / "src/pencilmark/api.py").read_text(encoding="utf-8")
+    tree = ast.parse(src)
+    defs = {n.name: n for n in tree.body if isinstance(n, (ast.FunctionDef, ast.ClassDef))}
+    L = ["# Python API", "",
+         "Everything below is importable from `pencilmark` directly (`pencilmark.rate`, `pencilmark.to_export`, …). "
+         "This page is generated from the docstrings (`tools/gen_api_md.py`).", ""]
+    for name in NAMES:
+        n = defs[name]
+        doc = ast.get_docstring(n) or ""
+        if isinstance(n, ast.ClassDef):
+            bases = ", ".join(ast.unparse(b) for b in n.bases)
+            L += [f"## `{name}`", "", f"```python\nclass {name}({bases})\n```", ""]
+        else:
+            L += [f"## `{name}`", "", f"```python\n{signature(n)}\n```", ""]
+        if doc:
+            L += ["```text", doc, "```", ""]
+    (ROOT / "docs/api.md").write_text("\n".join(L), encoding="utf-8")
+
+
+if __name__ == "__main__":
+    main()

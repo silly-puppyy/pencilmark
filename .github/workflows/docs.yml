@@ -1,11 +1,12 @@
-# Builds the documentation site (MkDocs) and publishes it with the JSON Schemas on GitHub Pages:
-# https://silly-puppyy.github.io/pencilmark/ and .../schema/sudoku-puzzle-1.json, sudoku-grade-1.json (the schemas' $id).
+# Builds the documentation site (Docusaurus, website/; pages from docs/) and publishes it with the JSON Schemas on
+# GitHub Pages: https://silly-puppyy.github.io/pencilmark/ and .../schema/sudoku-puzzle-1.json, sudoku-grade-1.json
+# (the schemas' $id).
 name: docs
 
 on:
   push:
     branches: [main]
-    paths: ["docs/**", "README.md", "CHANGELOG.md", "mkdocs.yml", "src/pencilmark/api.py", ".github/workflows/docs.yml"]
+    paths: ["docs/**", "website/**", "README.md", "src/pencilmark/api.py", "tools/gen_api_md.py", ".github/workflows/docs.yml"]
   workflow_dispatch:
 
 permissions:
@@ -23,20 +24,24 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-node@v7
         with:
-          python-version: "3.12"
-      - run: python -m pip install "mkdocs>=1.6,<2" "mkdocs-material>=9.5,<9.8" "mkdocstrings[python]"
-      - run: cp README.md docs/index.md
-      - run: mkdocs build --strict -d site
+          node-version: 22
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+      - run: python3 tools/gen_api_md.py && cp README.md docs/index.md
+      - run: npm ci
+        working-directory: website
+      - run: npm run build
+        working-directory: website
       - run: |
-          mkdir -p site/schema
-          cp docs/sudoku-puzzle.schema.json site/schema/sudoku-puzzle-1.json
-          cp docs/sudoku-grade.schema.json site/schema/sudoku-grade-1.json
+          mkdir -p website/build/schema
+          cp docs/sudoku-puzzle.schema.json website/build/schema/sudoku-puzzle-1.json
+          cp docs/sudoku-grade.schema.json website/build/schema/sudoku-grade-1.json
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
         with:
-          path: site
+          path: website/build
 
   deploy:
     needs: build
