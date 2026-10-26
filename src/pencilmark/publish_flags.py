@@ -1,4 +1,4 @@
-"""Common-sense publishing notes ('would not be chosen for publishing'), Stuart-style. Bands never change.
+"""Common-sense publishing notes ('would not be chosen for publishing'), sudokuwiki-style. Bands never change.
 
 Hand-coded rules (sudoku.coach likes are too sparse and its puzzles human-curated, so
 common sense first; the coach analysis only informed the spike rule's direction):

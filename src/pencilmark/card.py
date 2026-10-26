@@ -6,7 +6,7 @@
   label        family tier of the REQUIRED strategies (metrics.family_tier), with its meaning
   difficulty   level of the hardest insight (+ amount of hard reasoning), the difficulty head
   tediousness  routine work in minutes (scoring.work_time: every move priced as a Hidden Single)
-  chips        3-letter technique codes, Stuart's (sudokuwiki solver) where he has the strategy and
+  chips        3-letter technique codes, Andrew Stuart's (sudokuwiki.org solver) where he has the strategy and
                consistent new codes otherwise; shade = family (darker = harder); "x2" = forced
                twice (steps where nothing from an easier family was available)
 """
@@ -188,13 +188,13 @@ def grade_card(puzzle, P, specific=True, check_rules=True, band=None):
                 "chips": [c for c in chips if c["code"] != "GSS"], "guess_at": len(pre)}
     global _LAST_EFFORT
     _LAST_EFFORT = None
-    sc_ = _score_v2(puzzle)          # Stuart-form score on the written route (data/card_score.json)
+    sc_ = _score_v2(puzzle)          # sudokuwiki-form score on the written route (data/card_score.json)
     effort_ = _LAST_EFFORT
     if sc_ is None:
         sc_ = MT.card_score(MT.size_normalised(MT.difficulty_grade(steps, P, cap=False, head=False), puzzle.D, P))
     sc_ = round(sc_, 1) if sc_ is not None else None
     nf = sum(forced.values())
-    # Stuart-style publishing notes, hand-coded common sense (pencilmark/publish_flags.py); bands stay fixed
+    # sudokuwiki-style publishing notes, hand-coded common sense (pencilmark/publish_flags.py); bands stay fixed
     from . import publish_flags as PF
     wm = g["grade"]["work_time"] / 60 if g.get("grade") else None
     pnotes = PF.notes(puzzle, P, steps, tier, forced, req, wm, check_rules=check_rules)

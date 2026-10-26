@@ -5138,7 +5138,7 @@ def check(ex, step, puzzle, state):
 
 
 # ================================================== techniques 68-82 (engine records) ==
-# Forcing chains, 3D Medusa, colour classes, sum bounds, class counting, dominoes and the Stuart set.
+# Forcing chains, 3D Medusa, colour classes, sum bounds, class counting, dominoes and the sudokuwiki set.
 # Built from the engine's explanation records (cbackend.solve(..., explain=True)): each handler states
 # the move exactly in the short line and names only cells / houses that it also highlights.
 
@@ -5645,7 +5645,7 @@ def _h_weighted_sums(ctx):
 
 
 def _h_fireworks(ctx):
-    """Fireworks (Stuart): three digits each confined to a cell X, one cell A of X's row outside X's box and one
+    """Fireworks (sudokuwiki): three digits each confined to a cell X, one cell A of X's row outside X's box and one
     cell B of X's column outside it -> A, B, X hold exactly those digits."""
     nm, p = ctx.nm, ctx.p
     xm = ctx.xm or {}

@@ -48,7 +48,7 @@ see docs/FORMAT.md section 6.
 
 Other options: `-j N` rates N puzzles in parallel (output stays in input order); `--max-seconds N` caps the contents
 search; `--computer` allows computer search (forcing chains, trial); `--allow-guessing` guesses where no technique applies
-(band Unknown) instead of proving by full search (Trial and error, Extreme); `--legacy` prints the older card format.
+(band Unknown) instead of proving by full search (Trial and error, Extreme).
 
 ## Python
 
@@ -113,7 +113,7 @@ $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7..
 
 ## The card
 - **difficulty** is how hard each cell *feels* to a human. The scale is continuous: 0 means one empty cell, and there is no ceiling.
-  - On classics it follows Stuart's (sudokuwiki) scale.
+  - On classics it follows Andrew Stuart's sudokuwiki.org scale.
   - A typical newspaper medium is about 5; fed-sudoku "hard" is about 6.5.
 - **time** is in minutes for an average player.
   - The median 9x9 classic takes about 12 min.
@@ -138,9 +138,9 @@ overlap a lot, so treat this as a rough conversion.
 
 | Source label | Our difficulty | Notes |
 |---|---|---|
-| fed-sudoku easy | 3.9 (3.4–4.3) | Stuart 3.9 |
-| fed-sudoku medium | 5.1 (4.6–5.9) | Stuart 5.2 |
-| fed-sudoku hard | 6.5 (6.2–7.0) | Stuart 6.7 |
+| fed-sudoku easy | 3.9 (3.4–4.3) | sudokuwiki 3.9 |
+| fed-sudoku medium | 5.1 (4.6–5.9) | sudokuwiki 5.2 |
+| fed-sudoku hard | 6.5 (6.2–7.0) | sudokuwiki 6.7 |
 | sudoku.coach level 0 / 1 / 2 | 0.6 / 1.7 / 2.8 | classics |
 | sudoku.coach level 3 / 4 / 5 | 3.7 / 5.2 / 5.8 | |
 | sudoku.coach level 6 / 7 / 8 | 6.1 / 6.7 / 7.3 | |

@@ -9,7 +9,7 @@ puzzle (format "sudoku-puzzle", format_version 1): specified in docs/FORMAT.md, 
 
 grade (format "sudoku-grade", format_version 1):
   grader      {"name": "pencilmark", "version": "1.0.0"}: the engine that made the card; a card from another version can differ
-  difficulty  what a human feels per cell: continuous, floor 0 (one empty cell), no ceiling; classic medians track Stuart's
+  difficulty  what a human feels per cell: continuous, floor 0 (one empty cell), no ceiling; classic medians track Andrew Stuart's
               scale (data/card_score.json "map")
   time        minutes for today's average player (classic units x minutes_per_unit, data/time_model.json); time_p80 = the
               80th percentile (1.53 x)
@@ -485,7 +485,7 @@ def grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None):
     bp = BP.contents(p, P, deadline=None if max_seconds is None else time.time() + max_seconds)
     if card is None:        # band / required from the band path (skips the deletion test inside grade_card)
         req_b = list(dict.fromkeys(st["technique"] for st in bp["steps"] if st["band"] > 0))
-        card = K.grade_card(p, P, specific=False, check_rules=bool(want & {"issues", "reject"}),     # specific names only feed the legacy chips
+        card = K.grade_card(p, P, specific=False, check_rules=bool(want & {"issues", "reject"}),     # specific names are not used by this card
                             band=(bp["band"] if bp["solved"] else "Unknown", req_b))
     unknown = not bp["solved"]
     names = {}

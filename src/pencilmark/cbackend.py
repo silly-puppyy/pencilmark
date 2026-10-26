@@ -118,7 +118,7 @@ _CHAIN_KEYS = ("links", "strong_bivalue", "strong_bilocal", "strong_constraint",
 for _t in (S.X_CHAIN, S.XY_CHAIN, S.AIC_CHAIN, S.NICE_LOOP, S.MENTAL_CHAIN, S.REMOTE_PAIRS, S.EMPTY_RECT):
     XMETA_KEYS[_t] = _CHAIN_KEYS
 XMETA_KEYS[S.ALS_AIC] = _CHAIN_KEYS[:5] + ("n_als",) + _CHAIN_KEYS[6:]
-# Stuart-style codes for chain special cases
+# sudokuwiki-style codes for chain special cases
 CHAIN_CODES = {1: "SKY", 2: "2SK", 3: "TUR", 4: "XCH", 5: "XYC", 6: "RMP", 7: "WWG", 8: "AIC", 9: "DNL",
                3001: "UR1", 3002: "UR2", 3003: "UR3", 3004: "UR4", 3005: "HUR", 3006: "BUG",
                3101: "AXZ", 3102: "AXZ2", 3103: "AXY", 3104: "DBL", 3105: "ALS",

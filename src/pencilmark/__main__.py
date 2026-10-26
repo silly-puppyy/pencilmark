@@ -7,7 +7,7 @@
       %m time in minutes for today's average player, %p 80th-percentile minutes, %b band, %h hardest technique met,
       %c contents chips (band > 0, with uses), %n issue codes, %s status, %u unique?, %i line number.
       Default: "%b\t%d\t%m\t%h". --json prints the full card (add --steps for the step list); --report a readable
-      summary. --legacy prints the legacy card (time grade %t, work minutes %w).
+      summary.
   python -m pencilmark solve [FILE|-]      the solution (or 'not unique' / 'no solution') per puzzle
   python -m pencilmark json  [FILE|-]      validate + normalise to canonical JSON (adds "hash")
   python -m pencilmark export [FILE|-] [--pretty] [--no-solution]
@@ -101,60 +101,13 @@ def report2(g, k=None):
     return "\n".join(L)
 
 
-def _fmt(fmt, card, k, unique):
-    chips = card.get("chips") or []
-    req = [c for c in chips if c.get("required")] or chips
-    hardest = max(req, key=lambda c: c.get("family_i", 0))["name"] if req else ""
-    vals = {"t": "" if card.get("time_grade") is None else f"{card['time_grade']:.1f}",
-            "d": "" if card.get("score") is None else f"{card['score']:.1f}", "b": card.get("label", card.get("status", "")),
-            "w": "" if card.get("tediousness_min") is None else f"{card['tediousness_min']:.1f}", "h": hardest,
-            "c": " ".join(c["code"] + (f"x{c['forced']}" if c.get("forced", 0) > 1 else "") for c in chips),
-            "n": ";".join(f"{f[0]}" for f in card.get("flags") or []), "s": card.get("status", ""), "u": str(unique), "i": str(k)}
-    out, i = [], 0
-    while i < len(fmt):
-        if fmt[i] == "%" and i + 1 < len(fmt):
-            out.append(vals.get(fmt[i + 1], "%" + fmt[i + 1])); i += 2
-        elif fmt[i] == "\\" and fmt[i + 1:i + 2] == "t":
-            out.append("\t"); i += 2
-        else:
-            out.append(fmt[i]); i += 1
-    return "".join(out)
-
-
-def report(card, k=None):
-    """Readable grade report: Stuart-style breakdown plus our two numbers."""
-    if "label" not in card:
-        return f"[{k}] {card.get('status')}"
-    if card.get("status") in ("beyond engine", "beyond human logic"):
-        return (f"{'#' + str(k) + '  ' if k else ''}{card['label']}  -  {card.get('meaning')}\n   techniques before that: "
-                + ", ".join(c["name"] for c in card.get("chips") or []))
-    L = [f"{'#' + str(k) + '  ' if k else ''}{card['label']}  -  difficulty {card.get('score')}  -  time {card.get('time_grade')}"
-         f"  ({card.get('n_steps')} steps, ~{card.get('tediousness_min')} min of routine work)",
-         f"   {card.get('meaning', '')}",
-         f"   balance: {card.get('balance')} ({card.get('forced_total')} forced band-level steps){'; ' + card['score_fit'] if card.get('score_fit') else ''}"]
-    req = [c for c in card.get("chips") or [] if c.get("required")]
-    if req:
-        L.append("   required techniques: " + ", ".join(
-            f"{c['name']}{' (' + '/'.join(c['specific'][:3]) + ')' if c.get('specific') else ''}{' x' + str(c['forced']) if c.get('forced') else ''}"
-            f" [{c['family']}]" for c in sorted(req, key=lambda c: -c["family_i"])))
-    tech = card.get("techniques") or {}
-    if tech:
-        L.append("   technique counts: " + ", ".join(f"{n} {v}" for n, v in tech.items()))
-    for h in card.get("hardest_steps") or []:
-        L.append(f"   hardest: step {h['step']}  {h['technique']}  price {h['price']}{'  -> ' + h['place'] if h.get('place') else ''}")
-    for fl in card.get("flags") or []:
-        L.append(f"   {fl}")
-    return "\n".join(L)
-
-
 def _rate_one(args):
     """one input line -> its output text (runs in a worker process with -j)."""
     k, obj, a = args
-    from .card import grade_card
     from . import cpsat_verify as V
     from .export import grade
     P = dict(_params(), search="computer" if a.computer else "human", allow_guess=bool(a.allow_guessing))
-    fmt = a.format or ("%b\\t%d\\t%t\\t%h" if a.legacy else "%b\\t%d\\t%m\\t%h")
+    fmt = a.format or "%b\\t%d\\t%m\\t%h"
     try:
         p = PJ.from_json(obj)
         p.finalize()
@@ -162,24 +115,18 @@ def _rate_one(args):
         if len(sols) != 1 or not decided:
             st = ("not unique" if len(sols) > 1 else "undecided (" + V.VERIFY_HINT + ")" if not decided
                   else "no solution")
-            return ((_fmt if a.legacy else _fmt2)(fmt, {"status": st}, k, False) if not a.json
-                    else json.dumps({"line": k, "status": st}))
-        if not a.legacy:
-            from .export import card_fields
-            fl = a.fields.split(",") if a.fields else None
-            if fl is None and ("%p" in fmt or a.report):
-                fl = list(card_fields(None)) + ["time.p80"]
-            want = card_fields(fl, steps=a.steps)
-            g = grade(p, P, max_seconds=a.max_seconds, fields=sorted(want - {"se", "se.diuf"}))
-            if want & {"se", "se.diuf"}:
-                from . import band_path as BP, se as SE
-                bp = BP.band_path(p, P)
-                g["se"] = SE.ratings(bp["steps"], scale="diuf" if "se.diuf" in want else "classic") if bp["solved"] else None
-            return json.dumps({"line": k, **g}, default=str) if a.json else report2(g, k) if a.report else _fmt2(fmt, g, k, True)
-        card = grade_card(p, P, check_rules=a.notes)
-        if a.json:
-            return json.dumps({"line": k, **card}, default=str)
-        return report(card, k) if a.report else _fmt(fmt, card, k, True)
+            return _fmt2(fmt, {"status": st}, k, False) if not a.json else json.dumps({"line": k, "status": st})
+        from .export import card_fields
+        fl = a.fields.split(",") if a.fields else None
+        if fl is None and ("%p" in fmt or a.report):
+            fl = list(card_fields(None)) + ["time.p80"]
+        want = card_fields(fl, steps=a.steps)
+        g = grade(p, P, max_seconds=a.max_seconds, fields=sorted(want - {"se", "se.diuf"}))
+        if want & {"se", "se.diuf"}:
+            from . import band_path as BP, se as SE
+            bp = BP.band_path(p, P)
+            g["se"] = SE.ratings(bp["steps"], scale="diuf" if "se.diuf" in want else "classic") if bp["solved"] else None
+        return json.dumps({"line": k, **g}, default=str) if a.json else report2(g, k) if a.report else _fmt2(fmt, g, k, True)
     except Exception as e:
         return f"error\t{k}\t{type(e).__name__}: {e}"
 
@@ -244,14 +191,12 @@ def main(argv=None):
     r.add_argument("--computer", action="store_true", help="allow pure computer search (forcing chains / nets, trial); default: human mode")
     r.add_argument("--allow-guessing", action="store_true", help="guess where no technique applies (faster; band Unknown) "
                    "instead of proving by full search (Trial and error, band Extreme)")
-    r.add_argument("--notes", action="store_true", help="legacy card: run the publishing-rule checks (slower)")
     r.add_argument("--steps", action="store_true", help="with --json: include the step-by-step solve")
     r.add_argument("--fields", default=None, help="card fields, comma-separated (docs/FORMAT.md 11.1), e.g. "
                                                     "difficulty,band,time.p80,steps,steps.explanation.short")
     r.add_argument("-j", "--jobs", type=int, default=1, help="rate puzzles in N parallel processes (output in input order)")
     r.add_argument("--max-seconds", type=float, default=None,
                    help="cap the contents search (opt-in; the card then says contents_truncated and may differ run to run)")
-    r.add_argument("--legacy", action="store_true", help="print the legacy card (time grade instead of minutes)")
     r.set_defaults(fn=cmd_rate)
     s = sub.add_parser("solve"); s.add_argument("file", nargs="?"); s.set_defaults(fn=cmd_solve)
     j = sub.add_parser("json"); j.add_argument("file", nargs="?"); j.set_defaults(fn=cmd_json)

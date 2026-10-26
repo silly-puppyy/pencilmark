@@ -397,7 +397,7 @@ def work_volume(steps, puzzle, params):
 
 
 def time_grade(steps, puzzle, params):
-    """Stuart-style log scale of the work volume: 5.0 = a typical 9x9 classic, +1 per doubling of the work."""
+    """sudokuwiki-style log scale of the work volume: 5.0 = a typical 9x9 classic, +1 per doubling of the work."""
     v = work_volume(steps, puzzle, params)
     return round(5.0 + math.log2(max(v, 1e-9) / VOLUME_REF), 1) if v > 0 else None
 

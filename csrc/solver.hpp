@@ -65,7 +65,7 @@ enum Tech {
     SNYDER_MARKS = 90,    // writing Snyder marks (a digit confined to <= 2 cells of a box), params notes_mode=snyder
     SNYDER_D = 91,        // a placement read from Snyder marks (hidden pair / box-line X-wing from Snyder pairs)
     BAND_LOGIC = 92,      // a band's lines + boxes + the rules inside taken together (sub-puzzle consistency)
-    FIREWORKS = 93,       // Stuart's Fireworks: three digits confined to a cell, one cell of its row, one of its column
+    FIREWORKS = 93,       // Andrew Stuart's Fireworks: three digits confined to a cell, one cell of its row, one of its column
     HUMAN_CASE = 94,      // bounded human case analysis: refutation / cell / house forcing, <= case_rounds rule rounds
     COMBO_POS = 95,       // combination-aware positions: a cage's fillings cap how many of a digit set it holds in a house
     CLIQUE_HOUSE = 96,    // clique house: pairwise-different cells (houses, anti-knight, relations) as a virtual house
@@ -310,7 +310,7 @@ struct StepRec {
     int alt_off = 0, alt_n = 0, chosen = 0;
     int mode = 0;  // 0 direct, 1 notes
     int n_empty = 0, erasures = 0, notes_written = 0;
-    pm_long n_cands = 0;  // candidates left in the empty cells before the step (engine view; Stuart's C)
+    pm_long n_cands = 0;  // candidates left in the empty cells before the step (engine view; Andrew Stuart's C)
     Move move;  // cov/el offsets index into SolveResult pools
 };
 

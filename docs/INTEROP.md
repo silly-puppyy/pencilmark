@@ -24,34 +24,31 @@ command line) also accepts these strings directly.
 
 ## sudokuwiki.org packed strings
 
-The solvers on Andrew Stuart's [sudokuwiki.org](https://www.sudokuwiki.org) use packed strings ("Sudoku String
-Definitions", version B): a 3-character header (type letter, size digit, version letter), then a fixed-width base-36
-number per cell (`0-9a-z`, zero padded) in reading order. pencilmark reads and writes these forms:
+These are the puzzle strings used by the solvers on [sudokuwiki.org](https://www.sudokuwiki.org), Andrew Stuart's site.
+They are described on his [Sudoku String Definitions](https://www.sudokuwiki.org/Sudoku_String_Definitions) page; the
+full encoding reference is the [puzzle-coding documentation](https://blueant1.github.io/puzzle-coding/documentation/puzzlecoding/encodingformats)
+by Quintin May ([source](https://github.com/BlueAnt1/puzzle-coding)). A string is a 3-character header
+(puzzle type, size, encoding version) followed by one base-36 value per cell.
 
-| Header | Puzzle | Chars / cell | Cell value |
-|---|---|---|---|
-| `S9B` | classic 9×9 | 2 | given v → v; empty → 529 (= 511 + 18) |
-| `S6B` | classic 6×6 (2×3 boxes) | 2 | given v → v; empty → 81 (= 63 + 18) |
-| `X9B` | X-sudoku (both main diagonals) | 2 | as S9B |
-| `W9B` | windoku | 2 | as S9B; read as the 4 windows (`region` kind `window`) |
-| `C9B` | colour sudoku (9 groups: same position in every box) | 2 | as S9B; read as `region` kind `disjoint` |
-| `J9B` | jigsaw 9×9 | 3 | `(box − 1) << 10 \| n`, n as S9B |
-| `L9B` | killer 9×9 | 4 | `((colour − 1) << 6 \| clue) << 10 \| n`; given v → v + 9, empty → 529 |
-| `M9B` | killer jigsaw 9×9 | 5 | `(((box − 1) << 3 \| colour − 1) << 6 \| clue) << 10 \| n` |
-| `L6C` | killer 6×6 | 4 | `((colour − 1) << 11 \| clue_or_op) << 7 \| n`; given v → v + 6, empty → 75 |
+pencilmark reads and writes these headers:
 
-- Killer cages: `colour` (1–8) is a colouring in which touching cages differ; cages are the orthogonally connected
-  components of equal colour. `clue` is the cage sum, stored in the cage's first cell in reading order. A 1-cell cage
-  with clue 0 is no cage (uncaged cells are written that way).
-- L6C stores the operator `+` as 1 in the cage's second cell (right neighbour of the first cell, else the one below).
-  Any other operator code is refused.
-- Any other cell value (placed digits in the plain forms, candidate masks) is refused when read.
-- `to_string(puzzle, "sudokuwiki")` picks the header from the structure and refuses anything else (no 6×6 jigsaw or
-  X, no killer-X or killer-windoku, nothing above 9×9).
+| Header | Puzzle | Read as |
+|---|---|---|
+| `S9B`, `S6B` | classic 9×9, 6×6 | one `box_grid` |
+| `X9B` | Sudoku X | + both main diagonals (`region` kind `diagonal`) |
+| `W9B` | Windoku | + the 4 windows (`region` kind `window`) |
+| `C9B` | Colour Sudoku | + 9 groups at the same position in every box (`region` kind `disjoint`) |
+| `J9B` | Jigsaw | `box` rules |
+| `L9B`, `L6C` | Killer 9×9, 6×6 | + `cage` rules (L6C: `+` cages only) |
+| `M9B` | Killer Jigsaw | `box` and `cage` rules |
+
+Anything else (other puzzle types or versions, placed digits or candidates, 6×6 killer operators other than `+`) is
+refused when read. `to_string(puzzle, "sudokuwiki")` picks the header from the structure and refuses puzzles none of
+these headers can express (a 6×6 jigsaw or X, killer-X, killer-windoku, anything above 9×9).
 
 ## ipuz export
 
-`to_ipuz(puzzle)` writes [ipuz](http://www.ipuz.org) 2 for the subset that maps cleanly and refuses the rest:
+`to_ipuz(puzzle)` writes [ipuz](http://www.ipuz.org) 2 ([sudoku kinds](http://www.ipuz.org/sudoku)) for the subset that maps cleanly and refuses the rest:
 
 | pencilmark | ipuz |
 |---|---|
@@ -69,6 +66,7 @@ object goes in `"io.github.silly-puppyy.pencilmark:puzzle"`, with
 
 ## Site loaders
 
-`pencilmark.sources` reads f-puzzles, SudokuPad (SCL / fpuz / ctc), Penpa+ and Logic Masters links, and `to_export`
+`pencilmark.sources` reads [f-puzzles](https://www.f-puzzles.com), [SudokuPad](https://sudokupad.app) (SCL / fpuz /
+ctc), [Penpa+](https://swaroopg92.github.io/penpa-edit/) and [Logic Masters](https://logic-masters.de) links, and `to_export`
 turns the result into a `sudoku-puzzle` file. Writing those formats is not supported. Loaders that fetch pages identify
 themselves, obey robots.txt and pause between requests.

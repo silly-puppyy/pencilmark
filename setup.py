@@ -14,7 +14,7 @@ from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 
 SOURCES = ["model", "nary", "solver", "chains", "extra", "rich", "canon", "mental", "explain", "forcing", "colour",
-           "human", "stuart", "desc", "refute", "rollplace", "bindings"]          # order as in the reference build
+           "human", "sudokuwiki", "desc", "refute", "rollplace", "bindings"]          # order as in the reference build
 GCC_FLAGS = ["-O3", "-std=c++17", "-ffp-contract=off", "-fno-fast-math", "-Wall", "-Wno-unused-function", "-pthread"]
 MSVC_FLAGS = ["/O2", "/std:c++17", "/fp:precise", "/EHsc", "/bigobj"]   # also accepted by clang-cl
 

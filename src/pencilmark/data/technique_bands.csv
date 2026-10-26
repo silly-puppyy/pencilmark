@@ -1,4 +1,4 @@
-code,technique,engine,current,proposed,order,required_in,classic,variant,greedy,SE,Stuart,coach,HoDoKu,note
+code,technique,engine,current,proposed,order,required_in,classic,variant,greedy,SE,sudokuwiki,coach,HoDoKu,note
 FHS,Full House,FullHouse,Very Easy,Very Easy,1,0,0,0,,1.0,Basic,Very Easy,Singles,
 HSI,Hidden Single,HiddenSingle(direct),Very Easy,Very Easy,2,0,0,0,,1.2-1.5,Basic,Very Easy-Easy,Singles,box before row before column (easy-end fit)
 NSI,Naked Single,NakedSingle(direct),Very Easy,Very Easy,3,0,0,0,,2.3,Basic,Mod. Easy,Singles,

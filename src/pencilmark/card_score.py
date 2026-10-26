@@ -34,7 +34,7 @@ def steps(p):
     for s in st:
         t = s.move.feat[0]
         nm = "notes" if t in S.NOTE_TECHS else S.TECH_NAMES[t]
-        # ABSOLUTE candidate density, Stuart's C / 727 * 20 on every grid size: human times across sizes favour it
+        # ABSOLUTE candidate density, Andrew Stuart's C / 727 * 20 on every grid size: human times across sizes favour it
         # ... but only up to 9x9 size: beyond it no extra per-step difficulty is supported by data (sudokuleader
         # 12x12-25x25: partial Spearman +0.07), so bigger grids add TIME, not difficulty (relative density above 729 slots)
         C = s.n_cands if s.n_cands is not None else p.N * p.D
@@ -203,7 +203,7 @@ def score_parts(p, cfg):
         mp = cfg["map"]; x = (r - mp["r0"]) / mp["w"]
         score = mp["A"] * mp["w"] * (math.log1p(math.exp(-abs(x))) + max(x, 0.0))
     else:
-        score = cfg["a"] + cfg["b"] * r + cfg.get("c", 0.0) * r * r     # map refitted on fed + Stuart-rated hard puzzles
+        score = cfg["a"] + cfg["b"] * r + cfg.get("c", 0.0) * r * r     # map refitted on fed + sudokuwiki-rated hard puzzles
     if cfg.get("price_params"):   # time effort from the production route
         return score, math.log(max(sum(math.exp(cfg.get("beta_time", cfg["beta"]) * math.log(d) + cfg["delta"].get(nm, 0.0) + w * e) * f
                                        for nm, d, f, e in pth_time), 1e-9))

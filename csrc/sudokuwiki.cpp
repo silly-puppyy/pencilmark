@@ -544,7 +544,7 @@ void Solver::gurth(MoveBuf& out) {
 namespace cs {
 
 // ------------------------------------------------------------ Fireworks --
-// (Stuart, Diabolical tier) A cell X, its row R, its column C and a region Bx holding X (complete houses).
+// (sudokuwiki, Diabolical tier) A cell X, its row R, its column C and a region Bx holding X (complete houses).
 // A digit d that is unplaced in R, C and Bx and whose candidates in R outside Bx are only A (or none) and in
 // C outside Bx only B (or none) must sit in A, B or X: not in A -> R's d lies in Bx n R; not in B -> C's d lies
 // in Bx n C; the region holds one d, so it is at (Bx n R) n (Bx n C) = X. Three digits confined like that to

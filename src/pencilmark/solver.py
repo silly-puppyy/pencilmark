@@ -72,7 +72,7 @@ SUM_ALGEBRA = 89     # interval algebra over unit sums in a band / stack (house 
 SNYDER_MARKS = 90    # writing Snyder marks (params notes_mode = "snyder"), priced per mark like TakeNotes
 SNYDER_D = 91        # a placement read from Snyder marks (hidden pair / box-line X-wing from Snyder pairs)
 BAND_LOGIC = 92      # a band's lines + boxes + the rules inside taken together (C++ only; sub-puzzle consistency)
-FIREWORKS = 93       # Stuart's Fireworks (C++ only): three digits confined to a cell + one row cell + one column cell
+FIREWORKS = 93       # Andrew Stuart's Fireworks (C++ only): three digits confined to a cell + one row cell + one column cell
 HUMAN_CASE = 94      # bounded human case analysis (C++ only): refutation / cell / house forcing with rule rounds
 COMBO_POS = 95       # combination-aware positions (C++ only): a cage's fillings cap a digit set inside a house
 CLIQUE_HOUSE = 96    # clique house (C++ only): pairwise-different cells (houses, anti-knight, relations) as a house
