@@ -4,6 +4,7 @@
 [![Python](https://img.shields.io/pypi/pyversions/pencilmark)](https://pypi.org/project/pencilmark/)
 [![Wheels](https://github.com/silly-puppyy/pencilmark/actions/workflows/wheels.yml/badge.svg)](https://github.com/silly-puppyy/pencilmark/actions/workflows/wheels.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](https://github.com/silly-puppyy/pencilmark/blob/main/LICENSE)
+[![Docs](https://img.shields.io/badge/docs-silly--puppyy.github.io-blue)](https://silly-puppyy.github.io/pencilmark/)
 
 pencilmark rates sudoku puzzles the way a human solver experiences them. It solves a puzzle step by step with human
 techniques, easiest first, and reports how hard it is, how long it takes, which band it belongs to and which techniques

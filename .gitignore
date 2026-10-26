@@ -9,3 +9,7 @@ dist/
 .pytest_cache/
 *.log
 *.pkl
+
+# docs build
+site/
+docs/index.md

@@ -31,7 +31,7 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/silly-puppyy/pencilmark"
-Documentation = "https://github.com/silly-puppyy/pencilmark/blob/main/docs/USAGE.md"
+Documentation = "https://silly-puppyy.github.io/pencilmark/"
 Source = "https://github.com/silly-puppyy/pencilmark"
 Issues = "https://github.com/silly-puppyy/pencilmark/issues"
 Changelog = "https://github.com/silly-puppyy/pencilmark/blob/main/CHANGELOG.md"

@@ -1,0 +1,46 @@
+site_name: pencilmark
+site_description: Human-like difficulty grader, solver and generator for classic and variant sudoku
+site_url: https://silly-puppyy.github.io/pencilmark/
+repo_url: https://github.com/silly-puppyy/pencilmark
+repo_name: silly-puppyy/pencilmark
+edit_uri: edit/main/docs/
+docs_dir: docs
+exclude_docs: |
+  examples/specs/*.json
+nav:
+  - Home: index.md
+  - Usage: USAGE.md
+  - Puzzle format: FORMAT.md
+  - Other formats: INTEROP.md
+  - Engine: ENGINE.md
+  - Python API: api.md
+  - Example specs: examples/specs/README.md
+theme:
+  name: material
+  features:
+    - content.code.copy
+    - navigation.sections
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle: {icon: material/brightness-7, name: Dark mode}
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle: {icon: material/brightness-4, name: Light mode}
+markdown_extensions:
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.superfences
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: null
+            show_source: false
+            members_order: source
