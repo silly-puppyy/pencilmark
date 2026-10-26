@@ -5,29 +5,39 @@ Everything below is importable from `pencilmark` directly (`pencilmark.rate`, `p
 ## `rate`
 
 ```python
-rate(puzzle, steps=False, max_seconds=None, mode='human', se=False, fields=None, allow_guessing=False, explain=None, quality=None)
+rate(
+    puzzle,
+    steps=False,
+    max_seconds=None,
+    mode='human',
+    se=False,
+    fields=None,
+    allow_guessing=False,
+    explain=None,
+    quality=None,
+)
 ```
 
-```text
-the "sudoku-grade" card of one puzzle (docs/FORMAT.md 11) with the requested top-level fields only. Default fields:
-difficulty, time, band, band_index, contains, issues, reject (format, format_version, grader always). Optional:
-time_p80, se, se_diuf, steps, describe, symmetry. explain="short" / "teach" / True (both) adds explanations to the
-steps. steps=True is shorthand for the steps field with both explanation levels; se=True / se="diuf" for se / se_diuf.
-Raises NotUnique / NoSolution / Undecided for a puzzle without exactly one solution. allow_guessing=True: guess
-where no technique applies (band "Unknown") instead of proving by full search (Trial and error, Extreme).
-quality: the issue checks' limits, e.g. {"trivial": 0.5, "trial": False} (docs/FORMAT.md 11.4).
-```
+the "sudoku-grade" card of one puzzle (docs/FORMAT.md 11) with the requested top-level fields only. Default fields: difficulty, time, band, band_index, contains, issues, reject (format, format_version, grader always). Optional: time_p80, se, se_diuf, steps, describe, symmetry. explain="short" / "teach" / True (both) adds explanations to the steps. steps=True is shorthand for the steps field with both explanation levels; se=True / se="diuf" for se / se_diuf. Raises NotUnique / NoSolution / Undecided for a puzzle without exactly one solution. allow_guessing=True: guess where no technique applies (band "Unknown") instead of proving by full search (Trial and error, Extreme). quality: the issue checks' limits, e.g. {"trivial": 0.5, "trial": False} (docs/FORMAT.md 11.4).
 
 ## `rate_many`
 
 ```python
-rate_many(puzzles, jobs=1, steps=False, max_seconds=None, mode='human', se=False, fields=None, allow_guessing=False, explain=None, quality=None)
+rate_many(
+    puzzles,
+    jobs=1,
+    steps=False,
+    max_seconds=None,
+    mode='human',
+    se=False,
+    fields=None,
+    allow_guessing=False,
+    explain=None,
+    quality=None,
+)
 ```
 
-```text
-cards for many puzzles, in input order; jobs > 1 uses worker processes. A puzzle that cannot be rated (not unique,
-no solution, unreadable) gives {"error": "..."}.
-```
+cards for many puzzles, in input order; jobs > 1 uses worker processes. A puzzle that cannot be rated (not unique, no solution, unreadable) gives {"error": "..."}.
 
 ## `solve`
 
@@ -35,10 +45,7 @@ no solution, unreadable) gives {"error": "..."}.
 solve(puzzle)
 ```
 
-```text
-the unique solution as a list of digits (cell order of the puzzle); NotUnique / NoSolution otherwise.
-Uses the engine's exhaustive C++ search; CP-SAT (optional OR-Tools) only if that search hits its node limit.
-```
+the unique solution as a list of digits (cell order of the puzzle); NotUnique / NoSolution otherwise. Uses the engine's exhaustive C++ search; CP-SAT (optional OR-Tools) only if that search hits its node limit.
 
 ## `load`
 
@@ -46,9 +53,7 @@ Uses the engine's exhaustive C++ search; CP-SAT (optional OR-Tools) only if that
 load(puzzle)
 ```
 
-```text
 any accepted input -> a finalized engine Puzzle.
-```
 
 ## `to_export`
 
@@ -56,12 +61,7 @@ any accepted input -> a finalized engine Puzzle.
 to_export(puzzle, meta=None, with_solution=True, describe=True, **meta_kw)
 ```
 
-```text
-the "sudoku-puzzle" exchange dict (format_version 1, docs/FORMAT.md): canonical, houses and rules with "r1c1" cells.
-Metadata goes in its own optional "meta" object: pass a dict (meta={"title": ..., "author": ..., "date": ...}) and / or
-keywords (title=..., author=..., source=..., id=..., url=..., date=..., rules_text=...); metadata already in a JSON input is
-kept. describe=True fills an EMPTY meta.type / meta.rules_text from describe(); it never overwrites them.
-```
+the "sudoku-puzzle" exchange dict (format_version 1, docs/FORMAT.md): canonical, houses and rules with "r1c1" cells. Metadata goes in its own optional "meta" object: pass a dict (meta={"title": ..., "author": ..., "date": ...}) and / or keywords (title=..., author=..., source=..., id=..., url=..., date=..., rules_text=...); metadata already in a JSON input is kept. describe=True fills an EMPTY meta.type / meta.rules_text from describe(); it never overwrites them.
 
 ## `dumps`
 
@@ -69,9 +69,7 @@ kept. describe=True fills an EMPTY meta.type / meta.rules_text from describe(); 
 dumps(doc, pretty=True)
 ```
 
-```text
 canonical JSON text of a sudoku-puzzle dict (fixed key order; pretty: one grid row per line, one rule per line)
-```
 
 ## `fingerprint`
 
@@ -79,9 +77,7 @@ canonical JSON text of a sudoku-puzzle dict (fixed key order; pretty: one grid r
 fingerprint(puzzle)
 ```
 
-```text
 content fingerprint "sha256:<hex>" of the canonical form (rules, grid, givens, candidates; no meta / style / solution)
-```
 
 ## `validate`
 
@@ -89,9 +85,7 @@ content fingerprint "sha256:<hex>" of the canonical form (rules, grid, givens, c
 validate(doc)
 ```
 
-```text
 strict reading checks of a format_version 1 dict (docs/FORMAT.md section 4); raises FormatError
-```
 
 ## `describe`
 
@@ -99,9 +93,7 @@ strict reading checks of a format_version 1 dict (docs/FORMAT.md section 4); rai
 describe(puzzle)
 ```
 
-```text
 {"type": variant name, "rules": {short name: one-sentence rule, ...}} from the rules alone (pencilmark/variants.py)
-```
 
 ## `NotUnique`
 
@@ -109,9 +101,7 @@ describe(puzzle)
 class NotUnique(ValueError)
 ```
 
-```text
 the puzzle has more than one solution
-```
 
 ## `NoSolution`
 
@@ -119,9 +109,7 @@ the puzzle has more than one solution
 class NoSolution(ValueError)
 ```
 
-```text
 the puzzle has no solution
-```
 
 ## `Undecided`
 
@@ -129,6 +117,4 @@ the puzzle has no solution
 class Undecided(RuntimeError)
 ```
 
-```text
 the exhaustive search hit its node limit and OR-Tools (pip install "pencilmark[verify]") is not available
-```

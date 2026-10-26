@@ -1,5 +1,5 @@
 // Docusaurus site for pencilmark. Pages live in ../docs (readable on GitHub too); plain .md is parsed as Markdown, not MDX.
-const {themes} = require('prism-react-renderer');
+const {tomorrow, tomorrowNight} = require('./src/prism-tomorrow');
 
 const GH = 'https://github.com/silly-puppyy/pencilmark';
 
@@ -51,7 +51,7 @@ module.exports = {
       ],
       copyright: 'MIT licensed',
     },
-    prism: {theme: themes.github, darkTheme: themes.vsDark, additionalLanguages: ['json', 'python', 'bash']},
+    prism: {theme: tomorrow, darkTheme: tomorrowNight, additionalLanguages: ['json', 'python', 'bash']},
     tableOfContents: {minHeadingLevel: 2, maxHeadingLevel: 3},
   },
 };

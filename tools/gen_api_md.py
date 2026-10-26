@@ -11,7 +11,9 @@ NAMES = ["rate", "rate_many", "solve", "load", "to_export", "dumps", "fingerprin
 
 def signature(node):
     seg = ast.unparse(node.args)
-    return f"{node.name}({seg})"
+    if len(node.name) + len(seg) <= 80:
+        return f"{node.name}({seg})"
+    return f"{node.name}(\n    " + ",\n    ".join(a.strip() for a in seg.split(", ")) + ",\n)"
 
 
 def main():
@@ -29,8 +31,9 @@ def main():
             L += [f"## `{name}`", "", f"```python\nclass {name}({bases})\n```", ""]
         else:
             L += [f"## `{name}`", "", f"```python\n{signature(n)}\n```", ""]
-        if doc:
-            L += ["```text", doc, "```", ""]
+        if doc:                     # docstring lines are hard-wrapped: join them into flowing paragraphs
+            paras = [" ".join(x.split()) for x in doc.split("\n\n")]
+            L += [p.replace("*", "\\*") + "\n" for p in paras if p]
     (ROOT / "docs/api.md").write_text("\n".join(L), encoding="utf-8")
 
 
