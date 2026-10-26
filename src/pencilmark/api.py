@@ -72,16 +72,20 @@ def load(puzzle):
     return p
 
 
-def rate(puzzle, steps=False, max_seconds=None, mode="human", se=False, fields=None, allow_guessing=False, explain=None):
+def rate(puzzle, steps=False, max_seconds=None, mode="human", se=False, fields=None, allow_guessing=False, explain=None,
+         quality=None):
     """the "sudoku-grade" card of one puzzle (docs/FORMAT.md 11) with the requested top-level fields only. Default fields:
     difficulty, time, band, band_index, contains, issues, reject (format, format_version, grader always). Optional:
     time_p80, se, se_diuf, steps, describe, symmetry. explain="short" / "teach" / True (both) adds explanations to the
     steps. steps=True is shorthand for the steps field with both explanation levels; se=True / se="diuf" for se / se_diuf.
     Raises NotUnique / NoSolution / Undecided for a puzzle without exactly one solution. allow_guessing=True: guess
-    where no technique applies (band "Unknown") instead of proving by full search (Trial and error, Extreme)."""
+    where no technique applies (band "Unknown") instead of proving by full search (Trial and error, Extreme).
+    quality: the issue checks' limits, e.g. {"trivial": 0.5, "trial": False} (docs/FORMAT.md 11.4)."""
     from .export import grade, card_fields
+    from .publish_flags import quality_limits
     from . import cpsat_verify as V
     want = card_fields(fields, steps=steps, se=se)
+    quality_limits(quality)
     p = load(puzzle)
     sols, decided = V.decide(p, limit=2)
     if len(sols) > 1:
@@ -91,7 +95,7 @@ def rate(puzzle, steps=False, max_seconds=None, mode="human", se=False, fields=N
                         "for the CP-SAT fallback")
     if not sols:
         raise NoSolution("no solution")
-    P = dict(_params(mode), allow_guess=bool(allow_guessing))
+    P = dict(_params(mode), allow_guess=bool(allow_guessing), quality=quality or {})
     return grade(p, P, max_seconds=max_seconds, fields=sorted(want), with_steps=steps, explain=explain)
 
 
@@ -102,19 +106,19 @@ def _mp_context():
 
 
 def _rate_job(args):
-    puzzle, steps, max_seconds, mode, se, fields, allow_guessing, explain = args
+    puzzle, steps, max_seconds, mode, se, fields, allow_guessing, explain, quality = args
     try:
         return rate(puzzle, steps=steps, max_seconds=max_seconds, mode=mode, se=se, fields=fields,
-                    allow_guessing=allow_guessing, explain=explain)
+                    allow_guessing=allow_guessing, explain=explain, quality=quality)
     except Exception as e:                       # one bad puzzle must not sink the batch
         return {"error": f"{type(e).__name__}: {e}"}
 
 
 def rate_many(puzzles, jobs=1, steps=False, max_seconds=None, mode="human", se=False, fields=None, allow_guessing=False,
-              explain=None):
+              explain=None, quality=None):
     """cards for many puzzles, in input order; jobs > 1 uses worker processes. A puzzle that cannot be rated (not unique,
     no solution, unreadable) gives {"error": "..."}."""
-    items = [(p, steps, max_seconds, mode, se, fields, allow_guessing, explain) for p in puzzles]
+    items = [(p, steps, max_seconds, mode, se, fields, allow_guessing, explain, quality) for p in puzzles]
     if jobs <= 1:
         return [_rate_job(it) for it in items]
     with _mp_context().Pool(jobs) as pool:

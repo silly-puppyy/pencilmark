@@ -31,7 +31,6 @@ SYM_GEN = {v: k for k, v in GEN_SYM.items()}
 SPEC_KEYS = {"format", "format_version", "$schema", "meta", "board", "digits", "givens", "rules", "symmetry", "where",
              "quality", "limits", "fields", "ext"}
 WHERE_KEYS = {"band", "difficulty", "time", "contains", "not_contains", "issues", "areas", "elements"}
-QUALITY_KEYS = {"preset", "checks", "spike", "max_spike", "every_element_needed", "unused_rule", "reject"}
 LIMIT_KEYS = {"results", "attempts", "time", "seed"}
 TEMPLATE_KEYS = {"type", "kind", "count", "size", "length", "value", "displaced", "area", "id", "label", "style"}
 COUNT_WORDS = {"auto", "all", "min", "tile"}
@@ -79,7 +78,13 @@ def validate_spec(doc):
             raise FormatError('symmetry entries are {"kind": rot180 | rot90 | mirror, "axis"?, "of"}')
         if s["kind"] == "mirror" and s.get("axis") not in ("horizontal", "vertical", "diagonal", "antidiagonal"):
             raise FormatError("mirror symmetry needs axis horizontal / vertical / diagonal / antidiagonal")
-    for blk, keys in (("where", WHERE_KEYS), ("quality", QUALITY_KEYS), ("limits", LIMIT_KEYS)):
+    if doc.get("quality") is not None:
+        from .publish_flags import quality_limits
+        try:
+            quality_limits(doc["quality"])
+        except ValueError as e:
+            raise FormatError(str(e)) from None
+    for blk, keys in (("where", WHERE_KEYS), ("limits", LIMIT_KEYS)):
         for k in doc.get(blk) or {}:
             if k not in keys:
                 raise FormatError(f"unknown {blk} key {k!r}")
@@ -96,10 +101,10 @@ def _board_ok(doc):
         return f"no standard boxes for size {D}"
     bh, bw = PJ.BOXES[D]
     locked = [r for r in doc.get("rules") or [] if not _is_template(r)]
-    want = {"type": "box_grid", "origin": "r1c1", "box": [bh, bw]}
+    board = ({"type": "box_grid", "origin": "r1c1", "box": [bh, bw]}, {"type": "grid", "origin": "r1c1"})
     for r in locked:
-        if {k: v for k, v in r.items() if k not in ("id", "label", "style")} != want:
-            return f"locked rules other than the board's box_grid are not supported by the generator yet ({r.get('type')})"
+        if {k: v for k, v in r.items() if k not in ("id", "label", "style")} not in board:
+            return f"locked rules other than the board's grid / box_grid are not supported by the generator yet ({r.get('type')})"
     return None
 
 

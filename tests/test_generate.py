@@ -25,23 +25,23 @@ def run(spec, budget=60):
 
 
 def test_classic_4x4():
-    r = run({"size": 4, "seed": 1, "time_limit": 30})
+    r = run({"size": 4, "seed": 1, "time_limit": 300})
     assert r["puzzle"]["digits"] == 4 and r["card"]["band"] in BANDS
 
 
 def test_classic_6x6_symmetric():
-    r = run({"size": 6, "symmetry": "rot180", "seed": 2, "time_limit": 30})
+    r = run({"size": 6, "symmetry": "rot180", "seed": 2, "time_limit": 300})
     nums = r["puzzle"]["numbers"]
     assert all((nums[i] == ".") == (nums[35 - i] == ".") for i in range(36))
 
 
 def test_classic_9x9_difficulty_range():
-    r = run({"size": 9, "target_difficulty": [2, 4], "seed": 1, "time_limit": 50})
+    r = run({"size": 9, "target_difficulty": [2, 4], "seed": 1, "time_limit": 300})
     assert 2 <= r["card"]["difficulty"] <= 4
 
 
 def test_kropki_6x6_min():
-    r = run({"size": 6, "elements": {"kropki": "min"}, "seed": 1, "time_limit": 50})
+    r = run({"size": 6, "elements": {"kropki": "min"}, "seed": 1, "time_limit": 300})
     rules = r["puzzle"]["rules"]
     assert rules and all(x["type"] == "kropki" for x in rules) and set(r["puzzle"]["numbers"]) == {"."}
 

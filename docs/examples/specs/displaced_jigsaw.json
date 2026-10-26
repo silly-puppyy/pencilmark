@@ -26,10 +26,8 @@
   }
  ],
  "where": {
-  "band": "Medium"
- },
- "quality": {
-  "preset": "standard"
+  "band": "Medium",
+  "issues": "no_reject"
  },
  "limits": {
   "time": 900,

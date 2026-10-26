@@ -7,8 +7,8 @@ where the generator is going.
 
 | File | What | Runs |
 |---|---|---|
-| `super_samurai_variants.json` | Super samurai: a variant per row of grids | no: the generator makes gap-free 9x9 boards (grid {'rows': 21, 'cols': 33}) |
-| `one_xwing_classic.json` | Classic with exactly one X-Wing | no: contains 'only' / per-code uses are not supported by the generator yet |
+| `super_samurai_variants.json` | Super samurai: a variant per row of grids | no: the generator makes gap-free 9x9 boards (board {'rows': 21, 'cols': 33}) |
+| `one_xwing_classic.json` | Classic with exactly one X-Wing | no: where.issues is not supported by the generator yet |
 | `killer_whispers_2givens.json` | Killer with German whispers and two givens | yes |
 | `picture_mask_heart.json` | Givens in the shape of a heart | no: givens masks / locked values are not supported by the generator yet |
 | `hardest_0clue_6x6_kropki.json` | Hardest 0-clue 6x6 kropki | no: difficulty 'max' / 'min' (best-so-far search) is not supported by the generator yet |

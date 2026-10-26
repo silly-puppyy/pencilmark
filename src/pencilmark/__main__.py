@@ -102,12 +102,27 @@ def report2(g, k=None):
     return "\n".join(L)
 
 
+def _quality_arg(text):
+    """--quality "trivial=0.5,trial=false" -> {"trivial": 0.5, "trial": False}"""
+    if not text:
+        return {}
+    from .publish_flags import quality_limits
+    out = {}
+    for part in text.split(","):
+        k, _, v = part.partition("=")
+        v = v.strip().lower()
+        out[k.strip()] = True if v in ("", "true", "on") else False if v in ("false", "off") else float(v)
+    quality_limits(out)
+    return out
+
+
 def _rate_one(args):
     """one input line -> its output text (runs in a worker process with -j)."""
     k, obj, a = args
     from . import cpsat_verify as V
     from .export import grade
-    P = dict(_params(), search="computer" if a.computer else "human", allow_guess=bool(a.allow_guessing))
+    P = dict(_params(), search="computer" if a.computer else "human", allow_guess=bool(a.allow_guessing),
+             quality=_quality_arg(a.quality))
     fmt = a.format or "%b\\t%d\\t%m\\t%h"
     try:
         p = PJ.from_json(obj)
@@ -132,6 +147,10 @@ def _rate_one(args):
 
 
 def cmd_rate(a):
+    try:
+        _quality_arg(a.quality)
+    except ValueError as e:
+        raise SystemExit(f"--quality: {e}")
     items = ((k, obj, a) for k, obj in _inputs(a.file))
     if a.jobs <= 1:
         for it in items:
@@ -192,6 +211,8 @@ def main(argv=None):
     r.add_argument("--allow-guessing", action="store_true", help="guess where no technique applies (faster; band Unknown) "
                    "instead of proving by full search (Trial and error, band Extreme)")
     r.add_argument("--steps", action="store_true", help="with --json: include the step-by-step solve (with both explanation levels)")
+    r.add_argument("--quality", default=None, help='issue check limits, e.g. "trivial=0.5,tedious=90,trial=false" '
+                   "(docs/FORMAT.md 11.4)")
     r.add_argument("--explain", default=None, help="step explanation levels, comma-separated: short, teach")
     r.add_argument("--fields", default=None, help="card fields, comma-separated (docs/FORMAT.md 11.2), e.g. "
                                                     "difficulty,band,time_p80,steps")

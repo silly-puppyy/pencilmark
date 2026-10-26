@@ -380,10 +380,8 @@
      "band": "Hard"
     }
    }
-  ]
- },
- "quality": {
-  "preset": "standard"
+  ],
+  "issues": "no_reject"
  },
  "limits": {
   "results": 1,

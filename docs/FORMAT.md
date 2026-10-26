@@ -891,18 +891,22 @@ Each entry is one technique on the route:
 ### 11.4 `issues`
 
 `{"code", "severity", "text", "rules"?}`. `severity` is `"reject"` (would not be published) or `"warning"`. `rules`, when
-present, lists the offending rules as indices into `rules` of the puzzle as `to_export` writes it. Codes:
+present, lists the offending rules as indices into `rules` of the puzzle as `to_export` writes it.
 
-| Code | Meaning |
-|---|---|
-| `spike` | A Hard or harder puzzle that rests on 1–2 band-level moves in an otherwise all-singles solve. |
-| `decorative` | A rule that is neither needed for uniqueness nor used by any step. |
-| `barely_used` | A rule used in fewer than 3 steps (reject when never used). |
-| `redundant` | A rule the puzzle is unique without, although the solve uses it. |
-| `trivial` | More than 60% of the cells are given. |
-| `tedious` | Very Easy or Easy, but over an hour of routine work. |
-| `uniqueness` | Needs a uniqueness-based technique (relies on assuming one solution). |
-| `trial` | Needs trial and error or forcing chains. |
+Each check can be adjusted with a **quality object** keyed by code: `rate(puzzle, quality={"trivial": 0.5, "trial":
+false})`, CLI `--quality trivial=0.5,trial=false`, or the generator spec's `quality` (section 12). A check with a limit
+takes a number (`true` = the default limit); every check takes `false` to turn it off.
+
+| Code | Severity | Meaning | Limit (default) |
+|---|---|---|---|
+| `spike` | reject | A Hard or harder puzzle that rests on at most *limit* band-level moves in an otherwise all-singles (95%) solve. | moves (2) |
+| `decorative` | reject | A rule that is neither needed for uniqueness nor used by any step. | on / off |
+| `barely_used` | reject when never used, else warning | A rule used in fewer than *limit* steps. | steps (3) |
+| `redundant` | warning | A rule the puzzle is unique without, although the solve uses it. | on / off |
+| `trivial` | reject | More than *limit* of the cells are given (0.6 = 60%). | share (0.6) |
+| `tedious` | warning | Very Easy or Easy, but over *limit* minutes of routine work. | minutes (60) |
+| `uniqueness` | warning | Needs a uniqueness-based technique (relies on assuming one solution). | on / off |
+| `trial` | warning | Needs trial and error or forcing chains. | on / off |
 
 Example: `{"code": "barely_used", "severity": "reject", "text": "thermo lines (rules 3, 4, 5, 6): used in only 0 steps
 of the solve", "rules": [3, 4, 5, 6]}`.
@@ -931,8 +935,8 @@ puzzle reader mistakes it for a puzzle), plus four blocks that say what the resu
   {"type": "line", "kind": "whisper", "value": 5, "cells": ["r5c4", "r5c5", "r5c6"]},
   {"type": "cage", "count": "auto", "size": [2, 5]}],
  "symmetry": [{"kind": "rot180", "of": "givens"}],
- "where": {"band": "Hard", "difficulty": [6.5, 8], "contains": ["XWG"]},
- "quality": {"preset": "standard"},
+ "where": {"band": "Hard", "difficulty": [6.5, 8], "contains": ["XWG"], "issues": "no_reject"},
+ "quality": {"trivial": 0.4},
  "limits": {"results": 3, "attempts": 2000, "time": 600, "seed": 42},
  "fields": ["difficulty", "band", "contains", "issues"]}
 ```
@@ -957,15 +961,13 @@ carry `"area"` (section 5: a grid's origin or a cell list), limiting where it li
 **`where`: targets on the card**, using the card's keys (section 11): `band` (value or list), `difficulty`
 (`[lo, hi]` or `"max"` / `"min"`), `time` (`{"max": minutes}`), `contains` (codes that must appear; `{"codes": [...],
 "strict": true}` = as the code itself, not only as an alternative in a chip; `{"only": [...]}` to allow nothing else, and
-per-code `{"uses": n}`), `not_contains`, `issues` (`"none"` or a list of allowed codes), `elements` (`{"max": n}`: at most
+per-code `{"uses": n}`), `not_contains`, `issues` (`"none"`, `"no_reject"` (warnings allowed) or a list of allowed codes), `elements` (`{"max": n}`: at most
 n placed rule elements in total).
 **Per-area targets**: `"areas": [{"area": "r1c13", "where": {"band": "Medium"}}]`, measured on the **joint** solve (the
 steps that place or eliminate in that area on the whole-board route), never on the area generated alone.
 
-**`quality`: explicit, named checks.** Nothing is filtered unless asked. `{"preset": "standard"}` expands to: no spike,
-no decorative element (every element needed), no unused rule, no `reject` issue. Overrides and additions go next to it
-(`{"preset": "standard", "spike": "off", "max_spike": 1.5}`) or stand alone (`{"checks": {"every_element_needed":
-true}}`). The checks are the same list the card reports as `issues`, so anything the grader flags can be filtered.
+**`quality`: the checks' limits**, the same object as `rate(..., quality=…)` (11.4): `{"trivial": 0.4, "trial": false}`.
+It changes what the card reports as `issues`; `where.issues` chooses which of them a result may have.
 
 **`limits`** bound every run: `results` (puzzles to return), `attempts`, `time` (seconds), `seed` (reproducible runs).
 The run stops at the first limit; `"max"` / `"min"` targets are best-so-far and the result reports achieved vs

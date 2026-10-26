@@ -38,10 +38,8 @@
    "XWG": {
     "uses": 1
    }
-  }
- },
- "quality": {
-  "preset": "standard"
+  },
+  "issues": "no_reject"
  },
  "limits": {
   "results": 5,

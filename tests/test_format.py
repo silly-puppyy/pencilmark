@@ -401,7 +401,7 @@ def test_spec_round_trip():
         assert norm(back) == norm(s), (s, back)
     bad = pencilmark.spec_from_gen(specs[0])
     bad["rules"].append({"type": "line", "kind": "thermo", "cells": ["r1c1", "r1c2"]})
-    for extra in ({"rules": bad["rules"]}, {"quality": {"preset": "standard"}}, {"givens": {"mask": [1] * 81}},
+    for extra in ({"rules": bad["rules"]}, {"quality": {"trivial": 0.4}}, {"givens": {"mask": [1] * 81}},
                   {"where": {"difficulty": "max"}}, {"limits": {"results": 3}}):
         d = dict(pencilmark.spec_from_gen(specs[0]), **extra)
         try:
@@ -490,3 +490,18 @@ def test_card_schema():
     for c in cards:
         errs = list(v.iter_errors(c))
         assert not errs, errs[0].message
+
+
+def test_quality_limits():
+    """quality = per-check limits keyed by issue code (FORMAT.md 11.4): numbers adjust, false turns a check off"""
+    assert pencilmark.rate(CLASSIC, fields=["issues"])["issues"] == []
+    low = pencilmark.rate(CLASSIC, fields=["issues", "reject"], quality={"trivial": 0.2})
+    assert [i["code"] for i in low["issues"]] == ["trivial"] and low["reject"] is True
+    d = pencilmark.from_string(CLASSIC)
+    d["rules"].append({"type": "line", "kind": "thermo", "cells": ["r1c5", "r1c4"]})
+    assert pencilmark.rate(d, fields=["issues"], quality={"decorative": False})["issues"] == []
+    import pytest
+    with pytest.raises(ValueError):
+        pencilmark.rate(CLASSIC, quality={"nope": 1})
+    with pytest.raises(ValueError):
+        pencilmark.rate(CLASSIC, quality={"trial": 0.5})
