@@ -4,7 +4,7 @@ Hand-coded rules (sudoku.coach likes are too sparse and its puzzles human-curate
 common sense first; the coach analysis only informed the spike rule's direction):
   spike        a Hard+ puzzle that rests on 1-2 band-level moves with an otherwise all-singles solve
   decorative   a variant rule class that is neither needed for uniqueness nor used by any solve step
-  barely used  a variant rule class used in fewer than 3 steps of the whole solve (a 'Sudoku X' should use its X)
+  barely_used  a variant rule class used in fewer than 3 steps of the whole solve (a 'Sudoku X' should use its X)
   redundant    a variant rule class the puzzle is unique without, although the solve uses it (soft note)
   trivial      more than 60% of the cells are given (barely a puzzle)
   tedious      Very Easy / Easy but over an hour of work (long and routine)
@@ -73,5 +73,5 @@ def _rule_notes(puzzle, P):
         elif needed is False:
             out.append(("redundant", "note", f"{c} used {n_used}x but the puzzle is unique without it", c, n_used))
         elif n_used < 3:
-            out.append(("barely used", "reject" if n_used == 0 else "note", f"{c} used in only {n_used} step{'s' if n_used != 1 else ''}", c, n_used))
+            out.append(("barely_used", "reject" if n_used == 0 else "note", f"{c} used in only {n_used} step{'s' if n_used != 1 else ''}", c, n_used))
     return out

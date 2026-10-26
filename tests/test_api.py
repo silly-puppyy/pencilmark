@@ -14,7 +14,7 @@ def test_classic_card():
     assert card["format"] == "sudoku-grade"
     assert (card["band"], card["band_index"], card["difficulty"], card["time"]) == ("Medium", 2, 5.9, 10.7)
     assert "time_p80" not in card and card["reject"] is False and card["issues"] == []
-    assert pencilmark.rate(CLASSIC, fields=["time.p80"])["time_p80"] == 16.4
+    assert pencilmark.rate(CLASSIC, fields=["time_p80"])["time_p80"] == 16.4
     chips = [c["chip"] for c in card["contains"] if c["band"] > 0]
     assert chips == ["NPR/PPR/HPR", "XWG/KTE/SCL"]
 
@@ -139,3 +139,10 @@ def test_whole_grid_pair_rule():
     q = PJ.from_json(out)
     q.finalize()
     assert sorted(map(tuple, p.relations)) == sorted(map(tuple, q.relations))
+
+
+def test_rate_needs_one_solution():
+    import pytest
+    with pytest.raises(pencilmark.NotUnique):
+        pencilmark.rate("." * 81)
+    assert "error" in pencilmark.rate_many(["." * 81])[0]

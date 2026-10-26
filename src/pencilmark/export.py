@@ -364,27 +364,37 @@ def time_units(effort_l1, empty_cells, difficulty=None, geometry=None):
     return round(math.exp(_TIME["const"] + _TIME["k_difficulty"] * difficulty + _TIME["k_empty"] * math.log(empty_cells)), 2)
 
 
-DEFAULT_FIELDS = ("grader", "format", "format_version", "difficulty", "time", "band", "band_index", "contains", "issues",
-                  "reject")
-OPTIONAL_FIELDS = ("time.p80", "se", "se.diuf", "steps", "steps.explanation.short", "steps.explanation.teach", "describe",
-                   "symmetry")
-FIELD_ALIASES = {"time_p80": "time.p80", "notes": "issues"}
+ALWAYS = ("format", "format_version", "grader")
+DEFAULT_FIELDS = ("difficulty", "time", "band", "band_index", "contains", "issues", "reject")
+OPTIONAL_FIELDS = ("time_p80", "se", "se_diuf", "steps", "describe", "symmetry")
+EXPLAIN_LEVELS = ("short", "teach")
 
 
 def card_fields(fields=None, steps=False, se=False):
-    """the field mask (FORMAT.md 11.1): None = the default fields; pencilmark / format / format_version always; a
-    steps.explanation.* field implies steps. steps=True / se=True are shorthands."""
-    out = set(DEFAULT_FIELDS) if fields is None else {FIELD_ALIASES.get(f, f) for f in fields} | {"grader", "format", "format_version"}
+    """the field mask (FORMAT.md 11.2): the requested top-level card keys; None = the default fields. format,
+    format_version and grader are always present. steps=True / se=True / se="diuf" are shorthands."""
+    out = set(DEFAULT_FIELDS) if fields is None else set(fields) - set(ALWAYS)
     bad = out - set(DEFAULT_FIELDS) - set(OPTIONAL_FIELDS)
     if bad:
         raise ValueError(f"unknown card field(s) {sorted(bad)}; known: {list(DEFAULT_FIELDS) + list(OPTIONAL_FIELDS)}")
     if steps:
-        out |= {"steps", "steps.explanation.short", "steps.explanation.teach"}
-    if se:
-        out.add("se.diuf" if se == "diuf" else "se")
-    if out & {"steps.explanation.short", "steps.explanation.teach"}:
         out.add("steps")
+    if se:
+        out.add("se_diuf" if se == "diuf" else "se")
     return out
+
+
+def explain_levels(explain):
+    """explain= option -> the step explanation levels: None / False = none, True = both, "short" / "teach" or a list"""
+    if not explain:
+        return []
+    if explain is True:
+        return list(EXPLAIN_LEVELS)
+    lv = [explain] if isinstance(explain, str) else list(explain)
+    bad = [x for x in lv if x not in EXPLAIN_LEVELS]
+    if bad:
+        raise ValueError(f"unknown explanation level(s) {bad}; known: {list(EXPLAIN_LEVELS)}")
+    return [x for x in EXPLAIN_LEVELS if x in lv]
 
 
 RULE_NOUN = {("line", None): "line", ("edge", "kropki"): "kropki dot", ("edge", "xv"): "X / V clue", ("edge", "less"): "inequality sign",
@@ -410,7 +420,7 @@ def _noun(rules):
 
 
 def _issues(p, card, doc, prov):
-    """card notes -> issues [{"code", "severity": "reject" | "warning", "text", "rules"?}] (FORMAT.md 11.1). Rule notes
+    """card notes -> issues [{"code", "severity": "reject" | "warning", "text", "rules"?}] (FORMAT.md 11.4). Rule notes
     point at the exported file's rule indices (doc = exchange.write(p) as to_export writes it)."""
     out = []
     raw = card.get("_notes_raw")
@@ -474,12 +484,12 @@ def symmetry_of(p):
     return out
 
 
-def grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None):
-    """sudoku-grade card (FORMAT.md 11.1), only the requested fields: difficulty, time, band, contains, issues / reject by
-    default; time.p80, steps (+ steps.explanation.short / .teach), describe, symmetry on request (se is added by api.rate).
-    with_steps=True is shorthand for fields + steps with both explanation levels."""
+def grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, explain=None):
+    """sudoku-grade card (FORMAT.md 11), only the requested fields (card_fields). explain: step explanation levels
+    (explain_levels). with_steps=True is shorthand for the steps field with both explanation levels."""
     from . import card as K, band_path as BP
     want = card_fields(fields, steps=bool(with_steps))
+    levels = explain_levels(True if with_steps and explain is None else explain)
     P = dict(P, search=P.get("search", "human"))
     import time
     bp = BP.contents(p, P, deadline=None if max_seconds is None else time.time() + max_seconds)
@@ -512,7 +522,7 @@ def grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None):
     if "time" in want:
         # time in MINUTES for today's average player (classic units x minutes_per_unit, data/time_model.json)
         g["time"] = round(tm * _TIME.get("minutes_per_unit", 1.0), 1) if tm is not None else (round(2 ** (tg - 5), 2) if tg is not None else None)
-    if "time.p80" in want:
+    if "time_p80" in want:
         g["time_p80"] = round(tm * _TIME.get("p80_factor", 1.53) * _TIME.get("minutes_per_unit", 1.0), 1) if tm is not None else None
     if "band" in want:
         g["band"] = "Unknown" if unknown else bp["band"]
@@ -520,10 +530,9 @@ def grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None):
         g["band_index"] = None if unknown else bp["band_index"]
     if "contains" in want:
         g["contains"] = contains
-        if bp.get("truncated"):     # opt-in time cap hit: route complete, the list may not be minimal / may miss alternatives
-            g["contents_truncated"] = True
-        if unknown:     # what's in it up to where human logic ran out; the rest is unknown
-            g["contains_complete"] = False
+        g["contains_complete"] = not unknown        # false: the list stops where human logic ran out (guessing allowed)
+        g["contains_truncated"] = bool(bp.get("truncated"))   # max_seconds hit: may not be minimal / may miss alternatives
+        if unknown:
             g["stopped_at_step"] = len(bp["steps"]) + 1
     doc = prov = None
     if want & {"issues", "reject", "describe"}:
@@ -543,9 +552,13 @@ def grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None):
         g["describe"] = _describe(doc) if doc is not None else None
     if "symmetry" in want:
         g["symmetry"] = symmetry_of(p)
+    for f, scale in (("se", "classic"), ("se_diuf", "diuf")):
+        if f in want:
+            from . import se as SE
+            sb = BP.band_path(p, P)
+            g[f] = SE.ratings(sb["steps"], scale=scale) if sb["solved"] else None
     if "steps" in want:
         cn = lambda c: f"r{p.coords[c][0] + 1}c{p.coords[c][1] + 1}"
-        levels = [x for x in ("short", "teach") if f"steps.explanation.{x}" in want]
         expl = BP.explain_steps(p, P, bp["steps"]) if levels else [None] * len(bp["steps"])
         rows = []
         for i, st in enumerate(bp["steps"]):

@@ -16,8 +16,9 @@ Contents
 8. [Cosmetic layers: style and decorations](#8-cosmetic-layers-style-and-decorations)
 9. [Canonical form, fingerprint, compression](#9-canonical-form-fingerprint-compression)
 10. [Examples](#10-examples)
-11. [Generator spec: `sudoku-spec`](#11-generator-spec-sudoku-spec)
-12. [describe(): variant name and rules](#12-describe-variant-name-and-rules)
+11. [Grade card: `sudoku-grade`](#11-grade-card-sudoku-grade)
+12. [Generator spec: `sudoku-spec`](#12-generator-spec-sudoku-spec)
+13. [describe(): variant name and rules](#13-describe-variant-name-and-rules)
 
 ---
 
@@ -39,9 +40,8 @@ Several puzzles go in a JSON Lines file (`*.jsonl`): one compact `sudoku-puzzle`
 
 Companion formats sharing the vocabulary:
 
-- `"format": "sudoku-grade"`: a grade card, with `"format_version": 1` and
-  `"grader": {"name": "pencilmark", "version": "1.0.0"}` (a card is only meaningful with the engine that made it).
-- `"format": "sudoku-spec"`: a request to the generator (section 11).
+- `"format": "sudoku-grade"`: a grade card (section 11).
+- `"format": "sudoku-spec"`: a request to the generator (section 12).
 
 Python API (package `pencilmark`):
 
@@ -52,8 +52,8 @@ Python API (package `pencilmark`):
 | `dumps(doc, pretty=True)` | canonical JSON text (section 9.1) |
 | `fingerprint(puzzle)` | `"sha256:…"` content fingerprint (section 9.2) |
 | `validate(doc)` | strict reading checks (section 4); raises `FormatError` |
-| `describe(puzzle)` / `rules_text(d)` | `{"type", "rules"}` and its text form (section 12) |
-| `spec_from_gen(spec)` / `spec_to_gen(doc)` | `sudoku-spec` ↔ generator spec dict (section 11) |
+| `describe(puzzle)` / `rules_text(d)` | `{"type", "rules"}` and its text form (section 13) |
+| `spec_from_gen(spec)` / `spec_to_gen(doc)` | `sudoku-spec` ↔ generator spec dict (section 12) |
 
 ## 2. Envelope
 
@@ -105,10 +105,10 @@ maps). Common keys:
 | `url` | Link to the puzzle. |
 | `date` | ISO 8601 date. |
 | `rules_text` | The setter's own wording of the rules. Tools never overwrite it. |
-| `type` | Display name of the variant, e.g. `"Killer Sudoku"`. Variant names live **only** here; they never change the rules. `describe()` (section 12) fills it when it is empty. |
+| `type` | Display name of the variant, e.g. `"Killer Sudoku"`. Variant names live **only** here; they never change the rules. `describe()` (section 13) fills it when it is empty. |
 | `license` | Licence of the puzzle. |
 | `tags` | List of strings. |
-| `generated_from` | Fingerprint of the `sudoku-spec` that produced the puzzle (section 11). |
+| `generated_from` | Fingerprint of the `sudoku-spec` that produced the puzzle (section 12). |
 
 ## 3. Cells, outside clues and ordering
 
@@ -204,7 +204,7 @@ semantics and drawing). Every rule MAY carry:
 
 **Areas.** A rule that applies to part of the board says where with `area`: the `origin` of a `grid` / `box_grid` rule
 in the file (that grid's D × D cells), or a list of cells. The same key means the same thing everywhere it appears
-(`neighbours`, `negative`, and the generator spec, section 11).
+(`neighbours`, `negative`, and the generator spec, section 12).
 
 Number keys: **`sum`** when the clue is a sum of digits (cage, every `sum` kind, sandwich, x-sum, edge kind `sum`),
 **`value`** for every other number (difference, ratio, product, whisper gap, skyscraper count, …). Parameters with a
@@ -825,7 +825,95 @@ below r9c2 and runs up-left.
 
 Only knight-move pairs inside one box must differ. Without `within` the rule covers the whole board.
 
-## 11. Generator spec: `sudoku-spec`
+## 11. Grade card: `sudoku-grade`
+
+What `rate()` returns and `pencilmark rate --json` prints: one JSON object per puzzle. JSON Schema:
+`docs/sudoku-grade.schema.json`.
+
+```json
+{"format": "sudoku-grade", "format_version": 1,
+ "grader": {"name": "pencilmark", "version": "1.0.0"},
+ "difficulty": 5.9, "time": 10.7, "band": "Medium", "band_index": 2,
+ "contains": [{"code": "HSI", "chip": "HSI", "name": "Hidden Single", "band": 0},
+              {"code": "NPR", "chip": "NPR/PPR/HPR", "name": "Naked Pair", "band": 2, "uses": 1, "alternatives": ["PPR", "HPR"]},
+              {"code": "XWG", "chip": "XWG/KTE/SCL", "name": "X-Wing", "band": 2, "uses": 1, "alternatives": ["KTE", "SCL"]}],
+ "contains_complete": true, "contains_truncated": false,
+ "issues": [], "reject": false}
+```
+
+A card exists only for a puzzle with exactly one solution. For any other puzzle, `rate()` raises `NotUnique`,
+`NoSolution` or `Undecided`; `rate_many()` and the command line give `{"error": "…"}` in its place (the command line adds
+`"line"`, the input line number, to every object).
+
+### 11.1 Keys
+
+| Key | Field | Type | Meaning |
+|---|---|---|---|
+| `format`, `format_version` | always | `"sudoku-grade"`, `1` | |
+| `grader` | always | `{"name", "version"}` | The engine that made the card. A card is only meaningful with that engine and version. |
+| `difficulty` | default | number or null | How hard the steps feel, continuous from 0 (one empty cell), no ceiling; a typical newspaper medium is about 5. Null when the band is `Unknown`. |
+| `time` | default | number or null | Expected minutes for an average player. |
+| `time_p80` | optional | number or null | Minutes within which 80% of players finish. |
+| `band` | default | string | `"Very Easy"`, `"Easy"`, `"Medium"`, `"Hard"`, `"Very Hard"`, `"Extreme"`; `"Unknown"` only when guessing was allowed and used. |
+| `band_index` | default | integer or null | 0 (Very Easy) … 5 (Extreme); null for `Unknown`. |
+| `contains` | default | list | The techniques met on the easiest route, easiest first (11.3). |
+| `contains_complete` | with `contains` | boolean | False when the route stops where human logic ran out (band `Unknown`); `stopped_at_step` then gives the step. |
+| `stopped_at_step` | with `contains`, when incomplete | integer | The first step human logic could not make. |
+| `contains_truncated` | with `contains` | boolean | True when a `max_seconds` cap stopped the search for the shortest list: the list may not be minimal or may miss alternatives. |
+| `issues` | default | list | Publishing checks (11.4). |
+| `reject` | default | boolean | True when any issue has severity `reject`. |
+| `se`, `se_diuf` | optional | `{"er", "ep", "ed", "scale"}` or null | Sudoku Explainer-style ratings of the route, on the classic scale or the DiufSudoku fork's (`scale` says which). Meaningful for classic sudoku only. |
+| `steps` | optional | list | The step-by-step route (11.5). |
+| `describe` | optional | object | The `describe()` output (section 13). |
+| `symmetry` | optional | list | Symmetries of the givens pattern, entries as in the generator spec (`{"kind", "axis"?, "of": "givens"}`). |
+
+### 11.2 Choosing fields
+
+`rate(puzzle, fields=[...])` and `--fields a,b,c` take a list of the keys above; only those are computed. A field name
+is always the key it produces (`contains` also brings `contains_complete`, `contains_truncated` and `stopped_at_step`).
+Without `fields`, the default fields are returned. `explain="short"`, `"teach"` or both (CLI `--explain short,teach`)
+adds explanations to `steps`. Shorthands: `steps=True` = the `steps` field with both explanation levels; `se=True` /
+`se="diuf"` = the `se` / `se_diuf` field.
+
+### 11.3 `contains`
+
+Each entry is one technique on the route:
+
+| Key | Meaning |
+|---|---|
+| `code` | Three-letter technique code (USAGE.md lists them). |
+| `chip` | `code` plus its alternatives, `/`-separated: any one of them gets the solver through at that point. |
+| `name` | Technique name. |
+| `band` | The technique's band index. |
+| `uses` | Times used on the route; omitted for singles (band 0), whose count depends on the route. |
+| `alternatives` | Other codes that also work there; omitted when there are none. |
+
+### 11.4 `issues`
+
+`{"code", "severity", "text", "rules"?}`. `severity` is `"reject"` (would not be published) or `"warning"`. `rules`, when
+present, lists the offending rules as indices into `rules` of the puzzle as `to_export` writes it. Codes:
+
+| Code | Meaning |
+|---|---|
+| `spike` | A Hard or harder puzzle that rests on 1–2 band-level moves in an otherwise all-singles solve. |
+| `decorative` | A rule that is neither needed for uniqueness nor used by any step. |
+| `barely_used` | A rule used in fewer than 3 steps (reject when never used). |
+| `redundant` | A rule the puzzle is unique without, although the solve uses it. |
+| `trivial` | More than 60% of the cells are given. |
+| `tedious` | Very Easy or Easy, but over an hour of routine work. |
+| `uniqueness` | Needs a uniqueness-based technique (relies on assuming one solution). |
+| `trial` | Needs trial and error or forcing chains. |
+
+Example: `{"code": "barely_used", "severity": "reject", "text": "thermo lines (rules 3, 4, 5, 6): used in only 0 steps
+of the solve", "rules": [3, 4, 5, 6]}`.
+
+### 11.5 `steps`
+
+Each step: `n` (from 1), `technique` (name), `code`, `band`, then `placement` (`"r2c8=3"`) and / or `eliminations`
+(`["r4c5#7", …]`: candidate 7 removed from r4c5), and, when requested, `explanation`: `{"short": …, "teach": …}` with
+the requested levels.
+
+## 12. Generator spec: `sudoku-spec`
 
 A request to the generator **is a puzzle file with blanks**: the same envelope and rule vocabulary, its own `format` (no
 puzzle reader mistakes it for a puzzle), plus four blocks that say what the result must satisfy and how long to try.
@@ -866,7 +954,7 @@ carry `"area"` (section 5: a grid's origin or a cell list), limiting where it li
 `{"type": "line"}` / `{"type": "line", "kind": "whisper"}`. The same entries are a quality check and are reported by
 `describe()`.
 
-**`where`: targets on the card**, using the card's field paths (section 11.1): `band` (value or list), `difficulty`
+**`where`: targets on the card**, using the card's keys (section 11): `band` (value or list), `difficulty`
 (`[lo, hi]` or `"max"` / `"min"`), `time` (`{"max": minutes}`), `contains` (codes that must appear; `{"codes": [...],
 "strict": true}` = as the code itself, not only as an alternative in a chip; `{"only": [...]}` to allow nothing else, and
 per-code `{"uses": n}`), `not_contains`, `issues` (`"none"` or a list of allowed codes), `elements` (`{"max": n}`: at most
@@ -883,38 +971,14 @@ true}}`). The checks are the same list the card reports as `issues`, so anything
 The run stops at the first limit; `"max"` / `"min"` targets are best-so-far and the result reports achieved vs
 requested.
 
-**`fields`**: which card fields to return with each result (section 11.1).
+**`fields`**: which card fields to return with each result (section 11).
 
 pencilmark's generator implements a subset of this language and refuses the rest with a clear message, never silently
 ignoring a part; see [USAGE.md](USAGE.md#generator). Example specs are in `docs/examples/specs/`.
 
 A run's result is an ordinary `sudoku-puzzle`; `meta.generated_from` may carry the spec's fingerprint.
 
-### 11.1 Card fields and the field mask
-
-`rate(puzzle, fields=[...])`, CLI `--fields a,b,c`. Only requested fields are computed. Default (no `fields`):
-`grader`, `format`, `format_version`, `difficulty`, `time`, `band`, `band_index`, `contains`, `issues`, `reject`.
-
-| Path | Content |
-|---|---|
-| `grader`, `format`, `format_version` | always present |
-| `difficulty`, `time`, `band`, `band_index` | headline numbers |
-| `time.p80` | 80th-percentile time (field `time_p80`) |
-| `contains` | techniques on the easy-to-hard route |
-| `issues` | `[{"code", "severity": "reject" \| "warning", "text", "rules"?}]` (spike, decoration, unused rule …; `rules` points at the offending rule indices) |
-| `reject` | `true` when any issue is a reject |
-| `se` / `se.diuf` | Sudoku Explainer-style ER / EP / ED |
-| `steps` | the step-by-step route (trace) |
-| `steps.explanation.short` / `steps.explanation.teach` | explanation text at two levels: each step gets `"explanation": {"short": …, "teach": …}` with the requested levels |
-| `describe` | the `describe()` output (name + keyed rules) |
-| `symmetry` | symmetries present (same entries as the spec's `symmetry`); pencilmark detects symmetries of the givens pattern (`of: "givens"`), not of rules |
-
-`issues[].rules` are indices into the puzzle's `rules` as `to_export` writes them, e.g.
-`{"code": "barely used", "severity": "reject", "text": "thermo lines (rules 3, 4, 5, 6): used in only 0 steps of the
-solve", "rules": [3, 4, 5, 6]}`. Codes: `spike`, `trivial`, `tedious`, `uniqueness`, `trial`, `decorative`, `redundant`,
-`barely used`.
-
-## 12. describe(): variant name and rules
+## 13. describe(): variant name and rules
 
 `describe(puzzle)` names the variant and lists its rules **from the rules alone**, as an ordered map from a short name
 to one sentence, like the rule headers on Logic Masters:
@@ -935,7 +999,7 @@ overwrites them.
 The variant names are **not part of the file format**: they appear only in `meta.type` and in `describe()` output. They
 come from a registry in code (`pencilmark/variants.py`), so they generalise across sizes (a 16×16 windoku, a 6×6 X).
 
-### 12.1 Name
+### 13.1 Name
 
 `type` = [size word] + [ONE variant name, or "Variant" when two or more variants are present] + "Sudoku".
 
@@ -949,7 +1013,7 @@ come from a registry in code (`pencilmark/variants.py`), so they generalise acro
 - A board with rows / columns but no boxes and nothing else is a "Latin Square".
 - The first key of `rules` is the base: "Sudoku" (with the size word: "Mini Sudoku", "16x16 Sudoku"), or the layout name.
 
-### 12.2 Recognition
+### 13.2 Recognition
 
 - **Placement variants** are functions of ONE grid area (a `grid` / `box_grid`, or the whole board) that return the rules the variant adds there, or nothing where
   the variant is not defined for that size or box shape. For each grid area of the puzzle, every placement variant is
@@ -960,7 +1024,7 @@ come from a registry in code (`pencilmark/variants.py`), so they generalise acro
 - `box` rules (boxes that are not a regular tiling) are "Jigsaw".
 - Anything left falls back to a generic family name ("Diagonals", "Windows", "Extra Regions", …).
 
-### 12.3 Placement variants (geometric definitions)
+### 13.3 Placement variants (geometric definitions)
 
 For porting: a grid area has size n, boxes bh × bw, local rows and columns 0 … n−1.
 
@@ -974,7 +1038,7 @@ For porting: a grid area has size n, boxes bh × bw, local rows and columns 0 �
 | Girandola | n = 9 | one `region`: (0,0) (0,8) (1,4) (4,1) (4,4) (4,7) (7,4) (8,0) (8,8) |
 | Disjoint Groups (Colour) | boxes | bh·bw `region`s: for each in-box position (a, b), the cells (br + a, bc + b) of every box |
 
-### 12.4 Rule families
+### 13.4 Rule families
 
 In registry order (the order of the `rules` keys): Killer (`cage`), Little Killer, Sum Frame, Sum (`sum` group /
 corner), Sandwich, X-Sums, Skyscrapers, Rossini (+ its negative), 123 (`first_seen`), Count Different, Arrow, Thermo,
@@ -987,7 +1051,7 @@ Anti-Knight, Anti-King, Non-Consecutive, Neighbours (generic), Relation, Custom 
 (`candidates`). Each has one sentence, filled from its rules (whisper gap, sandwich digits, scope "within the same box",
 "All X's and V's are given." for a negative, …).
 
-### 12.5 Generator presets
+### 13.5 Generator presets
 
 The placement functions double as presets: `variants.preset_rules("windoku", 16)` gives the 9 windows of a 16×16
 board.

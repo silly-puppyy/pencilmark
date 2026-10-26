@@ -327,14 +327,16 @@ def test_describe_names():
 
 # ---------------------------------------------------------------------------------------------------------- sudoku-spec
 def test_card_fields():
-    """field mask and the issues / reject shape (FORMAT.md 11.1)"""
+    """field mask = top-level keys, explanation levels, the issues / reject shape (FORMAT.md 11)"""
     c = pencilmark.rate(CLASSIC)
-    assert list(c) == ["format", "format_version", "grader", "difficulty", "time", "band", "band_index", "contains", "issues",
-                       "reject"], list(c)
+    assert list(c) == ["format", "format_version", "grader", "difficulty", "time", "band", "band_index", "contains",
+                       "contains_complete", "contains_truncated", "issues", "reject"], list(c)
     assert c["grader"] == {"name": "pencilmark", "version": "1.0.0rc1"} and c["reject"] is False
-    m = pencilmark.rate(CLASSIC, fields=["difficulty", "time.p80", "steps", "steps.explanation.short", "symmetry"])
-    assert set(m) == {"format", "format_version", "grader", "difficulty", "time_p80", "steps", "symmetry"}
+    m = pencilmark.rate(CLASSIC, fields=["difficulty", "time_p80", "steps", "symmetry", "se_diuf"], explain="short")
+    assert set(m) == {"format", "format_version", "grader", "difficulty", "time_p80", "steps", "symmetry", "se_diuf"}
     assert m["difficulty"] == c["difficulty"] and set(m["steps"][0]["explanation"]) == {"short"}
+    assert m["se_diuf"]["scale"] == "diuf"
+    assert "explanation" not in pencilmark.rate(CLASSIC, fields=["steps"])["steps"][0]
     assert {"kind": "rot180", "of": "givens"} in m["symmetry"]
     try:
         pencilmark.rate(CLASSIC, fields=["nope"])
@@ -474,3 +476,17 @@ def test_area_scope():
     assert pencilmark.fingerprint(as_cells) == pencilmark.fingerprint(doc)
     bad = copy.deepcopy(doc); bad["rules"][5]["area"] = "r2c2"; _refuses(bad, "not the origin")
     bad = copy.deepcopy(doc); bad["rules"][5]["cells"] = ["r1c1"]; _refuses(bad, "unknown key")
+
+
+def test_card_schema():
+    import pytest
+    jsonschema = pytest.importorskip("jsonschema")
+    schema = json.load(open(ROOT / "docs" / "sudoku-grade.schema.json"))
+    jsonschema.Draft202012Validator.check_schema(schema)
+    v = jsonschema.Draft202012Validator(schema)
+    cards = [pencilmark.rate(CLASSIC), pencilmark.rate(CLASSIC, fields=list(pencilmark.export.DEFAULT_FIELDS) +
+                                                        list(pencilmark.export.OPTIONAL_FIELDS), explain=True)]
+    cards += [x["card"] for x in json.load(open(FIXTURES))]
+    for c in cards:
+        errs = list(v.iter_errors(c))
+        assert not errs, errs[0].message

@@ -87,7 +87,7 @@ r = generate({"size": 9, "target_band": "Hard", "seed": 1})
 r["puzzle"], r["card"], r["info"]
 ```
 
-Requests can also be written as a `sudoku-spec` file (docs/FORMAT.md section 11; `spec_to_gen` converts it). The
+Requests can also be written as a `sudoku-spec` file (docs/FORMAT.md section 12; `spec_to_gen` converts it). The
 generator supports this part of the spec and refuses everything else with a clear message:
 
 | Spec part | Supported |
@@ -117,7 +117,7 @@ $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7..
   - A typical newspaper medium is about 5; fed-sudoku "hard" is about 6.5.
 - **time** is in minutes for an average player.
   - The median 9x9 classic takes about 12 min.
-  - `time_p80` (field `time.p80`, on request) = 80% of players finish within this.
+  - `time_p80` (on request) = 80% of players finish within this.
   - Typical error: about 20-26%.
 - **band** is fixed by the techniques required on the easiest route (Very Easy ... Extreme).
   - Guessing is off by default: where no technique applies, the engine proves an elimination by full search (Trial and error, Extreme).
@@ -125,12 +125,13 @@ $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7..
 - **contains** lists what a solver meets going easy to hard.
   - A chip like `XWG/KTE/SCL` means each of those alone also works at that point.
   - Singles are listed without counts.
-- **issues** are publishing checks (`spike`, `decorative`, `barely used`, `redundant`, `trivial`, `tedious`,
+- **issues** are publishing checks (`spike`, `decorative`, `barely_used`, `redundant`, `trivial`, `tedious`,
   `uniqueness`, `trial`), severity `reject` or `warning`; rule problems name the offending rules by index in the exported
   puzzle (`"rules": [3, 4]`). **reject** is `true` when any issue is a reject.
-- Fields: `grader`, `format`, `format_version`, `difficulty`, `time`, `band`, `band_index`, `contains`, `issues`, `reject`
-  by default; `rate(puzzle, fields=[...])` / `pencilmark rate --fields ...` adds `time.p80`, `steps`,
-  `steps.explanation.short` / `.teach`, `se` / `se.diuf`, `describe`, `symmetry` (docs/FORMAT.md 11.1).
+- Fields: `difficulty`, `time`, `band`, `band_index`, `contains`, `issues`, `reject` by default (`grader`, `format`,
+  `format_version` always); `rate(puzzle, fields=[...])` / `pencilmark rate --fields ...` takes key names and adds
+  `time_p80`, `steps`, `se` / `se_diuf`, `describe`, `symmetry`. `explain="short"` / `"teach"` (CLI `--explain`) adds step
+  explanations. Every key is listed in docs/FORMAT.md section 11.
 
 ## Other sites' labels on this scale
 Median difficulty, interquartile range in brackets. Each site rates for its own audience and neighbouring levels
@@ -155,7 +156,7 @@ overlap a lot, so treat this as a rough conversion.
 - Classics take 0.04-0.2 s.
 - Typical variants take about 0.5-1.5 s.
 - A few very hard killers (huge cage algebra) can take 15-30 min while the contents list is minimised.
-- `--max-seconds N` (Python: `max_seconds=N`) caps the contents step. The card then says `contents_truncated`, and its
+- `--max-seconds N` (Python: `max_seconds=N`) caps the contents step. The card then says `contains_truncated: true`, and its
   contents list may not be minimal or may miss joint chips. Without the cap the result is deterministic.
 
 ## Uniqueness

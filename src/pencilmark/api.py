@@ -72,22 +72,27 @@ def load(puzzle):
     return p
 
 
-def rate(puzzle, steps=False, max_seconds=None, mode="human", se=False, fields=None, allow_guessing=False):
-    """the "sudoku-grade" card of one puzzle (a dict), with the requested fields only (docs/FORMAT.md 11.1). Default fields:
-    pencilmark, format, format_version, difficulty, time, band, band_index, contains, issues, reject. Opt-in: "time.p80",
-    "steps", "steps.explanation.short", "steps.explanation.teach", "se", "se.diuf", "describe", "symmetry".
-    steps=True / se=True (or se="diuf") are shorthands. allow_guessing=True: guess where no technique applies
-    (band "Unknown") instead of proving by full search (Trial and error, Extreme)."""
+def rate(puzzle, steps=False, max_seconds=None, mode="human", se=False, fields=None, allow_guessing=False, explain=None):
+    """the "sudoku-grade" card of one puzzle (docs/FORMAT.md 11) with the requested top-level fields only. Default fields:
+    difficulty, time, band, band_index, contains, issues, reject (format, format_version, grader always). Optional:
+    time_p80, se, se_diuf, steps, describe, symmetry. explain="short" / "teach" / True (both) adds explanations to the
+    steps. steps=True is shorthand for the steps field with both explanation levels; se=True / se="diuf" for se / se_diuf.
+    Raises NotUnique / NoSolution / Undecided for a puzzle without exactly one solution. allow_guessing=True: guess
+    where no technique applies (band "Unknown") instead of proving by full search (Trial and error, Extreme)."""
     from .export import grade, card_fields
+    from . import cpsat_verify as V
     want = card_fields(fields, steps=steps, se=se)
     p = load(puzzle)
+    sols, decided = V.decide(p, limit=2)
+    if len(sols) > 1:
+        raise NotUnique("more than one solution")
+    if not decided:
+        raise Undecided("search limit reached without a verdict; install OR-Tools (pip install \"pencilmark[verify]\") "
+                        "for the CP-SAT fallback")
+    if not sols:
+        raise NoSolution("no solution")
     P = dict(_params(mode), allow_guess=bool(allow_guessing))
-    card = grade(p, P, max_seconds=max_seconds, fields=sorted(want - {"se", "se.diuf"}))
-    if want & {"se", "se.diuf"}:
-        from . import band_path as BP, se as SE
-        bp = BP.band_path(load(puzzle), P)
-        card["se"] = SE.ratings(bp["steps"], scale="diuf" if "se.diuf" in want else "classic") if bp["solved"] else None
-    return card
+    return grade(p, P, max_seconds=max_seconds, fields=sorted(want), with_steps=steps, explain=explain)
 
 
 def _mp_context():
@@ -97,17 +102,19 @@ def _mp_context():
 
 
 def _rate_job(args):
-    puzzle, steps, max_seconds, mode, se, fields, allow_guessing = args
+    puzzle, steps, max_seconds, mode, se, fields, allow_guessing, explain = args
     try:
         return rate(puzzle, steps=steps, max_seconds=max_seconds, mode=mode, se=se, fields=fields,
-                    allow_guessing=allow_guessing)
+                    allow_guessing=allow_guessing, explain=explain)
     except Exception as e:                       # one bad puzzle must not sink the batch
         return {"error": f"{type(e).__name__}: {e}"}
 
 
-def rate_many(puzzles, jobs=1, steps=False, max_seconds=None, mode="human", se=False, fields=None, allow_guessing=False):
-    """cards for many puzzles, in input order; jobs > 1 uses worker processes. A failing puzzle gives {"error": ...}."""
-    items = [(p, steps, max_seconds, mode, se, fields, allow_guessing) for p in puzzles]
+def rate_many(puzzles, jobs=1, steps=False, max_seconds=None, mode="human", se=False, fields=None, allow_guessing=False,
+              explain=None):
+    """cards for many puzzles, in input order; jobs > 1 uses worker processes. A puzzle that cannot be rated (not unique,
+    no solution, unreadable) gives {"error": "..."}."""
+    items = [(p, steps, max_seconds, mode, se, fields, allow_guessing, explain) for p in puzzles]
     if jobs <= 1:
         return [_rate_job(it) for it in items]
     with _mp_context().Pool(jobs) as pool:

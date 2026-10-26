@@ -1,4 +1,4 @@
-"""Variant registry: names, rule text and recognition (docs/FORMAT.md section 12). Not part of the file format: variant
+"""Variant registry: names, rule text and recognition (docs/FORMAT.md section 13). Not part of the file format: variant
 names appear only in meta.type and in describe() output.
 
     describe(puzzle) -> {"type": "Killer Sudoku", "rules": {"Sudoku": "...", "Killer": "...", ...}}

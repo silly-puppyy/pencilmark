@@ -1,4 +1,4 @@
-"""The "sudoku-spec" generator request (docs/FORMAT.md section 11): a puzzle file with blanks.
+"""The "sudoku-spec" generator request (docs/FORMAT.md section 12): a puzzle file with blanks.
 
     validate_spec(doc)                    strict reading of the spec language (unknown keys refused)
     spec_to_gen(doc) -> dict              the part pencilmark.gen can run, as a Spec dict; anything else -> NotSupportedError
@@ -44,7 +44,7 @@ def _is_template(r):
 
 
 def validate_spec(doc):
-    """strict reading of a sudoku-spec (FORMAT.md 11); locked rules are checked like puzzle rules"""
+    """strict reading of a sudoku-spec (FORMAT.md 12); locked rules are checked like puzzle rules"""
     if not isinstance(doc, dict) or doc.get("format") != FORMAT:
         raise FormatError('not a sudoku-spec ("format" must be "sudoku-spec")')
     fv = doc.get("format_version")

@@ -1,0 +1,356 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "https://silly-puppyy.github.io/pencilmark/schema/sudoku-grade-1.json",
+ "title": "sudoku-grade format_version 1",
+ "description": "pencilmark grade card (docs/FORMAT.md section 11).",
+ "type": "object",
+ "required": [
+  "format",
+  "format_version",
+  "grader"
+ ],
+ "additionalProperties": false,
+ "properties": {
+  "format": {
+   "const": "sudoku-grade"
+  },
+  "format_version": {
+   "const": 1
+  },
+  "grader": {
+   "type": "object",
+   "required": [
+    "name",
+    "version"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "version": {
+     "type": "string"
+    }
+   }
+  },
+  "difficulty": {
+   "type": [
+    "number",
+    "null"
+   ]
+  },
+  "time": {
+   "type": [
+    "number",
+    "null"
+   ]
+  },
+  "time_p80": {
+   "type": [
+    "number",
+    "null"
+   ]
+  },
+  "band": {
+   "enum": [
+    "Very Easy",
+    "Easy",
+    "Medium",
+    "Hard",
+    "Very Hard",
+    "Extreme",
+    "Unknown"
+   ]
+  },
+  "band_index": {
+   "type": [
+    "integer",
+    "null"
+   ],
+   "minimum": 0,
+   "maximum": 5
+  },
+  "contains": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "code",
+     "chip",
+     "name",
+     "band"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "code": {
+      "type": "string"
+     },
+     "chip": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     },
+     "band": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 5
+     },
+     "uses": {
+      "type": "integer",
+      "minimum": 1
+     },
+     "alternatives": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      },
+      "minItems": 1
+     }
+    }
+   }
+  },
+  "contains_complete": {
+   "type": "boolean"
+  },
+  "contains_truncated": {
+   "type": "boolean"
+  },
+  "stopped_at_step": {
+   "type": "integer",
+   "minimum": 1
+  },
+  "issues": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "code",
+     "severity",
+     "text"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "code": {
+      "enum": [
+       "spike",
+       "decorative",
+       "barely_used",
+       "redundant",
+       "trivial",
+       "tedious",
+       "uniqueness",
+       "trial"
+      ]
+     },
+     "severity": {
+      "enum": [
+       "reject",
+       "warning"
+      ]
+     },
+     "text": {
+      "type": "string"
+     },
+     "rules": {
+      "type": "array",
+      "items": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "minItems": 1
+     }
+    }
+   }
+  },
+  "reject": {
+   "type": "boolean"
+  },
+  "se": {
+   "oneOf": [
+    {
+     "type": "null"
+    },
+    {
+     "type": "object",
+     "required": [
+      "er",
+      "ep",
+      "ed",
+      "scale"
+     ],
+     "additionalProperties": false,
+     "properties": {
+      "er": {
+       "type": "number"
+      },
+      "ep": {
+       "type": "number"
+      },
+      "ed": {
+       "type": "number"
+      },
+      "scale": {
+       "enum": [
+        "classic",
+        "diuf"
+       ]
+      }
+     }
+    }
+   ]
+  },
+  "se_diuf": {
+   "oneOf": [
+    {
+     "type": "null"
+    },
+    {
+     "type": "object",
+     "required": [
+      "er",
+      "ep",
+      "ed",
+      "scale"
+     ],
+     "additionalProperties": false,
+     "properties": {
+      "er": {
+       "type": "number"
+      },
+      "ep": {
+       "type": "number"
+      },
+      "ed": {
+       "type": "number"
+      },
+      "scale": {
+       "enum": [
+        "classic",
+        "diuf"
+       ]
+      }
+     }
+    }
+   ]
+  },
+  "steps": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "n",
+     "technique",
+     "code",
+     "band"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "n": {
+      "type": "integer",
+      "minimum": 1
+     },
+     "technique": {
+      "type": "string"
+     },
+     "code": {
+      "type": "string"
+     },
+     "band": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 5
+     },
+     "placement": {
+      "type": "string",
+      "pattern": "^r[1-9][0-9]*c[1-9][0-9]*=[0-9]+$"
+     },
+     "eliminations": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "pattern": "^r[1-9][0-9]*c[1-9][0-9]*#[0-9]+$"
+      }
+     },
+     "explanation": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+       "short": {
+        "type": "string"
+       },
+       "teach": {
+        "type": "string"
+       }
+      }
+     }
+    }
+   }
+  },
+  "describe": {
+   "type": [
+    "object",
+    "null"
+   ],
+   "required": [
+    "type",
+    "rules"
+   ],
+   "properties": {
+    "type": {
+     "type": "string"
+    },
+    "rules": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "symmetry": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "kind",
+     "of"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "kind": {
+      "enum": [
+       "rot180",
+       "rot90",
+       "mirror"
+      ]
+     },
+     "axis": {
+      "enum": [
+       "horizontal",
+       "vertical",
+       "diagonal",
+       "antidiagonal"
+      ]
+     },
+     "of": {
+      "const": "givens"
+     }
+    }
+   }
+  }
+ },
+ "dependentRequired": {
+  "contains": [
+   "contains_complete",
+   "contains_truncated"
+  ],
+  "issues": [
+   "reject"
+  ],
+  "reject": [
+   "issues"
+  ]
+ }
+}

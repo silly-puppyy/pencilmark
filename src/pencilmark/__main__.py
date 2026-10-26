@@ -5,9 +5,10 @@
       pencilmark.puzzle_json format or the sudoku-puzzle exchange format (pencilmark.export), or a path to a .json file. Prints one
       result line per puzzle. Card "sudoku-grade": FMT fields %d difficulty (continuous, floor 0, no ceiling; ~5 = typical medium),
       %m time in minutes for today's average player, %p 80th-percentile minutes, %b band, %h hardest technique met,
-      %c contents chips (band > 0, with uses), %n issue codes, %s status, %u unique?, %i line number.
-      Default: "%b\t%d\t%m\t%h". --json prints the full card (add --steps for the step list); --report a readable
-      summary.
+      %c contents chips (band > 0, with uses), %n issue codes, %s status ("ok" or the error), %u unique?, %i line number.
+      Default: "%b\t%d\t%m\t%h". --json prints the full card (add --steps for the step list, --explain for its
+      explanations, --fields to choose fields); --report a readable summary. A puzzle without exactly one solution
+      prints its error ({"line", "error"} with --json).
   python -m pencilmark solve [FILE|-]      the solution (or 'not unique' / 'no solution') per puzzle
   python -m pencilmark json  [FILE|-]      validate + normalise to canonical JSON (adds "hash")
   python -m pencilmark export [FILE|-] [--pretty] [--no-solution]
@@ -64,9 +65,9 @@ def _fmt2(fmt, g, k, unique):
     hard = [c for c in cont if c.get("band", 0) > 0]
     vals = {"d": "" if g.get("difficulty") is None else f"{g['difficulty']:.1f}",
             "m": "" if g.get("time") is None else f"{g['time']:.1f}", "p": "" if g.get("time_p80") is None else f"{g['time_p80']:.1f}",
-            "b": g.get("band", g.get("status", "")), "h": hard[-1]["name"] if hard else (cont[-1]["name"] if cont else ""),
+            "b": g.get("band", g.get("error", "")), "h": hard[-1]["name"] if hard else (cont[-1]["name"] if cont else ""),
             "c": " ".join(c["chip"] + (f"x{c['uses']}" if c.get("uses", 0) > 1 else "") for c in hard),
-            "n": ";".join(n.get("code") or n["text"] for n in g.get("issues") or []), "s": g.get("status", "ok"), "u": str(unique), "i": str(k)}
+            "n": ";".join(n.get("code") or n["text"] for n in g.get("issues") or []), "s": g.get("error", "ok"), "u": str(unique), "i": str(k)}
     return _subst(fmt, vals)
 
 
@@ -85,14 +86,14 @@ def _subst(fmt, vals):
 def report2(g, k=None):
     """Readable summary of the sudoku-grade card."""
     if "band" not in g:
-        return f"[{k}] {g.get('status')}"
+        return f"[{k}] {g.get('error')}"
     L = [f"{'#' + str(k) + '  ' if k else ''}{g['band']}  -  difficulty {g.get('difficulty')}  -  time {g.get('time')} min"
          + (f" (80% of players within {g.get('time_p80')} min)" if g.get("time_p80") is not None else "")]
     hard = [c for c in g.get("contains") or [] if c.get("band", 0) > 0]
     L.append("   contains: " + (", ".join(f"{c['name']}{' x' + str(c['uses']) if c.get('uses', 0) > 1 else ''}"
                                          f"{' (or ' + '/'.join(c['alternatives']) + ')' if c.get('alternatives') else ''}" for c in hard)
                                 if hard else "singles only"))
-    if g.get("contents_truncated"):
+    if g.get("contains_truncated"):
         L.append("   (time cap hit: contents not minimised; joint alternatives may be missing)")
     if g.get("contains_complete") is False:
         L.append(f"   human logic ran out at step {g.get('stopped_at_step')}; contents incomplete")
@@ -115,19 +116,18 @@ def _rate_one(args):
         if len(sols) != 1 or not decided:
             st = ("not unique" if len(sols) > 1 else "undecided (" + V.VERIFY_HINT + ")" if not decided
                   else "no solution")
-            return _fmt2(fmt, {"status": st}, k, False) if not a.json else json.dumps({"line": k, "status": st})
+            return _fmt2(fmt, {"error": st}, k, False) if not a.json else json.dumps({"line": k, "error": st})
         from .export import card_fields
         fl = a.fields.split(",") if a.fields else None
         if fl is None and ("%p" in fmt or a.report):
-            fl = list(card_fields(None)) + ["time.p80"]
+            fl = list(card_fields(None)) + ["time_p80"]
         want = card_fields(fl, steps=a.steps)
-        g = grade(p, P, max_seconds=a.max_seconds, fields=sorted(want - {"se", "se.diuf"}))
-        if want & {"se", "se.diuf"}:
-            from . import band_path as BP, se as SE
-            bp = BP.band_path(p, P)
-            g["se"] = SE.ratings(bp["steps"], scale="diuf" if "se.diuf" in want else "classic") if bp["solved"] else None
+        explain = a.explain.split(",") if a.explain else (True if a.steps else None)
+        g = grade(p, P, max_seconds=a.max_seconds, fields=sorted(want), explain=explain)
         return json.dumps({"line": k, **g}, default=str) if a.json else report2(g, k) if a.report else _fmt2(fmt, g, k, True)
     except Exception as e:
+        if a.json:
+            return json.dumps({"line": k, "error": f"{type(e).__name__}: {e}"})
         return f"error\t{k}\t{type(e).__name__}: {e}"
 
 
@@ -191,12 +191,13 @@ def main(argv=None):
     r.add_argument("--computer", action="store_true", help="allow pure computer search (forcing chains / nets, trial); default: human mode")
     r.add_argument("--allow-guessing", action="store_true", help="guess where no technique applies (faster; band Unknown) "
                    "instead of proving by full search (Trial and error, band Extreme)")
-    r.add_argument("--steps", action="store_true", help="with --json: include the step-by-step solve")
-    r.add_argument("--fields", default=None, help="card fields, comma-separated (docs/FORMAT.md 11.1), e.g. "
-                                                    "difficulty,band,time.p80,steps,steps.explanation.short")
+    r.add_argument("--steps", action="store_true", help="with --json: include the step-by-step solve (with both explanation levels)")
+    r.add_argument("--explain", default=None, help="step explanation levels, comma-separated: short, teach")
+    r.add_argument("--fields", default=None, help="card fields, comma-separated (docs/FORMAT.md 11.2), e.g. "
+                                                    "difficulty,band,time_p80,steps")
     r.add_argument("-j", "--jobs", type=int, default=1, help="rate puzzles in N parallel processes (output in input order)")
     r.add_argument("--max-seconds", type=float, default=None,
-                   help="cap the contents search (opt-in; the card then says contents_truncated and may differ run to run)")
+                   help="cap the contents search (opt-in; the card then says contains_truncated and may differ run to run)")
     r.set_defaults(fn=cmd_rate)
     s = sub.add_parser("solve"); s.add_argument("file", nargs="?"); s.set_defaults(fn=cmd_solve)
     j = sub.add_parser("json"); j.add_argument("file", nargs="?"); j.set_defaults(fn=cmd_json)

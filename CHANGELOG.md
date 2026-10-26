@@ -5,7 +5,7 @@
 First public release.
 
 - `rate`, `rate_many`, `solve`, `to_export`, `load`: the "sudoku-grade" card (difficulty, time, band, contents, issues /
-  reject; on request time.p80, steps with two explanation levels, Sudoku Explainer-style ratings, describe, symmetry;
+  reject; on request time_p80, steps with two explanation levels, Sudoku Explainer-style ratings, describe, symmetry;
   `fields=[...]` computes only the requested fields) for classic and variant sudoku.
 - Command line: `pencilmark rate | solve | json | export | fingerprint | describe` (also `python -m pencilmark`).
 - Exchange format: `sudoku-puzzle` format_version 1, read and written, specified in `docs/FORMAT.md` with a JSON Schema (`docs/sudoku-puzzle.schema.json`):

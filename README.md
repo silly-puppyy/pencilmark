@@ -55,17 +55,17 @@ More in [docs/USAGE.md](https://github.com/silly-puppyy/pencilmark/blob/main/doc
 ## The card
 
 `rate` returns a dict (format `"sudoku-grade"`) with these fields by default (`grader`, `format`, `format_version` are
-always there); `rate(puzzle, fields=[...])` / `--fields` asks for others, and only requested fields are computed
-([docs/FORMAT.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/FORMAT.md) 11.1):
+always there); `rate(puzzle, fields=[...])` / `--fields` asks for others by their key names, and only requested fields
+are computed ([docs/FORMAT.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/FORMAT.md) section 11):
 
 | Field | Meaning |
 |---|---|
 | `difficulty` | how hard each step feels, continuous from 0 (one empty cell) with no ceiling; a typical newspaper medium is about 5 |
-| `time` | expected minutes for an average player (`time.p80` on request: 80% of players finish within it) |
+| `time` | expected minutes for an average player (`time_p80` on request: 80% of players finish within it) |
 | `band`, `band_index` | Very Easy (0), Easy, Medium, Hard, Very Hard, Extreme (5); `"Unknown"` (null) only with `allow_guessing=True`, when the engine had to guess |
-| `contains` | techniques met going easy to hard: `code`, `chip`, `name`, `band`, `uses`, `alternatives` |
+| `contains` | techniques met going easy to hard: `code`, `chip`, `name`, `band`, `uses`, `alternatives`; with `contains_complete` and `contains_truncated` |
 | `issues`, `reject` | publishing checks such as a difficulty spike or an unused rule (`code`, `severity` reject / warning, `text`, and `rules`: the offending rules' indices in the exported puzzle); `reject` is true when any issue is a reject |
-| on request | `steps` (technique, placement `r2c8=3` or eliminations `r4c5#7`) with `steps.explanation.short` / `.teach`, `se` / `se.diuf`, `describe`, `symmetry` |
+| on request | `time_p80`, `steps` (technique, placement `r2c8=3` or eliminations `r4c5#7`; `explain="short"` / `"teach"` adds explanations), `se` / `se_diuf`, `describe`, `symmetry` |
 
 A chip like `XWG/KTE/SCL` means any one of those techniques gets you through at that point.
 
@@ -73,7 +73,8 @@ Guessing is off by default: where no technique applies, the engine proves an eli
 error, band Extreme), so every uniquely solvable puzzle gets a band. `allow_guessing=True` (CLI `--allow-guessing`) lets it
 guess there instead, which is faster on the hardest puzzles; the card then says Unknown, with `contains_complete: false`
 and `stopped_at_step`. With `max_seconds` set, the contents search is capped and the card
-may say `contents_truncated`.
+may say `contains_truncated: true`. A puzzle without exactly one solution has no card: `rate` raises `NotUnique` /
+`NoSolution`.
 
 ## Exchange format
 
@@ -150,7 +151,7 @@ the `PENCILMARK_UA` environment variable.
 - Bands depend on the technique catalogue; a puzzle that needs a technique the engine does not have is solved with
   Trial and error at that point and rated Extreme.
 - Very hard puzzles with many-cell rules (killers, arrows, palindromes, thermos) can take minutes while the contents list
-  is minimised; use `max_seconds` to cap it (the card then says `contents_truncated`).
+  is minimised; use `max_seconds` to cap it (the card then says `contains_truncated: true`).
 - The Sudoku Explainer-style ratings (`se=True`) are approximate and meaningful for classic sudoku only.
 
 ## License
