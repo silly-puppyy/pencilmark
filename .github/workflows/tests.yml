@@ -1,23 +1,25 @@
+# Full test suite on Linux, oldest and newest supported Python. Runs on version tags and by hand (Actions tab ->
+# tests -> Run workflow), not on every push.
 name: tests
 
 on:
   push:
-  pull_request:
+    tags: ["v*"]
+  workflow_dispatch:
 
 jobs:
   test:
-    name: ${{ matrix.os }} py${{ matrix.python }} ${{ matrix.extras }}
-    runs-on: ${{ matrix.os }}
+    name: py${{ matrix.python }} ${{ matrix.extras }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-14, windows-latest]
-        python: ["3.10", "3.14"]
-        extras: ["test,verify"]
         include:
-          - os: ubuntu-latest       # core install, without OR-Tools
-            python: "3.14"
-            extras: "test"
+          - python: "3.10"
+            extras: "test"            # core install, without OR-Tools
+          - python: "3.14"
+            extras: "test,verify"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

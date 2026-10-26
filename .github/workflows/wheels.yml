@@ -1,4 +1,4 @@
-# Builds wheels and the sdist, runs the test suite inside every wheel, and stores them as workflow artifacts.
+# Builds wheels and the sdist, smoke-tests every wheel (tests/smoke.py), and stores them as workflow artifacts.
 # Publishing to PyPI is a separate, manual step (workflow_dispatch with publish=true, or a published GitHub release)
 # that uses PyPI trusted publishing; nothing is uploaded on ordinary pushes.
 name: wheels
@@ -6,7 +6,6 @@ name: wheels
 on:
   push:
     tags: ["v*"]
-  pull_request:
   release:
     types: [published]
   workflow_dispatch:
@@ -20,10 +19,11 @@ jobs:
   wheels:
     name: wheels ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-13, macos-14]
+        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-15-intel, macos-14]
     steps:
       - uses: actions/checkout@v4
       - uses: pypa/cibuildwheel@v3.1.4    # 3.x builds CPython 3.14

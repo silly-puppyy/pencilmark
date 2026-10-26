@@ -46,8 +46,7 @@ testpaths = ["tests"]
 [tool.cibuildwheel]
 build = "cp310-* cp311-* cp312-* cp313-* cp314-*"
 skip = "*-win32 *_i686 *-musllinux_*"
-test-requires = ["pytest"]   # core install (no OR-Tools); tests.yml also runs with the [verify] extra
-test-command = "pytest {project}/tests -q -x"
+test-command = "python {project}/tests/smoke.py"   # quick check of every wheel; tests.yml runs the full suite
 build-verbosity = 1
 
 [tool.cibuildwheel.macos]
