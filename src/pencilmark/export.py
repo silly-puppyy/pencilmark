@@ -401,7 +401,7 @@ RULE_NOUN = {("line", None): "line", ("edge", "kropki"): "kropki dot", ("edge", 
              ("edge", "difference"): "difference clue", ("edge", "sum"): "sum clue", ("edge", "product"): "product clue",
              ("edge", "ratio"): "ratio clue", ("region", "diagonal"): "diagonal", ("region", "window"): "window",
              ("region", "disjoint"): "disjoint group", ("region", "extra"): "extra region", ("region", "colour"): "colour group",
-             ("cage", None): "cage", ("arrow", None): "arrow", ("digits", None): "shaded cell", ("neighbours", None): "neighbour rule",
+             ("cage", None): "cage", ("arrow", None): "arrow", ("cell", None): "cell clue", ("neighbours", None): "neighbour rule",
              ("negative", None): "negative constraint", ("table", None): "table rule", ("relation", None): "pair rule",
              ("corner", None): "corner clue", ("sum", None): "sum clue", ("contains", None): "quadruple", ("appears", None): "arrow clue"}
 

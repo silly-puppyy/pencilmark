@@ -93,7 +93,7 @@ generator supports this part of the spec and refuses everything else with a clea
 | Spec part | Supported |
 |---|---|
 | board | a gap-free D×D grid (D = 4, 6, 8, 9, 10, 12, 16) whose only locked rule is the standard `box_grid` |
-| templates | `cage`, `line` thermo / whisper / renban / between, `arrow`, `edge` kropki / xv, `digits` `parity` (odd / even cells); `count` `[n, null]` (at least n needed), `"auto"` (allowed, not required), `"all"` / `"min"` (kropki), `"tile"` (cages), an exact number only for cages with 0 givens; whisper `value` only at the generator's gap (5 on 9×9) |
+| templates | `cage`, `line` thermo / whisper / renban / between, `arrow`, `edge` kropki / xv, `cell` `parity` (odd / even cells); `count` `[n, null]` (at least n needed), `"auto"` (allowed, not required), `"all"` / `"min"` (kropki), `"tile"` (cages), an exact number only for cages with 0 givens; whisper `value` only at the generator's gap (5 on 9×9) |
 | givens | `{"count": n | [min, max]}` |
 | symmetry | one entry with `of: "givens"` |
 | where | `band` (one), `difficulty` `[lo, hi]`, `contains` (codes, optionally strict), `elements.max` |

@@ -19,13 +19,13 @@ whatever its source.
 | `line` | `{"type": "line", "kind": …}` (whisper `value` → `k`; closed: the first cell repeated at the end); `double_arrow` → `equal_sum` `[[ends], middle]`; `lockout` → `diffge` on the ends plus a 3-cell table per middle cell |
 | `arrow` | one `arrow` constraint per shaft |
 | `edge` | relations `diff 1` / `ratio 2` (kropki), `sum 10` / `sum 5` (xv), `lt` (less); difference / sum / product / ratio: a 2-cell table of the allowed pairs (normalisation 8) |
-| `corner` | battenburg: a 4-cell table; mathrax: a 2-cell table per diagonal pair (TL–BR, then TR–BL), even / odd: a `digits` clue; exclude: a `digits` exclude clue |
+| `corner` | battenburg: a 4-cell table; mathrax: a 2-cell table per diagonal pair (TL–BR, then TR–BL), even / odd: a `cell` clue; exclude: a `cell` exclude clue |
 | `sum` | `little_killer` / `sum` constraints |
 | outside clues | `sandwich` / `xsum` / `skyscraper` / `first_seen` constraints; rossini: `lt` relations and, with its negative, 3-cell tables |
 | `neighbours` | `neq` / `nonconsec` / the operator's relations per pair |
 | `relation` | one relation per pair |
 | `negative` | the complementary relation on every uncovered pair (`nonconsec` for white kropki, `notratio`, `notsum`, `notdiff`, `allowed`), tables for rossini / battenburg, domains for digits |
-| `digits`, `candidates` | domain masks (digits clues are also kept as cell clues) |
+| `cell`, `candidates` | domain masks (`cell` clues are also kept as cell clues) |
 | `contains` / `appears` / `count` / `distinct_count` / `clone` / `isomorphic` / `global_entropy` / `equal_sum` / `vudoku` / `table` | the engine constraints and named rules of the same mechanics |
 
 ## Normalisations

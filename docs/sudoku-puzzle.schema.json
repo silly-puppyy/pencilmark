@@ -963,11 +963,11 @@
    ],
    "additionalProperties": false
   },
-  "rule_digits": {
+  "rule_cell": {
    "type": "object",
    "properties": {
     "type": {
-     "const": "digits"
+     "const": "cell"
     },
     "id": {
      "type": "string"
@@ -1411,8 +1411,8 @@
     "of": {
      "enum": [
       "battenburg",
+      "cell",
       "difference",
-      "digits",
       "kropki",
       "product",
       "ratio",
@@ -1499,7 +1499,7 @@
      "$ref": "#/$defs/rule_relation"
     },
     {
-     "$ref": "#/$defs/rule_digits"
+     "$ref": "#/$defs/rule_cell"
     },
     {
      "$ref": "#/$defs/rule_contains"

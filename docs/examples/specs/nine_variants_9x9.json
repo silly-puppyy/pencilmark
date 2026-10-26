@@ -82,7 +82,7 @@
    ]
   },
   {
-   "type": "digits",
+   "type": "cell",
    "kind": "parity",
    "count": [
     1,

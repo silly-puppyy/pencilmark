@@ -23,7 +23,7 @@ NS = "io.github.silly-puppyy.pencilmark"
 # generator element kind <-> template (type, kind)
 GEN_KINDS = {"cage": ("cage", None), "thermo": ("line", "thermo"), "whisper": ("line", "whisper"),
              "renban": ("line", "renban"), "between": ("line", "between"), "arrow": ("arrow", None),
-             "kropki": ("edge", "kropki"), "xv": ("edge", "xv"), "parity": ("digits", "parity")}
+             "kropki": ("edge", "kropki"), "xv": ("edge", "xv"), "parity": ("cell", "parity")}
 RULE_KIND = {v: k for k, v in GEN_KINDS.items()}
 GEN_SYM = {("rot180", None): "rot180", ("rot90", None): "rot90", ("mirror", "vertical"): "mirror",
            ("mirror", "horizontal"): "mirror_v", ("mirror", "diagonal"): "diagonal", ("mirror", "antidiagonal"): "antidiagonal"}

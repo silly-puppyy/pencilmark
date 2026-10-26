@@ -83,7 +83,7 @@ Python API (package `pencilmark`):
 | `digits` | yes | Integer D ≥ 1: cells hold the digits 1..D. (Other digit sets and display symbols are reserved for a later version; see 6.17.) |
 | `givens` | yes | Flat list of R×C entries in reading order (row by row). `0` = empty cell, `null` = no cell at that position (the gaps of multi-grid boards), otherwise the given digit as a number (so 10..D work). This is the **only** representation: no text rows, no digit strings, no per-cell objects. |
 | `solution` | no | Same shape as `givens`, every existing cell filled, `null` exactly where `givens` has `null`. |
-| `candidates` | no | Given pencil marks (Sukaku): `{"r1c1": [1, 3, 7], …}`, ascending integer lists. **Semantic**: each listed cell's digit is one of its list; unlisted cells are unrestricted. Graphical cell clues (odd, even, …) are rules, never candidates. |
+| `candidates` | no | Given pencil marks (Sukaku): `{"r1c1": [1, 3, 7], …}`, ascending integer lists. **Semantic**: each listed cell's digit is one of its list; unlisted cells are unrestricted. Graphical cell clues (odd, even, …) are `cell` rules, never candidates. |
 | `rules` | yes | Every constraint, houses included (section 6). Nothing is implied: a board without house rules has no houses. |
 | `decorations` | no | Cosmetic drawing primitives (section 8). Never semantic. |
 | `style` | no | Cosmetic, puzzle-wide drawing hints (section 8). Never semantic. |
@@ -144,7 +144,7 @@ clues competing for one gap) is the renderer's business; the semantics never dep
 | Ordered (the order carries meaning) | Sets (readers ignore the order; writers SHOULD use reading order) |
 |---|---|
 | `line` cells (thermo bulb first; a whisper's order is its path) | `box`, `row`, `column`, `region`, `cage` cells; `sum` kinds `group` / `corner` |
-| `arrow` `bulb` (a pill reads as a number in `bulb` order) and each shaft in `lines` (away from the bulb) | `digits`, `contains`, `appears` cells, `count`, `distinct_count` without `side` |
+| `arrow` `bulb` (a pill reads as a number in `bulb` order) and each shaft in `lines` (away from the bulb) | `cell`, `contains`, `appears` cells, `count`, `distinct_count` without `side` |
 | outside clues (`sandwich`, `xsum`, `skyscraper`, `rossini`, `first_seen`, `sum` kinds `little_killer` / `frame`, `distinct_count` with `side`): from the cell next to the clue outwards | `equal_sum` segments (each a set; the segment list is unordered) |
 | `clone` / `isomorphic` regions: corresponding positions | `edge` pairs except `less`, `relation` pairs of symmetric operators |
 | `edge` kind `less` and `relation` pairs of `less` / `less_equal` / `allowed` / `any_of`: `[a, b]` in operator order | `corner` cells (written TL, TR, BL, BR = reading order) |
@@ -423,12 +423,12 @@ edge kind has, or a pair rule a site defines):
 {"type": "relation", "op": "different", "params": [], "pairs": [["r1c1", "r3c3"], ["r1c1", "r4c4"]]}
 ```
 
-### 6.12 `digits` (cell clues)
+### 6.12 `cell` (cell clues)
 
 ```json
-{"type": "digits", "kind": "odd", "cells": ["r1c1", "r5c5"]}
-{"type": "digits", "kind": "set", "values": [1, 2, 3], "cells": ["r2c2"]}
-{"type": "digits", "kind": "high", "split": 5, "cells": ["r3c3"]}
+{"type": "cell", "kind": "odd", "cells": ["r1c1", "r5c5"]}
+{"type": "cell", "kind": "set", "values": [1, 2, 3], "cells": ["r2c2"]}
+{"type": "cell", "kind": "high", "split": 5, "cells": ["r3c3"]}
 ```
 
 | `kind` | Fields | Each listed cell holds |
@@ -438,7 +438,7 @@ edge kind has, or a pair rule a site defines):
 | `set` | `values` | one of `values` |
 | `exclude` | `values` | none of `values` |
 
-"Every unmarked cell is low / even / …" is a `negative` rule over `digits` (6.14).
+"Every unmarked cell is low / even / …" is a `negative` rule over `cell` (6.14).
 
 ### 6.13 Other families
 
@@ -480,7 +480,7 @@ States exactly which clues are "all shown".
 {"type": "negative", "of": "difference", "value": 5}
 {"type": "negative", "of": "rossini"}
 {"type": "negative", "of": "battenburg"}
-{"type": "negative", "of": "digits", "kind": "high", "split": 5}
+{"type": "negative", "of": "cell", "kind": "high", "split": 5}
 ```
 
 | `of` | Selector | Positions | An uncovered position … |
@@ -491,12 +491,12 @@ States exactly which clues are "all shown".
 | `sum` | `sum` (REQUIRED) | orthogonal pairs | does not sum to `sum` |
 | `rossini` | – | the first 3 cells inwards from each end of every full row and column house | is not monotone |
 | `battenburg` | – | every 2×2 block whose cells share a `grid` / `box_grid` area (or of the whole board without one) | is not a parity checkerboard |
-| `digits` | `kind` `odd` / `even` / `low` / `high` (+ `split` for low / high) | every cell | does not satisfy that clue (so it is even / odd / high / low) |
+| `cell` | `kind` `odd` / `even` / `low` / `high` (+ `split` for low / high) | every cell | does not satisfy that clue (so it is even / odd / high / low) |
 
 - **A negative covers exactly what its selector names.** With a selector it covers a single value:
   `{"of": "xv", "letter": "X"}` says only "pairs without a clue do not sum to 10"; V clues may be partial.
 - **Exemption**: a position carrying **any** rule of the same family (any kropki dot of either colour; any X or V;
-  any edge clue of that kind; any rossini arrow; any battenburg mark; any `digits` rule of that kind) is exempt.
+  any edge clue of that kind; any rossini arrow; any battenburg mark; any `cell` rule of that kind) is exempt.
 - **Adjacency is only within one grid**: two cells form a pair only if some `grid` / `box_grid` area contains both (on a
   board without one, all orthogonally adjacent existing cells).
 - Optional `area` (5): only positions whose cells are all in the area are covered.
@@ -566,9 +566,9 @@ edge / corner clues, digits, outside clues.
 | `sum` `frame`, `sandwich`, `skyscraper`, `first_seen`, `distinct_count` with `side` | Plain number outside `cells[0]` on `side`. When kinds are mixed on one side: `xsum` in angle brackets ⟨n⟩, `skyscraper` in a small square, `first_seen` in a small circle. |
 | `xsum` | Plain number outside `cells[0]` (⟨n⟩ when mixed). |
 | `rossini` | Arrow glyph outside `cells[0]` on `side`, pointing into the grid (`in`) or out of it (`out`). |
-| `digits` `odd` / `even` | Grey circle / grey square (0.8) behind the digit. |
-| `digits` `low` / `high` | Light / dark grey diamond behind the digit. |
-| `digits` `set` / `exclude` | The values in small type along the bottom of the cell; `exclude` struck through. |
+| `cell` `odd` / `even` | Grey circle / grey square (0.8) behind the digit. |
+| `cell` `low` / `high` | Light / dark grey diamond behind the digit. |
+| `cell` `set` / `exclude` | The values in small type along the bottom of the cell; `exclude` struck through. |
 | `clone` | The same light shading colour for all regions of one rule (palette as for colour regions). |
 | `vudoku` | A thin V through the three cell centres, vertex at `cells[0]`. |
 | `equal_sum` | Thin dashed outline around each segment. |
@@ -624,7 +624,7 @@ Coordinates are cell units `[row, col]` with the origin at the top-left corner o
 3. Replace all house rules (`grid`, `box_grid`, `box`, `row`, `column`) by the houses they state, one
    `{"type": "row" | "column" | "box", "cells": [...]}` per distinct house, so every spelling of the same houses (a
    `box_grid`, a `grid` plus `box` rules, single rules, in any order) gives the same result.
-4. Sort the cells of set-like lists (3.3: region, cage, digits, contains, appears, count, sum group / corner,
+4. Sort the cells of set-like lists (3.3: region, cage, cell, contains, appears, count, sum group / corner,
    edge clues other than `less`, scope and `except` lists, the pairs of symmetric `relation` operators, `equal_sum`
    segments) in reading order.
 5. Sort `rules` by their compact canonical JSON text.

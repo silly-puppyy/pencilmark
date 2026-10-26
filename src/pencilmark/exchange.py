@@ -459,7 +459,7 @@ RULE_KEYS = {
     "first_seen": ({"value", "digits", "side", "cells"}, set()),
     "neighbours": (set(), {"kind", "op", "params", "where", "within", "area", "except"}),
     "relation": ({"op", "params", "pairs"}, set()),
-    "digits": ({"kind", "cells"}, {"split", "values"}),
+    "cell": ({"kind", "cells"}, {"split", "values"}),
     "contains": ({"digits", "cells"}, set()),
     "appears": ({"source", "cells"}, set()),
     "clone": ({"regions"}, set()),
@@ -480,13 +480,13 @@ KINDS = {
     "corner": {"battenburg", "mathrax", "exclude"},
     "sum": {"little_killer", "frame", "group", "corner"},
     "neighbours": {"antiknight", "antiking", "nonconsecutive"},
-    "digits": {"odd", "even", "low", "high", "set", "exclude"},
+    "cell": {"odd", "even", "low", "high", "set", "exclude"},
     "count": {"circles"},
 }
 LINE_PARAMS = {"whisper": {"value"}, "modular": {"value"}, "lockout": {"value"}, "entropic": {"groups"}}
 EDGE_PARAMS = {"kropki": {"color"}, "xv": {"letter"}, "difference": {"value"}, "sum": {"sum"}, "product": {"value"},
                "ratio": {"value"}, "less": set()}
-NEG_OF = {"kropki", "xv", "difference", "sum", "ratio", "product", "rossini", "battenburg", "digits"}
+NEG_OF = {"kropki", "xv", "difference", "sum", "ratio", "product", "rossini", "battenburg", "cell"}
 TOP_KEYS = {"format", "format_version", "$schema", "meta", "board", "digits", "givens", "solution", "candidates", "rules",
             "decorations", "style", "ext"}
 
@@ -627,7 +627,7 @@ def _validate_rule(r, B):
         r0, c0 = parse_cell(r["origin"])
         if grid_units(B, r0, c0) is None:
             raise FormatError(f"{t} covers a missing cell (its area is {D} x {D} from origin)")
-    elif t in ("box", "row", "column", "region", "contains", "appears", "digits", "count", "vudoku"):
+    elif t in ("box", "row", "column", "region", "contains", "appears", "cell", "count", "vudoku"):
         cs = _cells(B, r["cells"])
         if t == "vudoku" and len(cs) != 3:
             raise FormatError("vudoku takes 3 cells (vertex, arm, arm)")
@@ -636,7 +636,7 @@ def _validate_rule(r, B):
         if t == "contains" and (not isinstance(r["digits"], list) or not r["digits"]
                                 or any(not isinstance(x, int) or not 1 <= x <= D for x in r["digits"])):
             raise FormatError(f"digits must be a list of digits 1..{D}")
-        if t == "digits":
+        if t == "cell":
             if kind in ("low", "high"):
                 if "split" not in r or "values" in r:
                     raise FormatError(f"digits {kind} takes split (and no values)")
@@ -787,11 +787,11 @@ def _validate_rule(r, B):
         elif of in ("rossini", "battenburg"):
             if sel:
                 raise FormatError(f"negative {of} takes no selector")
-        elif of == "digits":
+        elif of == "cell":
             if r.get("kind") not in ("odd", "even", "low", "high"):
-                raise FormatError("negative digits needs kind odd / even / low / high")
+                raise FormatError("negative cell needs kind odd / even / low / high")
             if (r["kind"] in ("low", "high")) != ("split" in r) or sel - {"kind", "split"}:
-                raise FormatError("negative digits low / high need split (others take none)")
+                raise FormatError("negative cell low / high need split (others take none)")
         if "area" in r:
             area_cells(B, r["area"])
 
@@ -975,7 +975,7 @@ class _ReadCtx:
             kind = OPS[r["op"]]
             args = _op_params_to_engine(r["op"], r["params"])
             return [self.pairs_rule(kind, args, [tuple(idx(p)) for p in r["pairs"]])]
-        if t == "digits":
+        if t == "cell":
             k = r["kind"]
             if k in ("odd", "even"):
                 return [{"type": "parity", "parity": k, "cells": list(r["cells"])}]
@@ -1027,10 +1027,10 @@ class _ReadCtx:
                 return self.rossini(i, done)
             if of == "battenburg":
                 return self.battenburg(i, done)
-            if of == "digits":
+            if of == "cell":
                 if r["kind"] in ("low", "high"):
                     return self.lowhigh(i, r, done)
-                marked = {B.idx(c) for x in self.rules if x["type"] == "digits" and x["kind"] == r["kind"] for c in x["cells"]}
+                marked = {B.idx(c) for x in self.rules if x["type"] == "cell" and x["kind"] == r["kind"] for c in x["cells"]}
                 scope = set(idx(r["cells"])) if "cells" in r else set(range(len(B.coords)))
                 rest = [c for c in range(len(B.coords)) if c in scope and c not in marked]
                 other = "even" if r["kind"] == "odd" else "odd"
@@ -1111,8 +1111,8 @@ class _ReadCtx:
     def lowhigh(self, i, r, done):
         B, D = self.B, self.D
         split = r["split"]
-        hi_rules = [j for j, x in enumerate(self.rules) if x["type"] == "digits" and x["kind"] in ("low", "high") and x["split"] == split]
-        negs = [j for j, x in enumerate(self.rules) if x["type"] == "negative" and x["of"] == "digits"
+        hi_rules = [j for j, x in enumerate(self.rules) if x["type"] == "cell" and x["kind"] in ("low", "high") and x["split"] == split]
+        negs = [j for j, x in enumerate(self.rules) if x["type"] == "negative" and x["of"] == "cell"
                 and x.get("kind") in ("low", "high") and x.get("split") == split]
         if not negs:            # marked cells only: a digit-class clue
             k = r["kind"]
@@ -1352,18 +1352,18 @@ class _Writer:
             idx = [B.idx(c) for c in cells]
             if B.is_block(idx):
                 return [{"type": "corner", "kind": "mathrax", "op": r["parity"], "cells": cells}]
-            return [{"type": "digits", "kind": r["parity"], "cells": cells}]
+            return [{"type": "cell", "kind": r["parity"], "cells": cells}]
         if t == "digit_class":
-            return [{"type": "digits", "kind": "set", "values": [PJ._val(ch) for ch in str(r["digits"])], "cells": nm(r["cells"])}]
+            return [{"type": "cell", "kind": "set", "values": [PJ._val(ch) for ch in str(r["digits"])], "cells": nm(r["cells"])}]
         if t == "exclude":
             cells = nm(r["cells"])
             if B.is_block([B.idx(c) for c in cells]):
                 return [{"type": "corner", "kind": "exclude", "value": int(r["digit"]), "cells": cells}]
-            return [{"type": "digits", "kind": "exclude", "values": [int(r["digit"])], "cells": cells}]
+            return [{"type": "cell", "kind": "exclude", "values": [int(r["digit"])], "cells": cells}]
         if t == "lowhigh":
             split = int(r.get("split", (D + 1) // 2))
-            return [{"type": "digits", "kind": "high", "split": split, "cells": nm(r.get("high", []))},
-                    {"type": "negative", "of": "digits", "kind": "high", "split": split}]
+            return [{"type": "cell", "kind": "high", "split": split, "cells": nm(r.get("high", []))},
+                    {"type": "negative", "of": "cell", "kind": "high", "split": split}]
         raise NotSupportedError(f"cell clue {t!r}")
 
     # ---------------------------------------------------------------- relations / constraints
@@ -1958,7 +1958,7 @@ def jcs(x):
     return json.dumps(x, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
 
-SET_TYPES = {"region", "cage", "digits", "contains", "appears", "count", "box", "row", "column", "negative", "neighbours"}
+SET_TYPES = {"region", "cage", "cell", "contains", "appears", "count", "box", "row", "column", "negative", "neighbours"}
 
 
 def _rc(name):

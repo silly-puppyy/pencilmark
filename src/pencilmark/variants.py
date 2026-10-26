@@ -223,19 +223,19 @@ family("Battenburg", lambda r: (r["type"] == "corner" and r["kind"] == "battenbu
        lambda rs, c: "A battenburg mark means the four cells around it form an odd / even checkerboard"
        + ("; no other 2×2 area does." if any(r["type"] == "negative" for r in rs) else "."))
 family("Mathrax", _t("corner", "mathrax"), "A corner clue applies to both diagonal pairs around it (10+: sum, 2−: difference, 12×: product, 2÷: quotient; E / O: all even / odd).")
-family("Exclusion", lambda r: (r["type"] == "corner" and r["kind"] == "exclude") or (r["type"] == "digits" and r["kind"] == "exclude"),
+family("Exclusion", lambda r: (r["type"] == "corner" and r["kind"] == "exclude") or (r["type"] == "cell" and r["kind"] == "exclude"),
        "A circled digit does not appear in the cells it touches.")
 family("Quadruple", _t("contains"), "Digits in a circle appear at least once among the cells around it.")
 family("Cupid", _t("appears"), "The digit in a cell with an arrow appears again in the direction of the arrow.")
 family("Clone", _t("clone"), "Shaded shapes of the same colour hold the same digits in corresponding cells.")
 family("Twin", _t("isomorphic"), "The two grids are the same solution with the digits relabelled.")
-family("Odd-Even", lambda r: (r["type"] == "digits" and r["kind"] in ("odd", "even")) or
-       (r["type"] == "negative" and r["of"] == "digits" and r.get("kind") in ("odd", "even")),
+family("Odd-Even", lambda r: (r["type"] == "cell" and r["kind"] in ("odd", "even")) or
+       (r["type"] == "negative" and r["of"] == "cell" and r.get("kind") in ("odd", "even")),
        lambda rs, c: _odd_even_text(rs))
-family("Low-High", lambda r: (r["type"] == "digits" and r["kind"] in ("low", "high")) or
-       (r["type"] == "negative" and r["of"] == "digits" and r.get("kind") in ("low", "high")),
+family("Low-High", lambda r: (r["type"] == "cell" and r["kind"] in ("low", "high")) or
+       (r["type"] == "negative" and r["of"] == "cell" and r.get("kind") in ("low", "high")),
        lambda rs, c: _low_high_text(rs, c))
-family("Digit Class", _t("digits", "set"), "A cell marked with small digits contains one of them.")
+family("Digit Class", _t("cell", "set"), "A cell marked with small digits contains one of them.")
 family("Double", lambda r: r["type"] == "count" and "each" in r, lambda rs, c: f"Each digit appears exactly {rs[0]['each']} times in every marked group.")
 family("Counting Circles", lambda r: r["type"] == "count" and r.get("kind") == "circles",
        "A digit in a circle appears in exactly as many circles as its value.")
@@ -295,7 +295,7 @@ def _xv_text(rs):
 
 
 def _odd_even_text(rs):
-    k = {r["kind"] for r in rs if r["type"] == "digits"}
+    k = {r["kind"] for r in rs if r["type"] == "cell"}
     parts = (["a digit in a grey circle is odd"] if "odd" in k else []) + (["a digit in a grey square is even"] if "even" in k else [])
     s = "; ".join(parts) or "shaded cells have a fixed parity"
     s = s[0].upper() + s[1:] + "."
