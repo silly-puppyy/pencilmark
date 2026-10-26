@@ -34,6 +34,9 @@ UNIFY_TABLE_EDGES = True
 # "table": 2-cell tables of the allowed digit pairs, the form whose pricing fits players' times; kropki, XV and less stay
 # pair relations (their calibrated path). "relation" = generic pair relations.
 NUMBERED_PAIR_FORM = "table"
+# Multi-grid boards: one box_grid per grid even when the engine lists the grids' houses in another order (reading the
+# file back then orders them grid by grid, which can shift tie-breaks). False reproduces the engine order exactly.
+COMPACT_GRIDS = True
 
 
 class FormatError(ValueError):
@@ -1210,6 +1213,11 @@ class _Writer:
         gs = self.eff_groups()
         items, seen, i = [], set(), 0
         self.merged_duplicates = 0
+        used = set()
+        if COMPACT_GRIDS:
+            items, used = self.compact_grids(gs)
+            for it in items:
+                seen |= {frozenset(u[1]) for u in it["V"]}
         def match(units, i):
             seen_local = set(seen)
             V = []
@@ -1227,6 +1235,9 @@ class _Writer:
             return V
         while i < len(gs):
             kind, cells, total, complete = gs[i]
+            if i in used:
+                i += 1
+                continue
             if kind in ("row", "col", "box") and frozenset(cells) in seen:
                 self.merged_duplicates += 1            # normalisation: a house listed twice is one house
                 i += 1
@@ -1306,6 +1317,56 @@ class _Writer:
                     self.box_sets.append(set(cells))
                 rules.append(self.group_rule(kind, cells, total)); self.group_prov.append(gp(it))
         return rules
+
+    def compact_grids(self, gs):
+        """full box_grids whose rows, columns and boxes are all houses of the engine, in whatever order -> (grid items in
+        order of their first house, indices of gs they state). Only used when the grids are not already listed grid by
+        grid (then write_groups' own matching gives the same rules)."""
+        B, D = self.B, self.D
+        where = {}
+        for k, (kind, cells, total, complete) in enumerate(gs):
+            if kind in ("row", "col", "box") and total is None and complete and len(cells) == D:
+                where.setdefault((kind, frozenset(cells)), []).append(k)
+        cands = set()
+        for (kind, fs), ks in where.items():
+            if kind != "row":
+                continue
+            co = sorted(B.coords[c] for c in fs)
+            for k in range(D):
+                for box in _factor_shapes(D):
+                    cands.add((co[0][0] - k, co[0][1], box))
+        grids = []
+        for r0, c0, box in cands:
+            cnt = (D // box[0], D // box[1])
+            units = box_grid_units(B, r0, c0, box, cnt, True)
+            if units and all((u[0], frozenset(u[1])) in where for u in units):
+                grids.append((min(where[(u[0], frozenset(u[1]))][0] for u in units), r0, c0, box, cnt, units))
+        grids.sort()
+        items, covered, used = [], set(), set()
+        for first, r0, c0, box, cnt, units in grids:
+            V = [u for u in units if frozenset(u[1]) not in covered]
+            if not V:
+                continue
+            covered |= {frozenset(u[1]) for u in units}
+            gi = sorted(k for u in units for k in where[(u[0], frozenset(u[1]))] if k not in used)
+            used |= set(gi)
+            items.append({"t": "grid", "rule": {"type": "box_grid", "origin": cell_name(r0, c0), "box": list(box),
+                                                "count": list(cnt)},
+                          "area": box_grid_area(B, r0, c0, box, cnt), "V": V, "gi": gi})
+        if len(items) < 2 or sorted(used) == list(range(len(used))) and self._grid_by_grid(gs, items):
+            return [], set()
+        self.merged_duplicates += len(used) - sum(len(it["V"]) for it in items)
+        return items, used
+
+    def _grid_by_grid(self, gs, items):
+        """True when gs already lists the grids' houses grid by grid in box_grid order"""
+        k = 0
+        for it in items:
+            for kind, cells in it["V"]:
+                if k >= len(gs) or gs[k][0] != kind or gs[k][1] != cells:
+                    return False
+                k += 1
+        return True
 
     def box_grid_at(self, gs, i, seen):
         """a run of regular boxes at gs[i:] -> (box_grid rule with lines false, units, area) or None"""

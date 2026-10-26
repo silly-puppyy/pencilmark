@@ -433,3 +433,19 @@ if __name__ == "__main__":
                 traceback.print_exc()
                 print(f"FAIL {name}: {e}")
     sys.exit(1 if fails else 0)
+
+
+def test_multigrid_written_compact():
+    """a samurai whose houses the engine lists out of grid order is still written as five box_grids"""
+    R = 21
+    giv = [0 if (r < 9 or r >= 12 or 6 <= c < 15) and (c < 9 or c >= 12 or 6 <= r < 15) else None
+           for r in range(R) for c in range(R)]
+    grids = [(0, 0), (0, 12), (6, 6), (12, 0), (12, 12)]
+    doc = {"format": "sudoku-puzzle", "format_version": 1, "grid": {"rows": R, "cols": R}, "digits": 9, "givens": giv,
+           "rules": [{"type": "box_grid", "origin": X.cell_name(r, c), "box": [3, 3], "count": [3, 3]} for r, c in grids]}
+    p = X.read(doc)
+    p.groups.sort(key=lambda g: (g.kind != "box", g.kind != "row", g.cells))     # boxes first, then rows, then columns
+    p.finalize()
+    out = X.write(p)
+    assert [r for r in out["rules"] if r["type"] in ("box_grid", "box", "row", "column")] == doc["rules"]
+    assert pencilmark.fingerprint(out) == pencilmark.fingerprint(doc)

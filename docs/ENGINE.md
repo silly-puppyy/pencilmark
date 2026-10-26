@@ -51,6 +51,8 @@ the same file and the same card whatever its source.
 10. A house listed twice is one house.
 11. Negative and neighbour rules expand in board order (cell by cell).
 12. Named multi-grid layouts (puzzle JSON `layout`): cells are numbered in board reading order.
+13. Multi-grid boards are written as one `box_grid` per grid even when a loader listed their houses in another order
+    (`exchange.COMPACT_GRIDS`); reading the file back lists them grid by grid.
 
 Mechanics without a named rule (same-parity lines, maximin, minimax, ten-eleven and similar) stay 2-cell tables or
 `relation` `allowed` rules.
