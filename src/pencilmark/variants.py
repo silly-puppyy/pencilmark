@@ -44,6 +44,9 @@ class Grid:
     def block(self, r, c, h, w):
         return [self.cell(r + a, c + b) for a in range(h) for b in range(w)]
 
+    def cells_set(self):
+        return self.block(0, 0, self.n, self.n)
+
     def diagonal(self):
         return [self.cell(i, i) for i in range(self.n)]
 
@@ -405,7 +408,8 @@ def describe(puzzle):
     box_txt = {}
     for v in sorted((v for v in REGISTRY if v.kind == "placement"), key=lambda v: v.order):
         hit = False
-        for g in grids:
+        hit_grids = []
+        for gi_, g in enumerate(grids):
             rs = v.fn(g)
             if not rs:
                 continue
@@ -419,8 +423,11 @@ def describe(puzzle):
                 for i in idx:
                     explained[i] = True
                 if not hit:
-                    found.append((v.name, v.text.format(bh=g.bh, bw=g.bw, n=g.n, D=D)))
+                    found.append([v.name, v.text.format(bh=g.bh, bw=g.bw, n=g.n, D=D)])
                 hit = True
+                hit_grids.append(gi_)
+        if hit:
+            found[-1][1] += _where(hit_grids, grids)
     # jigsaw: box rules
     boxes = [i for i, r in enumerate(rules) if r["type"] == "box" and not explained[i]]
     loose = [h for h in hset if h[0] == "box" and h[1] not in tiled]
@@ -446,6 +453,13 @@ def describe(puzzle):
         if name == "Kropki" and not any(r["type"] == "edge" for r in rs):
             name = "Non-Kropki"
         txt = v.text(rs, ctx) if callable(v.text) else v.text
+        if len(grids) > 1:
+            areas = [set(g.cells_set()) for g in grids]
+            by_origin = {cell_name(g.r0, g.c0): set(g.cells_set()) for g in grids}
+            cells = [by_origin.get(r["area"], set()) if isinstance(r.get("area"), str) else set(_rule_cells(r)) for r in rs]
+            gi = {k for k, a in enumerate(areas) if any(c and c <= a for c in cells)}
+            if cells and all(c and any(c <= areas[k] for k in gi) for c in cells):
+                txt += _where(gi, grids)
         found.append((name, txt))
     for i, r in enumerate(rules):            # leftovers: generic family names
         if explained[i]:
@@ -489,6 +503,52 @@ def describe(puzzle):
     else:
         typ = " ".join(x for x in (sw, "Variant" if len(names) > 1 else (names[0] if names else ""), "Sudoku") if x)
     return {"type": typ, "rules": out}
+
+
+def _rule_cells(r):
+    """every cell name a rule mentions (empty for whole-board rules)"""
+    out = []
+    def walk(x):
+        if isinstance(x, str):
+            out.append(x)
+        elif isinstance(x, list):
+            for y in x:
+                walk(y)
+    for k in ("cells", "bulb", "lines", "pairs", "regions", "segments", "source"):
+        if k in r:
+            walk(r[k])
+    if isinstance(r.get("area"), list):
+        walk(r["area"])
+    return out
+
+
+def grid_names(grids):
+    """position names of the grids of a multi-grid board ("top-left", "centre", …), or "grid at r7c7" where positions
+    would be ambiguous"""
+    rs = sorted({g.r0 for g in grids}); cs = sorted({g.c0 for g in grids})
+    def pos(g):
+        v = "top" if g.r0 == rs[0] else "bottom" if g.r0 == rs[-1] else "middle"
+        h = "left" if g.c0 == cs[0] else "right" if g.c0 == cs[-1] else "centre"
+        return {("middle", "centre"): "centre", ("middle", "left"): "left", ("middle", "right"): "right",
+                ("top", "centre"): "top", ("bottom", "centre"): "bottom"}.get((v, h), f"{v}-{h}")
+    names = [pos(g) for g in grids]
+    if len(set(names)) < len(names):
+        names = [f"grid at r{g.r0 + 1}c{g.c0 + 1}" for g in grids]
+    else:
+        names = [n + " grid" for n in names]
+    return names
+
+
+def _where(gi, grids):
+    """' Only in the top-left grid.' for a rule set confined to some, not all, grids of a multi-grid board"""
+    if len(grids) < 2 or not gi or len(gi) == len(grids):
+        return ""
+    names = grid_names(grids)
+    ns = [names[i] for i in sorted(gi)]
+    if all(n.endswith(" grid") for n in ns) and len(ns) > 1:
+        ns = [n[:-5] for n in ns]
+        return " Only in the " + ", ".join(ns[:-1]) + " and " + ns[-1] + " grids."
+    return " Only in the " + (", ".join(ns[:-1]) + " and " + ns[-1] if len(ns) > 1 else ns[0]) + "."
 
 
 def rules_text(described):

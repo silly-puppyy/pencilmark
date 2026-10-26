@@ -1025,6 +1025,9 @@ come from a registry in code (`pencilmark/variants.py`), so they generalise acro
   it ("XV" with `{"type": "negative", "of": "xv"}`; a negative alone is "Non-XV").
 - `box` rules (boxes that are not a regular tiling) are "Jigsaw".
 - Anything left falls back to a generic family name ("Diagonals", "Windows", "Extra Regions", …).
+- On a multi-grid board, a variant or family whose rules lie in some grids only says so at the end of its sentence:
+  "Only in the top-left grid." Grids are named by position (top-left, centre, …), or by origin ("grid at r7c7") when
+  positions would be ambiguous.
 
 ### 13.3 Placement variants (geometric definitions)
 

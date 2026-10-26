@@ -505,3 +505,30 @@ def test_quality_limits():
         pencilmark.rate(CLASSIC, quality={"nope": 1})
     with pytest.raises(ValueError):
         pencilmark.rate(CLASSIC, quality={"trial": 0.5})
+
+
+def test_spec_fields_are_card_keys():
+    doc = SF.spec_from_gen({"size": 9, "target_band": "Hard"})
+    SF.validate_spec(dict(doc, fields=["difficulty", "time_p80"]))
+    import pytest
+    with pytest.raises(X.FormatError):
+        SF.validate_spec(dict(doc, fields=["time.p80"]))
+
+
+def test_describe_names_grids():
+    """on a multi-grid board, rules confined to some grids say which"""
+    R = 21
+    giv = [0 if (r < 9 or r >= 12 or 6 <= c < 15) and (c < 9 or c >= 12 or 6 <= r < 15) else None
+           for r in range(R) for c in range(R)]
+    rules = [{"type": "box_grid", "origin": o, "box": [3, 3]} for o in ("r1c1", "r1c13", "r7c7", "r13c1", "r13c13")]
+    rules += [{"type": "region", "kind": "diagonal", "cells": [X.cell_name(i, i) for i in range(9)]},
+              {"type": "region", "kind": "diagonal", "cells": [X.cell_name(i, 8 - i) for i in range(9)]},
+              {"type": "cage", "sum": 10, "cells": ["r13c1", "r13c2", "r14c1"]},
+              {"type": "neighbours", "kind": "antiknight", "area": "r13c13"}]
+    doc = {"format": "sudoku-puzzle", "format_version": 1, "board": {"rows": R, "cols": R}, "digits": 9, "givens": giv,
+           "rules": rules}
+    d = pencilmark.describe(doc)
+    assert d["type"] == "Variant Samurai Sudoku"
+    assert d["rules"]["X"].endswith("Only in the top-left grid.")
+    assert d["rules"]["Killer"].endswith("Only in the bottom-left grid.")
+    assert d["rules"]["Anti-Knight"].endswith("Only in the bottom-right grid.")

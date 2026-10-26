@@ -88,8 +88,14 @@ def validate_spec(doc):
         for k in doc.get(blk) or {}:
             if k not in keys:
                 raise FormatError(f"unknown {blk} key {k!r}")
-    if doc.get("fields") is not None and not isinstance(doc["fields"], list):
-        raise FormatError("fields must be a list of card field paths")
+    if doc.get("fields") is not None:
+        if not isinstance(doc["fields"], list):
+            raise FormatError("fields must be a list of card keys")
+        from .export import card_fields
+        try:
+            card_fields(doc["fields"])
+        except ValueError as e:
+            raise FormatError(str(e)) from None
     return True
 
 
