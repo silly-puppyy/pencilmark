@@ -331,7 +331,7 @@ def test_card_fields():
     c = pencilmark.rate(CLASSIC)
     assert list(c) == ["format", "format_version", "grader", "difficulty", "time", "band", "band_index", "contains", "issues",
                        "reject"], list(c)
-    assert c["grader"] == {"name": "pencilmark", "version": "1.0.0"} and c["reject"] is False
+    assert c["grader"] == {"name": "pencilmark", "version": "1.0.0rc1"} and c["reject"] is False
     m = pencilmark.rate(CLASSIC, fields=["difficulty", "time.p80", "steps", "steps.explanation.short", "symmetry"])
     assert set(m) == {"format", "format_version", "grader", "difficulty", "time_p80", "steps", "symmetry"}
     assert m["difficulty"] == c["difficulty"] and set(m["steps"][0]["explanation"]) == {"short"}
