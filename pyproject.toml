@@ -14,6 +14,11 @@ authors = [{ name = "pencilmark contributors" }]
 keywords = ["sudoku", "puzzle", "difficulty", "grader", "solver", "generator"]
 classifiers = [
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: C++",
     "Operating System :: POSIX :: Linux",
     "Operating System :: MacOS",
@@ -23,6 +28,13 @@ classifiers = [
 dependencies = [
     "lzstring>=1.0.4",
 ]
+
+[project.urls]
+Homepage = "https://github.com/silly-puppyy/pencilmark"
+Documentation = "https://github.com/silly-puppyy/pencilmark/blob/main/docs/USAGE.md"
+Source = "https://github.com/silly-puppyy/pencilmark"
+Issues = "https://github.com/silly-puppyy/pencilmark/issues"
+Changelog = "https://github.com/silly-puppyy/pencilmark/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 verify = ["ortools>=9.8"]

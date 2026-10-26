@@ -1,5 +1,10 @@
 # pencilmark
 
+[![PyPI](https://img.shields.io/pypi/v/pencilmark)](https://pypi.org/project/pencilmark/)
+[![Python](https://img.shields.io/pypi/pyversions/pencilmark)](https://pypi.org/project/pencilmark/)
+[![Wheels](https://github.com/silly-puppyy/pencilmark/actions/workflows/wheels.yml/badge.svg)](https://github.com/silly-puppyy/pencilmark/actions/workflows/wheels.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](https://github.com/silly-puppyy/pencilmark/blob/main/LICENSE)
+
 pencilmark rates sudoku puzzles the way a human solver experiences them. It solves a puzzle step by step with human
 techniques, easiest first, and reports how hard it is, how long it takes, which band it belongs to and which techniques
 you need. It works for classic sudoku of any standard size and for many variants (killer, thermo, arrow, kropki, XV,
@@ -45,13 +50,13 @@ pencilmark rate puzzles.txt --json        # full card per line (python -m pencil
 pencilmark solve puzzles.txt              # the solution, or 'not unique' / 'no solution'
 ```
 
-More in [docs/USAGE.md](docs/USAGE.md).
+More in [docs/USAGE.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/USAGE.md).
 
 ## The card
 
 `rate` returns a dict (format `"sudoku-grade"`) with these fields by default (`grader`, `format`, `format_version` are
 always there); `rate(puzzle, fields=[...])` / `--fields` asks for others, and only requested fields are computed
-([docs/FORMAT.md](docs/FORMAT.md) 11.1):
+([docs/FORMAT.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/FORMAT.md) 11.1):
 
 | Field | Meaning |
 |---|---|
@@ -73,7 +78,7 @@ may say `contents_truncated`.
 ## Exchange format
 
 `to_export` writes, and every entry point reads, the `"sudoku-puzzle"` format, **format_version 1**, specified in
-[docs/FORMAT.md](docs/FORMAT.md) (JSON Schema: [docs/sudoku-puzzle.schema.json](docs/sudoku-puzzle.schema.json)):
+[docs/FORMAT.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/FORMAT.md) (JSON Schema: [docs/sudoku-puzzle.schema.json](https://github.com/silly-puppyy/pencilmark/blob/main/docs/sudoku-puzzle.schema.json)):
 
 ```json
 {"format": "sudoku-puzzle", "format_version": 1,
@@ -103,8 +108,8 @@ may say `contents_truncated`.
 
 For convenience pencilmark also reads and writes sudokuwiki.org packed strings, exports ipuz, and loads SudokuPad,
 f-puzzles, Penpa+ and Logic Masters links. None of these is needed to use the `sudoku-puzzle` format; see
-[docs/INTEROP.md](docs/INTEROP.md). How rules map onto the engine, and how to add one, is in
-[docs/ENGINE.md](docs/ENGINE.md).
+[docs/INTEROP.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/INTEROP.md). How rules map onto the engine, and how to add one, is in
+[docs/ENGINE.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/ENGINE.md).
 
 ## Supported rules
 
@@ -148,12 +153,8 @@ the `PENCILMARK_UA` environment variable.
   is minimised; use `max_seconds` to cap it (the card then says `contents_truncated`).
 - The Sudoku Explainer-style ratings (`se=True`) are approximate and meaningful for classic sudoku only.
 
-## Benchmark
-
-See BENCHMARK.md (not yet published).
-
 ## License
 
-MIT, see [LICENSE](LICENSE).
+MIT, see [LICENSE](https://github.com/silly-puppyy/pencilmark/blob/main/LICENSE).
 
 pencilmark was written with [Claude](https://claude.ai).
