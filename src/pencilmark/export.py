@@ -1,10 +1,10 @@
 """Human-oriented exchange formats: one for the puzzle, one for its grade.
 
-puzzle (format "sudoku-puzzle", format_version 1): specified in docs/FORMAT.md, implemented in grader/exchange.py (strict
-  reader, order-preserving writer, canonical text, fingerprint), schema docs/sudoku-puzzle.schema.json. In short: "grid",
+puzzle (format "sudoku-puzzle", format_version 1): specified in docs/FORMAT.md, implemented in pencilmark/exchange.py (strict
+  reader, order-preserving writer, canonical text, fingerprint), schema docs/sudoku-puzzle.schema.json. In short: "board",
   "digits", flat "givens" (0 empty, null no cell), optional "solution" / "candidates", and "rules" holding every constraint,
-  houses included ({"type": "box_grid", "origin": "r1c1", "box": [3, 3], "count": [3, 3]} for a classic; rows / columns of
-  other cells inferred from the shape), cells
+  houses included ({"type": "box_grid", "origin": "r1c1", "box": [3, 3]} for a classic, {"type": "grid", ...} plus "box"
+  rules for a jigsaw), cells
   named "r{row}c{col}"; "meta" is free-form information that never changes solving. Unknown keys / rule types are refused.
 
 grade (format "sudoku-grade", format_version 1):

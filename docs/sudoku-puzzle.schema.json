@@ -7,7 +7,7 @@
  "required": [
   "format",
   "format_version",
-  "grid",
+  "board",
   "digits",
   "givens",
   "rules"
@@ -26,7 +26,7 @@
   "meta": {
    "type": "object"
   },
-  "grid": {
+  "board": {
    "type": "object",
    "required": [
     "rows",
@@ -41,9 +41,6 @@
     "cols": {
      "type": "integer",
      "minimum": 1
-    },
-    "infer_lines": {
-     "type": "boolean"
     }
    }
   },
@@ -122,6 +119,31 @@
   "style": {
    "type": "object"
   },
+  "rule_grid": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "grid"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "origin": {
+     "$ref": "#/$defs/cell"
+    }
+   },
+   "required": [
+    "type",
+    "origin"
+   ],
+   "additionalProperties": false
+  },
   "rule_box_grid": {
    "type": "object",
    "properties": {
@@ -146,18 +168,6 @@
      "minItems": 2,
      "maxItems": 2
     },
-    "count": {
-     "type": "array",
-     "items": {
-      "type": "integer",
-      "minimum": 1
-     },
-     "minItems": 2,
-     "maxItems": 2
-    },
-    "lines": {
-     "type": "boolean"
-    },
     "origin": {
      "$ref": "#/$defs/cell"
     }
@@ -165,7 +175,6 @@
    "required": [
     "type",
     "box",
-    "count",
     "origin"
    ],
    "additionalProperties": false
@@ -790,8 +799,8 @@
     "style": {
      "$ref": "#/$defs/style"
     },
-    "cells": {
-     "$ref": "#/$defs/cells"
+    "area": {
+     "$ref": "#/$defs/area"
     },
     "except": {
      "type": "array",
@@ -1376,8 +1385,8 @@
     "style": {
      "$ref": "#/$defs/style"
     },
-    "cells": {
-     "$ref": "#/$defs/cells"
+    "area": {
+     "$ref": "#/$defs/area"
     },
     "color": {
      "enum": [
@@ -1432,6 +1441,9 @@
   },
   "rule": {
    "oneOf": [
+    {
+     "$ref": "#/$defs/rule_grid"
+    },
     {
      "$ref": "#/$defs/rule_box_grid"
     },
@@ -1540,6 +1552,17 @@
      ]
     }
    }
+  },
+  "area": {
+   "description": "the origin of a grid / box_grid rule, or a list of cells",
+   "oneOf": [
+    {
+     "$ref": "#/$defs/cell"
+    },
+    {
+     "$ref": "#/$defs/cells"
+    }
+   ]
   }
  }
 }

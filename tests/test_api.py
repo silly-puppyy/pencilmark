@@ -121,7 +121,7 @@ def test_rate_without_ortools(variants):
 def test_meta_kept_and_ignored_for_rating():
     exp = pencilmark.to_export(CLASSIC, meta={"author": "someone", "x-custom": 1}, title="T", date="2026-10-25", describe=False)
     assert exp["meta"] == {"title": "T", "author": "someone", "date": "2026-10-25", "x-custom": 1}
-    assert exp["format_version"] == 1 and exp["rules"] == [{"type": "box_grid", "origin": "r1c1", "box": [3, 3], "count": [3, 3]}]
+    assert exp["format_version"] == 1 and exp["rules"] == [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}]
     again = pencilmark.to_export(exp, describe=False)       # metadata already in the input is kept
     assert again["meta"] == exp["meta"] and again["givens"] == exp["givens"]
     filled = pencilmark.to_export(exp)                      # an empty meta.type / rules_text is filled, nothing overwritten

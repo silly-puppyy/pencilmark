@@ -78,18 +78,19 @@ may say `contents_truncated`.
 ```json
 {"format": "sudoku-puzzle", "format_version": 1,
  "meta": {"title": "Heartstring", "author": "...", "source": "example.org", "type": "Killer Sudoku"},
- "grid": {"rows": 9, "cols": 9},
+ "board": {"rows": 9, "cols": 9},
  "digits": 9,
  "givens":   [0, 0, 5, 4, 0, ...],
  "solution": [6, 1, 5, 4, 2, ...],
  "rules": [
-  {"type": "box_grid", "origin": "r1c1", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r1c1", "box": [3, 3]},
   {"type": "cage", "sum": 15, "cells": ["r1c4", "r1c5", "r2c4"]},
   {"type": "edge", "kind": "kropki", "color": "white", "cells": ["r5c5", "r5c6"]}]}
 ```
 
-- Every constraint is a rule: one `box_grid` gives a grid's rows, columns and boxes; rows / columns of other cells are
-  inferred from the board shape, so a jigsaw is its grid plus `box` rules. Cells are named `r{row}c{col}`, 1-based.
+- Every constraint is a rule, houses included: a `grid` gives a sudoku grid's rows and columns, a `box_grid` adds its
+  regular boxes, so a classic is one `box_grid` and a jigsaw is a `grid` plus `box` rules. Nothing is implied. Cells are
+  named `r{row}c{col}`, 1-based.
   `givens`: `0` = empty, `null` = no cell (multi-grid gaps).
 - Each rule has one exact meaning and a default drawing, so a renderer needs nothing else; `style` and `decorations`
   are cosmetic only. `meta` is free-form information that never changes solving.

@@ -5,7 +5,7 @@
   "title": "Super samurai: a variant per row of grids",
   "description": "X sudoku on the top three grids, windoku in the middle two, anti-knight (within boxes) on the bottom three; the grids get harder from left to right, measured on the joint solve."
  },
- "grid": {
+ "board": {
   "rows": 21,
   "cols": 33
  },
@@ -23,12 +23,7 @@
    "box": [
     3,
     3
-   ],
-   "count": [
-    3,
-    3
-   ],
-   "id": "G11"
+   ]
   },
   {
    "type": "box_grid",
@@ -36,12 +31,7 @@
    "box": [
     3,
     3
-   ],
-   "count": [
-    3,
-    3
-   ],
-   "id": "G12"
+   ]
   },
   {
    "type": "box_grid",
@@ -49,12 +39,7 @@
    "box": [
     3,
     3
-   ],
-   "count": [
-    3,
-    3
-   ],
-   "id": "G13"
+   ]
   },
   {
    "type": "box_grid",
@@ -62,12 +47,7 @@
    "box": [
     3,
     3
-   ],
-   "count": [
-    3,
-    3
-   ],
-   "id": "G21"
+   ]
   },
   {
    "type": "box_grid",
@@ -75,12 +55,7 @@
    "box": [
     3,
     3
-   ],
-   "count": [
-    3,
-    3
-   ],
-   "id": "G22"
+   ]
   },
   {
    "type": "box_grid",
@@ -88,12 +63,7 @@
    "box": [
     3,
     3
-   ],
-   "count": [
-    3,
-    3
-   ],
-   "id": "G31"
+   ]
   },
   {
    "type": "box_grid",
@@ -101,12 +71,7 @@
    "box": [
     3,
     3
-   ],
-   "count": [
-    3,
-    3
-   ],
-   "id": "G32"
+   ]
   },
   {
    "type": "box_grid",
@@ -114,12 +79,7 @@
    "box": [
     3,
     3
-   ],
-   "count": [
-    3,
-    3
-   ],
-   "id": "G33"
+   ]
   },
   {
    "type": "region",
@@ -135,7 +95,7 @@
     "r8c8",
     "r9c9"
    ],
-   "area": "G11"
+   "area": "r1c1"
   },
   {
    "type": "region",
@@ -151,7 +111,7 @@
     "r8c2",
     "r9c1"
    ],
-   "area": "G11"
+   "area": "r1c1"
   },
   {
    "type": "region",
@@ -167,7 +127,7 @@
     "r8c20",
     "r9c21"
    ],
-   "area": "G12"
+   "area": "r1c13"
   },
   {
    "type": "region",
@@ -183,7 +143,7 @@
     "r8c14",
     "r9c13"
    ],
-   "area": "G12"
+   "area": "r1c13"
   },
   {
    "type": "region",
@@ -199,7 +159,7 @@
     "r8c32",
     "r9c33"
    ],
-   "area": "G13"
+   "area": "r1c25"
   },
   {
    "type": "region",
@@ -215,7 +175,7 @@
     "r8c26",
     "r9c25"
    ],
-   "area": "G13"
+   "area": "r1c25"
   },
   {
    "type": "region",
@@ -231,7 +191,7 @@
     "r10c9",
     "r10c10"
    ],
-   "area": "G21"
+   "area": "r7c7"
   },
   {
    "type": "region",
@@ -247,7 +207,7 @@
     "r10c13",
     "r10c14"
    ],
-   "area": "G21"
+   "area": "r7c7"
   },
   {
    "type": "region",
@@ -263,7 +223,7 @@
     "r14c9",
     "r14c10"
    ],
-   "area": "G21"
+   "area": "r7c7"
   },
   {
    "type": "region",
@@ -279,7 +239,7 @@
     "r14c13",
     "r14c14"
    ],
-   "area": "G21"
+   "area": "r7c7"
   },
   {
    "type": "region",
@@ -295,7 +255,7 @@
     "r10c21",
     "r10c22"
    ],
-   "area": "G22"
+   "area": "r7c19"
   },
   {
    "type": "region",
@@ -311,7 +271,7 @@
     "r10c25",
     "r10c26"
    ],
-   "area": "G22"
+   "area": "r7c19"
   },
   {
    "type": "region",
@@ -327,7 +287,7 @@
     "r14c21",
     "r14c22"
    ],
-   "area": "G22"
+   "area": "r7c19"
   },
   {
    "type": "region",
@@ -343,25 +303,25 @@
     "r14c25",
     "r14c26"
    ],
-   "area": "G22"
+   "area": "r7c19"
   },
   {
    "type": "neighbours",
    "kind": "antiknight",
    "within": "box",
-   "area": "G31"
+   "area": "r13c1"
   },
   {
    "type": "neighbours",
    "kind": "antiknight",
    "within": "box",
-   "area": "G32"
+   "area": "r13c13"
   },
   {
    "type": "neighbours",
    "kind": "antiknight",
    "within": "box",
-   "area": "G33"
+   "area": "r13c25"
   }
  ],
  "symmetry": [
@@ -373,49 +333,49 @@
  "where": {
   "areas": [
    {
-    "area": "G11",
+    "area": "r1c1",
     "where": {
      "band": "Easy"
     }
    },
    {
-    "area": "G31",
+    "area": "r13c1",
     "where": {
      "band": "Easy"
     }
    },
    {
-    "area": "G21",
+    "area": "r7c7",
     "where": {
      "band": "Medium"
     }
    },
    {
-    "area": "G12",
+    "area": "r1c13",
     "where": {
      "band": "Medium"
     }
    },
    {
-    "area": "G32",
+    "area": "r13c13",
     "where": {
      "band": "Medium"
     }
    },
    {
-    "area": "G22",
+    "area": "r7c19",
     "where": {
      "band": "Hard"
     }
    },
    {
-    "area": "G13",
+    "area": "r1c25",
     "where": {
      "band": "Hard"
     }
    },
    {
-    "area": "G33",
+    "area": "r13c25",
     "where": {
      "band": "Hard"
     }

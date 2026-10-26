@@ -28,7 +28,7 @@ RULE_KIND = {v: k for k, v in GEN_KINDS.items()}
 GEN_SYM = {("rot180", None): "rot180", ("rot90", None): "rot90", ("mirror", "vertical"): "mirror",
            ("mirror", "horizontal"): "mirror_v", ("mirror", "diagonal"): "diagonal", ("mirror", "antidiagonal"): "antidiagonal"}
 SYM_GEN = {v: k for k, v in GEN_SYM.items()}
-SPEC_KEYS = {"format", "format_version", "$schema", "meta", "grid", "digits", "givens", "rules", "symmetry", "where",
+SPEC_KEYS = {"format", "format_version", "$schema", "meta", "board", "digits", "givens", "rules", "symmetry", "where",
              "quality", "limits", "fields", "ext"}
 WHERE_KEYS = {"band", "difficulty", "time", "contains", "not_contains", "issues", "areas", "elements"}
 QUALITY_KEYS = {"preset", "checks", "spike", "max_spike", "every_element_needed", "unused_rule", "reject"}
@@ -53,9 +53,9 @@ def validate_spec(doc):
     for k in doc:
         if k not in SPEC_KEYS:
             raise FormatError(f"unknown key {k!r}")
-    g = doc.get("grid")
-    if not isinstance(g, dict) or not {"rows", "cols"} <= set(g) or set(g) - {"rows", "cols", "infer_lines"}:
-        raise FormatError('"grid" must be {"rows": R, "cols": C}')
+    g = doc.get("board")
+    if not isinstance(g, dict) or set(g) != {"rows", "cols"}:
+        raise FormatError('"board" must be {"rows": R, "cols": C}')
     if not isinstance(doc.get("digits"), int):
         raise FormatError("digits must be an integer")
     giv = doc.get("givens")
@@ -90,13 +90,13 @@ def validate_spec(doc):
 
 def _board_ok(doc):
     D = doc["digits"]
-    if doc["grid"].get("rows") != D or doc["grid"].get("cols") != D or doc["grid"].get("infer_lines") is False:
-        return f"the generator makes gap-free {D}x{D} boards (grid {doc['grid']})"
+    if doc["board"].get("rows") != D or doc["board"].get("cols") != D:
+        return f"the generator makes gap-free {D}x{D} boards (board {doc['board']})"
     if D not in PJ.BOXES:
         return f"no standard boxes for size {D}"
     bh, bw = PJ.BOXES[D]
     locked = [r for r in doc.get("rules") or [] if not _is_template(r)]
-    want = {"type": "box_grid", "origin": "r1c1", "box": [bh, bw], "count": [D // bh, D // bw]}
+    want = {"type": "box_grid", "origin": "r1c1", "box": [bh, bw]}
     for r in locked:
         if {k: v for k, v in r.items() if k not in ("id", "label", "style")} != want:
             return f"locked rules other than the board's box_grid are not supported by the generator yet ({r.get('type')})"
@@ -236,7 +236,7 @@ def spec_from_gen(spec):
     if D not in PJ.BOXES:
         raise NotSupportedError(f"no standard boxes for size {D}")
     bh, bw = PJ.BOXES[D]
-    rules = [{"type": "box_grid", "origin": "r1c1", "box": [bh, bw], "count": [D // bh, D // bw]}]
+    rules = [{"type": "box_grid", "origin": "r1c1", "box": [bh, bw]}]
     def tmpl(kind, count):
         t, k = GEN_KINDS[norm_kind(kind)]
         r = {"type": t}
@@ -255,7 +255,7 @@ def spec_from_gen(spec):
             rules.append(tmpl(kind, [n, None]))
     for kind in s.kinds or []:
         rules.append(tmpl(kind, [1, None]))
-    doc = {"format": FORMAT, "format_version": FORMAT_VERSION, "grid": {"rows": D, "cols": D}, "digits": D}
+    doc = {"format": FORMAT, "format_version": FORMAT_VERSION, "board": {"rows": D, "cols": D}, "digits": D}
     if s.min_givens or s.max_givens is not None:
         doc["givens"] = {"count": s.min_givens if s.min_givens == s.max_givens else [s.min_givens, s.max_givens]}
     doc["rules"] = rules
@@ -287,5 +287,5 @@ def spec_from_gen(spec):
 
 
 def spec_fingerprint(doc):
-    keep = {k: doc[k] for k in ("grid", "digits", "givens", "rules", "symmetry", "where", "quality") if k in doc}
+    keep = {k: doc[k] for k in ("board", "digits", "givens", "rules", "symmetry", "where", "quality") if k in doc}
     return "sha256:" + hashlib.sha256(jcs(keep).encode()).hexdigest()

@@ -52,11 +52,11 @@ these headers can express (a 6×6 jigsaw or X, killer-X, killer-windoku, anythin
 
 | pencilmark | ipuz |
 |---|---|
-| one `box_grid` covering the board | kind `http://ipuz.org/sudoku#1`, `boxes: true` |
-| no boxes, rows / columns only (Latin square) | `http://ipuz.org/sudoku/latinsquare#1`, `boxes: false` |
+| one `box_grid` of the standard box shape | kind `http://ipuz.org/sudoku#1`, `boxes: true` |
+| one `grid`, no boxes (Latin square) | `http://ipuz.org/sudoku/latinsquare#1`, `boxes: false` |
 | + both main diagonals | `http://ipuz.org/sudoku/diagonalsudoku#1`, `zones` |
 | + `region` window | `http://ipuz.org/sudoku/hypersudoku#1`, `zones` with `rect` |
-| inferred rows / columns + `box` rules (jigsaw) | `http://ipuz.org/sudoku/jigsawsudoku#1`, `boxes: false`, one zone per box |
+| one `grid` + `box` rules (jigsaw) | `http://ipuz.org/sudoku/jigsawsudoku#1`, `boxes: false`, one zone per box |
 | + `cage` | `http://ipuz.org/sudoku/killersudoku#1`, `cages` (`value`), `showoperators: false`, `cageborder: "dashed"` |
 
 `puzzle` and `solution` are row arrays (0 = empty); ipuz coordinates are `[col, row]`, 1-based. `meta` title /

@@ -33,13 +33,13 @@ def _doc(D, givens, rules, meta=None):
     d = {"format": FORMAT, "format_version": FORMAT_VERSION}
     if meta:
         d["meta"] = meta
-    d.update({"grid": {"rows": D, "cols": D}, "digits": D, "givens": givens, "rules": rules})
+    d.update({"board": {"rows": D, "cols": D}, "digits": D, "givens": givens, "rules": rules})
     return d
 
 
 def _box_grid(D):
     bh, bw = PJ.BOXES[D]
-    return {"type": "box_grid", "origin": "r1c1", "box": [bh, bw], "count": [D // bh, D // bw]}
+    return {"type": "box_grid", "origin": "r1c1", "box": [bh, bw]}
 
 
 # ------------------------------------------------------------------------------------------------------------ reading
@@ -111,6 +111,7 @@ def _from_sudokuwiki(kind, D, ver, body):
             raise NotSupportedError(f"sudokuwiki cell value {n} (placed digit or candidate mask) is not supported")
     rules = []
     if kind in ("J", "M"):
+        rules.append({"type": "grid", "origin": "r1c1"})
         groups = {}
         for i, lab in enumerate(box_lab):
             groups.setdefault(lab, []).append(i)
@@ -386,18 +387,17 @@ def to_ipuz(puzzle):
     from .exchange import validate
     B = validate(doc)
     D = doc["digits"]
-    R, C = doc["grid"]["rows"], doc["grid"]["cols"]
+    R, C = doc["board"]["rows"], doc["board"]["cols"]
     if not (R == C == D) or None in doc["givens"]:
         raise NotSupportedError("ipuz sudoku needs one gap-free D x D grid")
     rules = doc["rules"]
-    if doc["grid"].get("infer_lines") is False or any(r["type"] in ("row", "column") for r in rules):
-        raise NotSupportedError("ipuz sudoku needs plain rows and columns")
-    grids = [r for r in rules if r["type"] == "box_grid"]
+    grids = [r for r in rules if r["type"] in ("grid", "box_grid")]
+    if len(grids) != 1 or any(r["type"] in ("row", "column") for r in rules):
+        raise NotSupportedError("ipuz sudoku needs one grid with plain rows and columns")
     std = PJ.BOXES.get(D)
-    standard = len(grids) == 1 and grids[0]["origin"] == "r1c1" and grids[0].get("lines", True) and std and \
-        list(grids[0]["box"]) == list(std)
-    if grids and not standard:
-        raise NotSupportedError("ipuz infers box shapes; only one box_grid of the standard shape covering the board exports")
+    standard = grids[0]["type"] == "box_grid" and std and list(grids[0]["box"]) == list(std)
+    if grids[0]["type"] == "box_grid" and not standard:
+        raise NotSupportedError("ipuz infers box shapes; only a box_grid of the standard shape exports")
     kinds = ["http://ipuz.org/sudoku#1"]
     zones, cages = [], []
     boxes = [r for r in rules if r["type"] == "box"]
@@ -407,7 +407,7 @@ def to_ipuz(puzzle):
     diags = []
     for r in rules:
         t = r["type"]
-        if t in ("box_grid", "box"):
+        if t in ("grid", "box_grid", "box"):
             continue
         if t == "region" and r["kind"] == "diagonal" and r["cells"] in (diag_main, diag_anti, diag_main[::-1], diag_anti[::-1]):
             diags.append(r)

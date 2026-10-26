@@ -34,9 +34,6 @@ UNIFY_TABLE_EDGES = True
 # "table": 2-cell tables of the allowed digit pairs, the form whose pricing fits players' times; kropki, XV and less stay
 # pair relations (their calibrated path). "relation" = generic pair relations.
 NUMBERED_PAIR_FORM = "table"
-# Multi-grid boards: one box_grid per grid even when the engine lists the grids' houses in another order (reading the
-# file back then orders them grid by grid, which can shift tie-breaks). False reproduces the engine order exactly.
-COMPACT_GRIDS = True
 
 
 class FormatError(ValueError):
@@ -235,58 +232,34 @@ def window(B, r0, c0, n):
     return out
 
 
-def box_grid_units(B, r0, c0, box, count, lines=True):
-    """houses of a box_grid: its area's rows (top to bottom), columns (left to right), then boxes (reading order of their
-    top-left cells); boxes only with lines=False. None if a cell of the area is missing."""
-    bh, bw = box
-    H, W = bh * count[0], bw * count[1]
+def grid_units(B, r0, c0, box=None):
+    """houses of a grid at (r0, c0): its D rows (top to bottom), D columns (left to right) and, for a box_grid with
+    box [bh, bw], its D boxes (reading order of their top-left cells). None if a cell of the D x D area is missing."""
+    D = B.D
     grid = []
-    for r in range(r0, r0 + H):
-        for c in range(c0, c0 + W):
+    for r in range(r0, r0 + D):
+        for c in range(c0, c0 + D):
             if (r, c) not in B.cid:
                 return None
             grid.append(B.cid[(r, c)])
-    out = []
-    if lines:
-        out += [("row", tuple(grid[i * W:(i + 1) * W])) for i in range(H)]
-        out += [("col", tuple(grid[j::W])) for j in range(W)]
-    out += [("box", tuple(grid[(br + a) * W + bc + b_] for a in range(bh) for b_ in range(bw)))
-            for br in range(0, H, bh) for bc in range(0, W, bw)]
+    out = [("row", tuple(grid[i * D:(i + 1) * D])) for i in range(D)]
+    out += [("col", tuple(grid[j::D])) for j in range(D)]
+    if box:
+        bh, bw = box
+        out += [("box", tuple(grid[(br + a) * D + bc + b_] for a in range(bh) for b_ in range(bw)))
+                for br in range(0, D, bh) for bc in range(0, D, bw)]
     return out
 
 
-def box_grid_area(B, r0, c0, box, count):
-    return {B.cid[(r, c)] for r in range(r0, r0 + box[0] * count[0]) for c in range(c0, c0 + box[1] * count[1])}
+def grid_area(B, r0, c0):
+    return {B.cid[(r, c)] for r in range(r0, r0 + B.D) for c in range(c0, c0 + B.D)}
 
 
-def infer_lines(B, cov_r, cov_c):
-    """rows / columns inferred from the board's shape: every maximal straight run of exactly D existing cells, leaving out
-    cells whose rows (cov_r) / columns (cov_c) are already stated -> [("row", cells), ...] + [("col", cells), ...]"""
-    D = B.D
-    out = []
-    for kind, cov, outer, inner in (("row", cov_r, B.R, B.C), ("col", cov_c, B.C, B.R)):
-        for x in range(outer):
-            run = []
-            for y in range(inner + 1):
-                rc = (x, y) if kind == "row" else (y, x)
-                i = B.cid.get(rc) if y < inner else None
-                if i is not None and i not in cov:
-                    run.append(i)
-                    continue
-                if len(run) == D:
-                    out.append((kind, tuple(run)))
-                run = []
-    return out
-
-
-def read_houses(rules, B, infer=True):
+def read_houses(rules, B):
     """the house groups a rule list states, in engine order -> (houses [(kind, cells, extra)], areas [cell sets])
-    (FORMAT.md 6.1): box_grid / box / row / column rules in file order, a house equal to an earlier one skipped; inferred
-    rows / columns inserted before the groups of the first rule other than a box_grid with lines or an explicit row /
-    column (a box, a box_grid with lines false, a region or a cage), else at the end."""
+    (FORMAT.md 6.1): grid / box_grid / box / row / column rules in file order, a house equal to an earlier one skipped;
+    areas = the grid / box_grid areas."""
     out, seen, areas = [], set(), []
-    cov_r, cov_c = set(), set()
-    at = None
     def add(kind, cells, **kw):
         fs = frozenset(cells)
         if kind in ("row", "col", "box"):
@@ -296,24 +269,14 @@ def read_houses(rules, B, infer=True):
         out.append((kind, tuple(cells), kw))
     for r in rules:
         t = r["type"]
-        if t == "box_grid":
+        if t in ("grid", "box_grid"):
             r0, c0 = parse_cell(r["origin"])
-            lines = r.get("lines", True)
-            if not lines and at is None:
-                at = len(out)
-            areas.append(box_grid_area(B, r0, c0, r["box"], r["count"]))
-            if lines:
-                cov_r |= areas[-1]
-                cov_c |= areas[-1]
-            for kind, cells in box_grid_units(B, r0, c0, r["box"], r["count"], lines):
+            areas.append(grid_area(B, r0, c0))
+            for kind, cells in grid_units(B, r0, c0, r.get("box")):
                 add(kind, cells)
         elif t in ("row", "column"):
-            cells = [B.idx(c) for c in r["cells"]]
-            (cov_r if t == "row" else cov_c).update(cells)
-            add({"column": "col"}.get(t, t), cells)
+            add({"column": "col"}.get(t, t), [B.idx(c) for c in r["cells"]])
         elif t in ("box", "region", "cage"):
-            if at is None:
-                at = len(out)
             cells = [B.idx(c) for c in r["cells"]]
             if t == "box":
                 add("box", cells)
@@ -321,10 +284,6 @@ def read_houses(rules, B, infer=True):
                 add({"diagonal": "diag", "window": "window"}.get(r["kind"], "region"), cells)
             else:
                 add("cage", cells, **({"sum": r["sum"]} if "sum" in r else {}))
-    if infer:
-        lines = [(k, c, {}) for k, c in infer_lines(B, cov_r, cov_c) if frozenset(c) not in seen]
-        at = len(out) if at is None else at
-        out = out[:at] + lines + out[at:]
     return out, areas
 
 
@@ -484,7 +443,7 @@ NEG_SELECTOR = {"kropki": "color", "xv": "letter", "difference": "value", "sum":
 # -------------------------------------------------------------------------------------------------------- validation
 COMMON = {"type", "id", "label", "style"}
 RULE_KEYS = {
-    "box_grid": ({"origin", "box", "count"}, {"lines"}),
+    "grid": ({"origin"}, set()), "box_grid": ({"origin", "box"}, set()),
     "box": ({"cells"}, set()), "row": ({"cells"}, set()), "column": ({"cells"}, set()),
     "region": ({"kind", "cells"}, set()),
     "cage": ({"cells"}, {"sum"}),
@@ -498,7 +457,7 @@ RULE_KEYS = {
     "skyscraper": ({"value", "side", "cells"}, set()),
     "rossini": ({"arrow", "side", "cells"}, set()),
     "first_seen": ({"value", "digits", "side", "cells"}, set()),
-    "neighbours": (set(), {"kind", "op", "params", "where", "within", "cells", "except"}),
+    "neighbours": (set(), {"kind", "op", "params", "where", "within", "area", "except"}),
     "relation": ({"op", "params", "pairs"}, set()),
     "digits": ({"kind", "cells"}, {"split", "values"}),
     "contains": ({"digits", "cells"}, set()),
@@ -511,7 +470,7 @@ RULE_KEYS = {
     "equal_sum": ({"segments"}, set()),
     "vudoku": ({"cells"}, set()),
     "table": ({"allowed"}, {"cells", "where"}),
-    "negative": ({"of"}, {"color", "letter", "value", "sum", "kind", "split", "cells"}),
+    "negative": ({"of"}, {"color", "letter", "value", "sum", "kind", "split", "area"}),
 }
 KINDS = {
     "region": {"diagonal", "window", "disjoint", "colour", "extra", "region"},
@@ -528,7 +487,7 @@ LINE_PARAMS = {"whisper": {"value"}, "modular": {"value"}, "lockout": {"value"},
 EDGE_PARAMS = {"kropki": {"color"}, "xv": {"letter"}, "difference": {"value"}, "sum": {"sum"}, "product": {"value"},
                "ratio": {"value"}, "less": set()}
 NEG_OF = {"kropki", "xv", "difference", "sum", "ratio", "product", "rossini", "battenburg", "digits"}
-TOP_KEYS = {"format", "format_version", "$schema", "meta", "grid", "digits", "givens", "solution", "candidates", "rules",
+TOP_KEYS = {"format", "format_version", "$schema", "meta", "board", "digits", "givens", "solution", "candidates", "rules",
             "decorations", "style", "ext"}
 
 
@@ -550,14 +509,12 @@ def validate(doc):
     for k in doc:
         if k not in TOP_KEYS:
             raise FormatError(f"unknown top-level key {k!r}")
-    for k in ("grid", "digits", "givens", "rules"):
+    for k in ("board", "digits", "givens", "rules"):
         if k not in doc:
             raise FormatError(f"{k!r} missing")
-    g = doc["grid"]
-    if not isinstance(g, dict) or not {"rows", "cols"} <= set(g) or set(g) - {"rows", "cols", "infer_lines"}:
-        raise FormatError('"grid" must be {"rows": R, "cols": C} (optional "infer_lines": false)')
-    if "infer_lines" in g and not isinstance(g["infer_lines"], bool):
-        raise FormatError("grid.infer_lines must be true / false")
+    g = doc["board"]
+    if not isinstance(g, dict) or set(g) != {"rows", "cols"}:
+        raise FormatError('"board" must be {"rows": R, "cols": C}')
     R, C = _int(g["rows"], "grid.rows", 1), _int(g["cols"], "grid.cols", 1)
     D = _int(doc["digits"], "digits", 1)
     giv = doc["givens"]
@@ -587,6 +544,8 @@ def validate(doc):
                 raise FormatError(f"candidates of {k} must be a list of digits 1..{D}")
     if not isinstance(doc["rules"], list):
         raise FormatError("rules must be a list")
+    B.grid_origins = {r["origin"] for r in doc["rules"] if isinstance(r, dict) and r.get("type") in ("grid", "box_grid")
+                      and isinstance(r.get("origin"), str)}
     for i, r in enumerate(doc["rules"]):
         try:
             _validate_rule(r, B)
@@ -602,13 +561,47 @@ def _cells(B, x, what="cells", n=None, minlen=1):
     return out
 
 
+def _merge_negatives(rules, prov):
+    """adjacent negatives of both kropki colours (white, black) or both XV letters (X, V) with the same scope -> one negative
+    without a selector, which expands to the same relations in the same order"""
+    out, op = [], []
+    for r, pr in zip(rules, prov):
+        if out and r.get("type") == "negative" and out[-1].get("type") == "negative" and r["of"] == out[-1]["of"] in ("kropki", "xv"):
+            key = NEG_SELECTOR[r["of"]]
+            first, second = ("white", "black") if r["of"] == "kropki" else ("X", "V")
+            strip = lambda x: {k: v for k, v in x.items() if k != key}
+            if out[-1].get(key) == first and r.get(key) == second and strip(out[-1]) == strip(r):
+                out[-1] = strip(r)
+                op[-1] = {k: set(op[-1].get(k, ())) | set(pr.get(k, ())) for k in set(op[-1]) | set(pr)}
+                continue
+        out.append(r); op.append(pr)
+    return out, op
+
+
+def area_cells(B, a):
+    """an area (FORMAT.md 5): the origin of a grid / box_grid rule -> that grid's D x D cells in reading order, or a list of
+    cell names -> those cells; as engine cell ids"""
+    if isinstance(a, str):
+        if a not in getattr(B, "grid_origins", ()):
+            raise FormatError(f"area {a!r} is not the origin of a grid / box_grid rule")
+        r0, c0 = parse_cell(a)
+        return [B.cid[(r, c)] for r in range(r0, r0 + B.D) for c in range(c0, c0 + B.D)]
+    return _cells(B, a, "area")
+
+
+def resolve_areas(B, rules):
+    """rules with every "area" replaced by its cell list ("cells"), as the engine expansion reads them"""
+    return [dict({k: v for k, v in r.items() if k != "area"}, cells=[B.name(c) for c in area_cells(B, r["area"])])
+            if isinstance(r, dict) and "area" in r else r for r in rules]
+
+
 def _validate_rule(r, B):
     D = B.D
     if not isinstance(r, dict) or "type" not in r:
         raise FormatError("a rule must be an object with a type")
     t = r["type"]
     if t == "custom":
-        raise FormatError('"custom" is reserved for the planned rule language and refused by format_version 1 readers')
+        raise FormatError('"custom" is reserved for a later rule language and refused by format_version 1 readers')
     if isinstance(t, str) and ":" in t:
         raise FormatError(f"vendor rule type {t!r} is not implemented by this reader")
     if t not in RULE_KEYS:
@@ -623,18 +616,17 @@ def _validate_rule(r, B):
     kind = r.get("kind")
     if t in KINDS and (kind is not None or t not in ("neighbours", "count")) and kind not in KINDS[t]:
         raise FormatError(f"unknown kind {kind!r}")
-    if t == "box_grid":
-        bx, cnt = r["box"], r["count"]
-        if not (isinstance(bx, list) and len(bx) == 2 and isinstance(cnt, list) and len(cnt) == 2
-                and all(isinstance(x, int) and not isinstance(x, bool) and x >= 1 for x in bx + cnt)):
-            raise FormatError("box and count must be [rows, cols] of positive integers")
-        if "lines" in r and not isinstance(r["lines"], bool):
-            raise FormatError("lines must be true / false")
-        if r.get("lines", True) and not (bx[0] * cnt[0] == bx[1] * cnt[1] == D):
-            raise FormatError(f"a box_grid with lines needs box height x count down = box width x count across = digits ({D})")
+    if t in ("grid", "box_grid"):
+        if t == "box_grid":
+            bx = r["box"]
+            if not (isinstance(bx, list) and len(bx) == 2 and all(isinstance(x, int) and not isinstance(x, bool) and x >= 1
+                                                                  for x in bx)):
+                raise FormatError("box must be [rows, cols] of positive integers")
+            if bx[0] * bx[1] != D:
+                raise FormatError(f"box {bx} does not hold {D} cells")
         r0, c0 = parse_cell(r["origin"])
-        if box_grid_units(B, r0, c0, bx, cnt, False) is None:
-            raise FormatError("box_grid covers a missing cell")
+        if grid_units(B, r0, c0) is None:
+            raise FormatError(f"{t} covers a missing cell (its area is {D} x {D} from origin)")
     elif t in ("box", "row", "column", "region", "contains", "appears", "digits", "count", "vudoku"):
         cs = _cells(B, r["cells"])
         if t == "vudoku" and len(cs) != 3:
@@ -749,8 +741,8 @@ def _validate_rule(r, B):
                 raise FormatError("neighbours needs a symmetric op and where orthogonal / diagonal / king / knight")
         if "within" in r and r["within"] not in ("box", "region"):
             raise FormatError("within must be box or region")
-        if "cells" in r:
-            _cells(B, r["cells"])
+        if "area" in r:
+            area_cells(B, r["area"])
         for p in r.get("except") or []:
             _cells(B, p, "except pair", n=2)
     elif t == "relation":
@@ -800,8 +792,8 @@ def _validate_rule(r, B):
                 raise FormatError("negative digits needs kind odd / even / low / high")
             if (r["kind"] in ("low", "high")) != ("split" in r) or sel - {"kind", "split"}:
                 raise FormatError("negative digits low / high need split (others take none)")
-        if "cells" in r:
-            _cells(B, r["cells"])
+        if "area" in r:
+            area_cells(B, r["area"])
 
 
 def _check_op(op, params):
@@ -821,7 +813,7 @@ def to_internal(doc):
     """sudoku-puzzle (format_version 1) -> puzzle JSON (pencilmark.puzzle_json) that builds the engine Puzzle."""
     B = validate(doc)
     D = B.D
-    R, C = doc["grid"]["rows"], doc["grid"]["cols"]
+    R, C = doc["board"]["rows"], doc["board"]["cols"]
     giv = doc["givens"]
     sym = lambda v: "." if not v else PJ._sym(v)
     out = {"digits": D, "numbers": "".join("#" if v is None else sym(v) for v in giv)}
@@ -830,9 +822,9 @@ def to_internal(doc):
         out["shape"] = ["".join("." if giv[r * C + c] is None else "#" for c in range(C)) for r in range(R)]
     if doc.get("solution"):
         out["solution"] = "".join("#" if v is None else sym(v) for v in doc["solution"])
-    rules = doc["rules"]
-    # houses (FORMAT.md 6.1; a house equal to an earlier one is the same house; inferred rows / columns)
-    houses, areas = read_houses(rules, B, doc["grid"].get("infer_lines", True))
+    rules = resolve_areas(B, doc["rules"])
+    # houses (FORMAT.md 6.1; a house equal to an earlier one is the same house)
+    houses, areas = read_houses(rules, B)
     regions = [dict({"kind": k, "cells": [B.name(c) for c in cells]}, **kw) for k, cells, kw in houses]
     boxes = [set(cells) for k, cells, kw in houses if k == "box"]
     out["regions"] = regions
@@ -859,7 +851,7 @@ def read(doc):
 
 class _ReadCtx:
     def __init__(self, B, rules, subgrids, boxes, regions):
-        """subgrids: the box_grid areas (negative adjacency and battenburg windows stay inside one area)"""
+        """subgrids: the grid / box_grid areas (negative adjacency and battenburg windows stay inside one area)"""
         self.B, self.rules, self.D = B, rules, B.D
         self.subgrids = subgrids
         self.boxes = boxes
@@ -908,7 +900,7 @@ class _ReadCtx:
     def rule(self, i, r, done):
         B, D, t = self.B, self.D, r["type"]
         idx = lambda xs: [B.idx(c) for c in xs]
-        if t in ("box_grid", "box", "row", "column", "region", "cage"):
+        if t in ("grid", "box_grid", "box", "row", "column", "region", "cage"):
             return []
         if t == "line":
             k = r["kind"]
@@ -1204,199 +1196,78 @@ class _Writer:
         return None
 
     def write_groups(self):
-        """engine groups -> house / region / cage rules (FORMAT.md 6.1), reproducing the engine's group order: box_grid
-        for every regular grid whose rows, columns and boxes appear in box_grid order; rows / columns left to the shape
-        inference when the reader would infer exactly them at exactly their place, else explicit row / column rules (and
-        grid.infer_lines false when the reader would infer lines the engine does not have); box_grid "lines": false or
-        box rules for the remaining boxes."""
+        """engine groups -> house / region / cage rules (FORMAT.md 6.1): every D x D area whose rows and columns are all
+        houses is a box_grid (its boxes a regular tiling) or a grid, placed where its first own house was; the remaining
+        rows / columns / boxes are explicit rules; regions and cages keep their place."""
         B, D = self.B, self.D
         gs = self.eff_groups()
-        items, seen, i = [], set(), 0
-        self.merged_duplicates = 0
-        used = set()
-        if COMPACT_GRIDS:
-            items, used = self.compact_grids(gs)
-            for it in items:
-                seen |= {frozenset(u[1]) for u in it["V"]}
-        def match(units, i):
-            seen_local = set(seen)
-            V = []
-            for u in units:
-                fs = frozenset(u[1])
-                if fs in seen_local:
-                    continue
-                seen_local.add(fs)
-                V.append(u)
-            if not V or i + len(V) > len(gs):
-                return None
-            for (k, cells), g in zip(V, gs[i:i + len(V)]):
-                if g[0] != k or g[1] != cells or g[2] is not None or not g[3]:
-                    return None
-            return V
-        while i < len(gs):
-            kind, cells, total, complete = gs[i]
-            if i in used:
-                i += 1
-                continue
-            if kind in ("row", "col", "box") and frozenset(cells) in seen:
-                self.merged_duplicates += 1            # normalisation: a house listed twice is one house
-                i += 1
-                continue
-            hit = None
-            if kind in ("row", "col") and len(cells) == D and total is None:
-                co = [B.coords[c] for c in cells]
-                st = self.straight(cells)
-                # every D x D area this row / column belongs to (on overlapping boards a grid's first new unit can be any
-                # of its rows, or a column when all its rows were already listed)
-                origins = [(co[0][0] - k, co[0][1]) for k in range(D)] if st == "row" and kind == "row" else \
-                          [(co[0][0], co[0][1] - k) for k in range(D)] if st == "col" and kind == "col" else []
-                for r0, c0 in origins:
-                    for box in _factor_shapes(D):
-                        cnt = (D // box[0], D // box[1])
-                        units = box_grid_units(B, r0, c0, box, cnt, True)
-                        V = match(units, i) if units else None
-                        if V:
-                            hit = ({"type": "box_grid", "origin": cell_name(r0, c0), "box": list(box), "count": list(cnt)}, V,
-                                   box_grid_area(B, r0, c0, box, cnt))
-                            break
-                    if hit:
-                        break
-            if hit:
-                rule, V, area = hit
-                items.append({"t": "grid", "rule": rule, "area": area, "V": V, "gi": list(range(i, i + len(V)))})
-                for u in V:
-                    seen.add(frozenset(u[1]))
-                i += len(V)
-                continue
-            if kind == "box" and total is None and complete:
-                bg = self.box_grid_at(gs, i, seen)
-                if bg:
-                    rule, V, area = bg
-                    items.append({"t": "boxes", "rule": rule, "area": area, "V": V, "gi": list(range(i, i + len(V)))})
-                    for u in V:
-                        seen.add(frozenset(u[1]))
-                    i += len(V)
-                    continue
-            if kind in ("row", "col", "box"):
-                seen.add(frozenset(cells))
-            items.append({"t": "line" if kind in ("row", "col") else "group", "g": gs[i], "gi": [i]})
-            i += 1
-        # rows / columns: inferred from the shape when that reproduces them, else explicit
-        cov = set().union(*[it["area"] for it in items if it["t"] == "grid"]) if any(it["t"] == "grid" for it in items) else set()
-        L = infer_lines(B, cov, cov)
-        li = [k for k, it in enumerate(items) if it["t"] == "line"]
-        infer_ok = False
-        if li:
-            seq = [(items[k]["g"][0], items[k]["g"][1]) for k in li]
-            after = items[li[-1] + 1:]
-            infer_ok = (li == list(range(li[0], li[0] + len(li))) and seq == L
-                        and all(it["t"] == "grid" for it in items[:li[0]]) and (not after or after[0]["t"] != "grid"))
-        self.infer_lines = True
-        if not li:
-            self.infer_lines = not L
-        elif not infer_ok:
-            er = {c for k in li if items[k]["g"][0] == "row" for c in items[k]["g"][1]}
-            ec = {c for k in li if items[k]["g"][0] == "col" for c in items[k]["g"][1]}
-            if infer_lines(B, cov | er, cov | ec):
-                self.infer_lines = False
-        rules = []
-        self.group_prov = []
-        self.subgrids = [it["area"] for it in items if it["t"] in ("grid", "boxes")]      # box_grid areas
-        self.box_sets = []
-        gp = lambda it: {"groups": {self.gidx[k] for k in it["gi"]}}
-        for it in items:
-            if it["t"] in ("grid", "boxes"):
-                rules.append(it["rule"]); self.group_prov.append(gp(it))
-                self.box_sets += [set(u[1]) for u in it["V"] if u[0] == "box"]
-            elif it["t"] == "line":
-                if not infer_ok:
-                    rules.append(self.group_rule(it["g"][0], it["g"][1], None)); self.group_prov.append(gp(it))
-            else:
-                kind, cells, total, _ = it["g"]
-                if kind == "box":
-                    self.box_sets.append(set(cells))
-                rules.append(self.group_rule(kind, cells, total)); self.group_prov.append(gp(it))
-        return rules
-
-    def compact_grids(self, gs):
-        """full box_grids whose rows, columns and boxes are all houses of the engine, in whatever order -> (grid items in
-        order of their first house, indices of gs they state). Only used when the grids are not already listed grid by
-        grid (then write_groups' own matching gives the same rules)."""
-        B, D = self.B, self.D
         where = {}
         for k, (kind, cells, total, complete) in enumerate(gs):
             if kind in ("row", "col", "box") and total is None and complete and len(cells) == D:
                 where.setdefault((kind, frozenset(cells)), []).append(k)
         cands = set()
-        for (kind, fs), ks in where.items():
-            if kind != "row":
-                continue
-            co = sorted(B.coords[c] for c in fs)
-            for k in range(D):
-                for box in _factor_shapes(D):
-                    cands.add((co[0][0] - k, co[0][1], box))
+        for (kind, fs) in where:
+            if kind == "row":
+                r, c = min(B.coords[x] for x in fs)
+                cands |= {(r - k, c) for k in range(D)}
         grids = []
-        for r0, c0, box in cands:
-            cnt = (D // box[0], D // box[1])
-            units = box_grid_units(B, r0, c0, box, cnt, True)
-            if units and all((u[0], frozenset(u[1])) in where for u in units):
-                grids.append([None, r0, c0, box, cnt, units])
-        share = Counter(frozenset(u[1]) for g in grids for u in g[5])
+        for r0, c0 in cands:
+            units = grid_units(B, r0, c0)
+            if not units or not all((u[0], frozenset(u[1])) in where for u in units):
+                continue
+            box = None
+            for shape in _factor_shapes(D):
+                bu = grid_units(B, r0, c0, shape)[2 * D:]
+                if all(("box", frozenset(u[1])) in where for u in bu):
+                    box, units = shape, units + bu
+                    break
+            grids.append([None, r0, c0, box, units])
+        share = Counter(frozenset(u[1]) for g in grids for u in g[4])
         for g in grids:         # order: first house that belongs to this grid only (overlapping grids share boxes)
-            own = [u for u in g[5] if share[frozenset(u[1])] == 1] or g[5]
+            own = [u for u in g[4] if share[frozenset(u[1])] == 1] or g[4]
             g[0] = min(where[(u[0], frozenset(u[1]))][0] for u in own)
-        grids.sort()
+        grids.sort(key=lambda g: (g[0], g[1], g[2]))
         items, covered, used = [], set(), set()
-        for first, r0, c0, box, cnt, units in grids:
-            V = [u for u in units if frozenset(u[1]) not in covered]
-            if not V:
+        for first, r0, c0, box, units in grids:
+            if all(frozenset(u[1]) in covered for u in units):
                 continue
             covered |= {frozenset(u[1]) for u in units}
             gi = sorted(k for u in units for k in where[(u[0], frozenset(u[1]))] if k not in used)
             used |= set(gi)
-            items.append({"t": "grid", "rule": {"type": "box_grid", "origin": cell_name(r0, c0), "box": list(box),
-                                                "count": list(cnt)},
-                          "area": box_grid_area(B, r0, c0, box, cnt), "V": V, "gi": gi})
-        if len(items) < 2 or sorted(used) == list(range(len(used))) and self._grid_by_grid(gs, items):
-            return [], set()
-        self.merged_duplicates += len(used) - sum(len(it["V"]) for it in items)
-        return items, used
-
-    def _grid_by_grid(self, gs, items):
-        """True when gs already lists the grids' houses grid by grid in box_grid order"""
-        k = 0
-        for it in items:
-            for kind, cells in it["V"]:
-                if k >= len(gs) or gs[k][0] != kind or gs[k][1] != cells:
-                    return False
-                k += 1
-        return True
-
-    def box_grid_at(self, gs, i, seen):
-        """a run of regular boxes at gs[i:] -> (box_grid rule with lines false, units, area) or None"""
-        B = self.B
-        kind, cells, total, complete = gs[i]
-        co = [B.coords[c] for c in cells]
-        r0, c0 = co[0]
-        bh = max(r for r, _ in co) - r0 + 1
-        bw = max(c for _, c in co) - c0 + 1
-        if bh * bw != len(cells) or co != [(r0 + a, c0 + b) for a in range(bh) for b in range(bw)]:
-            return None
-        best = None
-        for m in range(1, B.R // bh + 1):
-            for n in range(1, B.C // bw + 1):
-                if m * n < 2:
+            rule = {"type": "box_grid" if box else "grid", "origin": cell_name(r0, c0)}
+            if box:
+                rule["box"] = list(box)
+            items.append((first, {"rule": rule, "area": grid_area(B, r0, c0), "units": units, "gi": gi}))
+        seen = set(covered)
+        self.merged_duplicates = len(used) - len(covered)
+        for k, g in enumerate(gs):
+            if k in used:
+                continue
+            kind, cells, total, _ = g
+            if kind in ("row", "col", "box"):
+                if frozenset(cells) in seen:
+                    self.merged_duplicates += 1            # normalisation: a house listed twice is one house
                     continue
-                units = box_grid_units(B, r0, c0, (bh, bw), (m, n), False)
-                if units is None or i + len(units) > len(gs):
-                    continue
-                if any(frozenset(u[1]) in seen for u in units):
-                    continue
-                if all(g[0] == "box" and g[1] == u[1] and g[2] is None and g[3] for u, g in zip(units, gs[i:i + len(units)])):
-                    if best is None or m * n > best[0]:
-                        best = (m * n, {"type": "box_grid", "origin": cell_name(r0, c0), "box": [bh, bw], "count": [m, n],
-                                        "lines": False}, units, box_grid_area(B, r0, c0, (bh, bw), (m, n)))
-        return best[1:] if best else None
+                seen.add(frozenset(cells))
+            items.append((k, {"g": g, "gi": [k]}))
+        items.sort(key=lambda kv: kv[0])
+        rules = []
+        self.group_prov = []
+        self.subgrids = [it["area"] for _, it in items if "rule" in it]
+        self.grid_areas = [(it["rule"]["origin"], it["area"]) for _, it in items if "rule" in it]
+        self.box_sets = []
+        for _, it in items:
+            prov = {"groups": {self.gidx[k] for k in it["gi"]}}
+            if "rule" in it:
+                rules.append(it["rule"])
+                self.box_sets += [set(u[1]) for u in it["units"] if u[0] == "box"]
+            else:
+                kind, cells, total, _ = it["g"]
+                if kind == "box":
+                    self.box_sets.append(set(cells))
+                rules.append(self.group_rule(kind, cells, total))
+            self.group_prov.append(prov)
+        return rules
 
     def group_rule(self, kind, cells, total):
         B = self.B
@@ -1436,15 +1307,13 @@ class _Writer:
         m = read_meta({"meta": meta or {}})
         if m:
             d["meta"] = m
-        d.update({"grid": {"rows": R, "cols": C}, "digits": D, "givens": givens})
+        d.update({"board": {"rows": R, "cols": C}, "digits": D, "givens": givens})
         if solution is not None:
             sol = [None] * (R * C)
             for i, v in enumerate(list(solution)[:len(B.coords)]):
                 sol[flat[i]] = int(v)
             d["solution"] = sol
         rules = self.write_groups()
-        if not self.infer_lines:
-            d["grid"]["infer_lines"] = False
         prov = list(self.group_prov)
         cands, clue_rules = self.cell_clues()
         rules += [r for r, _ in clue_rules]
@@ -1452,6 +1321,7 @@ class _Writer:
         rest = self.write_rules()
         rules += [r for r, _ in rest]
         prov += [pr for _, pr in rest]
+        rules, prov = _merge_negatives(rules, prov)
         if cands:
             d["candidates"] = cands
         d["rules"] = rules
@@ -1735,6 +1605,10 @@ class _Writer:
                               [(a, b) for a, b in B.pairs(KING_DIAG) if any(a in g and b in g for g in self.box_sets)]))
         if kind == "nonconsec" and not args:
             cands.append(({"type": "neighbours", "kind": "nonconsecutive"}, B.pairs(ORTHO)))
+        if len(self.grid_areas) > 1 and kind in ("neq", "nonconsec") and not args:     # the same rule on one grid only
+            for nk, steps in (("antiknight", KNIGHT), ("antiking", KING_DIAG)) if kind == "neq" else (("nonconsecutive", ORTHO),):
+                for org, area in self.grid_areas:
+                    cands.append(({"type": "neighbours", "kind": nk, "area": org}, B.pairs(steps, sorted(area))))
         neg = {("nonconsec", ()): ("kropki", "white"), ("notdiff", (1,)): ("kropki", "white"),
                ("notratio", (2,)): ("kropki", "black"), ("notsum", (10,)): ("xv", "X"), ("notsum", (5,)): ("xv", "V")}
         key = (kind, args)
@@ -1750,6 +1624,9 @@ class _Writer:
                 pass                      # plain non-consecutive: the neighbours rule above
             else:
                 cands.append((rule, exp))
+            if len(self.grid_areas) > 1:  # the negative on one grid only
+                for org, area in self.grid_areas:
+                    cands.append((dict(rule, area=org), [(a, b) for a, b in exp if a in area and b in area]))
         for rule, exp in cands:
             n = len(exp)
             if n and n <= len(rest) and first in fs(exp) and fs(rest[:n]) == fs(exp):
@@ -2023,10 +1900,10 @@ class _Writer:
 
 
 # --------------------------------------------------------------------------------------------- canonical text + hash
-KEY_ORDER = ["format", "format_version", "$schema", "meta", "grid", "digits", "givens", "solution", "candidates", "rules",
+KEY_ORDER = ["format", "format_version", "$schema", "meta", "board", "digits", "givens", "solution", "candidates", "rules",
              "decorations", "style", "ext"]
 RULE_ORDER = ["type", "kind", "of", "op", "params", "color", "letter", "value", "sum", "split", "values", "digits", "groups",
-              "each", "counts", "arrow", "size", "repeat", "box", "where", "within", "closed", "side", "origin", "source",
+              "each", "counts", "arrow", "size", "repeat", "box", "where", "within", "area", "closed", "side", "origin", "source",
               "bulb", "lines", "cells", "regions", "segments", "pairs", "except", "allowed", "id", "label", "style"]
 
 
@@ -2053,7 +1930,7 @@ def dumps(doc, pretty=True):
     d = canonical(doc)
     if not pretty:
         return json.dumps(d, separators=(",", ":"), ensure_ascii=False)
-    C = d.get("grid", {}).get("cols") or 1
+    C = d.get("board", {}).get("cols") or 1
     j = lambda x: json.dumps(x, ensure_ascii=False, separators=(", ", ": "))
     lines = []
     keys = list(d)
@@ -2107,16 +1984,17 @@ def _norm_rule(r, D):
 
 
 def semantic_subset(doc):
-    """the fingerprinted content: grid, digits, givens, candidates and rules, with the houses replaced by the houses they
-    state (box_grid, box / row / column rules and the inferred rows / columns), so every spelling of the same houses gives
+    """the fingerprinted content: board, digits, givens, candidates and rules, with the houses replaced by the houses they
+    state (grid, box_grid, box / row / column rules), so every spelling of the same houses gives
     the same result, and set-like cell lists sorted"""
     keep = {k: doc[k] for k in ("format", "format_version", "digits", "givens", "candidates") if k in doc}
-    keep["grid"] = {"rows": doc["grid"]["rows"], "cols": doc["grid"]["cols"]}
+    keep["board"] = {"rows": doc["board"]["rows"], "cols": doc["board"]["cols"]}
     D = doc.get("digits")
-    B = Board([divmod(k, doc["grid"]["cols"]) for k, v in enumerate(doc["givens"]) if v is not None], D)
-    house_rules = [r for r in doc.get("rules", []) if r["type"] in ("box_grid", "box", "row", "column")]
-    houses, _ = read_houses(house_rules, B, doc["grid"].get("infer_lines", True))
-    rules = [_norm_rule(r, D) for r in doc.get("rules", []) if r["type"] not in ("box_grid", "box", "row", "column")]
+    B = Board([divmod(k, doc["board"]["cols"]) for k, v in enumerate(doc["givens"]) if v is not None], D)
+    HT = ("grid", "box_grid", "box", "row", "column")
+    houses, _ = read_houses([r for r in doc.get("rules", []) if r["type"] in HT], B)
+    B.grid_origins = {r["origin"] for r in doc.get("rules", []) if r["type"] in ("grid", "box_grid")}
+    rules = [_norm_rule(r, D) for r in resolve_areas(B, doc.get("rules", [])) if r["type"] not in HT]
     hs = {(k, tuple(sorted((B.name(c) for c in cells), key=_rc))) for k, cells, _ in houses}
     rules += [{"type": {"col": "column"}.get(k, k), "cells": list(c)} for k, c in hs]
     keep["rules"] = sorted(rules, key=lambda r: jcs(r))

@@ -5,7 +5,7 @@
   "title": "0-clue 6x6 kropki (runs today)",
   "description": "No givens, a minimal set of kropki dots, difficulty at least 3."
  },
- "grid": {
+ "board": {
   "rows": 6,
   "cols": 6
  },
@@ -20,10 +20,6 @@
    "box": [
     2,
     3
-   ],
-   "count": [
-    3,
-    2
    ]
   },
   {

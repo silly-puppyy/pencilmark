@@ -5,7 +5,7 @@
   "title": "Nine variants on one 9x9",
   "description": "At least one cage, thermo, whisper, renban, between line, arrow, kropki dot, XV clue and odd / even cell, each needed by the solve."
  },
- "grid": {
+ "board": {
   "rows": 9,
   "cols": 9
  },
@@ -15,10 +15,6 @@
    "type": "box_grid",
    "origin": "r1c1",
    "box": [
-    3,
-    3
-   ],
-   "count": [
     3,
     3
    ]

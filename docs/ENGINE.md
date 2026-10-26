@@ -11,8 +11,8 @@ whatever its source.
 
 | Rule | Engine |
 |---|---|
-| `box_grid` | `row` / `col` / `box` groups of its area (rows, then columns, then boxes; an already present house is skipped); with `"lines": false` boxes only |
-| inferred lines | `row` / `col` groups (rows top to bottom, then columns), placed before the first `box` rule |
+| `grid` | `row` / `col` groups of its D × D area (rows, then columns; an already present house is skipped) |
+| `box_grid` | as `grid`, then the area's `box` groups |
 | `box` / `row` / `column` | `box` / `row` / `col` groups |
 | `region` | groups of kind `diag` (diagonal), `window` (window), `region` (the other kinds) |
 | `cage` | a `cage` group with its total |
@@ -51,8 +51,8 @@ the same file and the same card whatever its source.
 10. A house listed twice is one house.
 11. Negative and neighbour rules expand in board order (cell by cell).
 12. Named multi-grid layouts (puzzle JSON `layout`): cells are numbered in board reading order.
-13. Multi-grid boards are written as one `box_grid` per grid even when a loader listed their houses in another order
-    (`exchange.COMPACT_GRIDS`); reading the file back lists them grid by grid.
+13. Houses are written grid by grid (`grid` / `box_grid`, at the place of the grid's first house) whatever order a
+    loader listed them in; reading the file back lists each grid's rows, columns, then boxes.
 
 Mechanics without a named rule (same-parity lines, maximin, minimax, ten-eleven and similar) stay 2-cell tables or
 `relation` `allowed` rules.

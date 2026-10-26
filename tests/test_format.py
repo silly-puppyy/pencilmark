@@ -127,10 +127,13 @@ def test_strict_refusal():
     _refuses(bad, "orthogonally adjacent")
     bad = copy.deepcopy(d); bad["rules"].append({"type": "edge", "kind": "xv", "letter": "X", "cells": ["r1c1", "r1c10"]})
     _refuses(bad, "does not exist")
-    bad = copy.deepcopy(d); bad["grid"]["implied_houses"] = False; _refuses(bad, "grid")
+    bad = copy.deepcopy(d); bad["board"]["implied_houses"] = False; _refuses(bad, "board")
+    bad = copy.deepcopy(d); bad["grid"] = bad.pop("board"); _refuses(bad, "unknown top-level key")
     bad = dict(d, format="sudoku-puzzle/2"); _refuses(bad, "not a sudoku-puzzle")
     bad = copy.deepcopy(d); bad["candidates"] = {"R1C3": [1, 2]}; _refuses(bad, "bad cell name")
-    bad = copy.deepcopy(d); bad["rules"][0]["count"] = [2, 3]; _refuses(bad, "box_grid with lines")
+    bad = copy.deepcopy(d); bad["rules"][0]["count"] = [3, 3]; _refuses(bad, "unknown key")
+    bad = copy.deepcopy(d); bad["rules"][0]["box"] = [2, 3]; _refuses(bad, "does not hold")
+    bad = copy.deepcopy(d); bad["rules"].append({"type": "grid", "origin": "r2c1"}); _refuses(bad, "missing cell")
     bad = copy.deepcopy(d); bad["rules"].append({"type": "subgrid", "size": 9, "origin": "r1c1"}); _refuses(bad, "unknown rule type")
     bad = copy.deepcopy(d); bad["rules"].append({"type": "sandwich", "sum": 5, "side": "top", "cells": ["r2c1", "r3c1"]})
     _refuses(bad, "is a cell")
@@ -159,7 +162,7 @@ def test_schema_validates_pack():
     for n, e in enumerate(pack()):
         errs = list(v.iter_errors(doc_of(e)))
         assert not errs, f"pack line {n}: {errs[0].message}"
-    assert list(v.iter_errors({"format": "sudoku-puzzle", "format_version": 1, "grid": {"rows": 1, "cols": 1}, "digits": 1,
+    assert list(v.iter_errors({"format": "sudoku-puzzle", "format_version": 1, "board": {"rows": 1, "cols": 1}, "digits": 1,
                                "givens": [0], "rules": [{"type": "nope"}]}))
 
 
@@ -181,19 +184,18 @@ def test_format_md_examples():
 def test_fingerprint_stable():
     d = _classic_doc()
     f = pencilmark.fingerprint(d)
-    assert f == "sha256:f722943e0e36b27a6e339b59614840aac472c45635bc733152c2d1e13e174e32", f
+    assert f == "sha256:a96eb0bb99b3f4a588d8d3f97dd28eaf321a4f453de36e60b4bab8f5eac239a6", f
     # metadata, style and solution do not matter; another spelling of the same houses does not matter
     d2 = copy.deepcopy(d); d2["meta"] = {"title": "x"}; d2["style"] = {"a": 1}
     assert pencilmark.fingerprint(d2) == f
-    d3 = copy.deepcopy(d)                  # rows / columns inferred, boxes as single rules
-    d3["rules"] = [{"type": "box", "cells": [X.cell_name(br + i, bc + j) for i in range(3) for j in range(3)]}
-                   for br in (0, 3, 6) for bc in (0, 3, 6)]
+    boxes = [{"type": "box", "cells": [X.cell_name(br + i, bc + j) for i in range(3) for j in range(3)]}
+             for br in (0, 3, 6) for bc in (0, 3, 6)]
+    d3 = copy.deepcopy(d)                  # a grid plus boxes as single rules
+    d3["rules"] = [{"type": "grid", "origin": "r1c1"}] + boxes
     assert pencilmark.fingerprint(d3) == f
-    d5 = copy.deepcopy(d)                  # explicit rows / columns, no inference, boxes-only box_grid
-    d5["grid"]["infer_lines"] = False
+    d5 = copy.deepcopy(d)                  # explicit rows / columns and boxes
     d5["rules"] = ([{"type": "row", "cells": [X.cell_name(r, c) for c in range(9)]} for r in range(9)] +
-                   [{"type": "column", "cells": [X.cell_name(r, c) for r in range(9)]} for c in range(9)] +
-                   [{"type": "box_grid", "origin": "r1c1", "box": [3, 3], "count": [3, 3], "lines": False}])
+                   [{"type": "column", "cells": [X.cell_name(r, c) for r in range(9)]} for c in range(9)] + boxes)
     assert pencilmark.fingerprint(d5) == f
     d4 = copy.deepcopy(d); d4["givens"][2] = 5
     assert pencilmark.fingerprint(d4) != f
@@ -202,7 +204,7 @@ def test_fingerprint_stable():
 def test_dumps_layout():
     t = pencilmark.dumps(_classic_doc())
     assert '"givens": [\n    7, 9, 0, 2, 1, 4, 0, 0, 0,\n' in t
-    assert t.index('"format"') < t.index('"grid"') < t.index('"givens"') < t.index('"rules"')
+    assert t.index('"format"') < t.index('"board"') < t.index('"givens"') < t.index('"rules"')
     assert json.loads(t) == X.canonical(_classic_doc())
 
 
@@ -210,7 +212,7 @@ def test_dumps_layout():
 def test_plain_string_round_trip():
     d = pencilmark.from_string(CLASSIC)
     assert pencilmark.to_string(d, "plain") == CLASSIC
-    assert d["rules"] == [{"type": "box_grid", "origin": "r1c1", "box": [3, 3], "count": [3, 3]}]
+    assert d["rules"] == [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}]
 
 
 def _semantic(p):
@@ -238,7 +240,7 @@ def test_sudokuwiki_round_trip():
         d = pencilmark.from_string(giv)
         d["rules"] += extra
         kinds.setdefault(k, pencilmark.load(d))
-    d = pencilmark.from_string(giv); d["rules"] = boxes                 # jigsaw: rows / columns inferred
+    d = pencilmark.from_string(giv); d["rules"] = [{"type": "grid", "origin": "r1c1"}] + boxes    # jigsaw
     kinds["jigsaw"] = pencilmark.load(d)
     d = copy.deepcopy(d); d["rules"].append(cage)
     kinds["killer_jigsaw"] = pencilmark.load(d)
@@ -351,30 +353,34 @@ def _houses(doc):
     return [(g.kind, g.cells) for g in p.groups]
 
 
-def test_houses_round3():
-    """box_grid gives rows, columns, boxes; rows / columns of uncovered cells are inferred from the shape (before the
-    first box rule); infer_lines false; explicit bent rows; boxes-only box_grid (FORMAT.md 6.1)"""
+def test_houses():
+    """grid gives rows and columns, box_grid adds regular boxes, box / row / column are explicit, nothing is inferred;
+    the writer finds grids in any house order (FORMAT.md 6.1)"""
     classic = pencilmark.from_string(CLASSIC)
     h = _houses(classic)
     assert [k for k, _ in h] == ["row"] * 9 + ["col"] * 9 + ["box"] * 9
-    jig = copy.deepcopy(classic)
     boxes = [{"type": "box", "cells": [X.cell_name(br + i, bc + j) for i in range(3) for j in range(3)]}
              for br in (0, 3, 6) for bc in (0, 3, 6)]
-    jig["rules"] = [{"type": "region", "kind": "diagonal", "cells": [X.cell_name(i, i) for i in range(9)]}] + boxes
-    assert [k for k, _ in _houses(jig)] == ["row"] * 9 + ["col"] * 9 + ["diag"] + ["box"] * 9     # inferred before the region
-    assert sorted(_houses(jig)) == sorted(h + [("diag", tuple(i * 10 for i in range(9)))])
-    none = copy.deepcopy(jig); none["grid"]["infer_lines"] = False
-    assert [k for k, _ in _houses(none)] == ["diag"] + ["box"] * 9
-    bent = copy.deepcopy(none); bent["grid"].pop("infer_lines")
-    bent["rules"].insert(0, {"type": "row", "cells": ["r1c1", "r1c2", "r1c3", "r1c4", "r1c5", "r1c6", "r1c7", "r1c8", "r2c9"]})
-    hs = _houses(bent)
-    assert hs[0][0] == "row" and sum(1 for k, _ in hs if k == "row") == 8      # bent row + rows 3-9 (rows 1 / 2 now short runs)
-    only_boxes = copy.deepcopy(classic)
-    only_boxes["rules"] = [{"type": "box_grid", "origin": "r1c1", "box": [3, 3], "count": [3, 3], "lines": False}]
-    assert sorted(_houses(only_boxes)) == sorted(h)
+    jig = copy.deepcopy(classic)
+    jig["rules"] = [{"type": "grid", "origin": "r1c1"}] + boxes
+    assert _houses(jig) == h
+    only_boxes = copy.deepcopy(classic); only_boxes["rules"] = boxes
+    assert [k for k, _ in _houses(only_boxes)] == ["box"] * 9                  # no rows / columns without a grid
+    latin = copy.deepcopy(classic); latin["rules"] = [{"type": "grid", "origin": "r1c1"}]
+    assert [k for k, _ in _houses(latin)] == ["row"] * 9 + ["col"] * 9
+    # a jigsaw written from the engine: one grid plus its pieces
+    pieces = copy.deepcopy(boxes)
+    pieces[0]["cells"][8], pieces[1]["cells"][6] = pieces[1]["cells"][6], pieces[0]["cells"][8]
+    jig2 = copy.deepcopy(classic); jig2["rules"] = [{"type": "grid", "origin": "r1c1"}] + pieces
+    assert [r["type"] for r in X.write(X.read(jig2))["rules"]] == ["grid"] + ["box"] * 9
+    # explicit houses whose rows / columns make a grid are written as one
+    expl = copy.deepcopy(classic)
+    expl["rules"] = ([{"type": "column", "cells": [X.cell_name(r, c) for r in range(9)]} for c in range(9)] + boxes +
+                     [{"type": "row", "cells": [X.cell_name(r, c) for c in range(9)]} for r in range(9)])
+    assert X.write(X.read(expl))["rules"] == [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}]
     sam = pencilmark.load({"layout": "samurai", "numbers": ""})
     d = X.write(sam)
-    assert [r["type"] for r in d["rules"]] == ["box_grid"] * 5 and "infer_lines" not in d["grid"]
+    assert [r["type"] for r in d["rules"]] == ["box_grid"] * 5
     assert len(X.read(d).groups) == len(sam.groups)
 
 
@@ -441,11 +447,30 @@ def test_multigrid_written_compact():
     giv = [0 if (r < 9 or r >= 12 or 6 <= c < 15) and (c < 9 or c >= 12 or 6 <= r < 15) else None
            for r in range(R) for c in range(R)]
     grids = [(0, 0), (0, 12), (6, 6), (12, 0), (12, 12)]
-    doc = {"format": "sudoku-puzzle", "format_version": 1, "grid": {"rows": R, "cols": R}, "digits": 9, "givens": giv,
-           "rules": [{"type": "box_grid", "origin": X.cell_name(r, c), "box": [3, 3], "count": [3, 3]} for r, c in grids]}
+    doc = {"format": "sudoku-puzzle", "format_version": 1, "board": {"rows": R, "cols": R}, "digits": 9, "givens": giv,
+           "rules": [{"type": "box_grid", "origin": X.cell_name(r, c), "box": [3, 3]} for r, c in grids]}
     p = X.read(doc)
     p.groups.sort(key=lambda g: (g.kind != "box", g.kind != "row", g.cells))     # boxes first, then rows, then columns
     p.finalize()
     out = X.write(p)
     assert [r for r in out["rules"] if r["type"] in ("box_grid", "box", "row", "column")] == doc["rules"]
     assert pencilmark.fingerprint(out) == pencilmark.fingerprint(doc)
+
+
+def test_area_scope():
+    """area = a grid's origin or a cell list (FORMAT.md 5); one grid of a samurai with anti-knight round-trips compactly"""
+    R = 21
+    giv = [0 if (r < 9 or r >= 12 or 6 <= c < 15) and (c < 9 or c >= 12 or 6 <= r < 15) else None
+           for r in range(R) for c in range(R)]
+    grids = [X.cell_name(r, c) for r, c in [(0, 0), (0, 12), (6, 6), (12, 0), (12, 12)]]
+    doc = {"format": "sudoku-puzzle", "format_version": 1, "board": {"rows": R, "cols": R}, "digits": 9, "givens": giv,
+           "rules": [{"type": "box_grid", "origin": o, "box": [3, 3]} for o in grids] +
+                    [{"type": "neighbours", "kind": "antiknight", "area": "r13c13"},
+                     {"type": "negative", "of": "xv", "area": "r1c13"}]}
+    X.validate(doc)
+    assert X.write(X.read(doc))["rules"][5:] == doc["rules"][5:]
+    as_cells = copy.deepcopy(doc)
+    as_cells["rules"][5]["area"] = [X.cell_name(r, c) for r in range(12, 21) for c in range(12, 21)]
+    assert pencilmark.fingerprint(as_cells) == pencilmark.fingerprint(doc)
+    bad = copy.deepcopy(doc); bad["rules"][5]["area"] = "r2c2"; _refuses(bad, "not the origin")
+    bad = copy.deepcopy(doc); bad["rules"][5]["cells"] = ["r1c1"]; _refuses(bad, "unknown key")

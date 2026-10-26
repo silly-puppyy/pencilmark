@@ -27,7 +27,7 @@ from .exchange import cell_name, parse_cell
 
 # ---------------------------------------------------------------------------------------------------------- subgrid view
 class Grid:
-    """one grid area (a box_grid, or the whole board): n x n cells, box bh x bw (None for a jigsaw / Latin square). Local coordinates are 0-based."""
+    """one grid area (a grid / box_grid, or the whole board): n x n cells, box bh x bw (None for a jigsaw / Latin square). Local coordinates are 0-based."""
 
     def __init__(self, n, box=None, origin=(0, 0), cells=None):
         self.n = n
@@ -362,9 +362,8 @@ def describe(puzzle):
     # grid areas from the houses the rules state (any spelling): every D x D area whose D rows and D columns are houses,
     # with a box shape when its regular boxes are houses too
     from .exchange import Board, read_houses
-    B = Board([divmod(k, doc["grid"]["cols"]) for k, v in enumerate(doc["givens"]) if v is not None], D)
-    houses, _ = read_houses([r for r in rules if r["type"] in ("box_grid", "box", "row", "column")], B,
-                            doc["grid"].get("infer_lines", True))
+    B = Board([divmod(k, doc["board"]["cols"]) for k, v in enumerate(doc["givens"]) if v is not None], D)
+    houses, _ = read_houses([r for r in rules if r["type"] in ("grid", "box_grid", "box", "row", "column")], B)
     hset = {(k, frozenset(B.name(c) for c in cells)) for k, cells, _ in houses}
     origins = []
     for k, cells, _ in houses:
@@ -396,7 +395,7 @@ def describe(puzzle):
                 tiled |= set(tiles)
                 break
         grids.append(g)
-    explained = [r["type"] in ("box_grid", "row", "column") or (r["type"] == "box" and frozenset(r["cells"]) in tiled)
+    explained = [r["type"] in ("grid", "box_grid", "row", "column") or (r["type"] == "box" and frozenset(r["cells"]) in tiled)
                  for r in rules]
     subs = grids
     sigs = {}

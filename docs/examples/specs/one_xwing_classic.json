@@ -5,7 +5,7 @@
   "title": "Classic with exactly one X-Wing",
   "description": "Singles everywhere except one X-Wing; nothing else allowed."
  },
- "grid": {
+ "board": {
   "rows": 9,
   "cols": 9
  },
@@ -15,10 +15,6 @@
    "type": "box_grid",
    "origin": "r1c1",
    "box": [
-    3,
-    3
-   ],
-   "count": [
     3,
     3
    ]

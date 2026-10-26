@@ -3,14 +3,18 @@
  "format_version": 1,
  "meta": {
   "title": "Displaced jigsaw",
-  "description": "Boxes made from the regular 3x3 boxes with 2-3 cells moved out of each; rows and columns from the board shape."
+  "description": "Boxes made from the regular 3x3 boxes with 2-3 cells moved out of each."
  },
- "grid": {
+ "board": {
   "rows": 9,
   "cols": 9
  },
  "digits": 9,
  "rules": [
+  {
+   "type": "grid",
+   "origin": "r1c1"
+  },
   {
    "type": "box",
    "count": "tile",

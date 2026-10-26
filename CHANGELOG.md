@@ -9,8 +9,8 @@ First public release.
   `fields=[...]` computes only the requested fields) for classic and variant sudoku.
 - Command line: `pencilmark rate | solve | json | export | fingerprint | describe` (also `python -m pencilmark`).
 - Exchange format: `sudoku-puzzle` format_version 1, read and written, specified in `docs/FORMAT.md` with a JSON Schema (`docs/sudoku-puzzle.schema.json`):
-  every constraint is a rule (houses as `box_grid` / `box`, rows and columns of other cells inferred from the board
-  shape, explicit `row` / `column` for bent ones), cells named `r1c1`, a rule
+  every constraint is a rule (houses as `grid` / `box_grid` / `box`, explicit `row` / `column` for bent ones; nothing
+  implied), cells named `r1c1`, a rule
   vocabulary of families and kinds with exact semantics and default drawings, outside clues anchored by `side`,
   explicit `negative` rules, strict reading (unknown keys or rule types are refused).
 - `sudoku-spec` generator requests (givens, locked rules and templates, symmetry, `where` card targets, quality,

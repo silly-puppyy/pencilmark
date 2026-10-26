@@ -5,7 +5,7 @@
   "title": "Givens in the shape of a heart",
   "description": "Givens exactly on the heart cells, every other cell empty; Medium."
  },
- "grid": {
+ "board": {
   "rows": 9,
   "cols": 9
  },
@@ -100,10 +100,6 @@
    "type": "box_grid",
    "origin": "r1c1",
    "box": [
-    3,
-    3
-   ],
-   "count": [
     3,
     3
    ]
