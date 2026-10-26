@@ -32,7 +32,7 @@ SPEC_KEYS = {"format", "format_version", "$schema", "meta", "board", "digits", "
              "quality", "limits", "fields", "ext"}
 WHERE_KEYS = {"band", "difficulty", "time", "contains", "not_contains", "issues", "areas", "elements"}
 LIMIT_KEYS = {"results", "attempts", "time", "seed"}
-TEMPLATE_KEYS = {"type", "kind", "count", "size", "length", "value", "displaced", "area", "id", "label", "style"}
+TEMPLATE_KEYS = {"type", "kind", "count", "size", "length", "value", "displaced", "area", "id", "label", "style", "color", "letter"}
 COUNT_WORDS = {"auto", "all", "min", "tile"}
 DEFAULTS = {"solver": "logic", "seed": 1, "time_limit": 120.0, "grade_seconds": 60.0, "min_givens": 0, "max_givens": None,
             "strict_require": False}
@@ -145,6 +145,13 @@ def spec_to_gen(doc):
             if k in r:
                 raise NotSupportedError(f"template {r['type']}: {k!r} is not supported by the generator yet")
         kind = RULE_KIND[key]
+        # one colour / letter / parity of a kind is its own element class (counted separately)
+        cls = {("kropki", "white"): "kropki_white", ("kropki", "black"): "kropki_black", ("xv", "X"): "x", ("xv", "V"): "v"}
+        sel = r.get("color") or r.get("letter")
+        if sel is not None:
+            if (kind, sel) not in cls:
+                raise NotSupportedError(f"template {r['type']}: {sel!r} is not a generator element class")
+            kind = cls[(kind, sel)]
         if "value" in r:
             from .gen.elements import whisper_gap
             if kind != "whisper" or r["value"] != whisper_gap(D):
@@ -164,17 +171,12 @@ def spec_to_gen(doc):
             if kind != "cage":
                 raise NotSupportedError(f"count 'tile' is supported for cages only, not {kind}")
             elements[kind] = "partition"
-        elif isinstance(c, list):
-            if c[1] is not None:
-                raise NotSupportedError(f"template {r['type']}: an upper bound on the count is not supported (use where.elements.max)")
-            if c[0] == 1 and kind not in elements:
-                kinds.append(kind)                       # "at least one": the generator's each-kind form
-            else:
-                elements[kind] = c[0]
-        else:                                            # an exact number: only the zero-given killer form is exact
-            if kind != "cage" or out.get("max_givens") != 0:
-                raise NotSupportedError(f"an exact count of {kind} is supported only for cages with 0 givens (use [n, null])")
-            elements[kind] = c
+        elif isinstance(c, list):                        # [min, max]; max null = no cap
+            elements[kind] = [c[0] or 0, c[1]]
+        elif kind == "cage" and out.get("max_givens") == 0:
+            elements[kind] = c                           # zero-given killer: exactly c cages (CP-SAT form)
+        else:                                            # an exact number
+            elements[kind] = [c, c]
     if elements:
         out["elements"] = elements
     if kinds:
@@ -248,16 +250,25 @@ def spec_from_gen(spec):
         raise NotSupportedError(f"no standard boxes for size {D}")
     bh, bw = PJ.BOXES[D]
     rules = [{"type": "box_grid", "origin": "r1c1", "box": [bh, bw]}]
+    from .gen.elements import CLASSES
     def tmpl(kind, count):
-        t, k = GEN_KINDS[norm_kind(kind)]
+        kind = norm_kind(kind)
+        base, sel = CLASSES.get(kind, (kind, None))
+        t, k = GEN_KINDS[base]
         r = {"type": t}
         if k:
             r["kind"] = k
+        if sel is not None and base in ("kropki", "xv"):
+            r["color" if base == "kropki" else "letter"] = sel
         r["count"] = count
         return r
     for kind, n in (s.elements or {}).items():
-        if isinstance(n, str):
+        if isinstance(n, str) and n.lower() == "auto":
+            rules.append(tmpl(kind, "auto"))
+        elif isinstance(n, str):
             rules.append(tmpl(kind, {"full": "all", "min": "min", "partition": "tile"}[n.lower()]))
+        elif isinstance(n, (list, tuple)):
+            rules.append(tmpl(kind, n[0] if n[0] == n[1] else [n[0], n[1]]))
         elif not n:
             rules.append(tmpl(kind, "auto"))
         elif norm_kind(kind) == "cage" and s.max_givens == 0:

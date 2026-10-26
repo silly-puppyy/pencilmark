@@ -9,7 +9,7 @@ from .checks import Oracle
 
 
 def dig(b, kinds, rng, chk, sol=None, min_givens=0, seeds=None, max_els=10 ** 6, symmetry=None, fixed=None, blocked=(),
-        pool_tries=25):
+        pool_tries=25, caps=None, dense=()):
     """givens-digging with elements added on demand.
 
     1. `seeds` {kind: count} elements are placed first (disjoint) and their cells, then their peers, are emptied first,
@@ -18,19 +18,34 @@ def dig(b, kinds, rng, chk, sol=None, min_givens=0, seeds=None, max_els=10 ** 6,
        removal breaks solvability (chk: band-capped logic), the most informative element of `kinds` through that cell
        that restores it is added (if any), else the givens stay;
     3. prune: every element the puzzle stays solvable without is dropped (no decorative elements).
-    fixed {cell: True (stays given) / False (stays empty)}; blocked cells take no elements."""
+    fixed {cell: True (stays given) / False (stays empty)}; blocked cells take no elements. kinds / seeds may name element
+    classes (kropki_black, x, odd, ...); caps {class: max} limits how many of a class are added. dense: 2-cell / 1-cell
+    classes seeded with EVERY instance true in the solution before digging (few-givens targets); pruning then removes the
+    ones the puzzle doesn't need."""
     fixed = dict(fixed or {})
     sol = sol or b.solution(rng)
     givens = {i: sol[i] for i in range(b.N) if fixed.get(i, True)}
     els, used = [], set(blocked)
+    caps = dict(caps or {})
+    room = lambda e: all(sum(1 for x in els if EL.in_class(x, k)) < m for k, m in caps.items() if m is not None and EL.in_class(e, k))
     for kind, cnt in (seeds or {}).items():
         for _ in range(cnt):
             for _try in range(40):
-                g_ = [e for e in EL.grow(b, kind, sol, rng.randrange(b.N), used, rng, n=8) if used.isdisjoint(e[1])]
+                g_ = [e for e in EL.grow(b, EL.base_kind(kind), sol, rng.randrange(b.N), used, rng, n=8)
+                      if used.isdisjoint(e[1]) and EL.in_class(e, kind)]
                 if g_:
                     els.append(g_[0])
                     used |= set(g_[0][1])
                     break
+    for kind in dense:
+        bk = EL.base_kind(kind)
+        if bk not in ("kropki", "xv", "parity"):
+            continue
+        seen = {x[1] for x in els}
+        for i in range(b.N):
+            for e in EL.grow(b, bk, sol, i, set(blocked), rng):
+                if EL.in_class(e, kind) and e[1] not in seen and (bk != "parity" or i not in used):
+                    els.append(e); seen.add(e[1])
     el_cells = used - set(blocked)
     peers = {j for c in el_cells for j in b.peers[c]} - el_cells
     rest = [i for i in range(b.N) if i not in el_cells and i not in peers]
@@ -55,7 +70,8 @@ def dig(b, kinds, rng, chk, sol=None, min_givens=0, seeds=None, max_els=10 ** 6,
         restored = False
         if kinds and len(els) < max_els:
             taken = {c for x in els for c in x[1]} | set(blocked)      # elements never share cells
-            cand = [] if i in taken else [e for k in kinds for e in EL.grow(b, k, sol, i, taken, rng)]
+            cand = [] if i in taken else [e for k in kinds for e in EL.grow(b, EL.base_kind(k), sol, i, taken, rng)
+                                          if EL.in_class(e, k) and room(e)]
             cand.sort(key=lambda e: (EL.ncomb(b.n, len(e[1]), e[2]) if e[0] == "cage" else 0, rng.random()))
             for e in cand[:pool_tries]:
                 if chk.ok(givens, els + [e]):
@@ -64,8 +80,11 @@ def dig(b, kinds, rng, chk, sol=None, min_givens=0, seeds=None, max_els=10 ** 6,
                     break
         if not restored:
             givens.update(removed)
-    for e in list(els):                                 # prune decorative elements
+    mins = {k: n for k, n in (seeds or {}).items() if n}
+    for e in list(els):                                 # prune decorative elements (never below a class's minimum)
         rest_ = [x for x in els if x != e]
+        if any(EL.in_class(e, k) and sum(1 for x in rest_ if EL.in_class(x, k)) < n for k, n in mins.items()):
+            continue
         if chk.ok(givens, rest_):
             els = rest_
     return sol, givens, els

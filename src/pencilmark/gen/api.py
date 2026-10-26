@@ -29,8 +29,11 @@ class Spec:
     """what to generate.
 
     size              board size (4, 6, 8, 9, 10, 12, 16; standard boxes)
-    elements          {kind: N | "full" | "min" | "partition"}: N = at least N needed elements of that kind (0 / None =
-                      allowed, not required); {"kropki": "full"} = zero-given full kropki (no dot = neither relation);
+    elements          {kind or class: N | [min, max] | "auto" | "full" | "min" | "partition"}: N = at least N needed elements
+                      (0 / None / "auto" = allowed, not required); [min, max] = between min and max (max None = no cap;
+                      [2, 2] = exactly 2). Classes count one colour / letter / parity of a kind: kropki_white, kropki_black,
+                      x, v, odd, even ({"kropki_black": [2, 2], "kropki_white": "auto"}); {"kropki": "full"} = zero-given
+                      full kropki (no dot = neither relation);
                       {"kropki": "min"} = zero-given minimal dot set; {"cage": "partition"} = killer tiled by cages, few
                       givens; {"cage": N} with max_givens=0 = killer with exactly N cages and no givens (CP-SAT)
     kinds             shorthand: every listed kind keeps >= 1 needed element (each-kind mode)
@@ -127,11 +130,22 @@ def _plan(s):
             raise ValueError(f"element value {v!r} only means something for kropki ('full' / 'min') or cage ('partition')")
         if k == "cage" and s.max_givens == 0 and isinstance(v, int) and v > 0:
             return "cage_count", [k], {}, v
+    seeds, caps = {}, {}
     for k, v in els.items():
+        if isinstance(v, str) and v.lower() == "auto":
+            v = None
         if isinstance(v, str):
-            raise ValueError(f"{k}: {v!r} can't be mixed with other kinds (use a count)")
-    seeds = {k: int(v or 0) for k, v in els.items()}
-    return "dig", list(els), seeds, None
+            raise ValueError(f"{k}: {v!r} can't be mixed with other kinds (use a count, [min, max] or 'auto')")
+        if isinstance(v, (list, tuple)):
+            lo, hi = v
+            if hi is not None and (lo or 0) > hi:
+                raise ValueError(f"{k}: minimum {lo} above maximum {hi}")
+            seeds[k] = int(lo or 0)
+            if hi is not None:
+                caps[k] = hi
+        else:
+            seeds[k] = int(v or 0)
+    return "dig", list(els), seeds, caps
 
 
 def feasibility(spec):
@@ -211,7 +225,7 @@ def feasibility(spec):
                          f"{need:.0f}")
     elif mode == "dig" and gmax is not None and s.max_elements is not None:
         gbits = lg_c(b.N, min(gmax, b.N)) + gmax * math.log2(s.size) if gmax else 0.0
-        ebits = s.max_elements * max(EL.element_bits(b, k) for k in kinds)
+        ebits = s.max_elements * max(EL.element_bits(b, EL.base_kind(k)) for k in kinds)
         if gbits + ebits < need:
             probs.append(f"information budget: {gmax} givens + {s.max_elements} elements carry <= {gbits + ebits:.0f} bits, "
                          f"a {s.size}x{s.size} grid needs {need:.0f} -- too few for a unique puzzle")
@@ -302,8 +316,12 @@ def generate(spec, log=None):
     while time.time() < deadline:
         stats["attempts"] += 1
         if mode in ("classic", "dig"):
+            few = s.max_givens is not None and s.max_givens < CLASSIC_MIN_GIVENS.get(s.size, 0)   # elements must carry the puzzle
+            dense = [k for k in kinds if mode == "dig" and few and (value or {}).get(k) is None
+                     and EL.base_kind(k) in ("kropki", "xv", "parity")] if stats["attempts"] % 2 else []
             r = SR.dig(b, kinds, rng, chk, min_givens=s.min_givens, seeds=seeds,
-                       max_els=s.max_elements if s.max_elements is not None else 10 ** 6, symmetry=s.symmetry)
+                       max_els=s.max_elements if s.max_elements is not None else 10 ** 6, symmetry=s.symmetry,
+                       caps=value if mode == "dig" else None, dense=dense)
         elif mode == "partition":
             r = SR.partition(b, rng, chk, n_givens=s.min_givens)
         elif mode == "cage_count":
@@ -322,9 +340,14 @@ def generate(spec, log=None):
         if s.max_elements is not None and len(els) > s.max_elements:
             reject("too many elements")
             continue
-        short = [k for k, n in seeds.items() if sum(1 for e in els if e[0] == k) < n]
+        short = [k for k, n in seeds.items() if sum(1 for e in els if EL.in_class(e, k)) < n]
         if short:
             reject(f"kind pruned: {'/'.join(short)}")
+            continue
+        over = [k for k, m in ((value or {}) if mode == "dig" else {}).items()
+                if m is not None and sum(1 for e in els if EL.in_class(e, k)) > m]
+        if over:
+            reject(f"too many: {'/'.join(over)}")
             continue
         if low is not None and mode not in ("cage_count", "kropki_full") and low.ok(givens, els):
             got = None
@@ -332,14 +355,15 @@ def generate(spec, log=None):
             # 2026-10-24 on 9x9 classics: ~1 in 4-6 hits for band targets, never for a required technique, ~2 s each
             if mode in ("classic", "dig") and cap < 5 and not top and stats["attempts"] % 2 == 0:
                 rf = SR.dig(b, kinds, rng, full, sol=sol, min_givens=s.min_givens, seeds=seeds,
-                            max_els=s.max_elements if s.max_elements is not None else 10 ** 6, symmetry=s.symmetry)
+                            max_els=s.max_elements if s.max_elements is not None else 10 ** 6, symmetry=s.symmetry,
+                            caps=value if mode == "dig" else None)
                 if rf is not None:
                     got = SR.pull(b, sol, rf[1], rf[2], chk, low, rng, symmetry=s.symmetry, max_givens=s.max_givens)
             if got is None:
                 reject("band too low (logic pre-check)")
                 continue
             givens, els = got
-            if any(sum(1 for e in els if e[0] == k) < n for k, n in seeds.items()):
+            if any(sum(1 for e in els if EL.in_class(e, k)) < n for k, n in seeds.items()):
                 reject("kind pruned")
                 continue
         d = build(sol, givens, els)
@@ -359,7 +383,8 @@ def generate(spec, log=None):
         if verified is False:
             reject("not unique (CP-SAT)")
             continue
-        info = {"mode": mode, "givens": len(givens), "elements": {k: sum(1 for e in els if e[0] == k) for k in sorted({e[0] for e in els})},
+        info = {"mode": mode, "givens": len(givens),
+                "elements": {k: sum(1 for e in els if EL.element_class(e) == k) for k in sorted({EL.element_class(e) for e in els})},
                 "attempts": stats["attempts"], "seconds": round(time.time() - t0, 1), "rejected": stats["rejected"],
                 "unique_verified": verified, "seed": s.seed}
         return {"puzzle": d, "card": card, "info": info}

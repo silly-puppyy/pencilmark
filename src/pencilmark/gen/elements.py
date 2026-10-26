@@ -24,12 +24,35 @@ ALIASES = {"killer": "cage", "cages": "cage", "evenodd": "parity", "odd_even": "
            "arrows": "arrow", "dots": "kropki"}
 
 
+# element classes: a kind, or one colour / letter / parity of it (counted separately in Spec.elements)
+CLASSES = {"kropki_white": ("kropki", "white"), "kropki_black": ("kropki", "black"), "x": ("xv", "X"), "v": ("xv", "V"),
+           "odd": ("parity", 1), "even": ("parity", 0)}
+CLASS_ALIASES = {"white_kropki": "kropki_white", "black_kropki": "kropki_black", "white": "kropki_white", "black": "kropki_black"}
+
+
 def norm_kind(k):
+    """a kind or an element class name -> its canonical name"""
     k = str(k).strip().lower()
-    k = ALIASES.get(k, k)
-    if k not in KINDS:
-        raise ValueError(f"unknown element kind {k!r} (known: {', '.join(KINDS)})")
+    k = ALIASES.get(k, CLASS_ALIASES.get(k, k))
+    if k not in KINDS and k not in CLASSES:
+        raise ValueError(f"unknown element kind {k!r} (known: {', '.join(KINDS + tuple(CLASSES))})")
     return k
+
+
+def base_kind(k):
+    return CLASSES[k][0] if k in CLASSES else k
+
+
+def element_class(e):
+    """the class of an element: its colour / letter / parity class where one exists, else its kind"""
+    for name, (kind, extra) in CLASSES.items():
+        if e[0] == kind and e[2] == extra:
+            return name
+    return e[0]
+
+
+def in_class(e, k):
+    return e[0] == k or element_class(e) == k
 
 
 def whisper_gap(n):

@@ -770,8 +770,20 @@ c13–c21).
   {"type": "region", "kind": "diagonal", "cells": ["r1c9", "r2c8", "r3c7", "r4c6", "r5c5", "r6c4", "r7c3", "r8c2", "r9c1"]}]
 ```
 
-Argyle has 8 shorter diagonals instead, all `region` kind `diagonal`, e.g.
-`{"type": "region", "kind": "diagonal", "cells": ["r1c2", "r2c3", "r3c4", "r4c5", "r5c6", "r6c7", "r7c8", "r8c9"]}`.
+Argyle has 8 shorter diagonals instead, all `region` kind `diagonal`:
+
+```json
+"rules": [
+  {"type": "box_grid", "origin": "r1c1", "box": [3, 3]},
+  {"type": "region", "kind": "diagonal", "cells": ["r1c2", "r2c3", "r3c4", "r4c5", "r5c6", "r6c7", "r7c8", "r8c9"]},
+  {"type": "region", "kind": "diagonal", "cells": ["r2c1", "r3c2", "r4c3", "r5c4", "r6c5", "r7c6", "r8c7", "r9c8"]},
+  {"type": "region", "kind": "diagonal", "cells": ["r1c8", "r2c7", "r3c6", "r4c5", "r5c4", "r6c3", "r7c2", "r8c1"]},
+  {"type": "region", "kind": "diagonal", "cells": ["r2c9", "r3c8", "r4c7", "r5c6", "r6c5", "r7c4", "r8c3", "r9c2"]},
+  {"type": "region", "kind": "diagonal", "cells": ["r1c5", "r2c4", "r3c3", "r4c2", "r5c1"]},
+  {"type": "region", "kind": "diagonal", "cells": ["r1c5", "r2c6", "r3c7", "r4c8", "r5c9"]},
+  {"type": "region", "kind": "diagonal", "cells": ["r5c1", "r6c2", "r7c3", "r8c4", "r9c5"]},
+  {"type": "region", "kind": "diagonal", "cells": ["r5c9", "r6c8", "r7c7", "r8c6", "r9c5"]}]
+```
 
 ### 10.6 Thermo, arrow and kropki
 
@@ -946,7 +958,7 @@ starting point the generator may move or drop). A rule **with `count` and no cel
 `count` is a number, `[min, max]` (`max` may be `null`), `"auto"` (as many as needed), `"all"` (every true clue: for
 edge kinds this adds the matching `negative`), `"min"` (a minimal set) or `"tile"` (cages / boxes partitioning the
 area). Templates take shape limits where meaningful: `size` (cells per cage / box), `length` (cells per line), `value`
-(e.g. whisper difference), `displaced` (jigsaw: cells moved out of the regular boxes). Any template or locked rule may
+(e.g. whisper difference), `displaced` (jigsaw: cells moved out of the regular boxes). A template may also name the variety it wants with the rule's own key: `"color": "black"` on a kropki edge, `"letter": "X"` on an XV edge, `kind` `odd` / `even` on a cell rule; one template per variety, each with its own count. Any template or locked rule may
 carry `"area"` (section 5: a grid's origin or a cell list), limiting where it lives.
 
 **Givens.** `"givens"` is either the puzzle form (a flat list: digits are locked givens, `0` = must stay empty, `null`

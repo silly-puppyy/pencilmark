@@ -67,3 +67,15 @@ def test_uniquify():
     d = {"v": 1, "digits": 6, "box": "2x3", "numbers": "." * 36}
     out = uniquify(d, seed=1)
     assert is_unique(out) and sum(ch != "." for ch in out["numbers"]) >= 8
+
+
+def test_element_classes_and_ranges():
+    """per-class counts: 6 givens, exactly 2 black kropki, any number of white (the dense-seeding path)"""
+    r = run({"size": 9, "target_band": "Easy", "min_givens": 6, "max_givens": 6,
+             "elements": {"kropki_black": [2, 2], "kropki_white": "auto"}, "seed": 1, "time_limit": 300})
+    els = r["info"]["elements"]
+    assert r["info"]["givens"] == 6 and els.get("kropki_black") == 2 and els.get("kropki_white", 0) >= 1, r["info"]
+    from pencilmark import spec_format as SF
+    doc = SF.spec_from_gen({"size": 9, "elements": {"kropki_black": [2, 2], "kropki_white": "auto"}})
+    assert {"type": "edge", "kind": "kropki", "color": "black", "count": 2} in doc["rules"]
+    assert SF.spec_to_gen(doc)["elements"] == {"kropki_black": [2, 2], "kropki_white": 0}
