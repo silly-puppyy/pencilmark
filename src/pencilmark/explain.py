@@ -707,7 +707,7 @@ def enum_rule(p, rule, dom, node_limit=150000, keep=400, max_count=None, support
     """All assignments of rule.cells within masks `dom` that satisfy the rule, the pair relations
     and distinctness inside the scope. -> dict(sup, count, sols, complete).
     max_count: stop as soon as more fillings exist (-> complete False, count None); support=False: no witness search
-    when the enumeration is incomplete (2026-10-25: the direct-mode reading mirrors the engine's cap and skips such rules)."""
+    when the enumeration is incomplete (the direct-mode reading mirrors the engine's cap and skips such rules)."""
     cells = rule.cells
     n = len(cells)
     distinct_all = rule.distinct

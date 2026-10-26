@@ -31,8 +31,8 @@ sol   = pencilmark.solve(puzzle)                        # list of digits; raises
 exp   = pencilmark.to_export(puzzle, title="My puzzle") # "sudoku-puzzle" exchange format (docs/FORMAT.md)
 ```
 
-A puzzle can be a classic string (`.` or `0` for blanks), a sudokuwiki.org packed string, a puzzle JSON dict or string,
-a `sudoku-puzzle` dict, or a path to a `.json` file.
+A puzzle can be a classic string (`.` or `0` for blanks), a `sudoku-puzzle` dict, a puzzle JSON dict or string, or a
+path to a `.json` file.
 
 Command line:
 
@@ -51,7 +51,7 @@ More in [docs/USAGE.md](docs/USAGE.md).
 
 `rate` returns a dict (format `"sudoku-grade"`) with these fields by default (`grader`, `format`, `format_version` are
 always there); `rate(puzzle, fields=[...])` / `--fields` asks for others, and only requested fields are computed
-([docs/FORMAT.md](docs/FORMAT.md) 13.1):
+([docs/FORMAT.md](docs/FORMAT.md) 11.1):
 
 | Field | Meaning |
 |---|---|
@@ -94,10 +94,16 @@ may say `contents_truncated`.
 - Each rule has one exact meaning and a default drawing, so a renderer needs nothing else; `style` and `decorations`
   are cosmetic only. `meta` is free-form information that never changes solving.
 - Strict reading: an unknown key or rule type makes the reader refuse the file (`FormatError`) instead of dropping a
-  rule. Older files (no `format_version`, `sudoku-puzzle/2`) are still read.
+  rule.
 - `pencilmark.dumps` writes the canonical text (one grid row per line, one rule per line); `pencilmark.fingerprint`
-  gives a content hash that ignores metadata and styling; `pencilmark.describe` names the variant and lists its rules;
-  `pencilmark.to_ipuz`, `from_string` / `to_string` (plain and sudokuwiki.org strings) convert to other formats.
+  gives a content hash that ignores metadata and styling; `pencilmark.describe` names the variant and lists its rules.
+
+### Other formats
+
+For convenience pencilmark also reads and writes sudokuwiki.org packed strings, exports ipuz, and loads SudokuPad,
+f-puzzles, Penpa+ and Logic Masters links. None of these is needed to use the `sudoku-puzzle` format; see
+[docs/INTEROP.md](docs/INTEROP.md). How rules map onto the engine, and how to add one, is in
+[docs/ENGINE.md](docs/ENGINE.md).
 
 ## Supported rules
 
@@ -148,3 +154,5 @@ See BENCHMARK.md (not yet published).
 ## License
 
 MIT, see [LICENSE](LICENSE).
+
+pencilmark was written with [Claude](https://claude.ai).

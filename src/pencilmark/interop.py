@@ -1,13 +1,12 @@
-"""Interop strings and ipuz export (docs/FORMAT.md section 12).
+"""Interop strings and ipuz export (docs/INTEROP.md).
 
     from_string(s) -> sudoku-puzzle dict        plain classic strings and sudokuwiki.org packed strings (S9B, S6B, X9B, W9B,
                                                 C9B, J9B, L9B, M9B, L6C)
     to_string(puzzle, "plain" | "sudokuwiki")   the reverse (refuses what the target cannot express)
     to_ipuz(puzzle) -> dict                     ipuz 2 for classic / Latin square / diagonal / windoku / jigsaw / killer
 
-The sudokuwiki encodings are those of the validated encoder of the research tree (his solutions matched ours
-on every validated puzzle, 2026-10-08 / 2026-10-25); the decoder reads exactly what that encoder writes and refuses anything
-else (placed digits in plain forms, candidate masks, 6x6 killer operators other than '+').
+The sudokuwiki encodings are checked against sudokuwiki.org's solver; the decoder reads exactly what the encoder writes
+and refuses anything else (placed digits in plain forms, candidate masks, 6x6 killer operators other than '+').
 """
 from __future__ import annotations
 

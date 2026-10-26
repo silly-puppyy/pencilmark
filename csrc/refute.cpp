@@ -1,4 +1,4 @@
-// Generic refutation profile (2026-10-20, plan Phase 1a-A): technique-free difficulty for any puzzle.
+// Generic refutation profile technique-free difficulty for any puzzle.
 // Propagation = singles (naked + hidden in houses) + pair relations (Solver::place) + generalised arc consistency on every n-ary rule
 // (complete enumerations only), to a fixpoint. When stuck: every remaining candidate is assumed and propagated; a contradiction is a
 // refutation, its chain length = placements made before it. Only the SHORTEST refutations are applied (a human finds the short ones);
@@ -69,7 +69,7 @@ bool Solver::basic_propagate(int& placed) {
     return true;
 }
 
-// knowledge ladder (2026-10-21): houses = complete groups; overlaps of >= 2 cells precomputed once per solver
+// knowledge ladder: houses = complete groups; overlaps of >= 2 cells precomputed once per solver
 void Solver::k_prepare() {
     int H = (int)p.houses.size();
     k_in.assign(H, std::vector<char>(p.N, 0));
@@ -267,7 +267,7 @@ void Solver::refute_profile(const std::vector<std::pair<int, int>>& givens, cons
     }
 }
 
-// Per-cell features for a learned human model (2026-10-20, plan 1a-B for any rules): candidates after rule filtering (pair relations via
+// Per-cell features for a learned human model for any rules: candidates after rule filtering (pair relations via
 // place on the givens + n-ary arc consistency, NO placements), naked single, hidden single in a house, tightest digit (min places over its
 // houses), and -- only when the board has no single anywhere -- per-cell short-trial refutations (count, shortest chain).
 void Solver::cell_features(const std::vector<std::pair<int, int>>& givens, std::vector<std::array<double, 8>>& out) {

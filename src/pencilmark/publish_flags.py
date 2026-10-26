@@ -1,6 +1,6 @@
 """Common-sense publishing notes ('would not be chosen for publishing'), Stuart-style. Bands never change.
 
-Hand-coded rules (user decision 2026-10-11: sudoku.coach likes are too sparse and its puzzles human-curated, so
+Hand-coded rules (sudoku.coach likes are too sparse and its puzzles human-curated, so
 common sense first; the coach analysis only informed the spike rule's direction):
   spike        a Hard+ puzzle that rests on 1-2 band-level moves with an otherwise all-singles solve
   decorative   a variant rule class that is neither needed for uniqueness nor used by any solve step
@@ -58,7 +58,7 @@ def _rule_notes(puzzle, P):
         need = U.necessity(puzzle, time_limit=20.0)
     except Exception:  # never let the notes break a card
         return out
-    # 2026-10-25: pair relations are often credited under derived labels (chains of signs become detected lines; bounds are
+    # pair relations are often credited under derived labels (chains of signs become detected lines; bounds are
     # reported as "thermo / inequality") -- an x-sums + greater-than card said "lt relation used in only 0 steps" while 8 steps
     # used the signs as a detected line. Relation classes count those labels too.
     rel_aliases = ("line from pair relations", "pair relation", "thermo / inequality", "line / rule", "thermo line",

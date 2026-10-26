@@ -142,8 +142,8 @@ def grade_card(puzzle, P, specific=True, check_rules=True, band=None):
     if g["status"] not in ("ok",) and not g.get("report"):
         return {"status": g["status"]}
     steps = g["steps"]
-    if band is not None:     # 2026-10-22 speed: band + techniques from the band path (the user-facing notion) -- skips the
-        tier, req = band     # strict-required deletion test (~45% of grading time on variants; dropped as user-facing 2026-10-15)
+    if band is not None:     # band + techniques from the band path (the user-facing notion) -- skips the
+        tier, req = band     # strict-required deletion test (~45% of grading time on variants)
     else:
         tier, req = MT.band_label(puzzle, P)      # user's six bands (Very Easy .. Extreme) from required techniques
     req = [S.TECH_NAMES.get(t, str(t)) if isinstance(t, int) else t for t in (req or [])]
@@ -175,12 +175,12 @@ def grade_card(puzzle, P, specific=True, check_rules=True, band=None):
     lvl = g["report"]["level"]
     gi = [i for i, st in enumerate(steps) if st.move.feat[0] == S.GUESS]
     # the band path is the user-facing solve: when it finished without guessing, a guess in this route (its forcing budget
-    # ran out) does not make the card Unknown -- band and score stay consistent (2026-10-26)
+    # ran out) does not make the card Unknown -- band and score stay consistent
     if gi and (band is None or band[0] == "Unknown"):   # a guess is not a grade: report where logic ran out
         pre = steps[:gi[0]]
         band = max((MT.band_of(st.move.feat[0]) for st in pre if st.move.feat[0] not in getattr(S, "NOTE_TECHS", (S.TAKE_NOTES,))), default=0)
         human = (P or {}).get("search") == "human"
-        # no available technique can continue: we can't grade it (user: rate what we can't solve as unknown)
+        # no available technique can continue: we can't grade it (rated unknown)
         return {"status": "beyond human logic" if human else "beyond engine", "label": "Unknown",
                 "meaning": f"no {'human' if human else 'logical'} step found after {len(pre)} of {len(steps)} steps "
                            f"({100 * len(pre) // max(len(steps), 1)}% of the solve); grade unknown",

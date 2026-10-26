@@ -26,7 +26,7 @@ def steps(p):
     if not ok or any(s.move.feat[0] == S.GUESS for s in st):
         st, ok = CB.solve(p, P, disabled=gate)
         if not ok or any(s.move.feat[0] == S.GUESS for s in st):
-            # guessing off (2026-10-26): where it would guess, prove by full search (Trial and error, priced as that guess)
+            # guessing off: where it would guess, prove by full search (Trial and error, priced as that guess)
             st, ok = CB.solve(p, dict(P, exhaust_fallback=1), disabled=gate | {S.GUESS})
             if not ok:
                 return []                  # beyond engine: no score
@@ -69,7 +69,7 @@ _LAST_REFUTE = None
 
 
 def refute_lr_cell(p):
-    """technique-free search effort of the puzzle (plan 1a-A, 2026-10-20): the engine's generic refutation profile (singles + pair
+    """technique-free search effort of the puzzle: the engine's generic refutation profile (singles + pair
     relations + n-ary consistency; when stuck, every candidate trialled, shortest refutations applied) -> log1p(sum over stuck points of
     log(candidates / shortest refutations) per empty cell). Puzzle-only: no technique catalogue, no prices."""
     global _LAST_REFUTE
@@ -102,7 +102,7 @@ def _SC9():
 
 
 def _time_weights():
-    """2026-10-19: time and difficulty use separate price weights on the same route. Difficulty = the card-fit weights (installed
+    """Time and difficulty use separate price weights on the same route. Difficulty = the card-fit weights (installed
     params); time = data/time_model.json "price_weights" (the refit's time-trained weights). None -> time uses the card prices."""
     global _TIME_W
     if _TIME_W is None:
@@ -118,7 +118,7 @@ def _time_weights():
 
 def _cage_enum(p):
     """cell -> max log(number of digit combinations) over the sum cages containing it (distinct digits, size k, total s);
-    measured from the rule instance itself -- any summed cage has a combination count, no variant label (2026-10-17)."""
+    measured from the rule instance itself -- any summed cage has a combination count, no variant label."""
     import itertools
     out = {}
     for g in getattr(p, "groups", ()):
@@ -173,13 +173,13 @@ def steps_enum(p):
 
 def score_parts(p, cfg):
     """(card score, L1 = log of the step-value sum) for one puzzle; None if the engine must guess. L1 is the effort
-    the time model reads (data/time_model.json, 2026-10-16)."""
+    the time model reads (data/time_model.json)."""
     w = cfg.get("enum_w", 0.0)
     pth = steps_enum(p) if w else [(nm, d, f, 0.0) for nm, d, f in steps(p)]
     if not pth:
         return None
     pth_time, x_time = pth, _LAST_X
-    if cfg.get("price_params"):   # 2026-10-19: difficulty from the card-fit price weights on THEIR route; time (L1) from the
+    if cfg.get("price_params"):   # difficulty from the card-fit price weights on THEIR route; time (L1) from the
         global P
         P_old = P                 # production route above (time / bands / everything else unchanged)
         P = _price_params(cfg["price_params"])
@@ -190,16 +190,16 @@ def score_parts(p, cfg):
         if pth_d:
             pth = pth_d
     v = sorted((math.exp(cfg["beta"] * math.log(d) + cfg["delta"].get(nm, 0.0) + w * e) * f for nm, d, f, e in pth), reverse=True)
-    if cfg.get("stat") == "per_cell":   # 2026-10-18 (user idea): average effort to discover one cell = step sum / empty cells
+    if cfg.get("stat") == "per_cell":   # average effort to discover one cell = step sum / empty cells
         empty = max(p.N - len(p.givens), 1)
         lpc = math.log(max(sum(v) / empty, 1e-9))
-        if cfg.get("refute_w"):          # 2026-10-20 technique-free search effort (refute.cpp): + w * log1p(sum log(C/R) / empty cells)
+        if cfg.get("refute_w"):          # technique-free search effort (refute.cpp): + w * log1p(sum log(C/R) / empty cells)
             lpc += cfg["refute_w"] * refute_lr_cell(p)
         r = 2 * lpc / math.log(5)
-    else:                               # legacy: mean of the hardest quarter of steps
+    else:                               # mean of the hardest quarter of steps
         top = v[:max(1, len(v) // 4)]
         r = 2 * math.log(max(sum(top) / len(top), 1e-9)) / math.log(5)
-    if cfg.get("map"):            # 2026-10-22 (user): one continuous formula, floor 0, no ceiling: A * w * softplus((r - r0) / w)
+    if cfg.get("map"):            # one continuous formula, floor 0, no ceiling: A * w * softplus((r - r0) / w)
         mp = cfg["map"]; x = (r - mp["r0"]) / mp["w"]
         score = mp["A"] * mp["w"] * (math.log1p(math.exp(-abs(x))) + max(x, 0.0))
     else:

@@ -401,9 +401,9 @@ struct Enum {
         const int ar = k.arity;
         const size_t nrows = ar ? k.rows.size() / ar : 0;
         for (size_t r = 0; r < nrows; ++r) {
-            // 2026-10-22 fix: rows that do not fit the domains are skipped WITHOUT spending budget -- a large table (6+ cells,
-            // tens of thousands of rows) used to abort before reaching the matching row, so a full assignment violating the
-            // rule was accepted as 'possibly consistent' (brute force reported wrong solutions; CP-SAT was right)
+            // rows that do not fit the domains are skipped WITHOUT spending budget -- a large table (6+ cells,
+            // tens of thousands of rows) must still reach the matching row, or a violating full assignment would count as
+            // 'possibly consistent'
             const uint8_t* row = &k.rows[r * ar];
             bool fits = true;
             for (int p = 0; p < ar && fits; ++p) {

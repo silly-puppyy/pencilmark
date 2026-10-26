@@ -17,16 +17,15 @@ pencilmark describe puzzles.txt          # variant name and rules, e.g. {"type":
 `python -m pencilmark ...` does the same.
 
 **Input:** one puzzle per line. Each line can be any of these:
-- a classic string, with `.` or `0` for blanks, or a sudokuwiki.org packed string (`S9B…`, `J9B…`, `L9B…`, …);
+- a classic string, with `.` or `0` for blanks, or a sudokuwiki.org packed string (`S9B…`, `J9B…`, `L9B…`, …;
+  see docs/INTEROP.md);
 - a JSON object in the `pencilmark.puzzle_json` format (variants, multi-grids, rules);
-- a `sudoku-puzzle` object: the exchange format, format_version 1 (docs/FORMAT.md); older files without
-  `format_version` and `sudoku-puzzle/2` are also read;
+- a `sudoku-puzzle` object: the exchange format, format_version 1 (docs/FORMAT.md);
 - a sample-pack line `{"puzzle": ..., "grade": ...}`;
 - a path to a `.json` file.
 
 Metadata (title, author, source, date, ...) lives in an optional `"meta"` object in both JSON formats. It is never
-used for solving or rating; `pencilmark json` and `to_export` keep it. Older files with these keys at the top level
-are still read.
+used for solving or rating; `pencilmark json` and `to_export` keep it.
 
 In the exchange format, whole-board pair rules are `neighbours` rules (`{"type": "neighbours", "kind": "antiknight"}`,
 or an operator with `where` and `except`), and "all clues shown" is a `negative` rule (`{"type": "negative", "of": "xv"}`);
@@ -72,13 +71,38 @@ text  = pencilmark.dumps(exp)                       # canonical text (one grid r
 fp    = pencilmark.fingerprint(puzzle)              # "sha256:..." of rules + grid + givens (no meta / style / solution)
 pencilmark.validate(exp)                            # strict reading checks; raises pencilmark.FormatError
 pencilmark.describe(puzzle)                         # {"type": "Killer Sudoku", "rules": {"Sudoku": "...", "Killer": "..."}}
-pencilmark.to_ipuz(puzzle)                          # ipuz 2 (classic, Latin square, diagonal, windoku, jigsaw, killer)
-pencilmark.from_string("S9B...")                    # plain / sudokuwiki.org packed string -> sudoku-puzzle dict
-pencilmark.to_string(puzzle, "sudokuwiki")          # ... and back ("plain" for classic strings)
+pencilmark.to_ipuz(puzzle)                          # optional other formats (docs/INTEROP.md): ipuz 2 export,
+pencilmark.from_string("S9B...")                    #   plain / sudokuwiki.org strings -> sudoku-puzzle dict
+pencilmark.to_string(puzzle, "sudokuwiki")          #   ... and back ("plain" for classic strings)
 pencilmark.spec_from_gen({"size": 9, "target_band": "Hard"})   # generator spec <-> "sudoku-spec" (spec_to_gen)
 p     = pencilmark.load(puzzle)                     # the engine's Puzzle object
 ```
 `rate` returns the same card as `pencilmark rate --json`.
+
+## Generator
+
+```python
+from pencilmark.gen import generate
+r = generate({"size": 9, "target_band": "Hard", "seed": 1})
+r["puzzle"], r["card"], r["info"]
+```
+
+Requests can also be written as a `sudoku-spec` file (docs/FORMAT.md section 11; `spec_to_gen` converts it). The
+generator supports this part of the spec and refuses everything else with a clear message:
+
+| Spec part | Supported |
+|---|---|
+| board | a gap-free D×D grid (D = 4, 6, 8, 9, 10, 12, 16) whose only locked rule is the standard `box_grid` |
+| templates | `cage`, `line` thermo / whisper / renban / between, `arrow`, `edge` kropki / xv, `digits` `parity` (odd / even cells); `count` `[n, null]` (at least n needed), `"auto"` (allowed, not required), `"all"` / `"min"` (kropki), `"tile"` (cages), an exact number only for cages with 0 givens; whisper `value` only at the generator's gap (5 on 9×9) |
+| givens | `{"count": n | [min, max]}` |
+| symmetry | one entry with `of: "givens"` |
+| where | `band` (one), `difficulty` `[lo, hi]`, `contains` (codes, optionally strict), `elements.max` |
+| limits | `time`, `seed`; `results` 1 |
+| ext | `{"io.github.silly-puppyy.pencilmark": {"solver": "logic" \| "cpsat", "grade_seconds": s}}`: generator knobs |
+
+Not supported: locked clue rules, masks / locked givens, `size` / `length` / `displaced` / `area`, upper count bounds,
+`"max"` / `"min"` difficulty, time / issues / not_contains / per-area targets, `quality`, several results, attempts.
+Showcase specs are in `docs/examples/specs/`; those the generator cannot run say so.
 
 ## Example
 ```
@@ -106,7 +130,7 @@ $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7..
   puzzle (`"rules": [3, 4]`). **reject** is `true` when any issue is a reject.
 - Fields: `grader`, `format`, `format_version`, `difficulty`, `time`, `band`, `band_index`, `contains`, `issues`, `reject`
   by default; `rate(puzzle, fields=[...])` / `pencilmark rate --fields ...` adds `time.p80`, `steps`,
-  `steps.explanation.short` / `.teach`, `se` / `se.diuf`, `describe`, `symmetry` (docs/FORMAT.md 13.1).
+  `steps.explanation.short` / `.teach`, `se` / `se.diuf`, `describe`, `symmetry` (docs/FORMAT.md 11.1).
 
 ## Other sites' labels on this scale
 Median difficulty, interquartile range in brackets. Each site rates for its own audience and neighbouring levels

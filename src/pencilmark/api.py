@@ -73,10 +73,10 @@ def load(puzzle):
 
 
 def rate(puzzle, steps=False, max_seconds=None, mode="human", se=False, fields=None, allow_guessing=False):
-    """the "sudoku-grade" card of one puzzle (a dict), with the requested fields only (docs/FORMAT.md 13.1). Default fields:
+    """the "sudoku-grade" card of one puzzle (a dict), with the requested fields only (docs/FORMAT.md 11.1). Default fields:
     pencilmark, format, format_version, difficulty, time, band, band_index, contains, issues, reject. Opt-in: "time.p80",
     "steps", "steps.explanation.short", "steps.explanation.teach", "se", "se.diuf", "describe", "symmetry".
-    steps=True / se=True (or se="diuf") are the older keyword forms. allow_guessing=True: guess where no technique applies
+    steps=True / se=True (or se="diuf") are shorthands. allow_guessing=True: guess where no technique applies
     (band "Unknown") instead of proving by full search (Trial and error, Extreme)."""
     from .export import grade, card_fields
     want = card_fields(fields, steps=steps, se=se)

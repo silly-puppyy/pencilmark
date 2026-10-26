@@ -1,8 +1,6 @@
 # pencilmark puzzle format: `sudoku-puzzle`, format_version 1
 
-Specification of the exchange format of pencilmark (2026-10-25). The background research behind the choices is in
-the format research notes; the decisions taken on its open points are listed in
-[section 16](#16-design-decisions). The JSON Schema is `docs/sudoku-puzzle.schema.json`.
+Specification of the exchange format of pencilmark. The JSON Schema is `docs/sudoku-puzzle.schema.json`.
 
 The key words MUST, MUST NOT, SHOULD and MAY are used as in RFC 2119.
 
@@ -18,12 +16,8 @@ Contents
 8. [Cosmetic layers: style and decorations](#8-cosmetic-layers-style-and-decorations)
 9. [Canonical form, fingerprint, compression](#9-canonical-form-fingerprint-compression)
 10. [Examples](#10-examples)
-11. [Legacy reading](#11-legacy-reading)
-12. [Interop strings and other formats](#12-interop-strings-and-other-formats)
-13. [Generator spec: `sudoku-spec`](#13-generator-spec-sudoku-spec)
-14. [describe(): variant name and rules](#14-describe-variant-name-and-rules)
-15. [Engine mapping and unifications](#15-engine-mapping-and-unifications)
-16. [Design decisions](#16-design-decisions)
+11. [Generator spec: `sudoku-spec`](#11-generator-spec-sudoku-spec)
+12. [describe(): variant name and rules](#12-describe-variant-name-and-rules)
 
 ---
 
@@ -46,21 +40,19 @@ Companion formats sharing the vocabulary:
 
 - `"format": "sudoku-grade"`: a grade card, with `"format_version": 1` and
   `"grader": {"name": "pencilmark", "version": "1.0.0"}` (a card is only meaningful with the engine that made it).
-- `"format": "sudoku-spec"`: a request to the generator (section 13).
+- `"format": "sudoku-spec"`: a request to the generator (section 11).
 
 Python API (package `pencilmark`):
 
 | Function | Purpose |
 |---|---|
 | `to_export(puzzle, meta=None, **meta_kw)` | any accepted input → `sudoku-puzzle` dict (canonical) |
-| `load(puzzle)` | any accepted input (this format, older files, strings, internal JSON, …) → engine `Puzzle` |
+| `load(puzzle)` | any accepted input (this format, a classic string, a file path) → engine `Puzzle` |
 | `dumps(doc, pretty=True)` | canonical JSON text (section 9.1) |
 | `fingerprint(puzzle)` | `"sha256:…"` content fingerprint (section 9.2) |
 | `validate(doc)` | strict reading checks (section 4); raises `FormatError` |
-| `to_ipuz(puzzle)` | ipuz export (section 12.3) |
-| `from_string(s)` / `to_string(puzzle, "plain" \| "sudokuwiki")` | interop strings (section 12) |
-| `describe(puzzle)` / `rules_text(d)` | `{"type", "rules"}` and its text form (section 14) |
-| `spec_from_gen(spec)` / `spec_to_gen(doc)` | `sudoku-spec` ↔ generator spec dict (section 13) |
+| `describe(puzzle)` / `rules_text(d)` | `{"type", "rules"}` and its text form (section 12) |
+| `spec_from_gen(spec)` / `spec_to_gen(doc)` | `sudoku-spec` ↔ generator spec dict (section 11) |
 
 ## 2. Envelope
 
@@ -88,7 +80,7 @@ Python API (package `pencilmark`):
 | `meta` | no | Information *about* the puzzle (2.1). Never changes how it is solved or graded. |
 | `grid` | yes | `{"rows": R, "cols": C}`: the bounding grid. No other keys. |
 | `digits` | yes | Integer D ≥ 1: cells hold the digits 1..D. (Other digit sets and display symbols are reserved for a later version; see 6.17.) |
-| `givens` | yes | Flat list of R×C entries in reading order (row by row). `0` = empty cell, `null` = no cell at that position (the gaps of multi-grid boards), otherwise the given digit as a number (so 10..D work). This is the **only** representation: no text rows, no digit strings, no per-cell objects. Interop strings (section 12) are converted when read. |
+| `givens` | yes | Flat list of R×C entries in reading order (row by row). `0` = empty cell, `null` = no cell at that position (the gaps of multi-grid boards), otherwise the given digit as a number (so 10..D work). This is the **only** representation: no text rows, no digit strings, no per-cell objects. |
 | `solution` | no | Same shape as `givens`, every existing cell filled, `null` exactly where `givens` has `null`. |
 | `candidates` | no | Given pencil marks (Sukaku): `{"r1c1": [1, 3, 7], …}`, ascending integer lists. **Semantic**: each listed cell's digit is one of its list; unlisted cells are unrestricted. Graphical cell clues (odd, even, …) are rules, never candidates. |
 | `rules` | yes | Every constraint, houses included (section 6). Nothing is implied: a board without house rules has no houses. |
@@ -112,10 +104,10 @@ maps). Common keys:
 | `url` | Link to the puzzle. |
 | `date` | ISO 8601 date. |
 | `rules_text` | The setter's own wording of the rules. Tools never overwrite it. |
-| `type` | Display name of the variant, e.g. `"Killer Sudoku"`. Variant names live **only** here; they never change the rules. `describe()` (section 14) fills it when it is empty. |
+| `type` | Display name of the variant, e.g. `"Killer Sudoku"`. Variant names live **only** here; they never change the rules. `describe()` (section 12) fills it when it is empty. |
 | `license` | Licence of the puzzle. |
 | `tags` | List of strings. |
-| `generated_from` | Fingerprint of the `sudoku-spec` that produced the puzzle (section 13). |
+| `generated_from` | Fingerprint of the `sudoku-spec` that produced the puzzle (section 11). |
 
 ## 3. Cells, outside clues and ordering
 
@@ -124,7 +116,7 @@ maps). Common keys:
 A cell is named `"r{row}c{col}"`, 1-based on the bounding grid, lowercase, no leading zeros: `"r1c1"` is the top-left
 position, `"r9c9"` the bottom-right of a classic, `"r21c21"` the bottom-right of a samurai. A cell name anywhere in a
 rule or in `candidates` MUST refer to an existing cell, one whose `givens` entry is not `null`. There are no virtual
-or outside cell names. Readers MAY accept uppercase `R1C1`; writers MUST write lowercase.
+or outside cell names, and names are always lowercase.
 
 **Reading order** is by row, then by column: `r1c1 < r1c2 < … < r1c9 < r2c1`.
 
@@ -513,8 +505,8 @@ and `decorations` only.
 
 ### 6.17 Reserved
 
-- `"type": "custom"`: reserved for the planned rule language; every format_version 1 reader refuses it. Mechanics
-  without a named rule use `table` (and `relation` with `allowed`) until then.
+- `"type": "custom"`: reserved for a rule language in a later version; every format_version 1 reader refuses it.
+  Mechanics without a named rule use `table` (and `relation` with `allowed`).
 - `digits` as an object (`{"values": [0, …, 8], "symbols": {…}}`, with an `empty` sentinel) for digit sets other
   than 1..D, and digit-selection puzzles: reserved; refused in format_version 1.
 
@@ -604,10 +596,8 @@ Coordinates are cell units `[row, col]` with the origin at the top-left corner o
   `values`, `digits`, `groups`, `each`, `counts`, `arrow`, `size`, `repeat`, `box`, `where`, `within`, `closed`),
   then `side`, then the cell keys (`origin`, `source`, `bulb`, `lines`, `cells`, `regions`, `segments`, `pairs`,
   `except`, `allowed`), then `id`, `label`, `style`.
-- Houses as described in 6.1. Rules in the order given: pencilmark's writer keeps the order of the engine's houses,
-  relations and constraints (that order can change tie-breaks and so a grade), and a `box_grid` expands to rows, then columns, then boxes; where a source's
-  house order differs, the writer uses `box_grid` with `"lines": false` / `box` rules placed to reproduce it.
-  Candidate lists ascending; `candidates` keys in reading order. Cells of sets as the source listed them (the
+- Houses as described in 6.1. Rules in the order given (a grader's tie-breaks can depend on it); a `box_grid` expands
+  to rows, then columns, then boxes. Candidate lists ascending; `candidates` keys in reading order. Cells of sets as the source listed them (the
   fingerprint sorts them).
 - Defaults omitted (`closed: false`; whisper `value` 5, entropic `groups`, modular `value` 3, lockout `value` 4 on
   9×9; they are written when D ≠ 9).
@@ -675,8 +665,7 @@ decompressed text is a normal `sudoku-puzzle` file.
   {"type": "box_grid", "origin": "r1c1", "box": [3, 3], "count": [3, 3]}]}
 ```
 
-Made by the pencilmark generator (unique, graded Easy). As an interop string (12.1):
-`79.214...8.67..............4.2..78....84.32....16..5.3..............97.2...826.39`.
+Made by the pencilmark generator (unique, graded Easy).
 
 ### 10.2 Killer (4×4)
 
@@ -825,84 +814,7 @@ below r9c2 and runs up-left.
 
 Only knight-move pairs inside one box must differ. Without `within` the rule covers the whole board.
 
-## 11. Legacy reading
-
-Readers SHOULD read these older forms; writers never emit them.
-
-| Legacy form | How it reads |
-|---|---|
-| `sudoku-puzzle` without `format_version`, and `"sudoku-puzzle/2"`: flat 0-based cell indices (`row*cols + col`), `boxes`, `units`, `regions` | Indices become cell names. `units` (rows / columns of multi-grid boards) are the row and column houses; without `units`, the full rows and columns of the bounding grid are houses (also for a jigsaw without `boxes`); `boxes` are boxes; `regions` kind `cage` are cages, other kinds regions. |
-| `sudoku-puzzle` with `format_version` 1 from the pre-release drafts (2026-10-25): houses as `box` / `row` / `column` / `cage` / `region` rules, rows and columns implied on a gap-free D×D board, old rule vocabulary. A file is read as a draft when it has no `box_grid` rule and uses an old rule type (`kropki`, `xv`, `less`, `pairs`, `parity`, `lowhigh`, `antiknight`, `frame`, `set`, …, or `total` / `circle` / `rel` keys); a draft that relied on implied rows / columns reads the same through the shape inference | Same houses with rows and columns implied, then the rules as below. |
-| Metadata at the top level (`title`, `author`, `rules_text`, `source` as a string or as `{"site", "id", "author"}`) | Moved into `meta`. |
-| `candidates` as digit strings (`{"7": "13579"}`, `{"r1c1": "137"}`) | Integer lists. (Packs from before 2026-10-25 also carried odd / even shading as candidates; those read as candidates.) |
-| Old rule types | `kropki` / `xv` / `less` → `edge`; `pairs` with `cells` → `edge`, `relation` or `negative`; `pairs` with `where` / `except` → `neighbours` or `negative`; `nonconsecutive` / `antiknight` / `antiking` → `neighbours`; `parity` / `digit_class` / `exclude` → `digits` (or `corner`); `lowhigh` → `digits` high + `negative`; `arrow` `{circle, line}` → `arrow`; `little_killer` / `sandwich` / `xsum` / `skyscraper` / `distinct_count` / `first_seen` `{cells, total / count}` → the current type with `sum` / `value` and `side`; `frame` / `rossini` `{side, index}` → `sum` frame / `rossini` + `negative`; `sum` → `sum`; `set` consecutive → `line` renban; bare `between` → `line` between; `equal_sum` → `line` zipper / region_sum / double_arrow when it is one, else `equal_sum`; `quadruple` → `contains`; `contains` (source first) → `appears`; `counting_circles` → `count` circles; `increasing` → `line` thermo; `global_entropy`, `vudoku`, `isomorphic`, `clone`, `count`, `table` keep their names. |
-| pencilmark internal JSON (`{"numbers": "...", "regions": [...], "rules": [...]}`) | Accepted by `load()`; never written as an exchange file. |
-
-## 12. Interop strings and other formats
-
-### 12.1 Plain classic string
-
-`from_string(s)` / `to_string(puzzle, "plain")`:
-
-- D×D characters in reading order; whitespace and line breaks are ignored.
-- Empty cell: `.`, `0`, `-` or `_`. Digits `1`–`9`, then `A`–`Z` for 10–35 (case-insensitive).
-- D = √length for D in {4, 6, 8, 9, 10, 12, 14, 15, 16, 20, 25}; boxes are the standard shape (4: 2×2, 6: 2 rows ×
-  3 columns, 8: 2×4, 9: 3×3, 10: 2×5, 12: 3×4, 14: 2×7, 15: 3×5, 16: 4×4, 20: 4×5, 25: 5×5).
-- `to_string(…, "plain")` writes `.` for empty cells and refuses anything but a classic with standard boxes and no
-  other rules.
-
-### 12.2 sudokuwiki.org packed strings
-
-Andrew Stuart's sudokuwiki.org solvers use packed strings ("Sudoku String Definitions", version B): a 3-character
-header (type letter, size digit, version letter) and then a fixed-width base-36 number per cell (`0-9a-z`, zero
-padded), in reading order. pencilmark reads and writes exactly the forms its validated encoder produces (validated
-against his solver, 2026-10-08 and 2026-10-25: his solutions matched ours):
-
-| Header | Puzzle | Chars / cell | Cell value |
-|---|---|---|---|
-| `S9B` | classic 9×9 | 2 | given v → v; empty → 529 (= 511 + 18) |
-| `S6B` | classic 6×6 (2×3 boxes) | 2 | given v → v; empty → 81 (= 63 + 18) |
-| `X9B` | X-sudoku (both main diagonals) | 2 | as S9B |
-| `W9B` | windoku | 2 | as S9B; read as the 4 windows (`region` kind `window`) |
-| `C9B` | colour sudoku (9 groups: same position in every box) | 2 | as S9B; read as `region` kind `disjoint` |
-| `J9B` | jigsaw 9×9 | 3 | `(box − 1) << 10 \| n`, n as S9B |
-| `L9B` | killer 9×9 | 4 | `((colour − 1) << 6 \| clue) << 10 \| n`; given v → v + 9, empty → 529 |
-| `M9B` | killer jigsaw 9×9 | 5 | `(((box − 1) << 3 \| colour − 1) << 6 \| clue) << 10 \| n` |
-| `L6C` | killer 6×6 | 4 | `((colour − 1) << 11 \| clue_or_op) << 7 \| n`; given v → v + 6, empty → 75 |
-
-- Killer cages: `colour` (1–8) is a colouring in which touching cages differ; cages are the orthogonally connected
-  components of equal colour. `clue` is the cage sum, stored in the cage's first cell in reading order. A 1-cell cage
-  with clue 0 is no cage (uncaged cells are written that way).
-- L6C stores the operator `+` as 1 in the cage's second cell (right neighbour of the first cell, else the one below).
-  Any other operator code is refused.
-- Any other cell value (placed digits in the plain forms, candidate masks) is refused when read.
-- `to_string(puzzle, "sudokuwiki")` picks the header from the structure and refuses anything else (no 6×6 jigsaw or
-  X, no killer-X or killer-windoku, nothing above 9×9).
-
-### 12.3 ipuz export
-
-`to_ipuz(puzzle)` writes ipuz 2 for the subset that maps cleanly and refuses the rest:
-
-| pencilmark | ipuz |
-|---|---|
-| one `box_grid` covering the board | kind `http://ipuz.org/sudoku#1`, `boxes: true` |
-| no boxes, rows / columns only (Latin square) | `http://ipuz.org/sudoku/latinsquare#1`, `boxes: false` |
-| + both main diagonals | `http://ipuz.org/sudoku/diagonalsudoku#1`, `zones` |
-| + `region` window | `http://ipuz.org/sudoku/hypersudoku#1`, `zones` with `rect` |
-| inferred rows / columns + `box` rules (jigsaw) | `http://ipuz.org/sudoku/jigsawsudoku#1`, `boxes: false`, one zone per box |
-| + `cage` | `http://ipuz.org/sudoku/killersudoku#1`, `cages` (`value`), `showoperators: false`, `cageborder: "dashed"` |
-
-`puzzle` and `solution` are row arrays (0 = empty); ipuz coordinates are `[col, row]`, 1-based. `meta` title /
-author / url / id / date map to `title`, `author`, `url`, `uniqueid`, `date` (`mm/dd/yyyy`). The complete pencilmark
-object goes in `"io.github.silly-puppyy.pencilmark:puzzle"`, with
-`"volatile": {"io.github.silly-puppyy.pencilmark": "puzzle,solution,zones,cages"}`. There is no ipuz import.
-
-### 12.4 Site importers
-
-f-puzzles, SudokuPad (SCL / fpuz / ctc), Penpa+ and Logic Masters links are read by `pencilmark.sources` and
-exported with `to_export`. Writing those formats is not supported.
-
-## 13. Generator spec: `sudoku-spec`
+## 11. Generator spec: `sudoku-spec`
 
 A request to the generator **is a puzzle file with blanks**: the same envelope and rule vocabulary, its own `format` (no
 puzzle reader mistakes it for a puzzle), plus four blocks that say what the result must satisfy and how long to try.
@@ -943,7 +855,7 @@ carry `"area"`: a `box_grid` `id`, a list of ids, or a cell list, limiting where
 `{"type": "line"}` / `{"type": "line", "kind": "whisper"}`. The same entries are a quality check and are reported by
 `describe()`.
 
-**`where`: targets on the card**, using the card's field paths (section 13.1): `band` (value or list), `difficulty`
+**`where`: targets on the card**, using the card's field paths (section 11.1): `band` (value or list), `difficulty`
 (`[lo, hi]` or `"max"` / `"min"`), `time` (`{"max": minutes}`), `contains` (codes that must appear; `{"codes": [...],
 "strict": true}` = as the code itself, not only as an alternative in a chip; `{"only": [...]}` to allow nothing else, and
 per-code `{"uses": n}`), `not_contains`, `issues` (`"none"` or a list of allowed codes), `elements` (`{"max": n}`: at most
@@ -960,30 +872,14 @@ true}}`). The checks are the same list the card reports as `issues`, so anything
 The run stops at the first limit; `"max"` / `"min"` targets are best-so-far and the result reports achieved vs
 requested.
 
-**`fields`**: which card fields to return with each result (section 13.1).
+**`fields`**: which card fields to return with each result (section 11.1).
 
-Generator coverage in 1.0 (`spec_to_gen` / `gen_support`): what `pencilmark.gen` supports today, everything else is
-refused with a clear message, never silently ignored:
-
-| Spec part | Supported today |
-|---|---|
-| board | a gap-free D×D grid (D = 4, 6, 8, 9, 10, 12, 16) whose only locked rule is the standard `box_grid` |
-| templates | `cage`, `line` thermo / whisper / renban / between, `arrow`, `edge` kropki / xv, `digits` `parity` (odd / even cells); `count` `[n, null]` (at least n needed), `"auto"` (allowed, not required), `"all"` / `"min"` (kropki), `"tile"` (cages), an exact number only for cages with 0 givens; whisper `value` only at the generator's gap (5 on 9×9) |
-| givens | `{"count": n | [min, max]}` |
-| symmetry | one entry with `of: "givens"` |
-| where | `band` (one), `difficulty` `[lo, hi]`, `contains` (codes, optionally strict), `elements.max` |
-| limits | `time`, `seed`; `results` 1 |
-| ext | `{"io.github.silly-puppyy.pencilmark": {"solver": "logic" \| "cpsat", "grade_seconds": s}}`: generator knobs |
-
-Not yet: locked clue rules, masks / locked givens, `size` / `length` / `displaced` / `area`, upper count bounds,
-`"max"` / `"min"` difficulty, time / issues / not_contains / per-area targets, `quality`, several results, attempts. `spec_from_gen` / `spec_to_gen` convert to and from the
-generator's `Spec` dicts. Showcase specs (super samurai with a variant per row of grids and difficulty rising per column,
-one-X-Wing classic, killer + whispers with 2 givens, picture masks, hardest 0-clue 6×6 kropki, 9 variants on one 9×9,
-16×16 with 32 cages) are written in this language in `docs/examples/specs/`; those the generator cannot run yet say so.
+pencilmark's generator implements a subset of this language and refuses the rest with a clear message, never silently
+ignoring a part; see [USAGE.md](USAGE.md#generator). Example specs are in `docs/examples/specs/`.
 
 A run's result is an ordinary `sudoku-puzzle`; `meta.generated_from` may carry the spec's fingerprint.
 
-### 13.1 Card fields and the field mask
+### 11.1 Card fields and the field mask
 
 `rate(puzzle, fields=[...])`, CLI `--fields a,b,c`. Only requested fields are computed. Default (no `fields`):
 `grader`, `format`, `format_version`, `difficulty`, `time`, `band`, `band_index`, `contains`, `issues`, `reject`.
@@ -1000,14 +896,14 @@ A run's result is an ordinary `sudoku-puzzle`; `meta.generated_from` may carry t
 | `steps` | the step-by-step route (trace) |
 | `steps.explanation.short` / `steps.explanation.teach` | explanation text at two levels: each step gets `"explanation": {"short": …, "teach": …}` with the requested levels |
 | `describe` | the `describe()` output (name + keyed rules) |
-| `symmetry` | symmetries present (same entries as the spec's `symmetry`); 1.0 detects symmetries of the givens pattern (`of: "givens"`), not of rules |
+| `symmetry` | symmetries present (same entries as the spec's `symmetry`); pencilmark detects symmetries of the givens pattern (`of: "givens"`), not of rules |
 
 `issues[].rules` are indices into the puzzle's `rules` as `to_export` writes them, e.g.
 `{"code": "barely used", "severity": "reject", "text": "thermo lines (rules 3, 4, 5, 6): used in only 0 steps of the
 solve", "rules": [3, 4, 5, 6]}`. Codes: `spike`, `trivial`, `tedious`, `uniqueness`, `trial`, `decorative`, `redundant`,
 `barely used`.
 
-## 14. describe(): variant name and rules
+## 12. describe(): variant name and rules
 
 `describe(puzzle)` names the variant and lists its rules **from the rules alone**, as an ordered map from a short name
 to one sentence, like the rule headers on Logic Masters:
@@ -1028,7 +924,7 @@ overwrites them.
 The variant names are **not part of the file format**: they appear only in `meta.type` and in `describe()` output. They
 come from a registry in code (`pencilmark/variants.py`), so they generalise across sizes (a 16×16 windoku, a 6×6 X).
 
-### 14.1 Name
+### 12.1 Name
 
 `type` = [size word] + [ONE variant name, or "Variant" when two or more variants are present] + "Sudoku".
 
@@ -1042,7 +938,7 @@ come from a registry in code (`pencilmark/variants.py`), so they generalise acro
 - A board with rows / columns but no boxes and nothing else is a "Latin Square".
 - The first key of `rules` is the base: "Sudoku" (with the size word: "Mini Sudoku", "16x16 Sudoku"), or the layout name.
 
-### 14.2 Recognition
+### 12.2 Recognition
 
 - **Placement variants** are functions of ONE grid area (a `box_grid`, or the whole board) that return the rules the variant adds there, or nothing where
   the variant is not defined for that size or box shape. For each grid area of the puzzle, every placement variant is
@@ -1053,7 +949,7 @@ come from a registry in code (`pencilmark/variants.py`), so they generalise acro
 - `box` rules (boxes that are not a regular tiling) are "Jigsaw".
 - Anything left falls back to a generic family name ("Diagonals", "Windows", "Extra Regions", …).
 
-### 14.3 Placement variants (geometric definitions)
+### 12.3 Placement variants (geometric definitions)
 
 For porting: a grid area has size n, boxes bh × bw, local rows and columns 0 … n−1.
 
@@ -1067,7 +963,7 @@ For porting: a grid area has size n, boxes bh × bw, local rows and columns 0 �
 | Girandola | n = 9 | one `region`: (0,0) (0,8) (1,4) (4,1) (4,4) (4,7) (7,4) (8,0) (8,8) |
 | Disjoint Groups (Colour) | boxes | bh·bw `region`s: for each in-box position (a, b), the cells (br + a, bc + b) of every box |
 
-### 14.4 Rule families
+### 12.4 Rule families
 
 In registry order (the order of the `rules` keys): Killer (`cage`), Little Killer, Sum Frame, Sum (`sum` group /
 corner), Sandwich, X-Sums, Skyscrapers, Rossini (+ its negative), 123 (`first_seen`), Count Different, Arrow, Thermo,
@@ -1080,93 +976,7 @@ Anti-Knight, Anti-King, Non-Consecutive, Neighbours (generic), Relation, Custom 
 (`candidates`). Each has one sentence, filled from its rules (whisper gap, sandwich digits, scope "within the same box",
 "All X's and V's are given." for a negative, …).
 
-### 14.5 Generator presets
+### 12.5 Generator presets
 
-The placement functions are also generator presets: `variants.preset_rules("windoku", 16)` gives the 9 windows of a
-16×16 board. The current generator places only its own element kinds (cages, lines, arrows, dots, parity cells), so
-generating placement variants ("argyle", "super samurai", "windoku", "killer x") from these presets is the next step;
-`sudoku-spec` files will name them the same way.
-
-## 15. Engine mapping and unifications
-
-The format is a transport layer: for every puzzle, the engine `Puzzle` built from a file equals the one the importers
-build (groups and their order, relations, constraints, domains, givens, coordinates), except that each mechanic has
-**one** engine expansion regardless of its source. The expansions:
-
-| Rule | Engine |
-|---|---|
-| `box_grid` | `row` / `col` / `box` groups of its area (rows, then columns, then boxes; an already present house is skipped); with `"lines": false` boxes only |
-| inferred lines | `row` / `col` groups (rows top to bottom, then columns), placed before the first `box` rule |
-| `box` / `row` / `column` | `box` / `row` / `col` groups |
-| `region` | groups of kind `diag` (diagonal), `window` (window), `region` (the other kinds) |
-| `cage` | a `cage` group with its total |
-| `line` | `{"type": "line", "kind": …}` (whisper `value` → `k`; closed: the first cell repeated at the end); `double_arrow` → `equal_sum` `[[ends], middle]`; `lockout` → `diffge` on the ends plus a 3-cell table per middle cell |
-| `arrow` | one `arrow` constraint per shaft |
-| `edge` | relations `diff 1` / `ratio 2` (kropki), `sum 10` / `sum 5` (xv), `lt` (less); difference / sum / product / ratio: a 2-cell table of the allowed pairs (unification 8) |
-| `corner` | battenburg: a 4-cell table; mathrax: a 2-cell table per diagonal pair (TL–BR, then TR–BL), even / odd: a `digits` clue; exclude: a `digits` exclude clue |
-| `sum` | `little_killer` / `sum` constraints |
-| outside clues | `sandwich` / `xsum` / `skyscraper` / `first_seen` constraints; rossini: `lt` relations and, with its negative, 3-cell tables |
-| `neighbours` | `neq` / `nonconsec` / the operator's relations per pair |
-| `relation` | one relation per pair |
-| `negative` | the complementary relation on every uncovered pair (`nonconsec` for white kropki, `notratio`, `notsum`, `notdiff`, `allowed`), tables for rossini / battenburg, domains for digits |
-| `digits`, `candidates` | domain masks (digits clues are also kept as cell clues) |
-| `contains` / `appears` / `count` / `distinct_count` / `clone` / `isomorphic` / `global_entropy` / `equal_sum` / `vudoku` / `table` | the engine constraints and named rules of the same mechanics |
-
-Unifications made by format_version 1. Each one changes the engine form that some importer used to produce. Card deltas
-were measured on real puzzles before adoption (see the CHANGELOG).
-
-1. Bare `set` consecutive constraints (SudokuPad / coach renbans) → `line` renban.
-2. Bare `between` constraints → `line` between.
-3. Bare `equal_sum` constraints that are a zipper or a region-sum line → that `line` kind.
-4. `increasing` → `line` thermo; `dutch_whisper` → `line` whisper with value 4; `kropki_chain` lines → kropki edges.
-5. Jigsaw pieces stored as `region` groups (f-puzzles custom regions, coach, LMD) → `box` groups.
-6. f-puzzles disjoint groups (kind `extra`) → kind `region`; SudokuPad explicit-house boards (kinds `house` / `partial`)
-   → `row` / `col` / `box` / `region` by shape.
-7. "Not consecutive" relations of a white-kropki negative (`notdiff 1`) → `nonconsec` (identical to the solver).
-8. Numbered pair clues (edge `difference` / `sum` / `product` / `ratio`) and `corner` `mathrax` clues expand to 2-cell
-   tables of the allowed digit pairs (in digit order; equal digits allowed only when the two cells share no house) for
-   every source: the sudoku.today translator's form, whose pricing fits players' times (as pair relations, products /
-   quotients came out about +2.6 difficulty and fitted worse). Pair relations of these kinds from other importers
-   (f-puzzles differences / ratios) become tables. A 2-cell table equal to a clue's digit pairs is written as that clue
-   (first match in the order difference, sum, ratio, product: a 7:6 quotient and a ×42 product have the same pairs);
-   kropki dots, XV and inequality signs stay pair relations. (`exchange.NUMBERED_PAIR_FORM = "relation"` switches to pair
-   relations.)
-9. `sum` constraints with distinct digits whose cells share no house → `cage` groups.
-10. A house listed twice (sudoku.today's extra-region translations listed every row, column and box twice) is one house.
-11. Negative and neighbour rules expand in board order (cell by cell); importers that listed the pairs in another order
-    (horizontal pairs first, or string-sorted) now get that order.
-12. Named multi-grid layouts (puzzle JSON `layout`): cells are numbered in board reading order instead of grid by grid.
-
-Not unified: sudoku.today "parity lines" mean *same parity along the line*, a different mechanic from the `parity` line
-(alternating); they stay 2-cell tables until `custom` exists.
-
-## 16. Design decisions
-
-Taken on 2026-10-25 on the open points of the research report and the draft:
-
-- Houses (round 3, 2026-10-26): `box_grid` (`box` + `count`, consistent by construction) states a grid area's boxes,
-  rows and columns; rows / columns of other cells are inferred from the shape (straight runs of D cells); a jigsaw is
-  its grid plus `box` rules; explicit `row` / `column` only for bent / wrapping houses; `infer_lines: false` opt-out.
-  (`subgrid` from round 2 is gone.)
-- Outside clues are anchored by `side` and `cells[0]`; no virtual cells. Where the clue is drawn is the renderer's
-  business.
-- Explicit pairs that are not edge clues use `relation`, with readable operator names (5.1).
-- Rule order is kept in files; only the fingerprint sorts.
-- A cage is always a no-repeat cage group; repeat-allowed sums are `sum` rules.
-- One engine expansion per mechanic (section 15).
-- Named rules the engine already has keep their names (`vudoku`, `isomorphic`, `first_seen`, `count` circles,
-  `equal_sum`, `appears`, `double_arrow`, `lockout`); new mechanics wait for `custom`.
-- `contains` is one type with `digits`.
-- Digit sets other than 1..D and display symbols are reserved.
-- No uniqueness flag. No language maps in text fields. `label` is optional.
-- Low / high clues require `split`.
-- Negatives: positions carrying any clue of the family are exempt; adjacency only within one `box_grid` area.
-- Number keys: `sum` for sums of digits, `value` otherwise.
-- The fingerprint is not symmetry-invariant in 1.0.
-- sudokuwiki windoku reads as the 4 windows.
-- Edge clues are orthogonally adjacent pairs only.
-- sudoku.today types without a named rule (edge difference, maximin, minimax, makodoku, ten-eleven, answer-8, the
-  greater-than-kropki extra rule, same-parity lines) stay `table` / `relation` `allowed` until `custom` exists.
-- `sudoku-spec`: the format and the converter now; fixed rules beyond the board and givens masks later.
-- `describe()`: size word + one variant name or "Variant" + "Sudoku"; rules as a short-name → sentence map; the variant
-  registry is code, not part of the format; fills `meta.type` / `meta.rules_text` only when empty.
+The placement functions double as presets: `variants.preset_rules("windoku", 16)` gives the 9 windows of a 16×16
+board.

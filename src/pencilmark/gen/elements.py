@@ -199,7 +199,7 @@ def to_json(b, givens, els, sol=None, title=None):
             d["rules"].append({"type": "line", "kind": kind, "k": whisper_gap(b.n), "cells": [rc(c) for c in cells]})
         elif kind in ("thermo", "renban", "between"):
             d["rules"].append({"type": "line", "kind": kind, "cells": [rc(c) for c in cells]})
-        elif kind == "parity":                          # graphical rule (2026-10-25), not candidates
+        elif kind == "parity":                          # graphical rule, not candidates
             d["rules"].append({"type": "parity", "parity": "odd" if x else "even", "cells": [rc(cells[0])]})
         elif kind == "kropki":
             d["rules"].append({"type": "kropki", "color": x, "cells": [rc(c) for c in cells]})

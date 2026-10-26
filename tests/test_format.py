@@ -92,9 +92,9 @@ def test_canonical_idempotent():
         assert X.dumps(d1) == X.dumps(d2), f"pack line {n}: canonical form not stable"
 
 
-def test_legacy_files_still_read():
-    for v in json.load(open(FIXTURES)):            # the fixtures are older "sudoku-puzzle/2" files
-        assert v["puzzle"]["format"] == "sudoku-puzzle/2"
+def test_fixtures_are_valid():
+    for v in json.load(open(FIXTURES)):
+        X.validate(v["puzzle"])
         assert pencilmark.load(v["puzzle"]).N >= 16
 
 
@@ -128,6 +128,8 @@ def test_strict_refusal():
     bad = copy.deepcopy(d); bad["rules"].append({"type": "edge", "kind": "xv", "letter": "X", "cells": ["r1c1", "r1c10"]})
     _refuses(bad, "does not exist")
     bad = copy.deepcopy(d); bad["grid"]["implied_houses"] = False; _refuses(bad, "grid")
+    bad = dict(d, format="sudoku-puzzle/2"); _refuses(bad, "not a sudoku-puzzle")
+    bad = copy.deepcopy(d); bad["candidates"] = {"R1C3": [1, 2]}; _refuses(bad, "bad cell name")
     bad = copy.deepcopy(d); bad["rules"][0]["count"] = [2, 3]; _refuses(bad, "box_grid with lines")
     bad = copy.deepcopy(d); bad["rules"].append({"type": "subgrid", "size": 9, "origin": "r1c1"}); _refuses(bad, "unknown rule type")
     bad = copy.deepcopy(d); bad["rules"].append({"type": "sandwich", "sum": 5, "side": "top", "cells": ["r2c1", "r3c1"]})
@@ -323,7 +325,7 @@ def test_describe_names():
 
 # ---------------------------------------------------------------------------------------------------------- sudoku-spec
 def test_card_fields():
-    """field mask and the issues / reject shape (FORMAT.md 13.1)"""
+    """field mask and the issues / reject shape (FORMAT.md 11.1)"""
     c = pencilmark.rate(CLASSIC)
     assert list(c) == ["format", "format_version", "grader", "difficulty", "time", "band", "band_index", "contains", "issues",
                        "reject"], list(c)

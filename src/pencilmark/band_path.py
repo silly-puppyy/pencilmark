@@ -17,8 +17,8 @@ import copy
 from . import solver as S, cbackend as CB, export as E2
 
 BANDS = E2.BANDS
-FORCING_FALLBACK = True     # R6: when no listed move exists, take the solver's forcing step (Extreme)
-FISH_CAP = True            # below Hard, list finned fish of size 2 only (larger are Hard; 2026-10-26 speed)
+FORCING_FALLBACK = True     # when no listed move exists, take the solver's forcing step (Extreme)
+FISH_CAP = True            # below Hard, list finned fish of size 2 only (larger are Hard; speed)
 FORCING_TECHS = {S.FORCING, S.DYN_FORCING, S.NESTED_FORCING, S.NISHIO, S.POM, S.TRIAL}
 
 # most specific shape of an engine move -> (code, display name, band)
@@ -100,8 +100,7 @@ def classify(m, p):
     return code, name, band if band is not None else 9
 
 
-# techniques that reason about variant rules: only switched on when the puzzle has such rules (user, 2026-10-15:
-# "per-variant techniques should only be considered for their respective variants"). Fireworks and Gurth's theorem
+# techniques that reason about variant rules: only switched on when the puzzle has such rules (per-variant techniques are only considered for their variants). Fireworks and Gurth's theorem
 # are classic techniques and stay on everywhere.
 VARIANT_ANY = ["ConstraintSingle(direct)", "LineSingle(direct)", "PairwiseConstraint", "TableCombination", "LineRange",
                "LineScan", "LineClass", "SandwichCombination", "XSumCombination", "SkyscraperCombination",
@@ -145,7 +144,7 @@ def variant_gate(p):
 _CACHE = None       # position -> state_moves, shared by the many routes of one contents() call (same openings)
 
 
-LAZY = False   # REJECTED 2026-10-22 (v3 log): not exact (covers pricing, techniques that need others in the same call)
+LAZY = False   # off: not exact (covers pricing, techniques that need others in the same call)
 _SHAPED = set(E2.SPLIT) | {"MentalChain(direct)", "Swordfish", "Jellyfish"}   # classify() may give these a lower shape
 
 
@@ -254,7 +253,7 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
             allowed = {t for t in human if tband[t] <= b}
             if not allowed:
                 continue
-            # LAZY (2026-10-22, user idea): techniques in lower-bound order of the pick key (band, study order); stop
+            # LAZY: techniques in lower-bound order of the pick key (band, study order); stop
             # once the best move found beats every technique not yet run -- the expensive ones (RuleIntersection,
             # SumAlgebra ...) only run when nothing simpler exists. rng mode keeps the one-call form.
             if LAZY and rng is None:
@@ -270,7 +269,7 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
             for k_, lbk in enumerate(tiers):
                 run = groups[lbk] if lbk is not None else allowed   # each group runs once; its moves are merged
                 enabled |= run
-                # below Hard only size-2 finned fish can be picked (larger ones are Hard): don't list them (windoku 2026-10-26:
+                # below Hard only size-2 finned fish can be picked (larger ones are Hard): don't list them (windoku:
                 # sizes 3-4 were 90% of a listing over 58 houses)
                 Pb = dict(P, fish_max_n=2) if b <= 2 and FISH_CAP else P
                 key = (tuple(vals), tuple(cand), frozenset(run), b <= 2) if _CACHE is not None else None
@@ -301,9 +300,9 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
                 pick = min(cands, key=lambda x: x[0])
                 break
         if pick is None and FORCING_FALLBACK and P.get("r6_extreme", True) and rng is None and max_band >= 5:
-            # R6 (2026-10-26): nothing listed in any band -> one solver step from this state. The solver's stuck-fallback
+            # nothing listed in any band -> one solver step from this state. The solver's stuck-fallback
             # tries forcing chains / dynamic / nested forcing / Nishio / pattern overlay (state_moves never lists them);
-            # such a step is an Extreme move. A guess means really stuck -> Unknown as before.
+            # such a step is an Extreme move. A guess means really stuck -> Unknown.
             st1, _ = CB.solve(q, P, cpuzzle=cp, cand=mask, max_steps=4, assume_unique=False)   # first steps may be notes
             x = next((y for y in st1 if y.move.feat[0] not in notes), None)
             # guessing off (default): the solver's last resort is a proof by full search (TRIAL), an Extreme step too
@@ -371,7 +370,7 @@ def _check(bp, code, ban, extra=()):
     going to a harder technique or a generalisation of `code` -- counts only grow, so the verdict is final).
     The prefix (base route up to the first banned step) is NOT used by contents(): a whole-technique ban also removes
     composite moves built on it (a "notes in the head" single using innies / outies is labelled MSI), so a banned
-    route can differ before the banned code's first use (found 2026-10-15 on LMD x1zh931q9w)."""
+    route can differ before the banned code's first use."""
     B = bp["band_index"]
     keep = (set(bp["profile"]) - {code}) | set(extra)
     b = max(st["band"] for st in bp["steps"] if st["code"] == code)
@@ -551,7 +550,6 @@ def explain_steps(p, P, steps):
     from . import explain as E
     E.derived(p)        # build the explainer's derived puzzle from the ORIGINAL p (its domains are rules); each step's copy
                         # inherits it -- otherwise a copy builds it from its candidate masks and reads them as cell rules
-                        # (found 2026-10-22: explanations were right only when card.specific_names had run first)
     P = dict(P or {}, search="human")
     notes = set(getattr(S, "NOTE_TECHS", (S.TAKE_NOTES,)))
     rev = {v: k for k, v in S.TECH_NAMES.items()}

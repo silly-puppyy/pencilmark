@@ -235,7 +235,7 @@ void Solver::class_count(MoveBuf& out) {
     // arithmetic rules only: tables / digit sets are digit-relabelling equivariant, parity / size classes
     // mean nothing for them (and would make the grade depend on the digit names)
     for (const NConstraint& k : p.nary) value_rules |= k.type != NT_SAMESET && k.type != NT_TABLE && k.type != NT_DIGITSET;
-    // 2026-10-24 experiment (CSOLVER_TABLE_CLASSES=1): tables written from digit VALUES (sum < 10, product 8, parity checkerboards)
+    // CSOLVER_TABLE_CLASSES=1: tables written from digit VALUES (sum < 10, product 8, parity checkerboards)
     // are not relabelling-equivariant; humans count parity / size classes on them (battenburg, makodoku, answer-8)
     static const bool table_classes = getenv("CSOLVER_TABLE_CLASSES") && getenv("CSOLVER_TABLE_CLASSES")[0] == '1';
     if (table_classes)
@@ -378,7 +378,7 @@ void Solver::domino(MoveBuf& out) {
             doms.push_back(d);
         }
     }
-    // 2026-10-24 experiment (CSOLVER_TABLE_DOMINO=1): 2-cell table rules are dominoes too (quotient / product / answer-8 clues are
+    // CSOLVER_TABLE_DOMINO=1: 2-cell table rules are dominoes too (quotient / product / answer-8 clues are
     // written as tables; humans read them as digit pairs: "a quotient >= 5 contains a 1"). Allowed pairs = the table rows.
     static const bool table_domino = getenv("CSOLVER_TABLE_DOMINO") && getenv("CSOLVER_TABLE_DOMINO")[0] == '1';
     if (table_domino)

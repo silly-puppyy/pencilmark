@@ -112,7 +112,7 @@ struct Move {
     bool has_desc = false;  // structural descriptors (desc.cpp): log branches, log depth, search, uniqueness,
     double desc[8] = {0, 0, 0, 0, 0, 0, 0, 0};  // counting, contradiction, held, coverage -- exported, not priced
     double scan = 0.0;  // desc.cpp: patterns of this kind a human scans at the state (raw count behind desc[2])
-    double enumv = 0.0;  // D5 (2026-10-17): log1p(max consistent assignments of the SUM rule instances the move touches)
+    double enumv = 0.0;  // log1p(max consistent assignments of the SUM rule instances the move touches)
     int pc = -1, pv = 0;  // placement
     int el_off = 0, el_n = 0;
     int nk = NM_NONE, na = 0, nb = -1;  // nb: second group / cage (-1 = none)
@@ -235,11 +235,11 @@ struct Params {
     double gamma = 0.5, alpha = 1.0;
     std::vector<double> theta;  // meta_theta (empty = per-technique B path)
     std::vector<double> theta_full;  // params meta_theta_full: 18-19 weights pricing every technique (empty = off)
-    double locality = 0.0;  // params locality (2026-10-18): route choice by price x exp(locality x log2(1 + distance to the previous step)); 0 = off
+    double locality = 0.0;  // params locality: route choice by price x exp(locality x log2(1 + distance to the previous step)); 0 = off
     double theta_enum = 0.0;  // params meta_theta_enum (D5): weight on Move::enumv inside the meta_theta_full price
-    std::vector<double> tech_obsc;       // params tech_obscurity (2026-10-20): per-technique log-price offset = cultural familiarity /
+    std::vector<double> tech_obsc;       // params tech_obscurity: per-technique log-price offset = cultural familiarity /
                                          // obscurity (a property of the technique, measured from human outcomes); indexed by tech code
-    std::vector<double> theta_interact;  // params meta_theta_interact (D6, 2026-10-17): 3 weights on log depth x log cells,
+    std::vector<double> theta_interact;  // params meta_theta_interact 3 weights on log depth x log cells,
                                          // log depth x links, log depth x log branches (added to the meta_theta_full sum)
     bool has_theta = false;
     double theta_ac = 0.0;
@@ -707,18 +707,18 @@ private:
     void common_groups(const std::vector<int>& poss, int discard, std::vector<int>& out);
     bool contradicts(int c, int v, std::vector<int>* log = nullptr);
   public:
-    // generic refutation profile (refute.cpp, 2026-10-20): technique-free difficulty
+    // generic refutation profile (refute.cpp): technique-free difficulty
     void refute_profile(const std::vector<std::pair<int, int>>& givens, const std::vector<int>& sol, int max_stuck,
                         std::vector<std::array<int, 5>>& out);
     bool basic_propagate(int& placed);
     int trial_depth(int c, int v);
-    int refK = 0;                                   // 2026-10-21 knowledge ladder: 0 singles+relations+GAC, 1 + locked candidates + pairs,
+    int refK = 0;                                   // knowledge ladder: 0 singles+relations+GAC, 1 + locked candidates + pairs,
     std::vector<std::vector<int>> k_nbr;            // 2 + triples (over all houses); houses sharing >= 2 cells
     std::vector<std::vector<char>> k_in;            // house membership per cell
     std::vector<char> k_ok;                         // houses the ladder may use (refK >= 10: standard geometry only)
     void k_prepare();
     int k_step();                                   // -1 contradiction, 0 nothing, 1 progress
-    // finding-cost profile (2026-10-21, 'lift medium'): per singles-stuck point (scan space, productive K1 patterns, unlocking patterns,
+    // finding-cost profile per singles-stuck point (scan space, productive K1 patterns, unlocking patterns,
     // fallback flag, placements released)
     void finding_profile(const std::vector<std::pair<int, int>>& givens, const std::vector<int>& sol, int max_stuck,
                          std::vector<std::array<int, 5>>& out);

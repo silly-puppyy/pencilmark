@@ -93,8 +93,8 @@ double Params::difficulty(const Move& m, const Cover* covers, int D) const {
             s.add(theta_interact[1] * dp * x[4]);
             s.add(theta_interact[2] * dp * br);
         }
-        if (m.tech >= 0 && m.tech < (int)tech_obsc.size()) s.add(tech_obsc[m.tech]);   // obscurity (2026-10-20)
-        d = std::exp(std::min(s.value(), 6.907755278982137)) * size(D);   // cap log price at log(1000) (2026-10-18): extreme
+        if (m.tech >= 0 && m.tech < (int)tech_obsc.size()) s.add(tech_obsc[m.tech]);   // obscurity
+        d = std::exp(std::min(s.value(), 6.907755278982137)) * size(D);   // cap log price at log(1000): extreme
         if (is_direct(m.tech))                                              // descriptors overflowed exp() to inf
             for (int i = 0; i < m.cov_n; ++i) {
                 const Cover& c = covers[m.cov_off + i];
@@ -234,7 +234,7 @@ std::vector<Tier> default_notes_tiers() {
          S("linescan", [](Solver& s, MoveBuf& b) { s.line_scan(b); })},
         {S("locked", [](Solver& s, MoveBuf& b) { s.locked(b); }),
          // set equivalences (law of leftovers, Phistomefel, set theory) compete on price with pointing / claiming
-         // (a one-line-vs-one-box LoL is pointing in disguise; CHECKLIST D1b)
+         // (a one-line-vs-one-box LoL is pointing in disguise)
          S("leftovers", [](Solver& s, MoveBuf& b) { s.nary_combination(b, 1); }),
          S("pairarc", [](Solver& s, MoveBuf& b) { s.pairarc(b); }),
          S("domino", [](Solver& s, MoveBuf& b) { s.domino(b); }),
@@ -1854,7 +1854,7 @@ static int combo_tech(int type, int line_kind = -1) {
 }
 
 // plain consistency result, cached per constraint while its domains are unchanged
-// cross-call cache (2026-10-17 speed): nary_gac is a pure function of (constraint, domains, requirement, D), but every
+// cross-call cache: nary_gac is a pure function of (constraint, domains, requirement, D), but every
 // state_moves / solve call builds a new Solver whose gcache starts empty -- band_path re-enumerated the same big rules
 // hundreds of times per puzzle. Thread-local (featurize threads), keyed by (puzzle uid, constraint, requirement, full
 // domains: exact), bounded (cleared when it reaches GAC_XCACHE_MAX entries).
@@ -3021,7 +3021,7 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
             for (size_t i = 1; i < buf.moves.size(); ++i)
                 if (key(buf.moves[i]) < key(buf.moves[best])) best = (int)i;
         }
-        // params locality (2026-10-18): a human stays near the last step while it pays; route choice by
+        // params locality: a human stays near the last step while it pays; route choice by
         // price x exp(locality x log2(1 + Chebyshev distance)), distance in board coordinates (multi-grid aware); the
         // recorded step price is unchanged. locality = 0: the deterministic path above, untouched.
         auto mpos = [&](const Move& m, double& r, double& c) {
@@ -3644,7 +3644,7 @@ std::vector<std::vector<int>> brute_solve(const Puzzle& p, const std::vector<std
     }
     b.rec(0);
     if (complete) *complete = !(b.limited && (int)b.sols.size() < limit);
-    if (nodes_out) *nodes_out = b.nodes;  // (b.work: rule-check effort, kept for experiments)
+    if (nodes_out) *nodes_out = b.nodes;  // (b.work: rule-check effort)
     return b.sols;
 }
 

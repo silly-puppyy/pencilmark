@@ -34,7 +34,7 @@ def ref_difficulty(P):
 
 def level(G, D, P):
     """Grade difficulty G on a D-digit puzzle -> points (0 = a full house).
-    With P["level_slope"] (joint_refit): +1 point = the odds that a solver gives up double
+    With P["level_slope"]: +1 point = the odds that a solver gives up double
     (logit(abandon) = a + slope * G, fitted on real abandonment). Otherwise +1 point =
     the bottleneck takes 2x longer to spot (race model)."""
     sc = Scorer(P)
@@ -68,7 +68,6 @@ def move_difficulty(st, P):
     """One step's move difficulty on the difficulty head."""
     from .scoring import meta_vector, meta_priced
     dth = P.get("difficulty_dtheta") if head else None   # head=False: no per-move difficulty-head multiplier
-    # (2026-10-10: v4e's head scrambles classics -- Spearman with fed time 0.36 with it, 0.82 without)
     cap = P["B"].get(S.GUESS, float("inf"))
     d = min(st.move.d, cap)
     meta = st.move.feat[4] if len(st.move.feat) > 4 else None
@@ -79,11 +78,10 @@ def move_difficulty(st, P):
 
 def difficulty_grade(steps, P, tau=None, cap=True, head=True):
     """Soft-bottleneck grade on the DIFFICULTY head: each chosen move's race difficulty
-    times exp(dtheta . meta) (joint_refit --two-head; absent -> the time-head grade).
+    times exp(dtheta . meta) (absent -> the time-head grade).
     cap=False: no ceiling at the guess price (the card score stays open-ended above Extreme)."""
     from .scoring import meta_vector, meta_priced
     dth = P.get("difficulty_dtheta") if head else None   # head=False: no per-move difficulty-head multiplier
-    # (2026-10-10: v4e's head scrambles classics -- Spearman with fed time 0.36 with it, 0.82 without)
     cap = P["B"].get(S.GUESS, float("inf")) if cap else float("inf")
     ds = []
     for st in steps:
@@ -98,7 +96,7 @@ def difficulty_grade(steps, P, tau=None, cap=True, head=True):
     dmax = max(ds)
     w = sum(math.exp((d - dmax) / tau) for d in ds)
     g = dmax + tau * math.log(max(w * P["ref_steps"] / len(ds), 1.0))
-    # amount of hard reasoning (joint_refit v5): log(1 + summed excess over a Hidden Single), weighted by
+    # amount of hard reasoning: log(1 + summed excess over a Hidden Single), weighted by
     # the fitted difficulty_hard_w. Singles add nothing, so routine work (tediousness) stays out.
     hw = P.get("difficulty_hard_w", 0.0)
     if hw:
@@ -286,7 +284,7 @@ BAND_MEANING = {
     "Very Hard": "expert techniques: alternating inference chains, nice loops, almost locked sets, case analysis",
     "Extreme": "the limit of human solving: ALS chains, death blossom, bounded case splits",
 }
-# technique -> band: the accepted proposal (docs/technique_bands_proposal.md, 2026-10-13). FAMILIES above stay the
+# technique -> band: the band assignment. FAMILIES above stay the
 # engine's structural groups (pricing / features); only the band assignment changed. X-Chain, FinnedFish and LawOfLeftovers
 # sit at their lower (Medium) level here; pencilmark/export rates long X-Chains, larger finned fish and Phistomefel-type
 # set theory Hard by pattern name.
@@ -306,7 +304,7 @@ for _band, _names in {
         "WXYZ-Wing", "XY-Chain", "MultiColouring", "3DMedusa", "ChuteRemotePairs", "MentalChain(direct)", "SumAlgebra",
         "WeightedSums", "BandLogic", "Fireworks", "GurthSymmetry", "ColourAlgebra", "ComboPositions", "CliqueHouse",
         "LineSets", "LineClues"],
-    # R6 (user 2026-10-26): bounded case splits and ALS chains are within the expert hobby limit (Very Hard); Extreme =
+    # bounded case splits and ALS chains are within the expert hobby limit (Very Hard); Extreme =
     # borderline-computer logic: forcing chains / nets, Nishio, pattern overlay, trial and error (the no-guess last resort)
     4: ["AIC", "NiceLoop(discontinuous)", "ALS-XZ", "ALS-XY-Wing", "SueDeCoq", "AlignedPairExclusion", "CaseAnalysis",
         "ALS-AIC", "DeathBlossom", "EitherWay", "WhatIf", "ShortTrial"],

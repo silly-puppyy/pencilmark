@@ -185,7 +185,7 @@ void Solver::gfish(MoveBuf& out, int n, bool finless, bool finned) {
                 }
                 if (n > 2 && (base_types & 3) == 3) return;  // would be mutant
                 // n > 2 allows basic / franken only: rows-only bases (no columns) can't take row covers, and the
-                // reverse -- exact pre-filter of covers the leaf would reject as mutant (windoku: 2026-10-26 speed)
+                // reverse -- exact pre-filter of covers the leaf would reject as mutant (windoku speed)
                 int ban_line = -1;
                 if (n > 2 && (base_types & 1) && !(base_types & 2)) ban_line = 0;
                 if (n > 2 && (base_types & 2) && !(base_types & 1)) ban_line = 1;

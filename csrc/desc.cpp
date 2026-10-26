@@ -1,4 +1,4 @@
-// Structural descriptors for every move (CHECKLIST D0): the proof's shape, not the technique's name, so a
+// Structural descriptors for every move: the proof's shape, not the technique's name, so a
 // price model can do without per-technique numbers. Exported (not used in pricing):
 //   desc[0] log(branches)  cases the argument holds open at once (1 -> 0)
 //   desc[1] log(depth)     longest implication chain of the proof (1 -> 0)

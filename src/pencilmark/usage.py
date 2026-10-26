@@ -1,4 +1,4 @@
-"""Variant usage and balance (card concepts, CHECKLIST H4).
+"""Variant usage and balance (card concepts).
 
 rule_usage(puzzle, params): solve with explanations and record, per step, which rule ELEMENTS justified it --
 a diagonal, a cage, a dot / pair relation, a line (by kind), an arrow, extra regions, shading -- so a card can

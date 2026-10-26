@@ -8,7 +8,7 @@
     fingerprint(doc) -> "sha256:..."                    content fingerprint (FORMAT.md 9.2)
 
 The format is a transport layer: read(write(p)) builds the same engine structure as p (groups in order, relations and
-constraints in order, domains, givens, coordinates), except for the unifications listed in FORMAT.md section 15 (each
+constraints in order, domains, givens, coordinates), except for the normalisations listed in docs/ENGINE.md (each
 mechanic gets ONE engine expansion). The writer therefore works from the engine structure directly and keeps the order of
 relations and constraints (the order changes cards).
 """
@@ -27,15 +27,12 @@ FORMAT_VERSION = 1
 SCHEMA_URL = "https://silly-puppyy.github.io/pencilmark/schema/sudoku-puzzle-1.json"
 
 
-# unification 8 (FORMAT.md 15): 2-cell tables that are an edge clue (sudoku.today differences / sums / products / quotients)
-# and mathrax corner tables are written as edge / corner rules, i.e. read back as pair relations. Measured 2026-10-25
-# products / quotients cards +2.6 difficulty and a worse fit to players' times.
-# False keeps such tables as "table" rules (engine form unchanged).
+# normalisation 8 (ENGINE.md): 2-cell tables that are an edge clue (differences / sums / products / quotients) and mathrax
+# corner tables are written as edge / corner rules. False keeps such tables as "table" rules.
 UNIFY_TABLE_EDGES = True
 # Engine form of NUMBERED pair clues (edge difference / sum / product / ratio, mathrax corners) -- one form for every source.
-# "table" (2026-10-25, user decision): 2-cell tables of the allowed digit pairs, the form whose pricing fits players' times
-# (sudoku.today products / quotients bias +1.22 / +1.60 log2 as pair relations vs +0.62 / +0.54 as tables); kropki, XV and
-# less stay pair relations (their calibrated path). "relation" = generic pair relations. Revisit when R7 fixes pair pricing.
+# "table": 2-cell tables of the allowed digit pairs, the form whose pricing fits players' times; kropki, XV and less stay
+# pair relations (their calibrated path). "relation" = generic pair relations.
 NUMBERED_PAIR_FORM = "table"
 
 
@@ -49,7 +46,7 @@ class NotSupportedError(ValueError):
 
 
 # ---------------------------------------------------------------------------------------------------------------- cells
-_CELL = re.compile(r"[rR](\d+)[cC](\d+)")
+_CELL = re.compile(r"r([1-9]\d*)c([1-9]\d*)")
 
 
 def cell_name(r, c):
@@ -328,7 +325,7 @@ def read_houses(rules, B, infer=True):
     return out, areas
 
 
-# battenburg tables (sudoku.today's engine form, kept: TL != TR, TL != BL, TR != BR, BL != BR included)
+# battenburg tables (TL != TR, TL != BL, TR != BR, BL != BR included)
 def _cb(t):
     p = [x % 2 for x in t]
     return p[0] == p[3] and p[1] == p[2] and p[0] != p[1]
@@ -881,7 +878,7 @@ class _ReadCtx:
         return any(a in h and b in h for h in self.houses)
 
     def pair_table(self, a, b, ok):
-        """numbered pair clue as a 2-cell table (sudoku.today translator form: product order, equal digits only when the cells
+        """numbered pair clue as a 2-cell table (product order, equal digits only when the cells
         share no house)"""
         same = self.share_house(a, b)
         D = self.D
@@ -1164,7 +1161,7 @@ class _Writer:
 
     # ---------------------------------------------------------------- groups
     def eff_groups(self):
-        """(kind, cells, total) per engine group, with the unified kinds (FORMAT.md 15: jigsaw pieces stored as regions ->
+        """(kind, cells, total) per engine group, with the normalised kinds (ENGINE.md: jigsaw pieces stored as regions ->
         box; SudokuPad explicit houses -> row / column / box / region)."""
         p, B, D = self.p, self.B, self.D
         gs = [g for g in p.groups if not (self.key and set(g.cells) & self.key)]
@@ -1231,7 +1228,7 @@ class _Writer:
         while i < len(gs):
             kind, cells, total, complete = gs[i]
             if kind in ("row", "col", "box") and frozenset(cells) in seen:
-                self.merged_duplicates += 1            # unification: a house listed twice is one house
+                self.merged_duplicates += 1            # normalisation: a house listed twice is one house
                 i += 1
                 continue
             hit = None
@@ -1587,12 +1584,12 @@ class _Writer:
         return fam
 
     def table_edge(self, c):
-        """(family, value) of a 2-cell table that is an edge clue (sudoku.today form), or None"""
+        """(family, value) of a 2-cell table that is an edge clue, or None"""
         m = _pair_clue(self.D, c["allowed"])
         if m is None:
             return None
         op, v = m
-        # a table is a NUMBERED clue (sudoku.today form): never re-read as a kropki dot / XV letter (2026-10-25)
+        # a table is a NUMBERED clue: never re-read as a kropki dot / XV letter
         return ({"x": "product", "+": "sum", "-": "difference", "/": "ratio"}[op], v)
 
     def relation_items(self, rels, skip):
@@ -1782,7 +1779,7 @@ class _Writer:
                     return [{"type": "corner", "kind": "battenburg", "cells": [B.name(y) for y in cells]}], 1
         if len(cells) == 2 and B.adjacent(*cells) and UNIFY_TABLE_EDGES:
             f = self.table_edge(c)
-            if f:                               # unification 8: a 2-cell table edge clue -> pair relation
+            if f:                               # normalisation 8: a 2-cell table edge clue -> pair relation
                 return [edge_rule(f[0], f[1], cells[0], cells[1], B)], 1
         # mathrax corner: tables on (TL, BR) then (TR, BL) of a 2x2 block with the same clue
         if len(cells) == 2 and i + 1 < len(live) and cons[live[i + 1]].get("type") == "table" and UNIFY_TABLE_EDGES:
@@ -1827,7 +1824,7 @@ class _Writer:
         if t == "line":
             kind = c["kind"]
             cells = list(c["cells"])
-            if kind == "kropki_chain":                  # unification 4: kropki edges
+            if kind == "kropki_chain":                  # normalisation 4: kropki edges
                 dots = c.get("dots") or ["white"] * (len(cells) - 1)
                 return [edge_rule("kropki", d_, a, b, B) for (a, b), d_ in zip(zip(cells, cells[1:]), dots)]
             r = {"type": "line", "kind": "whisper" if kind == "dutch_whisper" else kind}
@@ -1847,7 +1844,7 @@ class _Writer:
         if t == "sum":
             cells = list(c["cells"])
             common = self.common_group(cells)
-            if c.get("distinct") and not common:        # unification 9: a no-repeat sum is a cage
+            if c.get("distinct") and not common:        # normalisation 9: a no-repeat sum is a cage
                 return [{"type": "cage", "sum": c["total"], "cells": nm(cells)}]
             side = B.outside_side(cells) if len(cells) >= 2 else None
             if side and len(cells) < D and B.outside_ok(side, cells, False):
@@ -1882,12 +1879,12 @@ class _Writer:
                 raise NotSupportedError(f"set constraint of kind {c.get('kind')!r}")
             cells = list(c["cells"])
             if all(B.touching(a, b) for a, b in zip(cells, cells[1:])):
-                return [{"type": "line", "kind": "renban", "cells": nm(cells)}]          # unification 1
+                return [{"type": "line", "kind": "renban", "cells": nm(cells)}]          # normalisation 1
             raise NotSupportedError("a consecutive set whose cells are not a line")
         if t == "between":
             cells = list(c["cells"])
             if all(B.touching(a, b) for a, b in zip(cells, cells[1:])):
-                return [{"type": "line", "kind": "between", "cells": nm(cells)}]         # unification 2
+                return [{"type": "line", "kind": "between", "cells": nm(cells)}]         # normalisation 2
             raise NotSupportedError("a between constraint whose cells are not a line")
         if t == "equal_sum":
             return [self.equal_sum_rule(c)]
@@ -1938,7 +1935,7 @@ class _Writer:
             if mid:
                 ids[n // 2] = mid[0][0]
             if path(ids):
-                return {"type": "line", "kind": "zipper", "cells": nm(ids)}                 # unification 3
+                return {"type": "line", "kind": "zipper", "cells": nm(ids)}                 # normalisation 3
         # double arrow: [[a, b], middle]
         if len(segs) == 2 and len(segs[0]) == 2 and segs[1]:
             ids = [segs[0][0]] + segs[1] + [segs[0][1]]
@@ -1956,7 +1953,7 @@ class _Writer:
                     cur = [x]
             cut.append(cur)
             if cut == segs:
-                return {"type": "line", "kind": "region_sum", "cells": nm(flat)}            # unification 3
+                return {"type": "line", "kind": "region_sum", "cells": nm(flat)}            # normalisation 3
         return {"type": "equal_sum", "segments": [nm(s) for s in segs]}
 
 

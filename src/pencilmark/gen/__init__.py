@@ -3,7 +3,7 @@
     from pencilmark.gen import generate, GenerationFailed
     r = generate({"size": 9, "target_band": "Hard", "seed": 1})
     r["puzzle"]   # puzzle JSON (pencilmark/puzzle_json format, with "solution")
-    r["card"]     # sudoku-grade/2 card (difficulty, time, band, contains)
+    r["card"]     # sudoku-grade card (difficulty, time, band, contains)
     r["info"]     # mode, givens, element counts, attempts, seconds, rejection reasons, unique_verified
 
 Spec fields: see pencilmark.gen.Spec. Modes picked from the spec:

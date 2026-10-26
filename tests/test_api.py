@@ -126,11 +126,7 @@ def test_meta_kept_and_ignored_for_rating():
     assert again["meta"] == exp["meta"] and again["givens"] == exp["givens"]
     filled = pencilmark.to_export(exp)                      # an empty meta.type / rules_text is filled, nothing overwritten
     assert filled["meta"]["type"] == "Sudoku" and filled["meta"]["author"] == "someone"
-    boxes = [[(br + i) * 9 + bc + j for i in range(3) for j in range(3)] for br in (0, 3, 6) for bc in (0, 3, 6)]
-    legacy = {"format": "sudoku-puzzle/2", "grid": exp["grid"], "digits": 9, "givens": exp["givens"], "boxes": boxes,
-              "title": "T", "source": {"site": "example.org", "id": "7"}}      # an older file: top-level metadata
-    assert pencilmark.to_export(legacy, describe=False)["meta"] == {"title": "T", "source": "example.org", "id": "7"}
-    assert pencilmark.rate(exp) == pencilmark.rate(legacy) == pencilmark.rate(CLASSIC)
+    assert pencilmark.rate(exp) == pencilmark.rate(CLASSIC)
 
 
 def test_whole_grid_pair_rule():

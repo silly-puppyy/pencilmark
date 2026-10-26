@@ -319,7 +319,7 @@ def solve(puzzle, params=None, disabled=(), solution=None, allow_direct=True, ma
     cp = cpuzzle if cpuzzle is not None else to_cpuzzle(puzzle)
     sol = [int(x) for x in solution] if solution is not None else None
     cp_p = no_guess_params(sc.p, params, disabled)
-    disabled = [int(t) for t in _extra_disabled(set(disabled) | search_disabled(params))]  # env: experiments, e.g. "58,59,60"
+    disabled = [int(t) for t in _extra_disabled(set(disabled) | search_disabled(params))]  # env override, e.g. "58,59,60"
     args = [cp, list(puzzle.givens.items()), cp_p, disabled, sol, bool(allow_direct), int(max_steps),
             bool(assume_unique), bool(all_tiers)]
     if _SOLVE_HAS["explain"]:
@@ -328,7 +328,7 @@ def solve(puzzle, params=None, disabled=(), solution=None, allow_direct=True, ma
             args.append(_colour_list(colour_seeds, puzzle.N))
     if cand is not None:
         if "cand" not in (_C.solve.__doc__ or ""):
-            raise RuntimeError("solve(cand=) needs a csolver build with the candidate mask (2026-10-15)")
+            raise RuntimeError("solve(cand=) needs a csolver build with the candidate mask")
         raw, solved = _C.solve(*args, cand=[int(x) for x in cand])
     else:
         raw, solved = _C.solve(*args)
@@ -810,7 +810,7 @@ def state_moves(puzzle, params=None, all_tiers=True, assume_unique=False, limit_
             bool(assume_unique), int(limit_per_tech)]
     if cand is not None:        # mid-solve candidates as a mask; cpuzzle keeps the puzzle's own domains (build it once)
         if "cand" not in (_C.state_moves.__doc__ or ""):
-            raise RuntimeError("state_moves(cand=) needs a csolver build with the candidate mask (2026-10-15)")
+            raise RuntimeError("state_moves(cand=) needs a csolver build with the candidate mask")
         raw = _C.state_moves(*args, None if written is None else [int(x) for x in written], bool(details),
                              [int(x) for x in cand])
     elif written is not None or details:
@@ -953,7 +953,7 @@ def search_disabled(params):
     p = params or {}
     out = set(p.get("disabled_techniques") or ())
     if p.get("search") == "human":
-        # R6 (user 2026-10-26): forcing chains / nets / nested, Nishio and pattern overlay are borderline-computer HUMAN logic
+        # forcing chains / nets / nested, Nishio and pattern overlay are borderline-computer HUMAN logic
         # (band Extreme); Unknown is for guessing only, so human mode switches off unbounded trial alone
         out |= {S.TRIAL} if p.get("r6_extreme", True) else computer_search()
         if not p.get("allow_guess", False):
@@ -962,7 +962,7 @@ def search_disabled(params):
 
 
 def no_guess_params(sc_p, params, disabled=()):
-    """user 2026-10-26: guessing is off by default. Human mode without params['allow_guess']: where a step would guess,
+    """Guessing is off by default. Human mode without params['allow_guess']: where a step would guess,
     the solver refutes one candidate by full search instead (Trial and error, band Extreme), so every unique puzzle gets a
     band. allow_guess=True: the solver guesses there and the card says Unknown.
     A caller that switches TRIAL off explicitly (a singles-only batch, a one-technique probe) stops where it is stuck."""
@@ -973,7 +973,7 @@ def no_guess_params(sc_p, params, disabled=()):
 
 
 def _extra_disabled(disabled):
-    """experiments: CSOLVER_EXTRA_DISABLED="62,63" adds techniques to every disabled set"""
+    """CSOLVER_EXTRA_DISABLED="62,63" adds techniques to every disabled set"""
     if os.environ.get("CSOLVER_EXTRA_DISABLED"):
         return set(disabled) | {int(x) for x in os.environ["CSOLVER_EXTRA_DISABLED"].split(",") if x}
     return disabled
@@ -985,7 +985,7 @@ def featurize_raw(rows, params, threads=16, as_lists=False, disabled=(), rich=Fa
     gives identical arrays); as_lists=True converts to plain lists.
     rich=True adds m_rich (one row per candidate move, same order as m_step),
     s_rich (one row per step) and their column names rich_names / step_names
-    (research feature columns)."""
+    (feature columns)."""
     sc = Scorer(params)
     out = _C.featurize([_spec(r) for r in rows], sc.p, int(threads), [int(t) for t in _extra_disabled(disabled)],
                        bool(rich))

@@ -222,9 +222,8 @@ void Puzzle::build_implied() {
                 if (group_line[gi] != orient) rem.push_back(std::vector<uint64_t>(gbits(gi), gbits(gi) + W));
             for (auto& h : prev) rem.push_back(h);
             const int L = (int)lines.size();
-            // 2026-10-25 (adopted): at most 3 lines combined (was 4; CSOLVER_IMPLIED_KMAX overrides). Overlap boards (duodoku)
-            // gave 1,102 derived houses scanned by every technique at every step (card score 18 s -> 0.4 s with 3); no loss
-            // of agreement with human data in A/B tests.
+            // at most 3 lines combined (CSOLVER_IMPLIED_KMAX overrides). Overlap boards (duodoku)
+            // gave 1,102 derived houses scanned by every technique at every step (card score 18 s -> 0.4 s with 3).
             static const int kmax = getenv("CSOLVER_IMPLIED_KMAX") ? atoi(getenv("CSOLVER_IMPLIED_KMAX")) : 3;
             for (int k = 2; k <= std::min(kmax, L); ++k) {
                 std::vector<int> idx(k);
@@ -610,7 +609,7 @@ void Puzzle::build_implied() {
         q->groups.push_back(g);
     }
     for (auto& sp : lol) q->nary_specs.push_back(sp);
-    if (getenv("CSOLVER_IMPLIED_DEBUG"))   // 2026-10-25 speed diagnosis: how much the implied puzzle adds
+    if (getenv("CSOLVER_IMPLIED_DEBUG"))   // how much the implied puzzle adds
         fprintf(stderr, "implied: %zu derived houses, %zu leftover rules, %zu set-theory rules\n", newh.size(), lol.size(), q->nary_specs.size() - lol.size() - nary_specs.size());
     q->finalize();
     implied = q;
@@ -841,7 +840,7 @@ void Puzzle::build_nary() {
         if (k.nv() > 64 || k.nv() == 0) continue;  // unsupported (kept out of the engine)
         nary.push_back(std::move(k));
     }
-    // 2026-10-24 (adopted; CSOLVER_OVERLAP_DIFF=0 disables): overlapping sum clues -- two sums sharing >= 2 cells, each with a
+    // (CSOLVER_OVERLAP_DIFF=0 disables): overlapping sum clues -- two sums sharing >= 2 cells, each with a
     // small own part: sum(own part of A) - sum(own part of B) = total A - total B, as a derived rule over the own parts (<= 4
     // cells). Killer cages (groups) never trigger it.
     static const bool overlap_diff = !(getenv("CSOLVER_OVERLAP_DIFF") && getenv("CSOLVER_OVERLAP_DIFF")[0] == '0');

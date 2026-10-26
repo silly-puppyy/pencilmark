@@ -1034,7 +1034,7 @@ void Solver::rule_intersect(MoveBuf& out) {
             aborted = nodes < 0;
             return hit->second.first;
         }
-        // cross-call cache (2026-10-17 speed): ri_cache dies with each Solver; the joint enumeration is a pure function of
+        // cross-call cache ri_cache dies with each Solver; the joint enumeration is a pure function of
         // (puzzle, unit ids, union state, budget, set cap) -> thread-local, exact, bounded
         std::vector<uint32_t> xkey(ckey);
         xkey.push_back((uint32_t)(p.uid & 0xFFFFFFFFu)); xkey.push_back((uint32_t)(p.uid >> 32));
@@ -1071,7 +1071,7 @@ void Solver::rule_intersect(MoveBuf& out) {
         std::vector<int> asg(nf, 0);
         std::vector<uint32_t> sup(nf, 0);
         uint32_t dom[64];
-        // memo (2026-10-22 speed, exact): the check is a pure function of (rule, its cells' domains); node counting unchanged
+        // memo (exact): the check is a pure function of (rule, its cells' domains); node counting unchanged
         std::map<std::vector<uint32_t>, bool> rok_memo;
         auto rule_ok = [&](const NConstraint& k) {
             std::vector<uint32_t> key;
@@ -1543,7 +1543,7 @@ void Solver::sum_algebra(MoveBuf& out) {
         for (uint32_t x : sup) any |= x != 0;
         return any || F.empty();
     };
-    // cross-call cache (2026-10-22 speed, exact): enum_sum is a pure function of (puzzle, cells, their states, interval)
+    // cross-call cache (exact): enum_sum is a pure function of (puzzle, cells, their states, interval)
     auto enum_sum = [&](const std::vector<int>& cs, pm_long lo, pm_long hi, std::vector<uint32_t>& sup) -> bool {
         std::vector<uint32_t> xkey;
         xkey.reserve(cs.size() * 2 + 4);
@@ -2218,7 +2218,7 @@ void Solver::band_logic(MoveBuf& out) {
     };
     // phase 1: refutations by propagation alone (the derived house sums, cage combinations, singles of the
     // sub-puzzle: "the maths", no cases), all regions smallest first; a size class with such moves ends it
-    static const bool phase1 = std::getenv("BAND_PHASE1") != nullptr;  // experiment: doubled the time, no gain
+    static const bool phase1 = std::getenv("BAND_PHASE1") != nullptr;  // enables the phase-1 pass
     if (phase1) {
         size_t a_class = 0;
         bool a_any = false;

@@ -49,11 +49,11 @@ def _inputs(src):
 
 
 def _to_puzzle_json(obj):
-    """accept puzzle JSON, the sudoku-puzzle exchange format ("sudoku-puzzle", older files "sudoku-puzzle/2"), or a
+    """accept puzzle JSON, the sudoku-puzzle exchange format, or a
     sample-pack line {"puzzle": ..., "grade": ...}."""
     if "puzzle" in obj and isinstance(obj["puzzle"], dict):
         obj = obj["puzzle"]
-    if obj.get("format") in ("sudoku-puzzle", "sudoku-puzzle/2"):
+    if obj.get("format") == "sudoku-puzzle":
         from .export import import_puzzle
         return import_puzzle(obj)
     return obj
@@ -83,7 +83,7 @@ def _subst(fmt, vals):
 
 
 def report2(g, k=None):
-    """Readable summary of the sudoku-grade/2 card."""
+    """Readable summary of the sudoku-grade card."""
     if "band" not in g:
         return f"[{k}] {g.get('status')}"
     L = [f"{'#' + str(k) + '  ' if k else ''}{g['band']}  -  difficulty {g.get('difficulty')}  -  time {g.get('time')} min"
@@ -246,7 +246,7 @@ def main(argv=None):
                    "instead of proving by full search (Trial and error, band Extreme)")
     r.add_argument("--notes", action="store_true", help="legacy card: run the publishing-rule checks (slower)")
     r.add_argument("--steps", action="store_true", help="with --json: include the step-by-step solve")
-    r.add_argument("--fields", default=None, help="card fields, comma-separated (docs/FORMAT.md 13.1), e.g. "
+    r.add_argument("--fields", default=None, help="card fields, comma-separated (docs/FORMAT.md 11.1), e.g. "
                                                     "difficulty,band,time.p80,steps,steps.explanation.short")
     r.add_argument("-j", "--jobs", type=int, default=1, help="rate puzzles in N parallel processes (output in input order)")
     r.add_argument("--max-seconds", type=float, default=None,

@@ -252,7 +252,7 @@ def _check_card(card, tb, td, req, strict):
 
 def generate(spec, log=None):
     """generate one puzzle meeting `spec` (Spec or dict, see Spec). Returns {"puzzle": puzzle JSON (with solution),
-    "card": sudoku-grade/2 card, "info": {...}} or raises GenerationFailed with the reason."""
+    "card": sudoku-grade card, "info": {...}} or raises GenerationFailed with the reason."""
     s = Spec.from_any(spec)
     probs = feasibility(s)
     if probs:
@@ -297,7 +297,7 @@ def generate(spec, log=None):
     def grade(d):
         p = PJ.from_json(d)
         p.finalize()
-        return E2.grade_v2(p, P, with_steps=False, max_seconds=s.grade_seconds)
+        return E2.grade(p, P, with_steps=False, max_seconds=s.grade_seconds)
 
     while time.time() < deadline:
         stats["attempts"] += 1

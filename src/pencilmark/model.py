@@ -80,7 +80,7 @@ RELATIONS = {
     "parity": lambda v, w: (v - w) % 2 == 1,        # parity line: adjacent digits differ in parity
     "diffmod3": lambda v, w: (v - w) % 3 != 0,      # modular line, 1-2 apart
     "samemod3": lambda v, w: (v - w) % 3 == 0,      # modular line, 3 apart
-    # any 2-cell rule given by its allowed digit pairs (2026-10-23: a generic 2-cell "table" was solved as costly table logic;
+    # any 2-cell rule given by its allowed digit pairs (a generic 2-cell "table" was solved as costly table logic;
     # as a relation it is read like a dot) -- args = ([[v, w], ...],)
     "allowed": lambda v, w, pairs: [v, w] in pairs,
     # incomplete / ambiguous clue type: any of several pair rules, args = ((kind, *args), ...), e.g. a dot

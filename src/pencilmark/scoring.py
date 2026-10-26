@@ -213,10 +213,10 @@ class Scorer:
             if ti and len(ti) >= 3:          # D6 mirror: log depth x (log cells, links, log branches)
                 br, dp = x[10], x[11]
                 z += ti[0] * dp * x[1] + ti[1] * dp * x[4] + ti[2] * dp * br
-            to = P.get("tech_obscurity")     # obscurity mirror (2026-10-20): per-technique log-price offset by tech code
+            to = P.get("tech_obscurity")     # obscurity mirror: per-technique log-price offset by tech code
             if to and 0 <= tech < len(to):
                 z += to[tech]
-            d = math.exp(min(z, 6.907755278982137)) * self.size(D)   # cap log price at log(1000), as C++ (2026-10-18)
+            d = math.exp(min(z, 6.907755278982137)) * self.size(D)   # cap log price at log(1000), as C++
         elif (self.meta is not None and meta_priced(meta) and (tech < P.get("meta_max_tech", 68) or tech in STRUCTURAL_ONLY)
                 and tech not in (P.get("meta_exclude") or ())):
             x = meta_vector(meta, desc=False)
@@ -355,7 +355,7 @@ def work_time(steps, puzzle, params):
     P = params
     sc = Scorer(P)
     d_ref = P["B"].get(S.HIDDEN_D if hasattr(S, "HIDDEN_D") else 2, 1.0)
-    # grid-size scaling of scanning (analysis/time_size_fit.py, sudokuleader 4x4..25x25 + lisudoku): humans take
+    # grid-size scaling of scanning (sudokuleader 4x4..25x25 + lisudoku): humans take
     # far longer on big grids than the 9x9-fitted model predicts -> scan term x (D/9)^gamma, rectangular boxes x e^k
     # (2x3, 3x4 boxes are slower to scan). 9x9 classics are unchanged by construction.
     rect = any(len({c // puzzle.D for c in g.cells}) != len({c % puzzle.D for c in g.cells})
@@ -384,7 +384,7 @@ VOLUME_REF = 881.3     # median work volume of a 9x9 classic (fed, 700 puzzles) 
 def work_volume(steps, puzzle, params):
     """Length of the solve at constant difficulty: every step scans the empty cells of the grid the solver works in
     (one D x D grid's share on composite boards), scaled by how hard a grid of that size / box shape is to scan;
-    move prices are left out (they are difficulty). runs/nlp/length_parts.py: adds the most human-time information
+    move prices are left out (they are difficulty). The route length adds the most human-time information
     beyond difficulty and correlates only 0.26 with it on 9x9 classics."""
     P = params
     rect = any(len({c // puzzle.D for c in g.cells}) != len({c % puzzle.D for c in g.cells})

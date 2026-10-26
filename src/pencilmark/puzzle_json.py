@@ -32,7 +32,7 @@ Full form (every field optional except what the puzzle needs):
                {"type": "<engine constraint>", ...}, ...],               # arrow, sum, little_killer, sandwich ...
      "candidates": {"r1c1": "137"},                       # given pencil marks (Sukaku); shaded clues are rules above
      "meta": {"title": "...", "author": "...", "rules_text": "...", "source": "...", "id": "..."}}
-                                                          # optional metadata, never used for solving (older files: top level)
+                                                          # optional metadata, never used for solving (top level)
 Cells are 'r{row}c{col}', 1-based on the bounding grid. Regions are the no-repeat groups (for each sub-grid its rows,
 columns and boxes); boxes are what a renderer draws with thick lines. Rows / columns / boxes of a D x D board (or a
 named layout) are implied unless "regions" overrides them.
@@ -268,14 +268,14 @@ def from_json(obj) -> M.Puzzle:
             for x in range(D):
                 p.coords.append((kr, x)); p.domains.append((1 << D) - 1); key.append(len(p.coords) - 1)
             p.N = len(p.coords)
-            p.iso_key = list(getattr(p, "iso_key", [])) + key       # 2026-10-25: the exchange writer leaves these out
+            p.iso_key = list(getattr(p, "iso_key", [])) + key       # the exchange writer leaves these out
             p.groups.append(M.Group("digit key", tuple(key), "region", True))
             for a, b in pairs:
                 for x in range(1, D + 1):
                     p.constraints.append({"type": "table", "cells": [a, b, key[x - 1]],
                                           "allowed": [(u, v, w) for u in range(1, D + 1) for v in range(1, D + 1) for w in range(1, D + 1)
                                                       if u != x or v == w]})
-        elif t in ("parity", "digit_class", "exclude"):   # graphical cell clues (2026-10-25: no longer "candidates")
+        elif t in ("parity", "digit_class", "exclude"):   # graphical cell clues (not "candidates")
             if t == "parity":
                 ok = {v for v in range(1, D + 1) if v % 2 == (1 if r["parity"] == "odd" else 0)}
             elif t == "digit_class":
@@ -333,7 +333,7 @@ def from_json(obj) -> M.Puzzle:
 
 
 # well-known rules that expand into engine relations / tables when read; the puzzle remembers them so they are written back
-# by name, not as their expansion (2026-10-25: a global-entropy puzzle was 64 copies of a 2,916-row table). One-off rules
+# by name, not as their expansion (a global-entropy puzzle was 64 copies of a 2,916-row table). One-off rules
 # belong to the planned custom rule language, not here.
 NAMED_RULES = {"global_entropy", "quadruple", "rossini", "vudoku", "increasing", "isomorphic"}
 
@@ -447,7 +447,7 @@ def to_json(p: M.Puzzle, solution=None, meta=None) -> dict:
     if solution is not None:
         out["solution"] = "".join(_sym(v) for v in solution)
     # graphical cell clues (parity / digit_class / exclude / lowhigh) go back out as rules; "candidates" keeps only what no clue
-    # explains (Sukaku pencil marks) -- 2026-10-25
+    # explains (Sukaku pencil marks)
     implied = [(1 << D) - 1] * len(p.domains)
     clue_rules = []
     for r_, masks in getattr(p, "cell_clues", []):
@@ -517,7 +517,7 @@ def to_json(p: M.Puzzle, solution=None, meta=None) -> dict:
     m = {"title": p.name} if p.name else {}
     m.update({k: v for k, v in (meta or {}).items() if v not in (None, "")})
     if m:
-        out["meta"] = m                  # 2026-10-25: metadata in its own object (was top level)
+        out["meta"] = m                  # metadata in its own object
     return out
 
 
@@ -537,7 +537,7 @@ def _symmetric(kind, params, D=9):
 
 def _compact_pairs(kind, params, cells, coords, cname):
     """a "pairs" rule; when its pairs are (almost) every neighbour pair of one kind, write it as a whole-grid rule
-    {"where": "orthogonal", "except": [...]} instead of listing every pair (2026-10-25: a non-consecutive sudoku was 144
+    {"where": "orthogonal", "except": [...]} instead of listing every pair (a non-consecutive sudoku was 144
     pairs). Only for symmetric relations, where the pair's order carries no meaning."""
     plain = {"type": "pairs", "rel": kind, "params": params, "cells": cells}
     if len(cells) < 12 or not _symmetric(kind, params):
