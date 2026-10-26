@@ -1340,7 +1340,11 @@ class _Writer:
             cnt = (D // box[0], D // box[1])
             units = box_grid_units(B, r0, c0, box, cnt, True)
             if units and all((u[0], frozenset(u[1])) in where for u in units):
-                grids.append((min(where[(u[0], frozenset(u[1]))][0] for u in units), r0, c0, box, cnt, units))
+                grids.append([None, r0, c0, box, cnt, units])
+        share = Counter(frozenset(u[1]) for g in grids for u in g[5])
+        for g in grids:         # order: first house that belongs to this grid only (overlapping grids share boxes)
+            own = [u for u in g[5] if share[frozenset(u[1])] == 1] or g[5]
+            g[0] = min(where[(u[0], frozenset(u[1]))][0] for u in own)
         grids.sort()
         items, covered, used = [], set(), set()
         for first, r0, c0, box, cnt, units in grids:
