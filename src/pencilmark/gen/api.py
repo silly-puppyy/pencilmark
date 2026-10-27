@@ -223,13 +223,18 @@ def feasibility(spec):
         if bits < need:
             probs.append(f"information budget: {value} cages carry <= {bits:.0f} bits, a {s.size}x{s.size} grid needs "
                          f"{need:.0f}")
-    elif mode == "dig" and gmax is not None and s.max_elements is not None:
+    elif mode == "dig" and gmax is not None and (s.max_elements is not None or (kinds and all(k in value for k in kinds))):
         gbits = lg_c(b.N, min(gmax, b.N)) + gmax * math.log2(s.size) if gmax else 0.0
-        ebits = s.max_elements * max(EL.element_bits(b, EL.base_kind(k)) for k in kinds)
+        if s.max_elements is not None:
+            n_el = s.max_elements
+            ebits = n_el * max(EL.element_bits(b, EL.base_kind(k)) for k in kinds)
+        else:                       # every element class has a maximum: the caps bound the elements
+            n_el = sum(value.values())
+            ebits = sum(m * EL.element_bits(b, EL.base_kind(k)) for k, m in value.items())
         if gbits + ebits < need:
-            probs.append(f"information budget: {gmax} givens + {s.max_elements} elements carry <= {gbits + ebits:.0f} bits, "
+            probs.append(f"information budget: {gmax} givens + {n_el} elements carry <= {gbits + ebits:.0f} bits, "
                          f"a {s.size}x{s.size} grid needs {need:.0f} -- too few for a unique puzzle")
-        if s.max_elements < sum(seeds.values()):
+        if s.max_elements is not None and s.max_elements < sum(seeds.values()):
             probs.append(f"max_elements {s.max_elements} < required element count {sum(seeds.values())}")
     if mode in ("kropki_full", "kropki_min", "cage_count") and s.min_givens:
         probs.append(f"mode {mode} has no givens (min_givens={s.min_givens})")

@@ -69,6 +69,14 @@ def test_uniquify():
     assert is_unique(out) and sum(ch != "." for ch in out["numbers"]) >= 8
 
 
+def test_capped_classes_budget():
+    """when every element class has a maximum, the caps bound the information budget"""
+    from pencilmark.gen import api as GA
+    probs = GA.feasibility(GA.Spec.from_any({"size": 9, "max_givens": 0,
+                                             "elements": {"kropki_black": [0, 2], "kropki_white": [0, 3]}}))
+    assert any("information budget" in p for p in probs), probs
+
+
 def test_element_classes_and_ranges():
     """per-class counts: 6 givens, exactly 2 black kropki, any number of white (the dense-seeding path)"""
     r = run({"size": 9, "target_band": "Easy", "min_givens": 6, "max_givens": 6,
