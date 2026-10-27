@@ -2,7 +2,8 @@
 
 Hand-coded rules (sudoku.coach likes are too sparse and its puzzles human-curated, so
 common sense first; the coach analysis only informed the spike rule's direction):
-  spike        a Hard+ puzzle that rests on at most `spike` (2) band-level moves with an otherwise all-singles solve
+  spike        a Medium+ puzzle whose 3 hardest steps carry more than `spike` (0.6 = 60%) of its effort (warning; enjoyment
+               check on LMD ratings and sudoku.coach likes, controlling difficulty: -0.08 / -0.03)
   decorative   a variant rule class that is neither needed for uniqueness nor used by any solve step
   barely_used  a variant rule class used in fewer than `barely_used` (3) steps of the whole solve (a 'Sudoku X' should use its X)
   redundant    a variant rule class the puzzle is unique without, although the solve uses it (soft note)
@@ -19,9 +20,8 @@ UNIQUENESS = {"UniqueRectangle", "BUG+1", "GurthSymmetry"}
 TRIAL = {"Trial", "ShortTrial", "EitherWay", "WhatIf", "ForcingChains", "DynamicForcingChains",
          "NestedForcingChains", "NishioForcingNet", "PatternOverlay"}
 BASE_UNITS = ("row", "col", "box", "column")
-QUALITY = {"spike": 2, "trivial": 0.6, "tedious": 60, "barely_used": 3,      # numeric limits (GRADE.md 4)
+QUALITY = {"spike": 0.6, "trivial": 0.6, "tedious": 60, "barely_used": 3,      # numeric limits (GRADE.md 4)
            "decorative": True, "redundant": True, "uniqueness": True, "trial": True}
-SPIKE_SINGLES = 0.95        # a spike's solve is otherwise at least this share singles
 
 
 def quality_limits(q=None):
@@ -41,19 +41,32 @@ def quality_limits(q=None):
     return out
 
 
+def _top3_share(puzzle, steps):
+    """share of the solve's effort in its 3 hardest steps; effort per step = price^beta x candidate density / moves
+    offered, as the card's difficulty"""
+    from . import _data
+    beta = _data.load_json("card_score.json")["beta"]
+    nd = puzzle.N * puzzle.D
+    v = []
+    for st in steps:
+        c = st.n_cands if st.n_cands is not None else nd
+        dens = c / 727 * 20 if nd <= 729 else c / nd * 20 * 729 / 727
+        v.append(max(float(st.move.d), 1e-3) ** beta * dens / max(len(st.alts), 1))
+    v.sort(reverse=True)
+    return sum(v[:3]) / sum(v) if v and sum(v) > 0 else 0.0
+
+
 def notes(puzzle, P, steps, tier, forced, required, work_min, check_rules=True):
     q = quality_limits(P.get("quality"))
     out = []
     rev = {v: k for k, v in S.TECH_NAMES.items()}
     note_techs = getattr(S, "NOTE_TECHS", (S.TAKE_NOTES,))
     mv = [st for st in steps if st.move.feat[0] not in note_techs]
-    ss = sum(1 for st in mv if MT.family_of(st.move.feat[0]) == 0) / max(len(mv), 1)
     bi = MT.BANDS.index(tier) if tier in MT.BANDS else -1
-    if bi >= 3 and q["spike"] is not False:
-        at_band = sum(v for n, v in forced.items() if MT.band_of(rev[n]) == bi)
-        if ss >= SPIKE_SINGLES and at_band <= q["spike"]:
-            out.append(("spike", "reject", f"{tier} rests on {at_band} {tier.lower()} move{'s' if at_band != 1 else ''}, "
-                                           f"otherwise {ss:.0%} singles"))
+    if bi >= 2 and q["spike"] is not False:
+        share = _top3_share(puzzle, mv)
+        if share > q["spike"]:
+            out.append(("spike", "note", f"{share:.0%} of the effort is in the 3 hardest steps"))
     given_share = len(puzzle.givens) / max(puzzle.N, 1)
     if q["trivial"] is not False and given_share > q["trivial"]:
         out.append(("trivial", "reject", f"{given_share:.0%} of the cells are given"))

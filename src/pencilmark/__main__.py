@@ -142,7 +142,7 @@ def _rate_one(args):
             fl = list(fl or card_fields(None)) + ["issues"]
         want = card_fields(fl, steps=a.steps)
         explain = a.explain.split(",") if a.explain else (True if a.steps else None)
-        g = grade(p, P, max_seconds=a.max_seconds, fields=sorted(want), explain=explain)
+        g = grade(p, P, max_seconds=a.max_seconds, fields=sorted(want), explain=explain, alternatives=not a.no_alternatives)
         return json.dumps({"line": k, **g}, default=str) if a.json else report2(g, k) if a.report else _fmt2(fmt, g, k, True)
     except Exception as e:
         if a.json:
@@ -212,6 +212,8 @@ def main(argv=None):
     r = sub.add_parser("rate"); r.add_argument("file", nargs="?"); r.add_argument("--format", default=None)
     r.add_argument("--json", action="store_true"); r.add_argument("--report", action="store_true")
     r.add_argument("--computer", action="store_true", help="allow pure computer search (forcing chains / nets, trial); default: human mode")
+    r.add_argument("--no-alternatives", action="store_true", help="skip the search for interchangeable techniques "
+                   "(one code per contents chip; same band, difficulty and time, much faster)")
     r.add_argument("--allow-guessing", action="store_true", help="guess where no technique applies (faster; band Unknown) "
                    "instead of proving by full search (Trial and error, band Extreme)")
     r.add_argument("--steps", action="store_true", help="with --json: include the step-by-step solve (with both explanation levels)")

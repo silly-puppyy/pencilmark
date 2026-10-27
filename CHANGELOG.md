@@ -11,6 +11,12 @@
   the population one (about 1.85x). `time` is the median player.
 - Generator: element varieties (kropki colour, XV letter, odd/even) with counts, ranges and caps; the information-budget
   check uses per-class maximums.
+- `spike` check: a Medium+ puzzle whose 3 hardest steps carry more than 60% of its effort (adjustable, `quality`), as a
+  warning; replaces the old "few band moves in an all-singles solve" rule.
+- `alternatives=False` / `--no-alternatives`: skip the search for interchangeable techniques (faster; band, difficulty and
+  time unchanged). The generator screens candidates this way.
+- Faster cards: the search-effort profile stops trials past the shortest refutation and skips unchanged rules; the
+  solution is found once per card.
 - Publishing checks (`issues`, `reject`) are no longer default card fields; ask for them with `fields=[...]`.
 - Docs: the puzzle format (`FORMAT.md`), grade card (`GRADE.md`) and generator spec (`SPEC.md`) are separate
   documents, each saying how to implement a subset; drawing conventions moved out of the format into `STYLE.md`, variant

@@ -62,7 +62,7 @@ Each entry is one technique on the route:
 | `name` | Technique name. |
 | `band` | The technique's band index. |
 | `uses` | Times used on the route; omitted for singles (band 0), whose count depends on the route. |
-| `alternatives` | Other codes that also work there; omitted when there are none. |
+| `alternatives` | Other codes that also work there; omitted when there are none, or when the producer skipped that search (pencilmark: `alternatives=False`, CLI `--no-alternatives`; band, difficulty and time are the same). |
 
 ## 4. `issues`
 
@@ -75,7 +75,7 @@ takes a number (`true` = the default limit); every check takes `false` to turn i
 
 | Code | Severity | Meaning | Limit (default) |
 |---|---|---|---|
-| `spike` | reject | A Hard or harder puzzle that rests on at most *limit* band-level moves in an otherwise all-singles (95%) solve. | moves (2) |
+| `spike` | warning | A Medium or harder puzzle whose 3 hardest steps carry more than *limit* of its effort (effort per step as in `difficulty`). | share (0.6) |
 | `decorative` | reject | A rule that is neither needed for uniqueness nor used by any step. | on / off |
 | `barely_used` | reject when never used, else warning | A rule used in fewer than *limit* steps. | steps (3) |
 | `redundant` | warning | A rule the puzzle is unique without, although the solve uses it. | on / off |

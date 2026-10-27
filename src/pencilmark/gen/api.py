@@ -313,10 +313,14 @@ def generate(spec, log=None):
         title = f"generated {s.size}x{s.size} {kinds_txt}, {len(givens)} givens"
         return EL.to_json(b, givens, els, sol, title=title)
 
-    def grade(d):
+    # candidates are screened without the alternatives search (band, difficulty and time don't depend on it) unless a
+    # non-strict `require` can be met by an alternative; the result's card is then made in full
+    screen_alts = bool(s.require) and not s.strict_require
+
+    def grade(d, alternatives=screen_alts):
         p = PJ.from_json(d)
         p.finalize()
-        return E2.grade(p, P, with_steps=False, max_seconds=s.grade_seconds)
+        return E2.grade(p, P, with_steps=False, max_seconds=s.grade_seconds, alternatives=alternatives)
 
     while time.time() < deadline:
         stats["attempts"] += 1
@@ -388,6 +392,8 @@ def generate(spec, log=None):
         if verified is False:
             reject("not unique (CP-SAT)")
             continue
+        if not screen_alts:
+            card = grade(d, alternatives=True)
         info = {"mode": mode, "givens": len(givens),
                 "elements": {k: sum(1 for e in els if EL.element_class(e) == k) for k in sorted({EL.element_class(e) for e in els})},
                 "attempts": stats["attempts"], "seconds": round(time.time() - t0, 1), "rejected": stats["rejected"],

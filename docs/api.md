@@ -15,10 +15,11 @@ rate(
     allow_guessing=False,
     explain=None,
     quality=None,
+    alternatives=True,
 )
 ```
 
-the "sudoku-grade" card of one puzzle (docs/GRADE.md) with the requested top-level fields only. Default fields: difficulty, time, band, band_index, contains (format, format_version, grader always). Optional: issues, reject (publishing checks), time_mean / time_pNN (any percentile 1-99, e.g. time_p80), se, se_diuf, steps, describe, symmetry. explain="short" / "teach" / True (both) adds explanations to the steps. steps=True is shorthand for the steps field with both explanation levels; se=True / se="diuf" for se / se_diuf. Raises NotUnique / NoSolution / Undecided for a puzzle without exactly one solution. allow_guessing=True: guess where no technique applies (band "Unknown") instead of proving by full search (Trial and error, Extreme). quality: the issue checks' limits, e.g. {"trivial": 0.5, "trial": False} (docs/GRADE.md 4).
+the "sudoku-grade" card of one puzzle (docs/GRADE.md) with the requested top-level fields only. Default fields: difficulty, time, band, band_index, contains (format, format_version, grader always). Optional: issues, reject (publishing checks), time_mean / time_pNN (any percentile 1-99, e.g. time_p80), se, se_diuf, steps, describe, symmetry. explain="short" / "teach" / True (both) adds explanations to the steps. steps=True is shorthand for the steps field with both explanation levels; se=True / se="diuf" for se / se_diuf. Raises NotUnique / NoSolution / Undecided for a puzzle without exactly one solution. allow_guessing=True: guess where no technique applies (band "Unknown") instead of proving by full search (Trial and error, Extreme). quality: the issue checks' limits, e.g. {"trivial": 0.5, "trial": False} (docs/GRADE.md 4). alternatives=False skips the search for interchangeable techniques (each chip in contains lists one code); band, difficulty and time are the same either way, and the card comes much faster.
 
 ## `rate_many`
 

@@ -503,7 +503,7 @@ def symmetry_of(p):
     return out
 
 
-def grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, explain=None):
+def grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, explain=None, alternatives=True):
     """sudoku-grade card (GRADE.md), only the requested fields (card_fields). explain: step explanation levels
     (explain_levels). with_steps=True is shorthand for the steps field with both explanation levels."""
     from . import card as K, band_path as BP
@@ -511,7 +511,7 @@ def grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expla
     levels = explain_levels(True if with_steps and explain is None else explain)
     P = dict(P, search=P.get("search", "human"))
     import time
-    bp = BP.contents(p, P, deadline=None if max_seconds is None else time.time() + max_seconds)
+    bp = BP.contents(p, P, alternatives=alternatives, deadline=None if max_seconds is None else time.time() + max_seconds)
     if card is None:        # band / required from the band path (skips the deletion test inside grade_card)
         req_b = list(dict.fromkeys(st["technique"] for st in bp["steps"] if st["band"] > 0))
         card = K.grade_card(p, P, specific=False, check_rules=bool(want & {"issues", "reject"}),     # specific names are not used by this card
