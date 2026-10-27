@@ -315,12 +315,14 @@ def generate(spec, log=None):
 
     # candidates are screened without the alternatives search (band, difficulty and time don't depend on it) unless a
     # non-strict `require` can be met by an alternative; the result's card is then made in full
+    # without `require` the technique list isn't needed at all: band / difficulty / time only
     screen_alts = bool(s.require) and not s.strict_require
+    screen_fields = None if s.require else ["difficulty", "time", "band", "band_index"]
 
-    def grade(d, alternatives=screen_alts):
+    def grade(d, alternatives=screen_alts, fields=screen_fields):
         p = PJ.from_json(d)
         p.finalize()
-        return E2.grade(p, P, with_steps=False, max_seconds=s.grade_seconds, alternatives=alternatives)
+        return E2.grade(p, P, with_steps=False, max_seconds=s.grade_seconds, alternatives=alternatives, fields=fields)
 
     while time.time() < deadline:
         stats["attempts"] += 1
@@ -392,8 +394,8 @@ def generate(spec, log=None):
         if verified is False:
             reject("not unique (CP-SAT)")
             continue
-        if not screen_alts:
-            card = grade(d, alternatives=True)
+        if not screen_alts or screen_fields is not None:
+            card = grade(d, alternatives=True, fields=None)
         info = {"mode": mode, "givens": len(givens),
                 "elements": {k: sum(1 for e in els if EL.element_class(e) == k) for k in sorted({EL.element_class(e) for e in els})},
                 "attempts": stats["attempts"], "seconds": round(time.time() - t0, 1), "rejected": stats["rejected"],

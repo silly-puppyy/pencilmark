@@ -13,6 +13,8 @@
   check uses per-class maximums.
 - `spike` check: a Medium+ puzzle whose 3 hardest steps carry more than 60% of its effort (adjustable, `quality`), as a
   warning; replaces the old "few band moves in an all-singles solve" rule.
+- Cards without `contains` / `issues` skip the technique-list search: about 3x faster for the same band, difficulty and
+  time; the generator screens candidates this way.
 - `alternatives=False` / `--no-alternatives`: skip the search for interchangeable techniques (faster; band, difficulty and
   time unchanged). The generator screens candidates this way.
 - Faster cards: the search-effort profile stops trials past the shortest refutation and skips unchanged rules; the

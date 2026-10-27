@@ -511,7 +511,10 @@ def grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expla
     levels = explain_levels(True if with_steps and explain is None else explain)
     P = dict(P, search=P.get("search", "human"))
     import time
-    bp = BP.contents(p, P, alternatives=alternatives, deadline=None if max_seconds is None else time.time() + max_seconds)
+    if want & {"contains", "issues", "reject"}:     # the shortest technique list (issues read its required techniques)
+        bp = BP.contents(p, P, alternatives=alternatives, deadline=None if max_seconds is None else time.time() + max_seconds)
+    else:                                           # band only: the first route already has it (shrinking keeps the band)
+        bp = dict(BP.band_path(p, P), removed=[], alternatives={})
     if card is None:        # band / required from the band path (skips the deletion test inside grade_card)
         req_b = list(dict.fromkeys(st["technique"] for st in bp["steps"] if st["band"] > 0))
         card = K.grade_card(p, P, specific=False, check_rules=bool(want & {"issues", "reject"}),     # specific names are not used by this card
