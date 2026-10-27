@@ -752,6 +752,8 @@ def rollouts(puzzle, params=None, n=200, temperature=1.0, seed=1, focus=True, ch
     sc = Scorer(params)
     cp = cpuzzle if cpuzzle is not None else to_cpuzzle(puzzle)
     sol = [int(x) for x in solution] if solution is not None else None
+    if sol is None:
+        sol = getattr(puzzle, "_pm_solution", None)   # known when rate() proved uniqueness
     if sol is None:  # one brute-force solve up front, so Guess steps never search again
         b = brute_solve(puzzle, limit=1, cpuzzle=cp)
         sol = list(b[0]) if b else None

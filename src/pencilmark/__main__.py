@@ -133,6 +133,7 @@ def _rate_one(args):
             st = ("not unique" if len(sols) > 1 else "undecided (" + V.VERIFY_HINT + ")" if not decided
                   else "no solution")
             return _fmt2(fmt, {"error": st}, k, False) if not a.json else json.dumps({"line": k, "error": st})
+        p._pm_solution = list(sols[0])      # proven unique: later stages reuse it
         from .export import card_fields
         fl = a.fields.split(",") if a.fields else None
         if fl is None and ("%p" in fmt or a.report):

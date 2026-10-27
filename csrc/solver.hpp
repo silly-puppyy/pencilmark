@@ -716,7 +716,9 @@ private:
     void refute_profile(const std::vector<std::pair<int, int>>& givens, const std::vector<int>& sol, int max_stuck,
                         std::vector<std::array<int, 5>>& out);
     bool basic_propagate(int& placed);
-    int trial_depth(int c, int v);
+    int trial_depth(int c, int v, int cap = 1 << 30);
+    int prop_cap = 1 << 30;
+    const std::vector<uint32_t>* gac_ref = nullptr;  // a consistent state: rules none of whose cells differ from it are skipped      // basic_propagate stops (no contradiction) once it has made more placements than this
     int refK = 0;                                   // knowledge ladder: 0 singles+relations+GAC, 1 + locked candidates + pairs,
     std::vector<std::vector<int>> k_nbr;            // 2 + triples (over all houses); houses sharing >= 2 cells
     std::vector<std::vector<char>> k_in;            // house membership per cell

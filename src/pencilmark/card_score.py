@@ -74,7 +74,8 @@ def refute_lr_cell(p):
     log(candidates / shortest refutations) per empty cell). Puzzle-only: no technique catalogue, no prices."""
     global _LAST_REFUTE
     from . import cbackend as _CB
-    bs = _CB.brute_solve(p, limit=1)
+    known = getattr(p, "_pm_solution", None)
+    bs = [known] if known is not None else _CB.brute_solve(p, limit=1)
     if not bs:
         _LAST_REFUTE = None
         return 0.0

@@ -96,6 +96,7 @@ def rate(puzzle, steps=False, max_seconds=None, mode="human", se=False, fields=N
                         "for the CP-SAT fallback")
     if not sols:
         raise NoSolution("no solution")
+    p._pm_solution = list(sols[0])      # proven unique: later stages reuse it instead of searching again
     P = dict(_params(mode), allow_guess=bool(allow_guessing), quality=quality or {})
     return grade(p, P, max_seconds=max_seconds, fields=sorted(want), with_steps=steps, explain=explain)
 

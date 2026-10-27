@@ -257,7 +257,8 @@ def grade_puzzle_checked(puzzle, P, explain=False, time_limit=60.0, tier_by_fami
     from .scoring import grade
     if not hasattr(puzzle, "groups_of"):
         puzzle.finalize()
-    sols = V.solutions(puzzle, limit=2, time_limit=time_limit)
+    known = getattr(puzzle, "_pm_solution", None)      # set by rate() once uniqueness is proven
+    sols = [known] if known is not None else V.solutions(puzzle, limit=2, time_limit=time_limit)
     if sols is not None and len(sols) == 0:
         return {"status": "no solution", "unique": False}
     if sols is not None and len(sols) >= 2:

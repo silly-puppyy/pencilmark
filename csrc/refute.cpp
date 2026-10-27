@@ -13,16 +13,22 @@ namespace cs {
 bool Solver::basic_propagate(int& placed) {
     for (int it = 0; it < 1000; ++it) {
         bool prog = false;
+        const std::vector<uint32_t>* ref = gac_ref;     // consistent state: unchanged cells / houses hold no single
         for (int x = 0; x < p.N; ++x) {
-            if (vals[x]) continue;
+            if (vals[x] || (ref && cand[x] == (*ref)[x])) continue;
             if (!cand[x]) return false;
             if (popc(cand[x]) == 1) {
                 place(x, lowdigit(cand[x]));
-                ++placed;
+                if (++placed > prop_cap) return true;
                 prog = true;
             }
         }
         for (int hi : p.houses) {
+            if (ref) {
+                bool dirty = false;
+                for (int x : p.groups[hi].cells) if (cand[x] != (*ref)[x]) { dirty = true; break; }
+                if (!dirty) continue;
+            }
             for (uint32_t mm = p.full & ~placed_g[hi]; mm; mm &= mm - 1) {
                 uint32_t b = mm & (~mm + 1);
                 int cnt = 0, last = -1;
@@ -34,7 +40,7 @@ bool Solver::basic_propagate(int& placed) {
                 if (cnt == 0) return false;
                 if (cnt == 1) {
                     place(last, lowdigit(b));
-                    ++placed;
+                    if (++placed > prop_cap) return true;
                     prog = true;
                 }
             }
@@ -42,6 +48,11 @@ bool Solver::basic_propagate(int& placed) {
         for (const std::vector<NConstraint>* lst : {&p.nary, &p.cage_nary}) {
             for (const NConstraint& k : *lst) {
                 if (k.nv() > 64) continue;
+                if (gac_ref) {               // unchanged since a consistent state: nothing new to find
+                    bool dirty = false;
+                    for (int i = 0; i < k.nv() && !dirty; ++i) dirty = cand[k.vars[i]] != (*gac_ref)[k.vars[i]];
+                    if (!dirty) continue;
+                }
                 uint32_t dom[64];
                 nary_dom(k, dom);
                 const GacOut& o = gac_cached(k, dom);
@@ -211,12 +222,16 @@ int Solver::k_step() {
     return 0;
 }
 
-int Solver::trial_depth(int c, int v) {
+// placements until a contradiction, or -1 when there is none within `cap` placements (a deeper refutation counts as none)
+int Solver::trial_depth(int c, int v, int cap) {
     std::vector<uint8_t> sv = vals;
     std::vector<uint32_t> sc = cand, sg = placed_g;
     place(c, v);
     int placed = 0;
+    const int cap0 = prop_cap;
+    prop_cap = cap;
     bool ok = basic_propagate(placed);
+    prop_cap = cap0;
     vals.swap(sv);
     cand.swap(sc);
     placed_g.swap(sg);
@@ -236,15 +251,27 @@ void Solver::refute_profile(const std::vector<std::pair<int, int>>& givens, cons
         int C = 0;
         for (int x = 0; x < p.N; ++x)
             if (!vals[x]) C += popc(cand[x]);
+        // only the shortest refutations are used: trials stop once they are longer than the shortest found so far, and the
+        // most constrained cells go first so short ones turn up early (same output, far fewer propagations)
         std::vector<std::array<int, 3>> refs;
-        for (int x = 0; x < p.N; ++x) {
-            if (vals[x]) continue;
+        std::vector<int> order;
+        for (int x = 0; x < p.N; ++x)
+            if (!vals[x]) order.push_back(x);
+        std::stable_sort(order.begin(), order.end(), [&](int a, int b) { return popc(cand[a]) < popc(cand[b]); });
+        int best = 1 << 30;
+        const std::vector<uint32_t> ref = cand;    // a fixpoint of basic_propagate: every rule is consistent with it
+        gac_ref = &ref;
+        for (int x : order) {
             for (uint32_t dm = cand[x]; dm; dm &= dm - 1) {
                 int v = lowdigit(dm);
-                int d = trial_depth(x, v);
-                if (d >= 0) refs.push_back({x, v, d});
+                int d = trial_depth(x, v, best);
+                if (d >= 0) {
+                    refs.push_back({x, v, d});
+                    best = std::min(best, d);
+                }
             }
         }
+        gac_ref = nullptr;
         if (refs.empty()) {
             if ((int)sol.size() != p.N) break;
             int best = -1, bp = 1 << 30;
