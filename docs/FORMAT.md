@@ -523,7 +523,8 @@ and `decorations` only.
 ## 7. Default drawing
 
 A renderer needs nothing beyond the rules. Sizes are in cell units (1 = a cell's side). Colours are defaults that
-`style` may override. Draw order, bottom to top: cell shading, lines, cage outlines, grid lines and box borders,
+`style` may override; the line colours are the community defaults (as measured on 6,217 published puzzles), and all
+values, with a dark theme, are in [`docs/palette.json`](palette.json). Grid lines 0.031, box borders and frame 0.055. Draw order, bottom to top: cell shading, lines, cage outlines, grid lines and box borders,
 edge / corner clues, digits, outside clues.
 
 | Rule | Default drawing |
@@ -538,16 +539,16 @@ edge / corner clues, digits, outside clues.
 | `cage` | Dashed outline inset 0.08 from the cell edges; `sum` in small type (0.25) in the top-left corner of the first cell in reading order. |
 | `sum` `group` | Like a cage, dotted. |
 | `sum` `corner` | Small white circle (0.3) with the sum at the shared corner. |
-| `line` `thermo` | Grey (`#b0b0b0`) line, width 0.3; filled bulb, diameter 0.75, at `cells[0]`. |
+| `line` `thermo` | Grey (`#cccccc`) line, width 0.3; filled bulb, diameter 0.75, at `cells[0]`. |
 | `line` `slow_thermo` | As thermo, bulb hollow. |
-| `line` `whisper` | Green (`#3fbf3f`), width 0.2. |
-| `line` `renban` | Purple (`#c060f0`), width 0.3. |
-| `line` `region_sum` | Blue (`#3080ff`), width 0.2. |
-| `line` `palindrome` | Grey (`#909090`), width 0.2. |
-| `line` `entropic` | Orange (`#f0a040`), width 0.2. |
-| `line` `modular` | Teal (`#20a0a0`), width 0.2. |
-| `line` `parity` | Red (`#ff7070`), width 0.2. |
-| `line` `zipper` | Lavender (`#9a8cf0`), width 0.2, small dot at the centre. |
+| `line` `whisper` | Green (`#67f067`), width 0.15; Dutch whisper (`value` 4) orange (`#ffa600`). |
+| `line` `renban` | Pink (`#f067f0`), width 0.15. |
+| `line` `region_sum` | Blue (`#2ecbff`), width 0.15. |
+| `line` `palindrome` | Grey (`#aaaaaa`), width 0.15. |
+| `line` `entropic` | Peach (`#ffccaa`), width 0.15. |
+| `line` `modular` | Teal (`#33bbaa`), width 0.15. |
+| `line` `parity` | Red (`#ff6666`), width 0.15. |
+| `line` `zipper` | Lavender (`#c8adeb`), width 0.15, small dot at the centre. |
 | `line` `between` | Grey line, width 0.1; hollow circles (0.75) at both ends. |
 | `line` `lockout` | Grey line, width 0.1; hollow diamonds at both ends. |
 | `line` `double_arrow` | Grey line, width 0.05; hollow circles at both ends. |

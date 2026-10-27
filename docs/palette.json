@@ -1,0 +1,91 @@
+{
+ "$comment": "pencilmark default drawing (docs/FORMAT.md section 7): sizes in cell units, digit weights in font weight; colours per theme. Line colours are the community defaults measured on 6,217 LMD puzzles.",
+ "format": "sudoku-palette",
+ "format_version": 1,
+ "sizes": {
+  "thin": 0.031,
+  "box": 0.055,
+  "frame": 0.055,
+  "box_dark": 0.075,
+  "digit": 0.7,
+  "given_w": 450,
+  "placed_w": 360,
+  "halo_light": 0.034,
+  "halo_dark": 0.05,
+  "line": 0.15,
+  "thermo": 0.3,
+  "bulb": 0.375
+ },
+ "themes": {
+  "light": {
+   "page": "#f8f6f1",
+   "board": "#fffdf8",
+   "ink": "#1a1a1a",
+   "thin": "#1a1a1a",
+   "given": "#111111",
+   "placed": "#2357c7",
+   "cand": "#5f5a54",
+   "shade": "#d8d8d8",
+   "diag": "#9a958e",
+   "clue_bg": "#fffdf8",
+   "odd": "#c9c5bf",
+   "even": "#c9c5bf",
+   "low": "#e2ded8",
+   "high": "#a9a49d",
+   "text": "#1f1e1d"
+  },
+  "dark": {
+   "page": "#1b1916",
+   "board": "#23201d",
+   "ink": "#e8e6e3",
+   "thin": "#e8e6e3",
+   "given": "#f2f0ed",
+   "placed": "#8fb6ff",
+   "cand": "#b3afa9",
+   "shade": "#3b3833",
+   "diag": "#7d7871",
+   "clue_bg": "#23201d",
+   "odd": "#4a4640",
+   "even": "#4a4640",
+   "low": "#3a3732",
+   "high": "#5e5953",
+   "text": "#ecebe8"
+  }
+ },
+ "lines": {
+  "whisper": "#67f067",
+  "renban": "#f067f0",
+  "region_sum": "#2ecbff",
+  "entropic": "#ffccaa",
+  "modular": "#33bbaa",
+  "parity": "#ff6666",
+  "palindrome": "#aaaaaa",
+  "zipper": "#c8adeb",
+  "thermo": "#cccccc",
+  "slow_thermo": "#cfcfcf",
+  "between": "#aaaaaa",
+  "lockout": "#aaaaaa",
+  "double_arrow": "#aaaaaa",
+  "dutch_whisper": "#ffa600"
+ },
+ "region_palette": [
+  "#f4cccc",
+  "#fce5cd",
+  "#fff2cc",
+  "#d9ead3",
+  "#d0e0e3",
+  "#c9daf8",
+  "#d9d2e9",
+  "#ead1dc",
+  "#e6e6e6"
+ ],
+ "bands": {
+  "Very Easy": "#7ccf6b",
+  "Easy": "#2f9e44",
+  "Medium": "#f2b705",
+  "Hard": "#ee6a1a",
+  "Very Hard": "#c92a2a",
+  "Extreme": "#e665c0",
+  "Unknown": "#9a958e"
+ }
+}
