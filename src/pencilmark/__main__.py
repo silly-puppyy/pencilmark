@@ -88,7 +88,8 @@ def report2(g, k=None):
     if "band" not in g:
         return f"[{k}] {g.get('error')}"
     L = [f"{'#' + str(k) + '  ' if k else ''}{g['band']}  -  difficulty {g.get('difficulty')}  -  time {g.get('time')} min"
-         + "".join(f" ({k[6:] if k != 'time_mean' else 'mean'}: {v} min)" for k, v in g.items() if k.startswith("time_") and v is not None)]
+         + "".join(f" (mean {v} min)" if k == "time_mean" else f" ({k[6:]}% of players within {v} min)"
+                   for k, v in g.items() if k.startswith("time_") and v is not None)]
     hard = [c for c in g.get("contains") or [] if c.get("band", 0) > 0]
     L.append("   contains: " + (", ".join(f"{c['name']}{' x' + str(c['uses']) if c.get('uses', 0) > 1 else ''}"
                                          f"{' (or ' + '/'.join(c['alternatives']) + ')' if c.get('alternatives') else ''}" for c in hard)
@@ -136,6 +137,8 @@ def _rate_one(args):
         fl = a.fields.split(",") if a.fields else None
         if fl is None and ("%p" in fmt or a.report):
             fl = list(card_fields(None)) + ["time_p80"]
+        if "%n" in fmt:
+            fl = list(fl or card_fields(None)) + ["issues"]
         want = card_fields(fl, steps=a.steps)
         explain = a.explain.split(",") if a.explain else (True if a.steps else None)
         g = grade(p, P, max_seconds=a.max_seconds, fields=sorted(want), explain=explain)
@@ -212,9 +215,9 @@ def main(argv=None):
                    "instead of proving by full search (Trial and error, band Extreme)")
     r.add_argument("--steps", action="store_true", help="with --json: include the step-by-step solve (with both explanation levels)")
     r.add_argument("--quality", default=None, help='issue check limits, e.g. "trivial=0.5,tedious=90,trial=false" '
-                   "(docs/FORMAT.md 11.4)")
+                   "(docs/GRADE.md 4)")
     r.add_argument("--explain", default=None, help="step explanation levels, comma-separated: short, teach")
-    r.add_argument("--fields", default=None, help="card fields, comma-separated (docs/FORMAT.md 11.2), e.g. "
+    r.add_argument("--fields", default=None, help="card fields, comma-separated (docs/GRADE.md 2), e.g. "
                                                     "difficulty,band,time_p80,steps")
     r.add_argument("-j", "--jobs", type=int, default=1, help="rate puzzles in N parallel processes (output in input order)")
     r.add_argument("--max-seconds", type=float, default=None,

@@ -327,11 +327,11 @@ def test_describe_names():
 
 # ---------------------------------------------------------------------------------------------------------- sudoku-spec
 def test_card_fields():
-    """field mask = top-level keys, explanation levels, the issues / reject shape (FORMAT.md 11)"""
+    """field mask = top-level keys, explanation levels, the issues / reject shape (GRADE.md)"""
     c = pencilmark.rate(CLASSIC)
     assert list(c) == ["format", "format_version", "grader", "difficulty", "time", "band", "band_index", "contains",
-                       "contains_complete", "contains_truncated", "issues", "reject"], list(c)
-    assert c["grader"] == {"name": "pencilmark", "version": "1.0.0rc1"} and c["reject"] is False
+                       "contains_complete", "contains_truncated"], list(c)
+    assert c["grader"] == {"name": "pencilmark", "version": "1.0.0rc1"} and "reject" not in c
     m = pencilmark.rate(CLASSIC, fields=["difficulty", "time_p80", "steps", "symmetry", "se_diuf"], explain="short")
     assert set(m) == {"format", "format_version", "grader", "difficulty", "time_p80", "steps", "symmetry", "se_diuf"}
     assert m["difficulty"] == c["difficulty"] and set(m["steps"][0]["explanation"]) == {"short"}
@@ -493,7 +493,7 @@ def test_card_schema():
 
 
 def test_quality_limits():
-    """quality = per-check limits keyed by issue code (FORMAT.md 11.4): numbers adjust, false turns a check off"""
+    """quality = per-check limits keyed by issue code (GRADE.md 4): numbers adjust, false turns a check off"""
     assert pencilmark.rate(CLASSIC, fields=["issues"])["issues"] == []
     low = pencilmark.rate(CLASSIC, fields=["issues", "reject"], quality={"trivial": 0.2})
     assert [i["code"] for i in low["issues"]] == ["trivial"] and low["reject"] is True

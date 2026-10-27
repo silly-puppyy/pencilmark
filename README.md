@@ -9,10 +9,10 @@
 pencilmark rates sudoku puzzles the way a human solver experiences them. It solves a puzzle step by step with human
 techniques, easiest first, and reports how hard it is, how long it takes, which band it belongs to and which techniques
 you need. It works for classic sudoku of any standard size and for many variants (killer, thermo, arrow, kropki, XV,
-sandwich, multi-grid boards and more). It also solves puzzles, checks uniqueness, imports puzzles from SudokuPad,
-f-puzzles, penpa-edit and Logic Masters links, and generates new puzzles to a target band or difficulty.
+sandwich, multi-grid boards and more). It also solves puzzles, checks uniqueness, imports puzzles from [SudokuPad](https://sudokupad.app/),
+[f-puzzles](https://www.f-puzzles.com/), [penpa-edit](https://swaroopg92.github.io/penpa-edit/) and [Logic Masters](https://logic-masters.de/) links, and generates new puzzles to a target band or difficulty.
 
-The engine is written in C++ (pybind11). Results are deterministic: the same puzzle always gets the same card.
+The engine is written in C++ ([pybind11](https://github.com/pybind/pybind11)). Results are deterministic: the same puzzle always gets the same card.
 
 ## Install
 
@@ -44,7 +44,7 @@ Command line:
 
 ```
 $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9.......' | pencilmark rate - --report
-#1  Medium  -  difficulty 5.9  -  time 10.7 min (80% of players within 16.4 min)
+#1  Medium  -  difficulty 5.9  -  time 10.7 min (80% of players within 19.8 min)
    contains: Naked Pair (or PPR/HPR), X-Wing (or KTE/SCL)
 
 pencilmark rate puzzles.txt --json        # full card per line (python -m pencilmark works too)
@@ -57,7 +57,7 @@ More in [docs/USAGE.md](https://github.com/silly-puppyy/pencilmark/blob/main/doc
 
 `rate` returns a dict (format `"sudoku-grade"`) with these fields by default (`grader`, `format`, `format_version` are
 always there); `rate(puzzle, fields=[...])` / `--fields` asks for others by their key names, and only requested fields
-are computed ([docs/FORMAT.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/FORMAT.md) section 11):
+are computed ([docs/GRADE.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/GRADE.md)):
 
 | Field | Meaning |
 |---|---|
@@ -65,10 +65,18 @@ are computed ([docs/FORMAT.md](https://github.com/silly-puppyy/pencilmark/blob/m
 | `time` | expected minutes for the median player (on request `time_mean` or any percentile `time_pNN`, e.g. `time_p80`: 80% of players finish within it) |
 | `band`, `band_index` | Very Easy (0), Easy, Medium, Hard, Very Hard, Extreme (5); `"Unknown"` (null) only with `allow_guessing=True`, when the engine had to guess |
 | `contains` | techniques met going easy to hard: `code`, `chip`, `name`, `band`, `uses`, `alternatives`; with `contains_complete` and `contains_truncated` |
-| `issues`, `reject` | publishing checks such as a difficulty spike or an unused rule (`code`, `severity` reject / warning, `text`, and `rules`: the offending rules' indices in the exported puzzle); `reject` is true when any issue is a reject |
-| on request | `time_mean` / `time_pNN`, `steps` (technique, placement `r2c8=3` or eliminations `r4c5#7`; `explain="short"` / `"teach"` adds explanations), `se` / `se_diuf`, `describe`, `symmetry` |
+| on request | `issues` / `reject` (publishing checks, below), `time_mean` / `time_pNN`, `steps` (technique, placement `r2c8=3` or eliminations `r4c5#7`; `explain="short"` / `"teach"` adds explanations), `se` / `se_diuf`, `describe`, `symmetry` |
 
 A chip like `XWG/KTE/SCL` means any one of those techniques gets you through at that point.
+
+Publishing checks are off unless you ask for them. They flag puzzles a publisher would usually not pick: a difficulty
+spike, a rule that is never used, too many givens, ... (`code`, `severity` reject / warning, `text`, and `rules`: the
+offending rules' indices in the exported puzzle); `reject` is true when any issue is a reject. Each check's limit is
+adjustable:
+
+```python
+card = pencilmark.rate(puzzle, fields=["difficulty", "band", "issues", "reject"], quality={"trivial": 0.4, "trial": False})
+```
 
 Guessing is off by default: where no technique applies, the engine proves an elimination by full search (Trial and
 error, band Extreme), so every uniquely solvable puzzle gets a band. `allow_guessing=True` (CLI `--allow-guessing`) lets it
@@ -108,8 +116,8 @@ may say `contains_truncated: true`. A puzzle without exactly one solution has no
 
 ### Other formats
 
-For convenience pencilmark also reads and writes sudokuwiki.org packed strings, exports ipuz, and loads SudokuPad,
-f-puzzles, Penpa+ and Logic Masters links. None of these is needed to use the `sudoku-puzzle` format; see
+For convenience pencilmark also reads and writes [sudokuwiki.org](https://www.sudokuwiki.org/) packed strings, exports [ipuz](http://www.ipuz.org/), and loads SudokuPad,
+f-puzzles, [Penpa](https://swaroopg92.github.io/penpa-edit/)+ and Logic Masters links. None of these is needed to use the `sudoku-puzzle` format; see
 [docs/INTEROP.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/INTEROP.md). How rules map onto the engine, and how to add one, is in
 [docs/ENGINE.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/ENGINE.md).
 

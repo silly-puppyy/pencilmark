@@ -1,4 +1,4 @@
-"""Draw a sudoku-puzzle file as SVG, following the default drawing of docs/FORMAT.md section 7 (reference renderer for
+"""Draw a sudoku-puzzle file as SVG, following the default drawing of docs/STYLE.md (reference renderer for
 the docs; not part of the package).
   python tools/render_svg.py puzzle.json out.svg [--dark] [--cell 48]
   render(doc, dark=False, cell=48) -> svg text"""
@@ -13,7 +13,7 @@ except ImportError:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
     from pencilmark import exchange as X  # noqa: E402
 
-# board style, in cell units unless noted (docs/FORMAT.md section 7; values in docs/palette.json)
+# board style, in cell units unless noted (docs/STYLE.md; values in docs/palette.json)
 _PAL = json.loads((Path(__file__).resolve().parents[1] / "docs/palette.json").read_text(encoding="utf-8"))
 STYLE = _PAL["sizes"]
 THEMES = {False: _PAL["themes"]["light"], True: _PAL["themes"]["dark"]}

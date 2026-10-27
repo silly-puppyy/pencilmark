@@ -11,6 +11,10 @@
   the population one (about 1.85x). `time` is the median player.
 - Generator: element varieties (kropki colour, XV letter, odd/even) with counts, ranges and caps; the information-budget
   check uses per-class maximums.
+- Publishing checks (`issues`, `reject`) are no longer default card fields; ask for them with `fields=[...]`.
+- Docs: the puzzle format (`FORMAT.md`), grade card (`GRADE.md`) and generator spec (`SPEC.md`) are separate
+  documents, each saying how to implement a subset; drawing conventions moved out of the format into `STYLE.md`, variant
+  naming into `NAMING.md`.
 - Drawing: `docs/palette.json` with the default sizes, light and dark themes and the community line colours; reference
   SVG renderer `tools/render_svg.py`.
 

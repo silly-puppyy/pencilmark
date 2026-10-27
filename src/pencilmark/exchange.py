@@ -4,8 +4,8 @@
     to_internal(doc) -> dict                            sudoku-puzzle dict -> puzzle JSON (pencilmark.puzzle_json)
     read(doc) -> Puzzle                                 sudoku-puzzle dict -> engine Puzzle (not finalized)
     validate(doc)                                       strict reading checks (FORMAT.md section 4); raises FormatError
-    dumps(doc, pretty=True) -> str                      canonical JSON text (FORMAT.md 9.1)
-    fingerprint(doc) -> "sha256:..."                    content fingerprint (FORMAT.md 9.2)
+    dumps(doc, pretty=True) -> str                      canonical JSON text (FORMAT.md 8.1)
+    fingerprint(doc) -> "sha256:..."                    content fingerprint (FORMAT.md 8.2)
 
 The format is a transport layer: read(write(p)) builds the same engine structure as p (groups in order, relations and
 constraints in order, domains, givens, coordinates), except for the normalisations listed in docs/ENGINE.md (each
@@ -1913,7 +1913,7 @@ def _order(d, order):
 
 
 def canonical(doc):
-    """key order of FORMAT.md 9.1 (content unchanged)"""
+    """key order of FORMAT.md 8.1 (content unchanged)"""
     out = _order(doc, KEY_ORDER)
     if "rules" in out:
         out["rules"] = [_order(r, RULE_ORDER) for r in out["rules"]]

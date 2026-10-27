@@ -1,6 +1,7 @@
 /* pencilmark docs: warm paper greys and the logo's tan / brown / espresso, Inter + JetBrains Mono, high contrast. */
 @import '@fontsource-variable/inter/index.css';
 @import '@fontsource-variable/jetbrains-mono/index.css';
+@import 'katex/dist/katex.min.css';
 
 :root {
   --ifm-color-primary: #7a5230;
@@ -103,3 +104,16 @@ body { font-feature-settings: 'cv11', 'ss01'; -webkit-font-smoothing: antialiase
 .markdown h1 code, .markdown h2 code, .markdown h3 code, .table-of-contents code {
   background: none; border: none; padding: 0; color: inherit; font-size: 0.92em;
 }
+
+/* inline JSON (rehype plugin src/plugins/inline-json.mjs): an inline-code chip in the code theme's colours */
+.inline-json { font-family: var(--ifm-font-family-monospace); font-size: var(--ifm-code-font-size); background: var(--ifm-code-background);
+  padding: 0.1em 0.35em; border-radius: 4px; font-variant-numeric: tabular-nums; }
+.inline-json .token.property { color: #c82829; }
+.inline-json .token.string { color: #718c00; }
+.inline-json .token.number, .inline-json .token.boolean, .inline-json .token.null { color: #f5871f; }
+.inline-json .token.punctuation, .inline-json .token.operator { color: #8e908c; }
+html[data-theme='dark'] .inline-json .token.property { color: #cc6666; }
+html[data-theme='dark'] .inline-json .token.string { color: #b5bd68; }
+html[data-theme='dark'] .inline-json .token.number, html[data-theme='dark'] .inline-json .token.boolean,
+html[data-theme='dark'] .inline-json .token.null { color: #de935f; }
+html[data-theme='dark'] .inline-json .token.punctuation, html[data-theme='dark'] .inline-json .token.operator { color: #969896; }

@@ -6,9 +6,9 @@ other formats for convenience. None of them is part of the format or required by
 | Function | Reads | Writes |
 |---|---|---|
 | `from_string(s)` / `to_string(puzzle, "plain")` | plain classic strings | plain classic strings |
-| `from_string(s)` / `to_string(puzzle, "sudokuwiki")` | sudokuwiki.org packed strings | sudokuwiki.org packed strings |
-| `to_ipuz(puzzle)` | – | ipuz 2 |
-| `pencilmark.sources.load(url)` | f-puzzles, SudokuPad (SCL / fpuz / ctc), Penpa+, Logic Masters links | – |
+| `from_string(s)` / `to_string(puzzle, "sudokuwiki")` | [sudokuwiki.org](https://www.sudokuwiki.org/) packed strings | sudokuwiki.org packed strings |
+| `to_ipuz(puzzle)` | – | [ipuz](http://www.ipuz.org/) 2 |
+| `pencilmark.sources.load(url)` | [f-puzzles](https://www.f-puzzles.com/), [SudokuPad](https://sudokupad.app/) (SCL / fpuz / ctc), [Penpa](https://swaroopg92.github.io/penpa-edit/)+, [Logic Masters](https://logic-masters.de/) links | – |
 
 `from_string` and the site loaders return a `sudoku-puzzle` dict; every entry point (`rate`, `solve`, `load`, the
 command line) also accepts these strings directly.

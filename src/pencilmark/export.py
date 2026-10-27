@@ -364,8 +364,8 @@ def time_units(effort_l1, empty_cells, difficulty=None, geometry=None):
 
 
 ALWAYS = ("format", "format_version", "grader")
-DEFAULT_FIELDS = ("difficulty", "time", "band", "band_index", "contains", "issues", "reject")
-OPTIONAL_FIELDS = ("time_p80", "se", "se_diuf", "steps", "describe", "symmetry")
+DEFAULT_FIELDS = ("difficulty", "time", "band", "band_index", "contains")
+OPTIONAL_FIELDS = ("time_p80", "issues", "reject", "se", "se_diuf", "steps", "describe", "symmetry")   # + time_mean / time_pNN
 EXPLAIN_LEVELS = ("short", "teach")
 
 
@@ -390,7 +390,7 @@ def _time_stat(field):
 
 
 def card_fields(fields=None, steps=False, se=False):
-    """the field mask (FORMAT.md 11.2): the requested top-level card keys; None = the default fields. format,
+    """the field mask (GRADE.md 2): the requested top-level card keys; None = the default fields. format,
     format_version and grader are always present. steps=True / se=True / se="diuf" are shorthands."""
     out = set(DEFAULT_FIELDS) if fields is None else set(fields) - set(ALWAYS)
     bad = {f for f in out - set(DEFAULT_FIELDS) - set(OPTIONAL_FIELDS) if not _time_stat(f)}
@@ -439,7 +439,7 @@ def _noun(rules):
 
 
 def _issues(p, card, doc, prov):
-    """card notes -> issues [{"code", "severity": "reject" | "warning", "text", "rules"?}] (FORMAT.md 11.4). Rule notes
+    """card notes -> issues [{"code", "severity": "reject" | "warning", "text", "rules"?}] (GRADE.md 4). Rule notes
     point at the exported file's rule indices (doc = exchange.write(p) as to_export writes it)."""
     out = []
     raw = card.get("_notes_raw")
@@ -504,7 +504,7 @@ def symmetry_of(p):
 
 
 def grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, explain=None):
-    """sudoku-grade card (FORMAT.md 11), only the requested fields (card_fields). explain: step explanation levels
+    """sudoku-grade card (GRADE.md), only the requested fields (card_fields). explain: step explanation levels
     (explain_levels). with_steps=True is shorthand for the steps field with both explanation levels."""
     from . import card as K, band_path as BP
     want = card_fields(fields, steps=bool(with_steps))

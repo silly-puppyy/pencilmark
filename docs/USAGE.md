@@ -17,7 +17,7 @@ pencilmark describe puzzles.txt          # variant name and rules, e.g. {"type":
 `python -m pencilmark ...` does the same.
 
 **Input:** one puzzle per line. Each line can be any of these:
-- a classic string, with `.` or `0` for blanks, or a sudokuwiki.org packed string (`S9B…`, `J9B…`, `L9B…`, …;
+- a classic string, with `.` or `0` for blanks, or a [sudokuwiki.org](https://www.sudokuwiki.org/) packed string (`S9B…`, `J9B…`, `L9B…`, …;
   see docs/INTEROP.md);
 - a JSON object in the `pencilmark.puzzle_json` format (variants, multi-grids, rules);
 - a `sudoku-puzzle` object: the exchange format, format_version 1 (docs/FORMAT.md);
@@ -87,7 +87,7 @@ r = generate({"size": 9, "target_band": "Hard", "seed": 1})
 r["puzzle"], r["card"], r["info"]
 ```
 
-Requests can also be written as a `sudoku-spec` file (docs/FORMAT.md section 12; `spec_to_gen` converts it). The
+Requests can also be written as a `sudoku-spec` file (docs/SPEC.md; `spec_to_gen` converts it). The
 generator supports this part of the spec and refuses everything else with a clear message:
 
 | Spec part | Supported |
@@ -114,7 +114,7 @@ $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7..
 ## The card
 - **difficulty** is how hard each cell *feels* to a human. The scale is continuous: 0 means one empty cell, and there is no ceiling.
   - On classics it follows Andrew Stuart's sudokuwiki.org scale.
-  - A typical newspaper medium is about 5; fed-sudoku "hard" is about 6.5.
+  - A typical newspaper medium is about 5; [fed-sudoku](https://www.fed-sudoku.eu/) "hard" is about 6.5.
   - It measures effort and is independent of the band: variants often sit above Andrew Stuart's range for their band, because the same techniques take more work there (more empty cells, clues to read).
 - **time** is in minutes for an average player.
   - The median 9x9 classic takes about 12 min.
@@ -126,13 +126,13 @@ $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7..
 - **contains** lists what a solver meets going easy to hard.
   - A chip like `XWG/KTE/SCL` means each of those alone also works at that point.
   - Singles are listed without counts.
-- **issues** are publishing checks (`spike`, `decorative`, `barely_used`, `redundant`, `trivial`, `tedious`,
+- **issues** (on request, `fields=[..., "issues", "reject"]`) are publishing checks (`spike`, `decorative`, `barely_used`, `redundant`, `trivial`, `tedious`,
   `uniqueness`, `trial`), severity `reject` or `warning`; rule problems name the offending rules by index in the exported
   puzzle (`"rules": [3, 4]`). **reject** is `true` when any issue is a reject.
-- Fields: `difficulty`, `time`, `band`, `band_index`, `contains`, `issues`, `reject` by default (`grader`, `format`,
-  `format_version` always); `rate(puzzle, fields=[...])` / `pencilmark rate --fields ...` takes key names and adds
-  `time_p80`, `steps`, `se` / `se_diuf`, `describe`, `symmetry`. `explain="short"` / `"teach"` (CLI `--explain`) adds step
-  explanations. Every key is listed in docs/FORMAT.md section 11.
+- Fields: `difficulty`, `time`, `band`, `band_index`, `contains` by default (`grader`, `format`, `format_version`
+  always); `rate(puzzle, fields=[...])` / `pencilmark rate --fields ...` takes key names and adds `issues` / `reject`,
+  `time_mean` / `time_pNN`, `steps`, `se` / `se_diuf`, `describe`, `symmetry`. `explain="short"` / `"teach"` (CLI `--explain`) adds step
+  explanations. Every key is listed in docs/GRADE.md.
 
 ## Other sites' labels on this scale
 Median difficulty, interquartile range in brackets. Each site rates for its own audience and neighbouring levels
@@ -143,11 +143,11 @@ overlap a lot, so treat this as a rough conversion.
 | fed-sudoku easy | 3.9 (3.4–4.3) | sudokuwiki 3.9 |
 | fed-sudoku medium | 5.1 (4.6–5.9) | sudokuwiki 5.2 |
 | fed-sudoku hard | 6.5 (6.2–7.0) | sudokuwiki 6.7 |
-| sudoku.coach level 0 / 1 / 2 | 0.6 / 1.7 / 2.8 | classics |
+| [sudoku.coach](https://sudoku.coach/) level 0 / 1 / 2 | 0.6 / 1.7 / 2.8 | classics |
 | sudoku.coach level 3 / 4 / 5 | 3.7 / 5.2 / 5.8 | |
 | sudoku.coach level 6 / 7 / 8 | 6.1 / 6.7 / 7.3 | |
 | sudoku.coach level 9 / 10 / 11 | 8.7 / 11.5 / 11.9 | |
-| Logic Masters 1 star | 8.8 (6.3–10.1) | variants; LMD's "easy" is already hard |
+| [Logic Masters](https://logic-masters.de/) 1 star | 8.8 (6.3–10.1) | variants; LMD's "easy" is already hard |
 | Logic Masters 2 stars | 11.1 (10.1–12.6) | |
 | Logic Masters 3 stars | 13.0 (11.5–13.7) | |
 | Logic Masters 4–5 stars | 13.8 (12.6–14.9) | n 56; stars 4 and 5 overlap |
@@ -161,7 +161,7 @@ overlap a lot, so treat this as a rough conversion.
   contents list may not be minimal or may miss joint chips. Without the cap the result is deterministic.
 
 ## Uniqueness
-Puzzles are checked with the engine's exhaustive search. If that search hits its node limit, OR-Tools CP-SAT is used
+Puzzles are checked with the engine's exhaustive search. If that search hits its node limit, [OR-Tools](https://developers.google.com/optimization) [CP-SAT](https://developers.google.com/optimization/cp/cp_solver) is used
 when installed (`pip install "pencilmark[verify]"`); otherwise the puzzle counts as undecided.
 
 ## Technique codes (the contents chips)

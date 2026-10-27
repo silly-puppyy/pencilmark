@@ -19,7 +19,7 @@ UNIQUENESS = {"UniqueRectangle", "BUG+1", "GurthSymmetry"}
 TRIAL = {"Trial", "ShortTrial", "EitherWay", "WhatIf", "ForcingChains", "DynamicForcingChains",
          "NestedForcingChains", "NishioForcingNet", "PatternOverlay"}
 BASE_UNITS = ("row", "col", "box", "column")
-QUALITY = {"spike": 2, "trivial": 0.6, "tedious": 60, "barely_used": 3,      # numeric limits (FORMAT.md 11.4)
+QUALITY = {"spike": 2, "trivial": 0.6, "tedious": 60, "barely_used": 3,      # numeric limits (GRADE.md 4)
            "decorative": True, "redundant": True, "uniqueness": True, "trial": True}
 SPIKE_SINGLES = 0.95        # a spike's solve is otherwise at least this share singles
 

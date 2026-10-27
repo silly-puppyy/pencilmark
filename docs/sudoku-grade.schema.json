@@ -2,7 +2,7 @@
  "$schema": "https://json-schema.org/draft/2020-12/schema",
  "$id": "https://silly-puppyy.github.io/pencilmark/schema/sudoku-grade-1.json",
  "title": "sudoku-grade format_version 1",
- "description": "pencilmark grade card (docs/FORMAT.md section 11).",
+ "description": "pencilmark grade card (docs/GRADE.md).",
  "type": "object",
  "required": [
   "format",

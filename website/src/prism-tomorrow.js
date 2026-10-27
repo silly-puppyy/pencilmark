@@ -16,9 +16,9 @@ function theme(c) {
   };
 }
 
-const tomorrowNight = theme({bg: '#151c28', fg: '#c5c8c6', comment: '#969896', red: '#cc6666', orange: '#de935f',
+const tomorrowNight = theme({bg: '#23201d', fg: '#c5c8c6', comment: '#969896', red: '#cc6666', orange: '#de935f',
   yellow: '#f0c674', green: '#b5bd68', aqua: '#8abeb7', blue: '#81a2be', purple: '#b294bb'});
-const tomorrow = theme({bg: '#f5f7fb', fg: '#4d4d4c', comment: '#8e908c', red: '#c82829', orange: '#f5871f',
+const tomorrow = theme({bg: '#f6f2ea', fg: '#4d4d4c', comment: '#8e908c', red: '#c82829', orange: '#f5871f',
   yellow: '#c18401', green: '#718c00', aqua: '#3e999f', blue: '#4271ae', purple: '#8959a8'});
 
 module.exports = {tomorrow, tomorrowNight};

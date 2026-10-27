@@ -1,8 +1,8 @@
 # Showcase generator specs (`sudoku-spec`)
 
-Written in the spec language of docs/FORMAT.md section 12. "Runs" means `pencilmark.gen` accepts the spec
+Written in the spec language of docs/SPEC.md. "Runs" means `pencilmark.gen` accepts the spec
 (`spec_format.gen_support` / `spec_to_gen`); whether a run finds a puzzle within its time limit is not promised (the
-16x16 cage count, for one, needs a long CP-SAT search). The others are refused with the reason shown and document
+16x16 cage count, for one, needs a long [CP-SAT](https://developers.google.com/optimization/cp/cp_solver) search). The others are refused with the reason shown and document
 where the generator is going.
 
 | File | What | Runs |
