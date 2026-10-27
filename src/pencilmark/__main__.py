@@ -88,7 +88,7 @@ def report2(g, k=None):
     if "band" not in g:
         return f"[{k}] {g.get('error')}"
     L = [f"{'#' + str(k) + '  ' if k else ''}{g['band']}  -  difficulty {g.get('difficulty')}  -  time {g.get('time')} min"
-         + (f" (80% of players within {g.get('time_p80')} min)" if g.get("time_p80") is not None else "")]
+         + "".join(f" ({k[6:] if k != 'time_mean' else 'mean'}: {v} min)" for k, v in g.items() if k.startswith("time_") and v is not None)]
     hard = [c for c in g.get("contains") or [] if c.get("band", 0) > 0]
     L.append("   contains: " + (", ".join(f"{c['name']}{' x' + str(c['uses']) if c.get('uses', 0) > 1 else ''}"
                                          f"{' (or ' + '/'.join(c['alternatives']) + ')' if c.get('alternatives') else ''}" for c in hard)

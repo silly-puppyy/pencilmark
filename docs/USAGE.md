@@ -117,7 +117,7 @@ $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7..
   - A typical newspaper medium is about 5; fed-sudoku "hard" is about 6.5.
 - **time** is in minutes for an average player.
   - The median 9x9 classic takes about 12 min.
-  - `time_p80` (on request) = 80% of players finish within this.
+  - On request, `time_mean` or any percentile `time_pNN` (for example `time_p80`: 80% of players finish within it; `time_p20`: the fastest fifth) over today's players.
   - Typical error: about 20-26%.
 - **band** is fixed by the techniques required on the easiest route (Very Easy ... Extreme).
   - Guessing is off by default: where no technique applies, the engine proves an elimination by full search (Trial and error, Extreme).

@@ -865,8 +865,8 @@ A card exists only for a puzzle with exactly one solution. For any other puzzle,
 | `format`, `format_version` | always | `"sudoku-grade"`, `1` | |
 | `grader` | always | `{"name", "version"}` | The engine that made the card. A card is only meaningful with that engine and version. |
 | `difficulty` | default | number or null | How hard the steps feel, continuous from 0 (one empty cell), no ceiling; a typical newspaper medium is about 5. Null when the band is `Unknown`. |
-| `time` | default | number or null | Expected minutes for an average player. |
-| `time_p80` | optional | number or null | Minutes within which 80% of players finish. |
+| `time` | default | number or null | Expected minutes for today's median player. |
+| `time_mean`, `time_pNN` | optional | number or null | Spread of solve times over today's players: the mean, or the NN-th percentile (`time_p80` = 80% of players finish within it; NN from 1 to 99). Solves without long pauses; a log-normal fitted on two sources' per-player times. |
 | `band` | default | string | `"Very Easy"`, `"Easy"`, `"Medium"`, `"Hard"`, `"Very Hard"`, `"Extreme"`; `"Unknown"` only when guessing was allowed and used. |
 | `band_index` | default | integer or null | 0 (Very Easy) … 5 (Extreme); null for `Unknown`. |
 | `contains` | default | list | The techniques met on the easiest route, easiest first (11.3). |

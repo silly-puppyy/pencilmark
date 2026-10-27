@@ -62,11 +62,11 @@ are computed ([docs/FORMAT.md](https://github.com/silly-puppyy/pencilmark/blob/m
 | Field | Meaning |
 |---|---|
 | `difficulty` | how hard each step feels, continuous from 0 (one empty cell) with no ceiling; a typical newspaper medium is about 5 |
-| `time` | expected minutes for an average player (`time_p80` on request: 80% of players finish within it) |
+| `time` | expected minutes for the median player (on request `time_mean` or any percentile `time_pNN`, e.g. `time_p80`: 80% of players finish within it) |
 | `band`, `band_index` | Very Easy (0), Easy, Medium, Hard, Very Hard, Extreme (5); `"Unknown"` (null) only with `allow_guessing=True`, when the engine had to guess |
 | `contains` | techniques met going easy to hard: `code`, `chip`, `name`, `band`, `uses`, `alternatives`; with `contains_complete` and `contains_truncated` |
 | `issues`, `reject` | publishing checks such as a difficulty spike or an unused rule (`code`, `severity` reject / warning, `text`, and `rules`: the offending rules' indices in the exported puzzle); `reject` is true when any issue is a reject |
-| on request | `time_p80`, `steps` (technique, placement `r2c8=3` or eliminations `r4c5#7`; `explain="short"` / `"teach"` adds explanations), `se` / `se_diuf`, `describe`, `symmetry` |
+| on request | `time_mean` / `time_pNN`, `steps` (technique, placement `r2c8=3` or eliminations `r4c5#7`; `explain="short"` / `"teach"` adds explanations), `se` / `se_diuf`, `describe`, `symmetry` |
 
 A chip like `XWG/KTE/SCL` means any one of those techniques gets you through at that point.
 

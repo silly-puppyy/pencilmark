@@ -45,12 +45,6 @@
     "null"
    ]
   },
-  "time_p80": {
-   "type": [
-    "number",
-    "null"
-   ]
-  },
   "band": {
    "enum": [
     "Very Easy",
@@ -339,6 +333,15 @@
      }
     }
    }
+  }
+ },
+ "patternProperties": {
+  "^time_(mean|p[1-9][0-9]?)$": {
+   "type": [
+    "number",
+    "null"
+   ],
+   "description": "On request: time_mean, or time_pNN = the NN-th percentile of solve times over today's players (minutes)."
   }
  },
  "dependentRequired": {

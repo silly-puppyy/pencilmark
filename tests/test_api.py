@@ -14,7 +14,9 @@ def test_classic_card():
     assert card["format"] == "sudoku-grade"
     assert (card["band"], card["band_index"], card["difficulty"], card["time"]) == ("Medium", 2, 5.9, 10.7)
     assert "time_p80" not in card and card["reject"] is False and card["issues"] == []
-    assert pencilmark.rate(CLASSIC, fields=["time_p80"])["time_p80"] == 16.4
+    t = pencilmark.rate(CLASSIC, fields=["time", "time_p20", "time_p80", "time_mean"])
+    assert t["time_p20"] < t["time"] < t["time_mean"] < t["time_p80"], t
+    assert abs(t["time_p80"] / t["time"] - 1.85) < 0.05, t
     chips = [c["chip"] for c in card["contains"] if c["band"] > 0]
     assert chips == ["NPR/PPR/HPR", "XWG/KTE/SCL"]
 

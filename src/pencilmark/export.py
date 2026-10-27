@@ -11,8 +11,8 @@ grade (format "sudoku-grade", format_version 1):
   grader      {"name": "pencilmark", "version": "1.0.0"}: the engine that made the card; a card from another version can differ
   difficulty  what a human feels per cell: continuous, floor 0 (one empty cell), no ceiling; classic medians track Andrew Stuart's
               scale (data/card_score.json "map")
-  time        minutes for today's average player (classic units x minutes_per_unit, data/time_model.json); time_p80 = the
-              80th percentile (1.53 x)
+  time        minutes for today's median player (classic units x minutes_per_unit, data/time_model.json); on request
+              time_pNN = the NN-th percentile over today's players and time_mean = the mean (log-normal, sigma spread_sigma)
   band        "Very Easy" … "Extreme" or "Unknown" (not solvable without computer search); band_index 0..5 (null for Unknown)
   contains    what a solver meets going easy -> hard (band path): [{"code", "chip", "name", "band", "uses", "alternatives"}];
               a chip "XWG/KTE/SCL" = each of these alone also gets you through here; singles listed without counts
@@ -336,9 +336,7 @@ def time_units(effort_l1, empty_cells, difficulty=None, geometry=None):
     exp(const + k_effort * L1 + k_empty * ln(empty cells)), L1 = log of the priced step sum (card "effort_l1"); fitted on
     era-adjusted per-player times. Files with k_difficulty instead of k_effort use the card difficulty.
     None without the file or the inputs."""
-    global _TIME
-    if _TIME is None:
-        _TIME = _data.load_json("time_model.json") if _data.exists("time_model.json") else {}
+    _time_model()
     import math
     if not _TIME or not empty_cells:
         return None
@@ -370,11 +368,31 @@ OPTIONAL_FIELDS = ("time_p80", "se", "se_diuf", "steps", "describe", "symmetry")
 EXPLAIN_LEVELS = ("short", "teach")
 
 
+def _time_model():
+    global _TIME
+    if _TIME is None:
+        _TIME = _data.load_json("time_model.json") if _data.exists("time_model.json") else {}
+    return _TIME
+
+
+def _time_stat(field):
+    """time_mean / time_p1 .. time_p99 -> the log ratio to the median time; None for any other key"""
+    import re
+    sg = _time_model().get("spread_sigma", 0.73)
+    if field == "time_mean":
+        return sg * sg / 2
+    m = re.fullmatch(r"time_p([1-9][0-9]?)", field)
+    if not m:
+        return None
+    from statistics import NormalDist
+    return NormalDist().inv_cdf(int(m.group(1)) / 100) * sg or 0.0
+
+
 def card_fields(fields=None, steps=False, se=False):
     """the field mask (FORMAT.md 11.2): the requested top-level card keys; None = the default fields. format,
     format_version and grader are always present. steps=True / se=True / se="diuf" are shorthands."""
     out = set(DEFAULT_FIELDS) if fields is None else set(fields) - set(ALWAYS)
-    bad = out - set(DEFAULT_FIELDS) - set(OPTIONAL_FIELDS)
+    bad = {f for f in out - set(DEFAULT_FIELDS) - set(OPTIONAL_FIELDS) if not _time_stat(f)}
     if bad:
         raise ValueError(f"unknown card field(s) {sorted(bad)}; known: {list(DEFAULT_FIELDS) + list(OPTIONAL_FIELDS)}")
     if steps:
@@ -522,8 +540,9 @@ def grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expla
     if "time" in want:
         # time in MINUTES for today's average player (classic units x minutes_per_unit, data/time_model.json)
         g["time"] = round(tm * _TIME.get("minutes_per_unit", 1.0), 1) if tm is not None else (round(2 ** (tg - 5), 2) if tg is not None else None)
-    if "time_p80" in want:
-        g["time_p80"] = round(tm * _TIME.get("p80_factor", 1.53) * _TIME.get("minutes_per_unit", 1.0), 1) if tm is not None else None
+    for f in sorted((f for f in want if f.startswith("time_")), key=lambda f: (f != "time_mean", len(f), f)):
+        lr = _time_stat(f)          # time_mean / time_pNN: spread over today's players around the median (data/time_model.json)
+        g[f] = round(tm * math.exp(lr) * _TIME.get("minutes_per_unit", 1.0), 1) if tm is not None and lr is not None else None
     if "band" in want:
         g["band"] = "Unknown" if unknown else bp["band"]
     if "band_index" in want:

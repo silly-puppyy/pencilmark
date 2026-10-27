@@ -12,7 +12,8 @@
   "c": 0.4
  },
  "minutes_per_unit": 11.8,
- "p80_factor": 1.53,
+ "spread_sigma": 0.73,
+ "spread_note": "solve times of one puzzle across today's players: log-normal around the median, sigma 0.73 = mean of the interquartile fits on fed-sudoku (0.755) and sudoku.coach (0.703); matches both from p10 to p80 and coach to p90 (fed's top tenth are paused solves). runs/nlp/time_spread.py, time_quantiles.py (2026-10-27)",
  "size_curve": {
   "q": 0.2148,
   "c": 4.5199

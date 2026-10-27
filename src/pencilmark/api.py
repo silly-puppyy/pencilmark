@@ -76,8 +76,9 @@ def rate(puzzle, steps=False, max_seconds=None, mode="human", se=False, fields=N
          quality=None):
     """the "sudoku-grade" card of one puzzle (docs/FORMAT.md 11) with the requested top-level fields only. Default fields:
     difficulty, time, band, band_index, contains, issues, reject (format, format_version, grader always). Optional:
-    time_p80, se, se_diuf, steps, describe, symmetry. explain="short" / "teach" / True (both) adds explanations to the
-    steps. steps=True is shorthand for the steps field with both explanation levels; se=True / se="diuf" for se / se_diuf.
+    time_mean / time_pNN (any percentile 1-99, e.g. time_p80), se, se_diuf, steps, describe, symmetry. explain="short" /
+    "teach" / True (both) adds explanations to the steps. steps=True is shorthand for the steps field with both explanation
+    levels; se=True / se="diuf" for se / se_diuf.
     Raises NotUnique / NoSolution / Undecided for a puzzle without exactly one solution. allow_guessing=True: guess
     where no technique applies (band "Unknown") instead of proving by full search (Trial and error, Extreme).
     quality: the issue checks' limits, e.g. {"trivial": 0.5, "trial": False} (docs/FORMAT.md 11.4)."""
