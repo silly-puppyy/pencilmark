@@ -864,7 +864,7 @@ A card exists only for a puzzle with exactly one solution. For any other puzzle,
 |---|---|---|---|
 | `format`, `format_version` | always | `"sudoku-grade"`, `1` | |
 | `grader` | always | `{"name", "version"}` | The engine that made the card. A card is only meaningful with that engine and version. |
-| `difficulty` | default | number or null | How hard the steps feel, continuous from 0 (one empty cell), no ceiling; a typical newspaper medium is about 5. Null when the band is `Unknown`. |
+| `difficulty` | default | number or null | How hard the steps feel, continuous from 0 (one empty cell), no ceiling; a typical newspaper medium is about 5. Measures effort, independent of `band`: variants often sit above Andrew Stuart's range for their band. Null when the band is `Unknown`. |
 | `time` | default | number or null | Expected minutes for today's median player. |
 | `time_mean`, `time_pNN` | optional | number or null | Spread of solve times over today's players: the mean, or the NN-th percentile (`time_p80` = 80% of players finish within it; NN from 1 to 99). Solves without long pauses; a log-normal fitted on two sources' per-player times. |
 | `band` | default | string | `"Very Easy"`, `"Easy"`, `"Medium"`, `"Hard"`, `"Very Hard"`, `"Extreme"`; `"Unknown"` only when guessing was allowed and used. |

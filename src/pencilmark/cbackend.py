@@ -89,6 +89,10 @@ XMETA_KEYS = {
     S.SUM_BOUND: ("lo", "hi", "triangular", "positions", "ctype"),
     # ClassCount: kind (0 parity, 1 thirds, 2 sum parity), class mask, placed, forced cells, others
     S.CLASS_COUNT: ("kind", "class_mask", "placed", "forced", "others"),
+    # ClassColouring: kind (0 low / high, 1 odd / even), why (0 known cell, 1 house count, 2 house quota), cells, links, houses
+    S.CLASS_COLOUR: ("kind", "why", "cells", "links", "houses"),
+    # ClueFacts / ClueShape: level (1 clue alone, 2 with the shape), cells, eliminations
+    S.CLUE_FACTS: ("level", "cells", "n_elims"), S.CLUE_SHAPE: ("level", "cells", "n_elims"),
     S.DOMINO: ("dominoes", "digit_or_mask", "cell_a", "cell_b", "fillings"),
     # seed: 0 house argument only, 1 equality rule / case split, 2 human colouring (consistent with the
     # solution), 3 human colouring without a solution to check against (soft hypothesis)

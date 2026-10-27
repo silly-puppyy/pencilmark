@@ -79,6 +79,9 @@ CLIQUE_HOUSE = 96    # clique house (C++ only): pairwise-different cells (houses
 LINE_SETS = 97       # line digit sets across lines (C++ only): renbans meeting a house choose disjoint digit sets there
 LINE_CLUES = 98      # outside clues together (C++ only): a line with >= 2 sandwich / x-sum / skyscraper clues as one unit
 WEIGHTED_SUMS = 99   # weighted multi-house sums (C++ only): integer combinations of sum facts down to 1-3 cells
+CLUE_FACTS = 101     # facts read off the clues alone (C++ only): relations on an empty grid (no 5 on a whisper, thermo ranges)
+CLUE_SHAPE = 102     # clue facts with the line shape (C++ only): partners in one house needing more digits than allowed
+CLASS_COLOUR = 100   # class colouring (C++ only): low / high or odd / even links between cells, sides fixed by known cells / house counts
 NOTE_TECHS = (TAKE_NOTES, SNYDER_MARKS)  # writing steps: time = t_mark x marks written
 NEW_TECHS = {SUM_COMBO, ARROW_COMBO, SET_COMBO, EQSUM_COMBO, TABLE_COMBO, COMBO_LOCK, NARY_D, INNIE_X,
              FINNED_FISH, JELLYFISH, X_CHAIN, XY_CHAIN, AIC_CHAIN, NICE_LOOP,
@@ -87,7 +90,7 @@ NEW_TECHS = {SUM_COMBO, ARROW_COMBO, SET_COMBO, EQSUM_COMBO, TABLE_COMBO, COMBO_
              LINE_D, LINE_RANGE, MENTAL_D, SHORT_TRIAL, MENTAL_CHAIN, EITHER_WAY, LINE_CLASS,
              DIGIT_COUNT, EQUAL_DIGITS, LINE_SCAN, FORCING, DYN_FORCING, NESTED_FORCING,
              MEDUSA, SUM_BOUND, CLASS_COUNT, DOMINO, COLOUR_ALGEBRA, N_WING, SUE_DE_COQ, APE, CHUTE_RP,
-             POM, GURTH, NISHIO, WHAT_IF, MENTAL_NOTES, MULTI_COLOR, REMOTE_PAIRS, EMPTY_RECT, RULE_INTERSECT, SUM_ALGEBRA, SNYDER_MARKS, SNYDER_D, BAND_LOGIC, FIREWORKS, HUMAN_CASE, COMBO_POS, CLIQUE_HOUSE, LINE_SETS, LINE_CLUES, WEIGHTED_SUMS}
+             POM, GURTH, NISHIO, WHAT_IF, MENTAL_NOTES, MULTI_COLOR, REMOTE_PAIRS, EMPTY_RECT, RULE_INTERSECT, SUM_ALGEBRA, SNYDER_MARKS, SNYDER_D, BAND_LOGIC, FIREWORKS, HUMAN_CASE, COMBO_POS, CLIQUE_HOUSE, LINE_SETS, LINE_CLUES, WEIGHTED_SUMS, CLASS_COLOUR, CLUE_FACTS, CLUE_SHAPE}
 
 TECH_NAMES = {
     FULL_HOUSE: "FullHouse", NAKED_D: "NakedSingle(direct)", HIDDEN_D: "HiddenSingle(direct)",
@@ -111,7 +114,7 @@ TECH_NAMES = {
     SHORT_TRIAL: "ShortTrial", MENTAL_CHAIN: "MentalChain(direct)", EITHER_WAY: "EitherWay", LINE_CLASS: "LineClass",
     DIGIT_COUNT: "DigitCount", EQUAL_DIGITS: "EqualDigits", LINE_SCAN: "LineScan",
     FORCING: "ForcingChains", DYN_FORCING: "DynamicForcingChains", NESTED_FORCING: "NestedForcingChains",
-    MEDUSA: "3DMedusa", SUM_BOUND: "SumBound", CLASS_COUNT: "ClassCount", DOMINO: "Domino",
+    MEDUSA: "3DMedusa", SUM_BOUND: "SumBound", CLASS_COUNT: "ClassCount", CLASS_COLOUR: "ClassColouring", CLUE_FACTS: "ClueFacts", CLUE_SHAPE: "ClueShape", DOMINO: "Domino",
     COLOUR_ALGEBRA: "ColourAlgebra", N_WING: "WXYZ-Wing", SUE_DE_COQ: "SueDeCoq", APE: "AlignedPairExclusion",
     CHUTE_RP: "ChuteRemotePairs", POM: "PatternOverlay", GURTH: "GurthSymmetry", NISHIO: "NishioForcingNet",
     WHAT_IF: "WhatIf", MENTAL_NOTES: "MentalNotesSingle", MULTI_COLOR: "MultiColouring",

@@ -133,6 +133,9 @@ double Params::difficulty(const Move& m, const Cover* covers, int D) const {
     } else {
         const double b = (m.tech == FIREWORKS && B[m.tech] <= 0.0) ? B[HTRIPLE]
                          : (m.tech == HUMAN_CASE && B[m.tech] <= 0.0) ? B[ALS_XZ]
+                         : (m.tech == CLASS_COLOUR && B[m.tech] <= 0.0) ? B[COLORING]
+                         : (m.tech == CLUE_FACTS && B[m.tech] <= 0.0) ? 0.5 * B[LINE_CLASS]
+                         : (m.tech == CLUE_SHAPE && B[m.tech] <= 0.0) ? B[LINE_CLASS]
                          : ((m.tech == COMBO_POS || m.tech == CLIQUE_HOUSE || m.tech == LINE_SETS || m.tech == LINE_CLUES ||
          m.tech == WEIGHTED_SUMS) && B[m.tech] <= 0.0) ? B[HTRIPLE]
                          : B[m.tech];  // no own price
@@ -214,7 +217,7 @@ static bool strategy_off(const char* name, const std::vector<char>& disabled) {
         {"suedecoq", {SUE_DE_COQ}}, {"ape", {APE}}, {"chuterp", {CHUTE_RP}},
         {"ur", {UNIQUE_RECT}}, {"xur", {UNIQUE_RECT}}, {"bug", {BUG_PLUS1}}, {"gurth", {GURTH}},
         {"pairs", {NPAIR, HPAIR}}, {"triples", {NTRIPLE, HTRIPLE}}, {"quads", {NQUAD, HQUAD}},
-        {"digitcount", {DIGIT_COUNT}}, {"equaldigits", {EQUAL_DIGITS}}, {"colouralgebra", {COLOUR_ALGEBRA}},
+        {"digitcount", {DIGIT_COUNT}}, {"equaldigits", {EQUAL_DIGITS}}, {"colouralgebra", {COLOUR_ALGEBRA}}, {"classcolour", {CLASS_COLOUR}}, {"cluefacts", {CLUE_FACTS, CLUE_SHAPE}},
         {"ruleintersect", {RULE_INTERSECT}}, {"shorttrial", {SHORT_TRIAL}}};
     auto it = TECHS.find(name);
     if (it == TECHS.end()) return false;
@@ -231,6 +234,7 @@ std::vector<Tier> default_notes_tiers() {
          S("sumbound", [](Solver& s, MoveBuf& b) { s.sum_bound(b); }),
          S("combination", [](Solver& s, MoveBuf& b) { s.nary_combination(b, 0); }),
          S("lineclass", [](Solver& s, MoveBuf& b) { s.line_classes(b); }),
+         S("cluefacts", [](Solver& s, MoveBuf& b) { s.clue_facts(b); }),
          S("linescan", [](Solver& s, MoveBuf& b) { s.line_scan(b); })},
         {S("locked", [](Solver& s, MoveBuf& b) { s.locked(b); }),
          // set equivalences (law of leftovers, Phistomefel, set theory) compete on price with pointing / claiming
@@ -239,6 +243,7 @@ std::vector<Tier> default_notes_tiers() {
          S("pairarc", [](Solver& s, MoveBuf& b) { s.pairarc(b); }),
          S("domino", [](Solver& s, MoveBuf& b) { s.domino(b); }),
          S("classcount", [](Solver& s, MoveBuf& b) { s.class_count(b); }),
+         S("classcolour", [](Solver& s, MoveBuf& b) { s.class_colour(b); }),
          S("innie", [](Solver& s, MoveBuf& b) { s.innies(b, true); }),
          S("combolock", [](Solver& s, MoveBuf& b) { s.combo_lock(b); }),
          S("inniesum", [](Solver& s, MoveBuf& b) { s.innie_sum(b); })},

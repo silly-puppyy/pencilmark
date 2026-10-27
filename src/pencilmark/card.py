@@ -63,6 +63,8 @@ CODES = {
     "LineClass": ("LNC", "Line classes (low/high, odd/even)"), "LineScan": ("LNS", "Local line scan"),
     "DigitCount": ("DGC", "Digit counting"), "EqualDigits": ("EQD", "Equal cells (same digit)"),
     "SumBound": ("SBD", "Min/max sum bounds"), "ClassCount": ("CLC", "Odd/even & high/low counting"),
+    "ClassColouring": ("CCL", "High/low & odd/even colouring"),
+    "ClueFacts": ("CFX", "Clue facts (no 5 on a whisper)"), "ClueShape": ("CSH", "Clue shape (a whisper 4 between two 9s)"),
     "Domino": ("DOM", "Domino pairs (dots / XV)"),
     "RuleIntersection": ("RUL", "Two rules together"), "BandLogic": ("BAN", "Band set theory with cages"),
     "Fireworks": ("FIR", "Fireworks"), "SumAlgebra": ("SAL", "Sum algebra (house totals)"),

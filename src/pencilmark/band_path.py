@@ -105,7 +105,8 @@ def classify(m, p):
 VARIANT_ANY = ["ConstraintSingle(direct)", "LineSingle(direct)", "PairwiseConstraint", "TableCombination", "LineRange",
                "LineScan", "LineClass", "SandwichCombination", "XSumCombination", "SkyscraperCombination",
                "CountCombination", "SetCombination", "ArrowCombination", "EqualDigits", "DigitCount", "RuleIntersection",
-               "ImpliedHouses", "Domino", "ClassCount", "BandLogic", "ColourAlgebra", "CliqueHouse", "LineSets", "LineClues"]
+               "ImpliedHouses", "Domino", "ClassCount", "BandLogic", "ColourAlgebra", "CliqueHouse", "LineSets", "LineClues",
+               "ClassColouring", "ClueFacts", "ClueShape"]
 VARIANT_SUM = ["CageCombination", "SumCombination", "Innie/Outie(direct)", "Innie/Outie(notes)", "Innie/Outie(sum)",
                "EqualSumCombination", "ComboLock", "SumBound", "SumAlgebra", "WeightedSums", "ComboPositions"]
 _SUM_WORDS = ("sum", "cage", "killer", "arrow", "sandwich", "little")

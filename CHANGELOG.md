@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+- Three variant techniques from how people solve on video: clue facts (`CFX`, Very Easy: what a clue rules out on an
+  empty grid, e.g. no 5 on a whisper), clue shape (`CSH`, Easy: a line's shape inside one house, e.g. a whisper 4
+  between two 9s) and high/low & odd/even colouring (`CCL`, Medium). Accuracy on human data is unchanged on average
+  (kropki ranks better); solving routes are shorter and closer to human ones.
+- Time spread: `time_mean` and any percentile `time_pNN` (e.g. `time_p20`, `time_p80`) on request, over today's players
+  (log-normal, sigma 0.73 from two sources' per-player times). `time_p80` was a one-player spread (1.53x) and is now
+  the population one (about 1.85x). `time` is the median player.
+- Generator: element varieties (kropki colour, XV letter, odd/even) with counts, ranges and caps; the information-budget
+  check uses per-class maximums.
+- Drawing: `docs/palette.json` with the default sizes, light and dark themes and the community line colours; reference
+  SVG renderer `tools/render_svg.py`.
+
 ## 1.0.0rc1
 
 First public release.

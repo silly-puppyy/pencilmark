@@ -72,6 +72,9 @@ enum Tech {
     LINE_SETS = 97,       // line digit sets across lines: renbans meeting a house choose disjoint digit sets there
     LINE_CLUES = 98,      // outside clues together: a line with >= 2 sandwich / x-sum / skyscraper clues enumerated as one unit
     WEIGHTED_SUMS = 99,   // weighted multi-house sums: integer combinations of sum facts down to 1-3 weighted cells
+    CLUE_FACTS = 101,     // facts read off the clues alone (relations on an empty grid): no 5 on a whisper, thermo ranges
+    CLUE_SHAPE = 102,     // clue facts with the line's shape: partners in one house needing more digits than allowed (a whisper 4 between two 9s)
+    CLASS_COLOUR = 100,   // class colouring: low / high or odd / even links between cells; sides fixed by known cells or house counts
     MENTAL_NOTES = 84,    // single after notes logic done in the head (subset / pointing / combination on the mental view)    // line consistency on 3-cell windows (local scan of a long line)  // both options of a 2-way choice lead to the same placement / elimination  // short chain (<= 5 links) on the no-notes mental view, leading to a single  // bounded case split: bivalue cell, contradiction within a few direct rounds
     N_TECH = 128
 };
@@ -546,6 +549,8 @@ public:
     void gurth(MoveBuf& out);
     void sum_bound(MoveBuf& out);
     void class_count(MoveBuf& out);
+    void class_colour(MoveBuf& out);
+    void clue_facts(MoveBuf& out);
     void domino(MoveBuf& out);
     // forcing chains (forcing.cpp)
     void forcing(MoveBuf& out, int level, bool nested = false);

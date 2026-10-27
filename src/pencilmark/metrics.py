@@ -149,11 +149,11 @@ def report(g, puzzle, P, steps=None, tier_by_family=True):
 
 FAMILIES = [
     ("singles", [0, 1, 2, 11, 12, 37, 58]),
-    ("intersections+combos", [3, 4, 13, 25, 28, 29, 30, 31, 32, 33, 34, 35, 36, 38, 45, 46, 47, 48, 49, 57, 59, 99,
+    ("intersections+combos", [101, 102, 3, 4, 13, 25, 28, 29, 30, 31, 32, 33, 34, 35, 36, 38, 45, 46, 47, 48, 49, 57, 59, 99,
                               64, 65, 66, 67, 72, 73, 74, 88, 89, 91]),
     ("subsets", [14, 15, 16, 17, 18, 19, 60, 84, 95, 96, 97, 98]),
     ("fish+wings", [20, 21, 22, 23, 39, 40, 50, 51, 76, 81, 93]),
-    ("chains", [24, 41, 42, 43, 44, 62, 71, 75, 79, 85, 86, 87, 92, 94]),
+    ("chains", [24, 41, 42, 43, 44, 62, 71, 75, 79, 85, 86, 87, 92, 94, 100]),
     ("ALS", [52, 53, 54, 55, 77, 78]),
     ("trial", [26, 61, 63, 68, 69, 70, 80, 82, 83]),
 ]
@@ -290,16 +290,16 @@ BAND_MEANING = {
 # set theory Hard by pattern name.
 _BAND_BY_NAME = {}
 for _band, _names in {
-    0: ["FullHouse", "NakedSingle(direct)", "HiddenSingle(direct)", "NakedSingle(notes)", "HiddenSingle(notes)",
+    0: ["FullHouse", "NakedSingle(direct)", "HiddenSingle(direct)", "NakedSingle(notes)", "HiddenSingle(notes)", "ClueFacts",
         "LineSingle(direct)", "ConstraintSingle(direct)"],
     1: ["NakedSingle+Pointing(direct)", "HiddenSingle+Pointing(direct)", "LockedCandidates", "SnyderMarks", "SnyderSingle",
         "NakedPair", "HiddenPair", "MentalSingle(direct)", "MentalNotesSingle", "CageCombination", "SumCombination",
         "ArrowCombination", "SetCombination", "Innie/Outie(direct)", "PairwiseConstraint", "TableCombination", "LineRange",
         "LineScan", "LineClass", "SandwichCombination", "XSumCombination", "SkyscraperCombination", "CountCombination",
-        "NakedTriple", "HiddenTriple"],
+        "NakedTriple", "HiddenTriple", "ClueShape"],
     2: ["X-Wing", "X-Chain", "EmptyRectangle", "Coloring", "FinnedFish", "EqualDigits", "DigitCount", "LawOfLeftovers",
         "EqualSumCombination", "ComboLock", "RuleIntersection", "ImpliedHouses", "Domino", "ClassCount", "SumBound",
-        "Innie/Outie(notes)", "Innie/Outie(sum)"],
+        "Innie/Outie(notes)", "Innie/Outie(sum)", "ClassColouring"],
     3: ["Swordfish", "XY-Wing", "XYZ-Wing", "RemotePairs", "UniqueRectangle", "BUG+1", "NakedQuad", "HiddenQuad", "Jellyfish",
         "WXYZ-Wing", "XY-Chain", "MultiColouring", "3DMedusa", "ChuteRemotePairs", "MentalChain(direct)", "SumAlgebra",
         "WeightedSums", "BandLogic", "Fireworks", "GurthSymmetry", "ColourAlgebra", "ComboPositions", "CliqueHouse",

@@ -1278,4 +1278,252 @@ void Solver::weighted_sums(MoveBuf& out) {
         }
 }
 
+
+
+
+// ---------------------------------------------------------- ClassColour --
+// Class colouring over two-class splits: low / high around the middle digit (1-4 | 6-9 on 9x9; halves for even D) and
+// odd / even. A relation whose remaining digit pairs always take opposite (or always the same) classes links its two
+// cells; linked cells form components with two sides, one in each class. A side is fixed by a cell of known class or
+// by counting (a house holds exactly |A| digits of class A); then its cells lose the other class. When every orientation
+// of a component fills a house's quota of a class, the house's other cells lose that class.
+void Solver::class_colour(MoveBuf& out) {
+    if (disabled[CLASS_COLOUR]) return;
+    const int D = p.D, N = p.N;
+    bool any_rel = false;
+    for (int c = 0; c < N && !any_rel; ++c) any_rel = !p.rel[c].empty();
+    if (!any_rel) return;
+    struct Split { uint32_t a, b; int kind; };
+    uint32_t lo = 0, hi = 0, odd = 0;
+    for (int d = 1; d <= D / 2; ++d) lo |= bit(d);
+    for (int d = D - D / 2 + 1; d <= D; ++d) hi |= bit(d);
+    for (int d = 1; d <= D; d += 2) odd |= bit(d);
+    const Split splits[2] = {{lo, hi, 0}, {odd, p.full & ~odd, 1}};
+    std::vector<int> par(N), sd(N);
+    for (const Split& S : splits) {
+        auto mask = [&](int c) { return vals[c] ? bit(vals[c]) : cand[c]; };
+        auto cls = [&](int c) { uint32_t m = mask(c); return !(m & ~S.a) ? 0 : !(m & ~S.b) ? 1 : -1; };
+        for (int c = 0; c < N; ++c) { par[c] = c; sd[c] = 0; }
+        std::function<int(int)> find = [&](int x) {
+            if (par[x] == x) return x;
+            int r = find(par[x]);
+            sd[x] ^= sd[par[x]];
+            par[x] = r;
+            return r;
+        };
+        bool bad = false;
+        std::vector<int> nlinks(N, 0);
+        for (int c = 0; c < N && !bad; ++c) {
+            const uint32_t mc = mask(c);
+            if (mc & ~(S.a | S.b)) continue;
+            for (size_t j = 0; j < p.rel[c].size(); ++j) {
+                const int b = p.rel[c][j];
+                if (b < c) continue;
+                const uint32_t mb = mask(b);
+                if (mb & ~(S.a | S.b)) continue;
+                bool opp = true, same = true, any = false;
+                for (uint32_t r = mc; r; r &= r - 1) {
+                    const int v = lowdigit(r);
+                    const uint32_t ok = mb & ~p.rel_out[c][j * (D + 1) + v];
+                    if (!ok) continue;
+                    any = true;
+                    const bool va = bit(v) & S.a;
+                    if (ok & (va ? S.a : S.b)) opp = false;
+                    if (ok & (va ? S.b : S.a)) same = false;
+                }
+                if (!any || (!opp && !same)) continue;
+                const int w = opp ? 1 : 0;
+                int rc = find(c), rb = find(b);
+                if (rc == rb) {
+                    if ((sd[c] ^ sd[b]) != w) bad = true;  // contradiction: other techniques' business
+                    continue;
+                }
+                par[rb] = rc;
+                sd[rb] = sd[c] ^ sd[b] ^ w;
+                ++nlinks[rc];
+            }
+        }
+        if (bad) continue;
+        std::vector<std::vector<int>> comp(N);
+        for (int c = 0; c < N; ++c) comp[find(c)].push_back(c);
+        std::vector<int> links(N, 0);
+        for (int c = 0; c < N; ++c) links[find(c)] += nlinks[c];
+        const int capA = popc(S.a), capB = popc(S.b);
+        for (int r = 0; r < N; ++r) {
+            const std::vector<int>& cs = comp[r];
+            if (cs.size() < 2 || links[r] == 0) continue;
+            for (int c : cs) find(c);
+            bool open = false;  // some cell still holds both classes
+            for (int c : cs) open |= !vals[c] && cls(c) < 0;
+            std::vector<char> inC(N, 0);
+            for (int c : cs) inC[c] = 1;
+            // orientation o: side 0 holds class A (o == 0) or B (o == 1)
+            bool feas[2] = {true, true};
+            int why = 0, houses_used = 0;
+            for (int c : cs) {
+                const int k = cls(c);
+                if (k < 0) continue;
+                feas[sd[c] == 0 ? 1 - k : k] = false;  // side of c must be class k
+            }
+            if (!feas[0] && !feas[1]) continue;
+            struct HC { int hi, outA, outB, n0, n1; };
+            std::vector<HC> hcs;
+            for (int hi : p.houses) {
+                const Group& g = p.groups[hi];
+                if ((int)g.cells.size() != D) continue;
+                HC h{hi, 0, 0, 0, 0};
+                for (int c : g.cells) {
+                    if (inC[c]) { (sd[c] == 0 ? h.n0 : h.n1)++; continue; }
+                    const int k = cls(c);
+                    if (k == 0) ++h.outA;
+                    else if (k == 1) ++h.outB;
+                }
+                if (h.n0 + h.n1 == 0) continue;
+                hcs.push_back(h);
+            }
+            const bool known = !(feas[0] && feas[1]);
+            for (int o = 0; o < 2; ++o) {
+                if (!feas[o]) continue;
+                for (const HC& h : hcs) {
+                    const int cA = o == 0 ? h.n0 : h.n1, cB = o == 0 ? h.n1 : h.n0;
+                    if (h.outA + cA > capA || h.outB + cB > capB) {
+                        feas[o] = false;
+                        ++houses_used;
+                        break;
+                    }
+                }
+            }
+            if (!feas[0] && !feas[1]) continue;
+            std::vector<std::pair<int, int>> el;
+            if (feas[0] != feas[1]) {
+                why = known ? 0 : 1;
+                const int o = feas[0] ? 0 : 1;
+                for (int c : cs) {
+                    if (vals[c]) continue;
+                    const bool isA = (sd[c] == 0) == (o == 0);
+                    for (uint32_t b = cand[c] & (isA ? S.b : S.a); b; b &= b - 1) el.push_back({c, lowdigit(b)});
+                }
+            } else if (open) {
+                // both orientations possible: a house whose quota of a class is filled either way
+                why = 2;
+                for (const HC& h : hcs) {
+                    for (int k = 0; k < 2; ++k) {
+                        const int cap = k == 0 ? capA : capB, out_k = k == 0 ? h.outA : h.outB;
+                        const int c0 = k == 0 ? h.n0 : h.n1, c1 = k == 0 ? h.n1 : h.n0;
+                        if (out_k + std::min(c0, c1) < cap) continue;
+                        ++houses_used;
+                        const uint32_t X = k == 0 ? S.a : S.b;
+                        for (int c : p.groups[h.hi].cells)
+                            if (!vals[c] && !inC[c] && cls(c) < 0)
+                                for (uint32_t b = cand[c] & X; b; b &= b - 1) el.push_back({c, lowdigit(b)});
+                    }
+                }
+            }
+            if (el.empty()) continue;
+            std::sort(el.begin(), el.end());
+            el.erase(std::unique(el.begin(), el.end()), el.end());
+            Move& m = new_move(out, CLASS_COLOUR, 1.0, (int)cs.size());
+            for (auto& e : el) add_el(out, m, e.first, e.second);
+            std::vector<int> pc;
+            for (int c : cs)
+                if (!vals[c]) pc.push_back(c);
+            set_pattern(out, m, pc);
+            meta8(m, (int)cs.size(), links[r], houses_used, why, S.kind, 0, 0, 1, 1.0);
+            m.code = 10001 + 10 * S.kind + why;
+            pm_long xm[XM_N] = {S.kind, why, (pm_long)cs.size(), links[r], houses_used, 0, 0, 0, 0, 0};
+            std::copy(xm, xm + XM_N, m.xm);
+        }
+    }
+}
+
+
+// ------------------------------------------------------------ ClueFacts --
+// Facts a solver reads off the clues before solving, from the clues' allowed digit pairs alone (no givens):
+//   level 1 (ClueFacts): arc consistency of the pair relations on an empty grid -- a digit stays only while every
+//     relation partner can still hold an allowed digit (a different one when the two cells must differ): no 5 on a
+//     German whisper, no 5 / 7 / 9 on a black dot, a thermo's ranges, ...
+//   level 2 (ClueShape): a digit whose relation partners inside one all-different group would need more distinct
+//     digits than their allowed partners offer (pigeonhole): a whisper 4 needs 9 on both sides -- impossible where those
+//     two cells share a box; the middle of a black-dot chain can't be 3 when both 6s would see each other.
+// Both are properties of the puzzle's structure, so each fires once as one step.
+void Solver::clue_facts(MoveBuf& out) {
+    if (disabled[CLUE_FACTS] && disabled[CLUE_SHAPE]) return;
+    const int D = p.D, N = p.N;
+    bool any_rel = false;
+    for (int c = 0; c < N && !any_rel; ++c) any_rel = !p.rel[c].empty();
+    if (!any_rel) return;
+    std::vector<uint32_t> m(N, p.full);
+    for (int c = 0; c < N; ++c)
+        if (!p.domains.empty()) m[c] &= p.domains[c];
+    auto allowed = [&](int a, size_t j, int v) {
+        const int b = p.rel[a][j];
+        uint32_t ok = m[b] & ~p.rel_out[a][j * (D + 1) + v];
+        if (tbit(p.peers(a), b)) ok &= ~bit(v);
+        return ok;
+    };
+    auto level1 = [&]() {
+        bool ch = true;
+        while (ch) {
+            ch = false;
+            for (int a = 0; a < N; ++a) {
+                if (p.rel[a].empty()) continue;
+                uint32_t keep = m[a];
+                for (size_t j = 0; j < p.rel[a].size(); ++j)
+                    for (uint32_t r = keep; r; r &= r - 1) {
+                        const int v = lowdigit(r);
+                        if (!allowed(a, j, v)) keep &= ~bit(v);
+                    }
+                if (keep != m[a]) { m[a] = keep; ch = true; }
+            }
+        }
+    };
+    level1();
+    const std::vector<uint32_t> m1 = m;
+    // level 2: pigeonhole over the partners of a that lie in one all-different group
+    bool ch = true;
+    while (ch) {
+        ch = false;
+        for (int a = 0; a < N; ++a) {
+            const auto& R = p.rel[a];
+            if (R.size() < 2) continue;
+            for (uint32_t r = m[a]; r; r &= r - 1) {
+                const int v = lowdigit(r);
+                bool bad = false;
+                std::vector<char> done(R.size(), 0);
+                for (size_t j = 0; j < R.size() && !bad; ++j)
+                    for (int gi : p.groups_of[R[j]]) {
+                        if (!p.groups[gi].complete && !p.groups[gi].has_total && p.groups[gi].kind != "cage") continue;
+                        uint32_t U = 0;
+                        int k = 0;
+                        for (size_t q = 0; q < R.size(); ++q)
+                            if (tbit(p.gbits(gi), R[q])) { U |= allowed(a, q, v); ++k; }
+                        if (k >= 2 && popc(U) < k) { bad = true; break; }
+                    }
+                if (bad) { m[a] &= ~bit(v); ch = true; }
+            }
+        }
+        if (ch) level1();
+    }
+    for (int lvl = 1; lvl <= 2; ++lvl) {
+        const int tech = lvl == 1 ? CLUE_FACTS : CLUE_SHAPE;
+        if (disabled[tech]) continue;
+        std::vector<std::pair<int, int>> el;
+        std::vector<int> pc;
+        for (int c = 0; c < N; ++c) {
+            if (vals[c]) continue;
+            const uint32_t gone = cand[c] & (lvl == 1 ? ~m1[c] : (m1[c] & ~m[c])) & p.full;
+            for (uint32_t b = gone; b; b &= b - 1) el.push_back({c, lowdigit(b)});
+            if (gone) pc.push_back(c);
+        }
+        if (el.empty()) continue;
+        Move& mv = new_move(out, tech, 1.0, (int)pc.size());
+        for (auto& e : el) add_el(out, mv, e.first, e.second);
+        set_pattern(out, mv, pc);
+        meta8(mv, (int)pc.size(), (int)el.size(), lvl, 0, 0, 0, 0, 1, 1.0);
+        mv.code = 10101 + lvl;
+        pm_long xm[XM_N] = {lvl, (pm_long)pc.size(), (pm_long)el.size(), 0, 0, 0, 0, 0, 0, 0};
+        std::copy(xm, xm + XM_N, mv.xm);
+    }
+}
+
 }  // namespace cs

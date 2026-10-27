@@ -117,7 +117,8 @@ for _c, _names in {
                              "XSumCombination", "SkyscraperCombination", "CountCombination"],
     "single-digit patterns": ["X-Wing", "X-Chain", "EmptyRectangle", "Coloring", "FinnedFish", "MultiColouring"],
     "variant implications": ["EqualDigits", "DigitCount", "LawOfLeftovers", "EqualSumCombination", "ComboLock", "RuleIntersection",
-                             "ImpliedHouses", "Domino", "ClassCount", "SumBound", "Innie/Outie(notes)", "Innie/Outie(sum)"],
+                             "ImpliedHouses", "Domino", "ClassCount", "SumBound", "Innie/Outie(notes)", "Innie/Outie(sum)",
+                             "ClassColouring"],
     "fish": ["Swordfish", "Jellyfish"],
     "wings": ["XYZ-Wing", "WXYZ-Wing"],     # XY-Wing is a 3-cell XY-Chain: subsumed, so it sits with the chains
     "uniqueness": ["UniqueRectangle", "BUG+1", "GurthSymmetry"],

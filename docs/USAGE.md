@@ -115,6 +115,7 @@ $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7..
 - **difficulty** is how hard each cell *feels* to a human. The scale is continuous: 0 means one empty cell, and there is no ceiling.
   - On classics it follows Andrew Stuart's sudokuwiki.org scale.
   - A typical newspaper medium is about 5; fed-sudoku "hard" is about 6.5.
+  - It measures effort and is independent of the band: variants often sit above Andrew Stuart's range for their band, because the same techniques take more work there (more empty cells, clues to read).
 - **time** is in minutes for an average player.
   - The median 9x9 classic takes about 12 min.
   - On request, `time_mean` or any percentile `time_pNN` (for example `time_p80`: 80% of players finish within it; `time_p20`: the fastest fifth) over today's players.
@@ -178,6 +179,7 @@ Machine-readable version: `pencilmark/data/technique_bands.csv` (installed with 
 | NSI | Naked Single | Very Easy |  |
 | LSI | Line / dot read without notes | Very Easy |  |
 | CSI | Last cell of a cage / line (variant) | Very Easy |  |
+| CFX | Clue facts (no 5 on a whisper) (variant) | Very Easy |  |
 | PPR | Pointing / Box-Line Reduction | Easy |  |
 | SNY | Snyder notation (box pairs) | Easy |  |
 | NPR | Naked Pair | Easy |  |
@@ -199,6 +201,7 @@ Machine-readable version: `pencilmark/data/technique_bands.csv` (installed with 
 | CNT | Counting clues | Easy |  |
 | NTR | Naked Triple | Easy |  |
 | HTR | Hidden Triple | Easy |  |
+| CSH | Clue shape (a whisper 4 between two 9s) (variant) | Easy |  |
 | XWG | X-Wing | Medium | AAC, AIC, FRK, FXW, SKY, SWF, TUR, XCL |
 | SKY | Skyscraper | Medium | AAC, AIC, TUR, XCL |
 | KTE | 2-String Kite | Medium | AAC, AIC, TUR, XCL |
@@ -218,6 +221,7 @@ Machine-readable version: `pencilmark/data/technique_bands.csv` (installed with 
 | IMH | Hidden regions (implied houses) | Medium |  |
 | DOM | Domino pairs (dots / XV) (variant) | Medium |  |
 | CLC | Odd/even & high/low counting (variant) | Medium |  |
+| CCL | High/low & odd/even colouring (variant) | Medium |  |
 | SBD | Min/max sum bounds (variant) | Medium |  |
 | SWF | Swordfish | Hard |  |
 | FSW | Finned Swordfish | Hard |  |
