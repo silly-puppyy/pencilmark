@@ -12,7 +12,7 @@ What `rate()` returns and `pencilmark rate --json` prints: one JSON object per p
  "grader": {"name": "pencilmark", "version": "1.0.0"},
  "difficulty": 5.9, "time": 10.7, "band": "Medium", "band_index": 2,
  "contains": [{"code": "HSI", "chip": "HSI", "name": "Hidden Single", "band": 0},
-              {"code": "NPR", "chip": "NPR/PPR/HPR", "name": "Naked Pair", "band": 2, "uses": 1, "alternatives": ["PPR", "HPR"]},
+              {"code": "NPR", "chip": "NPR/PPR/HPR", "name": "Naked Pair", "band": 1, "uses": 1, "alternatives": ["PPR", "HPR"]},
               {"code": "XWG", "chip": "XWG/KTE/SCL", "name": "X-Wing", "band": 2, "uses": 1, "alternatives": ["KTE", "SCL"]}],
  "contains_complete": true, "contains_truncated": false}
 ```
