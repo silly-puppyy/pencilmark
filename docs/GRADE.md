@@ -27,11 +27,11 @@ A card exists only for a puzzle with exactly one solution. For any other puzzle,
 |---|---|---|---|
 | `format`, `format_version` | always | `"sudoku-grade"`, `1` | |
 | `grader` | always | `{"name", "version"}` | The engine that made the card. A card is only meaningful with that engine and version. |
-| `difficulty` | default | number or null | How hard the steps feel, continuous from 0 (one empty cell), no ceiling; a typical newspaper medium is about 5. Measures effort, independent of `band`: variants often sit above Andrew Stuart's range for their band. Null when the band is `Unknown`. |
-| `time` | default | number or null | Expected minutes for today's median player. |
+| `difficulty` | default | number or null | How hard the puzzle feels, on Andrew Stuart's scale (a classic gets about what sudokuwiki.org gives it); continuous from 0 (one empty cell), no ceiling. Hardness, not amount: independent of board size and length, which belong to `time`. Independent of `band`: variants often sit above Andrew Stuart's range for their band. Null when the band is `Unknown`. Exact definition: [PHILOSOPHY.md](PHILOSOPHY.md). |
+| `time` | default | number or null | Predicted median solving time in minutes over the people who solve puzzles like this one, without long breaks. Null when the band is `Unknown`. |
 | `time_mean`, `time_pNN` | optional | number or null | Spread of solve times over today's players: the mean, or the NN-th percentile (`time_p80` = 80% of players finish within it; NN from 1 to 99). Solves without long pauses; a log-normal fitted on two sources' per-player times. |
 | `time_dist` | optional | object or null | The time distribution's parameters: `{"type": "lognormal", "median": …, "sigma_players": …, "sigma_model": …}`. `median` equals `time`; `sigma_players` is the spread of log solve time over today's players (0.79 for classics and multi-grid layouts, 0.62 for puzzles with any other rule; measured on grandgames and sudoku.coach), which `time_mean` and `time_pNN` use; `sigma_model` is the typical error of the predicted median itself (0.33 / 0.48). |
-| `band` | default | string | `"Very Easy"`, `"Easy"`, `"Medium"`, `"Hard"`, `"Very Hard"`, `"Extreme"`; `"Unknown"` only when guessing was allowed and used. |
+| `band` | default | string | `"Very Easy"`, `"Easy"`, `"Medium"`, `"Hard"`, `"Very Hard"`, `"Extreme"`; `"Unknown"` when the band could not be determined: guessing was allowed and used, or `max_seconds` passed in the difficulty route. |
 | `band_index` | default | integer or null | 0 (Very Easy) … 5 (Extreme); null for `Unknown`. |
 | `contains` | default | list | The techniques met on the easiest route, easiest first (section 3). |
 | `contains_complete` | with `contains` | boolean | False when the route stops where human logic ran out (band `Unknown`); `stopped_at_step` then gives the step. |
