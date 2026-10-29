@@ -47,7 +47,7 @@ def _box_grid(D):
 _PACKED = re.compile(r"([SXWCJLM])(\d+)([BC])([0-9a-zA-Z]+)")
 
 
-_SEPARATOR_LINE = re.compile(r"[\s\-+=|*]*")
+_SEPARATOR_LINE = re.compile(r"[\s|*]*[\-+=][\s\-+=|*]*")      # needs a - + or =: "*********" is a row of empties
 _COMMENT = re.compile(r"\s*[#;].*$")
 
 
@@ -66,6 +66,9 @@ def from_string(s, symbols=None):
         if len(tokens) in PJ.SIZES and any(len(tok) > 1 for tok in tokens) and all(tok.isalnum() for tok in tokens):
             return _from_pencilmarks(tokens)
         body = "".join(re.sub(r"[\s|]+", "", ln) for ln in rows)
+        if len(body) not in PJ.SIZES and len(body) != 729:   # a row of '-' empties looks like a separator: keep bare dash rows
+            rows = [ln for ln in lines if ln.strip() and not (_SEPARATOR_LINE.fullmatch(ln) and re.search(r"[+=|*]", ln))]
+            body = "".join(re.sub(r"[\s|]+", "", ln) for ln in rows)
         if len(body) == 729 and re.fullmatch(r"[0-9.]+", body):
             return _from_candidate_string(body)
         if len(body) in PJ.SIZES:

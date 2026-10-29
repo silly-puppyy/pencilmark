@@ -37,7 +37,7 @@ The same classic puzzle laid out on lines, as Simple Sudoku (`.ss`), SadMan (`.s
 …                              …
 ```
 
-- Lines made only of `-`, `+`, `=`, `|`, `*` and spaces are separators and skipped; `|` and spaces inside a row are
+- Lines made only of `-`, `+`, `=`, `|`, `*` and spaces, with at least one `-`, `+` or `=`, are separators and skipped; `|` and spaces inside a row are
   ignored; `*` is also an empty cell.
 - Text after `#` or `;` on a line is a comment (`<81 characters>  # rating 5.9`).
 - `to_string(…, "grid")` writes the left-hand form (refuses what a plain string cannot carry).

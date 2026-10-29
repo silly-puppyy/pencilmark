@@ -189,6 +189,10 @@ def test_text_grids_and_pencilmarks():
     for text in (grid, framed, s + "  # rated 5.9", s + ";5.9"):
         assert pencilmark.to_string(pencilmark.from_string(text)) == s, text
     assert pencilmark.rate(framed)["band"] == pencilmark.rate(s)["band"]
+    blank = s[:45] + "." * 9 + s[54:]
+    dashes = "\n".join(blank[r * 9:r * 9 + 9].replace(".", "-") for r in range(9))
+    assert pencilmark.to_string(pencilmark.from_string(dashes)) == blank       # a row of '-' empties is not a separator
+    assert pencilmark.from_string("*********\n" * 8 + "123456789")["givens"][:9] == [0] * 9
     d = pencilmark.from_string(" ".join(["5", "1234", "6789"] + ["123456789"] * 78))
     assert d["givens"][:3] == [5, 0, 0] and d["candidates"] == {"r1c2": [1, 2, 3, 4], "r1c3": [6, 7, 8, 9]}
     body = "".join("." * (i % 9) + str(i % 9 + 1) + "." * (8 - i % 9) if i % 2 == 0 else "123456789" for i in range(81))
