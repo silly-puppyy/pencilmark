@@ -2,6 +2,7 @@
 #pragma once
 #include "portable.hpp"
 #include <array>
+#include <chrono>
 #include <cstdint>
 #include <functional>
 #include <map>
@@ -12,8 +13,10 @@
 #include <vector>
 
 #include "model.hpp"
+#include "deadline.hpp"
 
 namespace cs {
+
 
 // technique codes (grader.solver)
 enum Tech {

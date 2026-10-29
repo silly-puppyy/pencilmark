@@ -516,21 +516,74 @@ def symmetry_of(p):
 
 
 def grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, explain=None, alternatives=True):
+    """grade() under max_seconds, stage by stage: the technique list (contains) truncates at the limit as before; the difficulty
+    route stops at its own limit (engine deadline) and the card is then band "Unknown" with difficulty / time null, the
+    techniques found so far in contains (contains_complete false) and "stopped": "time limit" (GRADE.md 1)."""
+    g, expired = _grade(p, P, card=card, with_steps=with_steps, max_seconds=max_seconds, fields=fields, explain=explain,
+                        alternatives=alternatives)
+    if expired:
+        for k in list(g):
+            if k in ("difficulty", "time", "band_index", "time_dist", "time_mean") or k.startswith("time_p"):
+                g[k] = None
+        if "band" in g:
+            g["band"] = "Unknown"
+        if "contains" in g:
+            g["contains_complete"] = False
+        g["completed"] = False
+    return g
+
+
+_OUTER_END = [None]      # rate() sets the shared wall-clock end (time.time() value) for the whole call; grade() alone owns its own
+
+
+def _grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, explain=None, alternatives=True):
     """sudoku-grade card (GRADE.md), only the requested fields (card_fields). explain: step explanation levels
     (explain_levels). with_steps=True is shorthand for the steps field with both explanation levels."""
     from . import card as K, band_path as BP
     want = card_fields(fields, steps=bool(with_steps))
+    expired = False
+    bp_cut = [False]                                 # the technique-list stage hit max_seconds (the card itself may still be complete)
     levels = explain_levels(True if with_steps and explain is None else explain)
     P = dict(P, search=P.get("search", "human"))
     import time
-    if want & {"contains", "issues", "reject"}:     # the shortest technique list (issues read its required techniques)
-        bp = BP.contents(p, P, alternatives=alternatives, deadline=None if max_seconds is None else time.time() + max_seconds)
-    else:                                           # band only: the first route already has it (shrinking keeps the band)
-        bp = dict(BP.band_path(p, P), removed=[], alternatives={})
-    if card is None:        # band / required from the band path (skips the deletion test inside grade_card)
-        req_b = list(dict.fromkeys(st["technique"] for st in bp["steps"] if st["band"] > 0))
-        card = K.grade_card(p, P, specific=False, check_rules=bool(want & {"issues", "reject"}),     # specific names are not used by this card
-                            band=(bp["band"] if bp["solved"] else "Unknown", req_b))
+    from . import cbackend as CB
+    has_dl = hasattr(CB._C, "set_deadline")
+    timed = max_seconds is not None and has_dl
+    own = timed and _OUTER_END[0] is None          # called directly (CLI): this call owns the deadline; under rate() it is shared
+    if own:
+        CB._C.set_deadline(float(max_seconds))
+    t_end = None if max_seconds is None else (_OUTER_END[0] or time.time() + float(max_seconds))
+    hit = lambda: timed and CB._C.deadline_hit()
+    need_list = bool(want & {"contains", "issues", "reject"})
+    checks = bool(want & {"issues", "reject"})      # publishing checks read the shortest list's required techniques: list first
+    try:
+        base = BP.band_path(p, P)                   # the band (first route; shrinking keeps it)
+
+        def make_card(route):
+            req_b = list(dict.fromkeys(st["technique"] for st in route["steps"] if st["band"] > 0))
+            try:
+                return K.grade_card(p, P, specific=False, check_rules=checks,       # specific names are not used by this card
+                                    band=(route["band"] if route["solved"] else "Unknown", req_b))
+            except Exception:
+                if not hit():
+                    raise
+                return {}                           # max_seconds passed inside the card route
+
+        if card is None and not checks:             # 1) band + difficulty / time first: they get the time they need
+            card = make_card(base)
+            expired = hit()
+        if need_list and not expired:               # 2) the shortest technique list in the time that is left (truncates)
+            bp = BP.contents(p, P, alternatives=alternatives, deadline=t_end, base=base)
+            if hit():
+                bp_cut[0] = True
+        else:
+            bp = dict(base, removed=[], alternatives={})
+        if card is None:                            # publishing checks: the card after the list (they read its techniques)
+            card = make_card(bp)
+            expired = hit()
+    finally:
+        if own:
+            CB._C.set_deadline(0.0)
     unknown = not bp["solved"]
     names = {}
     for st in bp["steps"]:
@@ -571,7 +624,7 @@ def grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expla
     if "contains" in want:
         g["contains"] = contains
         g["contains_complete"] = not unknown        # false: the list stops where human logic ran out (guessing allowed)
-        g["contains_truncated"] = bool(bp.get("truncated"))   # max_seconds hit: may not be minimal / may miss alternatives
+        g["contains_truncated"] = bool(bp.get("truncated")) or bp_cut[0]   # max_seconds hit: may not be minimal / may miss alternatives
         if unknown:
             g["stopped_at_step"] = len(bp["steps"]) + 1
     doc = prov = None
@@ -611,5 +664,7 @@ def grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expla
                 r["explanation"] = {x: expl[i][x] for x in levels}
             rows.append(r)
         g["steps"] = rows
-    return g
+    if max_seconds is not None:                 # with a limit only (always true without one): every stage finished within it
+        g["completed"] = not (expired or bp_cut[0] or bool(bp.get("truncated")))
+    return g, expired
 

@@ -90,18 +90,32 @@ def rate(puzzle, steps=False, max_seconds=None, mode="human", se=False, fields=N
     want = card_fields(fields, steps=steps, se=se)
     quality_limits(quality)
     p = load(puzzle)
-    sols, decided = V.decide(p, limit=2)
-    if len(sols) > 1:
-        raise NotUnique("more than one solution")
-    if not decided:
-        raise Undecided("search limit reached without a verdict; install OR-Tools (pip install \"pencilmark[verify]\") "
-                        "for the CP-SAT fallback")
-    if not sols:
-        raise NoSolution("no solution")
-    p._pm_solution = list(sols[0])      # proven unique: later stages reuse it instead of searching again
-    P = dict(_params(mode), allow_guess=bool(allow_guessing), quality=quality or {})
-    return grade(p, P, max_seconds=max_seconds, fields=sorted(want), with_steps=steps, explain=explain,
-                 alternatives=alternatives)
+    import time
+    from . import cbackend as CB
+    from . import export as EX
+    timed = max_seconds is not None and hasattr(CB._C, "set_deadline")
+    if timed:                                   # ONE wall-clock limit for the whole call: uniqueness proof, card, technique list
+        CB._C.set_deadline(float(max_seconds))
+        EX._OUTER_END[0] = time.time() + float(max_seconds)
+    try:
+        sols, decided = V.decide(p, limit=2, time_limit=60.0 if max_seconds is None else max(1.0, min(60.0, float(max_seconds))))
+        if len(sols) > 1:
+            raise NotUnique("more than one solution")
+        if not decided:
+            if timed and CB._C.deadline_hit():
+                raise Undecided(f"max_seconds ({max_seconds}) passed before uniqueness was proven")
+            raise Undecided("search limit reached without a verdict; install OR-Tools (pip install \"pencilmark[verify]\") "
+                            "for the CP-SAT fallback")
+        if not sols:
+            raise NoSolution("no solution")
+        p._pm_solution = list(sols[0])      # proven unique: later stages reuse it instead of searching again
+        P = dict(_params(mode), allow_guess=bool(allow_guessing), quality=quality or {})
+        return grade(p, P, max_seconds=max_seconds, fields=sorted(want), with_steps=steps, explain=explain,
+                     alternatives=alternatives)
+    finally:
+        if timed:
+            CB._C.set_deadline(0.0)
+            EX._OUTER_END[0] = None
 
 
 def _mp_context():

@@ -960,6 +960,9 @@ PYBIND11_MODULE(_csolver, m) {
         .def_readonly("has_cages", &Puzzle::has_cages);
     m.def("make_puzzle", &make_puzzle);
     m.def("make_puzzle_raw", &make_puzzle_raw);
+    m.def("set_deadline", [](double seconds) { set_deadline(seconds); }, py::arg("seconds"),
+          "wall-clock limit for the following solves in this thread (seconds; <= 0 switches it off)");
+    m.def("deadline_hit", []() { return g_deadline_hit; }, "True once the deadline set by set_deadline has passed");
     m.def("solve", &py_solve, py::arg("puzzle"), py::arg("givens"), py::arg("params"), py::arg("disabled"),
           py::arg("solution"), py::arg("allow_direct"), py::arg("max_steps"), py::arg("assume_unique") = true,
           py::arg("all_tiers") = false, py::arg("explain") = false, py::arg("colours") = py::none(),

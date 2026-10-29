@@ -363,6 +363,10 @@
     "sigma_players"
    ],
    "additionalProperties": false
+  },
+  "completed": {
+   "type": "boolean",
+   "description": "Grading finished within max_seconds (always true without a limit); false: band may be Unknown with difficulty / time null, or the technique list truncated (GRADE.md)."
   }
  },
  "patternProperties": {

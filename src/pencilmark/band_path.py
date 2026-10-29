@@ -418,7 +418,7 @@ def _states(p, steps):
             cand[c] &= ~(1 << (d - 1))
 
 
-def contents(p, P, alternatives=True, deadline=None):
+def contents(p, P, alternatives=True, deadline=None, base=None):
     """What's in the puzzle, deterministically (same puzzle -> same card).
     1. band_path (easy to hard, simplest technique first).
     2. Shrink: each listed technique is tried for removal (banned by its exact code), later in the study order first,
@@ -431,20 +431,21 @@ def contents(p, P, alternatives=True, deadline=None):
        Skyscrapers).
     Full houses fold into the listed single. -> band_path result + "removed", "alternatives" {code: [codes]}.
     deadline (time.time() value, opt-in; default None = deterministic): shrink / alternatives stop when it passes and the
-    result carries "truncated": True (the base route is always complete; the list may then not be minimal / miss joint chips)."""
+    result carries "truncated": True (the base route is always complete; the list may then not be minimal / miss joint chips).
+    base: band_path(p, P) already computed by the caller (it is not computed again)."""
     global _CACHE
     _CACHE = {}
     try:
-        return _contents(p, P, alternatives, deadline)
+        return _contents(p, P, alternatives, deadline, base)
     finally:
         _CACHE = None
 
 
-def _contents(p, P, alternatives, deadline=None):
+def _contents(p, P, alternatives, deadline=None, base=None):
     import time
     late = lambda: deadline is not None and time.time() > deadline
     truncated = False
-    bp = band_path(p, P)
+    bp = base if base is not None else band_path(p, P)     # base: the caller's band_path(p, P) (same route, not recomputed)
     if not bp["solved"]:
         return dict(bp, removed=[], alternatives={}, profile=fold(bp["profile"]))
     ban, removed, failed = set(), [], set()

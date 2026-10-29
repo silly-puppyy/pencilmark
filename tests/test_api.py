@@ -64,7 +64,7 @@ EASTER_MONSTER = "1.......2.9.4...5...6...7...5.9.3.......7.......85..4.7.....6.
 
 def test_no_guessing_by_default():
     # guessing is off by default: where no technique applies the engine proves by full search (Extreme), never Unknown
-    card = pencilmark.rate(EASTER_MONSTER, max_seconds=30)
+    card = pencilmark.rate(EASTER_MONSTER, fields=["band", "band_index", "difficulty"])     # ~40 s: no technique list
     assert card["band"] == "Extreme" and card["band_index"] == 5 and card["difficulty"] is not None
 
 
@@ -151,3 +151,21 @@ def test_rate_needs_one_solution():
     with pytest.raises(pencilmark.NotUnique):
         pencilmark.rate("." * 81)
     assert "error" in pencilmark.rate_many(["." * 81])[0]
+
+
+def test_max_seconds_unknown_when_time_runs_out():
+    """a card that runs out of max_seconds in the difficulty route: band Unknown, difficulty null, completed false, on time"""
+    import time
+    t = time.time()
+    card = pencilmark.rate(EASTER_MONSTER, max_seconds=5)
+    assert time.time() - t < 8, time.time() - t
+    assert card["band"] == "Unknown" and card["difficulty"] is None and card["completed"] is False, card
+
+
+def test_max_seconds_bounds_the_call():
+    """max_seconds bounds the whole rate() call; a card that ran out of time says so (completed false)"""
+    import time
+    t = time.time()
+    c = pencilmark.rate(CLASSIC, max_seconds=30)
+    assert c["completed"] is True and c["band"] != "Unknown" and time.time() - t < 30, c
+    assert "completed" not in pencilmark.rate(CLASSIC)         # no limit: grading always finishes, the field is left out

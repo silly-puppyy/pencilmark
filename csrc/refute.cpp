@@ -244,6 +244,7 @@ void Solver::refute_profile(const std::vector<std::pair<int, int>>& givens, cons
     int placed = 0;
     if (!basic_propagate(placed)) return;
     for (int s = 0; s < max_stuck; ++s) {
+        if (deadline_passed()) return;             // max_seconds (the caller reports band "Unknown")
         bool done = true;
         for (int x = 0; x < p.N; ++x)
             if (!vals[x]) { done = false; break; }
@@ -262,6 +263,7 @@ void Solver::refute_profile(const std::vector<std::pair<int, int>>& givens, cons
         const std::vector<uint32_t> ref = cand;    // a fixpoint of basic_propagate: every rule is consistent with it
         gac_ref = &ref;
         for (int x : order) {
+            if (deadline_passed()) { gac_ref = nullptr; return; }
             for (uint32_t dm = cand[x]; dm; dm &= dm - 1) {
                 int v = lowdigit(dm);
                 int d = trial_depth(x, v, best);

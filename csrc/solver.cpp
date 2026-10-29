@@ -2437,8 +2437,10 @@ void Solver::collect_all(MoveBuf& b, bool direct_phase) {
         return;
     }
     for (auto& tier : tiers)
-        for (auto& s : tier)
+        for (auto& s : tier) {
+            if (deadline_passed()) return;
             if (!strategy_off(s->name(), disabled)) timed(s->name(), b, [&] { s->collect(*this, b); });
+        }
 }
 
 void Solver::state_moves(const std::vector<std::pair<int, int>>& givens, MoveBuf& b, int limit_per_tech) {
@@ -2765,6 +2767,7 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
     for (int it = 0; it < opt.max_steps; ++it) {
         compute_empties();
         if (empties.empty()) break;
+        if (deadline_passed()) break;      // max_seconds: stop with the steps so far (reported as band "Unknown")
         const int n_empty = (int)empties.size();
         buf.clear();
         std::vector<int> entered;  // search order: stages tried this step (search-policy cost)
@@ -3450,7 +3453,7 @@ struct Brute {
     void rec(int depth) {
         ++nodes;
         if ((int)sols.size() >= limit) return;
-        if (nodes > node_limit) {
+        if (nodes > node_limit || ((nodes & 15) == 0 && deadline_passed())) {   // node budget or max_seconds
             limited = true;
             return;
         }
@@ -3555,6 +3558,10 @@ struct Brute {
             uint32_t dom[64];
             static const std::vector<GacReq> noreq;
             for (size_t ki = 0; ki < p.nary.size(); ++ki) {
+                if (deadline_passed()) {     // max_seconds inside one node's propagation: give up (undecided)
+                    limited = true;
+                    return;
+                }
                 const NConstraint& k = p.nary[ki];
                 if (k.type == NT_LINE || k.type == NT_SAMESET) continue;  // implied by pairs / houses
                 if (gac_memo) {  // skip a rule whose domains equal its last propagated output (exact GAC is idempotent)

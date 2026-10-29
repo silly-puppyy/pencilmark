@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include "portable.hpp"
 #include "nary.hpp"
+#include "deadline.hpp"
 
 #include <algorithm>
 #include <climits>
@@ -349,7 +350,7 @@ struct Enum {
     }
     // returns true to stop; d = live domains, done = assigned-var mask
     bool fc(uint32_t* d, uint64_t done, int depth) {
-        if (++nodes > budget) {
+        if (++nodes > budget || ((nodes & 1023) == 0 && deadline_passed())) {   // budget or max_seconds: aborted (sound)
             aborted = true;
             return true;
         }
@@ -411,7 +412,7 @@ struct Enum {
                 if (v < 1 || v > D || !(dom[i] & bitd(v))) fits = false;
             }
             if (!fits) continue;
-            if (++nodes > budget) {
+            if (++nodes > budget || ((nodes & 1023) == 0 && deadline_passed())) {
                 aborted = true;
                 return;
             }
