@@ -43,6 +43,9 @@ A card exists only for a puzzle with exactly one solution. For any other puzzle,
 | `describe` | optional | object | The `describe()` output ([NAMING.md](NAMING.md)). |
 | `symmetry` | optional | list | Symmetries of the givens pattern, entries as in the generator spec (`{"kind", "axis"?, "of": "givens"}`). |
 
+Numbers are rounded as emitted: `difficulty`, `time`, `time_mean` and `time_pNN` to 1 decimal, the sigmas of
+`time_dist` to 2. Two puzzles whose rounded values are equal are not distinguished by the card.
+
 ## 2. Choosing fields
 
 `rate(puzzle, fields=[...])` and `--fields a,b,c` take a list of the keys above; only those are computed. A field name

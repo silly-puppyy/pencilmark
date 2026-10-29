@@ -527,7 +527,8 @@ and `decorations` only.
 
 Per-rule `style` (optional, never semantic):
 `{"color": "#rrggbb" | palette index, "fill": "#rrggbb" | palette index, "opacity": 0..1, "width": cell units,
-"shape": "circle" | "square" | "diamond", "label": "text", "label_cell": "r1c1", "dash": true}`.
+"shape": "circle" | "square" | "diamond", "label_cell": "r1c1", "dash": true}`. The text a rule shows is its
+`label` (section 5); `label_cell` only says where to draw it.
 
 Top-level `style`: puzzle-wide hints, e.g. `{"palette": [...], "cell_size": 64}`. Free-form.
 
