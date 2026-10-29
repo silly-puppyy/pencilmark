@@ -95,17 +95,18 @@
       "minimum": 1
      },
      "alternatives": {
-      "type": "array",
+      "type": [
+       "array",
+       "null"
+      ],
       "items": {
        "type": "string"
       },
-      "minItems": 1
+      "minItems": 1,
+      "description": "Omitted when there are none; null when the producer did not search."
      }
     }
    }
-  },
-  "contains_complete": {
-   "type": "boolean"
   },
   "stopped_at_step": {
    "type": "integer",
@@ -231,8 +232,8 @@
     "type": "object",
     "required": [
      "n",
-     "technique",
      "code",
+     "name",
      "band"
     ],
     "additionalProperties": false,
@@ -241,10 +242,10 @@
       "type": "integer",
       "minimum": 1
      },
-     "technique": {
+     "code": {
       "type": "string"
      },
-     "code": {
+     "name": {
       "type": "string"
      },
      "band": {
@@ -341,9 +342,6 @@
     "type": {
      "const": "lognormal"
     },
-    "median": {
-     "type": "number"
-    },
     "sigma_players": {
      "type": "number"
     },
@@ -356,7 +354,6 @@
    },
    "required": [
     "type",
-    "median",
     "sigma_players"
    ],
    "additionalProperties": false
@@ -380,9 +377,6 @@
   }
  },
  "dependentRequired": {
-  "contains": [
-   "contains_complete"
-  ],
   "issues": [
    "reject"
   ],

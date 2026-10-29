@@ -17,7 +17,7 @@ grade (format "sudoku-grade", format_version 1):
   contains    what a solver meets going easy -> hard (band path): [{"code", "chip", "name", "band", "uses", "alternatives"}];
               a chip "XWG/KTE/SCL" = each of these alone also gets you through here; singles listed without counts
   notes       publishing notes: [{"code": "spike", "severity": "reject" | "note", "text": "…"}]
-  steps       [{"n", "technique", "chip", "placement" ("r2c8=3"), "eliminations" (["r4c5#7"]), "explanation", "detail"}]
+  steps       [{"n", "code", "name", "placement" ("r2c8=3"), "eliminations" (["r4c5#7"]), "explanation", "detail"}]
 """
 from __future__ import annotations
 
@@ -519,7 +519,7 @@ def symmetry_of(p):
 def grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, explain=None, alternatives=True):
     """grade() under max_seconds, stage by stage: the technique list (contains) truncates at the limit as before; the difficulty
     route stops at its own limit (engine deadline) and the card is then band "Unknown" with difficulty / time null, the
-    techniques found so far in contains (contains_complete false) and "stopped": "time limit" (GRADE.md 1)."""
+    techniques found so far in contains and "stopped": "time limit" (GRADE.md 1)."""
     t0 = time.perf_counter()
     g, expired = _grade(p, P, card=card, with_steps=with_steps, max_seconds=max_seconds, fields=fields, explain=explain,
                         alternatives=alternatives)
@@ -529,8 +529,6 @@ def grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expla
                 g[k] = None
         if "band" in g:
             g["band"] = "Unknown"
-        if "contains" in g:
-            g["contains_complete"] = False
         g["completed"] = False
     if fields is not None and "elapsed" in fields:      # wall-clock seconds of this grading call (rate() adds the uniqueness proof)
         g["elapsed"] = round(time.perf_counter() - t0, 3)
@@ -599,7 +597,9 @@ def _grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expl
     for c, n in sorted(uses.items(), key=lambda x: (bandof.get(x[0], 0), BP._order(x[0]), x[0])):
         e = {"code": c, "chip": "/".join([c] + alts.get(c, [])), "name": names[c].most_common(1)[0][0],
              "band": bandof.get(c, 0)}
-        if alts.get(c):
+        if not alternatives:
+            e["alternatives"] = None        # not searched (alternatives=False); absent = searched, none found
+        elif alts.get(c):
             e["alternatives"] = alts[c]     # each of these alone also gets you through (not on c's subset chain)
         if e["band"] > 0:
             e["uses"] = n                   # on the easiest route; singles' counts swing with the route, so omitted
@@ -619,7 +619,7 @@ def _grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expl
         g[f] = round(tm * math.exp(lr) * _TIME.get("minutes_per_unit", 1.0), 1) if tm is not None and lr is not None else None
     if "time_dist" in want:          # the distribution's parameters: log-normal around the median time
         sp, sm = _sigmas(variant)
-        g["time_dist"] = None if tm is None else {"type": "lognormal", "median": round(tm * _TIME.get("minutes_per_unit", 1.0), 1),
+        g["time_dist"] = None if tm is None else {"type": "lognormal",
                                                   "sigma_players": sp, "sigma_model": sm}
     if "band" in want:
         g["band"] = "Unknown" if unknown else bp["band"]
@@ -627,7 +627,6 @@ def _grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expl
         g["band_index"] = None if unknown else bp["band_index"]
     if "contains" in want:
         g["contains"] = contains
-        g["contains_complete"] = not unknown        # false: the list stops where human logic ran out (guessing allowed)
         if unknown:
             g["stopped_at_step"] = len(bp["steps"]) + 1
     doc = prov = None
@@ -658,7 +657,7 @@ def _grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expl
         expl = BP.explain_steps(p, P, bp["steps"]) if levels else [None] * len(bp["steps"])
         rows = []
         for i, st in enumerate(bp["steps"]):
-            r = {"n": i + 1, "technique": st["name"], "code": st["code"], "band": st["band"]}
+            r = {"n": i + 1, "code": st["code"], "name": st["name"], "band": st["band"]}
             if st["place"]:
                 r["placement"] = f"{cn(st['place'][0])}={st['place'][1]}"
             if st["elims"]:

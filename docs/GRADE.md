@@ -13,8 +13,7 @@ What `rate()` returns and `pencilmark rate --json` prints: one JSON object per p
  "difficulty": 5.9, "time": 10.7, "band": "Medium", "band_index": 2,
  "contains": [{"code": "HSI", "chip": "HSI", "name": "Hidden Single", "band": 0},
               {"code": "NPR", "chip": "NPR/PPR/HPR", "name": "Naked Pair", "band": 1, "uses": 1, "alternatives": ["PPR", "HPR"]},
-              {"code": "XWG", "chip": "XWG/KTE/SCL", "name": "X-Wing", "band": 2, "uses": 1, "alternatives": ["KTE", "SCL"]}],
- "contains_complete": true}
+              {"code": "XWG", "chip": "XWG/KTE/SCL", "name": "X-Wing", "band": 2, "uses": 1, "alternatives": ["KTE", "SCL"]}]}
 ```
 
 A card exists only for a puzzle with exactly one solution. For any other puzzle, `rate()` raises `NotUnique`,
@@ -30,13 +29,12 @@ A card exists only for a puzzle with exactly one solution. For any other puzzle,
 | `difficulty` | default | number or null | How hard the puzzle feels, on Andrew Stuart's scale (a classic gets about what sudokuwiki.org gives it); continuous from 0 (one empty cell), no ceiling. Hardness, not amount: independent of board size and length, which belong to `time`. Independent of `band`: variants often sit above Andrew Stuart's range for their band. Null when the band is `Unknown`. Exact definition: [PHILOSOPHY.md](PHILOSOPHY.md). |
 | `time` | default | number or null | Predicted median solving time in minutes over the people who solve puzzles like this one, without long breaks. Null when the band is `Unknown`. |
 | `time_mean`, `time_pNN` | optional | number or null | Spread of solve times over today's players: the mean, or the NN-th percentile (`time_p80` = 80% of players finish within it; NN from 1 to 99). Solves without long pauses; a log-normal fitted on two sources' per-player times. |
-| `time_dist` | optional | object or null | The time distribution's parameters: `{"type": "lognormal", "median": …, "sigma_players": …, "sigma_model": …}`. `median` equals `time`; `sigma_players` is the spread of log solve time over today's players (0.79 for classics and multi-grid layouts, 0.62 for puzzles with any other rule; measured on grandgames and sudoku.coach), which `time_mean` and `time_pNN` use; `sigma_model` is the typical error of the predicted median itself (0.33 / 0.48). |
+| `time_dist` | optional | object or null | The time distribution's parameters: `{"type": "lognormal", "sigma_players": …, "sigma_model": …}`, around the median `time`. `sigma_players` is the spread of log solve time over today's players (0.79 for classics and multi-grid layouts, 0.62 for puzzles with any other rule; measured on grandgames and sudoku.coach), which `time_mean` and `time_pNN` use; `sigma_model` is the typical error of the predicted median itself (0.33 / 0.48). |
 | `band` | default | string | `"Very Easy"`, `"Easy"`, `"Medium"`, `"Hard"`, `"Very Hard"`, `"Extreme"`; `"Unknown"` when the band could not be determined: guessing was allowed and used, or `max_seconds` passed in the difficulty route. |
 | `band_index` | default | integer or null | 0 (Very Easy) … 5 (Extreme); null for `Unknown`. |
 | `contains` | default | list | The techniques met on the easiest route, easiest first (section 3). |
-| `contains_complete` | with `contains` | boolean | False when the route stops where human logic ran out (band `Unknown`); `stopped_at_step` then gives the step. |
-| `stopped_at_step` | with `contains`, when incomplete | integer | The first step human logic could not make. |
-| `completed` | with `max_seconds` | boolean | True when grading finished within `max_seconds`; absent without a limit (grading then always finishes). False: the limit passed. If it passed in the difficulty route, `band` is `"Unknown"` and `difficulty` / `time` are null, with the techniques found so far in `contains` (`contains_complete` false); if it passed only in the search for the shortest list, the grade stands but the list may not be minimal or may miss alternatives. `max_seconds` bounds the whole call (uniqueness proof, card, technique list); a puzzle whose uniqueness is not proven within it raises `Undecided`. Band `"Unknown"` with `completed` true means human logic ran out (`allow_guessing`). |
+| `stopped_at_step` | with `contains`, when human logic ran out | integer | The first step human logic could not make (band `Unknown` with guessing allowed); the `contains` list ends there. |
+| `completed` | with `max_seconds` | boolean | True when grading finished within `max_seconds`; absent without a limit (grading then always finishes). False: the limit passed. If it passed in the difficulty route, `band` is `"Unknown"` and `difficulty` / `time` are null, with the techniques found so far in `contains`; if it passed only in the search for the shortest list, the grade stands but the list may not be minimal or may miss alternatives. `max_seconds` bounds the whole call (uniqueness proof, card, technique list); a puzzle whose uniqueness is not proven within it raises `Undecided`. Band `"Unknown"` with `completed` true means human logic ran out (`allow_guessing`). |
 | `elapsed` | optional | number | Wall-clock seconds the grader took for this card (for `rate()`: the uniqueness proof plus the card). Machine-dependent; not part of the grade. |
 | `issues` | optional | list | Publishing checks (section 4). |
 | `reject` | optional | boolean | True when any issue has severity `reject`. |
@@ -48,7 +46,7 @@ A card exists only for a puzzle with exactly one solution. For any other puzzle,
 ## 2. Choosing fields
 
 `rate(puzzle, fields=[...])` and `--fields a,b,c` take a list of the keys above; only those are computed. A field name
-is always the key it produces (`contains` also brings `contains_complete` and `stopped_at_step`).
+is always the key it produces (`contains` also brings `stopped_at_step`).
 Without `fields`, the default fields are returned. `explain="short"`, `"teach"` or both (CLI `--explain short,teach`)
 adds explanations to `steps`. Shorthands: `steps=True` = the `steps` field with both explanation levels; `se=True` /
 `se="diuf"` = the `se` / `se_diuf` field.
@@ -64,7 +62,7 @@ Each entry is one technique on the route:
 | `name` | Technique name. |
 | `band` | The technique's band index. |
 | `uses` | Times used on the route; omitted for singles (band 0), whose count depends on the route. |
-| `alternatives` | Other codes that also work there; omitted when there are none, or when the producer skipped that search (pencilmark: `alternatives=False`, CLI `--no-alternatives`; band, difficulty and time are the same). |
+| `alternatives` | Other codes that also work there; omitted when there are none; `null` when the producer did not search (pencilmark: `alternatives=False`, CLI `--no-alternatives`; band, difficulty and time are the same). |
 
 ## 4. `issues`
 
@@ -91,7 +89,7 @@ of the solve", "rules": [3, 4, 5, 6]}`.
 
 ## 5. `steps`
 
-Each step: `n` (from 1), `technique` (name), `code`, `band`, then `placement` (`"r2c8=3"`) and / or `eliminations`
+Each step: `n` (from 1), `code`, `name`, `band` (the same keys as in `contains`), then `placement` (`"r2c8=3"`) and / or `eliminations`
 (`["r4c5#7", …]`: candidate 7 removed from r4c5), and, when requested, `explanation`: `{"short": …, "teach": …}` with
 the requested levels.
 

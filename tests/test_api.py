@@ -18,7 +18,7 @@ def test_classic_card():
     assert t["time_p20"] < t["time"] < t["time_mean"] < t["time_p80"], t
     assert abs(t["time_p80"] / t["time"] - 1.94) < 0.05, t     # classic sigma_players 0.79
     d = pencilmark.rate(CLASSIC, fields=["time", "time_dist", "time_p50"])
-    assert d["time_dist"]["type"] == "lognormal" and d["time_dist"]["median"] == d["time"] == d["time_p50"], d
+    assert d["time_dist"]["type"] == "lognormal" and "median" not in d["time_dist"] and d["time"] == d["time_p50"], d
     assert d["time_dist"]["sigma_players"] == 0.79 and d["time_dist"]["sigma_model"] == 0.33, d
     chips = [c["chip"] for c in card["contains"] if c["band"] > 0]
     assert chips == ["NPR/PPR/HPR", "XWG/KTE/SCL"]
@@ -70,7 +70,7 @@ def test_no_guessing_by_default():
 
 def test_unknown_band_when_guessing():
     card = pencilmark.rate(EASTER_MONSTER, max_seconds=30, allow_guessing=True)
-    assert card["band"] == "Unknown" and card["band_index"] is None and card["contains_complete"] is False
+    assert card["band"] == "Unknown" and card["band_index"] is None and card["stopped_at_step"] >= 1
 
 
 def test_variants_reference_cards(variants):

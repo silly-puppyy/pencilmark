@@ -96,7 +96,7 @@ def report2(g, k=None):
                                 if hard else "singles only"))
     if g.get("completed") is False and g.get("band") != "Unknown":
         L.append("   (time cap hit: contents not minimised; joint alternatives may be missing)")
-    if g.get("contains_complete") is False:
+    if g.get("stopped_at_step"):
         L.append(f"   human logic ran out at step {g.get('stopped_at_step')}; contents incomplete")
     for n in g.get("issues") or []:
         L.append(f"   {'reject' if n['severity'] == 'reject' else 'note'}: {n['text']}")

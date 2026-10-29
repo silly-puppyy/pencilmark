@@ -64,7 +64,7 @@ are computed ([docs/GRADE.md](https://github.com/silly-puppyy/pencilmark/blob/ma
 | `difficulty` | how hard each step feels, continuous from 0 (one empty cell) with no ceiling; a typical newspaper medium is about 5 |
 | `time` | expected minutes for the median player (on request `time_mean` or any percentile `time_pNN`, e.g. `time_p80`: 80% of players finish within it) |
 | `band`, `band_index` | Very Easy (0), Easy, Medium, Hard, Very Hard, Extreme (5); `"Unknown"` (null) only with `allow_guessing=True`, when the engine had to guess |
-| `contains` | techniques met going easy to hard: `code`, `chip`, `name`, `band`, `uses`, `alternatives`; with `contains_complete` |
+| `contains` | techniques met going easy to hard: `code`, `chip`, `name`, `band`, `uses`, `alternatives`; with `stopped_at_step` when human logic ran out |
 | on request | `issues` / `reject` (publishing checks, below), `time_mean` / `time_pNN`, `steps` (technique, placement `r2c8=3` or eliminations `r4c5#7`; `explain="short"` / `"teach"` adds explanations), `se` / `se_diuf`, `describe`, `symmetry` |
 
 A chip like `XWG/KTE/SCL` means any one of those techniques gets you through at that point.
@@ -80,8 +80,8 @@ card = pencilmark.rate(puzzle, fields=["difficulty", "band", "issues", "reject"]
 
 Guessing is off by default: where no technique applies, the engine proves an elimination by full search (Trial and
 error, band Extreme), so every uniquely solvable puzzle gets a band. `allow_guessing=True` (CLI `--allow-guessing`) lets it
-guess there instead, which is faster on the hardest puzzles; the card then says Unknown, with `contains_complete: false`
-and `stopped_at_step`. With `max_seconds` set, the whole call is capped and the card
+guess there instead, which is faster on the hardest puzzles; the card then says Unknown, with
+`stopped_at_step`. With `max_seconds` set, the whole call is capped and the card
 says `completed: false` if the limit passed. A puzzle without exactly one solution has no card: `rate` raises `NotUnique` /
 `NoSolution`.
 
@@ -162,6 +162,21 @@ the `PENCILMARK_UA` environment variable.
 - Very hard puzzles with many-cell rules (killers, arrows, palindromes, thermos) can take minutes while the contents list
   is minimised; use `max_seconds` to cap it (the card then says `completed: false`).
 - The Sudoku Explainer-style ratings (`se=True`) are approximate and meaningful for classic sudoku only.
+
+## Known issues (release candidate)
+
+Being worked on before or soon after 1.0:
+
+- **Speed.** Grading takes a median 0.5 s per puzzle (classics about 0.05 s, but the slowest few percent take 10 s to
+  minutes). Graders that do not model human solving answer in under a millisecond. Use `max_seconds` to bound a call.
+- **Generator speed and range.** About 20-70 s per puzzle that meets a spec (HoDoKu: 0.05-1 s), and classic Extreme puzzles
+  are not reached within the default 120 s. `max_givens` is not always enforced.
+- **Variants on one scale.** On classics, difficulty matches Andrew Stuart's ratings on the same puzzles; across variant
+  types the same difficulty does not yet mean the same experience (puzzle types differ by about 2 points on average, and
+  variants often score above the classic range of their band). Time is most off for the same reason (about 1.4x per
+  puzzle type).
+- **Uniqueness on some killers.** A few large killers can raise `Undecided` without OR-Tools (`pip install
+  "pencilmark[verify]"`) although human logic solves them.
 
 ## License
 

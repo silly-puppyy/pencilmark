@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Grade card simplified (one meaning per key, docs/PHILOSOPHY.md): `contains_complete` removed (it was band != Unknown;
+  `stopped_at_step` still marks where human logic ran out); `time_dist.median` removed (it repeated `time`); steps use
+  the same keys as `contains` (`code`, `name`, `band`; `technique` renamed `name`); `alternatives` is `null` when the
+  search was skipped (`alternatives=False`) and omitted only when there are none.
+- Docs: philosophy page (goals, exact meaning of band / difficulty / time, format rules); README known issues.
+
 ## 1.0.0rc2
 
 - `max_seconds` bounds the whole `rate()` call (uniqueness proof, card, technique list). The band and difficulty route
