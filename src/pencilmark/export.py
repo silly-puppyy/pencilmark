@@ -31,7 +31,7 @@ from pathlib import Path
 
 from . import _data, cbackend as CB, solver as S, metrics as MT, puzzle_json as PJ
 
-GRADER_NAME, GRADER_VERSION = "pencilmark", "1.0.0rc1"   # on every card: a grade is only meaningful with the engine that made it
+GRADER_NAME, GRADER_VERSION = "pencilmark", "1.0.0rc2"   # on every card: a grade is only meaningful with the engine that made it
 FORMAT_VERSION = 1          # of both formats; bumped only on a breaking change (additive fields don't bump it)
 BANDS = ["Very Easy", "Easy", "Medium", "Hard", "Very Hard", "Extreme"]
 SITES = {"fed": "fed-sudoku.eu", "lisudoku": "lisudoku.com", "sudoku.coach": "sudoku.coach", "LMD": "logic-masters.de",
