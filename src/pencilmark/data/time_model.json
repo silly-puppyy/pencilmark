@@ -13,10 +13,14 @@
  },
  "minutes_per_unit": 11.8,
  "spread_sigma": 0.73,
- "spread_note": "solve times of one puzzle across today's players: log-normal around the median, sigma 0.73 = mean of the interquartile fits on fed-sudoku (0.755) and sudoku.coach (0.703); matches both from p10 to p80 and coach to p90 (fed's top tenth are paused solves). runs/nlp/time_spread.py, time_quantiles.py (2026-10-27)",
+ "spread_note": "solve times of one puzzle across today's players: log-normal around the median (shape checked on sudoku.coach and grandgames: symmetric in log time, near-normal tails). sigma_players 0.79 for classics and multi-grid layouts, 0.62 for puzzles with any rule beyond rows / columns / boxes (two sources agree: grandgames 0.78 / 0.60, sudoku.coach 0.82 / 0.64; fed classics 0.74); no audience-free dependence on puzzle length (opposite signs across sources). sigma_model = typical error of the predicted median (classics 0.32-0.36 on three sources, variants 0.46-0.50). spread_sigma (0.73) kept for older readers. (2026-10-29)",
  "size_curve": {
   "q": 0.2148,
   "c": 4.5199
  },
- "size_curve_note": "log t += q * max(0, ln(empty) - c)^2 after everything else; affects boards above ~92 empty cells only (multi-grid, big grids). Fitted on time-model residuals and checked on held-out sources."
+ "size_curve_note": "log t += q * max(0, ln(empty) - c)^2 after everything else; affects boards above ~92 empty cells only (multi-grid, big grids). Fitted on time-model residuals and checked on held-out sources.",
+ "spread_sigma_classic": 0.79,
+ "spread_sigma_variant": 0.62,
+ "model_sigma_classic": 0.33,
+ "model_sigma_variant": 0.48
 }

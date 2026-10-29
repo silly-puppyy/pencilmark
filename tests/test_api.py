@@ -16,7 +16,10 @@ def test_classic_card():
     assert "time_p80" not in card and "issues" not in card and "reject" not in card     # publishing checks on request
     t = pencilmark.rate(CLASSIC, fields=["time", "time_p20", "time_p80", "time_mean"])
     assert t["time_p20"] < t["time"] < t["time_mean"] < t["time_p80"], t
-    assert abs(t["time_p80"] / t["time"] - 1.85) < 0.05, t
+    assert abs(t["time_p80"] / t["time"] - 1.94) < 0.05, t     # classic sigma_players 0.79
+    d = pencilmark.rate(CLASSIC, fields=["time", "time_dist", "time_p50"])
+    assert d["time_dist"]["type"] == "lognormal" and d["time_dist"]["median"] == d["time"] == d["time_p50"], d
+    assert d["time_dist"]["sigma_players"] == 0.79 and d["time_dist"]["sigma_model"] == 0.33, d
     chips = [c["chip"] for c in card["contains"] if c["band"] > 0]
     assert chips == ["NPR/PPR/HPR", "XWG/KTE/SCL"]
 

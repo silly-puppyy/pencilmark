@@ -365,7 +365,7 @@ def time_units(effort_l1, empty_cells, difficulty=None, geometry=None):
 
 ALWAYS = ("format", "format_version", "grader")
 DEFAULT_FIELDS = ("difficulty", "time", "band", "band_index", "contains")
-OPTIONAL_FIELDS = ("time_p80", "issues", "reject", "se", "se_diuf", "steps", "describe", "symmetry")   # + time_mean / time_pNN
+OPTIONAL_FIELDS = ("time_p80", "time_dist", "issues", "reject", "se", "se_diuf", "steps", "describe", "symmetry")   # + time_mean / time_pNN
 EXPLAIN_LEVELS = ("short", "teach")
 
 
@@ -376,10 +376,22 @@ def _time_model():
     return _TIME
 
 
-def _time_stat(field):
+def _is_variant(p):
+    """any rule beyond rows / columns / boxes (multi-grid layouts count as classic)"""
+    return bool(getattr(p, "relations", None)) or bool(getattr(p, "constraints", None)) or \
+        any(getattr(g, "kind", "row") not in ("row", "col", "box") for g in getattr(p, "groups", ()))
+
+
+def _sigmas(variant):
+    """(sigma_players, sigma_model) of the log-normal time distribution (data/time_model.json)"""
+    tm = _time_model(); k = "variant" if variant else "classic"
+    return tm.get(f"spread_sigma_{k}", tm.get("spread_sigma", 0.73)), tm.get(f"model_sigma_{k}")
+
+
+def _time_stat(field, variant=False):
     """time_mean / time_p1 .. time_p99 -> the log ratio to the median time; None for any other key"""
     import re
-    sg = _time_model().get("spread_sigma", 0.73)
+    sg = _sigmas(variant)[0]
     if field == "time_mean":
         return sg * sg / 2
     m = re.fullmatch(r"time_p([1-9][0-9]?)", field)
@@ -393,7 +405,7 @@ def card_fields(fields=None, steps=False, se=False):
     """the field mask (GRADE.md 2): the requested top-level card keys; None = the default fields. format,
     format_version and grader are always present. steps=True / se=True / se="diuf" are shorthands."""
     out = set(DEFAULT_FIELDS) if fields is None else set(fields) - set(ALWAYS)
-    bad = {f for f in out - set(DEFAULT_FIELDS) - set(OPTIONAL_FIELDS) if not _time_stat(f)}
+    bad = {f for f in out - set(DEFAULT_FIELDS) - set(OPTIONAL_FIELDS) if _time_stat(f) is None}
     if bad:
         raise ValueError(f"unknown card field(s) {sorted(bad)}; known: {list(DEFAULT_FIELDS) + list(OPTIONAL_FIELDS)}")
     if steps:
@@ -544,9 +556,14 @@ def grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expla
     if "time" in want:
         # time in MINUTES for today's average player (classic units x minutes_per_unit, data/time_model.json)
         g["time"] = round(tm * _TIME.get("minutes_per_unit", 1.0), 1) if tm is not None else (round(2 ** (tg - 5), 2) if tg is not None else None)
-    for f in sorted((f for f in want if f.startswith("time_")), key=lambda f: (f != "time_mean", len(f), f)):
-        lr = _time_stat(f)          # time_mean / time_pNN: spread over today's players around the median (data/time_model.json)
+    variant = _is_variant(p)
+    for f in sorted((f for f in want if f.startswith("time_") and f != "time_dist"), key=lambda f: (f != "time_mean", len(f), f)):
+        lr = _time_stat(f, variant)  # time_mean / time_pNN: spread over today's players around the median (data/time_model.json)
         g[f] = round(tm * math.exp(lr) * _TIME.get("minutes_per_unit", 1.0), 1) if tm is not None and lr is not None else None
+    if "time_dist" in want:          # the distribution's parameters: log-normal around the median time
+        sp, sm = _sigmas(variant)
+        g["time_dist"] = None if tm is None else {"type": "lognormal", "median": round(tm * _TIME.get("minutes_per_unit", 1.0), 1),
+                                                  "sigma_players": sp, "sigma_model": sm}
     if "band" in want:
         g["band"] = "Unknown" if unknown else bp["band"]
     if "band_index" in want:

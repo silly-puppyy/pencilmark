@@ -333,6 +333,36 @@
      }
     }
    }
+  },
+  "time_dist": {
+   "type": [
+    "object",
+    "null"
+   ],
+   "description": "On request: parameters of the log-normal time distribution around the median (minutes).",
+   "properties": {
+    "type": {
+     "const": "lognormal"
+    },
+    "median": {
+     "type": "number"
+    },
+    "sigma_players": {
+     "type": "number"
+    },
+    "sigma_model": {
+     "type": [
+      "number",
+      "null"
+     ]
+    }
+   },
+   "required": [
+    "type",
+    "median",
+    "sigma_players"
+   ],
+   "additionalProperties": false
   }
  },
  "patternProperties": {
