@@ -1,8 +1,9 @@
 """Interop strings and ipuz export (docs/INTEROP.md).
 
-    from_string(s) -> sudoku-puzzle dict        plain classic strings and sudokuwiki.org packed strings (S9B, S6B, X9B, W9B,
-                                                C9B, J9B, L9B, M9B, L6C)
-    to_string(puzzle, "plain" | "sudokuwiki")   the reverse (refuses what the target cannot express)
+    from_string(s) -> sudoku-puzzle dict        plain classic strings (also as text grids with | - + separators, or with a
+                                                trailing comment), pencil-mark grids, 729-character candidate strings, and
+                                                sudokuwiki.org packed strings (S9B, S6B, X9B, W9B, C9B, J9B, L9B, M9B, L6C)
+    to_string(puzzle, "plain" | "grid" | "sudokuwiki")   the reverse (refuses what the target cannot express)
     to_ipuz(puzzle) -> dict                     ipuz 2 for classic / Latin square / diagonal / windoku / jigsaw / killer
 
 The sudokuwiki encodings are checked against sudokuwiki.org's solver; the decoder reads exactly what the encoder writes
@@ -46,13 +47,76 @@ def _box_grid(D):
 _PACKED = re.compile(r"([SXWCJLM])(\d+)([BC])([0-9a-zA-Z]+)")
 
 
+_SEPARATOR_LINE = re.compile(r"[\s\-+=|*]*")
+_COMMENT = re.compile(r"\s*[#;].*$")
+
+
 def from_string(s, symbols=None):
-    """plain classic string or sudokuwiki packed string -> sudoku-puzzle dict"""
-    t = re.sub(r"\s+", "", s or "")
+    """plain classic string, text grid, pencil-mark grid, 729-character candidate string or sudokuwiki packed string ->
+    sudoku-puzzle dict (docs/INTEROP.md)"""
+    s = s or ""
+    t = re.sub(r"\s+", "", s)
     m = _PACKED.fullmatch(t)
     if m and len(m.group(4)) == WIDTH[m.group(1)] * int(m.group(2)) ** 2:
         return _from_sudokuwiki(m.group(1), int(m.group(2)), m.group(3), m.group(4).lower())
+    if symbols is None:
+        lines = [_COMMENT.sub("", ln) for ln in s.splitlines()]
+        rows = [ln for ln in lines if ln.strip() and not _SEPARATOR_LINE.fullmatch(ln)]
+        tokens = [tok for ln in rows for tok in ln.replace("|", " ").split()]
+        if len(tokens) in PJ.SIZES and any(len(tok) > 1 for tok in tokens) and all(tok.isalnum() for tok in tokens):
+            return _from_pencilmarks(tokens)
+        body = "".join(re.sub(r"[\s|]+", "", ln) for ln in rows)
+        if len(body) == 729 and re.fullmatch(r"[0-9.]+", body):
+            return _from_candidate_string(body)
+        if len(body) in PJ.SIZES:
+            return _from_plain(body.replace("*", "."))
+        first = s.split()[0] if s.split() else ""
+        if len(first) in PJ.SIZES and len(first) >= 16 and len(s.splitlines()) == 1:    # "<81 chars> rating / comment"
+            return _from_plain(first)
     return _from_plain(t, symbols)
+
+
+def _from_pencilmarks(tokens):
+    """D*D tokens, one per cell in reading order: one digit = a placed digit (given), several = that cell's candidates"""
+    D = PJ.SIZES[len(tokens)]
+    givens, cands = [], {}
+    for i, tok in enumerate(tokens):
+        vals = sorted({PJ.SYMBOLS.find(ch.upper()) + 1 for ch in tok})
+        if not all(1 <= v <= D for v in vals) or len(vals) != len(tok):
+            raise FormatError(f"pencil-mark grid: cell {i + 1} ({tok!r}) is not a set of digits 1..{D}")
+        if len(vals) == 1:
+            givens.append(vals[0])
+        else:
+            givens.append(0)
+            if len(vals) < D:
+                cands[cell_name(i // D, i % D)] = vals
+    d = _doc(D, givens, [_box_grid(D)])
+    if cands:
+        d["candidates"] = cands
+    return d
+
+
+def _from_candidate_string(body):
+    """729 characters: 9 per cell, position k holds digit k+1 when it is a candidate ('.' or '0' otherwise); a cell with
+    one candidate is a given"""
+    givens, cands = [], {}
+    for i in range(81):
+        chunk = body[9 * i:9 * i + 9]
+        vals = [k + 1 for k, ch in enumerate(chunk) if ch not in ".0"]
+        if any(ch not in ".0" and ch != str(k + 1) for k, ch in enumerate(chunk)):
+            raise FormatError(f"candidate string: cell {i + 1} ({chunk!r}) has a digit out of place")
+        if not vals:
+            raise FormatError(f"candidate string: cell {i + 1} has no candidate")
+        if len(vals) == 1:
+            givens.append(vals[0])
+        else:
+            givens.append(0)
+            if len(vals) < 9:
+                cands[cell_name(i // 9, i % 9)] = vals
+    d = _doc(9, givens, [_box_grid(9)])
+    if cands:
+        d["candidates"] = cands
+    return d
 
 
 def _from_plain(t, symbols=None):
@@ -196,11 +260,22 @@ def to_string(puzzle, form="plain"):
             raise NotSupportedError(f"plain strings carry only classic sudoku with standard boxes ({info.get('why') or kind})")
         g = info.get("givens") if kind else {p.coords[i][0] * D + p.coords[i][1]: v for i, v in p.givens.items()}
         return "".join(PJ._sym(g[i]) if i in g else "." for i in range(D * D))
+    if form == "grid":                          # text grid: rows on lines, boxes separated by | and ------+------ lines
+        flat = to_string(p, "plain")
+        D = p.D
+        bh, bw = PJ.BOXES[D]
+        rows = []
+        for r in range(D):
+            cells = flat[r * D:(r + 1) * D]
+            rows.append(" | ".join(" ".join(cells[c:c + bw]) for c in range(0, D, bw)))
+            if (r + 1) % bh == 0 and r + 1 < D:
+                rows.append("-+-".join("-" * (2 * bw - 1) for _ in range(0, D, bw)))
+        return "\n".join(rows)
     if form == "sudokuwiki":
         if kind is None:
             raise NotSupportedError(f"sudokuwiki.org has no form for this puzzle: {info.get('why')}")
         return ENCODERS[kind](info)
-    raise ValueError(f"unknown string form {form!r} (plain / sudokuwiki)")
+    raise ValueError(f"unknown string form {form!r} (plain / grid / sudokuwiki)")
 
 
 def _plain_ok(p):

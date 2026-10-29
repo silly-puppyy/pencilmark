@@ -177,3 +177,20 @@ def test_timing_fields():
     assert "elapsed" not in pencilmark.rate(CLASSIC)                     # optional
     s = pencilmark.solve(CLASSIC, info=True)
     assert s["solution"] == pencilmark.solve(CLASSIC) and s["seconds"] >= 0, s
+
+
+def test_text_grids_and_pencilmarks():
+    """INTEROP.md: text grids with separators, trailing comments, pencil-mark grids, 729-character candidate strings"""
+    s = "....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9......."
+    grid = pencilmark.to_string(s, "grid")
+    assert grid.count("\n") == 10 and "|" in grid
+    framed = "*-----------*\n" + "\n".join("|" + "|".join(s[r * 9 + c:r * 9 + c + 3] for c in (0, 3, 6)) + "|"
+                                          + ("\n|---+---+---|" if r in (2, 5) else "") for r in range(9)) + "\n*-----------*"
+    for text in (grid, framed, s + "  # rated 5.9", s + ";5.9"):
+        assert pencilmark.to_string(pencilmark.from_string(text)) == s, text
+    assert pencilmark.rate(framed)["band"] == pencilmark.rate(s)["band"]
+    d = pencilmark.from_string(" ".join(["5", "1234", "6789"] + ["123456789"] * 78))
+    assert d["givens"][:3] == [5, 0, 0] and d["candidates"] == {"r1c2": [1, 2, 3, 4], "r1c3": [6, 7, 8, 9]}
+    body = "".join("." * (i % 9) + str(i % 9 + 1) + "." * (8 - i % 9) if i % 2 == 0 else "123456789" for i in range(81))
+    d = pencilmark.from_string(body)
+    assert d["givens"][:4] == [1, 0, 3, 0] and "candidates" not in d

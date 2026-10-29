@@ -6,6 +6,9 @@
   `stopped_at_step` still marks where human logic ran out); `time_dist.median` removed (it repeated `time`); steps use
   the same keys as `contains` (`code`, `name`, `band`; `technique` renamed `name`); `alternatives` is `null` when the
   search was skipped (`alternatives=False`) and omitted only when there are none.
+- More text formats: text grids with separators (Simple Sudoku / SadMan / forum style; `to_string(puzzle, "grid")`
+  writes them), a trailing `# comment` after a plain string, pencil-mark grids and 729-character candidate strings
+  (Sukaku). `rate()` and every entry point accept them as one string.
 - Docs: philosophy page (goals, exact meaning of band / difficulty / time, format rules); README known issues.
 
 ## 1.0.0rc2

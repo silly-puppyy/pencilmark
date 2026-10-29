@@ -5,7 +5,9 @@ other formats for convenience. None of them is part of the format or required by
 
 | Function | Reads | Writes |
 |---|---|---|
-| `from_string(s)` / `to_string(puzzle, "plain")` | plain classic strings | plain classic strings |
+| `from_string(s)` / `to_string(puzzle, "plain")` | plain classic strings, also with a trailing comment | plain classic strings |
+| `from_string(s)` / `to_string(puzzle, "grid")` | text grids with `\|`, `-`, `+` separators (Simple Sudoku, forums) | text grids |
+| `from_string(s)` | pencil-mark grids, 729-character candidate strings | – |
 | `from_string(s)` / `to_string(puzzle, "sudokuwiki")` | [sudokuwiki.org](https://www.sudokuwiki.org/) packed strings | sudokuwiki.org packed strings |
 | `to_ipuz(puzzle)` | – | [ipuz](http://www.ipuz.org/) 2 |
 | `pencilmark.sources.load(url)` | [f-puzzles](https://www.f-puzzles.com/), [SudokuPad](https://sudokupad.app/) (SCL / fpuz / ctc), [Penpa](https://swaroopg92.github.io/penpa-edit/)+, [Logic Masters](https://logic-masters.de/) links | – |
@@ -21,6 +23,34 @@ command line) also accepts these strings directly.
   3 columns, 8: 2×4, 9: 3×3, 10: 2×5, 12: 3×4, 14: 2×7, 15: 3×5, 16: 4×4, 20: 4×5, 25: 5×5).
 - `to_string(…, "plain")` writes `.` for empty cells and refuses anything but a classic with standard boxes and no
   other rules.
+
+## Text grids
+
+The same classic puzzle laid out on lines, as Simple Sudoku (`.ss`), SadMan (`.sdk`) and forum posts write it:
+
+```
+. . . | . 4 . | 8 . 3          *-----------*
+. 6 . | . . 8 | . . 2          |...|.4.|8.3|
+9 . 8 | 6 . 5 | . . 1          |.6.|..8|..2|
+------+-------+------          |9.8|6.5|..1|
+2 3 5 | . . . | . . .          |---+---+---|
+…                              …
+```
+
+- Lines made only of `-`, `+`, `=`, `|`, `*` and spaces are separators and skipped; `|` and spaces inside a row are
+  ignored; `*` is also an empty cell.
+- Text after `#` or `;` on a line is a comment (`<81 characters>  # rating 5.9`).
+- `to_string(…, "grid")` writes the left-hand form (refuses what a plain string cannot carry).
+
+## Pencil marks
+
+- **Pencil-mark grid**: one whitespace-separated token per cell in reading order (separators as above). A token with one
+  digit is a given; several digits are that cell's candidates (`candidates` in the puzzle).
+- **729-character candidate string** (Sukaku): 9 characters per cell, position k holds the digit k+1 when it is a
+  candidate and `.` or `0` otherwise; a cell with a single candidate is a given.
+
+These are read only. A multi-line grid is one puzzle: pass it to `from_string` / `rate` as one string (the command line
+reads one puzzle per line).
 
 ## sudokuwiki.org packed strings
 

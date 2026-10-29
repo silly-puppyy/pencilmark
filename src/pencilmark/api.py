@@ -57,8 +57,15 @@ def load(puzzle):
         obj = json.loads(puzzle)
     elif isinstance(puzzle, str):
         from .interop import _PACKED
-        tok = puzzle.split()[0]
-        obj = _from_string_doc(tok) if _PACKED.fullmatch(tok) else {"numbers": tok}
+        tok = puzzle.split()[0] if puzzle.split() else ""
+        obj = None
+        if len(puzzle.split()) > 1:                 # text grid, pencil-mark grid, or a string with a trailing comment
+            try:
+                obj = _from_string_doc(puzzle)
+            except ValueError:
+                obj = None
+        if obj is None:
+            obj = _from_string_doc(tok) if _PACKED.fullmatch(tok) else {"numbers": tok}
     elif isinstance(puzzle, dict):
         obj = puzzle
     elif hasattr(puzzle, "groups") and hasattr(puzzle, "coords"):    # already an engine Puzzle
