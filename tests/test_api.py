@@ -169,3 +169,11 @@ def test_max_seconds_bounds_the_call():
     c = pencilmark.rate(CLASSIC, max_seconds=30)
     assert c["completed"] is True and c["band"] != "Unknown" and time.time() - t < 30, c
     assert "completed" not in pencilmark.rate(CLASSIC)         # no limit: grading always finishes, the field is left out
+
+
+def test_timing_fields():
+    c = pencilmark.rate(CLASSIC, fields=["difficulty", "elapsed"])
+    assert isinstance(c["elapsed"], float) and 0 <= c["elapsed"] < 30, c
+    assert "elapsed" not in pencilmark.rate(CLASSIC)                     # optional
+    s = pencilmark.solve(CLASSIC, info=True)
+    assert s["solution"] == pencilmark.solve(CLASSIC) and s["seconds"] >= 0, s

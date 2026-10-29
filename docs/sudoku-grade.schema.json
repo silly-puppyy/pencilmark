@@ -367,6 +367,10 @@
   "completed": {
    "type": "boolean",
    "description": "Grading finished within max_seconds (always true without a limit); false: band may be Unknown with difficulty / time null, or the technique list truncated (GRADE.md)."
+  },
+  "elapsed": {
+   "type": "number",
+   "description": "On request: wall-clock seconds the grader took (machine-dependent, not part of the grade)."
   }
  },
  "patternProperties": {

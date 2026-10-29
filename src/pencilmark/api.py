@@ -76,7 +76,7 @@ def rate(puzzle, steps=False, max_seconds=None, mode="human", se=False, fields=N
          quality=None, alternatives=True):
     """the "sudoku-grade" card of one puzzle (docs/GRADE.md) with the requested top-level fields only. Default fields:
     difficulty, time, band, band_index, contains (format, format_version, grader always). Optional: issues, reject
-    (publishing checks), time_mean / time_pNN (any percentile 1-99, e.g. time_p80), se, se_diuf, steps, describe, symmetry. explain="short" /
+    (publishing checks), time_mean / time_pNN (any percentile 1-99, e.g. time_p80), time_dist, elapsed (wall seconds of the call), se, se_diuf, steps, describe, symmetry. explain="short" /
     "teach" / True (both) adds explanations to the steps. steps=True is shorthand for the steps field with both explanation
     levels; se=True / se="diuf" for se / se_diuf.
     Raises NotUnique / NoSolution / Undecided for a puzzle without exactly one solution. allow_guessing=True: guess
@@ -93,6 +93,7 @@ def rate(puzzle, steps=False, max_seconds=None, mode="human", se=False, fields=N
     import time
     from . import cbackend as CB
     from . import export as EX
+    t_call = time.perf_counter()
     timed = max_seconds is not None and hasattr(CB._C, "set_deadline")
     if timed:                                   # ONE wall-clock limit for the whole call: uniqueness proof, card, technique list
         CB._C.set_deadline(float(max_seconds))
@@ -110,8 +111,11 @@ def rate(puzzle, steps=False, max_seconds=None, mode="human", se=False, fields=N
             raise NoSolution("no solution")
         p._pm_solution = list(sols[0])      # proven unique: later stages reuse it instead of searching again
         P = dict(_params(mode), allow_guess=bool(allow_guessing), quality=quality or {})
-        return grade(p, P, max_seconds=max_seconds, fields=sorted(want), with_steps=steps, explain=explain,
-                     alternatives=alternatives)
+        g = grade(p, P, max_seconds=max_seconds, fields=sorted(want), with_steps=steps, explain=explain,
+                  alternatives=alternatives)
+        if "elapsed" in g:                      # the whole call: uniqueness proof + card
+            g["elapsed"] = round(time.perf_counter() - t_call, 3)
+        return g
     finally:
         if timed:
             CB._C.set_deadline(0.0)
@@ -148,10 +152,13 @@ class Undecided(RuntimeError):
     """the exhaustive search hit its node limit and OR-Tools (pip install "pencilmark[verify]") is not available"""
 
 
-def solve(puzzle):
+def solve(puzzle, info=False):
     """the unique solution as a list of digits (cell order of the puzzle); NotUnique / NoSolution otherwise.
-    Uses the engine's exhaustive C++ search; CP-SAT (optional OR-Tools) only if that search hits its node limit."""
+    Uses the engine's exhaustive C++ search; CP-SAT (optional OR-Tools) only if that search hits its node limit.
+    info=True: {"solution": [...], "seconds": wall-clock seconds of the search} instead of the bare list."""
+    import time
     from . import cpsat_verify as V
+    t0 = time.perf_counter()
     sols, decided = V.decide(load(puzzle), limit=2)
     if len(sols) > 1:
         raise NotUnique("more than one solution")
@@ -160,6 +167,8 @@ def solve(puzzle):
                         "for the CP-SAT fallback")
     if not sols:
         raise NoSolution("no solution")
+    if info:
+        return {"solution": list(sols[0]), "seconds": round(time.perf_counter() - t0, 4)}
     return list(sols[0])
 
 

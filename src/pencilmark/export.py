@@ -21,6 +21,7 @@ grade (format "sudoku-grade", format_version 1):
 """
 from __future__ import annotations
 
+import time
 import csv
 import io
 import json
@@ -365,7 +366,7 @@ def time_units(effort_l1, empty_cells, difficulty=None, geometry=None):
 
 ALWAYS = ("format", "format_version", "grader")
 DEFAULT_FIELDS = ("difficulty", "time", "band", "band_index", "contains")
-OPTIONAL_FIELDS = ("time_p80", "time_dist", "issues", "reject", "se", "se_diuf", "steps", "describe", "symmetry")   # + time_mean / time_pNN
+OPTIONAL_FIELDS = ("time_p80", "time_dist", "elapsed", "issues", "reject", "se", "se_diuf", "steps", "describe", "symmetry")   # + time_mean / time_pNN
 EXPLAIN_LEVELS = ("short", "teach")
 
 
@@ -519,6 +520,7 @@ def grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expla
     """grade() under max_seconds, stage by stage: the technique list (contains) truncates at the limit as before; the difficulty
     route stops at its own limit (engine deadline) and the card is then band "Unknown" with difficulty / time null, the
     techniques found so far in contains (contains_complete false) and "stopped": "time limit" (GRADE.md 1)."""
+    t0 = time.perf_counter()
     g, expired = _grade(p, P, card=card, with_steps=with_steps, max_seconds=max_seconds, fields=fields, explain=explain,
                         alternatives=alternatives)
     if expired:
@@ -530,6 +532,8 @@ def grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expla
         if "contains" in g:
             g["contains_complete"] = False
         g["completed"] = False
+    if fields is not None and "elapsed" in fields:      # wall-clock seconds of this grading call (rate() adds the uniqueness proof)
+        g["elapsed"] = round(time.perf_counter() - t0, 3)
     return g
 
 
