@@ -5,6 +5,7 @@
                                                 sudokuwiki.org packed strings (S9B, S6B, X9B, W9B, C9B, J9B, L9B, M9B, L6C)
     to_string(puzzle, "plain" | "grid" | "sudokuwiki")   the reverse (refuses what the target cannot express)
     to_ipuz(puzzle) -> dict                     ipuz 2 for classic / Latin square / diagonal / windoku / jigsaw / killer
+    from_ipuz(ipuz) -> sudoku-puzzle dict       the reverse (boxes, zones, cages); a to_ipuz file returns its embedded puzzle
 
 The sudokuwiki encodings are checked against sudokuwiki.org's solver; the decoder reads exactly what the encoder writes
 and refuses anything else (placed digits in plain forms, candidate masks, 6x6 killer operators other than '+').
@@ -468,6 +469,8 @@ def to_ipuz(puzzle):
     R, C = doc["board"]["rows"], doc["board"]["cols"]
     if not (R == C == D) or None in doc["givens"]:
         raise NotSupportedError("ipuz sudoku needs one gap-free D x D grid")
+    if doc.get("candidates"):
+        raise NotSupportedError("ipuz sudoku cannot carry given candidates (Sukaku)")
     rules = doc["rules"]
     grids = [r for r in rules if r["type"] in ("grid", "box_grid")]
     if len(grids) != 1 or any(r["type"] in ("row", "column") for r in rules):
@@ -537,3 +540,84 @@ def to_ipuz(puzzle):
     out[f"{IPUZ_NS}:puzzle"] = doc
     out["volatile"] = {IPUZ_NS: "puzzle,solution,zones,cages"}
     return out
+
+
+def from_ipuz(ipuz):
+    """ipuz sudoku (dict or JSON text) -> sudoku-puzzle dict. Reads `puzzle`, `solution`, `boxes`, `zones` (jigsaw boxes,
+    diagonals, windows, other regions) and `cages`; a file written by to_ipuz gives back its embedded puzzle unless the
+    grid was edited. Refuses kinds other than sudoku and cells it cannot read."""
+    import json
+    d = json.loads(ipuz) if isinstance(ipuz, str) else ipuz
+    kinds = d.get("kind") or []
+    if not str(d.get("version", "")).startswith("http://ipuz.org/v") or not any("ipuz.org/sudoku" in k for k in kinds):
+        raise FormatError("not an ipuz sudoku (version http://ipuz.org/v1 or v2, kind http://ipuz.org/sudoku...)")
+    empty, block = d.get("empty", 0), d.get("block", "#")
+
+    def value(x):
+        if isinstance(x, dict):
+            x = x.get("cell", x.get("value", 0))
+        if x is None or x == block:
+            raise NotSupportedError("ipuz sudoku with omitted or block cells")
+        if x == empty or str(x) == str(empty) or x in ("", 0, "0"):
+            return 0
+        try:
+            return int(x)
+        except (TypeError, ValueError):
+            raise FormatError(f"ipuz cell value {x!r} is not a digit")
+
+    grid = d.get("puzzle")
+    if not isinstance(grid, list) or not grid:
+        raise FormatError("ipuz sudoku without a puzzle grid")
+    D = len(grid)
+    if any(not isinstance(row, list) or len(row) != D for row in grid):
+        raise NotSupportedError("ipuz sudoku needs a square D x D puzzle grid")
+    givens = [value(x) for row in grid for x in row]
+    emb = d.get(f"{IPUZ_NS}:puzzle")
+    if isinstance(emb, dict) and emb.get("givens") == givens:
+        return emb
+    name = lambda cr: cell_name(int(cr[1]) - 1, int(cr[0]) - 1)          # ipuz coordinates are [col, row], 1-based
+    rules, boxes = [], []
+    diag_main = [cell_name(i, i) for i in range(D)]
+    diag_anti = [cell_name(i, D - 1 - i) for i in range(D)]
+    jigsaw = any("jigsawsudoku" in k for k in kinds)
+    for z in d.get("zones") or []:
+        if "rect" in z:
+            c0, r0, c1, r1 = z["rect"]
+            cells = [cell_name(r, c) for r in range(r0 - 1, r1) for c in range(c0 - 1, c1)]
+            kind = "window"
+        else:
+            cells = [name(cr) for cr in z.get("cells") or []]
+            srt = sorted(cells, key=lambda c: parse_cell(c))
+            kind = "diagonal" if srt in (diag_main, sorted(diag_anti, key=lambda c: parse_cell(c))) else "region"
+            if kind == "diagonal":
+                cells = diag_main if srt == diag_main else diag_anti
+        if not cells:
+            raise FormatError("ipuz zone without cells")
+        if jigsaw and kind == "region" and len(cells) == D:
+            boxes.append(sorted(cells, key=lambda c: parse_cell(c)))
+        else:
+            rules.append({"type": "region", "kind": kind, "cells": sorted(cells, key=lambda c: parse_cell(c)) if kind != "diagonal" else cells})
+    for cg in d.get("cages") or []:
+        cells = sorted((name(cr) for cr in cg.get("cells") or []), key=lambda c: parse_cell(c))
+        if "value" not in cg or not cells:
+            raise NotSupportedError("ipuz cage without a sum")
+        rules.append({"type": "cage", "cells": cells, "sum": int(cg["value"])})
+    if boxes:
+        houses = [{"type": "grid", "origin": "r1c1"}] + [{"type": "box", "cells": b} for b in boxes]
+    elif d.get("boxes", True) and D in PJ.BOXES:
+        houses = [_box_grid(D)]
+    else:
+        houses = [{"type": "grid", "origin": "r1c1"}]
+    meta = {}
+    for ik, k in (("title", "title"), ("author", "author"), ("url", "url"), ("uniqueid", "id")):
+        if d.get(ik):
+            meta[k] = d[ik]
+    if re.fullmatch(r"\d{2}/\d{2}/\d{4}", str(d.get("date", ""))):
+        mo, da, y = d["date"].split("/")
+        meta["date"] = f"{y}-{mo}-{da}"
+    doc = _doc(D, givens, houses + rules, meta or None)
+    if isinstance(d.get("solution"), list) and len(d["solution"]) == D:
+        doc["solution"] = [value(x) for row in d["solution"] for x in row]
+    from .exchange import validate
+    validate(doc)
+    return doc

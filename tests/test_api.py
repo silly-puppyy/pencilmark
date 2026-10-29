@@ -198,3 +198,26 @@ def test_text_grids_and_pencilmarks():
     body = "".join("." * (i % 9) + str(i % 9 + 1) + "." * (8 - i % 9) if i % 2 == 0 else "123456789" for i in range(81))
     d = pencilmark.from_string(body)
     assert d["givens"][:4] == [1, 0, 3, 0] and "candidates" not in d
+
+
+def test_ipuz_round_trip():
+    """INTEROP.md: from_ipuz reads what to_ipuz writes, with and without the embedded puzzle; candidates are refused"""
+    import copy
+    base = pencilmark.to_export("....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9.......")
+    cn = lambda r, c: f"r{r + 1}c{c + 1}"
+    killer = copy.deepcopy(base); killer["rules"].append({"type": "cage", "cells": ["r1c1", "r1c2"], "sum": 7})
+    windoku = copy.deepcopy(base)
+    windoku["rules"] += [{"type": "region", "kind": "window", "cells": [cn(r0 + i, c0 + j) for i in range(3) for j in range(3)]}
+                         for r0, c0 in ((1, 1), (1, 5), (5, 1), (5, 5))]
+    lab = [[(r // 3) * 3 + c // 3 for c in range(9)] for r in range(9)]
+    lab[0][2], lab[0][3] = lab[0][3], lab[0][2]
+    jigsaw = copy.deepcopy(base)
+    jigsaw["rules"] = [{"type": "grid", "origin": "r1c1"}] + \
+        [{"type": "box", "cells": [cn(r, c) for r in range(9) for c in range(9) if lab[r][c] == b]} for b in range(9)]
+    for doc in (base, killer, windoku, jigsaw):
+        ip = pencilmark.to_ipuz(doc)
+        assert pencilmark.from_ipuz(ip) == doc
+        bare = {k: v for k, v in ip.items() if not k.startswith("io.")}
+        assert pencilmark.fingerprint(pencilmark.from_ipuz(json.dumps(bare))) == pencilmark.fingerprint(doc)
+    with pytest.raises(pencilmark.NotSupportedError):
+        pencilmark.to_ipuz(pencilmark.from_string(" ".join(["5", "1234"] + ["123456789"] * 79)))

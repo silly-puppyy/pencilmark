@@ -9,6 +9,8 @@
 - More text formats: text grids with separators (Simple Sudoku / SadMan / forum style; `to_string(puzzle, "grid")`
   writes them), a trailing `# comment` after a plain string, pencil-mark grids and 729-character candidate strings
   (Sukaku). `rate()` and every entry point accept them as one string.
+- ipuz import: `from_ipuz` reads ipuz 1 / 2 sudoku (boxes, jigsaw zones, diagonals, windows, cages); `to_ipuz` now refuses
+  given candidates instead of dropping them.
 - Docs: philosophy page (goals, exact meaning of band / difficulty / time, format rules); README known issues.
 
 ## 1.0.0rc2

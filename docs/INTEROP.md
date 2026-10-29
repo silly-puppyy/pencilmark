@@ -9,7 +9,7 @@ other formats for convenience. None of them is part of the format or required by
 | `from_string(s)` / `to_string(puzzle, "grid")` | text grids with `\|`, `-`, `+` separators (Simple Sudoku, forums) | text grids |
 | `from_string(s)` | pencil-mark grids, 729-character candidate strings | – |
 | `from_string(s)` / `to_string(puzzle, "sudokuwiki")` | [sudokuwiki.org](https://www.sudokuwiki.org/) packed strings | sudokuwiki.org packed strings |
-| `to_ipuz(puzzle)` | – | [ipuz](http://www.ipuz.org/) 2 |
+| `from_ipuz(ipuz)` / `to_ipuz(puzzle)` | [ipuz](http://www.ipuz.org/) 1 and 2 sudoku | [ipuz](http://www.ipuz.org/) 2 |
 | `pencilmark.sources.load(url)` | [f-puzzles](https://www.f-puzzles.com/), [SudokuPad](https://sudokupad.app/) (SCL / fpuz / ctc), [Penpa](https://swaroopg92.github.io/penpa-edit/)+, [Logic Masters](https://logic-masters.de/) links | – |
 
 `from_string` and the site loaders return a `sudoku-puzzle` dict; every entry point (`rate`, `solve`, `load`, the
@@ -76,7 +76,7 @@ Anything else (other puzzle types or versions, placed digits or candidates, 6×6
 refused when read. `to_string(puzzle, "sudokuwiki")` picks the header from the structure and refuses puzzles none of
 these headers can express (a 6×6 jigsaw or X, killer-X, killer-windoku, anything above 9×9).
 
-## ipuz export
+## ipuz
 
 `to_ipuz(puzzle)` writes [ipuz](http://www.ipuz.org) 2 ([sudoku kinds](http://www.ipuz.org/sudoku)) for the subset that maps cleanly and refuses the rest:
 
@@ -92,7 +92,14 @@ these headers can express (a 6×6 jigsaw or X, killer-X, killer-windoku, anythin
 `puzzle` and `solution` are row arrays (0 = empty); ipuz coordinates are `[col, row]`, 1-based. `meta` title /
 author / url / id / date map to `title`, `author`, `url`, `uniqueid`, `date` (`mm/dd/yyyy`). The complete pencilmark
 object goes in `"io.github.silly-puppyy.pencilmark:puzzle"`, with
-`"volatile": {"io.github.silly-puppyy.pencilmark": "puzzle,solution,zones,cages"}`. There is no ipuz import.
+`"volatile": {"io.github.silly-puppyy.pencilmark": "puzzle,solution,zones,cages"}`. Given candidates (Sukaku) are
+refused: ipuz has no field for them.
+
+`from_ipuz(ipuz)` (a dict or JSON text) reads the same subset back: `puzzle` and `solution` (numbers, digit strings or
+`{"cell": …}` objects; `empty` as declared), `boxes`, `zones` (on a jigsaw, zones of D cells are its boxes; both main
+diagonals become `region` kind `diagonal`, `rect` zones `window`, any other zone `region`) and `cages` with a `value`.
+A file written by `to_ipuz` returns its embedded puzzle as long as the grid was not edited. Other kinds, omitted or
+block cells, and cages without a sum are refused.
 
 ## Site loaders
 

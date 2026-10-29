@@ -22,7 +22,7 @@ import json
 from pathlib import Path
 
 __all__ = ["rate", "rate_many", "solve", "to_export", "load", "NotUnique", "NoSolution", "Undecided", "dumps", "fingerprint",
-           "validate", "describe", "rules_text", "to_ipuz", "from_string", "to_string", "spec_from_gen", "spec_to_gen",
+           "validate", "describe", "rules_text", "to_ipuz", "from_ipuz", "from_string", "to_string", "spec_from_gen", "spec_to_gen",
            "FormatError", "NotSupportedError"]
 
 from .exchange import FormatError, NotSupportedError  # noqa: E402
@@ -250,6 +250,11 @@ def rules_text(described):
 def to_ipuz(puzzle):
     from .interop import to_ipuz as t
     return t(puzzle)
+
+
+def from_ipuz(ipuz):
+    from .interop import from_ipuz as f
+    return f(ipuz)
 
 
 def from_string(s, symbols=None):

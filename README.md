@@ -116,7 +116,7 @@ says `completed: false` if the limit passed. A puzzle without exactly one soluti
 
 ### Other formats
 
-For convenience pencilmark also reads and writes [sudokuwiki.org](https://www.sudokuwiki.org/) packed strings, exports [ipuz](http://www.ipuz.org/), and loads SudokuPad,
+For convenience pencilmark also reads and writes [sudokuwiki.org](https://www.sudokuwiki.org/) packed strings, text grids and [ipuz](http://www.ipuz.org/), reads pencil-mark grids, and loads SudokuPad,
 f-puzzles, [Penpa](https://swaroopg92.github.io/penpa-edit/)+ and Logic Masters links. None of these is needed to use the `sudoku-puzzle` format; see
 [docs/INTEROP.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/INTEROP.md). How rules map onto the engine, and how to add one, is in
 [docs/ENGINE.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/ENGINE.md).
