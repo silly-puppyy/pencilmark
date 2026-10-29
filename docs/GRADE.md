@@ -14,7 +14,7 @@ What `rate()` returns and `pencilmark rate --json` prints: one JSON object per p
  "contains": [{"code": "HSI", "chip": "HSI", "name": "Hidden Single", "band": 0},
               {"code": "NPR", "chip": "NPR/PPR/HPR", "name": "Naked Pair", "band": 1, "uses": 1, "alternatives": ["PPR", "HPR"]},
               {"code": "XWG", "chip": "XWG/KTE/SCL", "name": "X-Wing", "band": 2, "uses": 1, "alternatives": ["KTE", "SCL"]}],
- "contains_complete": true, "contains_truncated": false}
+ "contains_complete": true}
 ```
 
 A card exists only for a puzzle with exactly one solution. For any other puzzle, `rate()` raises `NotUnique`,
@@ -36,8 +36,7 @@ A card exists only for a puzzle with exactly one solution. For any other puzzle,
 | `contains` | default | list | The techniques met on the easiest route, easiest first (section 3). |
 | `contains_complete` | with `contains` | boolean | False when the route stops where human logic ran out (band `Unknown`); `stopped_at_step` then gives the step. |
 | `stopped_at_step` | with `contains`, when incomplete | integer | The first step human logic could not make. |
-| `contains_truncated` | with `contains` | boolean | True when a `max_seconds` cap stopped the search for the shortest list: the list may not be minimal or may miss alternatives. |
-| `completed` | with `max_seconds` | boolean | True when grading finished within `max_seconds`; absent without a limit (grading then always finishes). False: the limit passed. If it passed in the difficulty route, `band` is `"Unknown"` and `difficulty` / `time` are null, with the techniques found so far in `contains` (`contains_complete` false); if it passed only in the search for the shortest list, the grade stands and `contains_truncated` is true. `max_seconds` bounds the whole call (uniqueness proof, card, technique list); a puzzle whose uniqueness is not proven within it raises `Undecided`. Band `"Unknown"` with `completed` true means human logic ran out (`allow_guessing`). |
+| `completed` | with `max_seconds` | boolean | True when grading finished within `max_seconds`; absent without a limit (grading then always finishes). False: the limit passed. If it passed in the difficulty route, `band` is `"Unknown"` and `difficulty` / `time` are null, with the techniques found so far in `contains` (`contains_complete` false); if it passed only in the search for the shortest list, the grade stands but the list may not be minimal or may miss alternatives. `max_seconds` bounds the whole call (uniqueness proof, card, technique list); a puzzle whose uniqueness is not proven within it raises `Undecided`. Band `"Unknown"` with `completed` true means human logic ran out (`allow_guessing`). |
 | `elapsed` | optional | number | Wall-clock seconds the grader took for this card (for `rate()`: the uniqueness proof plus the card). Machine-dependent; not part of the grade. |
 | `issues` | optional | list | Publishing checks (section 4). |
 | `reject` | optional | boolean | True when any issue has severity `reject`. |
@@ -49,7 +48,7 @@ A card exists only for a puzzle with exactly one solution. For any other puzzle,
 ## 2. Choosing fields
 
 `rate(puzzle, fields=[...])` and `--fields a,b,c` take a list of the keys above; only those are computed. A field name
-is always the key it produces (`contains` also brings `contains_complete`, `contains_truncated` and `stopped_at_step`).
+is always the key it produces (`contains` also brings `contains_complete` and `stopped_at_step`).
 Without `fields`, the default fields are returned. `explain="short"`, `"teach"` or both (CLI `--explain short,teach`)
 adds explanations to `steps`. Shorthands: `steps=True` = the `steps` field with both explanation levels; `se=True` /
 `se="diuf"` = the `se` / `se_diuf` field.

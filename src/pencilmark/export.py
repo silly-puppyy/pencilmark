@@ -628,7 +628,6 @@ def _grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expl
     if "contains" in want:
         g["contains"] = contains
         g["contains_complete"] = not unknown        # false: the list stops where human logic ran out (guessing allowed)
-        g["contains_truncated"] = bool(bp.get("truncated")) or bp_cut[0]   # max_seconds hit: may not be minimal / may miss alternatives
         if unknown:
             g["stopped_at_step"] = len(bp["steps"]) + 1
     doc = prov = None

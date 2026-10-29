@@ -161,8 +161,8 @@ overlap a lot, so treat this as a rough conversion.
 - Classics take 0.04-0.2 s.
 - Typical variants take about 0.5-1.5 s.
 - A few very hard killers (huge cage algebra) can take 15-30 min while the contents list is minimised.
-- `--max-seconds N` (Python: `max_seconds=N`) caps the contents step. The card then says `contains_truncated: true`, and its
-  contents list may not be minimal or may miss joint chips. Without the cap the result is deterministic.
+- `--max-seconds N` (Python: `max_seconds=N`) caps the whole call. The card then says `completed: false`; if the limit
+  passed while the contents list was being minimised, the grade stands but the list may not be minimal or may miss joint chips. Without the cap the result is deterministic.
 
 ## Uniqueness
 Puzzles are checked with the engine's exhaustive search. If that search hits its node limit, [OR-Tools](https://developers.google.com/optimization) [CP-SAT](https://developers.google.com/optimization/cp/cp_solver) is used

@@ -94,7 +94,7 @@ def report2(g, k=None):
     L.append("   contains: " + (", ".join(f"{c['name']}{' x' + str(c['uses']) if c.get('uses', 0) > 1 else ''}"
                                          f"{' (or ' + '/'.join(c['alternatives']) + ')' if c.get('alternatives') else ''}" for c in hard)
                                 if hard else "singles only"))
-    if g.get("contains_truncated"):
+    if g.get("completed") is False and g.get("band") != "Unknown":
         L.append("   (time cap hit: contents not minimised; joint alternatives may be missing)")
     if g.get("contains_complete") is False:
         L.append(f"   human logic ran out at step {g.get('stopped_at_step')}; contents incomplete")
@@ -224,7 +224,7 @@ def main(argv=None):
                                                     "difficulty,band,time_p80,steps")
     r.add_argument("-j", "--jobs", type=int, default=1, help="rate puzzles in N parallel processes (output in input order)")
     r.add_argument("--max-seconds", type=float, default=None,
-                   help="cap the contents search (opt-in; the card then says contains_truncated and may differ run to run)")
+                   help="cap the whole call (opt-in; the card then says completed and may differ run to run)")
     r.set_defaults(fn=cmd_rate)
     s = sub.add_parser("solve"); s.add_argument("file", nargs="?"); s.set_defaults(fn=cmd_solve)
     j = sub.add_parser("json"); j.add_argument("file", nargs="?"); j.set_defaults(fn=cmd_json)

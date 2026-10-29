@@ -107,9 +107,6 @@
   "contains_complete": {
    "type": "boolean"
   },
-  "contains_truncated": {
-   "type": "boolean"
-  },
   "stopped_at_step": {
    "type": "integer",
    "minimum": 1
@@ -384,8 +381,7 @@
  },
  "dependentRequired": {
   "contains": [
-   "contains_complete",
-   "contains_truncated"
+   "contains_complete"
   ],
   "issues": [
    "reject"
