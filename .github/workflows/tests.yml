@@ -1,5 +1,6 @@
-# Full test suite on Linux, oldest and newest supported Python. Runs on version tags and by hand (Actions tab ->
-# tests -> Run workflow), not on every push.
+# Full test suite: Linux on the oldest and newest supported Python, plus Windows and macOS (the reference cards in
+# tests/fixtures must come out identical on every platform). Runs on version tags and by hand (Actions tab -> tests ->
+# Run workflow), not on every push.
 name: tests
 
 on:
@@ -9,17 +10,25 @@ on:
 
 jobs:
   test:
-    name: py${{ matrix.python }} ${{ matrix.extras }}
-    runs-on: ubuntu-latest
+    name: ${{ matrix.os }} py${{ matrix.python }} ${{ matrix.extras }}
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
         include:
-          - python: "3.10"
+          - os: ubuntu-latest
+            python: "3.10"
             extras: "test"            # core install, without OR-Tools
-          - python: "3.14"
+          - os: ubuntu-latest
+            python: "3.14"
             extras: "test,verify"
+          - os: windows-latest
+            python: "3.14"
+            extras: "test"
+          - os: macos-latest           # arm64
+            python: "3.14"
+            extras: "test"
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
