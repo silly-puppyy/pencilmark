@@ -198,6 +198,9 @@ def test_text_grids_and_pencilmarks():
     body = "".join("." * (i % 9) + str(i % 9 + 1) + "." * (8 - i % 9) if i % 2 == 0 else "123456789" for i in range(81))
     d = pencilmark.from_string(body)
     assert d["givens"][:4] == [1, 0, 3, 0] and "candidates" not in d
+    d = pencilmark.from_string(":0901:4:" + s + ":412 413 512::r1c2 r1c3:")    # HoDoKu library line, removed candidates
+    assert d["givens"] == pencilmark.from_string(s)["givens"] and d["candidates"] == {"r1c2": [1, 2, 3, 6, 7, 8, 9],
+                                                                                      "r1c3": [1, 2, 3, 5, 6, 7, 8, 9]}
 
 
 def test_ipuz_round_trip():

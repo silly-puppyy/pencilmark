@@ -15,6 +15,6 @@ assert len(pencilmark.solve(CLASSIC)) == 81
 doc = pencilmark.to_export(CLASSIC)
 pencilmark.validate(doc)
 assert pencilmark.fingerprint(doc) == pencilmark.fingerprint(CLASSIC)
-v = json.load(open(Path(__file__).parent / "fixtures" / "variants.json"))[0]
+v = json.load(open(Path(__file__).parent / "fixtures" / "variants.json", encoding="utf-8"))[0]
 assert pencilmark.rate(v["puzzle"])["band"] == v["card"]["band"], v["name"]
 print(f"smoke ok ({time.time() - t0:.1f}s, python {sys.version.split()[0]})")

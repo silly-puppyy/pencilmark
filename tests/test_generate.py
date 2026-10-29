@@ -15,7 +15,7 @@ def unique(puzzle):
     return len(sols) == 1 and "".join(PJ._sym(v) for v in sols[0]) == puzzle["solution"]
 
 
-def run(spec, budget=60):
+def run(spec, budget=150):          # a runaway guard; CI on Windows is about 2x slower than Linux
     t = time.time()
     r = generate(spec)
     assert time.time() - t < budget

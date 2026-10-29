@@ -36,6 +36,7 @@ bool fc_skip(const char* n) {
 // first contradiction. steps: placements + technique applications; log: EV_* events.
 int Solver::fc_propagate(int level, int& steps, std::vector<int>* log) {
     for (int it = 0; it < 200; ++it) {
+        if (deadline_passed()) return 0;   // max_seconds: stop following (the caller reports band "Unknown")
         int placed = 0;
         const int r = prop_rounds(1000, placed, log);
         steps += placed;
@@ -166,8 +167,8 @@ void Solver::forcing(MoveBuf& out, int level, bool nested) {
             const int s = it->second.steps;
             steps += s;
             fc_steps_total += s;
-            if (fc_abort_at >= 0 && fc_steps_total > fc_abort_at) {  // fallback budget: all-or-none per call
-                fc_aborted = true;
+            if ((fc_abort_at >= 0 && fc_steps_total > fc_abort_at) || deadline_passed()) {  // fallback budget (all-or-none
+                fc_aborted = true;                                                               // per call) or max_seconds
                 return;
             }
             if (dead[i]) ++ncontra;

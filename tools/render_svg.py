@@ -272,6 +272,6 @@ def render(doc, dark=False, cell=48):
 
 
 if __name__ == "__main__":
-    doc = json.load(open(sys.argv[1]))
+    doc = json.load(open(sys.argv[1], encoding="utf-8"))
     cell = int(sys.argv[sys.argv.index("--cell") + 1]) if "--cell" in sys.argv else 48
-    Path(sys.argv[2]).write_text(render(doc, dark="--dark" in sys.argv, cell=cell))
+    Path(sys.argv[2]).write_text(render(doc, dark="--dark" in sys.argv, cell=cell), encoding="utf-8")

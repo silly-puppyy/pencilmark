@@ -11,6 +11,11 @@
   (Sukaku). `rate()` and every entry point accept them as one string.
 - ipuz import: `from_ipuz` reads ipuz 1 / 2 sudoku (boxes, jigsaw zones, diagonals, windows, cages); `to_ipuz` now refuses
   given candidates instead of dropping them.
+- `max_seconds` is now also checked inside the forcing-chain fallback (Easter Monster at `max_seconds=2` returned after
+  4.3 s, now 2.0 s); grades without a limit are unchanged.
+- Windows: the command line reads all input before starting `-j` worker processes (a pending read on the stdin pipe
+  blocked them) and reads / writes UTF-8 on every platform; the test suite runs on Windows and macOS too.
+- HoDoKu library lines (`:0901:4:<puzzle>:<removed candidates>:...`) are read by `from_string`.
 - Docs: philosophy page (goals, exact meaning of band / difficulty / time, format rules); README known issues.
 
 ## 1.0.0rc2

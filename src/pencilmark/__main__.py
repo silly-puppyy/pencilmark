@@ -161,6 +161,7 @@ def cmd_rate(a):
             print(_rate_one(it), flush=True)
         return
     from .api import _mp_context
+    items = list(items)          # read all input first: on Windows a pending read on the stdin pipe blocks starting workers
     with _mp_context().Pool(a.jobs, maxtasksperchild=50) as pool:   # output stays in input order
         for out in pool.imap(_rate_one, items, chunksize=1):
             print(out, flush=True)
@@ -207,6 +208,11 @@ def cmd_describe(a):
 
 
 def main(argv=None):
+    for f in (sys.stdin, sys.stdout):            # UTF-8 on every platform (Windows pipes default to the ANSI code page)
+        try:
+            f.reconfigure(encoding="utf-8")
+        except (AttributeError, ValueError):
+            pass
     ap = argparse.ArgumentParser(prog="python -m pencilmark", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
     r = sub.add_parser("rate"); r.add_argument("file", nargs="?"); r.add_argument("--format", default=None)

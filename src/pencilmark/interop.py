@@ -1,7 +1,8 @@
 """Interop strings and ipuz export (docs/INTEROP.md).
 
     from_string(s) -> sudoku-puzzle dict        plain classic strings (also as text grids with | - + separators, or with a
-                                                trailing comment), pencil-mark grids, 729-character candidate strings, and
+                                                trailing comment), pencil-mark grids, 729-character candidate strings, HoDoKu
+                                                library lines, and
                                                 sudokuwiki.org packed strings (S9B, S6B, X9B, W9B, C9B, J9B, L9B, M9B, L6C)
     to_string(puzzle, "plain" | "grid" | "sudokuwiki")   the reverse (refuses what the target cannot express)
     to_ipuz(puzzle) -> dict                     ipuz 2 for classic / Latin square / diagonal / windoku / jigsaw / killer
@@ -60,6 +61,8 @@ def from_string(s, symbols=None):
     m = _PACKED.fullmatch(t)
     if m and len(m.group(4)) == WIDTH[m.group(1)] * int(m.group(2)) ** 2:
         return _from_sudokuwiki(m.group(1), int(m.group(2)), m.group(3), m.group(4).lower())
+    if symbols is None and s.lstrip().startswith(":") and s.count(":") >= 4:
+        return _from_hodoku_library(s.strip())
     if symbols is None:
         lines = [_COMMENT.sub("", ln) for ln in s.splitlines()]
         rows = [ln for ln in lines if ln.strip() and not _SEPARATOR_LINE.fullmatch(ln)]
@@ -78,6 +81,25 @@ def from_string(s, symbols=None):
         if len(first) in PJ.SIZES and len(first) >= 16 and len(s.splitlines()) == 1:    # "<81 chars> rating / comment"
             return _from_plain(first)
     return _from_plain(t, symbols)
+
+
+def _from_hodoku_library(line):
+    """HoDoKu library line ':<technique code>:<letter>:<puzzle>:<removed candidates>:...': the puzzle (81 characters, '.' or
+    '0' empty) and its removed candidates (tokens 'drc': digit d is not a candidate of row r, column c); the remaining
+    fields describe the step the line was collected for and are ignored"""
+    f = line.split(":")
+    d = _from_plain(re.sub(r"\s+", "", f[3]))
+    D = d["digits"]
+    removed = {}
+    for tok in f[4].split() if len(f) > 4 else []:
+        if not re.fullmatch(r"[1-9]{3}", tok) or D != 9:
+            raise FormatError(f"HoDoKu library line: removed candidate {tok!r} is not 'digit row column'")
+        removed.setdefault(cell_name(int(tok[1]) - 1, int(tok[2]) - 1), set()).add(int(tok[0]))
+    cands = {c: [v for v in range(1, D + 1) if v not in rm] for c, rm in removed.items()
+             if not d["givens"][parse_cell(c)[0] * D + parse_cell(c)[1]]}
+    if cands:
+        d["candidates"] = dict(sorted(cands.items(), key=lambda kv: parse_cell(kv[0])))
+    return d
 
 
 def _from_pencilmarks(tokens):

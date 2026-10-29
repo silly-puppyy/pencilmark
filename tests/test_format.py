@@ -31,8 +31,8 @@ def pack():
     """synthetic puzzles: the variant fixtures, the FORMAT.md example files, and generated variant boards"""
     global _pack
     if _pack is None:
-        _pack = [v["puzzle"] for v in json.load(open(FIXTURES))]
-        text = (ROOT / "docs" / "FORMAT.md").read_text()
+        _pack = [v["puzzle"] for v in json.load(open(FIXTURES, encoding="utf-8"))]
+        text = (ROOT / "docs" / "FORMAT.md").read_text(encoding="utf-8")
         _pack += [json.loads(b) for b in re.findall(r"```json\n(.*?)```", text, re.S)
                   if b.startswith('{"format": "sudoku-puzzle"') and "…" not in b]
         g9 = VR.Grid(9, (3, 3))
@@ -93,7 +93,7 @@ def test_canonical_idempotent():
 
 
 def test_fixtures_are_valid():
-    for v in json.load(open(FIXTURES)):
+    for v in json.load(open(FIXTURES, encoding="utf-8")):
         X.validate(v["puzzle"])
         assert pencilmark.load(v["puzzle"]).N >= 16
 
@@ -156,7 +156,7 @@ def test_required_parameters_off_9x9():
 def test_schema_validates_pack():
     import pytest
     jsonschema = pytest.importorskip("jsonschema")
-    schema = json.load(open(SCHEMA))
+    schema = json.load(open(SCHEMA, encoding="utf-8"))
     jsonschema.Draft202012Validator.check_schema(schema)
     v = jsonschema.Draft202012Validator(schema)
     for n, e in enumerate(pack()):
@@ -168,7 +168,7 @@ def test_schema_validates_pack():
 
 def test_format_md_examples():
     """the complete example files in docs/FORMAT.md are valid"""
-    text = (ROOT / "docs" / "FORMAT.md").read_text()
+    text = (ROOT / "docs" / "FORMAT.md").read_text(encoding="utf-8")
     n = 0
     for block in re.findall(r"```json\n(.*?)```", text, re.S):
         if not block.startswith('{"format": "sudoku-puzzle"') or "…" in block:
@@ -480,12 +480,12 @@ def test_area_scope():
 def test_card_schema():
     import pytest
     jsonschema = pytest.importorskip("jsonschema")
-    schema = json.load(open(ROOT / "docs" / "sudoku-grade.schema.json"))
+    schema = json.load(open(ROOT / "docs" / "sudoku-grade.schema.json", encoding="utf-8"))
     jsonschema.Draft202012Validator.check_schema(schema)
     v = jsonschema.Draft202012Validator(schema)
     cards = [pencilmark.rate(CLASSIC), pencilmark.rate(CLASSIC, fields=list(pencilmark.export.DEFAULT_FIELDS) +
                                                         list(pencilmark.export.OPTIONAL_FIELDS), explain=True)]
-    cards += [x["card"] for x in json.load(open(FIXTURES))]
+    cards += [x["card"] for x in json.load(open(FIXTURES, encoding="utf-8"))]
     for c in cards:
         errs = list(v.iter_errors(c))
         assert not errs, errs[0].message
