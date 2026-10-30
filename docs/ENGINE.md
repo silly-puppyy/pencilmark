@@ -26,7 +26,7 @@ whatever its source.
 | `relation` | one relation per pair |
 | `negative` | the complementary relation on every uncovered pair (`nonconsec` for white kropki, `notratio`, `notsum`, `notdiff`, `allowed`), tables for rossini / battenburg, domains for digits |
 | `cell`, `candidates` | domain masks (`cell` clues are also kept as cell clues) |
-| `contains` / `appears` / `count` / `distinct_count` / `clone` / `isomorphic` / `global_entropy` / `equal_sum` / `vudoku` / `table` | the engine constraints and named rules of the same mechanics |
+| `contains` / `appears` / `count` / `distinct_count` / `clone` / `isomorphic` / `global_entropy` / `equal_sum` / `vudoku` | the engine constraints and named rules of the same mechanics |
 
 ## Normalisations
 
@@ -54,8 +54,9 @@ the same file and the same card whatever its source.
 13. Houses are written grid by grid (`grid` / `box_grid`, at the place of the grid's first house) whatever order a
     loader listed them in; reading the file back lists each grid's rows, columns, then boxes.
 
-Mechanics without a named rule (same-parity lines, maximin, minimax, ten-eleven and similar) stay 2-cell tables or
-`relation` `allowed` rules.
+Mechanics without a named rule (same-parity lines, maximin, minimax, ten-eleven and similar) can be graded when a loader
+builds them as engine tables, but cannot be written in format_version 1: `table` and the `allowed` operator are reserved
+for the planned custom rule type (FORMAT.md 6.17), and `to_export` refuses such puzzles.
 
 ## Adding a rule
 

@@ -29,7 +29,7 @@ Python 3.10 or newer. Building from source needs a C++17 compiler.
 import pencilmark
 
 card = pencilmark.rate("....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9.......")
-card["band"], card["difficulty"], card["time"]          # ('Medium', 5.9, 10.7)
+card["band"], card["difficulty"], card["time"]          # ('Hard', 5.9, 10.7)
 
 card  = pencilmark.rate(puzzle, steps=True)             # add the step-by-step solve with explanations
 cards = pencilmark.rate_many(puzzles, jobs=4)           # several puzzles in parallel, input order kept
@@ -45,7 +45,7 @@ Command line:
 ```
 $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9.......' | pencilmark rate - --report
 #1  Hard  -  difficulty 5.9  -  time 10.7 min
-   contains: Naked Pair (or PPR/HPR), X-Wing (or KTE/SCL)
+   contains: Naked Pair (or Hidden Pair), X-Wing (or 2-String Kite / Simple Colouring / Short chain in the head)
 
 pencilmark rate puzzles.txt --json        # full card per line (python -m pencilmark works too)
 pencilmark solve puzzles.txt              # the solution, or 'not unique' / 'no solution'
@@ -177,7 +177,7 @@ Being worked on before or soon after 1.0:
 - **Speed.** Grading takes a median 0.5 s per puzzle (classics about 0.05 s, but the slowest few percent take 10 s to
   minutes). Graders that do not model human solving answer in under a millisecond. Use `max_seconds` to bound a call.
 - **Generator speed and range.** About 20-70 s per puzzle that meets a spec (HoDoKu: 0.05-1 s), and classic Extreme puzzles
-  are not reached within the default 120 s. `max_givens` is not always enforced.
+  are not reached within the default 120 s. A maximum on the givens count is not always enforced.
 - **Variants on one scale.** On classics, difficulty matches Andrew Stuart's ratings on the same puzzles; across variant
   types the same difficulty does not yet mean the same experience (puzzle types differ by about 2 points on average, and
   variants often score above the classic range of their band). Time is most off for the same reason (about 1.4x per

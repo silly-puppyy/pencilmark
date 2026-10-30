@@ -98,7 +98,7 @@ refused with a message naming them, never ignored. Example requests: `docs/examp
 ```
 $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9.......' | pencilmark rate - --report
 #1  Hard  -  difficulty 5.9  -  time 10.7 min
-   contains: Naked Pair (or PPR/HPR), X-Wing (or KTE/SCL)
+   contains: Naked Pair (or Hidden Pair), X-Wing (or 2-String Kite / Simple Colouring / Short chain in the head)
 ```
 
 ## The card
