@@ -17,7 +17,11 @@ module.exports = async function createConfig() {
   projectName: 'pencilmark',
   trailingSlash: true,
   onBrokenLinks: 'throw',
-  markdown: {format: 'detect', hooks: {onBrokenMarkdownLinks: 'throw'}},
+  markdown: {format: 'detect', mermaid: true, hooks: {onBrokenMarkdownLinks: 'throw'}},
+  themes: [
+    '@docusaurus/theme-mermaid',
+    ['@easyops-cn/docusaurus-search-local', {hashed: true, docsDir: '../docs', docsRouteBasePath: '/', indexBlog: false, highlightSearchTermsOnTargetPage: true}],
+  ],
   presets: [
     ['classic', {
       docs: {
@@ -61,6 +65,7 @@ module.exports = async function createConfig() {
     },
     prism: {theme: tomorrow, darkTheme: tomorrowNight, additionalLanguages: ['json', 'python', 'bash']},
     tableOfContents: {minHeadingLevel: 2, maxHeadingLevel: 3},
+    mermaid: {theme: {light: 'neutral', dark: 'dark'}},
   },
 };
 };
