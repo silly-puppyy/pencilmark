@@ -90,14 +90,22 @@ def report2(g, k=None):
     L = [f"{'#' + str(k) + '  ' if k else ''}{g['band']}  -  difficulty {g.get('difficulty')}  -  time {g.get('time')} min"
          + "".join(f" (mean {v} min)" if k == "time_mean" else f" ({k[6:]}% of players within {v} min)"
                    for k, v in g.items() if k.startswith("time_") and v is not None)]
-    hard = [c for c in g.get("contains") or [] if c.get("band", 0) > 0]
+    from .export import SINGLE_CODES, code_names
+    names = code_names()
+    hard = [c for c in g.get("contains") or [] if c["code"] not in SINGLE_CODES]
     L.append("   contains: " + (", ".join(f"{c['name']}{' x' + str(c['uses']) if c.get('uses', 0) > 1 else ''}"
-                                         f"{' (or ' + '/'.join(c['alternatives']) + ')' if c.get('alternatives') else ''}" for c in hard)
+                                         f"{' (or ' + ' / '.join(names.get(a, a) for a in c['alternatives']) + ')' if c.get('alternatives') else ''}"
+                                         for c in hard)
                                 if hard else "singles only"))
     if g.get("completed") is False and g.get("band") != "Unknown":
         L.append("   (time cap hit: contents not minimised; joint alternatives may be missing)")
     if g.get("stopped_at_step"):
         L.append(f"   human logic ran out at step {g.get('stopped_at_step')}; contents incomplete")
+    for st in g.get("steps") or []:
+        ex = st.get("explanation") or {}
+        text = ex.get("teach") or ex.get("short") or ex.get("notation")
+        if text and (st["code"] not in SINGLE_CODES or ex.get("teach") or ex.get("short")):   # -v: singles stay silent
+            L.append(f"   {st['n']:>3}. " + text.replace("\n", "\n        "))
     for n in g.get("issues") or []:
         L.append(f"   {'reject' if n['severity'] == 'reject' else 'note'}: {n['text']}")
     return "\n".join(L)
@@ -138,12 +146,14 @@ def _rate_one(args):
         p._pm_solution = list(sols[0])      # proven unique: later stages reuse it
         from .export import card_fields
         fl = a.fields.split(",") if a.fields else None
-        if fl is None and ("%p" in fmt or a.report):
+        if fl is None and "%p" in fmt:              # the %p placeholder asks for time_p80; the report shows pNN only on request
             fl = list(card_fields(None)) + ["time_p80"]
         if "%n" in fmt:
             fl = list(fl or card_fields(None)) + ["issues"]
-        want = card_fields(fl, steps=a.steps)
-        explain = a.explain.split(",") if a.explain else (True if a.steps else None)
+        verbose = getattr(a, "verbose", 0) if a.report else 0
+        want = card_fields(fl, steps=a.steps or verbose > 0)
+        explain = a.explain.split(",") if a.explain else (["notation", "short", "teach"][min(verbose, 3) - 1] if verbose
+                                                          else True if a.steps else None)
         g = grade(p, P, max_seconds=a.max_seconds, fields=sorted(want), explain=explain, alternatives=not a.no_alternatives)
         return json.dumps({"line": k, **g}, default=str) if a.json else report2(g, k) if a.report else _fmt2(fmt, g, k, True)
     except Exception as e:
@@ -232,7 +242,9 @@ def main(argv=None):
     r.add_argument("--steps", action="store_true", help="with --json: include the step-by-step solve (with both explanation levels)")
     r.add_argument("--quality", default=None, help='issue checks, e.g. "trivial.limit=0.5,trial.severity=reject,tedious.severity=off" '
                    "(docs/GRADE.md 4)")
-    r.add_argument("--explain", default=None, help="step explanation levels, comma-separated: short, teach")
+    r.add_argument("--explain", default=None, help="step explanation levels, comma-separated: notation, short, teach")
+    r.add_argument("-v", "--verbose", action="count", default=0, help="with --report: list the steps; -v in solvers' "
+                   "notation (X-Wing: 3 r58 c68 => r679c6<>3), -vv as plain sentences, -vvv as short lessons")
     r.add_argument("--fields", default=None, help="card fields, comma-separated (docs/GRADE.md 2), e.g. "
                                                     "difficulty,band,time_p80,steps")
     r.add_argument("-j", "--jobs", type=int, default=1, help="rate puzzles in N parallel processes (output in input order)")

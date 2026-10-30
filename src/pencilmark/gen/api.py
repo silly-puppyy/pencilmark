@@ -37,7 +37,7 @@ class Spec:
                       {"kropki": "min"} = zero-given minimal dot set; {"cage": "partition"} = killer tiled by cages, few
                       givens; {"cage": N} with max_givens=0 = killer with exactly N cages and no givens (CP-SAT)
     kinds             shorthand: every listed kind keeps >= 1 needed element (each-kind mode)
-    target_band       "Very Easy" .. "Extreme" (or 0..5): the card's band must equal it
+    target_band       "Very Easy" .. "Extreme" (or 0..6): the card's band must equal it
     target_difficulty [lo, hi] on the card's difficulty scale
     require           technique codes the card must contain (e.g. ["XWG"]); strict_require = listed as the code itself,
                       not only as an alternative chip
@@ -318,7 +318,7 @@ def _generate(spec, log=None):
 
     # band cap of the construction; with a required technique at the cap, only that technique is allowed at the cap
     # (everything easier stays allowed), so the logic route has to go through it
-    cap = tb if tb is not None else (max(codes[c] for c in req) if req else 5)
+    cap = tb if tb is not None else (max(codes[c] for c in req) if req else len(BANDS) - 1)
     top = [c for c in req if codes[c] == cap]
     if top and cap > 0:
         allowed = band_techs(P, cap - 1) | set().union(*(code_techs(P, c) for c in top))
@@ -328,7 +328,7 @@ def _generate(spec, log=None):
         allowed = band_techs(P, cap)
     chk = Checker(b, allowed=allowed, P=P)
     low = Checker(b, cap=cap - 1, P=P) if (tb is not None or top) and cap > 0 else None
-    full = Checker(b, cap=5, P=P)
+    full = Checker(b, cap=len(BANDS) - 1, P=P)
     stats = {"attempts": 0, "rejected": {}}
 
     def reject(why):

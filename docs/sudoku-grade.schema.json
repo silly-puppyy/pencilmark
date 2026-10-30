@@ -52,6 +52,7 @@
     "Medium",
     "Hard",
     "Very Hard",
+    "Expert",
     "Extreme",
     "Unknown"
    ]
@@ -62,7 +63,7 @@
     "null"
    ],
    "minimum": 0,
-   "maximum": 5
+   "maximum": 6
   },
   "contains": {
    "type": "array",
@@ -88,7 +89,7 @@
      "band": {
       "type": "integer",
       "minimum": 0,
-      "maximum": 5
+      "maximum": 6
      },
      "uses": {
       "type": "integer",
@@ -217,7 +218,7 @@
      "band": {
       "type": "integer",
       "minimum": 0,
-      "maximum": 5
+      "maximum": 6
      },
      "placement": {
       "type": "string",
@@ -235,6 +236,9 @@
       "additionalProperties": false,
       "minProperties": 1,
       "properties": {
+       "notation": {
+        "type": "string"
+       },
        "short": {
         "type": "string"
        },

@@ -39,7 +39,9 @@ void Solver::gfish(MoveBuf& out, int n, bool finless, bool finned) {
     std::set<std::vector<uint32_t>> seen_el;
     auto ov = [&](int a, int b) { return p.group_overlap[(size_t)p.houses[a] * p.G + p.houses[b]] != 0; };
     auto line = [&](int h) { return p.group_line[p.houses[h]]; };
-    for (int v = 1; v <= p.D; ++v) {
+    pm_long gf_nodes = 0;        // max_seconds: the cover / base enumeration checks the deadline every 4096 nodes
+    bool gf_stop = false;
+    for (int v = 1; v <= p.D && !gf_stop; ++v) {
         const uint32_t b = bit(v);
         for (int h = 0; h < H; ++h) {
             uint64_t* ph = &pos[(size_t)h * W];
@@ -69,6 +71,7 @@ void Solver::gfish(MoveBuf& out, int n, bool finless, bool finned) {
         };
         int base_types = 0;  // bit0 row, bit1 col, bit2 other
         pick_cov = [&](int start, int depth) {
+            if (gf_stop || ((++gf_nodes & 4095) == 0 && deadline_passed())) { gf_stop = true; return; }
             if (depth == n) {
                 std::fill(CU.begin(), CU.end(), 0);
                 for (int i = 0; i < n; ++i) {
@@ -175,6 +178,7 @@ void Solver::gfish(MoveBuf& out, int n, bool finless, bool finned) {
             }
         };
         pick_base = [&](int start, int depth) {
+            if (gf_stop || ((++gf_nodes & 4095) == 0 && deadline_passed())) { gf_stop = true; return; }
             if (depth == n) {
                 std::fill(U.begin(), U.end(), 0);
                 base_types = 0;

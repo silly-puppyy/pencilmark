@@ -10,10 +10,10 @@ What `rate()` returns and `pencilmark rate --json` prints: one JSON object per p
 ```json
 {"format": "sudoku-grade", "format_version": 1,
  "grader": {"name": "pencilmark", "version": "1.0.0"},
- "difficulty": 5.9, "time": 10.7, "band": "Medium",
+ "difficulty": 5.9, "time": 10.7, "band": "Hard",
  "contains": [{"code": "HSI", "chip": "HSI", "name": "Hidden Single", "band": 0},
-              {"code": "NPR", "chip": "NPR/PPR/HPR", "name": "Naked Pair", "band": 1, "uses": 1, "alternatives": ["PPR", "HPR"]},
-              {"code": "XWG", "chip": "XWG/KTE/SCL", "name": "X-Wing", "band": 2, "uses": 1, "alternatives": ["KTE", "SCL"]}]}
+              {"code": "NPR", "chip": "NPR/HPR", "name": "Naked Pair", "band": 2, "uses": 1, "alternatives": ["HPR"]},
+              {"code": "XWG", "chip": "XWG/KTE/SCL", "name": "X-Wing", "band": 3, "uses": 1, "alternatives": ["KTE", "SCL"]}]}
 ```
 
 A card exists only for a puzzle with exactly one solution. For any other puzzle, `rate()` raises `NotUnique`,
@@ -30,8 +30,8 @@ A card exists only for a puzzle with exactly one solution. For any other puzzle,
 | `time` | default | number or null | Predicted median solving time in minutes over the people who solve puzzles like this one, without long breaks. Null when the band is `Unknown`. |
 | `time_mean`, `time_pNN` | optional | number or null | Spread of solve times over today's players: the mean, or the NN-th percentile (`time_p80` = 80% of players finish within it; NN from 1 to 99). Solves without long pauses; a log-normal fitted on two sources' per-player times. |
 | `time_dist` | optional | object or null | The time distribution's parameters: `{"type": "lognormal", "sigma_players": …, "sigma_model": …}`, around the median `time`. `sigma_players` is the spread of log solve time over today's players (0.79 for classics and multi-grid layouts, 0.62 for puzzles with any other rule; measured on grandgames and sudoku.coach), which `time_mean` and `time_pNN` use; `sigma_model` is the typical error of the predicted median itself (0.33 / 0.48). |
-| `band` | default | string | `"Very Easy"`, `"Easy"`, `"Medium"`, `"Hard"`, `"Very Hard"`, `"Extreme"`; `"Unknown"` when the band could not be determined: guessing was allowed and used, or `max_seconds` passed in the difficulty route. |
-| `band_index` | optional | integer or null | 0 (Very Easy) … 5 (Extreme); null for `Unknown`. Handy for sorting, or for mapping the bands to other names. |
+| `band` | default | string | `"Very Easy"`, `"Easy"`, `"Medium"`, `"Hard"`, `"Very Hard"`, `"Expert"`, `"Extreme"`; `"Unknown"` when the band could not be determined: guessing was allowed and used, or `max_seconds` passed in the difficulty route. |
+| `band_index` | optional | integer or null | 0 (Very Easy) … 6 (Extreme); null for `Unknown`. Handy for sorting, or for mapping the bands to other names. |
 | `contains` | default | list | The techniques met on the easiest route, easiest first (section 3). |
 | `stopped_at_step` | with `contains`, when human logic ran out | integer | The first step human logic could not make (band `Unknown` with guessing allowed); the `contains` list ends there. |
 | `completed` | with `max_seconds` | boolean | True when grading finished within `max_seconds`; absent without a limit (grading then always finishes). False: the limit passed. If it passed in the difficulty route, `band` is `"Unknown"` and `difficulty` / `time` are null, with the techniques found so far in `contains`; if it passed only in the search for the shortest list, the grade stands but the list may not be minimal or may miss alternatives. `max_seconds` bounds the whole call (uniqueness proof, card, technique list); a puzzle whose uniqueness is not proven within it raises `Undecided`. Band `"Unknown"` with `completed` true means human logic ran out (`allow_guessing`). |
@@ -51,8 +51,9 @@ Numbers are rounded as emitted: `difficulty`, `time`, `time_mean` and `time_pNN`
 
 `rate(puzzle, fields=[...])` and `--fields a,b,c` take a list of the keys above; only those are computed. A field name
 is always the key it produces (`contains` also brings `stopped_at_step`).
-Without `fields`, the default fields are returned. `explain="short"`, `"teach"` or both (CLI `--explain short,teach`)
-adds explanations to `steps`. Shorthands: `steps=True` = the `steps` field with both explanation levels; `se=True` = the `se` field.
+Without `fields`, the default fields are returned. `explain=` adds explanations to `steps`, at one or more levels (CLI
+`--explain notation,short,teach`; section 5). Shorthands: `steps=True` = the `steps` field with every explanation level;
+`se=True` = the `se` field.
 
 ## 3. `contains`
 
@@ -64,7 +65,7 @@ Each entry is one technique on the route:
 | `chip` | `code` plus its alternatives, `/`-separated: any one of them gets the solver through at that point. |
 | `name` | Technique name. |
 | `band` | The technique's band index. |
-| `uses` | Times used on the route; omitted for singles (band 0), whose count depends on the route. |
+| `uses` | Times used on the route; omitted for singles (full house, hidden and naked singles, a rule's last cell), whose count depends on the route. |
 | `alternatives` | Other codes that also work there; omitted when there are none; `null` when the producer did not search (pencilmark: `alternatives=False`, CLI `--no-alternatives`; band, difficulty and time are the same). |
 
 ## 4. `issues`
@@ -101,8 +102,15 @@ of the solve", "rules": [3, 4, 5, 6]}`.
 ## 5. `steps`
 
 Each step: `n` (from 1), `code`, `name`, `band` (the same keys as in `contains`), then `placement` (`"r2c8=3"`) and / or `eliminations`
-(`["r4c5#7", …]`: candidate 7 removed from r4c5), and, when requested, `explanation`: `{"short": …, "teach": …}` with
-the requested levels.
+(`["r4c5#7", …]`: candidate 7 removed from r4c5), and, when requested, `explanation` with the requested levels:
+
+| Level | Example |
+|---|---|
+| `notation` | `X-Wing: 3 r58 c68 => r679c6<>3`: the notation solvers and forums share (HoDoKu's form: technique, digits, pattern, `=>` result; `<>` = "is not") |
+| `short` | `r6c6, r7c6, r9c6 ≠ 3: X-Wing on 3 (row 5 and row 8 / column 6 and column 8)`: one plain sentence, result first |
+| `teach` | a few sentences: where to look, why it works, what it achieves |
+
+`notation` is always present for a step; `short` and `teach` are left out of a step the explainer could not reconstruct.
 
 ## 6. Implementing a subset
 

@@ -18,17 +18,19 @@ from . import solver as S, cbackend as CB, export as E2
 
 BANDS = E2.BANDS
 FORCING_FALLBACK = True     # when no listed move exists, take the solver's forcing step (Extreme)
-FISH_CAP = True            # below Hard, list finned fish of size 2 only (larger are Hard; speed)
+FISH_CAP = True            # up to Hard, list fish of size 2 only (X-Wing; Swordfish and larger are Very Hard; speed)
 FORCING_TECHS = {S.FORCING, S.DYN_FORCING, S.NESTED_FORCING, S.NISHIO, S.POM, S.TRIAL}
 
 # most specific shape of an engine move -> (code, display name, band)
-_X_CHAIN = {"SKY": ("SKY", "Skyscraper", 2), "2SK": ("KTE", "2-String Kite", 2), "TUR": ("TUR", "Turbot Fish", 2),
-            "ER": ("ERE", "Empty Rectangle", 2), "XCH": ("XCL", "X-Chain", 3), "GXC": ("XCL", "Grouped X-Chain", 3)}
+_X_CHAIN = {"SKY": ("SKY", "Skyscraper", 3), "2SK": ("KTE", "2-String Kite", 3), "TUR": ("TUR", "Turbot Fish", 3),
+            "ER": ("ERE", "Empty Rectangle", 4), "XCH": ("XCL", "X-Chain", 4), "GXC": ("XCL", "Grouped X-Chain", 4)}
 
 # study order inside a band; codes not listed fall back to the proposal csv order
-_ORDER = {"FHS": 1, "HSI": 2, "NSI": 3, "LSI": 4, "CSI": 5,
-          "PPR": 1, "SNY": 3, "NPR": 4, "HPR": 5, "MSI": 6, "NTR": 21, "HTR": 22,
-          "XWG": 1, "SKY": 2.1, "KTE": 2.2, "TUR": 2.3, "ERE": 3, "SCL": 4, "FXW": 5,
+_ORDER = {"FHS": 1, "HSI": 2, "LSI": 4, "CSI": 5,                      # Very Easy
+          "NSI": 0.5, "PPR": 1, "SNY": 3, "MSI": 6,                       # Easy: naked singles before pointing (SE, HoDoKu, coach)
+          "NPR": 4, "HPR": 5, "NTR": 21, "HTR": 22,                       # Medium
+          "XWG": 1, "SKY": 2.1, "KTE": 2.2, "TUR": 2.3, "SCL": 4,           # Hard
+          "FXW": 1.3, "ERE": 2.5,                                         # Very Hard: after Swordfish (csv 1), with the wings
           # Hard: shape codes beside their relatives (csv: SWF 1 .. JLF 9, XYC 11, MCL 12, 3DM 13, SUM 16); Franken fish
           # late for its obscurity
           "FSW": 1.5, "FJF": 9.5, "XCL": 10.8, "FRK": 12.5, "PHI": 16.5, "PHV": 16.6}
@@ -88,12 +90,12 @@ def classify(m, p):
         cols = {p.coords[x][1] for x in m["pattern"]}
         plain = min(len(rows), len(cols)) <= k and max(len(rows), len(cols)) <= k   # base and cover lines only
         if not plain:
-            return "FRK", f"Franken {n}", 3
-        return ("XWG", "X-Wing", 2) if n == "X-Wing" else ("SWF", "Swordfish", 3)
+            return "FRK", f"Franken {n}", 4
+        return ("XWG", "X-Wing", 3) if n == "X-Wing" else ("SWF", "Swordfish", 4)
     if n == "LawOfLeftovers" and c in ("PHI", "Phistomefel variant"):
         return ("PHI", "Phistomefel ring", 3) if c == "PHI" else ("PHV", "Phistomefel variant", 3)
     if n == "Jellyfish" and c and "franken" in str(c).lower():
-        return "FRK", "Franken Jellyfish", 3
+        return "FRK", "Franken Jellyfish", 4
     code, band = E2.chip_of(t, str(c) if c and n in E2.SPLIT else None)
     from .card import _code
     name = str(c) if c and n in E2.SPLIT else _code(n)[1]
@@ -151,13 +153,13 @@ _SHAPED = set(E2.SPLIT) | {"MentalChain(direct)", "Swordfish", "Jellyfish"}   # 
 
 def _lb(t, tb):
     """lower bound of the pick key (band, study order) for any move of engine technique t: exact for techniques named by
-    their chip, conservative (band <= 2, order 0) for the ones classify() names by shape."""
+    their chip, conservative (the lowest shape band, order 0) for the ones classify() names by shape."""
     if S.TECH_NAMES.get(t) in _SHAPED:
-        return (min(tb, 2), 0)
+        return (min(tb, 3), 0)
     return (tb, _order(E2.chip_of(t)[0]))
 
 
-def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes=(), guard=None, prefix=(), max_band=5):
+def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes=(), guard=None, prefix=(), max_band=6):
     """solve band by band (see module doc). Moves are taken in full-notes mode: each placement clears its peers.
     target = a cell: stop once it is placed, preferring (within the current band) a move that places it -- "what does
     it take to place this cell from here". max_band: stop (unsolved) where only a harder move would continue -- contents()
@@ -241,7 +243,7 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
                     continue
                 code, name, mb = classify(m, p)
                 apply(m)
-                record({"code": code, "name": name, "band": 0, "technique": m["name"], "ecode": m.get("code"),
+                record({"code": code, "name": name, "band": mb, "technique": m["name"], "ecode": m.get("code"),
                         "xmeta": m.get("xmeta"), "tech": m["tech"], "place": m["place"], "elims": list(m["elim"]),
                         "seg": seg, "d": m.get("d")})
                 moved = True
@@ -272,8 +274,9 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
                 enabled |= run
                 # below Hard only size-2 finned fish can be picked (larger ones are Hard): don't list them (windoku:
                 # sizes 3-4 were 90% of a listing over 58 houses)
-                Pb = dict(P, fish_max_n=2) if b <= 2 and FISH_CAP else P
-                key = (tuple(vals), tuple(cand), frozenset(run), b <= 2) if _CACHE is not None else None
+                capped = b <= 3 and FISH_CAP
+                Pb = dict(P, fish_max_n=2) if capped else P
+                key = (tuple(vals), tuple(cand), frozenset(run), capped) if _CACHE is not None else None
                 mv = _CACHE.get(key) if key is not None else None
                 if mv is None:
                     mv = CB.state_moves(q, Pb, disabled=set(S.TECH_NAMES) - run, limit_per_tech=8, details=True,
@@ -300,7 +303,7 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
             if cands:
                 pick = min(cands, key=lambda x: x[0])
                 break
-        if pick is None and FORCING_FALLBACK and P.get("r6_extreme", True) and rng is None and max_band >= 5:
+        if pick is None and FORCING_FALLBACK and P.get("r6_extreme", True) and rng is None and max_band >= 6:
             # nothing listed in any band -> one solver step from this state. The solver's stuck-fallback
             # tries forcing chains / dynamic / nested forcing / Nishio / pattern overlay (state_moves never lists them);
             # such a step is an Extreme move. A guess means really stuck -> Unknown.
@@ -315,7 +318,7 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
                      "d": float(x.move.d) if x.move.d is not None else None}
                 code, name, mb = classify(m, p)
                 # a forcing step is Extreme; any other human step the move listing missed keeps its own band
-                pick = ((mb, 1, 0, m["d"]), code, name, max(mb, 5) if m["tech"] in FORCING_TECHS else mb, m)
+                pick = ((mb, 1, 0, m["d"]), code, name, max(mb, 6) if m["tech"] in FORCING_TECHS else mb, m)
         if pick is None:
             break
         _, code, name, mb, m = pick
@@ -485,7 +488,7 @@ def _contents(p, P, alternatives, deadline=None, base=None):
             for st, q in spots[:6]:                 # what else of this band was on offer where X was used
                 g = copy.copy(p)
                 g.givens = q.givens
-                for m in CB.state_moves(g, dict(P, fish_max_n=2) if b <= 2 and FISH_CAP else P,
+                for m in CB.state_moves(g, dict(P, fish_max_n=2) if b <= 3 and FISH_CAP else P,
                                         disabled=set(S.TECH_NAMES) - {t for t in allowed_t if E2.tech_band(t) <= b},
                                         limit_per_tech=8, details=True, cpuzzle=getattr(p, "_bp_cpuzzle", None),
                                         cand=q.domains):
@@ -493,7 +496,7 @@ def _contents(p, P, alternatives, deadline=None, base=None):
                     if b2 == b and c2 != code and (m["place"] or m["elim"]):
                         seen.add(c2)
             alt0 = None
-            for y in sorted(seen, key=_order):
+            for y in sorted(seen, key=lambda c_: (_order(c_), c_)):     # ties by code: deterministic in every process
                 if y in bp["profile"] or covered(y, {code}) or covered(code, {y}):
                     continue                        # listed already, or on X's chain: the subset table covers it
                 base = (ban - {y}) | {code}         # a technique dropped in the shrink may still be an alternative
@@ -545,6 +548,83 @@ def lesson(profile, target, known=()):
     return target in profile and not covered(target, k) and all(covered(c, k | {target}) for c in profile)
 
 
+def _cells_notation(p, cells):
+    """compact cell list in the solvers' notation: r679c6 (one column), r4c48 (one row), otherwise rows joined by commas"""
+    rc = sorted({(p.coords[c][0] + 1, p.coords[c][1] + 1) for c in cells})
+    if not rc:
+        return ""
+    if p.D > 9 or max(max(r, c) for r, c in rc) > 9:           # two-digit rows / columns: no run-together digits
+        return ",".join(f"r{r}c{c}" for r, c in rc)
+    def grouped(cells, flip):                  # rows sharing the same columns merge (r56c8); flip: the same by columns
+        by = {}
+        for r, c in cells:
+            a, b = (c, r) if flip else (r, c)
+            by.setdefault(a, []).append(b)
+        merged = {}
+        for a, bs in sorted(by.items()):
+            merged.setdefault(tuple(sorted(bs)), []).append(a)
+        parts = sorted(merged.items(), key=lambda kv: (kv[1][0], kv[0]))
+        fmt = lambda xs: "".join(map(str, xs))
+        return ",".join((f"r{fmt(bs)}c{fmt(a_)}" if flip else f"r{fmt(a_)}c{fmt(bs)}") for bs, a_ in parts)
+    return min((grouped(rc, False), grouped(rc, True)), key=lambda t: (len(t), t.count(",")))
+
+
+def _unit_notation(p, gis):
+    """houses in the solvers' notation: r58, c68, b9 (boxes numbered in reading order); other regions by name"""
+    boxes = [i for i, g in enumerate(p.groups) if str(g.name).startswith("b")]
+    out, rows, cols = [], [], []
+    for gi in gis:
+        nm = str(p.groups[gi].name)
+        if nm[:1] == "r" and nm[1:].isdigit():
+            rows.append(int(nm[1:]))
+        elif nm[:1] == "c" and nm[1:].isdigit():
+            cols.append(int(nm[1:]))
+        elif gi in boxes:
+            out.append(f"b{boxes.index(gi) + 1}")
+        else:
+            out.append(nm)
+    join = lambda xs: "".join(map(str, sorted(xs))) if p.D <= 9 else ",".join(map(str, sorted(xs)))
+    return " ".join(([f"r{join(rows)}"] if rows else []) + ([f"c{join(cols)}"] if cols else []) + out)
+
+
+def step_notation(p, st, just=None):
+    """one band-path step in the notation solvers and forums share: "X-Wing: 3 r58 c68 => r679c6<>3",
+    "Hidden Single: r3c5=6". The pattern part comes from the explainer's justification when there is one."""
+    if st.get("place"):
+        c, d = st["place"]
+        res = f"{_cells_notation(p, [c])}={d}"
+    else:
+        by_d = {}
+        for c, d in sorted(st["elims"], key=lambda x: (p.coords[x[0]], x[1])):
+            by_d.setdefault(d, []).append(c)
+        res = ", ".join(f"{_cells_notation(p, cs)}<>{d}" for d, cs in by_d.items())
+    pat = ""
+    j = just or {}
+    if not st.get("place") or st.get("band", 0) > 1:
+        digs = j.get("digits") or []
+        units = list(j.get("base_units") or []) + list(j.get("cover_units") or [])
+        cells = j.get("base_cells") or []
+        parts = []
+        if digs:
+            parts.append(",".join(str(d) for d in sorted(set(digs))))
+        fish = j.get("base_units") and j.get("cover_units")
+        if cells and not fish:                       # subsets, wings, patterns: the cells (HoDoKu: "4,8 in r4c48")
+            parts.append(f"in {_cells_notation(p, cells)}")
+        elif units:                                  # fish: base and cover houses ("3 r58 c68")
+            parts.append(_unit_notation(p, units))
+        if j.get("fins"):
+            parts.append(f"fins {_cells_notation(p, j['fins'])}")
+        pat = " ".join(parts)
+    name = st["name"]
+    if st.get("code") == "PPR" and j.get("base_units"):     # one step is pointing (box -> line) or claiming (line -> box)
+        boxes = {i for i, g in enumerate(p.groups) if str(g.name).startswith("b")}
+        bu = j["base_units"][0]
+        name = "Locked Candidates Type 1 (Pointing)" if bu in boxes else "Locked Candidates Type 2 (Claiming)"
+        digs = j.get("digits") or []
+        pat = (",".join(str(d) for d in sorted(set(digs))) + " " if digs else "") + "in " + _unit_notation(p, [bu])
+    return f"{name}: {pat + ' => ' if pat else ''}{res}"
+
+
 def explain_steps(p, P, steps):
     """teaching text for band-path steps: rebuild each position, let the engine find that technique's moves there
     (one short solve with only that technique), take the move with exactly the same placement / eliminations and
@@ -579,7 +659,7 @@ def explain_steps(p, P, steps):
             e = E.explain(NS(move=mv, alts=[], mode=mode, n_empty=sum(1 for v in vals if not v)), q,
                           E.State(q, vals, q.domains, mode))
             if e.get("short") and not e.get("error") and e.get("derived", True) is not None:
-                ex = {"short": e.get("short"), "teach": e.get("teach")}
+                ex = {"short": e.get("short"), "teach": e.get("teach"), "notation": step_notation(p, st, e.get("justification"))}
         except Exception:
             ex = None
         if ex is None and t is not None:
@@ -598,10 +678,12 @@ def explain_steps(p, P, steps):
                     if (st["code"] == "FRK") != ("franken" in tn.lower() or "mutant" in tn.lower()) and \
                             st["technique"] in ("X-Wing", "Swordfish", "Jellyfish", "FinnedFish"):
                         continue
-                    ex = {"short": e.get("short"), "teach": e.get("teach")}
+                    ex = {"short": e.get("short"), "teach": e.get("teach"), "notation": step_notation(p, st, e.get("justification"))}
                     break
             except Exception:
                 ex = None
+        if ex is None:
+            ex = {"notation": step_notation(p, st)}     # the notation needs no pattern: technique and result
         out.append(ex)
         if st["place"]:
             c, d = st["place"]

@@ -274,16 +274,18 @@ def grade_puzzle_checked(puzzle, P, explain=False, time_limit=60.0, tier_by_fami
 # ---- user-facing difficulty BANDS (labels), separate from the pricing FAMILIES ----------------
 # The label is the band of the hardest REQUIRED technique; variant techniques are placed by what they
 # demand of a human (the pricing families lump all variant logic with pointing pairs).
-BANDS = ["Very Easy", "Easy", "Medium", "Hard", "Very Hard", "Extreme"]
+BANDS = ["Very Easy", "Easy", "Medium", "Hard", "Very Hard", "Expert", "Extreme"]
 BAND_MEANING = {
-    "Very Easy": "a first foray: singles, and the obvious consequences of a rule ('a 6 in a cage of 11')",
-    "Easy": "common-sense combinations: pointing / box-line, pairs and triples, first rule combinations",
-    "Medium": "a compact foundation to study: single-digit patterns (X-Wing, Skyscraper, Kite, Empty Rectangle, "
-              "simple colouring, finned X-Wing) and the implications of each variant rule",
-    "Hard": "the big study band: wings, larger fish, quads, uniqueness, multi-digit chains and colouring, "
-            "advanced variant logic (set theory, sum algebra)",
-    "Very Hard": "expert techniques: alternating inference chains, nice loops, almost locked sets, case analysis",
-    "Extreme": "the limit of human solving: ALS chains, death blossom, bounded case splits",
+    "Very Easy": "the entry point: scanning without candidates (full house, hidden singles) and the obvious consequences "
+                 "of a rule ('a 6 in a cage of 11')",
+    "Easy": "one step further: naked singles, pointing / claiming, reading one rule's combinations",
+    "Medium": "subsets (naked and hidden pairs, triples, quads) and the implications of each variant rule",
+    "Hard": "the first learned patterns: X-Wing, Skyscraper, 2-String Kite, Turbot Fish, simple colouring, the "
+            "Phistomefel ring",
+    "Very Hard": "the big study band: Empty Rectangle, finned fish, Swordfish and Jellyfish, wings, uniqueness, longer "
+                 "X-Chains, advanced variant logic (sum algebra, band logic)",
+    "Expert": "chains and almost locked sets: XY-Chains, AIC, nice loops, Medusa, multi-colouring, case analysis",
+    "Extreme": "the limit of human solving: forcing chains / nets, Nishio, pattern overlay, trial and error",
 }
 # technique -> band: the band assignment. FAMILIES above stay the
 # engine's structural groups (pricing / features); only the band assignment changed. X-Chain, FinnedFish and LawOfLeftovers
@@ -291,25 +293,29 @@ BAND_MEANING = {
 # set theory Hard by pattern name.
 _BAND_BY_NAME = {}
 for _band, _names in {
-    0: ["FullHouse", "NakedSingle(direct)", "HiddenSingle(direct)", "NakedSingle(notes)", "HiddenSingle(notes)", "ClueFacts",
-        "LineSingle(direct)", "ConstraintSingle(direct)"],
-    1: ["NakedSingle+Pointing(direct)", "HiddenSingle+Pointing(direct)", "LockedCandidates", "SnyderMarks", "SnyderSingle",
-        "NakedPair", "HiddenPair", "MentalSingle(direct)", "MentalNotesSingle", "CageCombination", "SumCombination",
-        "ArrowCombination", "SetCombination", "Innie/Outie(direct)", "PairwiseConstraint", "TableCombination", "LineRange",
-        "LineScan", "LineClass", "SandwichCombination", "XSumCombination", "SkyscraperCombination", "CountCombination",
-        "NakedTriple", "HiddenTriple", "ClueShape"],
-    2: ["X-Wing", "X-Chain", "EmptyRectangle", "Coloring", "FinnedFish", "EqualDigits", "DigitCount", "LawOfLeftovers",
-        "EqualSumCombination", "ComboLock", "RuleIntersection", "ImpliedHouses", "Domino", "ClassCount", "SumBound",
-        "Innie/Outie(notes)", "Innie/Outie(sum)", "ClassColouring"],
-    3: ["Swordfish", "XY-Wing", "XYZ-Wing", "RemotePairs", "UniqueRectangle", "BUG+1", "NakedQuad", "HiddenQuad", "Jellyfish",
-        "WXYZ-Wing", "XY-Chain", "MultiColouring", "3DMedusa", "ChuteRemotePairs", "MentalChain(direct)", "SumAlgebra",
-        "WeightedSums", "BandLogic", "Fireworks", "GurthSymmetry", "ColourAlgebra", "ComboPositions", "CliqueHouse",
-        "LineSets", "LineClues"],
-    # bounded case splits and ALS chains are within the expert hobby limit (Very Hard); Extreme =
-    # borderline-computer logic: forcing chains / nets, Nishio, pattern overlay, trial and error (the no-guess last resort)
-    4: ["AIC", "NiceLoop(discontinuous)", "ALS-XZ", "ALS-XY-Wing", "SueDeCoq", "AlignedPairExclusion", "CaseAnalysis",
-        "ALS-AIC", "DeathBlossom", "EitherWay", "WhatIf", "ShortTrial"],
-    5: ["Trial", "ForcingChains", "DynamicForcingChains", "NestedForcingChains", "NishioForcingNet", "PatternOverlay"],
+    # Very Easy, the entry point: scanning without candidates (full house, hidden singles, a rule's last cell)
+    0: ["FullHouse", "HiddenSingle(direct)", "HiddenSingle(notes)", "ClueFacts", "LineSingle(direct)", "ConstraintSingle(direct)"],
+    # Easy: one cell's candidates (naked single), pointing / claiming, and reading one rule's combinations
+    1: ["NakedSingle(direct)", "NakedSingle(notes)", "NakedSingle+Pointing(direct)", "HiddenSingle+Pointing(direct)",
+        "LockedCandidates", "SnyderMarks", "SnyderSingle", "MentalSingle(direct)", "MentalNotesSingle", "CageCombination",
+        "SumCombination", "ArrowCombination", "SetCombination", "Innie/Outie(direct)", "PairwiseConstraint",
+        "TableCombination", "LineRange", "LineScan", "LineClass", "SandwichCombination", "XSumCombination",
+        "SkyscraperCombination", "CountCombination", "ClueShape"],
+    # Medium: subsets (naked / hidden pairs, triples, quads) and the implications of each variant rule
+    2: ["NakedPair", "HiddenPair", "NakedTriple", "HiddenTriple", "NakedQuad", "HiddenQuad", "EqualDigits", "DigitCount",
+        "LawOfLeftovers", "EqualSumCombination", "ComboLock", "RuleIntersection", "ImpliedHouses", "Domino", "ClassCount",
+        "SumBound", "Innie/Outie(notes)", "Innie/Outie(sum)", "ClassColouring"],
+    # Hard: the first learned patterns (X-Wing, Skyscraper, 2-String Kite, Turbot Fish, simple colouring)
+    3: ["X-Wing", "X-Chain", "Coloring", "MentalChain(direct)"],
+    # Very Hard: Empty Rectangle, finned fish, larger fish, wings, uniqueness, advanced variant logic
+    4: ["EmptyRectangle", "FinnedFish", "Swordfish", "Jellyfish", "XY-Wing", "XYZ-Wing", "WXYZ-Wing", "RemotePairs", "UniqueRectangle", "BUG+1",
+        "ChuteRemotePairs", "SumAlgebra", "WeightedSums", "BandLogic", "Fireworks", "GurthSymmetry", "ColourAlgebra",
+        "ComboPositions", "CliqueHouse", "LineSets", "LineClues"],
+    # Expert: chains and almost locked sets (bounded case splits and ALS chains are within the expert hobby limit)
+    5: ["XY-Chain", "MultiColouring", "3DMedusa", "AIC", "NiceLoop(discontinuous)", "ALS-XZ", "ALS-XY-Wing", "SueDeCoq",
+        "AlignedPairExclusion", "CaseAnalysis", "ALS-AIC", "DeathBlossom", "EitherWay", "WhatIf", "ShortTrial"],
+    # Extreme: borderline-computer logic: forcing chains / nets, Nishio, pattern overlay, trial and error
+    6: ["Trial", "ForcingChains", "DynamicForcingChains", "NestedForcingChains", "NishioForcingNet", "PatternOverlay"],
 }.items():
     for _n in _names:
         _BAND_BY_NAME[_n] = _band
@@ -320,11 +326,11 @@ if _missing:
 
 
 def band_of(tech):
-    """Band index (0 Very Easy .. 5 Extreme) of a technique code; unknown codes fall back to the family."""
+    """Band index (0 Very Easy .. 6 Extreme) of a technique code; unknown codes fall back to the family."""
     name = S.TECH_NAMES.get(tech, "")
     if name in _BAND_BY_NAME:
         return _BAND_BY_NAME[name]
-    return min(family_of(tech), 5)
+    return min(family_of(tech), 6)
 
 
 # card score (sudokuwiki-like, one scale for every variant and size). Bands are purely move-based; the
@@ -335,7 +341,11 @@ def band_of(tech):
 # Anchors from the reference corpus (data/card_calibration.json, sorted G per band): score 0 at the
 # easiest reference puzzle (a 4x4), each boundary score at the geometric mean of the neighbouring bands'
 # median G, isotonic; above the Very Hard / Extreme boundary +1 per doubling of G (open-ended).
-SCORE_RANGES = [(0.0, 3.0), (3.0, 4.0), (4.0, 5.0), (5.0, 7.0), (7.0, 9.0), (9.0, float("inf"))]
+_ANCHOR_RANGES = [(0.0, 3.0), (3.0, 4.0), (4.0, 5.0), (5.0, 7.0), (7.0, 9.0), (9.0, float("inf"))]   # the six bands the
+# calibration file (card_calibration.json) is keyed by: they fix the score curve, so difficulty did not move when the bands
+# became seven (2026-10-30)
+# readability ranges of the seven bands (score_fit notes): where a typical classic of each band lies (frozen benchmark)
+SCORE_RANGES = [(0.0, 4.5), (4.5, 6.0), (6.0, 7.0), (6.0, 7.5), (6.5, 8.5), (8.0, 11.0), (11.0, float("inf"))]
 _CALIB = None
 _ANCHORS = None
 
@@ -362,7 +372,7 @@ def score_anchors(calib=None):
     bands = sorted(med)
     for a, b in zip(bands, bands[1:]):
         x = 0.5 * (math.log(max(med[a], 1e-6)) + math.log(max(med[b], 1e-6)))
-        pts.append((max(x, pts[-1][0] + 1e-3), SCORE_RANGES[b][0]))
+        pts.append((max(x, pts[-1][0] + 1e-3), _ANCHOR_RANGES[b][0]))
     if calib is None:
         _ANCHORS = pts
     return pts

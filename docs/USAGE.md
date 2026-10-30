@@ -97,7 +97,7 @@ refused with a message naming them, never ignored. Example requests: `docs/examp
 ## Example
 ```
 $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9.......' | pencilmark rate - --report
-#1  Medium  -  difficulty 5.9  -  time 10.7 min (80% of players within 16.4 min)
+#1  Hard  -  difficulty 5.9  -  time 10.7 min
    contains: Naked Pair (or PPR/HPR), X-Wing (or KTE/SCL)
 ```
 
@@ -126,8 +126,9 @@ $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7..
   puzzle (`"rules": [3, 4]`). **reject** is `true` when any issue is a reject.
 - Fields: `difficulty`, `time`, `band`, `contains` by default (`grader`, `format`, `format_version`
   always); `rate(puzzle, fields=[...])` / `pencilmark rate --fields ...` takes key names and adds `issues` / `reject`,
-  `band_index`, `time_mean` / `time_pNN`, `steps`, `se`, `describe`, `symmetry`. `explain="short"` / `"teach"` (CLI `--explain`) adds step
-  explanations. Every key is listed in docs/GRADE.md.
+  `band_index`, `time_mean` / `time_pNN`, `steps`, `se`, `describe`, `symmetry`. `explain="notation"` / `"short"` / `"teach"` (CLI `--explain`) adds step
+  explanations; `pencilmark rate --report -v` lists the steps in solvers' notation (`-vv` plain sentences, `-vvv` short
+  lessons). Every key is listed in docs/GRADE.md.
 
 ## Other sites' labels on this scale
 Median difficulty, interquartile range in brackets. Each site rates for its own audience and neighbouring levels
@@ -171,14 +172,14 @@ Machine-readable version: `pencilmark/data/technique_bands.csv` (installed with 
 |---|---|---|---|
 | FHS | Full House | Very Easy | HSI, NSI |
 | HSI | Hidden Single | Very Easy |  |
-| NSI | Naked Single | Very Easy |  |
+| NSI | Naked Single | Easy |  |
 | LSI | Line / dot read without notes | Very Easy |  |
 | CSI | Last cell of a cage / line (variant) | Very Easy |  |
 | CFX | Clue facts (no 5 on a whisper) (variant) | Very Easy |  |
 | PPR | Pointing / Box-Line Reduction | Easy |  |
 | SNY | Snyder notation (box pairs) | Easy |  |
-| NPR | Naked Pair | Easy |  |
-| HPR | Hidden Pair | Easy |  |
+| NPR | Naked Pair | Medium |  |
+| HPR | Hidden Pair | Medium |  |
 | MSI | Pair / triple in the head | Easy | NPR, NTR |
 | CGC | Killer cage combinations (variant) | Easy |  |
 | SUM | Sum clue combinations (variant) | Easy |  |
@@ -194,16 +195,16 @@ Machine-readable version: `pencilmark/data/technique_bands.csv` (installed with 
 | XSC | X-Sums | Easy |  |
 | SKC | Skyscraper clues (variant) | Easy |  |
 | CNT | Counting clues | Easy |  |
-| NTR | Naked Triple | Easy |  |
-| HTR | Hidden Triple | Easy |  |
+| NTR | Naked Triple | Medium |  |
+| HTR | Hidden Triple | Medium |  |
 | CSH | Clue shape (a whisper 4 between two 9s) (variant) | Easy |  |
-| XWG | X-Wing | Medium | AAC, AIC, FRK, FXW, SKY, SWF, TUR, XCL |
-| SKY | Skyscraper | Medium | AAC, AIC, TUR, XCL |
-| KTE | 2-String Kite | Medium | AAC, AIC, TUR, XCL |
-| TUR | Turbot Fish | Medium | AAC, AIC, XCL |
-| ERE | Empty Rectangle | Medium | AAC, AIC, TUR, XCL |
-| SCL | Simple Colouring | Medium | AAC, AIC, XCL |
-| FXW | Finned X-Wing | Medium | AAC, AIC, XCL |
+| XWG | X-Wing | Hard | AAC, AIC, FRK, FXW, SKY, SWF, TUR, XCL |
+| SKY | Skyscraper | Hard | AAC, AIC, TUR, XCL |
+| KTE | 2-String Kite | Hard | AAC, AIC, TUR, XCL |
+| TUR | Turbot Fish | Hard | AAC, AIC, XCL |
+| ERE | Empty Rectangle | Very Hard | AAC, AIC, TUR, XCL |
+| SCL | Simple Colouring | Hard | AAC, AIC, XCL |
+| FXW | Finned X-Wing | Very Hard | AAC, AIC, XCL |
 | EQD | Equal cells (same digit) | Medium |  |
 | DGC | Digit counting (variant) | Medium |  |
 | LOL | Set theory (law of leftovers) | Medium |  |
@@ -211,55 +212,55 @@ Machine-readable version: `pencilmark/data/technique_bands.csv` (installed with 
 | IOM | Innies & outies over several houses | Medium |  |
 | EQS | Equal sums (zipper / region-sum lines) (variant) | Medium |  |
 | CBL | Must-contain digits (cage / line) (variant) | Medium |  |
-| XCL | X-Chain | Medium | AAC, AIC |
+| XCL | X-Chain | Very Hard | AAC, AIC |
 | RUL | Two rules together | Medium |  |
 | IMH | Hidden regions (implied houses) | Medium |  |
 | DOM | Domino pairs (dots / XV) (variant) | Medium |  |
 | CLC | Odd/even & high/low counting (variant) | Medium |  |
 | CCL | High/low & odd/even colouring (variant) | Medium |  |
 | SBD | Min/max sum bounds (variant) | Medium |  |
-| SWF | Swordfish | Hard |  |
-| FSW | Finned Swordfish | Hard |  |
-| YWG | Y-Wing | Hard | AAC, AIC, XYC |
-| XYZ | XYZ-Wing | Hard | AAC, ALS |
-| RMP | Remote Pairs | Hard | AAC, AIC, XYC |
-| URC | Unique Rectangle | Hard |  |
-| BUG | BUG | Hard |  |
-| NQD | Naked Quad | Hard |  |
-| HQD | Hidden Quad | Hard |  |
-| JLF | Jellyfish | Hard |  |
-| FJF | Finned Jellyfish | Hard |  |
-| WXZ | WXYZ-Wing | Hard | AAC, ALS |
-| XYC | XY-Chain | Hard | AAC, AIC |
-| MCL | Multi-Colouring | Hard | AAC, AIC, XCL |
-| FRK | Franken / Mutant fish | Hard |  |
-| 3DM | 3D Medusa | Hard |  |
-| CRP | Chute Remote Pairs | Hard |  |
+| SWF | Swordfish | Very Hard |  |
+| FSW | Finned Swordfish | Very Hard |  |
+| YWG | Y-Wing | Very Hard | AAC, AIC, XYC |
+| XYZ | XYZ-Wing | Very Hard | AAC, ALS |
+| RMP | Remote Pairs | Very Hard | AAC, AIC, XYC |
+| URC | Unique Rectangle | Very Hard |  |
+| BUG | BUG | Very Hard |  |
+| NQD | Naked Quad | Medium |  |
+| HQD | Hidden Quad | Medium |  |
+| JLF | Jellyfish | Very Hard |  |
+| FJF | Finned Jellyfish | Very Hard |  |
+| WXZ | WXYZ-Wing | Very Hard | AAC, ALS |
+| XYC | XY-Chain | Expert | AAC, AIC |
+| MCL | Multi-Colouring | Expert | AAC, AIC, XCL |
+| FRK | Franken / Mutant fish | Very Hard |  |
+| 3DM | 3D Medusa | Expert |  |
+| CRP | Chute Remote Pairs | Very Hard |  |
 | MCH | Short chain in the head | Hard |  |
-| SAL | Sum algebra (house totals) (variant) | Hard |  |
+| SAL | Sum algebra (house totals) (variant) | Very Hard |  |
 | PHI | Phistomefel ring | Hard | LOL |
 | PHV | Phistomefel variant | Hard | LOL |
-| WEI | Weighted sums | Hard |  |
-| BAN | Band set theory with cages (variant) | Hard |  |
-| FIR | Fireworks | Hard |  |
-| GSY | Gurth's Symmetry | Hard |  |
-| CAL | Equal-digit colouring | Hard |  |
-| CPS | Cage combination positions (variant) | Hard |  |
-| CLI | Clique house (all-different cells) | Hard |  |
-| RNS | Renban sets in a house (variant) | Hard |  |
-| OCL | Outside clues together | Hard |  |
-| AIC | Alternating Inference Chain | Very Hard | AAC |
-| NLP | Nice Loop | Very Hard | AAC, AIC |
-| ALS | ALS-XZ (almost locked sets) | Very Hard | AAC |
-| AXY | ALS-XY-Wing | Very Hard | AAC, DEB |
-| SDC | Sue de Coq | Very Hard |  |
-| APE | Aligned Pair Exclusion | Very Hard |  |
-| CAS | Case analysis | Very Hard |  |
-| AAC | ALS chain | Very Hard |  |
-| DEB | Death Blossom | Very Hard |  |
-| EWY | Either way (case split) | Very Hard |  |
-| WIF | What if… | Very Hard |  |
-| STR | Short trial | Very Hard |  |
+| WEI | Weighted sums | Very Hard |  |
+| BAN | Band set theory with cages (variant) | Very Hard |  |
+| FIR | Fireworks | Very Hard |  |
+| GSY | Gurth's Symmetry | Very Hard |  |
+| CAL | Equal-digit colouring | Very Hard |  |
+| CPS | Cage combination positions (variant) | Very Hard |  |
+| CLI | Clique house (all-different cells) | Very Hard |  |
+| RNS | Renban sets in a house (variant) | Very Hard |  |
+| OCL | Outside clues together | Very Hard |  |
+| AIC | Alternating Inference Chain | Expert | AAC |
+| NLP | Nice Loop | Expert | AAC, AIC |
+| ALS | ALS-XZ (almost locked sets) | Expert | AAC |
+| AXY | ALS-XY-Wing | Expert | AAC, DEB |
+| SDC | Sue de Coq | Expert |  |
+| APE | Aligned Pair Exclusion | Expert |  |
+| CAS | Case analysis | Expert |  |
+| AAC | ALS chain | Expert |  |
+| DEB | Death Blossom | Expert |  |
+| EWY | Either way (case split) | Expert |  |
+| WIF | What if… | Expert |  |
+| STR | Short trial | Expert |  |
 | FCH | Forcing Chains | Extreme |  |
 | FNT | Forcing Nets | Extreme |  |
 | NFC | Nested Forcing Chains | Extreme |  |

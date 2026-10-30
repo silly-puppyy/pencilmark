@@ -12,7 +12,7 @@ CLASSIC_SOLUTION = None
 def test_classic_card():
     card = pencilmark.rate(CLASSIC)
     assert card["format"] == "sudoku-grade"
-    assert (card["band"], card["difficulty"], card["time"]) == ("Medium", 5.9, 10.7) and "band_index" not in card
+    assert (card["band"], card["difficulty"], card["time"]) == ("Hard", 5.9, 10.7) and "band_index" not in card
     assert "time_p80" not in card and "issues" not in card and "reject" not in card     # publishing checks on request
     t = pencilmark.rate(CLASSIC, fields=["time", "time_p20", "time_p80", "time_mean"])
     assert t["time_p20"] < t["time"] < t["time_mean"] < t["time_p80"], t
@@ -21,7 +21,7 @@ def test_classic_card():
     assert d["time_dist"]["type"] == "lognormal" and "median" not in d["time_dist"] and d["time"] == d["time_p50"], d
     assert d["time_dist"]["sigma_players"] == 0.79 and d["time_dist"]["sigma_model"] == 0.33, d
     chips = [c["chip"] for c in card["contains"] if c["band"] > 0]
-    assert chips == ["NPR/PPR/HPR", "XWG/KTE/SCL"]
+    assert chips == ["NSI", "NPR/HPR", "XWG/KTE/SCL/MCH"]
 
 
 def test_deterministic_and_input_forms(tmp_path):
@@ -41,7 +41,7 @@ def test_deterministic_and_input_forms(tmp_path):
 def test_steps_and_se():
     card = pencilmark.rate(CLASSIC, steps=True, se=True)
     st = card["steps"]
-    assert st[0]["n"] == 1 and set(st[0]["explanation"]) == {"short", "teach"}
+    assert st[0]["n"] == 1 and set(st[0]["explanation"]) == {"notation", "short", "teach"}
     filled = sum(1 for s in st if "placement" in s)
     assert filled == 81 - sum(ch != "." for ch in CLASSIC)
     assert card["se"]["scale"] == "classic" and card["se"]["er"] >= card["se"]["ep"]
@@ -65,7 +65,7 @@ EASTER_MONSTER = "1.......2.9.4...5...6...7...5.9.3.......7.......85..4.7.....6.
 def test_no_guessing_by_default():
     # guessing is off by default: where no technique applies the engine proves by full search (Extreme), never Unknown
     card = pencilmark.rate(EASTER_MONSTER, fields=["band", "band_index", "difficulty"])     # ~40 s: no technique list
-    assert card["band"] == "Extreme" and card["band_index"] == 5 and card["difficulty"] is not None
+    assert card["band"] == "Extreme" and card["band_index"] == 6 and card["difficulty"] is not None
 
 
 def test_unknown_band_when_guessing():
@@ -239,3 +239,14 @@ def test_issue_rules_follow_the_input_file():
     assert dec and dec[0]["rules"] == [0] and dec[0]["ids"] == ["T1"], dec
     out = pencilmark.to_export(doc)["rules"]
     assert out[0]["type"] == "line" and out[0]["id"] == "T1" and out[0]["label"] == "t", out
+
+
+def test_step_notation_levels():
+    """GRADE.md 5: explanation levels notation / short / teach; notation in the solvers' shared form (HoDoKu's)"""
+    s = "....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9......."
+    steps = pencilmark.rate(s, fields=["steps"], explain="notation")["steps"]
+    lines = [x["explanation"]["notation"] for x in steps]
+    assert "X-Wing: 3 r58 c68 => r679c6<>3" in lines and "Naked Pair: 4,8 in r4c48 => r4c5<>8, r4c6<>4" in lines, lines
+    assert all(set(x["explanation"]) == {"notation"} for x in steps)
+    full = pencilmark.rate(s, fields=["steps"], explain=True)["steps"]
+    assert all("notation" in x["explanation"] for x in full) and any("teach" in x["explanation"] for x in full)

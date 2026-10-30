@@ -41,6 +41,17 @@
   (`target_band`, `max_givens`, ...) and `spec_from_gen` / `spec_to_gen` are no longer public. `SPEC.md` version 1
   describes exactly what the generator runs; the rest is listed as reserved and refused with a message naming it.
   Example specs that use reserved parts moved to `docs/examples/specs/reserved/`.
+- **Seven bands**: Very Easy (scanning: full house, hidden singles) / Easy (naked singles, pointing / claiming, one rule's
+  combinations) / Medium (pairs, triples, quads; variant implications) / Hard (the first learned patterns: X-Wing,
+  Skyscraper, 2-String Kite, Turbot Fish, simple colouring) / Very Hard (Empty Rectangle, finned and larger fish, wings,
+  uniqueness) / **Expert** (new: XY-Chain, AIC, Medusa, ALS) / Extreme (forcing, trial). The steps of HoDoKu's, Andrew
+  Stuart's and sudoku.coach's curricula (docs/PHILOSOPHY.md). `band_index` runs 0..6. Difficulty and time are unchanged
+  (all 7,427 graded puzzles of the frozen benchmark identical).
+- Step explanations at three levels: `notation` (the solvers' shared form, `X-Wing: 3 r58 c68 => r679c6<>3`), `short`,
+  `teach`; `pencilmark rate --report -v / -vv / -vvv` lists the steps at those levels. The report shows time percentiles
+  only when asked for (`--fields ...,time_p80`) and names alternatives in full.
+- Singles never carry `uses`; alternatives inside a chip are ordered deterministically (the order depended on Python's
+  per-process hashing); `max_seconds` also checked in the generalised fish search.
 - Docs: philosophy page (goals, exact meaning of band / difficulty / time, format rules); README known issues.
 
 ## 1.0.0rc2

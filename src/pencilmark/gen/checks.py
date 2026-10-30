@@ -49,7 +49,7 @@ def code_techs(P, code):
 class Checker:
     """solvable by logic with techniques in `allowed` (default: band <= cap) -> unique by construction."""
 
-    def __init__(self, board, cap=5, allowed=None, P=None, max_steps=None):
+    def __init__(self, board, cap=6, allowed=None, P=None, max_steps=None):
         self.b = board
         self.P = P or params()
         self.allowed = set(allowed) if allowed is not None else band_techs(self.P, cap)

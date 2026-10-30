@@ -44,7 +44,7 @@ Command line:
 
 ```
 $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9.......' | pencilmark rate - --report
-#1  Medium  -  difficulty 5.9  -  time 10.7 min (80% of players within 19.8 min)
+#1  Hard  -  difficulty 5.9  -  time 10.7 min
    contains: Naked Pair (or PPR/HPR), X-Wing (or KTE/SCL)
 
 pencilmark rate puzzles.txt --json        # full card per line (python -m pencilmark works too)
@@ -63,9 +63,9 @@ are computed ([docs/GRADE.md](https://github.com/silly-puppyy/pencilmark/blob/ma
 |---|---|
 | `difficulty` | how hard each step feels, continuous from 0 (one empty cell) with no ceiling; a typical newspaper medium is about 5 |
 | `time` | expected minutes for the median player (on request `time_mean` or any percentile `time_pNN`, e.g. `time_p80`: 80% of players finish within it) |
-| `band` | Very Easy, Easy, Medium, Hard, Very Hard, Extreme; `"Unknown"` when guessing was allowed and used, or `max_seconds` passed (on request `band_index` 0..5) |
+| `band` | Very Easy, Easy, Medium, Hard, Very Hard, Expert, Extreme; `"Unknown"` when guessing was allowed and used, or `max_seconds` passed (on request `band_index` 0..6) |
 | `contains` | techniques met going easy to hard: `code`, `chip`, `name`, `band`, `uses`, `alternatives`; with `stopped_at_step` when human logic ran out |
-| on request | `issues` / `reject` (publishing checks, below), `time_mean` / `time_pNN`, `steps` (technique, placement `r2c8=3` or eliminations `r4c5#7`; `explain="short"` / `"teach"` adds explanations), `se`, `band_index`, `describe`, `symmetry` |
+| on request | `issues` / `reject` (publishing checks, below), `time_mean` / `time_pNN`, `steps` (technique, placement `r2c8=3` or eliminations `r4c5#7`; `explain="notation"` / `"short"` / `"teach"` adds explanations, from `X-Wing: 3 r58 c68 => r679c6<>3` to a short lesson), `se`, `band_index`, `describe`, `symmetry` |
 
 A chip like `XWG/KTE/SCL` means any one of those techniques gets you through at that point.
 

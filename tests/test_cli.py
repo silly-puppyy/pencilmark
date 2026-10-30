@@ -26,7 +26,7 @@ def test_cli_json_equals_api(variants):
 
 def test_cli_default_format_and_solve():
     out = run(["rate", "-"], CLASSIC + "\n")
-    assert out == ["Medium\t5.9\t10.7\tX-Wing"]
+    assert out == ["Hard\t5.9\t10.7\tX-Wing"]
     sol = run(["solve", "-"], CLASSIC + "\n" + "." * 81 + "\n")
     assert sol[0] == "".join(map(str, pencilmark.solve(CLASSIC))) and sol[1] == "not unique"
 
@@ -52,4 +52,4 @@ def test_cli_parallel_spawn():
             "runpy.run_module('pencilmark', run_name='__main__', alter_sys=True)\n")
     r = subprocess.run([sys.executable, "-c", code], input=CLASSIC + "\n" + CLASSIC + "\n", capture_output=True, text=True,
                        encoding="utf-8", timeout=120)
-    assert r.returncode == 0 and r.stdout.splitlines() == ["Medium\t5.9\t10.7\tX-Wing"] * 2, r.stderr[-2000:]
+    assert r.returncode == 0 and r.stdout.splitlines() == ["Hard\t5.9\t10.7\tX-Wing"] * 2, r.stderr[-2000:]

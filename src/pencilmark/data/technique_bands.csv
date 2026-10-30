@@ -1,14 +1,14 @@
 code,technique,engine,current,proposed,order,required_in,classic,variant,greedy,SE,sudokuwiki,coach,HoDoKu,note
 FHS,Full House,FullHouse,Very Easy,Very Easy,1,0,0,0,,1.0,Basic,Very Easy,Singles,
 HSI,Hidden Single,HiddenSingle(direct),Very Easy,Very Easy,2,0,0,0,,1.2-1.5,Basic,Very Easy-Easy,Singles,box before row before column (easy-end fit)
-NSI,Naked Single,NakedSingle(direct),Very Easy,Very Easy,3,0,0,0,,2.3,Basic,Mod. Easy,Singles,
+NSI,Naked Single,NakedSingle(direct),Very Easy,Easy,3,0,0,0,,2.3,Basic,Mod. Easy,Singles,
 LSI,Line / dot read without notes,LineSingle(direct),Very Easy,Very Easy,4,847,2,845,1,-,-,-,-,variant: obvious line consequence
 CSI,Last cell of a cage / line,ConstraintSingle(direct),Very Easy,Very Easy,5,178,0,178,5,-,-,-,-,variant: '6 in a cage of 11'
 PPR,Pointing / Box-Line Reduction,LockedCandidates,Easy,Easy,1,795,454,341,2,2.6-2.8,Basic,Moderate,Intersections,greedy #2: most useful basic
 PPR,Pointing Pair (in the head),NakedSingle+Pointing(direct),Easy,Easy,2,514,361,153,7,2.6,Basic,Moderate,Intersections,
 SNY,Snyder notation (box pairs),SnyderSingle,Easy,Easy,3,0,0,0,,-,-,-,-,Snyder marks
-NPR,Naked Pair,NakedPair,Medium,Easy,4,449,207,242,9,3.0,Basic,Moderate,Naked Subsets,user: subsets -> Easy
-HPR,Hidden Pair,HiddenPair,Medium,Easy,5,450,256,194,8,3.4,Basic,Moderate,Hidden Subsets,
+NPR,Naked Pair,NakedPair,Medium,Medium,4,449,207,242,9,3.0,Basic,Moderate,Naked Subsets,user: subsets -> Easy
+HPR,Hidden Pair,HiddenPair,Medium,Medium,5,450,256,194,8,3.4,Basic,Moderate,Hidden Subsets,
 MSI,Pair / triple in the head,MentalSingle(direct),Easy,Easy,6,210,128,82,20,-,-,-,-,mental subset
 CGC,Killer cage combinations,CageCombination,Easy,Easy,7,6,0,6,,-,-,-,-,variant first combinations
 SUM,Sum clue combinations,SumCombination,Easy,Easy,8,23,0,23,,-,-,-,-,
@@ -24,13 +24,13 @@ SWC,Sandwich sums,SandwichCombination,Easy,Easy,17,18,0,18,,-,-,-,-,
 XSC,X-Sums,XSumCombination,Easy,Easy,18,0,0,0,,-,-,-,-,
 SKC,Skyscraper clues,SkyscraperCombination,Easy,Easy,19,4,0,4,,-,-,-,-,outside-clue skyscrapers (not the pattern)
 CNT,Counting clues,CountCombination,Easy,Easy,20,0,0,0,,-,-,-,-,
-NTR,Naked Triple,NakedTriple,Medium,Easy,21,207,66,141,24,3.6,Basic,Moderate,Naked Subsets,rarely needed (greedy #24)
-HTR,Hidden Triple,HiddenTriple,Medium,Easy,22,202,58,144,25,4.0,Basic,Mod. Hard,Hidden Subsets,rarely needed (greedy #25)
-XWG,X-Wing,X-Wing,Hard,Medium,1,295,74,221,23,3.2,Tough,Vicious,Basic Fish,"foundation: first single-digit pattern (SE 3.2, SudoCue/HoDoKu right after subsets)"
-XCL,X-Chain,X-Chain,Very Hard,Medium,2,140,10,130,,~6.5+,Diabolical,Devilish,Single Digit / Chains,"SHORT shapes only (Skyscraper, 2-String Kite, Turbot); long X-Chains -> Hard"
-ERE,Empty Rectangle,EmptyRectangle,Hard,Medium,3,126,7,119,,-,deprecated (Extreme),Fiendish,Single Digit Patterns,single-digit pattern
-SCL,Simple Colouring,Coloring,Hard,Medium,4,61,10,51,,-,Tough,Fiendish,Coloring,strong-link chains: chaining foundation
-FXW,Finned X-Wing,FinnedFish,Hard,Medium,5,308,76,232,21,~3.4-4.x,Extreme (finned),Fiendish-Devilish,Finned Fish,finned X-Wing; finned Swordfish/Jellyfish -> Hard
+NTR,Naked Triple,NakedTriple,Medium,Medium,21,207,66,141,24,3.6,Basic,Moderate,Naked Subsets,rarely needed (greedy #24)
+HTR,Hidden Triple,HiddenTriple,Medium,Medium,22,202,58,144,25,4.0,Basic,Mod. Hard,Hidden Subsets,rarely needed (greedy #25)
+XWG,X-Wing,X-Wing,Hard,Hard,1,295,74,221,23,3.2,Tough,Vicious,Basic Fish,"foundation: first single-digit pattern (SE 3.2, SudoCue/HoDoKu right after subsets)"
+XCL,X-Chain,X-Chain,Very Hard,Very Hard,2,140,10,130,,~6.5+,Diabolical,Devilish,Single Digit / Chains,"SHORT shapes only (Skyscraper, 2-String Kite, Turbot); long X-Chains -> Hard"
+ERE,Empty Rectangle,EmptyRectangle,Hard,Very Hard,3,126,7,119,,-,deprecated (Extreme),Fiendish,Single Digit Patterns,single-digit pattern
+SCL,Simple Colouring,Coloring,Hard,Hard,4,61,10,51,,-,Tough,Fiendish,Coloring,strong-link chains: chaining foundation
+FXW,Finned X-Wing,FinnedFish,Hard,Very Hard,5,308,76,232,21,~3.4-4.x,Extreme (finned),Fiendish-Devilish,Finned Fish,finned X-Wing; finned Swordfish/Jellyfish -> Hard
 EQD,Equal cells (same digit),EqualDigits,Medium,Medium,6,705,181,524,4,-,-,-,-,variant implications
 DGC,Digit counting,DigitCount,Medium,Medium,7,675,0,675,6,-,-,-,-,
 LOL,Set theory (law of leftovers),LawOfLeftovers,Medium,Medium,8,110,5,105,22,-,-,-,-,basic forms; Phistomefel-type -> Hard
@@ -41,44 +41,44 @@ IMH,Hidden regions (implied houses),ImpliedHouses,Medium,Medium,12,0,0,0,,-,-,-,
 DOM,Domino pairs (dots / XV),Domino,Medium,Medium,13,373,0,373,11,-,-,-,-,
 CLC,Odd/even & high/low counting,ClassCount,Medium,Medium,14,353,0,353,10,-,-,-,-,
 SBD,Min/max sum bounds,SumBound,Medium,Medium,15,80,0,80,14,-,-,-,-,
-SWF,Swordfish,Swordfish,Hard,Hard,1,62,13,49,,3.8,Tough,Fiendish,Basic Fish,
-YWG,Y-Wing,XY-Wing,Hard,Hard,2,70,29,41,26,4.2,Tough,Fiendish,Wings,
-XYZ,XYZ-Wing,XYZ-Wing,Hard,Hard,3,35,12,23,,4.4,Tough,Fiendish,Wings,
-RMP,Remote Pairs,RemotePairs,Hard,Hard,4,128,19,109,,-,deprecated,-,Chains,
-URC,Unique Rectangle,UniqueRectangle,Hard,Hard,5,46,11,35,,4.5,Diabolical,Fiendish,Uniqueness,uniqueness-based (card note)
-BUG,BUG,BUG+1,Hard,Hard,6,5,5,0,,5.6,Tough,Devilish,Uniqueness,uniqueness-based
-NQD,Naked Quad,NakedQuad,Medium,Hard,7,92,19,73,29,5.0,Basic,Mod. Hard,Naked Subsets,SE 5.0
-HQD,Hidden Quad,HiddenQuad,Medium,Hard,8,105,7,98,28,5.4,Basic,Mod. Hard,Hidden Subsets,SE 5.4
-JLF,Jellyfish,Jellyfish,Hard,Hard,9,159,7,152,,5.2,Diabolical,Devilish,Basic Fish,
-WXZ,WXYZ-Wing,WXYZ-Wing,Hard,Hard,10,93,32,61,,~4.6+,Diabolical,Devilish,Wings,
-XYC,XY-Chain,XY-Chain,Very Hard,Hard,11,31,6,25,,~6.5+,Diabolical,Hell,Chains,
-MCL,Multi-Colouring,MultiColouring,Very Hard,Hard,12,124,18,106,,-,deprecated,-,Coloring,
-3DM,3D Medusa,3DMedusa,Very Hard,Hard,13,127,1,126,,-,Diabolical,Hell,Coloring,
-CRP,Chute Remote Pairs,ChuteRemotePairs,Very Hard,Hard,14,49,2,47,,-,Tough,-,-,
+SWF,Swordfish,Swordfish,Hard,Very Hard,1,62,13,49,,3.8,Tough,Fiendish,Basic Fish,
+YWG,Y-Wing,XY-Wing,Hard,Very Hard,2,70,29,41,26,4.2,Tough,Fiendish,Wings,
+XYZ,XYZ-Wing,XYZ-Wing,Hard,Very Hard,3,35,12,23,,4.4,Tough,Fiendish,Wings,
+RMP,Remote Pairs,RemotePairs,Hard,Very Hard,4,128,19,109,,-,deprecated,-,Chains,
+URC,Unique Rectangle,UniqueRectangle,Hard,Very Hard,5,46,11,35,,4.5,Diabolical,Fiendish,Uniqueness,uniqueness-based (card note)
+BUG,BUG,BUG+1,Hard,Very Hard,6,5,5,0,,5.6,Tough,Devilish,Uniqueness,uniqueness-based
+NQD,Naked Quad,NakedQuad,Medium,Medium,7,92,19,73,29,5.0,Basic,Mod. Hard,Naked Subsets,SE 5.0
+HQD,Hidden Quad,HiddenQuad,Medium,Medium,8,105,7,98,28,5.4,Basic,Mod. Hard,Hidden Subsets,SE 5.4
+JLF,Jellyfish,Jellyfish,Hard,Very Hard,9,159,7,152,,5.2,Diabolical,Devilish,Basic Fish,
+WXZ,WXYZ-Wing,WXYZ-Wing,Hard,Very Hard,10,93,32,61,,~4.6+,Diabolical,Devilish,Wings,
+XYC,XY-Chain,XY-Chain,Very Hard,Expert,11,31,6,25,,~6.5+,Diabolical,Hell,Chains,
+MCL,Multi-Colouring,MultiColouring,Very Hard,Expert,12,124,18,106,,-,deprecated,-,Coloring,
+3DM,3D Medusa,3DMedusa,Very Hard,Expert,13,127,1,126,,-,Diabolical,Hell,Coloring,
+CRP,Chute Remote Pairs,ChuteRemotePairs,Very Hard,Very Hard,14,49,2,47,,-,Tough,-,-,
 MCH,Short chain in the head,MentalChain(direct),Hard,Hard,15,35,17,18,,-,-,-,-,
-SAL,Sum algebra (house totals),SumAlgebra,Hard,Hard,16,91,0,91,17,-,-,-,-,variant algebra
-WEI,Weighted sums,WeightedSums,Hard,Hard,17,112,2,110,13,-,-,-,-,
-BAN,Band set theory with cages,BandLogic,Very Hard,Hard,18,210,0,210,,-,-,-,-,
-FIR,Fireworks,Fireworks,Hard,Hard,19,7,3,4,,-,Diabolical,-,-,
-GSY,Gurth's Symmetry,GurthSymmetry,Hard,Hard,20,0,0,0,,-,-,-,-,uniqueness / symmetry
-CAL,Equal-digit colouring,ColourAlgebra,Very Hard,Hard,21,114,7,107,,-,-,-,-,
-CPS,Cage combination positions,ComboPositions,Medium,Hard,22,20,0,20,,-,-,-,-,
-CLI,Clique house (all-different cells),CliqueHouse,Medium,Hard,23,56,1,55,27,-,-,-,-,
-RNS,Renban sets in a house,LineSets,Medium,Hard,24,10,0,10,,-,-,-,-,
-OCL,Outside clues together,LineClues,Medium,Hard,25,0,0,0,,-,-,-,-,
-AIC,Alternating Inference Chain,AIC,Very Hard,Very Hard,1,135,30,105,,~7+,Extreme,Hell,Chains,"next real jump (coach +0.62 SD, LMD +1.1 stars)"
-NLP,Nice Loop,NiceLoop(discontinuous),Very Hard,Very Hard,2,135,11,124,,~7+,Diabolical-Extreme,Hell,Chains,
-ALS,ALS-XZ (almost locked sets),ALS-XZ,Very Hard,Very Hard,3,12,8,4,,-,Extreme,-,ALS,
-AXY,ALS-XY-Wing,ALS-XY-Wing,Very Hard,Very Hard,4,10,8,2,,-,Extreme,-,ALS,
-SDC,Sue de Coq,SueDeCoq,Very Hard,Very Hard,5,4,4,0,,-,Extreme,-,Miscellaneous,
-APE,Aligned Pair Exclusion,AlignedPairExclusion,Very Hard,Very Hard,6,6,3,3,,6.2,Diabolical,-,-,
-CAS,Case analysis,CaseAnalysis,Very Hard,Very Hard,7,0,0,0,,-,-,-,-,human case work
-AAC,ALS chain,ALS-AIC,Very Hard,Very Hard,8,9,8,1,,-,Extreme,-,ALS,Very Hard (expert hobby limit)
-DEB,Death Blossom,DeathBlossom,Very Hard,Very Hard,9,10,8,2,,-,Extreme,-,ALS,Very Hard (expert hobby limit)
-EWY,Either way (case split),EitherWay,Extreme,Very Hard,10,8,4,4,,-,-,-,-,bounded human case split; Very Hard (expert hobby limit)
-WIF,What if…,WhatIf,Extreme,Very Hard,11,11,4,7,,-,-,-,-,bounded; Very Hard (expert hobby limit)
-STR,Short trial,ShortTrial,Extreme,Very Hard,12,14,9,5,,-,-,-,-,<= 4 rounds ~ short Bowman's Bingo; Very Hard (expert hobby limit)
-TRL,Trial and error,Trial,Extreme,Extreme,0,0,0,0,,-,-,-,-,"last-resort proof by full search when guessing is off (default); Unknown = guessing (allow_guess) only"
+SAL,Sum algebra (house totals),SumAlgebra,Hard,Very Hard,16,91,0,91,17,-,-,-,-,variant algebra
+WEI,Weighted sums,WeightedSums,Hard,Very Hard,17,112,2,110,13,-,-,-,-,
+BAN,Band set theory with cages,BandLogic,Very Hard,Very Hard,18,210,0,210,,-,-,-,-,
+FIR,Fireworks,Fireworks,Hard,Very Hard,19,7,3,4,,-,Diabolical,-,-,
+GSY,Gurth's Symmetry,GurthSymmetry,Hard,Very Hard,20,0,0,0,,-,-,-,-,uniqueness / symmetry
+CAL,Equal-digit colouring,ColourAlgebra,Very Hard,Very Hard,21,114,7,107,,-,-,-,-,
+CPS,Cage combination positions,ComboPositions,Medium,Very Hard,22,20,0,20,,-,-,-,-,
+CLI,Clique house (all-different cells),CliqueHouse,Medium,Very Hard,23,56,1,55,27,-,-,-,-,
+RNS,Renban sets in a house,LineSets,Medium,Very Hard,24,10,0,10,,-,-,-,-,
+OCL,Outside clues together,LineClues,Medium,Very Hard,25,0,0,0,,-,-,-,-,
+AIC,Alternating Inference Chain,AIC,Very Hard,Expert,1,135,30,105,,~7+,Extreme,Hell,Chains,"next real jump (coach +0.62 SD, LMD +1.1 stars)"
+NLP,Nice Loop,NiceLoop(discontinuous),Very Hard,Expert,2,135,11,124,,~7+,Diabolical-Extreme,Hell,Chains,
+ALS,ALS-XZ (almost locked sets),ALS-XZ,Very Hard,Expert,3,12,8,4,,-,Extreme,-,ALS,
+AXY,ALS-XY-Wing,ALS-XY-Wing,Very Hard,Expert,4,10,8,2,,-,Extreme,-,ALS,
+SDC,Sue de Coq,SueDeCoq,Very Hard,Expert,5,4,4,0,,-,Extreme,-,Miscellaneous,
+APE,Aligned Pair Exclusion,AlignedPairExclusion,Very Hard,Expert,6,6,3,3,,6.2,Diabolical,-,-,
+CAS,Case analysis,CaseAnalysis,Very Hard,Expert,7,0,0,0,,-,-,-,-,human case work
+AAC,ALS chain,ALS-AIC,Very Hard,Expert,8,9,8,1,,-,Extreme,-,ALS,Very Hard (expert hobby limit)
+DEB,Death Blossom,DeathBlossom,Very Hard,Expert,9,10,8,2,,-,Extreme,-,ALS,Very Hard (expert hobby limit)
+EWY,Either way (case split),EitherWay,Extreme,Expert,10,8,4,4,,-,-,-,-,bounded human case split; Very Hard (expert hobby limit)
+WIF,What if…,WhatIf,Extreme,Expert,11,11,4,7,,-,-,-,-,bounded; Very Hard (expert hobby limit)
+STR,Short trial,ShortTrial,Extreme,Expert,12,14,9,5,,-,-,-,-,<= 4 rounds ~ short Bowman's Bingo; Very Hard (expert hobby limit)
+TRL,Trial and error,Trial,Extreme,Extreme,0,0,0,0,,-,-,-,-,last-resort proof by full search when guessing is off (default); Unknown = guessing (allow_guess) only
 FCH,Forcing Chains,ForcingChains,Extreme,Extreme,0,0,0,0,,7+,Extreme,Beyond Hell,Last Resort,Extreme (borderline-computer human logic)
 FNT,Forcing Nets,DynamicForcingChains,Extreme,Extreme,0,0,0,0,,8+,Extreme,Beyond Hell,Last Resort,Extreme (borderline-computer human logic)
 NFC,Nested Forcing Chains,NestedForcingChains,Extreme,Extreme,0,0,0,0,,-,-,-,-,Extreme (borderline-computer human logic)

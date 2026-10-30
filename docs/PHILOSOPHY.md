@@ -32,9 +32,21 @@ Each number answers one question. They are meant to disagree sometimes: together
 
 ### `band`
 
-**Definition.** The tier of the hardest technique on the easiest human route through the puzzle: Very Easy (singles
-only), Easy, Medium, Hard, Very Hard, Extreme. Each technique belongs to one tier (USAGE.md lists them). The route
-always prefers an easier technique when one is available, so the band is the least a solver must know.
+**Definition.** The tier of the hardest technique on the easiest human route through the puzzle. The tiers are a
+learning path, the steps every curriculum takes (HoDoKu, Andrew Stuart, sudoku.coach's technique categories):
+
+| Band | What it adds |
+|---|---|
+| Very Easy | the entry point: scanning without candidates (full house, hidden singles), a rule's obvious consequences |
+| Easy | candidates in one cell (naked singles), pointing / claiming, one rule's combinations |
+| Medium | subsets: naked and hidden pairs, triples, quads; the implications of each variant rule |
+| Hard | the first learned patterns: X-Wing, Skyscraper, 2-String Kite, Turbot Fish, simple colouring |
+| Very Hard | Empty Rectangle, finned fish, Swordfish and Jellyfish, wings, uniqueness, longer X-Chains, advanced variant logic |
+| Expert | chains and almost locked sets: XY-Chain, AIC, Medusa |
+| Extreme | forcing chains and nets, trial and error |
+
+Each technique belongs to one band (USAGE.md lists them). The route always prefers an easier technique when one is
+available, so the band is the least a solver must know.
 
 - It is a rule, not an estimate: the same route gives the same band, whatever people's solve times say.
 - Where no technique in the catalogue applies, the engine proves the next step by search (Trial and error) and the

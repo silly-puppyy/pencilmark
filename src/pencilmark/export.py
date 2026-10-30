@@ -13,7 +13,7 @@ grade (format "sudoku-grade", format_version 1):
               scale (data/card_score.json "map")
   time        minutes for today's median player (classic units x minutes_per_unit, data/time_model.json); on request
               time_pNN = the NN-th percentile over today's players and time_mean = the mean (log-normal, sigma spread_sigma)
-  band        "Very Easy" … "Extreme" or "Unknown" (not solvable without computer search); on request band_index 0..5
+  band        "Very Easy" … "Extreme" or "Unknown" (not solvable without computer search); on request band_index 0..6
   contains    what a solver meets going easy -> hard (band path): [{"code", "chip", "name", "band", "uses", "alternatives"}];
               a chip "XWG/KTE/SCL" = each of these alone also gets you through here; singles listed without counts
   notes       publishing notes: [{"code": "spike", "severity": "reject" | "note", "text": "…"}]
@@ -33,7 +33,7 @@ from . import _data, cbackend as CB, solver as S, metrics as MT, puzzle_json as 
 
 GRADER_NAME, GRADER_VERSION = "pencilmark", "1.0.0rc2"   # on every card: a grade is only meaningful with the engine that made it
 FORMAT_VERSION = 1          # of both formats; bumped only on a breaking change (additive fields don't bump it)
-BANDS = ["Very Easy", "Easy", "Medium", "Hard", "Very Hard", "Extreme"]
+BANDS = ["Very Easy", "Easy", "Medium", "Hard", "Very Hard", "Expert", "Extreme"]
 SITES = {"fed": "fed-sudoku.eu", "lisudoku": "lisudoku.com", "sudoku.coach": "sudoku.coach", "LMD": "logic-masters.de",
          "puzzleduel": "puzzleduel.club", "sudoku-variants": "sudoku-variants.com", "sudoku.one": "sudoku.one",
          "hard set": "sudokuwiki.org"}
@@ -44,24 +44,24 @@ X_CHAIN_SHAPES = {"skyscraper": "SKY", "2-string kite": "KTE", "turbot fish": "T
 def _shape(name, specific):
     """(code, band) of a SPLIT technique step from its most specific name; None if the name doesn't decide."""
     sl = specific.lower()
-    if name == "X-Chain":       # Skyscraper / 2-String Kite / Turbot / Empty Rectangle Medium; longer chains Hard
+    if name == "X-Chain":       # Skyscraper / 2-String Kite / Turbot Hard; Empty Rectangle and longer chains Very Hard
         for k, c in X_CHAIN_SHAPES.items():
             if k in sl:
-                return c, 2
-        return "XCL", 3
-    if name == "X-Wing":        # plain row / column X-Wing Medium; Franken (a box as base or cover) / Mutant Hard
+                return c, 4 if c == "ERE" else 3
+        return "XCL", 4
+    if name == "X-Wing":        # plain row / column X-Wing Hard; Franken (a box as base or cover) / Mutant Very Hard
         if "franken" in sl or "mutant" in sl:
-            return "FRK", 3
-        return "XWG", 2
-    if name == "FinnedFish":    # finned / sashimi X-Wing Medium; Franken (box) fish and larger finned fish Hard
+            return "FRK", 4
+        return "XWG", 3
+    if name == "FinnedFish":    # every finned / sashimi fish and Franken (box) fish Very Hard
         if "franken" in sl or "mutant" in sl:
-            return "FRK", 3
+            return "FRK", 4
         if "jellyfish" in sl:
-            return "FJF", 3
+            return "FJF", 4
         if "swordfish" in sl:
-            return "FSW", 3
+            return "FSW", 4
         if "x-wing" in sl:
-            return "FXW", 2
+            return "FXW", 4
         return None
     if name == "LawOfLeftovers":
         if "phistomefel" in sl:
@@ -81,6 +81,16 @@ def _band_table():
                 b = r["proposed"]
                 _BAND[r["technique"]] = BANDS.index(b) if b in BANDS else None
     return _BAND
+
+
+def code_names():
+    """chip code -> technique name (technique_bands.csv; first row of each code)"""
+    out = {"SKY": "Skyscraper", "KTE": "2-String Kite", "TUR": "Turbot Fish", "FRK": "Franken Fish",
+           "FSW": "Finned Swordfish", "FJF": "Finned Jellyfish", "PHI": "Phistomefel Ring", "PHV": "Phistomefel Variant",
+           "CFX": "Clue Facts", "CSH": "Clue Shape", "CCL": "High / Low and Odd / Even Colouring"}
+    for r in csv.DictReader(io.StringIO(_data.read_text("technique_bands.csv"))):
+        out.setdefault(r["code"], r["technique"])
+    return out
 
 
 def chip_of(tech_id, specific=None):
@@ -170,13 +180,15 @@ def _specific_in(p, steps, t):
 # techniques whose band depends on the named shape: plain X-Wing / short X-Chains / finned X-Wing / basic set theory
 # Medium; Franken / Mutant X-Wings, long X-Chains, larger finned fish and Phistomefel-type set theory Hard. The engine can't cap the shape it looks for, so
 # band-limited solves allow them from Medium on and required_chips checks the shapes actually used.
+SINGLE_CODES = {"FHS", "HSI", "NSI", "LSI", "CSI"}   # singles: no use counts on the card (GRADE.md 3)
 SPLIT = ("X-Wing", "X-Chain", "FinnedFish", "LawOfLeftovers")   # engine X-Wing includes Franken / Mutant 2-fish
+SPLIT_LOW = {"X-Wing": 3, "X-Chain": 3, "FinnedFish": 4, "LawOfLeftovers": 2}   # their lower band; larger shapes one above
 
 
 def tech_band(t):
-    """band index of an engine technique under the accepted proposal (SPLIT techniques at their lower, Medium level)."""
+    """band index of an engine technique under the accepted proposal (SPLIT techniques at their lower level)."""
     if S.TECH_NAMES.get(t) in SPLIT:
-        return 2
+        return SPLIT_LOW[S.TECH_NAMES[t]]
     code, b = chip_of(t)
     return b if b is not None else 9
 
@@ -187,7 +199,7 @@ def _split_hard(p, steps, techs):
     for t in techs:
         if S.TECH_NAMES.get(t) in SPLIT and any(s.move.feat[0] == t for s in steps):
             nm = _specific_in(p, steps, t)
-            if nm and chip_of(t, nm)[1] == 3:
+            if nm and chip_of(t, nm)[1] > SPLIT_LOW[S.TECH_NAMES[t]]:
                 out.add(t)
     return out
 
@@ -205,11 +217,11 @@ def required_chips(p, P, steps=None, specific_by_step=None):
     def run(allowed):
         return _solved(p, P, ALL - (set(allowed) | notes))
     B, stB, allowedB = None, None, None
-    for b in range(6):
+    for b in range(len(BANDS)):
         allowed = {t for t in techs if tech_band(t) <= b}
         ok, st = run(allowed)
-        while ok and b == 2:   # Medium only if no Hard-shaped X-Chain / finned fish / set theory is needed
-            hard = _split_hard(p, st, allowed)
+        while ok:              # this band only if no larger shape of a split technique (long X-Chain, larger fish) is needed
+            hard = {t for t in _split_hard(p, st, allowed) if tech_band(t) == b}
             if not hard:
                 break
             allowed -= hard
@@ -277,7 +289,7 @@ def required_chips(p, P, steps=None, specific_by_step=None):
             chips.append({"chip": "/".join(c for c, _, _ in parts), "band": B, "uses": parts[0][2],
                           **({"joint": True} if len(parts) > 1 else {})})
     if B > 0 and not any(c["band"] == B for c in chips):     # band needed, but only interchangeable same-family ways
-        top = [t for t in uses if tech_band(t) == B or (B == 3 and S.TECH_NAMES.get(t) in SPLIT and chip_of(t, sp(t))[1] == 3)]
+        top = [t for t in uses if tech_band(t) == B or (S.TECH_NAMES.get(t) in SPLIT and chip_of(t, sp(t))[1] == B)]
         if top:
             t = min(top, key=lambda t: (MT.band_of(t), -uses[t]))
             c, b = chip_of(t, sp(t)); chips.append({"chip": c, "band": B, "uses": uses[t]})
@@ -367,7 +379,7 @@ def time_units(effort_l1, empty_cells, difficulty=None, geometry=None):
 ALWAYS = ("format", "format_version", "grader")
 DEFAULT_FIELDS = ("difficulty", "time", "band", "contains")
 OPTIONAL_FIELDS = ("band_index", "time_p80", "time_dist", "elapsed", "issues", "reject", "warning", "se", "steps", "describe", "symmetry")   # + time_mean / time_pNN
-EXPLAIN_LEVELS = ("short", "teach")
+EXPLAIN_LEVELS = ("notation", "short", "teach")    # terse to verbose: solvers' notation, one plain line, a short lesson
 
 
 def _time_model():
@@ -417,7 +429,7 @@ def card_fields(fields=None, steps=False, se=False):
 
 
 def explain_levels(explain):
-    """explain= option -> the step explanation levels: None / False = none, True = both, "short" / "teach" or a list"""
+    """explain= option -> the step explanation levels: None / False = none, True = all, "notation" / "short" / "teach" or a list"""
     if not explain:
         return []
     if explain is True:
@@ -604,7 +616,7 @@ def _grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expl
             e["alternatives"] = None        # not searched (alternatives=False); absent = searched, none found
         elif alts.get(c):
             e["alternatives"] = alts[c]     # each of these alone also gets you through (not on c's subset chain)
-        if e["band"] > 0:
+        if c not in SINGLE_CODES:
             e["uses"] = n                   # on the easiest route; singles' counts swing with the route, so omitted
         contains.append(e)
     tg = card.get("time_grade")
@@ -666,7 +678,7 @@ def _grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expl
             if st["elims"]:
                 r["eliminations"] = [f"{cn(c)}#{d}" for c, d in st["elims"]]
             if levels and expl[i]:
-                r["explanation"] = {x: expl[i][x] for x in levels}
+                r["explanation"] = {x: expl[i][x] for x in levels if expl[i].get(x)}
             rows.append(r)
         g["steps"] = rows
     if max_seconds is not None:                 # with a limit only (always true without one): every stage finished within it
