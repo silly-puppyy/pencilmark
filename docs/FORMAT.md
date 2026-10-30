@@ -215,28 +215,34 @@ stated default are omitted by canonical writers when they equal the default.
 
 ### 5.1 Pair operators
 
-`relation`, `neighbours` and `negative` use these operator names. `params` is a list (empty for parameterless ops).
+`relation` and `neighbours` use these operator names, with the operator's parameter under its own key, as everywhere
+else in the format (`value` for a number, `sum` for a sum):
 
-| `op` | `params` | The pair `[a, b]` satisfies it when |
+```json
+{"type": "relation", "op": "difference", "value": 3, "pairs": [["r1c1", "r3c3"]]}
+{"type": "relation", "op": "any_of", "any_of": [{"op": "sum", "sum": 10}, {"op": "difference", "value": 1}], "pairs": [["r1c1", "r2c3"]]}
+```
+
+| `op` | Parameter | The pair `[a, b]` satisfies it when |
 |---|---|---|
-| `different` | [] | a ≠ b |
-| `equal` | [] | a = b |
-| `less` | [] | a < b |
-| `less_equal` | [] | a ≤ b |
-| `difference` | [k] | \|a − b\| = k |
-| `not_difference` | [k] | \|a − b\| ≠ k |
-| `not_consecutive` | [] | \|a − b\| ≠ 1 |
-| `difference_at_least` | [k] | \|a − b\| ≥ k |
-| `difference_at_most` | [k] | \|a − b\| ≤ k |
-| `ratio` | [k] | a = k·b or b = k·a |
-| `not_ratio` | [k] | neither |
-| `sum` | [s] | a + b = s |
-| `not_sum` | [s] | a + b ≠ s |
-| `parity_differs` | [] | one is odd, the other even |
-| `same_third` / `different_third` | [] | a and b are / are not in the same third of 1..9 (entropic) |
-| `same_mod3` / `different_mod3` | [] | a ≡ b / a ≢ b (mod 3) |
-| `allowed` | [[[v, w], …]] | `[a, b]` is one of the listed digit pairs (escape hatch; also how a product clue is built) |
-| `any_of` | [[op, params], …] | at least one of the listed operators holds |
+| `different` | – | a ≠ b |
+| `equal` | – | a = b |
+| `less` | – | a < b |
+| `less_equal` | – | a ≤ b |
+| `difference` | `value` k | \|a − b\| = k |
+| `not_difference` | `value` k | \|a − b\| ≠ k |
+| `not_consecutive` | – | \|a − b\| ≠ 1 |
+| `difference_at_least` | `value` k | \|a − b\| ≥ k |
+| `difference_at_most` | `value` k | \|a − b\| ≤ k |
+| `ratio` | `value` k | a = k·b or b = k·a |
+| `not_ratio` | `value` k | neither |
+| `sum` | `sum` s | a + b = s |
+| `not_sum` | `sum` s | a + b ≠ s |
+| `parity_differs` | – | one is odd, the other even |
+| `same_third` / `different_third` | – | a and b are / are not in the same third of 1..9 (entropic) |
+| `same_mod3` / `different_mod3` | – | a ≡ b / a ≢ b (mod 3) |
+| `allowed` | `allowed` [[v, w], …] | `[a, b]` is one of the listed digit pairs (escape hatch; also how a product clue is built) |
+| `any_of` | `any_of` [{`op`, parameter}, …] | at least one of the listed operators holds |
 
 `less`, `less_equal`, `allowed` and `any_of` are directional (pair order matters); the others are symmetric.
 
@@ -403,13 +409,13 @@ A rule over neighbouring pairs of the whole board.
 {"type": "neighbours", "kind": "antiknight"}
 {"type": "neighbours", "kind": "antiknight", "within": "box"}
 {"type": "neighbours", "kind": "antiknight", "area": "r1c1"}
-{"type": "neighbours", "op": "not_sum", "params": [10], "where": "orthogonal", "except": [["r1c1", "r1c2"]]}
+{"type": "neighbours", "op": "not_sum", "sum": 10, "where": "orthogonal", "except": [["r1c1", "r1c2"]]}
 ```
 
 | Field | Meaning |
 |---|---|
 | `kind` | A named shortcut for one exact `op` + `where`: `antiknight` = `different` on `knight` pairs, `antiking` = `different` on `diagonal` pairs (orthogonal neighbours already share a row or column), `nonconsecutive` = `not_consecutive` on `orthogonal` pairs. Writers SHOULD use the kind when one matches. Or omit `kind` and give `op` (+ parameters) and `where`. |
-| `op`, `params` | A symmetric pair operator (5.1). |
+| `op` (+ its parameter) | A symmetric pair operator (5.1). |
 | `where` | `orthogonal` \| `diagonal` \| `king` \| `knight`. |
 | `within` | Optional scope: `"box"` (only pairs inside one box) or `"region"` (only pairs inside one `region` rule). |
 | `area` | Optional scope (5): only pairs with both cells in the area, e.g. one grid of a samurai. |
@@ -423,7 +429,7 @@ Explicit pairs under one pair operator (5.1), for clues that are not edge clues 
 edge kind has, or a pair rule a site defines):
 
 ```json
-{"type": "relation", "op": "different", "params": [], "pairs": [["r1c1", "r3c3"], ["r1c1", "r4c4"]]}
+{"type": "relation", "op": "different", "pairs": [["r1c1", "r3c3"], ["r1c1", "r4c4"]]}
 ```
 
 ### 6.12 `cell` (cell clues)
@@ -549,7 +555,7 @@ Coordinates are cell units `[row, col]` with the origin at the top-left corner o
 
 - Top-level key order: `format`, `format_version`, `$schema`, `meta`, `board`, `digits`, `givens`, `solution`,
   `candidates`, `rules`, `decorations`, `style`.
-- Rule key order: `type`, `kind`, then the parameters (`op`, `params`, `color`, `letter`, `value`, `sum`, `split`,
+- Rule key order: `type`, `kind`, then the parameters (`op`, `any_of`, `color`, `letter`, `value`, `sum`, `split`,
   `values`, `digits`, `groups`, `each`, `counts`, `arrow`, `size`, `repeat`, `box`, `where`, `within`, `closed`),
   then `side`, then the cell keys (`origin`, `source`, `bulb`, `lines`, `cells`, `regions`, `segments`, `pairs`,
   `except`, `allowed`), then `id`, `label`, `style`.

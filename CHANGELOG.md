@@ -30,6 +30,9 @@
   (the generator's own knobs too). Reserved items (`"type": "custom"`, `digits` as an object) are refused with a
   message naming them as future work. `neighbours` kinds are documented as exact shortcuts for an operator on a pair
   pattern.
+- Pair operators take their parameter under its own key, as the rest of the format: `{"op": "difference", "value": 3}`,
+  `{"op": "sum", "sum": 10}`, `allowed` / `any_of` lists of objects; positional `params` lists are refused. Writing an
+  `any_of` relation back no longer crashes.
 - Docs: philosophy page (goals, exact meaning of band / difficulty / time, format rules); README known issues.
 
 ## 1.0.0rc2

@@ -71,13 +71,33 @@ OPS = {"different": "neq", "equal": "eq", "less": "lt", "less_equal": "le", "dif
        "parity_differs": "parity", "same_third": "samegroup3", "different_third": "diffgroup3", "same_mod3": "samemod3",
        "different_mod3": "diffmod3", "allowed": "allowed", "any_of": "anyof"}
 REL_OP = {v: k for k, v in OPS.items()}
-OP_NPARAMS = {"difference": 1, "not_difference": 1, "difference_at_least": 1, "difference_at_most": 1, "ratio": 1,
-              "not_ratio": 1, "sum": 1, "not_sum": 1, "allowed": 1}
 DIRECTED_OPS = {"less", "less_equal", "allowed", "any_of"}
 NEIGHBOUR_STEPS = PJ.NEIGHBOURS
 KNIGHT = [(1, 2), (2, 1), (1, -2), (2, -1)]
 KING_DIAG = [(1, 1), (1, -1)]
 ORTHO = [(0, 1), (1, 0)]
+
+
+OP_KEY = {"difference": "value", "not_difference": "value", "difference_at_least": "value", "difference_at_most": "value",
+          "ratio": "value", "not_ratio": "value", "sum": "sum", "not_sum": "sum", "allowed": "allowed", "any_of": "any_of"}
+OP_PARAM_KEYS = {"value", "sum", "allowed", "any_of"}          # the operator's named parameter (FORMAT.md 5.1)
+
+
+def op_params(r):
+    """an operator's named parameter in a rule or an any_of entry -> the positional params list"""
+    op = r["op"]
+    if op == "any_of":
+        return [[x["op"], op_params(x)] for x in r["any_of"]]
+    k = OP_KEY.get(op)
+    return [r[k]] if k else []
+
+
+def op_named(op, params):
+    """positional params -> the named parameter key(s) of a rule or any_of entry"""
+    if op == "any_of":
+        return {"any_of": [dict({"op": o}, **op_named(o, p)) for o, p in params]}
+    k = OP_KEY.get(op)
+    return {k: params[0]} if k else {}
 
 
 def _op_params_to_engine(op, params):
@@ -457,8 +477,8 @@ RULE_KEYS = {
     "skyscraper": ({"value", "side", "cells"}, set()),
     "rossini": ({"arrow", "side", "cells"}, set()),
     "first_seen": ({"value", "digits", "side", "cells"}, set()),
-    "neighbours": (set(), {"kind", "op", "params", "where", "within", "area", "except"}),
-    "relation": ({"op", "params", "pairs"}, set()),
+    "neighbours": (set(), {"kind", "op", "value", "sum", "allowed", "any_of", "where", "within", "area", "except"}),
+    "relation": ({"op", "pairs"}, {"value", "sum", "allowed", "any_of"}),
     "cell": ({"kind", "cells"}, {"split", "values"}),
     "contains": ({"digits", "cells"}, set()),
     "appears": ({"source", "cells"}, set()),
@@ -735,12 +755,12 @@ def _validate_rule(r, B):
             B.check_outside(r["side"], cs, what="distinct_count")
     elif t == "neighbours":
         if "kind" in r:
-            if set(r) & {"op", "params", "where"}:
-                raise FormatError("neighbours takes a kind or op / params / where, not both")
+            if set(r) & ({"op", "where"} | OP_PARAM_KEYS):
+                raise FormatError("neighbours takes a kind or op / where, not both")
         else:
-            if not {"op", "params", "where"} <= set(r):
-                raise FormatError("neighbours needs a kind, or op + params + where")
-            _check_op(r["op"], r["params"])
+            if not {"op", "where"} <= set(r):
+                raise FormatError("neighbours needs a kind, or op + where")
+            _check_op(r)
             if r["op"] in DIRECTED_OPS - {"allowed", "any_of"} or r["where"] not in NEIGHBOUR_STEPS:
                 raise FormatError("neighbours needs a symmetric op and where orthogonal / diagonal / king / knight")
         if "within" in r and r["within"] not in ("box", "region"):
@@ -750,7 +770,7 @@ def _validate_rule(r, B):
         for p in r.get("except") or []:
             _cells(B, p, "except pair", n=2)
     elif t == "relation":
-        _check_op(r["op"], r["params"])
+        _check_op(r)
         if not isinstance(r["pairs"], list) or not r["pairs"]:
             raise FormatError("pairs must be a non-empty list")
         for p in r["pairs"]:
@@ -800,16 +820,28 @@ def _validate_rule(r, B):
             area_cells(B, r["area"])
 
 
-def _check_op(op, params):
+def _check_op(r, where="rule"):
+    """an operator and exactly its named parameter (FORMAT.md 5.1), in a rule or an any_of entry"""
+    op = r.get("op")
     if op not in OPS:
         raise FormatError(f"unknown operator {op!r}")
-    if not isinstance(params, list) or len(params) != OP_NPARAMS.get(op, 0) and op != "any_of":
-        raise FormatError(f"operator {op} takes {OP_NPARAMS.get(op, 0)} parameter(s)")
+    want = OP_KEY.get(op)
+    have = set(r) & OP_PARAM_KEYS
+    if have != ({want} if want else set()):
+        raise FormatError(f"operator {op} takes " + (f'"{want}"' if want else "no parameter") +
+                          (f", not {sorted(have - {want})}" if have - {want} else ""))
+    if want in ("value", "sum") and (isinstance(r[want], bool) or not isinstance(r[want], int)):
+        raise FormatError(f"operator {op}: {want} must be an integer")
+    if op == "allowed" and not (isinstance(r["allowed"], list) and r["allowed"] and
+                                all(isinstance(x, list) and len(x) == 2 for x in r["allowed"])):
+        raise FormatError("operator allowed takes a non-empty list of digit pairs [[a, b], ...]")
     if op == "any_of":
-        for x in params:
-            if not (isinstance(x, list) and len(x) == 2):
-                raise FormatError("any_of takes [[op, params], ...]")
-            _check_op(x[0], x[1])
+        if not isinstance(r["any_of"], list) or not r["any_of"]:
+            raise FormatError("any_of takes a non-empty list of {op, ...} entries")
+        for x in r["any_of"]:
+            if not isinstance(x, dict) or set(x) - {"op"} - OP_PARAM_KEYS:
+                raise FormatError("any_of entries are objects with op and its parameter")
+            _check_op(x, "any_of entry")
 
 
 # ----------------------------------------------------------------------------------------------------------- reading
@@ -977,7 +1009,7 @@ class _ReadCtx:
             return self.neighbours(r)
         if t == "relation":
             kind = OPS[r["op"]]
-            args = _op_params_to_engine(r["op"], r["params"])
+            args = _op_params_to_engine(r["op"], op_params(r))
             return [self.pairs_rule(kind, args, [tuple(idx(p)) for p in r["pairs"]])]
         if t == "cell":
             k = r["kind"]
@@ -1054,7 +1086,7 @@ class _ReadCtx:
         if k == "antiknight":
             steps = KNIGHT
         if not k and not ("within" in r or "cells" in r):
-            out = {"type": "pairs", "rel": OPS[r["op"]], "params": _engine_params_json(OPS[r["op"]], _op_params_to_engine(r["op"], r["params"])),
+            out = {"type": "pairs", "rel": OPS[r["op"]], "params": _engine_params_json(OPS[r["op"]], _op_params_to_engine(r["op"], op_params(r))),
                    "where": r["where"]}
             if r.get("except"):
                 out["except"] = [list(p) for p in r["except"]]
@@ -1068,7 +1100,7 @@ class _ReadCtx:
         if k:
             kind, args = ("nonconsec", ()) if k == "nonconsecutive" else ("neq", ())
         else:
-            kind, args = OPS[r["op"]], _op_params_to_engine(r["op"], r["params"])
+            kind, args = OPS[r["op"]], _op_params_to_engine(r["op"], op_params(r))
         return [self.pairs_rule(kind, args, prs)] if prs else []
 
     def rossini(self, i, done):
@@ -1605,12 +1637,12 @@ class _Writer:
                     op = REL_OP[kind]
                     params = _engine_params_to_op(kind, args)
                     last = items[-1]["rules"][-1] if items else None
-                    if last and last.get("type") == "relation" and last["op"] == op and last["params"] == params:
+                    if last and last.get("type") == "relation" and last["op"] == op and op_params(last) == params:
                         last["pairs"].append([B.name(a), B.name(b)])
                         items[-1]["rel"].append(run[pos])
                     else:
                         items.append({"pos": run[pos], "rel": [run[pos]],
-                                      "rules": [{"type": "relation", "op": op, "params": params, "pairs": [[B.name(a), B.name(b)]]}]})
+                                      "rules": [dict({"type": "relation", "op": op}, **op_named(op, params), pairs=[[B.name(a), B.name(b)]])]})
                 pos += 1
         return items
 
@@ -1648,7 +1680,8 @@ class _Writer:
                     cands.append(({"type": "neighbours", "kind": nk, "area": org}, B.pairs(steps, sorted(area))))
         neg = {("nonconsec", ()): ("kropki", "white"), ("notdiff", (1,)): ("kropki", "white"),
                ("notratio", (2,)): ("kropki", "black"), ("notsum", (10,)): ("xv", "X"), ("notsum", (5,)): ("xv", "V")}
-        key = (kind, args)
+        frozen = lambda x: tuple(frozen(y) for y in x) if isinstance(x, (list, tuple)) else x
+        key = (kind, frozen(args))                 # any_of / allowed parameters hold lists
         nf = neg.get(key)
         if nf is None and len(args) == 1 and kind in ("notdiff", "notsum", "notratio"):
             nf = ({"notdiff": "difference", "notsum": "sum", "notratio": "ratio"}[kind], args[0])
@@ -1679,7 +1712,7 @@ class _Writer:
                         missing = [x for x in alln if frozenset(x) not in have]
                         exp = [x for x in alln if frozenset(x) in have]
                         if [frozenset(x) for x in exp] == [frozenset(x) for x in prs]:
-                            rule = {"type": "neighbours", "op": REL_OP[kind], "params": _engine_params_to_op(kind, args), "where": where}
+                            rule = dict({"type": "neighbours", "op": REL_OP[kind]}, **op_named(REL_OP[kind], _engine_params_to_op(kind, args)), where=where)
                             if missing:
                                 rule["except"] = [[B.name(a), B.name(b)] for a, b in missing]
                             return rule, len(prs)
@@ -1939,7 +1972,7 @@ class _Writer:
 # --------------------------------------------------------------------------------------------- canonical text + hash
 KEY_ORDER = ["format", "format_version", "$schema", "meta", "board", "digits", "givens", "solution", "candidates", "rules",
              "decorations", "style"]
-RULE_ORDER = ["type", "kind", "of", "op", "params", "color", "letter", "value", "sum", "split", "values", "digits", "groups",
+RULE_ORDER = ["type", "kind", "of", "op", "any_of", "color", "letter", "value", "sum", "split", "values", "digits", "groups",
               "each", "counts", "arrow", "size", "repeat", "box", "where", "within", "area", "closed", "side", "origin", "source",
               "bulb", "lines", "cells", "regions", "segments", "pairs", "except", "allowed", "id", "label", "style"]
 

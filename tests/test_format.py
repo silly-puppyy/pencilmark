@@ -4,6 +4,7 @@ strings, ipuz, describe, sudoku-spec.
     pytest tests/test_format.py        (synthetic puzzles only: tests/fixtures/variants.json, docs/FORMAT.md examples)
 """
 import copy
+import pytest
 import json
 import re
 import sys
@@ -535,3 +536,25 @@ def test_describe_names_grids():
     assert d["rules"]["X"].endswith("Only in the top-left grid.")
     assert d["rules"]["Killer"].endswith("Only in the bottom-left grid.")
     assert d["rules"]["Anti-Knight"].endswith("Only in the bottom-right grid.")
+
+
+def test_operators_named_parameters():
+    """FORMAT.md 5.1: an operator's parameter has its own key (value / sum / allowed / any_of); positional params are refused"""
+    s = "....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9......."
+    sol = pencilmark.solve(s)
+    v = lambda c: sol[(int(c[1]) - 1) * 9 + int(c[3]) - 1]
+    a, b, c = "r1c1", "r3c3", "r5c9"
+    doc = pencilmark.to_export(s)
+    doc["rules"] += [{"type": "relation", "op": "difference", "value": abs(v(a) - v(b)), "pairs": [[a, b]]},
+                     {"type": "relation", "op": "any_of", "any_of": [{"op": "sum", "sum": v(a) + v(c)}, {"op": "equal"}],
+                      "pairs": [[a, c]]}]
+    X.validate(doc)
+    out = pencilmark.to_export(doc)["rules"]
+    assert {"type": "relation", "op": "difference", "value": abs(v(a) - v(b)), "pairs": [[a, b]]} in out, out
+    assert pencilmark.rate(doc)["band"]
+    for bad_rule in ({"type": "relation", "op": "difference", "params": [2], "pairs": [[a, b]]},
+                     {"type": "relation", "op": "difference", "sum": 2, "pairs": [[a, b]]},
+                     {"type": "relation", "op": "different", "value": 1, "pairs": [[a, b]]}):
+        bad = copy.deepcopy(doc); bad["rules"].append(bad_rule)
+        with pytest.raises(pencilmark.FormatError):
+            X.validate(bad)
