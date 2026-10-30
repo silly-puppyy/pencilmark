@@ -251,21 +251,29 @@ def rules_text(described):
 
 
 def to_ipuz(puzzle):
+    """any accepted puzzle -> ipuz 2 dict, for the subset ipuz expresses (classic, Latin square, diagonal, windoku, jigsaw,
+    killer); NotSupportedError otherwise (docs/INTEROP.md)"""
     from .interop import to_ipuz as t
     return t(puzzle)
 
 
 def from_ipuz(ipuz):
+    """ipuz sudoku (dict or JSON text) -> sudoku-puzzle dict (docs/INTEROP.md)"""
     from .interop import from_ipuz as f
     return f(ipuz)
 
 
 def from_string(s, symbols=None):
+    """text -> sudoku-puzzle dict: plain classic strings (with or without a trailing comment), text grids with separators,
+    pencil-mark grids, 729-character candidate strings, HoDoKu library lines, sudokuwiki.org packed strings
+    (docs/INTEROP.md)"""
     from .interop import from_string as f
     return f(s, symbols=symbols)
 
 
 def to_string(puzzle, form="plain"):
+    """any accepted puzzle -> text: form "plain" (81 characters), "grid" (rows with separators) or "sudokuwiki" (packed
+    string); NotSupportedError when the form cannot carry the puzzle (docs/INTEROP.md)"""
     from .interop import to_string as t
     return t(puzzle, form)
 

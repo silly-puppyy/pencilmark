@@ -5,8 +5,8 @@ import ast
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-NAMES = ["rate", "rate_many", "solve", "load", "to_export", "dumps", "fingerprint", "validate", "describe",
-         "NotUnique", "NoSolution", "Undecided"]
+NAMES = ["rate", "rate_many", "solve", "generate", "load", "to_export", "dumps", "fingerprint", "validate", "describe",
+         "from_string", "to_string", "from_ipuz", "to_ipuz", "NotUnique", "NoSolution", "Undecided"]
 
 
 def signature(node):

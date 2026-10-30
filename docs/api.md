@@ -48,6 +48,14 @@ solve(puzzle, info=False)
 
 the unique solution as a list of digits (cell order of the puzzle); NotUnique / NoSolution otherwise. Uses the engine's exhaustive C++ search; CP-SAT (optional OR-Tools) only if that search hits its node limit. info=True: {"solution": [...], "seconds": wall-clock seconds of the search} instead of the bare list.
 
+## `generate`
+
+```python
+generate(spec)
+```
+
+one puzzle for a "sudoku-spec" request (docs/SPEC.md: dict, JSON text or path) -> {"puzzle": sudoku-puzzle, "card": sudoku-grade card, "info": {...}}; see pencilmark.gen.generate
+
 ## `load`
 
 ```python
@@ -95,6 +103,38 @@ describe(puzzle)
 ```
 
 {"type": variant name, "rules": {short name: one-sentence rule, ...}} from the rules alone (pencilmark/variants.py)
+
+## `from_string`
+
+```python
+from_string(s, symbols=None)
+```
+
+text -> sudoku-puzzle dict: plain classic strings (with or without a trailing comment), text grids with separators, pencil-mark grids, 729-character candidate strings, HoDoKu library lines, sudokuwiki.org packed strings (docs/INTEROP.md)
+
+## `to_string`
+
+```python
+to_string(puzzle, form='plain')
+```
+
+any accepted puzzle -> text: form "plain" (81 characters), "grid" (rows with separators) or "sudokuwiki" (packed string); NotSupportedError when the form cannot carry the puzzle (docs/INTEROP.md)
+
+## `from_ipuz`
+
+```python
+from_ipuz(ipuz)
+```
+
+ipuz sudoku (dict or JSON text) -> sudoku-puzzle dict (docs/INTEROP.md)
+
+## `to_ipuz`
+
+```python
+to_ipuz(puzzle)
+```
+
+any accepted puzzle -> ipuz 2 dict, for the subset ipuz expresses (classic, Latin square, diagonal, windoku, jigsaw, killer); NotSupportedError otherwise (docs/INTEROP.md)
 
 ## `NotUnique`
 
