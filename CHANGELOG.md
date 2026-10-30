@@ -13,8 +13,9 @@
   given candidates instead of dropping them.
 - `max_seconds` is now also checked inside the forcing-chain fallback (Easter Monster at `max_seconds=2` returned after
   4.3 s, now 2.0 s); grades without a limit are unchanged.
-- Windows: the command line reads all input before starting `-j` worker processes (a pending read on the stdin pipe
-  blocked them) and reads / writes UTF-8 on every platform; the test suite runs on Windows and macOS too.
+- Windows / macOS: `pencilmark rate -j N` hung under the spawn start method (the workers looked for their function in
+  pencilmark's `__main__`, which spawn does not re-import); it now passes them from the importable module and reads all
+  input first and reads / writes UTF-8 on every platform; the test suite runs on Windows and macOS too.
 - HoDoKu library lines (`:0901:4:<puzzle>:<removed candidates>:...`) are read by `from_string`.
 - Docs: philosophy page (goals, exact meaning of band / difficulty / time, format rules); README known issues.
 

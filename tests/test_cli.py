@@ -40,3 +40,16 @@ def test_cli_json_keeps_meta():
     exp = pencilmark.to_export(CLASSIC, title="T", author="A")
     out = json.loads(run(["json", "-"], json.dumps(exp) + "\n")[0])
     assert out["meta"]["title"] == "T" and out["meta"]["author"] == "A" and out["hash"]
+
+
+def test_cli_parallel_spawn():
+    """-j with the spawn start method (Windows, macOS) run as `python -m pencilmark`: the workers must not need
+    pencilmark's __main__, which spawn does not re-import"""
+    code = ("import sys, runpy, multiprocessing as mp\n"
+            "import pencilmark.api as A\n"
+            "A._mp_context = lambda: mp.get_context('spawn')\n"
+            "sys.argv = ['pencilmark', 'rate', '-', '-j', '2']\n"
+            "runpy.run_module('pencilmark', run_name='__main__', alter_sys=True)\n")
+    r = subprocess.run([sys.executable, "-c", code], input=CLASSIC + "\n" + CLASSIC + "\n", capture_output=True, text=True,
+                       encoding="utf-8", timeout=120)
+    assert r.returncode == 0 and r.stdout.splitlines() == ["Medium\t5.9\t10.7\tX-Wing"] * 2, r.stderr[-2000:]

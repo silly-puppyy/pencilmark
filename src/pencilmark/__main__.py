@@ -160,10 +160,15 @@ def cmd_rate(a):
         for it in items:
             print(_rate_one(it), flush=True)
         return
+    import importlib
     from .api import _mp_context
-    items = list(items)          # read all input first: on Windows a pending read on the stdin pipe blocks starting workers
+    # spawn (Windows, macOS) does not re-import a package's __main__ in the workers, so the worker function and the options
+    # must come from the importable module, and the options must not carry cmd_rate (a function of this __main__)
+    worker = importlib.import_module("pencilmark.__main__")._rate_one
+    opts = argparse.Namespace(**{k: v for k, v in vars(a).items() if k != "fn"})
+    items = [(k, obj, opts) for k, obj, _ in items]       # all input read first (a pending stdin read blocks spawning)
     with _mp_context().Pool(a.jobs, maxtasksperchild=50) as pool:   # output stays in input order
-        for out in pool.imap(_rate_one, items, chunksize=1):
+        for out in pool.imap(worker, items, chunksize=1):
             print(out, flush=True)
 
 
