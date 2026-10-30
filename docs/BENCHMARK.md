@@ -8,8 +8,7 @@ graders, on a frozen held-out set. Only aggregate numbers are published; no puzz
 - Within each group of comparable puzzles, pencilmark's `difficulty` ranks puzzles by human solve time with a Spearman
   correlation of 0.61 to 0.80 depending on the source, and reaches 67-87% of the best any grader could reach (the noise
   ceiling of each source's own data).
-- On the same classic puzzles it ranks closer to human times than Andrew Stuart's grader, Sudoku Explainer, HoDoKu and
-  Rangsk's solver; on variants it is ahead of Rangsk's solver, the one other grader that rates them.
+- On the same classic puzzles it ranks closer to human times than the four other graders tested; on variants it is ahead of Rangsk's solver, the one other grader that rates them.
 - 99.5% of the 7,623 puzzles get a card; the median card takes 0.5 s (classics 0.04 s) on the machine below.
 
 ## Method
@@ -78,16 +77,16 @@ so most of its gap is noise. On the other three the human signal is clean and th
 
 ## Bands against other graders (frozen classics, 747 puzzles)
 
-| pencilmark band | Puzzles | HoDoKu level | Andrew Stuart's grade | pencilmark / Andrew Stuart rating (median) |
-|---|---|---|---|---|
-| Very Easy | 295 | Easy 100% | Kids 52%, Gentle 47% | 3.5 / 3.8 |
-| Easy | 373 | Easy 13%, Medium 86% | Gentle 37%, Moderate 52% | 5.4 / 5.2 |
-| Medium | 69 | Medium 89%, Hard 10% | Moderate 56%, Tough 39% | 6.8 / 7.0 |
-| Hard | 8 | Hard 75%, Unfair 25% | Moderate 62%, Tough 25% | 5.4 / 5.3 |
+| pencilmark band | Puzzles | HoDoKu level | pencilmark / sudokuwiki.org rating (median) |
+|---|---|---|---|
+| Very Easy | 295 | Easy 100% | 3.5 / 3.8 |
+| Easy | 373 | Easy 13%, Medium 86% | 5.4 / 5.2 |
+| Medium | 69 | Medium 89%, Hard 10% | 6.8 / 7.0 |
+| Hard | 8 | Hard 75%, Unfair 25% | 5.4 / 5.3 |
 
-The bands follow the same technique steps as HoDoKu's levels. On the same puzzles pencilmark's difficulty is within 0.3 of
-Andrew Stuart's rating at every band. A Hard puzzle can rate below a Medium one: the band orders the knowledge a puzzle
-needs, the number its overall difficulty (docs/PHILOSOPHY.md). Andrew Stuart's ratings show the same.
+The bands follow the same technique steps as HoDoKu's levels, and pencilmark's difficulty is within 0.3 of the
+sudokuwiki.org rating at every band. A Hard puzzle can rate below a Medium one: the band orders the knowledge a puzzle
+needs, the number its overall difficulty (docs/PHILOSOPHY.md); the sudokuwiki.org ratings show the same.
 
 ## Coverage and speed
 
@@ -95,8 +94,8 @@ needs, the number its overall difficulty (docs/PHILOSOPHY.md). Andrew Stuart's r
   conversion, 12 undecided at the search limit without OR-Tools, 2 unreadable, 1 over the benchmark's memory cap.
 - **By time limit** (graded within the limit): 10 s 93.9%, 30 s 96.4%, 60 s 97.4%, 120 s 98.2%, 300 s 98.8%.
 - **Speed** (default card): median 0.49 s, 90th percentile 3.8 s; classics median 0.04 s. Sudoku Explainer and HoDoKu
-  answer in under a millisecond (they do not model human solving); Rangsk 0.07-0.13 s; Andrew Stuart's grader on
-  sudokuwiki.org, median 3.1 s per request.
+  answer in under a millisecond (they do not model human solving); Rangsk 0.07-0.13 s; the sudokuwiki.org grader,
+  median 3.1 s per request.
 
 ## Generator
 

@@ -104,9 +104,8 @@ $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7..
 ## The card
 - **difficulty** is how hard the puzzle *feels* to a human, independent of its size (exact definitions of all three
   numbers: [PHILOSOPHY.md](PHILOSOPHY.md)). The scale is continuous: 0 means one empty cell, and there is no ceiling.
-  - On classics it follows Andrew Stuart's sudokuwiki.org scale.
   - A typical newspaper medium is about 5; [fed-sudoku](https://www.fed-sudoku.eu/) "hard" is about 6.5.
-  - It measures effort and is independent of the band: variants often sit above Andrew Stuart's range for their band, because the same techniques are harder to find there (clues to read, sums to track).
+  - It measures effort and is independent of the band: variants often sit above the classic range for their band, because the same techniques are harder to find there (clues to read, sums to track).
 - **time** is the predicted median time in minutes over the people who solve puzzles like it.
   - The median 9x9 classic takes about 12 min.
   - On request, `time_mean` or any percentile `time_pNN` (for example `time_p80`: 80% of players finish within it; `time_p20`: the fastest fifth) over today's players.
@@ -136,9 +135,9 @@ overlap a lot, so treat this as a rough conversion.
 
 | Source label | Our difficulty | Notes |
 |---|---|---|
-| fed-sudoku easy | 3.9 (3.4–4.3) | sudokuwiki 3.9 |
-| fed-sudoku medium | 5.1 (4.6–5.9) | sudokuwiki 5.2 |
-| fed-sudoku hard | 6.5 (6.2–7.0) | sudokuwiki 6.7 |
+| fed-sudoku easy | 3.9 (3.4–4.3) | |
+| fed-sudoku medium | 5.1 (4.6–5.9) | |
+| fed-sudoku hard | 6.5 (6.2–7.0) | |
 | [sudoku.coach](https://sudoku.coach/) level 0 / 1 / 2 | 0.6 / 1.7 / 2.8 | classics |
 | sudoku.coach level 3 / 4 / 5 | 3.7 / 5.2 / 5.8 | |
 | sudoku.coach level 6 / 7 / 8 | 6.1 / 6.7 / 7.3 | |

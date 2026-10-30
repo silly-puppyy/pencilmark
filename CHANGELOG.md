@@ -47,8 +47,8 @@ meaning is set out in docs/PHILOSOPHY.md. Changes since 1.0.0rc2:
 - **Seven bands**: Very Easy (scanning: full house, hidden singles) / Easy (naked singles, pointing / claiming, one rule's
   combinations) / Medium (pairs, triples, quads; variant implications) / Hard (the first learned patterns: X-Wing,
   Skyscraper, 2-String Kite, Turbot Fish, simple colouring) / Very Hard (Empty Rectangle, finned and larger fish, wings,
-  uniqueness) / **Expert** (new: XY-Chain, AIC, Medusa, ALS) / Extreme (forcing, trial). The steps of HoDoKu's, Andrew
-  Stuart's and sudoku.coach's curricula (docs/PHILOSOPHY.md). `band_index` runs 0..6. Difficulty and time are unchanged
+  uniqueness) / **Expert** (new: XY-Chain, AIC, Medusa, ALS) / Extreme (forcing, trial). The steps common curricula
+  take (docs/PHILOSOPHY.md). `band_index` runs 0..6. Difficulty and time are unchanged
   (all 7,427 graded puzzles of the frozen benchmark identical).
 - Step explanations at three levels: `notation` (the solvers' shared form, `X-Wing: 3 r58 c68 => r679c6<>3`), `short`,
   `teach`; `pencilmark rate --report -v / -vv / -vvv` lists the steps at those levels. The report shows time percentiles

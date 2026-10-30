@@ -33,7 +33,7 @@ Each number answers one question. They are meant to disagree sometimes: together
 ### `band`
 
 **Definition.** The tier of the hardest technique on the easiest human route through the puzzle. The tiers are a
-learning path, the steps every curriculum takes (HoDoKu, Andrew Stuart, sudoku.coach's technique categories):
+learning path, the steps every curriculum takes (HoDoKu, sudokuwiki.org, sudoku.coach's technique categories):
 
 | Band | What it adds |
 |---|---|

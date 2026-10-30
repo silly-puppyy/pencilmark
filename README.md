@@ -173,8 +173,8 @@ the `PENCILMARK_UA` environment variable.
 ## Benchmark
 
 On a frozen held-out set of 7,623 puzzles with real human solve data from seven sources, pencilmark's difficulty ranks
-puzzles by human solve time at Spearman 0.61 to 0.80 within each group, closer than Andrew Stuart's grader, Sudoku
-Explainer, HoDoKu and Rangsk's solver on the same classics. Details: [docs/BENCHMARK.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/BENCHMARK.md).
+puzzles by human solve time at Spearman 0.61 to 0.80 within each group, closer than four established graders on the same
+classics. Details: [docs/BENCHMARK.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/BENCHMARK.md).
 
 ## Known issues
 
@@ -184,7 +184,7 @@ Being worked on after 1.0:
   minutes). Graders that do not model human solving answer in under a millisecond. Use `max_seconds` to bound a call.
 - **Generator speed and range.** About 20-70 s per puzzle that meets a spec (HoDoKu: 0.05-1 s), and classic Extreme puzzles
   are not reached within the default 120 s. A maximum on the givens count is not always enforced.
-- **Variants on one scale.** On classics, difficulty matches Andrew Stuart's ratings on the same puzzles; across variant
+- **Variants on one scale.** On classics, difficulty matches established ratings of the same puzzles; across variant
   types the same difficulty does not yet mean the same experience (puzzle types differ by about 2 points on average, and
   variants often score above the classic range of their band). Time is most off for the same reason (about 1.4x per
   puzzle type).
