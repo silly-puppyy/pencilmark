@@ -189,11 +189,9 @@ Being worked on after 1.0:
   types the same difficulty does not yet mean the same experience (puzzle types differ by about 2 points on average, and
   variants often score above the classic range of their band). Time is most off for the same reason (about 1.4x per
   puzzle type).
-- **The ends of the scale.** Between about 2 and 14, higher difficulty means slower solves on every source with solve
-  times (logic-masters.de star ratings only rise above about 8). Below 2 puzzles are clearly easier than at 2-4, but
-  finer differences there (0.0 against 1.5) do not show in human times: the solves are quick and mostly spent writing
-  digits in, and few rated puzzles are that easy. Above about 14, sudoku.coach and sudoku.today stop rising while
-  grandgames and logic-masters.de keep rising; few puzzles are rated there (about 200).
+- **The ends of the scale.** Between about 2 and 8, each point of difficulty means about 20-40% more solving time per
+  cell. Above about 8 a point is worth less time (5-15% on three sources). At the bottom the scale bends into 0, so very
+  easy puzzles (an easy 4x4, a nearly finished grid) all read 0.0 although their solve times still differ.
 - **Uniqueness on some killers.** A few large killers can raise `Undecided` without OR-Tools (`pip install
   "pencilmark[verify]"`) although human logic solves them.
 
