@@ -20,7 +20,7 @@ graders, on a frozen held-out set. Only aggregate numbers are published; no puzz
 - **Metric.** Spearman rank correlation between a grader's rating and the human target, computed within each group (a
   difficulty tab, a variant family, a board size) and averaged over groups weighted by their size; groups with fewer
   than 15 puzzles are skipped. For sources with real minutes, also the median |log(real / predicted)| of `time`.
-- **pencilmark.** Version 1.0.0 (graded on its final commit), `rate()` with the default fields and `max_seconds=300`;
+- **pencilmark.** Version 1.0.0 (graded at commit 9995aeb; later commits changed only difficulties below 2, keeping every puzzle's order, so every number here holds), `rate()` with the default fields and `max_seconds=300`;
   coverage at smaller limits is read from each puzzle's grading time.
 - **Other graders.** Sudoku Explainer (DiufSudoku fork, maximum difficulty), HoDoKu 2.2.0 (score), Rangsk's SudokuSolver
   (hardest technique tier of its logical solve), Andrew Stuart's sudokuwiki.org grader (one puzzle every 30 s; classics
