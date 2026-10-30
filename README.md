@@ -14,6 +14,10 @@ sandwich, multi-grid boards and more). It also solves puzzles, checks uniqueness
 
 The engine is written in C++ ([pybind11](https://github.com/pybind/pybind11)). Results are deterministic: the same puzzle always gets the same card.
 
+> **Written with AI.** Almost all of pencilmark's code, data analysis and documentation was written by an AI model
+> ([Claude](https://claude.ai)), directed and reviewed by its maintainer. If you object to AI-written software, take that
+> into account before you use it or contribute.
+
 ## Install
 
 ```
@@ -198,5 +202,3 @@ Being worked on after 1.0:
 ## License
 
 MIT, see [LICENSE](https://github.com/silly-puppyy/pencilmark/blob/main/LICENSE).
-
-pencilmark was written with [Claude](https://claude.ai).
