@@ -1,6 +1,9 @@
 # Changelog
 
-## Unreleased
+## 1.0.0
+
+First stable release: the `sudoku-puzzle`, `sudoku-grade` and `sudoku-spec` formats are format_version 1, and the card's
+meaning is set out in docs/PHILOSOPHY.md. Changes since 1.0.0rc2:
 
 - Grade card simplified (one meaning per key, docs/PHILOSOPHY.md): `contains_complete` removed (it was band != Unknown;
   `stopped_at_step` still marks where human logic ran out); `time_dist.median` removed (it repeated `time`); steps use
@@ -31,7 +34,7 @@
   message naming them as future work. `neighbours` kinds are documented as exact shortcuts for an operator on a pair
   pattern.
 - Pair operators take their parameter under its own key, as the rest of the format: `{"op": "difference", "value": 3}`,
-  `{"op": "sum", "sum": 10}`, `allowed` / `any_of` lists of objects; positional `params` lists are refused. Writing an
+  `{"op": "sum", "sum": 10}`, `any_of` a list of objects; positional `params` lists are refused. Writing an
   `any_of` relation back no longer crashes.
 - `"type": "table"` and the `allowed` operator are reserved: explicit digit tables made files large and could not be
   drawn; a custom rule type is planned to replace them. Mechanics without a rule family cannot be written in

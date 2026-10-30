@@ -170,9 +170,15 @@ the `PENCILMARK_UA` environment variable.
   is minimised; use `max_seconds` to cap it (the card then says `completed: false`).
 - The Sudoku Explainer-style ratings (`se=True`) are approximate and meaningful for classic sudoku only.
 
-## Known issues (release candidate)
+## Benchmark
 
-Being worked on before or soon after 1.0:
+On a frozen held-out set of 7,623 puzzles with real human solve data from seven sources, pencilmark's difficulty ranks
+puzzles by human solve time at Spearman 0.61 to 0.80 within each group, closer than Andrew Stuart's grader, Sudoku
+Explainer, HoDoKu and Rangsk's solver on the same classics. Details: [docs/BENCHMARK.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/BENCHMARK.md).
+
+## Known issues
+
+Being worked on after 1.0:
 
 - **Speed.** Grading takes a median 0.5 s per puzzle (classics about 0.05 s, but the slowest few percent take 10 s to
   minutes). Graders that do not model human solving answer in under a millisecond. Use `max_seconds` to bound a call.

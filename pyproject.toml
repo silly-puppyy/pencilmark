@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pencilmark"
-version = "1.0.0rc2"
+version = "1.0.0"
 description = "Human-like difficulty grader, solver and generator for classic and variant sudoku"
 readme = "README.md"
 requires-python = ">=3.10"
