@@ -224,3 +224,18 @@ def test_ipuz_round_trip():
         assert pencilmark.fingerprint(pencilmark.from_ipuz(json.dumps(bare))) == pencilmark.fingerprint(doc)
     with pytest.raises(pencilmark.NotSupportedError):
         pencilmark.to_ipuz(pencilmark.from_string(" ".join(["5", "1234"] + ["123456789"] * 79)))
+
+
+def test_issue_rules_follow_the_input_file():
+    """issues count rules in the graded file's own order and carry their ids; to_export keeps that order and id / label"""
+    s = "....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9......."
+    sol = pencilmark.solve(s)
+    v = lambda r, c: sol[r * 9 + c]
+    cn = lambda r, c: f"r{r + 1}c{c + 1}"
+    th = next([cn(r, c), cn(r, c + 1), cn(r, c + 2)] for r in range(9) for c in range(7) if v(r, c) < v(r, c + 1) < v(r, c + 2))
+    doc = pencilmark.to_export(s)
+    doc["rules"] = [{"type": "line", "kind": "thermo", "cells": th, "id": "T1", "label": "t"}] + doc["rules"]
+    dec = [i for i in pencilmark.rate(doc, fields=["issues"])["issues"] if i["code"] == "decorative"]
+    assert dec and dec[0]["rules"] == [0] and dec[0]["ids"] == ["T1"], dec
+    out = pencilmark.to_export(doc)["rules"]
+    assert out[0]["type"] == "line" and out[0]["id"] == "T1" and out[0]["label"] == "t", out

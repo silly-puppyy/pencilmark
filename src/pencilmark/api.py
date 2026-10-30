@@ -76,6 +76,9 @@ def load(puzzle):
         raise TypeError(f"unsupported puzzle input: {type(puzzle).__name__}")
     p = PJ.from_json(_to_puzzle_json(obj))
     p.finalize()
+    src = obj.get("puzzle") if isinstance(obj.get("puzzle"), dict) else obj
+    if src.get("format") == "sudoku-puzzle" and isinstance(src.get("rules"), list):
+        p._pm_input_rules = src["rules"]          # written back and counted (issues) in the file's own order
     return p
 
 

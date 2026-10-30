@@ -1140,7 +1140,40 @@ def write(p, meta=None, solution=None, provenance=False):
     ({"groups", "relations", "constraints", "clues"}: indices into p.groups / p.relations / p.constraints / p.cell_clues)."""
     w = _Writer(p)
     doc = w.run(meta, solution)
-    return (doc, w.prov) if provenance else doc
+    prov = w.prov
+    src = getattr(p, "_pm_input_rules", None)
+    if src:
+        doc, prov = _input_order(doc, prov, src)
+    return (doc, prov) if provenance else doc
+
+
+def _input_order(doc, prov, src):
+    """the rules of a puzzle read from a sudoku-puzzle file back in the file's order, with their id / label / style
+    (FORMAT.md 8.1: rules in the order given). Only when the written rules are exactly the file's rules up to spelling;
+    otherwise the written order stays."""
+    D = doc.get("digits")
+    key = lambda r: json.dumps(_norm_rule(r, D), sort_keys=True)
+    try:
+        want = [key(r) for r in src]
+        have = [key(r) for r in doc["rules"]]
+    except Exception:
+        return doc, prov
+    if sorted(want) != sorted(have):
+        return doc, prov
+    free = {}
+    for i, k in enumerate(have):
+        free.setdefault(k, []).append(i)
+    order = [free[k].pop(0) for k in want]
+    rules = []
+    for j, i in enumerate(order):
+        r = dict(doc["rules"][i])
+        for extra in ("id", "label", "style"):
+            if extra in src[j]:
+                r[extra] = src[j][extra]
+        rules.append(r)
+    doc = dict(doc)
+    doc["rules"] = rules
+    return doc, [prov[i] for i in order] if prov is not None else prov
 
 
 class _Writer:

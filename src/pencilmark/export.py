@@ -493,6 +493,9 @@ def _issues(p, card, doc, prov):
                 else:
                     e["text"] = f"{what} ({where}): used in only {used} step{'s' if used != 1 else ''} of the solve"
                 e["rules"] = idx
+                ids = [doc["rules"][i]["id"] for i in idx if "id" in doc["rules"][i]]
+                if ids:
+                    e["ids"] = ids
         out.append(e)
     return out
 

@@ -19,6 +19,9 @@
 - HoDoKu library lines (`:0901:4:<puzzle>:<removed candidates>:...`) are read by `from_string`.
 - `band_index` is no longer a default field (ask for it with `fields=[...]`); `se_diuf` removed (`se` gives the classic
   Sudoku Explainer scale).
+- Rules keep the file's order: `to_export` writes a puzzle file's rules back in the order given, with their `id`, `label`
+  and `style` (it used to reorder them and drop those keys), and `issues` count rules in the graded file (`rules`), plus
+  their `ids` where present.
 - Docs: philosophy page (goals, exact meaning of band / difficulty / time, format rules); README known issues.
 
 ## 1.0.0rc2

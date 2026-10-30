@@ -68,8 +68,9 @@ Each entry is one technique on the route:
 
 ## 4. `issues`
 
-`{"code", "severity", "text", "rules"?}`. `severity` is `"reject"` (would not be published) or `"warning"`. `rules`, when
-present, lists the offending rules as indices into `rules` of the puzzle as `to_export` writes it.
+`{"code", "severity", "text", "rules"?, "ids"?}`. `severity` is `"reject"` (would not be published) or `"warning"`.
+`rules`, when present, lists the offending rules as indices into the `rules` array of the puzzle file that was graded
+(0-based; for other inputs, of the puzzle as `to_export` writes it); `ids` lists those rules' `id`s where they have one.
 
 Each check can be adjusted with a **quality object** keyed by code: `rate(puzzle, quality={"trivial": 0.5, "trial":
 false})`, CLI `--quality trivial=0.5,trial=false`, or the generator spec's `quality` ([SPEC.md](SPEC.md)). A check with a limit
