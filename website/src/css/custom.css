@@ -117,3 +117,8 @@ html[data-theme='dark'] .inline-json .token.string { color: #b5bd68; }
 html[data-theme='dark'] .inline-json .token.number, html[data-theme='dark'] .inline-json .token.boolean,
 html[data-theme='dark'] .inline-json .token.null { color: #de935f; }
 html[data-theme='dark'] .inline-json .token.punctuation, html[data-theme='dark'] .inline-json .token.operator { color: #969896; }
+
+/* Infima's .footer--dark sets its own blue-grey background and link colours on the footer element, which win over
+   :root; restate the palette there */
+.footer--dark { --ifm-footer-background-color: #3b2a1a; --ifm-footer-link-color: #e8dccb; --ifm-footer-title-color: #fffdf8; }
+[data-theme='dark'] .footer--dark { --ifm-footer-background-color: #13110f; }
