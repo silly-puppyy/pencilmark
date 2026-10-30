@@ -180,8 +180,9 @@ classics. Details: [docs/BENCHMARK.md](https://github.com/silly-puppyy/pencilmar
 
 Being worked on after 1.0:
 
-- **Speed.** Grading takes a median 0.5 s per puzzle (classics about 0.05 s, but the slowest few percent take 10 s to
-  minutes). Graders that do not model human solving answer in under a millisecond. Use `max_seconds` to bound a call.
+- **Speed.** Grading takes a median 0.5 s per puzzle, but the slowest few percent take 10 s to minutes. On the
+  benchmark's classics: pencilmark 0.04 s, Rangsk's solver 0.09 s, Sudoku Explainer and HoDoKu under a millisecond (they do
+  not model human solving); on variants: pencilmark 0.49 s, Rangsk's solver 0.13 s. Use `max_seconds` to bound a call.
 - **Generator speed and range.** About 20-70 s per puzzle that meets a spec (HoDoKu: 0.05-1 s), and classic Extreme puzzles
   are not reached within the default 120 s. A maximum on the givens count is not always enforced.
 - **Variants on one scale.** On classics, difficulty matches established ratings of the same puzzles; across variant
