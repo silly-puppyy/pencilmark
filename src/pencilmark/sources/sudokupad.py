@@ -16,6 +16,7 @@ data/sudokupad/_inferred.jsonl) to reproduce a stored translation, or infer=True
     translate(x, page_text=None, reading=None, infer=False) -> (engine Puzzle, info)
     to_puzzle(x, page_text=None, reading=None, infer=False, fetch=True) -> puzzle JSON dict
 """
+
 from __future__ import annotations
 
 import json
@@ -26,23 +27,65 @@ from ._common import DecodeError, FetchError, Http, UnsupportedPuzzle, to_puzzle
 
 API = "https://sudokupad.app/api/puzzle/"
 HOSTS = re.compile(r"(?:^|\.)(?:sudokupad\.app|crackingthecryptic\.com)$", re.I)
-HTTP = Http(min_gap=1.0)          # module-level client: >= 1 s between SudokuPad requests, one retry at most
+HTTP = Http(min_gap=1.0)  # module-level client: >= 1 s between SudokuPad requests, one retry at most
 
 # SudokuPad PuzzleZipper key abbreviations (compact -> full)
-KEYS = {"ce": "cells", "re": "regions", "ca": "cages", "li": "lines", "ar": "arrows", "un": "underlays",
-        "ov": "overlays", "so": "solution", "cs": "cellSize", "co": "color", "c": "color", "bc": "backgroundColor",
-        "bo": "borderColor", "wd": "width", "w": "width", "hg": "height", "h": "height", "ro": "rounded",
-        "tx": "text", "fs": "fontSize", "fc": "fontColor", "wa": "wayPoints", "hl": "highlight", "v": "value",
-        "di": "dimensions", "ct": "center", "pv": "pencilMarks", "pe": "pencilMarks", "cl": "cellLines",
-        "ta": "target", "th": "thickness", "dl": "dashLength", "sp": "settings", "ga": "gaps", "an": "angle",
-        "ty": "type", "st": "style", "op": "opacity", "ff": "fontFamily",
-        "o": "overlays", "a": "arrows", "u": "underlays", "l": "lines", "te": "text", "wp": "wayPoints",
-        "r": "rounded", "s": "stroke", "f": "fill"}
+KEYS = {
+    "ce": "cells",
+    "re": "regions",
+    "ca": "cages",
+    "li": "lines",
+    "ar": "arrows",
+    "un": "underlays",
+    "ov": "overlays",
+    "so": "solution",
+    "cs": "cellSize",
+    "co": "color",
+    "c": "color",
+    "bc": "backgroundColor",
+    "bo": "borderColor",
+    "wd": "width",
+    "w": "width",
+    "hg": "height",
+    "h": "height",
+    "ro": "rounded",
+    "tx": "text",
+    "fs": "fontSize",
+    "fc": "fontColor",
+    "wa": "wayPoints",
+    "hl": "highlight",
+    "v": "value",
+    "di": "dimensions",
+    "ct": "center",
+    "pv": "pencilMarks",
+    "pe": "pencilMarks",
+    "cl": "cellLines",
+    "ta": "target",
+    "th": "thickness",
+    "dl": "dashLength",
+    "sp": "settings",
+    "ga": "gaps",
+    "an": "angle",
+    "ty": "type",
+    "st": "style",
+    "op": "opacity",
+    "ff": "fontFamily",
+    "o": "overlays",
+    "a": "arrows",
+    "u": "underlays",
+    "l": "lines",
+    "te": "text",
+    "wp": "wayPoints",
+    "r": "rounded",
+    "s": "stroke",
+    "f": "fill",
+}
 PAYLOAD_PREFIXES = ("scl", "ctc", "fpuzzles", "fpuz")
 
 
 def _lz():
     import lzstring
+
     return lzstring.LZString()
 
 
@@ -55,7 +98,7 @@ def compact_to_json(s):
             q, j, buf = ch, i + 1, []
             while j < n and s[j] != q:
                 if s[j] == "\\" and j + 1 < n:
-                    buf.append(s[j:j + 2])
+                    buf.append(s[j : j + 2])
                     j += 2
                     continue
                 buf.append(s[j])
@@ -70,7 +113,7 @@ def compact_to_json(s):
             out.append('"' + s[i:j] + '"')
             i = j
         elif ch.isdigit() or (ch in "-." and i + 1 < n and s[i + 1].isdigit()):
-            j = i + 1                                   # numbers; a bare token like 67f067 (hex colour) is a string
+            j = i + 1  # numbers; a bare token like 67f067 (hex colour) is a string
             while j < n and (s[j].isalnum() or s[j] in ".-+"):
                 j += 1
             tok = s[i:j]
@@ -87,11 +130,19 @@ def compact_to_json(s):
             if k < n and s[k] == ":":
                 out.append('"' + word + '"')
             else:
-                out.append({"t": "true", "f": "false", "true": "true", "false": "false", "null": "null",
-                            "undefined": "null"}.get(word, '"' + word + '"'))
+                out.append(
+                    {
+                        "t": "true",
+                        "f": "false",
+                        "true": "true",
+                        "false": "false",
+                        "null": "null",
+                        "undefined": "null",
+                    }.get(word, '"' + word + '"')
+                )
             i = j
         else:
-            if ch in ",]":                              # JS array elisions ([,,,] / [1,,2]) -> explicit nulls
+            if ch in ",]":  # JS array elisions ([,,,] / [1,,2]) -> explicit nulls
                 prev = next((x for x in reversed(out) if x.strip()), "")
                 if prev and prev[-1] in "[,":
                     out.append("null")
@@ -126,7 +177,7 @@ def payload_key(link):
     path = u.path.lstrip("/")
     for pre in ("sudoku/", "puzzle/"):
         if path.startswith(pre):
-            path = path[len(pre):]
+            path = path[len(pre) :]
     return urllib.parse.unquote(path.rstrip("/"))
 
 
@@ -140,6 +191,7 @@ def decode_payload(payload):
         fmt = "fpuzzles"
     elif payload.startswith("fpuz"):
         from ._fpuz_translate import decode_fpuz
+
         d = decode_fpuz(payload)
         if d is None:
             return None
@@ -182,8 +234,9 @@ def decode(link_or_payload, fetch=False):
     if not isinstance(x, str) or not x.strip():
         raise DecodeError("empty SudokuPad link / payload")
     key = payload_key(x)
-    if "f-puzzles.com" in x:                      # an f-puzzles link handed to the SudokuPad decoder
+    if "f-puzzles.com" in x:  # an f-puzzles link handed to the SudokuPad decoder
         from . import fpuzzles
+
         fp = fpuzzles.decode(x, fetch=fetch)
         return {"format": "fpuzzles", "meta": _meta_of(fp, "fpuzzles"), "puzzle": fp}
     if key.startswith(PAYLOAD_PREFIXES) or key.lstrip().startswith("{"):
@@ -233,8 +286,10 @@ def translate(x, page_text=None, reading=None, infer=False, fetch=True):
     sp = decode(x, fetch=fetch)
     if sp["format"] == "fpuzzles":
         from . import fpuzzles
+
         return fpuzzles.translate(sp["puzzle"], rules_text=page_text, reading=reading, infer=infer)
     from . import _sp_translate as T
+
     text = _rules_fallback(sp, page_text)
     if infer and reading is None:
         p, info, ev = T.infer(sp, text, max_combos=60, node_limit=5_000_000)
@@ -253,8 +308,12 @@ def metadata(sp):
     meta = dict(sp.get("meta") or {})
     P = sp.get("puzzle") if isinstance(sp.get("puzzle"), dict) else {}
     md = P.get("metadata") if isinstance(P.get("metadata"), dict) else {}
-    out = {"title": meta.get("title") or md.get("title"), "author": meta.get("author") or md.get("author"),
-           "rules_text": meta.get("rules") or md.get("rules"), "solution": meta.get("solution") or md.get("solution")}
+    out = {
+        "title": meta.get("title") or md.get("title"),
+        "author": meta.get("author") or md.get("author"),
+        "rules_text": meta.get("rules") or md.get("rules"),
+        "solution": meta.get("solution") or md.get("solution"),
+    }
     return {k: (v.strip() if isinstance(v, str) else v) for k, v in out.items()}
 
 
@@ -265,14 +324,31 @@ def to_puzzle(x, page_text=None, reading=None, infer=False, fetch=True, url=None
     p, info = translate(sp, page_text=page_text, reading=reading, infer=infer)
     md = metadata(sp)
     src = url or (x if isinstance(x, str) and "://" in x else (sp.get("url") if isinstance(sp, dict) else None))
-    meta = {"title": md["title"], "author": md["author"], "rules_text": md["rules_text"] or page_text,
-            "source": src, "id": (sp.get("puzzle") or {}).get("id") if isinstance(sp.get("puzzle"), dict) else None}
+    meta = {
+        "title": md["title"],
+        "author": md["author"],
+        "rules_text": md["rules_text"] or page_text,
+        "source": src,
+        "id": (sp.get("puzzle") or {}).get("id") if isinstance(sp.get("puzzle"), dict) else None,
+    }
     sol = md["solution"]
     if sp["format"] == "fpuzzles":
         from ._fpuz_translate import solution_of
+
         sol = solution_of(sp["puzzle"]) or sol
     return to_puzzle_json(p, solution=sol, meta=meta)
 
 
-__all__ = ["decode", "decode_payload", "fetch", "translate", "to_puzzle", "metadata", "payload_key",
-           "is_sudokupad_url", "compact_to_json", "expand", "UnsupportedPuzzle"]
+__all__ = [
+    "decode",
+    "decode_payload",
+    "fetch",
+    "translate",
+    "to_puzzle",
+    "metadata",
+    "payload_key",
+    "is_sudokupad_url",
+    "compact_to_json",
+    "expand",
+    "UnsupportedPuzzle",
+]

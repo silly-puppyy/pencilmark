@@ -12,6 +12,7 @@ constraints in order, domains, givens, coordinates), except for the normalisatio
 mechanic gets ONE engine expansion). The writer therefore works from the engine structure directly and keeps the order of
 relations and constraints (the order changes cards).
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -20,7 +21,8 @@ import json
 import re
 from collections import Counter
 
-from . import model as M, puzzle_json as PJ
+from . import model as M
+from . import puzzle_json as PJ
 
 FORMAT = "sudoku-puzzle"
 FORMAT_VERSION = 1
@@ -65,11 +67,28 @@ def parse_cell(s):
 SIDES = {"top": (-1, 0), "bottom": (1, 0), "left": (0, -1), "right": (0, 1)}
 
 # pair operators (FORMAT.md 5.1) <-> engine relation kinds
-OPS = {"different": "neq", "equal": "eq", "less": "lt", "less_equal": "le", "difference": "diff",
-       "not_difference": "notdiff", "not_consecutive": "nonconsec", "difference_at_least": "diffge",
-       "difference_at_most": "diffle", "ratio": "ratio", "not_ratio": "notratio", "sum": "sum", "not_sum": "notsum",
-       "parity_differs": "parity", "same_third": "samegroup3", "different_third": "diffgroup3", "same_mod3": "samemod3",
-       "different_mod3": "diffmod3", "allowed": "allowed", "any_of": "anyof"}
+OPS = {
+    "different": "neq",
+    "equal": "eq",
+    "less": "lt",
+    "less_equal": "le",
+    "difference": "diff",
+    "not_difference": "notdiff",
+    "not_consecutive": "nonconsec",
+    "difference_at_least": "diffge",
+    "difference_at_most": "diffle",
+    "ratio": "ratio",
+    "not_ratio": "notratio",
+    "sum": "sum",
+    "not_sum": "notsum",
+    "parity_differs": "parity",
+    "same_third": "samegroup3",
+    "different_third": "diffgroup3",
+    "same_mod3": "samemod3",
+    "different_mod3": "diffmod3",
+    "allowed": "allowed",
+    "any_of": "anyof",
+}
 REL_OP = {v: k for k, v in OPS.items()}
 DIRECTED_OPS = {"less", "less_equal", "allowed", "any_of"}
 NEIGHBOUR_STEPS = PJ.NEIGHBOURS
@@ -78,9 +97,19 @@ KING_DIAG = [(1, 1), (1, -1)]
 ORTHO = [(0, 1), (1, 0)]
 
 
-OP_KEY = {"difference": "value", "not_difference": "value", "difference_at_least": "value", "difference_at_most": "value",
-          "ratio": "value", "not_ratio": "value", "sum": "sum", "not_sum": "sum", "allowed": "allowed", "any_of": "any_of"}
-OP_PARAM_KEYS = {"value", "sum", "allowed", "any_of"}          # the operator's named parameter (FORMAT.md 5.1)
+OP_KEY = {
+    "difference": "value",
+    "not_difference": "value",
+    "difference_at_least": "value",
+    "difference_at_most": "value",
+    "ratio": "value",
+    "not_ratio": "value",
+    "sum": "sum",
+    "not_sum": "sum",
+    "allowed": "allowed",
+    "any_of": "any_of",
+}
+OP_PARAM_KEYS = {"value", "sum", "allowed", "any_of"}  # the operator's named parameter (FORMAT.md 5.1)
 
 
 def op_params(r):
@@ -160,7 +189,7 @@ class Board:
     def windows2x2(self):
         """2x2 blocks of existing cells (TL, TR, BL, BR) in puzzle_json's global-entropy order (sorted by top-left)."""
         out = []
-        for (r, c) in sorted(self.cid):
+        for r, c in sorted(self.cid):
             w = [(r, c), (r, c + 1), (r + 1, c), (r + 1, c + 1)]
             if all(x in self.cid for x in w):
                 out.append([self.cid[x] for x in w])
@@ -180,8 +209,10 @@ class Board:
         else:
             r2, c2 = self.coords[cells[1]]
             dr, dc = r2 - r, c2 - c
-            if any((self.coords[b][0] - self.coords[a][0], self.coords[b][1] - self.coords[a][1]) != (dr, dc)
-                   for a, b in zip(cells, cells[1:])):
+            if any(
+                (self.coords[b][0] - self.coords[a][0], self.coords[b][1] - self.coords[a][1]) != (dr, dc)
+                for a, b in zip(cells, cells[1:])
+            ):
                 return None
             cand = []
             if dc == 0 and abs(dr) == 1:
@@ -233,12 +264,15 @@ def _factor_shapes(D):
 def subgrid_units(grid, n, box):
     """rows, columns, boxes of an n x n sub-grid given as n*n engine cells in its reading order (puzzle_json's
     _layout_regions / standard order)."""
-    units = [("row", tuple(grid[i * n:(i + 1) * n])) for i in range(n)]
+    units = [("row", tuple(grid[i * n : (i + 1) * n])) for i in range(n)]
     units += [("col", tuple(grid[j::n])) for j in range(n)]
     if box:
         bh, bw = box
-        units += [("box", tuple(grid[(br + a) * n + bc + b] for a in range(bh) for b in range(bw)))
-                  for br in range(0, n, bh) for bc in range(0, n, bw)]
+        units += [
+            ("box", tuple(grid[(br + a) * n + bc + b] for a in range(bh) for b in range(bw)))
+            for br in range(0, n, bh)
+            for bc in range(0, n, bw)
+        ]
     return units
 
 
@@ -262,12 +296,15 @@ def grid_units(B, r0, c0, box=None):
             if (r, c) not in B.cid:
                 return None
             grid.append(B.cid[(r, c)])
-    out = [("row", tuple(grid[i * D:(i + 1) * D])) for i in range(D)]
+    out = [("row", tuple(grid[i * D : (i + 1) * D])) for i in range(D)]
     out += [("col", tuple(grid[j::D])) for j in range(D)]
     if box:
         bh, bw = box
-        out += [("box", tuple(grid[(br + a) * D + bc + b_] for a in range(bh) for b_ in range(bw)))
-                for br in range(0, D, bh) for bc in range(0, D, bw)]
+        out += [
+            ("box", tuple(grid[(br + a) * D + bc + b_] for a in range(bh) for b_ in range(bw)))
+            for br in range(0, D, bh)
+            for bc in range(0, D, bw)
+        ]
     return out
 
 
@@ -280,6 +317,7 @@ def read_houses(rules, B):
     (FORMAT.md 6.1): grid / box_grid / box / row / column rules in file order, a house equal to an earlier one skipped;
     areas = the grid / box_grid areas."""
     out, seen, areas = [], set(), []
+
     def add(kind, cells, **kw):
         fs = frozenset(cells)
         if kind in ("row", "col", "box"):
@@ -287,6 +325,7 @@ def read_houses(rules, B):
                 return
             seen.add(fs)
         out.append((kind, tuple(cells), kw))
+
     for r in rules:
         t = r["type"]
         if t in ("grid", "box_grid"):
@@ -314,13 +353,22 @@ def _cb(t):
 
 
 def battenburg_table(D, marked):
-    return [list(t) for t in itertools.product(range(1, D + 1), repeat=4) if _cb(t) == marked
-            and t[0] != t[1] and t[0] != t[2] and t[1] != t[3] and t[2] != t[3]]
+    return [
+        list(t)
+        for t in itertools.product(range(1, D + 1), repeat=4)
+        if _cb(t) == marked and t[0] != t[1] and t[0] != t[2] and t[1] != t[3] and t[2] != t[3]
+    ]
 
 
 def lockout_table(D, k):
-    return [(x, y, z) for x in range(1, D + 1) for y in range(1, D + 1) if abs(x - y) >= k
-            for z in range(1, D + 1) if z < min(x, y) or z > max(x, y)]
+    return [
+        (x, y, z)
+        for x in range(1, D + 1)
+        for y in range(1, D + 1)
+        if abs(x - y) >= k
+        for z in range(1, D + 1)
+        if z < min(x, y) or z > max(x, y)
+    ]
 
 
 def vudoku_table(D):
@@ -366,7 +414,10 @@ def _pair_clue(D, allowed):
 
 def _bat(D):
     if ("bat", D) not in _CACHE:
-        _CACHE[("bat", D)] = ([tuple(x) for x in battenburg_table(D, True)], [tuple(x) for x in battenburg_table(D, False)])
+        _CACHE[("bat", D)] = (
+            [tuple(x) for x in battenburg_table(D, True)],
+            [tuple(x) for x in battenburg_table(D, False)],
+        )
     return _CACHE[("bat", D)]
 
 
@@ -390,10 +441,18 @@ def edge_relation(rule, D):
     raise FormatError(f"unknown edge kind {k!r}")
 
 
-_MATHRAX_OK = {"+": lambda v: (lambda x, y: x + y == v), "-": lambda v: (lambda x, y: abs(x - y) == v),
-               "/": lambda v: (lambda x, y: max(x, y) == v * min(x, y)), "x": lambda v: (lambda x, y: x * y == v)}
-_NUMBERED_OK = {"difference": lambda r: _MATHRAX_OK["-"](r["value"]), "sum": lambda r: _MATHRAX_OK["+"](r["sum"]),
-                "ratio": lambda r: _MATHRAX_OK["/"](r["value"]), "product": lambda r: _MATHRAX_OK["x"](r["value"])}
+_MATHRAX_OK = {
+    "+": lambda v: (lambda x, y: x + y == v),
+    "-": lambda v: (lambda x, y: abs(x - y) == v),
+    "/": lambda v: (lambda x, y: max(x, y) == v * min(x, y)),
+    "x": lambda v: (lambda x, y: x * y == v),
+}
+_NUMBERED_OK = {
+    "difference": lambda r: _MATHRAX_OK["-"](r["value"]),
+    "sum": lambda r: _MATHRAX_OK["+"](r["sum"]),
+    "ratio": lambda r: _MATHRAX_OK["/"](r["value"]),
+    "product": lambda r: _MATHRAX_OK["x"](r["value"]),
+}
 
 
 def edge_family(kind, args, D):
@@ -456,15 +515,24 @@ def negative_relation(of, sel, D):
     raise FormatError(f"negative of {of!r} has no pair relation")
 
 
-NEG_SELECTOR = {"kropki": "color", "xv": "letter", "difference": "value", "sum": "sum", "ratio": "value",
-                "product": "value"}
+NEG_SELECTOR = {
+    "kropki": "color",
+    "xv": "letter",
+    "difference": "value",
+    "sum": "sum",
+    "ratio": "value",
+    "product": "value",
+}
 
 
 # -------------------------------------------------------------------------------------------------------- validation
 COMMON = {"type", "id", "label", "style"}
 RULE_KEYS = {
-    "grid": ({"origin"}, set()), "box_grid": ({"origin", "box"}, set()),
-    "box": ({"cells"}, set()), "row": ({"cells"}, set()), "column": ({"cells"}, set()),
+    "grid": ({"origin"}, set()),
+    "box_grid": ({"origin", "box"}, set()),
+    "box": ({"cells"}, set()),
+    "row": ({"cells"}, set()),
+    "column": ({"cells"}, set()),
     "region": ({"kind", "cells"}, set()),
     "cage": ({"cells"}, {"sum"}),
     "line": ({"kind", "cells"}, {"closed", "value", "groups"}),
@@ -494,8 +562,21 @@ RULE_KEYS = {
 }
 KINDS = {
     "region": {"diagonal", "window", "disjoint", "colour", "extra", "region"},
-    "line": {"thermo", "slow_thermo", "whisper", "renban", "region_sum", "palindrome", "entropic", "modular", "parity",
-             "zipper", "between", "lockout", "double_arrow"},
+    "line": {
+        "thermo",
+        "slow_thermo",
+        "whisper",
+        "renban",
+        "region_sum",
+        "palindrome",
+        "entropic",
+        "modular",
+        "parity",
+        "zipper",
+        "between",
+        "lockout",
+        "double_arrow",
+    },
     "edge": {"kropki", "xv", "difference", "sum", "product", "ratio", "less"},
     "corner": {"battenburg", "mathrax", "exclude"},
     "sum": {"little_killer", "frame", "group", "corner"},
@@ -504,11 +585,30 @@ KINDS = {
     "count": {"circles"},
 }
 LINE_PARAMS = {"whisper": {"value"}, "modular": {"value"}, "lockout": {"value"}, "entropic": {"groups"}}
-EDGE_PARAMS = {"kropki": {"color"}, "xv": {"letter"}, "difference": {"value"}, "sum": {"sum"}, "product": {"value"},
-               "ratio": {"value"}, "less": set()}
+EDGE_PARAMS = {
+    "kropki": {"color"},
+    "xv": {"letter"},
+    "difference": {"value"},
+    "sum": {"sum"},
+    "product": {"value"},
+    "ratio": {"value"},
+    "less": set(),
+}
 NEG_OF = {"kropki", "xv", "difference", "sum", "ratio", "product", "rossini", "battenburg", "cell"}
-TOP_KEYS = {"format", "format_version", "$schema", "meta", "board", "digits", "givens", "solution", "candidates", "rules",
-            "decorations", "style"}
+TOP_KEYS = {
+    "format",
+    "format_version",
+    "$schema",
+    "meta",
+    "board",
+    "digits",
+    "givens",
+    "solution",
+    "candidates",
+    "rules",
+    "decorations",
+    "style",
+}
 
 
 def _int(x, what, lo=None):
@@ -537,8 +637,10 @@ def validate(doc):
         raise FormatError('"board" must be {"rows": R, "cols": C}')
     R, C = _int(g["rows"], "grid.rows", 1), _int(g["cols"], "grid.cols", 1)
     if isinstance(doc["digits"], dict):
-        raise FormatError('"digits" as an object (other digit sets, symbols) is reserved for a future version of the '
-                          'format; format_version 1 takes an integer D (digits 1..D)')
+        raise FormatError(
+            '"digits" as an object (other digit sets, symbols) is reserved for a future version of the '
+            "format; format_version 1 takes an integer D (digits 1..D)"
+        )
     D = _int(doc["digits"], "digits", 1)
     giv = doc["givens"]
     if not isinstance(giv, list) or len(giv) != R * C:
@@ -567,8 +669,11 @@ def validate(doc):
                 raise FormatError(f"candidates of {k} must be a list of digits 1..{D}")
     if not isinstance(doc["rules"], list):
         raise FormatError("rules must be a list")
-    B.grid_origins = {r["origin"] for r in doc["rules"] if isinstance(r, dict) and r.get("type") in ("grid", "box_grid")
-                      and isinstance(r.get("origin"), str)}
+    B.grid_origins = {
+        r["origin"]
+        for r in doc["rules"]
+        if isinstance(r, dict) and r.get("type") in ("grid", "box_grid") and isinstance(r.get("origin"), str)
+    }
     for i, r in enumerate(doc["rules"]):
         try:
             _validate_rule(r, B)
@@ -589,7 +694,12 @@ def _merge_negatives(rules, prov):
     without a selector, which expands to the same relations in the same order"""
     out, op = [], []
     for r, pr in zip(rules, prov):
-        if out and r.get("type") == "negative" and out[-1].get("type") == "negative" and r["of"] == out[-1]["of"] in ("kropki", "xv"):
+        if (
+            out
+            and r.get("type") == "negative"
+            and out[-1].get("type") == "negative"
+            and r["of"] == out[-1]["of"] in ("kropki", "xv")
+        ):
             key = NEG_SELECTOR[r["of"]]
             first, second = ("white", "black") if r["of"] == "kropki" else ("X", "V")
             strip = lambda x: {k: v for k, v in x.items() if k != key}
@@ -597,7 +707,8 @@ def _merge_negatives(rules, prov):
                 out[-1] = strip(r)
                 op[-1] = {k: set(op[-1].get(k, ())) | set(pr.get(k, ())) for k in set(op[-1]) | set(pr)}
                 continue
-        out.append(r); op.append(pr)
+        out.append(r)
+        op.append(pr)
     return out, op
 
 
@@ -615,13 +726,16 @@ def area_cells(B, a):
 # Reserved for a planned custom rule type (FORMAT.md 6.17): explicit digit tables. Tables make files huge and no renderer
 # can draw them, so format_version 1 readers refuse them and the writer never produces them. The engine still builds
 # tables internally (edge clues, lockout, entropy, ...); _reserved_ok() lets internal tooling read old files that hold them.
-RESERVED_MSG = ("is reserved: digit tables are replaced by a custom rule type planned for a later version of the format; "
-                "use a rule family (FORMAT.md 6)")
+RESERVED_MSG = (
+    "is reserved: digit tables are replaced by a custom rule type planned for a later version of the format; "
+    "use a rule family (FORMAT.md 6)"
+)
 _RESERVED_OK = [False]
 
 
 class _reserved_ok:
     """internal tooling only (not part of the format): read and write table rules / the allowed operator"""
+
     def __enter__(self):
         self.old = _RESERVED_OK[0]
         _RESERVED_OK[0] = True
@@ -632,8 +746,12 @@ class _reserved_ok:
 
 def resolve_areas(B, rules):
     """rules with every "area" replaced by its cell list ("cells"), as the engine expansion reads them"""
-    return [dict({k: v for k, v in r.items() if k != "area"}, cells=[B.name(c) for c in area_cells(B, r["area"])])
-            if isinstance(r, dict) and "area" in r else r for r in rules]
+    return [
+        dict({k: v for k, v in r.items() if k != "area"}, cells=[B.name(c) for c in area_cells(B, r["area"])])
+        if isinstance(r, dict) and "area" in r
+        else r
+        for r in rules
+    ]
 
 
 def _validate_rule(r, B):
@@ -642,8 +760,10 @@ def _validate_rule(r, B):
         raise FormatError("a rule must be an object with a type")
     t = r["type"]
     if t == "custom":
-        raise FormatError('"type": "custom" is reserved for a future rule language (custom rules written in the file); '
-                          'format_version 1 readers refuse it')
+        raise FormatError(
+            '"type": "custom" is reserved for a future rule language (custom rules written in the file); '
+            "format_version 1 readers refuse it"
+        )
     if t == "table" and not _RESERVED_OK[0]:
         raise FormatError('"type": "table" ' + RESERVED_MSG)
     if isinstance(t, str) and ":" in t:
@@ -663,8 +783,11 @@ def _validate_rule(r, B):
     if t in ("grid", "box_grid"):
         if t == "box_grid":
             bx = r["box"]
-            if not (isinstance(bx, list) and len(bx) == 2 and all(isinstance(x, int) and not isinstance(x, bool) and x >= 1
-                                                                  for x in bx)):
+            if not (
+                isinstance(bx, list)
+                and len(bx) == 2
+                and all(isinstance(x, int) and not isinstance(x, bool) and x >= 1 for x in bx)
+            ):
                 raise FormatError("box must be [rows, cols] of positive integers")
             if bx[0] * bx[1] != D:
                 raise FormatError(f"box {bx} does not hold {D} cells")
@@ -677,8 +800,11 @@ def _validate_rule(r, B):
             raise FormatError("vudoku takes 3 cells (vertex, arm, arm)")
         if t == "appears":
             B.idx(r["source"])
-        if t == "contains" and (not isinstance(r["digits"], list) or not r["digits"]
-                                or any(not isinstance(x, int) or not 1 <= x <= D for x in r["digits"])):
+        if t == "contains" and (
+            not isinstance(r["digits"], list)
+            or not r["digits"]
+            or any(not isinstance(x, int) or not 1 <= x <= D for x in r["digits"])
+        ):
             raise FormatError(f"digits must be a list of digits 1..{D}")
         if t == "cell":
             if kind in ("low", "high"):
@@ -688,7 +814,11 @@ def _validate_rule(r, B):
             elif kind in ("set", "exclude"):
                 if "values" not in r or "split" in r:
                     raise FormatError(f"digits {kind} takes values")
-                if not isinstance(r["values"], list) or not r["values"] or any(not isinstance(x, int) or not 1 <= x <= D for x in r["values"]):
+                if (
+                    not isinstance(r["values"], list)
+                    or not r["values"]
+                    or any(not isinstance(x, int) or not 1 <= x <= D for x in r["values"])
+                ):
                     raise FormatError(f"values must be digits 1..{D}")
             elif "split" in r or "values" in r:
                 raise FormatError(f"digits {kind} takes no split / values")
@@ -850,12 +980,18 @@ def _check_op(r, where="rule"):
     want = OP_KEY.get(op)
     have = set(r) & OP_PARAM_KEYS
     if have != ({want} if want else set()):
-        raise FormatError(f"operator {op} takes " + (f'"{want}"' if want else "no parameter") +
-                          (f", not {sorted(have - {want})}" if have - {want} else ""))
+        raise FormatError(
+            f"operator {op} takes "
+            + (f'"{want}"' if want else "no parameter")
+            + (f", not {sorted(have - {want})}" if have - {want} else "")
+        )
     if want in ("value", "sum") and (isinstance(r[want], bool) or not isinstance(r[want], int)):
         raise FormatError(f"operator {op}: {want} must be an integer")
-    if op == "allowed" and not (isinstance(r["allowed"], list) and r["allowed"] and
-                                all(isinstance(x, list) and len(x) == 2 for x in r["allowed"])):
+    if op == "allowed" and not (
+        isinstance(r["allowed"], list)
+        and r["allowed"]
+        and all(isinstance(x, list) and len(x) == 2 for x in r["allowed"])
+    ):
         raise FormatError("operator allowed takes a non-empty list of digit pairs [[a, b], ...]")
     if op == "any_of":
         if not isinstance(r["any_of"], list) or not r["any_of"]:
@@ -896,7 +1032,9 @@ def to_internal(doc):
     if internal:
         out["rules"] = internal
     if doc.get("candidates"):
-        out["candidates"] = {k.lower(): "".join(PJ._sym(v) for v in sorted(set(vs))) for k, vs in doc["candidates"].items()}
+        out["candidates"] = {
+            k.lower(): "".join(PJ._sym(v) for v in sorted(set(vs))) for k, vs in doc["candidates"].items()
+        }
     if doc.get("meta"):
         out["meta"] = dict(doc["meta"])
     return out
@@ -924,8 +1062,11 @@ class _ReadCtx:
                 a, b = (B.idx(c) for c in r["cells"])
                 fam.setdefault(r["kind"], set()).add(frozenset((a, b)))
         self.family = fam
-        self.houses = [set(B.idx(c) for c in g["cells"]) for g in regions
-                       if g["kind"] in ("row", "col", "box", "diag", "window", "region")]
+        self.houses = [
+            set(B.idx(c) for c in g["cells"])
+            for g in regions
+            if g["kind"] in ("row", "col", "box", "diag", "window", "region")
+        ]
 
     def share_house(self, a, b):
         return any(a in h and b in h for h in self.houses)
@@ -942,8 +1083,12 @@ class _ReadCtx:
         return [self.B.name(c) for c in cells]
 
     def pairs_rule(self, kind, args, prs):
-        return {"type": "pairs", "rel": kind, "params": _engine_params_json(kind, args),
-                "cells": [[self.B.name(a), self.B.name(b)] for a, b in prs]}
+        return {
+            "type": "pairs",
+            "rel": kind,
+            "params": _engine_params_json(kind, args),
+            "cells": [[self.B.name(a), self.B.name(b)] for a, b in prs],
+        }
 
     def ortho_pairs(self, cells=None):
         prs = self.B.pairs(ORTHO, cells)
@@ -972,7 +1117,11 @@ class _ReadCtx:
                 tab = [list(x) for x in lockout_table(D, kk)]
                 out += [{"type": "table", "cells": [cs[0], cs[-1], c], "allowed": tab} for c in cs[1:-1]]
                 return out
-            con = {"type": "line", "kind": k, "cells": list(cs) + ([cs[0]] if r.get("closed") and k != "renban" else [])}
+            con = {
+                "type": "line",
+                "kind": k,
+                "cells": list(cs) + ([cs[0]] if r.get("closed") and k != "renban" else []),
+            }
             if k == "whisper" and "value" in r:
                 con["k"] = r["value"]
             if k == "modular" and r.get("value", 3) != 3:
@@ -1011,13 +1160,19 @@ class _ReadCtx:
                 if NUMBERED_PAIR_FORM == "table":
                     ok = _MATHRAX_OK[op](v)
                     return [self.pair_table(tl, br, ok), self.pair_table(tr, bl, ok)]
-                rel = {"+": ("sum", v), "-": ("diff", v), "/": ("ratio", v),
-                       "x": ("allowed", product_pairs(D, v))}[op]
-                return [self.pairs_rule(rel[0], tuple(rel[1:]), [(tl, br)]), self.pairs_rule(rel[0], tuple(rel[1:]), [(tr, bl)])]
+                rel = {"+": ("sum", v), "-": ("diff", v), "/": ("ratio", v), "x": ("allowed", product_pairs(D, v))}[op]
+                return [
+                    self.pairs_rule(rel[0], tuple(rel[1:]), [(tl, br)]),
+                    self.pairs_rule(rel[0], tuple(rel[1:]), [(tr, bl)]),
+                ]
             # battenburg corners (+ negative): one block in window order
             return self.battenburg(i, done)
         if t == "sum":
-            con = {"type": "little_killer" if r["kind"] == "little_killer" else "sum", "cells": list(r["cells"]), "total": r["sum"]}
+            con = {
+                "type": "little_killer" if r["kind"] == "little_killer" else "sum",
+                "cells": list(r["cells"]),
+                "total": r["sum"],
+            }
             return [con]
         if t in ("sandwich", "xsum"):
             return [{"type": t, "cells": list(r["cells"]), "total": r["sum"]}]
@@ -1038,7 +1193,13 @@ class _ReadCtx:
             if k in ("odd", "even"):
                 return [{"type": "parity", "parity": k, "cells": list(r["cells"])}]
             if k == "set":
-                return [{"type": "digit_class", "digits": "".join(PJ._sym(v) for v in r["values"]), "cells": list(r["cells"])}]
+                return [
+                    {
+                        "type": "digit_class",
+                        "digits": "".join(PJ._sym(v) for v in r["values"]),
+                        "cells": list(r["cells"]),
+                    }
+                ]
             if k == "exclude":
                 return [{"type": "exclude", "digit": v, "cells": list(r["cells"])} for v in r["values"]]
             return self.lowhigh(i, r, done)
@@ -1074,7 +1235,7 @@ class _ReadCtx:
             if "cells" in r:
                 return [{"type": "table", "cells": list(r["cells"]), "allowed": allowed}]
             out = []
-            for (rr, cc) in sorted(B.cid):
+            for rr, cc in sorted(B.cid):
                 w = [(rr + dr, cc + dc) for dr, dc in r["where"]]
                 if all(x in B.cid for x in w):
                     out.append({"type": "table", "cells": [cell_name(*x) for x in w], "allowed": allowed})
@@ -1088,7 +1249,9 @@ class _ReadCtx:
             if of == "cell":
                 if r["kind"] in ("low", "high"):
                     return self.lowhigh(i, r, done)
-                marked = {B.idx(c) for x in self.rules if x["type"] == "cell" and x["kind"] == r["kind"] for c in x["cells"]}
+                marked = {
+                    B.idx(c) for x in self.rules if x["type"] == "cell" and x["kind"] == r["kind"] for c in x["cells"]
+                }
                 scope = set(idx(r["cells"])) if "cells" in r else set(range(len(B.coords)))
                 rest = [c for c in range(len(B.coords)) if c in scope and c not in marked]
                 other = "even" if r["kind"] == "odd" else "odd"
@@ -1104,12 +1267,18 @@ class _ReadCtx:
         scoped = "within" in r or "cells" in r or "except" in r
         if k and not scoped:
             return [{"type": k}]
-        steps = {"antiknight": KNIGHT, "antiking": KING_DIAG, "nonconsecutive": ORTHO}.get(k) or NEIGHBOUR_STEPS[r["where"]]
+        steps = {"antiknight": KNIGHT, "antiking": KING_DIAG, "nonconsecutive": ORTHO}.get(k) or NEIGHBOUR_STEPS[
+            r["where"]
+        ]
         if k == "antiknight":
             steps = KNIGHT
         if not k and not ("within" in r or "cells" in r):
-            out = {"type": "pairs", "rel": OPS[r["op"]], "params": _engine_params_json(OPS[r["op"]], _op_params_to_engine(r["op"], op_params(r))),
-                   "where": r["where"]}
+            out = {
+                "type": "pairs",
+                "rel": OPS[r["op"]],
+                "params": _engine_params_json(OPS[r["op"]], _op_params_to_engine(r["op"], op_params(r))),
+                "where": r["where"],
+            }
             if r.get("except"):
                 out["except"] = [list(p) for p in r["except"]]
             return [out]
@@ -1138,7 +1307,7 @@ class _ReadCtx:
             elif x["type"] == "negative" and x["of"] == "rossini":
                 all_given = True
                 done.add(j)
-        if not (B.R == B.C == self.D and len(B.coords) == self.D ** 2):
+        if not (B.R == B.C == self.D and len(B.coords) == self.D**2):
             raise NotSupportedError("rossini is supported on a plain D x D board only")
         return [{"type": "rossini", "arrows": arrows, "all_given": all_given}]
 
@@ -1169,10 +1338,20 @@ class _ReadCtx:
     def lowhigh(self, i, r, done):
         B, D = self.B, self.D
         split = r["split"]
-        hi_rules = [j for j, x in enumerate(self.rules) if x["type"] == "cell" and x["kind"] in ("low", "high") and x["split"] == split]
-        negs = [j for j, x in enumerate(self.rules) if x["type"] == "negative" and x["of"] == "cell"
-                and x.get("kind") in ("low", "high") and x.get("split") == split]
-        if not negs:            # marked cells only: a digit-class clue
+        hi_rules = [
+            j
+            for j, x in enumerate(self.rules)
+            if x["type"] == "cell" and x["kind"] in ("low", "high") and x["split"] == split
+        ]
+        negs = [
+            j
+            for j, x in enumerate(self.rules)
+            if x["type"] == "negative"
+            and x["of"] == "cell"
+            and x.get("kind") in ("low", "high")
+            and x.get("split") == split
+        ]
+        if not negs:  # marked cells only: a digit-class clue
             k = r["kind"]
             vals = range(1, split + 1) if k == "low" else range(split + 1, D + 1)
             return [{"type": "digit_class", "digits": "".join(PJ._sym(v) for v in vals), "cells": list(r["cells"])}]
@@ -1254,8 +1433,15 @@ class _Writer:
         self.gidx = [k for k, g in enumerate(p.groups) if not (self.key and set(g.cells) & self.key)]
         out = []
         boxes = [g for g in gs if g.kind == "box"]
-        cand = [g for g in gs if g.kind in ("region", "jigsaw") and g.complete and g.total is None and len(g.cells) == D
-                and not self.straight(g.cells)]
+        cand = [
+            g
+            for g in gs
+            if g.kind in ("region", "jigsaw")
+            and g.complete
+            and g.total is None
+            and len(g.cells) == D
+            and not self.straight(g.cells)
+        ]
         piece = set()
         if cand:
             allb = boxes + cand
@@ -1268,7 +1454,11 @@ class _Writer:
                 kind = "box"
             elif kind in ("house", "partial"):
                 st = self.straight(g.cells)
-                kind = st if (st and len(g.cells) == D and g.complete) else ("box" if g.complete and len(g.cells) == D else "region")
+                kind = (
+                    st
+                    if (st and len(g.cells) == D and g.complete)
+                    else ("box" if g.complete and len(g.cells) == D else "region")
+                )
             if g.total is not None and kind != "cage":
                 kind = "cage"
             if len(g.cells) == D and not g.complete and kind != "cage":
@@ -1297,7 +1487,7 @@ class _Writer:
             if kind in ("row", "col", "box") and total is None and complete and len(cells) == D:
                 where.setdefault((kind, frozenset(cells)), []).append(k)
         cands = set()
-        for (kind, fs) in where:
+        for kind, fs in where:
             if kind == "row":
                 r, c = min(B.coords[x] for x in fs)
                 cands |= {(r - k, c) for k in range(D)}
@@ -1308,13 +1498,13 @@ class _Writer:
                 continue
             box = None
             for shape in _factor_shapes(D):
-                bu = grid_units(B, r0, c0, shape)[2 * D:]
+                bu = grid_units(B, r0, c0, shape)[2 * D :]
                 if all(("box", frozenset(u[1])) in where for u in bu):
                     box, units = shape, units + bu
                     break
             grids.append([None, r0, c0, box, units])
         share = Counter(frozenset(u[1]) for g in grids for u in g[4])
-        for g in grids:         # order: first house that belongs to this grid only (overlapping grids share boxes)
+        for g in grids:  # order: first house that belongs to this grid only (overlapping grids share boxes)
             own = [u for u in g[4] if share[frozenset(u[1])] == 1] or g[4]
             g[0] = min(where[(u[0], frozenset(u[1]))][0] for u in own)
         grids.sort(key=lambda g: (g[0], g[1], g[2]))
@@ -1337,7 +1527,7 @@ class _Writer:
             kind, cells, total, _ = g
             if kind in ("row", "col", "box"):
                 if frozenset(cells) in seen:
-                    self.merged_duplicates += 1            # normalisation: a house listed twice is one house
+                    self.merged_duplicates += 1  # normalisation: a house listed twice is one house
                     continue
                 seen.add(frozenset(cells))
             items.append((k, {"g": g, "gi": [k]}))
@@ -1395,13 +1585,14 @@ class _Writer:
             givens[flat[i]] = p.givens.get(i, 0)
         d = {"format": FORMAT, "format_version": FORMAT_VERSION}
         from .export import read_meta
+
         m = read_meta({"meta": meta or {}})
         if m:
             d["meta"] = m
         d.update({"board": {"rows": R, "cols": C}, "digits": D, "givens": givens})
         if solution is not None:
             sol = [None] * (R * C)
-            for i, v in enumerate(list(solution)[:len(B.coords)]):
+            for i, v in enumerate(list(solution)[: len(B.coords)]):
                 sol[flat[i]] = int(v)
             d["solution"] = sol
         rules = self.write_groups()
@@ -1445,7 +1636,14 @@ class _Writer:
                 return [{"type": "corner", "kind": "mathrax", "op": r["parity"], "cells": cells}]
             return [{"type": "cell", "kind": r["parity"], "cells": cells}]
         if t == "digit_class":
-            return [{"type": "cell", "kind": "set", "values": [PJ._val(ch) for ch in str(r["digits"])], "cells": nm(r["cells"])}]
+            return [
+                {
+                    "type": "cell",
+                    "kind": "set",
+                    "values": [PJ._val(ch) for ch in str(r["digits"])],
+                    "cells": nm(r["cells"]),
+                }
+            ]
         if t == "exclude":
             cells = nm(r["cells"])
             if B.is_block([B.idx(c) for c in cells]):
@@ -1453,8 +1651,10 @@ class _Writer:
             return [{"type": "cell", "kind": "exclude", "values": [int(r["digit"])], "cells": cells}]
         if t == "lowhigh":
             split = int(r.get("split", (D + 1) // 2))
-            return [{"type": "cell", "kind": "high", "split": split, "cells": nm(r.get("high", []))},
-                    {"type": "negative", "of": "cell", "kind": "high", "split": split}]
+            return [
+                {"type": "cell", "kind": "high", "split": split, "cells": nm(r.get("high", []))},
+                {"type": "negative", "of": "cell", "kind": "high", "split": split},
+            ]
         raise NotSupportedError(f"cell clue {t!r}")
 
     # ---------------------------------------------------------------- relations / constraints
@@ -1467,13 +1667,15 @@ class _Writer:
         drop_con = [False] * len(cons)
         if compiled:
             comp, comp_cons, _ = PJ._compiled_extras(p)
-            for k in range(len(rels) - 1, -1, -1):          # compiled relations come last (finalize appends them)
+            for k in range(len(rels) - 1, -1, -1):  # compiled relations come last (finalize appends them)
                 if comp[rels[k]] > 0:
                     comp[rels[k]] -= 1
                     drop_rel[k] = True
             cc = Counter(comp_cons)
             for k in range(len(cons) - 1, -1, -1):
-                key = json.dumps({a: b for a, b in cons[k].items() if not a.startswith("_")}, sort_keys=True, default=list)
+                key = json.dumps(
+                    {a: b for a, b in cons[k].items() if not a.startswith("_")}, sort_keys=True, default=list
+                )
                 if cc[key] > 0:
                     cc[key] -= 1
                     drop_con[k] = True
@@ -1488,15 +1690,22 @@ class _Writer:
             if nrels:
                 L = len(nrels)
                 for s in range(len(rels) - L + 1):
-                    if not any(used[s:s + L]) and not any(drop_rel[s:s + L]) and rels[s:s + L] == list(nrels):
+                    if not any(used[s : s + L]) and not any(drop_rel[s : s + L]) and rels[s : s + L] == list(nrels):
                         pos = s
                         break
                 if pos is None:
                     raise NotSupportedError(f"named rule {rule.get('type')} relations not found")
                 for s in range(pos, pos + len(nrels)):
                     used[s] = True
-            named_items.append({"rule": rule, "rel": pos, "con": None, "nrel": len(nrels),
-                                "prov": {"relations": set(range(pos, pos + len(nrels))) if nrels else set()}})
+            named_items.append(
+                {
+                    "rule": rule,
+                    "rel": pos,
+                    "con": None,
+                    "nrel": len(nrels),
+                    "prov": {"relations": set(range(pos, pos + len(nrels))) if nrels else set()},
+                }
+            )
         nk = 0
         named_cons = [k for k, c in enumerate(cons) if c.get("_named") and not drop_con[k]]
         # assign named constraints to named rules in order (each named rule's constraints are contiguous)
@@ -1507,19 +1716,31 @@ class _Writer:
                 if cursor + n_c > len(named_cons):
                     raise NotSupportedError(f"named rule {it['rule'].get('type')} constraints not found")
                 it["con"] = named_cons[cursor]
-                it["prov"]["constraints"] = set(named_cons[cursor:cursor + n_c])
+                it["prov"]["constraints"] = set(named_cons[cursor : cursor + n_c])
                 cursor += n_c
         self.family = self.family_positions(rels, [u or d for u, d in zip(used, drop_rel)], cons, drop_con)
         rel_items = self.relation_items(rels, [u or d for u, d in zip(used, drop_rel)])
         con_items = self.constraint_items(cons, drop_con)
         # merge the relation stream and the constraint stream; named rules with both link them
-        sr = sorted([(x["pos"], "r", x) for x in rel_items] + [(it["rel"], "n", it) for it in named_items if it["rel"] is not None],
-                    key=lambda z: z[0])
-        sc = sorted([(x["pos"], "c", x) for x in con_items] + [(it["con"], "n", it) for it in named_items if it["con"] is not None],
-                    key=lambda z: z[0])
-        out = [(r, it["prov"]) for it in named_items if it["rel"] is None and it["con"] is None for r in self.named_rule(it["rule"])]
+        sr = sorted(
+            [(x["pos"], "r", x) for x in rel_items]
+            + [(it["rel"], "n", it) for it in named_items if it["rel"] is not None],
+            key=lambda z: z[0],
+        )
+        sc = sorted(
+            [(x["pos"], "c", x) for x in con_items]
+            + [(it["con"], "n", it) for it in named_items if it["con"] is not None],
+            key=lambda z: z[0],
+        )
+        out = [
+            (r, it["prov"])
+            for it in named_items
+            if it["rel"] is None and it["con"] is None
+            for r in self.named_rule(it["rule"])
+        ]
         emitted = set()
         i = j = 0
+
         def emit(kind, x):
             if kind == "n":
                 if id(x) in emitted:
@@ -1529,16 +1750,20 @@ class _Writer:
             else:
                 pr = {"relations": set(x.get("rel") or ()), "constraints": set(x.get("con") or ())}
                 out.extend((r, pr) for r in x["rules"])
+
         while i < len(sr) or j < len(sc):
             while i < len(sr) and (sr[i][1] == "r" or id(sr[i][2]) in emitted):
-                emit(sr[i][1], sr[i][2]); i += 1
-            while j < len(sc) and (sc[j][1] == "c" or id(sc[j][2]) in emitted
-                                   or sc[j][2]["rel"] is None):
-                emit(sc[j][1], sc[j][2]); j += 1
-            if i < len(sr):                       # a named rule with relations: its constraints (if any) are next in sc
-                emit("n", sr[i][2]); i += 1
+                emit(sr[i][1], sr[i][2])
+                i += 1
+            while j < len(sc) and (sc[j][1] == "c" or id(sc[j][2]) in emitted or sc[j][2]["rel"] is None):
+                emit(sc[j][1], sc[j][2])
+                j += 1
+            if i < len(sr):  # a named rule with relations: its constraints (if any) are next in sc
+                emit("n", sr[i][2])
+                i += 1
             elif j < len(sc):
-                emit(sc[j][1], sc[j][2]); j += 1
+                emit(sc[j][1], sc[j][2])
+                j += 1
         return out
 
     def named_cons_count(self, rule):
@@ -1573,7 +1798,14 @@ class _Writer:
             out = []
             for a in rule.get("arrows", []):
                 cells = PJ._edge_line(None, D, a["side"], a["index"])[:3]
-                out.append({"type": "rossini", "arrow": a.get("towards", "in"), "side": a["side"], "cells": [B.name(c) for c in cells]})
+                out.append(
+                    {
+                        "type": "rossini",
+                        "arrow": a.get("towards", "in"),
+                        "side": a["side"],
+                        "cells": [B.name(c) for c in cells],
+                    }
+                )
             if rule.get("all_given", True):
                 out.append({"type": "negative", "of": "rossini"})
             return out
@@ -1648,7 +1880,7 @@ class _Writer:
                 hit = self.whole_rule(kind, args, prs, pos)
                 if hit:
                     rule, n = hit
-                    items.append({"pos": run[pos], "rules": [rule], "rel": run[pos:pos + n]})
+                    items.append({"pos": run[pos], "rules": [rule], "rel": run[pos : pos + n]})
                     pos += n
                     continue
                 a, b = prs[pos]
@@ -1658,16 +1890,29 @@ class _Writer:
                 else:
                     op = REL_OP[kind]
                     if op == "allowed" and not _RESERVED_OK[0]:
-                        raise NotSupportedError("a pair clue with no rule family (an explicit digit-pair list); the allowed "
-                                                "operator is reserved for the planned custom rule type")
+                        raise NotSupportedError(
+                            "a pair clue with no rule family (an explicit digit-pair list); the allowed "
+                            "operator is reserved for the planned custom rule type"
+                        )
                     params = _engine_params_to_op(kind, args)
                     last = items[-1]["rules"][-1] if items else None
                     if last and last.get("type") == "relation" and last["op"] == op and op_params(last) == params:
                         last["pairs"].append([B.name(a), B.name(b)])
                         items[-1]["rel"].append(run[pos])
                     else:
-                        items.append({"pos": run[pos], "rel": [run[pos]],
-                                      "rules": [dict({"type": "relation", "op": op}, **op_named(op, params), pairs=[[B.name(a), B.name(b)]])]})
+                        items.append(
+                            {
+                                "pos": run[pos],
+                                "rel": [run[pos]],
+                                "rules": [
+                                    dict(
+                                        {"type": "relation", "op": op},
+                                        **op_named(op, params),
+                                        pairs=[[B.name(a), B.name(b)]],
+                                    )
+                                ],
+                            }
+                        )
                 pos += 1
         return items
 
@@ -1693,20 +1938,35 @@ class _Writer:
             cands.append(({"type": "neighbours", "kind": "antiknight"}, kn))
             cands.append(({"type": "neighbours", "kind": "antiking"}, B.pairs(KING_DIAG)))
             if self.box_sets:
-                cands.append(({"type": "neighbours", "kind": "antiknight", "within": "box"},
-                              [(a, b) for a, b in kn if any(a in g and b in g for g in self.box_sets)]))
-                cands.append(({"type": "neighbours", "kind": "antiking", "within": "box"},
-                              [(a, b) for a, b in B.pairs(KING_DIAG) if any(a in g and b in g for g in self.box_sets)]))
+                cands.append(
+                    (
+                        {"type": "neighbours", "kind": "antiknight", "within": "box"},
+                        [(a, b) for a, b in kn if any(a in g and b in g for g in self.box_sets)],
+                    )
+                )
+                cands.append(
+                    (
+                        {"type": "neighbours", "kind": "antiking", "within": "box"},
+                        [(a, b) for a, b in B.pairs(KING_DIAG) if any(a in g and b in g for g in self.box_sets)],
+                    )
+                )
         if kind == "nonconsec" and not args:
             cands.append(({"type": "neighbours", "kind": "nonconsecutive"}, B.pairs(ORTHO)))
-        if len(self.grid_areas) > 1 and kind in ("neq", "nonconsec") and not args:     # the same rule on one grid only
-            for nk, steps in (("antiknight", KNIGHT), ("antiking", KING_DIAG)) if kind == "neq" else (("nonconsecutive", ORTHO),):
+        if len(self.grid_areas) > 1 and kind in ("neq", "nonconsec") and not args:  # the same rule on one grid only
+            for nk, steps in (
+                (("antiknight", KNIGHT), ("antiking", KING_DIAG)) if kind == "neq" else (("nonconsecutive", ORTHO),)
+            ):
                 for org, area in self.grid_areas:
                     cands.append(({"type": "neighbours", "kind": nk, "area": org}, B.pairs(steps, sorted(area))))
-        neg = {("nonconsec", ()): ("kropki", "white"), ("notdiff", (1,)): ("kropki", "white"),
-               ("notratio", (2,)): ("kropki", "black"), ("notsum", (10,)): ("xv", "X"), ("notsum", (5,)): ("xv", "V")}
+        neg = {
+            ("nonconsec", ()): ("kropki", "white"),
+            ("notdiff", (1,)): ("kropki", "white"),
+            ("notratio", (2,)): ("kropki", "black"),
+            ("notsum", (10,)): ("xv", "X"),
+            ("notsum", (5,)): ("xv", "V"),
+        }
         frozen = lambda x: tuple(frozen(y) for y in x) if isinstance(x, (list, tuple)) else x
-        key = (kind, frozen(args))                 # any_of / allowed parameters hold lists
+        key = (kind, frozen(args))  # any_of / allowed parameters hold lists
         nf = neg.get(key)
         if nf is None and len(args) == 1 and kind in ("notdiff", "notsum", "notratio"):
             nf = ({"notdiff": "difference", "notsum": "sum", "notratio": "ratio"}[kind], args[0])
@@ -1716,7 +1976,7 @@ class _Writer:
             exp = [(a, b) for a, b in self.ortho_in_subgrids() if frozenset((a, b)) not in exempt]
             rule = {"type": "negative", "of": of, NEG_SELECTOR[of]: sel}
             if kind == "nonconsec" and not exempt and fs(exp) == fs(B.pairs(ORTHO)):
-                pass                      # plain non-consecutive: the neighbours rule above
+                pass  # plain non-consecutive: the neighbours rule above
             else:
                 cands.append((rule, exp))
             if len(self.grid_areas) > 1:  # the negative on one grid only
@@ -1737,7 +1997,11 @@ class _Writer:
                         missing = [x for x in alln if frozenset(x) not in have]
                         exp = [x for x in alln if frozenset(x) in have]
                         if [frozenset(x) for x in exp] == [frozenset(x) for x in prs]:
-                            rule = dict({"type": "neighbours", "op": REL_OP[kind]}, **op_named(REL_OP[kind], _engine_params_to_op(kind, args)), where=where)
+                            rule = dict(
+                                {"type": "neighbours", "op": REL_OP[kind]},
+                                **op_named(REL_OP[kind], _engine_params_to_op(kind, args)),
+                                where=where,
+                            )
                             if missing:
                                 rule["except"] = [[B.name(a), B.name(b)] for a, b in missing]
                             return rule, len(prs)
@@ -1762,7 +2026,7 @@ class _Writer:
                 blk = self.table_block(cons, live, i)
                 if blk:
                     rules, n = blk
-                    items.append({"pos": live[i], "rules": rules, "con": live[i:i + n]})
+                    items.append({"pos": live[i], "rules": rules, "con": live[i : i + n]})
                     i += n
                     continue
             if t == "arrow":
@@ -1771,8 +2035,13 @@ class _Writer:
                 while j < len(live) and cons[live[j]].get("type") == "arrow" and cons[live[j]]["circle"] == c["circle"]:
                     lines.append([B.name(x) for x in cons[live[j]]["line"]])
                     j += 1
-                items.append({"pos": live[i], "rules": [{"type": "arrow", "bulb": [B.name(x) for x in c["circle"]], "lines": lines}],
-                              "con": live[i:j]})
+                items.append(
+                    {
+                        "pos": live[i],
+                        "rules": [{"type": "arrow", "bulb": [B.name(x) for x in c["circle"]], "lines": lines}],
+                        "con": live[i:j],
+                    }
+                )
                 i = j
                 continue
             items.append({"pos": live[i], "rules": self.constraint_rule(c), "con": [live[i]]})
@@ -1797,8 +2066,12 @@ class _Writer:
         if len(cells) == 4 and D % 3 == 0 and wins and cells == wins[0]:
             ent = [tuple(x) for x in PJ.entropy_table(D)]
             n = len(wins)
-            if i + n <= len(live) and all(cons[live[i + k]].get("type") == "table" and list(cons[live[i + k]]["cells"]) == wins[k]
-                                          and [tuple(x) for x in cons[live[i + k]]["allowed"]] == ent for k in range(n)):
+            if i + n <= len(live) and all(
+                cons[live[i + k]].get("type") == "table"
+                and list(cons[live[i + k]]["cells"]) == wins[k]
+                and [tuple(x) for x in cons[live[i + k]]["allowed"]] == ent
+                for k in range(n)
+            ):
                 return [{"type": "global_entropy"}], n
         if len(cells) == 4 and B.is_block(cells):
             T, F = _bat(D)
@@ -1807,16 +2080,23 @@ class _Writer:
                 n = len(ws)
                 if cells == ws[0] and i + n <= len(live):
                     blk = [cons[live[i + k]] for k in range(n)]
-                    if all(x.get("type") == "table" and list(x["cells"]) == ws[k] and [tuple(y) for y in x["allowed"]] in (T, F)
-                           for k, x in enumerate(blk)):
-                        rules = [{"type": "corner", "kind": "battenburg", "cells": [B.name(y) for y in ws[k]]}
-                                 for k, x in enumerate(blk) if [tuple(y) for y in x["allowed"]] == T]
+                    if all(
+                        x.get("type") == "table"
+                        and list(x["cells"]) == ws[k]
+                        and [tuple(y) for y in x["allowed"]] in (T, F)
+                        for k, x in enumerate(blk)
+                    ):
+                        rules = [
+                            {"type": "corner", "kind": "battenburg", "cells": [B.name(y) for y in ws[k]]}
+                            for k, x in enumerate(blk)
+                            if [tuple(y) for y in x["allowed"]] == T
+                        ]
                         return rules + [{"type": "negative", "of": "battenburg"}], n
                 if A == T:
                     return [{"type": "corner", "kind": "battenburg", "cells": [B.name(y) for y in cells]}], 1
         if len(cells) == 2 and B.adjacent(*cells) and UNIFY_TABLE_EDGES:
             f = self.table_edge(c)
-            if f:                               # normalisation 8: a 2-cell table edge clue -> pair relation
+            if f:  # normalisation 8: a 2-cell table edge clue -> pair relation
                 return [edge_rule(f[0], f[1], cells[0], cells[1], B)], 1
         # mathrax corner: tables on (TL, BR) then (TR, BL) of a 2x2 block with the same clue
         if len(cells) == 2 and i + 1 < len(live) and cons[live[i + 1]].get("type") == "table" and UNIFY_TABLE_EDGES:
@@ -1828,10 +2108,18 @@ class _Writer:
                 if B.is_block(blk):
                     m1, m2 = self.mathrax_clue(c), self.mathrax_clue(c2)
                     if m1 and m1 == m2:
-                        return [{"type": "corner", "kind": "mathrax", "op": m1[0], "value": m1[1], "cells": [B.name(x) for x in blk]}], 2
+                        return [
+                            {
+                                "type": "corner",
+                                "kind": "mathrax",
+                                "op": m1[0],
+                                "value": m1[1],
+                                "cells": [B.name(x) for x in blk],
+                            }
+                        ], 2
         if len(cells) == 3 and A == [tuple(x) for x in vudoku_table(D)]:
             return [{"type": "vudoku", "cells": [B.name(x) for x in cells]}], 1
-        if len(cells) == 4 and B.is_block(cells):        # the quadruple clue (other tables that happen to match stay tables)
+        if len(cells) == 4 and B.is_block(cells):  # the quadruple clue (other tables that happen to match stay tables)
             need = self.quadruple_need(A, len(cells))
             if need is not None:
                 return [{"type": "contains", "digits": need, "cells": [B.name(x) for x in cells]}], 1
@@ -1842,7 +2130,7 @@ class _Writer:
 
     def quadruple_need(self, A, n):
         D = self.D
-        if not A or len(A) == D ** n:
+        if not A or len(A) == D**n:
             return None
         need = []
         for v in range(1, D + 1):
@@ -1861,7 +2149,7 @@ class _Writer:
         if t == "line":
             kind = c["kind"]
             cells = list(c["cells"])
-            if kind == "kropki_chain":                  # normalisation 4: kropki edges
+            if kind == "kropki_chain":  # normalisation 4: kropki edges
                 dots = c.get("dots") or ["white"] * (len(cells) - 1)
                 return [edge_rule("kropki", d_, a, b, B) for (a, b), d_ in zip(zip(cells, cells[1:]), dots)]
             r = {"type": "line", "kind": "whisper" if kind == "dutch_whisper" else kind}
@@ -1881,7 +2169,7 @@ class _Writer:
         if t == "sum":
             cells = list(c["cells"])
             common = self.common_group(cells)
-            if c.get("distinct") and not common:        # normalisation 9: a no-repeat sum is a cage
+            if c.get("distinct") and not common:  # normalisation 9: a no-repeat sum is a cage
                 return [{"type": "cage", "sum": c["total"], "cells": nm(cells)}]
             side = B.outside_side(cells) if len(cells) >= 2 else None
             if side and len(cells) < D and B.outside_ok(side, cells, False):
@@ -1916,18 +2204,20 @@ class _Writer:
                 raise NotSupportedError(f"set constraint of kind {c.get('kind')!r}")
             cells = list(c["cells"])
             if all(B.touching(a, b) for a, b in zip(cells, cells[1:])):
-                return [{"type": "line", "kind": "renban", "cells": nm(cells)}]          # normalisation 1
+                return [{"type": "line", "kind": "renban", "cells": nm(cells)}]  # normalisation 1
             raise NotSupportedError("a consecutive set whose cells are not a line")
         if t == "between":
             cells = list(c["cells"])
             if all(B.touching(a, b) for a, b in zip(cells, cells[1:])):
-                return [{"type": "line", "kind": "between", "cells": nm(cells)}]         # normalisation 2
+                return [{"type": "line", "kind": "between", "cells": nm(cells)}]  # normalisation 2
             raise NotSupportedError("a between constraint whose cells are not a line")
         if t == "equal_sum":
             return [self.equal_sum_rule(c)]
         if t == "table":
             if not _RESERVED_OK[0]:
-                raise NotSupportedError("a digit table with no rule family; tables " + RESERVED_MSG.split(": ", 1)[1].split(";")[0])
+                raise NotSupportedError(
+                    "a digit table with no rule family; tables " + RESERVED_MSG.split(": ", 1)[1].split(";")[0]
+                )
             return [{"type": "table", "cells": nm(c["cells"]), "allowed": [list(x) for x in c["allowed"]]}]
         if t == "count":
             r = {"type": "count"}
@@ -1974,7 +2264,7 @@ class _Writer:
             if mid:
                 ids[n // 2] = mid[0][0]
             if path(ids):
-                return {"type": "line", "kind": "zipper", "cells": nm(ids)}                 # normalisation 3
+                return {"type": "line", "kind": "zipper", "cells": nm(ids)}  # normalisation 3
         # double arrow: [[a, b], middle]
         if len(segs) == 2 and len(segs[0]) == 2 and segs[1]:
             ids = [segs[0][0]] + segs[1] + [segs[0][1]]
@@ -1982,7 +2272,12 @@ class _Writer:
                 return {"type": "line", "kind": "double_arrow", "cells": nm(ids)}
         # region sum: the segments are the line cut at box borders
         if path(flat) and len(set(flat)) == n:
-            box = {cc: gi for gi, g in enumerate(self.p.groups) if g.complete and g.kind in ("box", "region", "jigsaw") for cc in g.cells}
+            box = {
+                cc: gi
+                for gi, g in enumerate(self.p.groups)
+                if g.complete and g.kind in ("box", "region", "jigsaw")
+                for cc in g.cells
+            }
             cut, cur = [], [flat[0]]
             for x in flat[1:]:
                 if box.get(x) == box.get(cur[-1]):
@@ -1992,16 +2287,64 @@ class _Writer:
                     cur = [x]
             cut.append(cur)
             if cut == segs:
-                return {"type": "line", "kind": "region_sum", "cells": nm(flat)}            # normalisation 3
+                return {"type": "line", "kind": "region_sum", "cells": nm(flat)}  # normalisation 3
         return {"type": "equal_sum", "segments": [nm(s) for s in segs]}
 
 
 # --------------------------------------------------------------------------------------------- canonical text + hash
-KEY_ORDER = ["format", "format_version", "$schema", "meta", "board", "digits", "givens", "solution", "candidates", "rules",
-             "decorations", "style"]
-RULE_ORDER = ["type", "kind", "of", "op", "any_of", "color", "letter", "value", "sum", "split", "values", "digits", "groups",
-              "each", "counts", "arrow", "size", "repeat", "box", "where", "within", "area", "closed", "side", "origin", "source",
-              "bulb", "lines", "cells", "regions", "segments", "pairs", "except", "allowed", "id", "label", "style"]
+KEY_ORDER = [
+    "format",
+    "format_version",
+    "$schema",
+    "meta",
+    "board",
+    "digits",
+    "givens",
+    "solution",
+    "candidates",
+    "rules",
+    "decorations",
+    "style",
+]
+RULE_ORDER = [
+    "type",
+    "kind",
+    "of",
+    "op",
+    "any_of",
+    "color",
+    "letter",
+    "value",
+    "sum",
+    "split",
+    "values",
+    "digits",
+    "groups",
+    "each",
+    "counts",
+    "arrow",
+    "size",
+    "repeat",
+    "box",
+    "where",
+    "within",
+    "area",
+    "closed",
+    "side",
+    "origin",
+    "source",
+    "bulb",
+    "lines",
+    "cells",
+    "regions",
+    "segments",
+    "pairs",
+    "except",
+    "allowed",
+    "id",
+    "label",
+    "style",
+]
 
 
 def _order(d, order):
@@ -2015,9 +2358,11 @@ def canonical(doc):
     if "rules" in out:
         out["rules"] = [_order(r, RULE_ORDER) for r in out["rules"]]
     if "candidates" in out:
+
         def rc(k):
             r, c = parse_cell(k)
             return (r, c)
+
         out["candidates"] = {k: sorted(v) for k, v in sorted(out["candidates"].items(), key=lambda kv: rc(kv[0]))}
     return out
 
@@ -2036,7 +2381,7 @@ def dumps(doc, pretty=True):
         end = "," if n < len(keys) - 1 else "}"
         pre = "{" if n == 0 else " "
         if k in ("givens", "solution") and isinstance(v, list):
-            rows = [", ".join("null" if x is None else str(x) for x in v[i:i + C]) for i in range(0, len(v), C)]
+            rows = [", ".join("null" if x is None else str(x) for x in v[i : i + C]) for i in range(0, len(v), C)]
             lines.append(f'{pre}"{k}": [\n' + ",\n".join("    " + r for r in rows) + "]" + end)
         elif k == "rules" and isinstance(v, list):
             lines.append(f'{pre}"{k}": [' + ("\n" + ",\n".join("  " + j(r) for r in v) if v else "") + "]" + end)
@@ -2067,8 +2412,12 @@ def _norm_rule(r, D):
     r = {k: v for k, v in r.items() if k not in ("id", "label", "style")}
     srt = lambda xs: sorted((x.lower() for x in xs), key=_rc)
     t = r["type"]
-    if t in SET_TYPES or (t == "sum" and r.get("kind") in ("group", "corner")) or (t == "distinct_count" and "side" not in r) \
-            or (t == "edge" and r.get("kind") != "less"):
+    if (
+        t in SET_TYPES
+        or (t == "sum" and r.get("kind") in ("group", "corner"))
+        or (t == "distinct_count" and "side" not in r)
+        or (t == "edge" and r.get("kind") != "less")
+    ):
         if "cells" in r:
             r["cells"] = srt(r["cells"])
     if t == "equal_sum":

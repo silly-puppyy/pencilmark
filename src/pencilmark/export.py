@@ -19,24 +19,35 @@ grade (format "sudoku-grade", format_version 1):
   notes       publishing notes: [{"code": "spike", "severity": "reject" | "note", "text": "…"}]
   steps       [{"n", "code", "name", "placement" ("r2c8=3"), "eliminations" (["r4c5#7"]), "explanation", "detail"}]
 """
+
 from __future__ import annotations
 
-import time
 import csv
 import io
-import json
 import math
+import time
 from collections import Counter
-from pathlib import Path
 
-from . import _data, solver as S, metrics as MT, puzzle_json as PJ
+from . import _data
+from . import metrics as MT
+from . import solver as S
 
-GRADER_NAME, GRADER_VERSION = "pencilmark", "1.0.0"   # on every card: a grade is only meaningful with the engine that made it
-FORMAT_VERSION = 1          # of both formats; bumped only on a breaking change (additive fields don't bump it)
+GRADER_NAME, GRADER_VERSION = (
+    "pencilmark",
+    "1.0.0",
+)  # on every card: a grade is only meaningful with the engine that made it
+FORMAT_VERSION = 1  # of both formats; bumped only on a breaking change (additive fields don't bump it)
 BANDS = ["Very Easy", "Easy", "Medium", "Hard", "Very Hard", "Expert", "Extreme"]
-SITES = {"fed": "fed-sudoku.eu", "lisudoku": "lisudoku.com", "sudoku.coach": "sudoku.coach", "LMD": "logic-masters.de",
-         "puzzleduel": "puzzleduel.club", "sudoku-variants": "sudoku-variants.com", "sudoku.one": "sudoku.one",
-         "hard set": "sudokuwiki.org"}
+SITES = {
+    "fed": "fed-sudoku.eu",
+    "lisudoku": "lisudoku.com",
+    "sudoku.coach": "sudoku.coach",
+    "LMD": "logic-masters.de",
+    "puzzleduel": "puzzleduel.club",
+    "sudoku-variants": "sudoku-variants.com",
+    "sudoku.one": "sudoku.one",
+    "hard set": "sudokuwiki.org",
+}
 # shape names (explainer pattern or technique name) -> chip code; Medium shapes of the SPLIT techniques
 X_CHAIN_SHAPES = {"skyscraper": "SKY", "2-string kite": "KTE", "turbot fish": "TUR", "empty rectangle": "ERE"}
 
@@ -44,16 +55,16 @@ X_CHAIN_SHAPES = {"skyscraper": "SKY", "2-string kite": "KTE", "turbot fish": "T
 def _shape(name, specific):
     """(code, band) of a SPLIT technique step from its most specific name; None if the name doesn't decide."""
     sl = specific.lower()
-    if name == "X-Chain":       # Skyscraper / 2-String Kite / Turbot Hard; Empty Rectangle and longer chains Very Hard
+    if name == "X-Chain":  # Skyscraper / 2-String Kite / Turbot Hard; Empty Rectangle and longer chains Very Hard
         for k, c in X_CHAIN_SHAPES.items():
             if k in sl:
                 return c, 4 if c == "ERE" else 3
         return "XCL", 4
-    if name == "X-Wing":        # plain row / column X-Wing Hard; Franken (a box as base or cover) / Mutant Very Hard
+    if name == "X-Wing":  # plain row / column X-Wing Hard; Franken (a box as base or cover) / Mutant Very Hard
         if "franken" in sl or "mutant" in sl:
             return "FRK", 4
         return "XWG", 3
-    if name == "FinnedFish":    # every finned / sashimi fish and Franken (box) fish Very Hard
+    if name == "FinnedFish":  # every finned / sashimi fish and Franken (box) fish Very Hard
         if "franken" in sl or "mutant" in sl:
             return "FRK", 4
         if "jellyfish" in sl:
@@ -68,6 +79,8 @@ def _shape(name, specific):
             return ("PHV" if "variant" in sl else "PHI"), 3
         return "LOL", 2
     return None
+
+
 _BAND = None
 
 
@@ -85,9 +98,19 @@ def _band_table():
 
 def code_names():
     """chip code -> technique name (technique_bands.csv; first row of each code)"""
-    out = {"SKY": "Skyscraper", "KTE": "2-String Kite", "TUR": "Turbot Fish", "FRK": "Franken Fish",
-           "FSW": "Finned Swordfish", "FJF": "Finned Jellyfish", "PHI": "Phistomefel Ring", "PHV": "Phistomefel Variant",
-           "CFX": "Clue Facts", "CSH": "Clue Shape", "CCL": "High / Low and Odd / Even Colouring"}
+    out = {
+        "SKY": "Skyscraper",
+        "KTE": "2-String Kite",
+        "TUR": "Turbot Fish",
+        "FRK": "Franken Fish",
+        "FSW": "Finned Swordfish",
+        "FJF": "Finned Jellyfish",
+        "PHI": "Phistomefel Ring",
+        "PHV": "Phistomefel Variant",
+        "CFX": "Clue Facts",
+        "CSH": "Clue Shape",
+        "CCL": "High / Low and Odd / Even Colouring",
+    }
     for r in csv.DictReader(io.StringIO(_data.read_text("technique_bands.csv"))):
         out.setdefault(r["code"], r["technique"])
     return out
@@ -97,6 +120,7 @@ def chip_of(tech_id, specific=None):
     """(chip code, band index) for a technique, using its most specific pattern name where the band depends on it:
     short X-Chains (Skyscraper / 2-String Kite / Turbot) Medium, longer ones Hard; finned X-Wing Medium, larger Hard."""
     from .card import _code
+
     name = S.TECH_NAMES.get(tech_id, str(tech_id))
     code, disp = _code(name)
     # base band from the engine-name map (metrics._BAND_BY_NAME, the accepted proposal; it separates forms that share
@@ -126,9 +150,14 @@ def _order_table():
 # techniques whose band depends on the named shape: plain X-Wing / short X-Chains / finned X-Wing / basic set theory
 # Medium; Franken / Mutant X-Wings, long X-Chains, larger finned fish and Phistomefel-type set theory Hard. The engine can't cap the shape it looks for, so
 # band-limited solves allow them from Medium on and band_path checks the shapes actually used.
-SINGLE_CODES = {"FHS", "HSI", "NSI", "LSI", "CSI"}   # singles: no use counts on the card (GRADE.md 3)
-SPLIT = ("X-Wing", "X-Chain", "FinnedFish", "LawOfLeftovers")   # engine X-Wing includes Franken / Mutant 2-fish
-SPLIT_LOW = {"X-Wing": 3, "X-Chain": 3, "FinnedFish": 4, "LawOfLeftovers": 2}   # their lower band; larger shapes one above
+SINGLE_CODES = {"FHS", "HSI", "NSI", "LSI", "CSI"}  # singles: no use counts on the card (GRADE.md 3)
+SPLIT = ("X-Wing", "X-Chain", "FinnedFish", "LawOfLeftovers")  # engine X-Wing includes Franken / Mutant 2-fish
+SPLIT_LOW = {
+    "X-Wing": 3,
+    "X-Chain": 3,
+    "FinnedFish": 4,
+    "LawOfLeftovers": 2,
+}  # their lower band; larger shapes one above
 
 
 def tech_band(t):
@@ -146,7 +175,7 @@ def read_meta(d):
     """metadata from a dict: its "meta" object plus known top-level keys (the keyword form of to_export), empty values dropped."""
     m = {k: d[k] for k in META_KEYS if k in d}
     m.update(d.get("meta") or {})
-    order = {k: i for i, k in enumerate(META_KEYS)}         # known keys first, in a fixed order; free-form keys after
+    order = {k: i for i, k in enumerate(META_KEYS)}  # known keys first, in a fixed order; free-form keys after
     return {k: m[k] for k in sorted(m, key=lambda k: (order.get(k, len(order)), k)) if m[k] not in (None, "", [], {})}
 
 
@@ -154,6 +183,7 @@ def export_puzzle(p, meta=None, solution=None, source=None, title=None, rules_te
     """engine Puzzle -> "sudoku-puzzle" dict (format_version 1, docs/FORMAT.md; pencilmark/exchange.py). meta: free-form metadata
     dict; source / title / rules_text keywords are merged into meta."""
     from . import exchange as X
+
     m = read_meta({"source": source, "title": title, "rules_text": rules_text, "meta": meta})
     return X.write(p, meta=m, solution=solution)
 
@@ -162,6 +192,7 @@ def import_puzzle(d):
     """sudoku-puzzle (format_version 1, docs/FORMAT.md) -> puzzle JSON (pencilmark.puzzle_json), read strictly by
     pencilmark/exchange.py."""
     from . import exchange as X
+
     return X.to_internal(d)
 
 
@@ -173,14 +204,21 @@ def region_geometry(p):
     groups that are not rectangles (jigsaw regions; diagonals are lines, excluded); extra_area_pc = 2-D complete groups per cell beyond
     one (windoku / centre-dot / extra regions). 0 / 0 on a standard grid."""
     from collections import Counter
-    if not hasattr(p, "groups_of"): p.finalize()
+
+    if not hasattr(p, "groups_of"):
+        p.finalize()
     co = p.coords if isinstance(p.coords, list) else [p.coords[i] for i in range(p.N)]
+
     def rect(g):
-        rs = [co[c][0] for c in g.cells]; cs = [co[c][1] for c in g.cells]
+        rs = [co[c][0] for c in g.cells]
+        cs = [co[c][1] for c in g.cells]
         return (max(rs) - min(rs) + 1) * (max(cs) - min(cs) + 1) == len(g.cells)
+
     def line(g):
-        pts = [co[c] for c in g.cells]; (r0, c0), (r1, c1) = pts[0], pts[1]
+        pts = [co[c] for c in g.cells]
+        (r0, c0), (r1, c1) = pts[0], pts[1]
         return all((r - r0) * (c1 - c0) == (c - c0) * (r1 - r0) for r, c in pts)
+
     comp = [g for g in p.groups if g.complete and len(g.cells) > 1]
     blob = set(c for g in comp if not rect(g) and not line(g) for c in g.cells)
     area = Counter(c for g in comp if not line(g) for c in g.cells)
@@ -194,34 +232,50 @@ def time_units(effort_l1, empty_cells, difficulty=None, geometry=None):
     None without the file or the inputs."""
     _time_model()
     import math
+
     if not _TIME or not empty_cells:
         return None
     if "k_effort" in _TIME:
         if effort_l1 is None:
             return None
-        geo = sum(w * (geometry or {}).get(k, 0.0) for k, w in _TIME.get("k_geometry", {}).items())   # scanning cost
-        t = math.exp(_TIME["const"] + _TIME["k_effort"] * effort_l1 + _TIME["k_empty"] * math.log(empty_cells) + geo) \
-            + _TIME.get("t0", 0.0)                       # t0: per-puzzle start-up overhead
-        sat = _TIME.get("saturation")                    # effort grows less per point above difficulty s0 (off:
-        if sat and difficulty is not None:               # reversed within-type order where most puzzles score > s0; key disabled)
+        geo = sum(w * (geometry or {}).get(k, 0.0) for k, w in _TIME.get("k_geometry", {}).items())  # scanning cost
+        t = math.exp(
+            _TIME["const"] + _TIME["k_effort"] * effort_l1 + _TIME["k_empty"] * math.log(empty_cells) + geo
+        ) + _TIME.get("t0", 0.0)  # t0: per-puzzle start-up overhead
+        sat = _TIME.get("saturation")  # effort grows less per point above difficulty s0 (off:
+        if sat and difficulty is not None:  # reversed within-type order where most puzzles score > s0; key disabled)
             t *= math.exp(sat["g"] * max(0.0, difficulty - sat["s0"]))
-        cmp_ = _TIME.get("compress")                     # long predicted times grow more slowly (order-preserving)
+        cmp_ = _TIME.get("compress")  # long predicted times grow more slowly (order-preserving)
         if cmp_ and t > 0:
             lt = math.log(t)
             t = math.exp(lt - cmp_["k"] * max(0.0, lt - cmp_["c"]))
-        szc = _TIME.get("size_curve")                    # very large boards are slower per cell than the power law
-        if szc and t > 0:                                # (3 sources); 0 below ~92 empty cells
+        szc = _TIME.get("size_curve")  # very large boards are slower per cell than the power law
+        if szc and t > 0:  # (3 sources); 0 below ~92 empty cells
             t *= math.exp(szc["q"] * max(0.0, math.log(empty_cells) - szc["c"]) ** 2)
         return round(t, 2)
     if difficulty is None:
         return None
-    return round(math.exp(_TIME["const"] + _TIME["k_difficulty"] * difficulty + _TIME["k_empty"] * math.log(empty_cells)), 2)
+    return round(
+        math.exp(_TIME["const"] + _TIME["k_difficulty"] * difficulty + _TIME["k_empty"] * math.log(empty_cells)), 2
+    )
 
 
 ALWAYS = ("format", "format_version", "grader")
 DEFAULT_FIELDS = ("difficulty", "time", "band", "contains")
-OPTIONAL_FIELDS = ("band_index", "time_p80", "time_dist", "elapsed", "issues", "reject", "warning", "se", "steps", "describe", "symmetry")   # + time_mean / time_pNN
-EXPLAIN_LEVELS = ("notation", "short", "teach")    # terse to verbose: solvers' notation, one plain line, a short lesson
+OPTIONAL_FIELDS = (
+    "band_index",
+    "time_p80",
+    "time_dist",
+    "elapsed",
+    "issues",
+    "reject",
+    "warning",
+    "se",
+    "steps",
+    "describe",
+    "symmetry",
+)  # + time_mean / time_pNN
+EXPLAIN_LEVELS = ("notation", "short", "teach")  # terse to verbose: solvers' notation, one plain line, a short lesson
 
 
 def _time_model():
@@ -233,19 +287,24 @@ def _time_model():
 
 def _is_variant(p):
     """any rule beyond rows / columns / boxes (multi-grid layouts count as classic)"""
-    return bool(getattr(p, "relations", None)) or bool(getattr(p, "constraints", None)) or \
-        any(getattr(g, "kind", "row") not in ("row", "col", "box") for g in getattr(p, "groups", ()))
+    return (
+        bool(getattr(p, "relations", None))
+        or bool(getattr(p, "constraints", None))
+        or any(getattr(g, "kind", "row") not in ("row", "col", "box") for g in getattr(p, "groups", ()))
+    )
 
 
 def _sigmas(variant):
     """(sigma_players, sigma_model) of the log-normal time distribution (data/time_model.json)"""
-    tm = _time_model(); k = "variant" if variant else "classic"
+    tm = _time_model()
+    k = "variant" if variant else "classic"
     return tm.get(f"spread_sigma_{k}", tm.get("spread_sigma", 0.73)), tm.get(f"model_sigma_{k}")
 
 
 def _time_stat(field, variant=False):
     """time_mean / time_p1 .. time_p99 -> the log ratio to the median time; None for any other key"""
     import re
+
     sg = _sigmas(variant)[0]
     if field == "time_mean":
         return sg * sg / 2
@@ -253,6 +312,7 @@ def _time_stat(field, variant=False):
     if not m:
         return None
     from statistics import NormalDist
+
     return NormalDist().inv_cdf(int(m.group(1)) / 100) * sg or 0.0
 
 
@@ -283,23 +343,54 @@ def explain_levels(explain):
     return [x for x in EXPLAIN_LEVELS if x in lv]
 
 
-RULE_NOUN = {("line", None): "line", ("edge", "kropki"): "kropki dot", ("edge", "xv"): "X / V clue", ("edge", "less"): "inequality sign",
-             ("edge", "difference"): "difference clue", ("edge", "sum"): "sum clue", ("edge", "product"): "product clue",
-             ("edge", "ratio"): "ratio clue", ("region", "diagonal"): "diagonal", ("region", "window"): "window",
-             ("region", "disjoint"): "disjoint group", ("region", "extra"): "extra region", ("region", "colour"): "colour group",
-             ("cage", None): "cage", ("arrow", None): "arrow", ("cell", None): "cell clue", ("neighbours", None): "neighbour rule",
-             ("negative", None): "negative constraint", ("table", None): "table rule", ("relation", None): "pair rule",
-             ("corner", None): "corner clue", ("sum", None): "sum clue", ("contains", None): "quadruple", ("appears", None): "arrow clue"}
+RULE_NOUN = {
+    ("line", None): "line",
+    ("edge", "kropki"): "kropki dot",
+    ("edge", "xv"): "X / V clue",
+    ("edge", "less"): "inequality sign",
+    ("edge", "difference"): "difference clue",
+    ("edge", "sum"): "sum clue",
+    ("edge", "product"): "product clue",
+    ("edge", "ratio"): "ratio clue",
+    ("region", "diagonal"): "diagonal",
+    ("region", "window"): "window",
+    ("region", "disjoint"): "disjoint group",
+    ("region", "extra"): "extra region",
+    ("region", "colour"): "colour group",
+    ("cage", None): "cage",
+    ("arrow", None): "arrow",
+    ("cell", None): "cell clue",
+    ("neighbours", None): "neighbour rule",
+    ("negative", None): "negative constraint",
+    ("table", None): "table rule",
+    ("relation", None): "pair rule",
+    ("corner", None): "corner clue",
+    ("sum", None): "sum clue",
+    ("contains", None): "quadruple",
+    ("appears", None): "arrow clue",
+}
 
 
 def _noun(rules):
     names = []
     for r in rules:
         t, k = r["type"], r.get("kind")
-        n = RULE_NOUN.get((t, k)) or (f"{k.replace('_', ' ')} line" if t == "line" else
-                                      {"antiknight": "anti-knight rule", "antiking": "anti-king rule",
-                                       "nonconsecutive": "non-consecutive rule"}.get(k) if t == "neighbours" and k else None) \
-            or RULE_NOUN.get((t, None)) or t.replace("_", " ")
+        n = (
+            RULE_NOUN.get((t, k))
+            or (
+                f"{k.replace('_', ' ')} line"
+                if t == "line"
+                else {
+                    "antiknight": "anti-knight rule",
+                    "antiking": "anti-king rule",
+                    "nonconsecutive": "non-consecutive rule",
+                }.get(k)
+                if t == "neighbours" and k
+                else None
+            )
+            or RULE_NOUN.get((t, None))
+            or t.replace("_", " ")
+        )
         if n not in names:
             names.append(n)
     return " / ".join(names) or "rule"
@@ -310,8 +401,11 @@ def _issues(p, card, doc, prov):
     point at the exported file's rule indices (doc = exchange.write(p) as to_export writes it)."""
     out = []
     raw = card.get("_notes_raw")
-    if raw is None:                       # cards made without the raw notes: parse the flags
-        raw = [("note", "reject" if f.startswith("would not") else "note", f.split(": ", 1)[-1]) for f in card.get("flags") or []]
+    if raw is None:  # cards made without the raw notes: parse the flags
+        raw = [
+            ("note", "reject" if f.startswith("would not") else "note", f.split(": ", 1)[-1])
+            for f in card.get("flags") or []
+        ]
     cls_map = None
     for n in raw:
         code, sev, text = n[0], n[1], n[2]
@@ -320,6 +414,7 @@ def _issues(p, card, doc, prov):
             c, used = n[3], n[4]
             if cls_map is None:
                 from . import usage as U
+
                 try:
                     cls_map = U.element_classes(p)
                 except Exception:
@@ -334,8 +429,14 @@ def _issues(p, card, doc, prov):
                 if want[tuple(r)] > 0:
                     want[tuple(r)] -= 1
                     rpos.add(k)
-            idx = [i for i, pr in enumerate(prov) if (pr.get("groups", set()) & gidx) or (pr.get("constraints", set()) & cons)
-                   or (pr.get("relations", set()) & rpos) or (c.startswith("shading") and pr.get("clues"))]
+            idx = [
+                i
+                for i, pr in enumerate(prov)
+                if (pr.get("groups", set()) & gidx)
+                or (pr.get("constraints", set()) & cons)
+                or (pr.get("relations", set()) & rpos)
+                or (c.startswith("shading") and pr.get("clues"))
+            ]
             if idx:
                 rs = [doc["rules"][i] for i in idx]
                 what = _noun(rs) + ("s" if len(idx) > 1 and " / " not in _noun(rs) else "")
@@ -343,7 +444,9 @@ def _issues(p, card, doc, prov):
                 if code == "decorative":
                     e["text"] = f"{what} ({where}): not needed for uniqueness and never used by the solve"
                 elif code == "redundant":
-                    e["text"] = f"{what} ({where}): used in {used} step{'s' if used != 1 else ''}, but the puzzle is unique without it"
+                    e["text"] = (
+                        f"{what} ({where}): used in {used} step{'s' if used != 1 else ''}, but the puzzle is unique without it"
+                    )
                 else:
                     e["text"] = f"{what} ({where}): used in only {used} step{'s' if used != 1 else ''} of the solve"
                 e["rules"] = idx
@@ -358,14 +461,23 @@ def symmetry_of(p):
     """symmetries of the givens pattern (and board shape): [{"kind", "axis"?, "of": "givens"}]. Rule symmetry ("of": "all")
     is not detected yet."""
     co = [tuple(x) for x in p.coords]
-    R = max(r for r, _ in co) + 1; C = max(c for _, c in co) + 1
+    R = max(r for r, _ in co) + 1
+    C = max(c for _, c in co) + 1
     cells = set(co)
     giv = {co[i] for i in p.givens}
-    tf = {("rot180", None): lambda r, c: (R - 1 - r, C - 1 - c), ("mirror", "vertical"): lambda r, c: (r, C - 1 - c),
-          ("mirror", "horizontal"): lambda r, c: (R - 1 - r, c)}
+    tf = {
+        ("rot180", None): lambda r, c: (R - 1 - r, C - 1 - c),
+        ("mirror", "vertical"): lambda r, c: (r, C - 1 - c),
+        ("mirror", "horizontal"): lambda r, c: (R - 1 - r, c),
+    }
     if R == C:
-        tf.update({("rot90", None): lambda r, c: (c, R - 1 - r), ("mirror", "diagonal"): lambda r, c: (c, r),
-                   ("mirror", "antidiagonal"): lambda r, c: (C - 1 - c, R - 1 - r)})
+        tf.update(
+            {
+                ("rot90", None): lambda r, c: (c, R - 1 - r),
+                ("mirror", "diagonal"): lambda r, c: (c, r),
+                ("mirror", "antidiagonal"): lambda r, c: (C - 1 - c, R - 1 - r),
+            }
+        )
     out = []
     for (kind, axis), f in tf.items():
         if all(f(*x) in cells for x in cells) and all(f(*x) in giv for x in giv):
@@ -378,8 +490,16 @@ def grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expla
     route stops at its own limit (engine deadline) and the card is then band "Unknown" with difficulty / time null, the
     techniques found so far in contains and "stopped": "time limit" (GRADE.md 1)."""
     t0 = time.perf_counter()
-    g, expired = _grade(p, P, card=card, with_steps=with_steps, max_seconds=max_seconds, fields=fields, explain=explain,
-                        alternatives=alternatives)
+    g, expired = _grade(
+        p,
+        P,
+        card=card,
+        with_steps=with_steps,
+        max_seconds=max_seconds,
+        fields=fields,
+        explain=explain,
+        alternatives=alternatives,
+    )
     if expired:
         for k in list(g):
             if k in ("difficulty", "time", "band_index", "time_dist", "time_mean") or k.startswith("time_p"):
@@ -387,57 +507,74 @@ def grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expla
         if "band" in g:
             g["band"] = "Unknown"
         g["completed"] = False
-    if fields is not None and "elapsed" in fields:      # wall-clock seconds of this grading call (rate() adds the uniqueness proof)
+    if (
+        fields is not None and "elapsed" in fields
+    ):  # wall-clock seconds of this grading call (rate() adds the uniqueness proof)
         g["elapsed"] = round(time.perf_counter() - t0, 3)
     return g
 
 
-_OUTER_END = [None]      # rate() sets the shared wall-clock end (time.time() value) for the whole call; grade() alone owns its own
+_OUTER_END = [
+    None
+]  # rate() sets the shared wall-clock end (time.time() value) for the whole call; grade() alone owns its own
 
 
 def _grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, explain=None, alternatives=True):
     """sudoku-grade card (GRADE.md), only the requested fields (card_fields). explain: step explanation levels
     (explain_levels). with_steps=True is shorthand for the steps field with both explanation levels."""
-    from . import card as K, band_path as BP
+    from . import band_path as BP
+    from . import card as K
+
     want = card_fields(fields, steps=bool(with_steps))
     expired = False
-    bp_cut = [False]                                 # the technique-list stage hit max_seconds (the card itself may still be complete)
+    bp_cut = [False]  # the technique-list stage hit max_seconds (the card itself may still be complete)
     levels = explain_levels(True if with_steps and explain is None else explain)
     P = dict(P, search=P.get("search", "human"))
     import time
+
     from . import cbackend as CB
+
     has_dl = hasattr(CB._C, "set_deadline")
     timed = max_seconds is not None and has_dl
-    own = timed and _OUTER_END[0] is None          # called directly (CLI): this call owns the deadline; under rate() it is shared
+    own = (
+        timed and _OUTER_END[0] is None
+    )  # called directly (CLI): this call owns the deadline; under rate() it is shared
     if own:
         CB._C.set_deadline(float(max_seconds))
     t_end = None if max_seconds is None else (_OUTER_END[0] or time.time() + float(max_seconds))
     hit = lambda: timed and CB._C.deadline_hit()
     need_list = bool(want & {"contains", "issues", "reject", "warning"})
-    checks = bool(want & {"issues", "reject", "warning"})      # publishing checks read the shortest list's required techniques: list first
+    checks = bool(
+        want & {"issues", "reject", "warning"}
+    )  # publishing checks read the shortest list's required techniques: list first
     try:
-        base = BP.band_path(p, P)                   # the band (first route; shrinking keeps it)
+        base = BP.band_path(p, P)  # the band (first route; shrinking keeps it)
 
         def make_card(route):
             req_b = list(dict.fromkeys(st["technique"] for st in route["steps"] if st["band"] > 0))
             try:
-                return K.grade_card(p, P, specific=False, check_rules=checks,       # specific names are not used by this card
-                                    band=(route["band"] if route["solved"] else "Unknown", req_b))
+                return K.grade_card(
+                    p,
+                    P,
+                    specific=False,
+                    check_rules=checks,  # specific names are not used by this card
+                    band=(route["band"] if route["solved"] else "Unknown", req_b),
+                )
             except Exception:
                 if not hit():
                     raise
-                return {}                           # max_seconds passed inside the card route
+                return {}  # max_seconds passed inside the card route
 
-        if card is None and not checks:             # 1) band + difficulty / time first: they get the time they need
+        if card is None and not checks:  # 1) band + difficulty / time first: they get the time they need
             card = make_card(base)
             expired = hit()
-        if need_list and not expired:               # 2) the shortest technique list in the time that is left (truncates)
+        if need_list and not expired:  # 2) the shortest technique list in the time that is left (truncates)
             bp = BP.contents(p, P, alternatives=alternatives, deadline=t_end, base=base)
             if hit():
                 bp_cut[0] = True
         else:
             bp = dict(base, removed=[], alternatives={})
-        if card is None:                            # publishing checks: the card after the list (they read its techniques)
+        if card is None:  # publishing checks: the card after the list (they read its techniques)
             card = make_card(bp)
             expired = hit()
     finally:
@@ -447,37 +584,57 @@ def _grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expl
     names = {}
     for st in bp["steps"]:
         names.setdefault(st["code"], Counter())[st["name"]] += 1
-    uses = Counter(bp["profile"])                  # folded: full houses count under the listed single
+    uses = Counter(bp["profile"])  # folded: full houses count under the listed single
     bandof = {st["code"]: st["band"] for st in bp["steps"]}
     alts = bp.get("alternatives", {})
     contains = []
     for c, n in sorted(uses.items(), key=lambda x: (bandof.get(x[0], 0), BP._order(x[0]), x[0])):
-        e = {"code": c, "chip": "/".join([c] + alts.get(c, [])), "name": names[c].most_common(1)[0][0],
-             "band": bandof.get(c, 0)}
+        e = {
+            "code": c,
+            "chip": "/".join([c] + alts.get(c, [])),
+            "name": names[c].most_common(1)[0][0],
+            "band": bandof.get(c, 0),
+        }
         if not alternatives:
-            e["alternatives"] = None        # not searched (alternatives=False); absent = searched, none found
+            e["alternatives"] = None  # not searched (alternatives=False); absent = searched, none found
         elif alts.get(c):
-            e["alternatives"] = alts[c]     # each of these alone also gets you through (not on c's subset chain)
+            e["alternatives"] = alts[c]  # each of these alone also gets you through (not on c's subset chain)
         if c not in SINGLE_CODES:
-            e["uses"] = n                   # on the easiest route; singles' counts swing with the route, so omitted
+            e["uses"] = n  # on the easiest route; singles' counts swing with the route, so omitted
         contains.append(e)
     tg = card.get("time_grade")
-    tm = time_units(card.get("effort_l1"), p.N - len(p.givens), difficulty=card.get("score"), geometry=region_geometry(p))
-    g = {"format": "sudoku-grade", "format_version": FORMAT_VERSION,
-         "grader": {"name": GRADER_NAME, "version": GRADER_VERSION}}
+    tm = time_units(
+        card.get("effort_l1"), p.N - len(p.givens), difficulty=card.get("score"), geometry=region_geometry(p)
+    )
+    g = {
+        "format": "sudoku-grade",
+        "format_version": FORMAT_VERSION,
+        "grader": {"name": GRADER_NAME, "version": GRADER_VERSION},
+    }
     if "difficulty" in want:
         g["difficulty"] = card.get("score")
     if "time" in want:
         # time in MINUTES for today's average player (classic units x minutes_per_unit, data/time_model.json)
-        g["time"] = round(tm * _TIME.get("minutes_per_unit", 1.0), 1) if tm is not None else (round(2 ** (tg - 5), 2) if tg is not None else None)
+        g["time"] = (
+            round(tm * _TIME.get("minutes_per_unit", 1.0), 1)
+            if tm is not None
+            else (round(2 ** (tg - 5), 2) if tg is not None else None)
+        )
     variant = _is_variant(p)
-    for f in sorted((f for f in want if f.startswith("time_") and f != "time_dist"), key=lambda f: (f != "time_mean", len(f), f)):
-        lr = _time_stat(f, variant)  # time_mean / time_pNN: spread over today's players around the median (data/time_model.json)
-        g[f] = round(tm * math.exp(lr) * _TIME.get("minutes_per_unit", 1.0), 1) if tm is not None and lr is not None else None
-    if "time_dist" in want:          # the distribution's parameters: log-normal around the median time
+    for f in sorted(
+        (f for f in want if f.startswith("time_") and f != "time_dist"), key=lambda f: (f != "time_mean", len(f), f)
+    ):
+        lr = _time_stat(
+            f, variant
+        )  # time_mean / time_pNN: spread over today's players around the median (data/time_model.json)
+        g[f] = (
+            round(tm * math.exp(lr) * _TIME.get("minutes_per_unit", 1.0), 1)
+            if tm is not None and lr is not None
+            else None
+        )
+    if "time_dist" in want:  # the distribution's parameters: log-normal around the median time
         sp, sm = _sigmas(variant)
-        g["time_dist"] = None if tm is None else {"type": "lognormal",
-                                                  "sigma_players": sp, "sigma_model": sm}
+        g["time_dist"] = None if tm is None else {"type": "lognormal", "sigma_players": sp, "sigma_model": sm}
     if "band" in want:
         g["band"] = "Unknown" if unknown else bp["band"]
     if "band_index" in want:
@@ -490,6 +647,7 @@ def _grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expl
     if want & {"issues", "reject", "warning", "describe"}:
         try:
             from . import exchange as X
+
             doc, prov = X.write(p, provenance=True)
         except Exception:
             doc = prov = None
@@ -502,11 +660,13 @@ def _grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expl
                 g[f] = any(i["severity"] == f for i in issues)
     if "describe" in want:
         from .variants import describe as _describe
+
         g["describe"] = _describe(doc) if doc is not None else None
     if "symmetry" in want:
         g["symmetry"] = symmetry_of(p)
     if "se" in want:
         from . import se as SE
+
         sb = BP.band_path(p, P)
         g["se"] = SE.ratings(sb["steps"], scale="classic") if sb["solved"] else None
     if "steps" in want:
@@ -523,7 +683,6 @@ def _grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expl
                 r["explanation"] = {x: expl[i][x] for x in levels if expl[i].get(x)}
             rows.append(r)
         g["steps"] = rows
-    if max_seconds is not None:                 # with a limit only (always true without one): every stage finished within it
+    if max_seconds is not None:  # with a limit only (always true without one): every stage finished within it
         g["completed"] = not (expired or bp_cut[0] or bool(bp.get("truncated")))
     return g, expired
-

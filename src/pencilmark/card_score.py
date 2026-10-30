@@ -2,12 +2,14 @@
 difficulty = mapped log of the average step effort per empty cell (+ a technique-free search-effort term).
 Configuration: data/card_score.json; price weights: data/params.json (route) and data/price_params.json (difficulty).
 """
-import json
+
 import math
 
 from . import _data
-from . import cbackend as CB, solver as S
-from .scoring import Scorer as _Scorer, complete_params
+from . import cbackend as CB
+from . import solver as S
+from .scoring import Scorer as _Scorer
+from .scoring import complete_params
 
 MENTAL = ("MentalChain(direct)", "MentalSingle(direct)", "MentalNotesSingle", "WhatIf", "EitherWay", "ShortTrial")
 P = complete_params(_data.load_params("params.json"))
@@ -21,7 +23,8 @@ _LAST_CELLS = []
 
 def steps(p):
     from .band_path import variant_gate
-    gate = variant_gate(p)          # variant techniques only for puzzles with the matching rules (as the card's bands)
+
+    gate = variant_gate(p)  # variant techniques only for puzzles with the matching rules (as the card's bands)
     st, ok = CB.solve(p, P, disabled=dis | gate)
     if not ok or any(s.move.feat[0] == S.GUESS for s in st):
         st, ok = CB.solve(p, P, disabled=gate)
@@ -29,7 +32,7 @@ def steps(p):
             # guessing off: where it would guess, prove by full search (Trial and error, priced as that guess)
             st, ok = CB.solve(p, dict(P, exhaust_fallback=1), disabled=gate | {S.GUESS})
             if not ok:
-                return []                  # beyond engine: no score
+                return []  # beyond engine: no score
     return _record(p, st)
 
 
@@ -44,8 +47,8 @@ def _record(p, st):
         C = s.n_cands if s.n_cands is not None else p.N * p.D
         F = C / 727 * 20 if p.N * p.D <= 729 else C / (p.N * p.D) * 20 * 729 / 727
         d = float(s.move.d)
-        if p.D > 9:      # the engine price carries a grid-size factor ((D-1)/8)^alpha that d^beta would amplify:
-            d /= SC.size(p.D) / SC.size(9)     # beyond 9x9 bigger grids add time, not per-step difficulty
+        if p.D > 9:  # the engine price carries a grid-size factor ((D-1)/8)^alpha that d^beta would amplify:
+            d /= SC.size(p.D) / SC.size(9)  # beyond 9x9 bigger grids add time, not per-step difficulty
         out.append((nm, max(d, 1e-3), F / max(len(s.alts), 1)))
         cells_.append(([s.move.place[0]] if s.move.place else []) + [c for c, _ in (s.move.elim or ())])
         xs_.append(_xvec(s.move.feat[-1]))
@@ -63,6 +66,7 @@ def _xvec(meta):
     if meta is None or len(meta) < 18:
         return None
     from .scoring import meta_vector
+
     x = list(meta_vector(meta, desc=False)) + [float(t) for t in meta[10:18]]
     br, dp = x[10], x[11]
     return x + [dp * x[1], dp * x[4], dp * br]
@@ -78,6 +82,7 @@ def refute_lr_cell(p):
     log(candidates / shortest refutations) per empty cell). Puzzle-only: no technique catalogue, no prices."""
     global _LAST_REFUTE
     from . import cbackend as _CB
+
     known = getattr(p, "_pm_solution", None)
     bs = [known] if known is not None else _CB.brute_solve(p, limit=1)
     if not bs:
@@ -119,19 +124,20 @@ def _time_weights():
     return _TIME_W or None
 
 
-
-
 def _cage_enum(p):
     """cell -> max log(number of digit combinations) over the sum cages containing it (distinct digits, size k, total s);
     measured from the rule instance itself -- any summed cage has a combination count, no variant label."""
     import itertools
+
     out = {}
     for g in getattr(p, "groups", ()):
         if getattr(g, "kind", "") == "cage" and getattr(g, "total", None):
             k, s_ = len(g.cells), int(g.total)
             key = (k, s_, p.D)
             if key not in _ENUM_CACHE:
-                _ENUM_CACHE[key] = math.log(max(1, sum(1 for c in itertools.combinations(range(1, p.D + 1), k) if sum(c) == s_)))
+                _ENUM_CACHE[key] = math.log(
+                    max(1, sum(1 for c in itertools.combinations(range(1, p.D + 1), k) if sum(c) == s_))
+                )
             for c in g.cells:
                 out[c] = max(out.get(c, 0.0), _ENUM_CACHE[key])
     return out
@@ -146,6 +152,7 @@ def _pair_enum(p):
     non-consecutive allow most pairs and are skipped by that measured share, not by name) -- the pairwise twin of
     _cage_enum."""
     from .model import RELATIONS
+
     out, D = {}, p.D
     for rel in getattr(p, "relations", ()):
         kind, a, b, args = rel[0], rel[1], rel[2], tuple(rel[3:])
@@ -204,9 +211,9 @@ def score_parts(p, cfg):
     if not pth:
         return None
     pth_time, x_time = pth, _LAST_X
-    if cfg.get("price_params"):   # difficulty from the card-fit price weights on THEIR route; time (L1) from the
+    if cfg.get("price_params"):  # difficulty from the card-fit price weights on THEIR route; time (L1) from the
         global P
-        P_old = P                 # production route above (time / bands / everything else unchanged)
+        P_old = P  # production route above (time / bands / everything else unchanged)
         P = _price_params(cfg["price_params"])
         try:
             pth_d = steps_enum(p) if w else [(nm, d, f, 0.0) for nm, d, f in steps(p)]
@@ -214,35 +221,51 @@ def score_parts(p, cfg):
             P = P_old
         if pth_d:
             pth = pth_d
-    v = sorted((math.exp(cfg["beta"] * math.log(d) + cfg["delta"].get(nm, 0.0) + w * e) * f for nm, d, f, e in pth), reverse=True)
-    if cfg.get("stat") == "per_cell":   # average effort to discover one cell = step sum / empty cells
+    v = sorted(
+        (math.exp(cfg["beta"] * math.log(d) + cfg["delta"].get(nm, 0.0) + w * e) * f for nm, d, f, e in pth),
+        reverse=True,
+    )
+    if cfg.get("stat") == "per_cell":  # average effort to discover one cell = step sum / empty cells
         empty = max(p.N - len(p.givens), 1)
         lpc = math.log(max(sum(v) / empty, 1e-9))
-        if cfg.get("refute_w"):          # technique-free search effort (refute.cpp): + w * log1p(sum log(C/R) / empty cells)
+        if cfg.get("refute_w"):  # technique-free search effort (refute.cpp): + w * log1p(sum log(C/R) / empty cells)
             lpc += cfg["refute_w"] * refute_lr_cell(p)
         r = 2 * lpc / math.log(5)
-    else:                               # mean of the hardest quarter of steps
-        top = v[:max(1, len(v) // 4)]
+    else:  # mean of the hardest quarter of steps
+        top = v[: max(1, len(v) // 4)]
         r = 2 * math.log(max(sum(top) / len(top), 1e-9)) / math.log(5)
-    if cfg.get("map"):            # one continuous formula, no ceiling: A * w * softplus((r - r0) / w) from score 2 up;
-        mp = cfg["map"]               # below 2, 2 * exp(A * (r - r2) / 2) (same value and slope at 2, about the square root
+    if cfg.get("map"):  # one continuous formula, no ceiling: A * w * softplus((r - r0) / w) from score 2 up;
+        mp = cfg["map"]  # below 2, 2 * exp(A * (r - r2) / 2) (same value and slope at 2, about the square root
         score = _softplus_map(mp, r)  # of effort, never negative; human times keep rising there, 2026-10-30)
         if score < 2.0:
             score = 2.0 * math.exp(mp["A"] * (r - _r_at(mp, 2.0)) / 2.0)
     else:
-        score = cfg["a"] + cfg["b"] * r + cfg.get("c", 0.0) * r * r     # map refitted on fed + sudokuwiki-rated hard puzzles
-    if cfg.get("price_params"):   # time effort from the production route
-        return score, math.log(max(sum(math.exp(cfg.get("beta_time", cfg["beta"]) * math.log(d) + cfg["delta"].get(nm, 0.0) + w * e) * f
-                                       for nm, d, f, e in pth_time), 1e-9))
+        score = (
+            cfg["a"] + cfg["b"] * r + cfg.get("c", 0.0) * r * r
+        )  # map refitted on fed + sudokuwiki-rated hard puzzles
+    if cfg.get("price_params"):  # time effort from the production route
+        return score, math.log(
+            max(
+                sum(
+                    math.exp(cfg.get("beta_time", cfg["beta"]) * math.log(d) + cfg["delta"].get(nm, 0.0) + w * e) * f
+                    for nm, d, f, e in pth_time
+                ),
+                1e-9,
+            )
+        )
     tw = _time_weights()
-    if tw and _LAST_X is not None and len(_LAST_X) == len(pth):   # time effort: same route, time price weights (log-price delta)
+    if (
+        tw and _LAST_X is not None and len(_LAST_X) == len(pth)
+    ):  # time effort: same route, time price weights (log-price delta)
         P_ = P
         wc = list(P_.get("meta_theta_full") or [])[:18] + list(P_.get("meta_theta_interact") or [0.0, 0.0, 0.0])[:3]
         dw = [a_ - b_ for a_, b_ in zip(tw, wc)]
         vt = 0.0
         for (nm, d, f, e), x in zip(pth, _LAST_X):
-            ld = min(math.log(d) + (sum(a_ * b_ for a_, b_ in zip(dw, x)) if x is not None else 0.0),
-                     6.907755278982137 + math.log(_SC9()))        # the engine's log-price cap (log 1000) on the time price too
+            ld = min(
+                math.log(d) + (sum(a_ * b_ for a_, b_ in zip(dw, x)) if x is not None else 0.0),
+                6.907755278982137 + math.log(_SC9()),
+            )  # the engine's log-price cap (log 1000) on the time price too
             vt += math.exp(cfg["beta"] * ld + cfg["delta"].get(nm, 0.0) + w * e) * f
         return score, math.log(max(vt, 1e-9))
     return score, math.log(max(sum(v), 1e-9))

@@ -17,6 +17,7 @@ Modules: sudokupad, fpuzzles, penpa, lmd (each with decode / to_puzzle; see thei
 Errors: SourceError > DecodeError (unrecognised / undecodable), FetchError (network, robots.txt), UnsupportedPuzzle
 (.elements = what could not be mapped exactly; nothing is silently dropped), VerificationError (verify=True).
 """
+
 from __future__ import annotations
 
 import json
@@ -32,6 +33,7 @@ class VerificationError(SourceError):
 def detect(x):
     """-> 'puzzle_json' | 'sudokupad' | 'fpuzzles' | 'penpa' | 'lmd' | 'short' | None."""
     from . import fpuzzles, lmd, penpa, sudokupad
+
     if isinstance(x, dict):
         if x.get("format") == "penpa":
             return "penpa"
@@ -80,6 +82,7 @@ def load(x, rules_text=None, infer=False, fetch=True, verify=False, time_limit=3
     search line readings with the solver (slow). fetch=False refuses anything that needs a network request.
     verify=True checks uniqueness (and the embedded solution) with CP-SAT and raises VerificationError otherwise."""
     from . import fpuzzles, lmd, penpa, sudokupad
+
     kind = detect(x)
     s = x.strip() if isinstance(x, str) else x
     if kind is None:
@@ -100,13 +103,13 @@ def load(x, rules_text=None, infer=False, fetch=True, verify=False, time_limit=3
         pj = lmd.to_puzzle(pid, infer=infer)
     elif kind == "sudokupad":
         if isinstance(s, str) and s.lower().startswith("sudokupad:"):
-            s = s[len("sudokupad:"):]
+            s = s[len("sudokupad:") :]
         pj = sudokupad.to_puzzle(s, page_text=rules_text, infer=infer, fetch=fetch)
     elif kind == "fpuzzles":
         pj = fpuzzles.to_puzzle(s, rules_text=rules_text, infer=infer, fetch=fetch)
     else:
         if isinstance(s, str) and s.lower().startswith("penpa:"):
-            s = s[len("penpa:"):]
+            s = s[len("penpa:") :]
         pj = penpa.to_puzzle(s, rules_text=rules_text)
     if verify:
         check(pj, time_limit=time_limit)
@@ -116,12 +119,15 @@ def load(x, rules_text=None, infer=False, fetch=True, verify=False, time_limit=3
 def check(pj, time_limit=30.0):
     """Unique solution (and equal to pj['solution'] when present) or VerificationError. Returns the solution string."""
     from .. import cpsat_verify, puzzle_json
+
     p = puzzle_json.from_json(pj)
     p.finalize()
     sols = cpsat_verify.solutions(p, limit=2, time_limit=time_limit)
     if sols is None:
-        raise VerificationError("uniqueness could not be decided (unsupported constraint or search limit)"
-                                + ("" if cpsat_verify.have_ortools() else "; " + cpsat_verify.VERIFY_HINT))
+        raise VerificationError(
+            "uniqueness could not be decided (unsupported constraint or search limit)"
+            + ("" if cpsat_verify.have_ortools() else "; " + cpsat_verify.VERIFY_HINT)
+        )
     if len(sols) != 1:
         raise VerificationError(f"{len(sols)} solutions")
     got = "".join(puzzle_json._sym(v) for v in sols[0])
@@ -130,12 +136,26 @@ def check(pj, time_limit=30.0):
     return got
 
 
-__all__ = ["load", "detect", "check", "SourceError", "DecodeError", "FetchError", "UnsupportedPuzzle",
-           "VerificationError", "USER_AGENT", "sudokupad", "fpuzzles", "penpa", "lmd"]
+__all__ = [
+    "load",
+    "detect",
+    "check",
+    "SourceError",
+    "DecodeError",
+    "FetchError",
+    "UnsupportedPuzzle",
+    "VerificationError",
+    "USER_AGENT",
+    "sudokupad",
+    "fpuzzles",
+    "penpa",
+    "lmd",
+]
 
 
-def __getattr__(name):                     # lazy submodule access: sources.sudokupad, sources.penpa, ...
+def __getattr__(name):  # lazy submodule access: sources.sudokupad, sources.penpa, ...
     if name in ("sudokupad", "fpuzzles", "penpa", "lmd"):
         import importlib
+
         return importlib.import_module(f"{__name__}.{name}")
     raise AttributeError(name)

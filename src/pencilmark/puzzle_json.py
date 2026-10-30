@@ -38,9 +38,9 @@ columns and boxes); boxes are what a renderer draws with thick lines. Rows / col
 named layout) are implied unless "regions" overrides them.
   from_json(obj or str) -> Puzzle (not finalized)      to_json(Puzzle) -> dict      canonical_hash(obj) -> md5
 """
+
 from __future__ import annotations
 
-import copy
 import hashlib
 import json
 import re
@@ -48,10 +48,21 @@ from collections import Counter
 
 from . import model as M
 
-BOXES = {4: (2, 2), 6: (2, 3), 8: (2, 4), 9: (3, 3), 10: (2, 5), 12: (3, 4), 14: (2, 7), 15: (3, 5), 16: (4, 4),
-         20: (4, 5), 25: (5, 5)}
+BOXES = {
+    4: (2, 2),
+    6: (2, 3),
+    8: (2, 4),
+    9: (3, 3),
+    10: (2, 5),
+    12: (3, 4),
+    14: (2, 7),
+    15: (3, 5),
+    16: (4, 4),
+    20: (4, 5),
+    25: (5, 5),
+}
 SIZES = {n * n: n for n in BOXES}
-CELL_KEYS = ("cells", "line", "circle")          # constraint keys holding a cell list
+CELL_KEYS = ("cells", "line", "circle")  # constraint keys holding a cell list
 NESTED_KEYS = ("segments", "regions", "houses")  # ... a list of cell lists
 SYMBOLS = "123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
@@ -72,14 +83,23 @@ def _layouts():
     """name -> 9x9 sub-grid origins. Exact geometries extracted from sudoku.one solutions plus a few aliases."""
     global LAYOUT_FILE
     if LAYOUT_FILE is None:
-        import os
         from . import _data
+
         f = "layouts_sudoku_one.json"
-        LAYOUT_FILE = {k: [tuple(o) for o in v["origins"]] for k, v in _data.load_json(f).items()} if _data.exists(f) else {}
+        LAYOUT_FILE = (
+            {k: [tuple(o) for o in v["origins"]] for k, v in _data.load_json(f).items()} if _data.exists(f) else {}
+        )
         LAYOUT_FILE.setdefault("samurai", [(0, 0), (0, 12), (6, 6), (12, 0), (12, 12)])
         LAYOUT_FILE.setdefault("twodoku", [(0, 0), (6, 6)])
-        for alias, name in (("gattai-3", "wing-3"), ("kazaguruma", "windmill"), ("flower", "flower-4"), ("tripledoku", "tridoku"),
-                            ("gattai-5", "samurai"), ("supersamurai", "super-samurai"), ("clueless", "clueless-1")):
+        for alias, name in (
+            ("gattai-3", "wing-3"),
+            ("kazaguruma", "windmill"),
+            ("flower", "flower-4"),
+            ("tripledoku", "tridoku"),
+            ("gattai-5", "samurai"),
+            ("supersamurai", "super-samurai"),
+            ("clueless", "clueless-1"),
+        ):
             if name in LAYOUT_FILE:
                 LAYOUT_FILE.setdefault(alias, LAYOUT_FILE[name])
     return LAYOUT_FILE
@@ -104,7 +124,7 @@ def _layout_extra(name, coords):
 def _layout_regions(origins, D=9, bh=3, bw=3):
     """rows / columns / boxes of D x D sub-grids at origins -> (coords, groups) with shared cells merged."""
     cid, coords = {}, []
-    for (o_r, o_c) in origins:
+    for o_r, o_c in origins:
         for r in range(D):
             for c in range(D):
                 if (o_r + r, o_c + c) not in cid:
@@ -114,8 +134,11 @@ def _layout_regions(origins, D=9, bh=3, bw=3):
     for k, (o_r, o_c) in enumerate(origins):
         units = [("row", [(o_r + r, o_c + c) for c in range(D)]) for r in range(D)]
         units += [("col", [(o_r + r, o_c + c) for r in range(D)]) for c in range(D)]
-        units += [("box", [(o_r + br + i, o_c + bc + j) for i in range(bh) for j in range(bw)])
-                  for br in range(0, D, bh) for bc in range(0, D, bw)]
+        units += [
+            ("box", [(o_r + br + i, o_c + bc + j) for i in range(bh) for j in range(bw)])
+            for br in range(0, D, bh)
+            for bc in range(0, D, bw)
+        ]
         for kind, cells in units:
             ids = tuple(cid[x] for x in cells)
             if frozenset(ids) not in seen:
@@ -139,8 +162,15 @@ def from_json(obj) -> M.Puzzle:
         cid_ = {rc: k for k, rc in enumerate(coords)}
         for g10 in _layout_extra(layout, coords):
             ids = [cid_[rc] for rc in g10]
-            units = [("row", ids[r * 9:(r + 1) * 9]) for r in range(9)] + [("col", ids[c::9]) for c in range(9)] + \
-                    [("box", [ids[(br + a) * 9 + bc + b] for a in range(3) for b in range(3)]) for br in (0, 3, 6) for bc in (0, 3, 6)]
+            units = (
+                [("row", ids[r * 9 : (r + 1) * 9]) for r in range(9)]
+                + [("col", ids[c::9]) for c in range(9)]
+                + [
+                    ("box", [ids[(br + a) * 9 + bc + b] for a in range(3) for b in range(3)])
+                    for br in (0, 3, 6)
+                    for bc in (0, 3, 6)
+                ]
+            )
             seen_ = {frozenset(x.cells) for x in groups}
             for kind, cells in units:
                 if frozenset(cells) not in seen_:
@@ -171,22 +201,29 @@ def from_json(obj) -> M.Puzzle:
     if groups:
         p.groups = list(groups)
     elif not d.get("shape") and (d.get("box") or not d.get("regions")):
-        bh, bw = (tuple(int(x) for x in d["box"].lower().split("x")) if d.get("box") else BOXES.get(D, (0, 0)))
+        bh, bw = tuple(int(x) for x in d["box"].lower().split("x")) if d.get("box") else BOXES.get(D, (0, 0))
         for r in range(D):
-            p.groups.append(M.Group(f"r{r+1}", tuple(r * D + c for c in range(D)), "row", True))
+            p.groups.append(M.Group(f"r{r + 1}", tuple(r * D + c for c in range(D)), "row", True))
         for c in range(D):
-            p.groups.append(M.Group(f"c{c+1}", tuple(r * D + c for r in range(D)), "col", True))
+            p.groups.append(M.Group(f"c{c + 1}", tuple(r * D + c for r in range(D)), "col", True))
         if bh:
             for br in range(0, D, bh):
                 for bc in range(0, D, bw):
-                    p.groups.append(M.Group(f"b{len(p.groups)}", tuple((br + i) * D + bc + j for i in range(bh) for j in range(bw)),
-                                            "box", True))
+                    p.groups.append(
+                        M.Group(
+                            f"b{len(p.groups)}",
+                            tuple((br + i) * D + bc + j for i in range(bh) for j in range(bw)),
+                            "box",
+                            True,
+                        )
+                    )
     for k, g in enumerate(d.get("regions") or []):
         cells = tuple(ci(x) for x in g["cells"])
         kind = g.get("kind", "region")
         complete = g.get("complete", len(cells) == D and g.get("unique", True))
-        p.groups.append(M.Group(g.get("name") or f"{kind}{k}", cells, "region" if kind == "extra" else kind,
-                                complete, g.get("sum")))
+        p.groups.append(
+            M.Group(g.get("name") or f"{kind}{k}", cells, "region" if kind == "extra" else kind, complete, g.get("sum"))
+        )
     # givens: row-major over the bounding grid ('#' or '.' at voids), or over existing cells only
     if nums:
         if len(nums) == width * height:
@@ -205,7 +242,7 @@ def from_json(obj) -> M.Puzzle:
         for ch in s:
             m |= 1 << (_val(ch) - 1)
         p.domains[ci(cell)] = m
-    marks = []                                       # (rule, relations / constraints before it): named rules are remembered
+    marks = []  # (rule, relations / constraints before it): named rules are remembered
     for r in d.get("rules") or []:
         t = r["type"]
         marks.append((r, len(p.relations), len(p.constraints)))
@@ -215,17 +252,17 @@ def from_json(obj) -> M.Puzzle:
         elif t == "xv":
             a, b = (ci(x) for x in r["cells"])
             p.relations.append(("sum", a, b, 10 if r.get("letter", "X").upper() == "X" else 5))
-        elif t == "less":                               # cells[0] < cells[1]
+        elif t == "less":  # cells[0] < cells[1]
             a, b = (ci(x) for x in r["cells"])
             p.relations.append(("lt", a, b))
-        elif t == "frame":                              # outside clue: sum of the first `count` cells from that edge
-            cells = _edge_line(d, D, r["side"], r["index"])[:r.get("count", 3)]
+        elif t == "frame":  # outside clue: sum of the first `count` cells from that edge
+            cells = _edge_line(d, D, r["side"], r["index"])[: r.get("count", 3)]
             p.constraints.append({"type": "sum", "cells": cells, "total": int(r["sum"])})
-        elif t == "increasing":                         # cells[0] < cells[1] < ...
+        elif t == "increasing":  # cells[0] < cells[1] < ...
             cs = [ci(x) for x in r["cells"]]
             p.relations += [("lt", a, b) for a, b in zip(cs, cs[1:])]
-        elif t == "rossini":                            # edge arrows: the first 3 cells ascend in the arrow's direction;
-            marked = set()                              # with all_given, every other edge's first 3 are not monotone
+        elif t == "rossini":  # edge arrows: the first 3 cells ascend in the arrow's direction;
+            marked = set()  # with all_given, every other edge's first 3 are not monotone
             for a_ in r.get("arrows", []):
                 cs = _edge_line(d, D, a_["side"], a_["index"])[:3]
                 if a_.get("towards", "in") == "out":
@@ -234,24 +271,44 @@ def from_json(obj) -> M.Puzzle:
                 marked.add((a_["side"], int(a_["index"])))
             if r.get("all_given", True):
                 mono = lambda t_: t_[0] < t_[1] < t_[2] or t_[0] > t_[1] > t_[2]
-                allowed = [(x, y, z) for x in range(1, D + 1) for y in range(1, D + 1) for z in range(1, D + 1)
-                           if len({x, y, z}) == 3 and not mono((x, y, z))]
+                allowed = [
+                    (x, y, z)
+                    for x in range(1, D + 1)
+                    for y in range(1, D + 1)
+                    for z in range(1, D + 1)
+                    if len({x, y, z}) == 3 and not mono((x, y, z))
+                ]
                 for side in ("top", "bottom", "left", "right"):
                     for k in range(1, D + 1):
                         if (side, k) not in marked:
-                            p.constraints.append({"type": "table", "cells": _edge_line(d, D, side, k)[:3], "allowed": allowed})
-        elif t == "vudoku":                             # V corner [vertex, arm, arm]: vertex = sum or difference of the arms
+                            p.constraints.append(
+                                {"type": "table", "cells": _edge_line(d, D, side, k)[:3], "allowed": allowed}
+                            )
+        elif t == "vudoku":  # V corner [vertex, arm, arm]: vertex = sum or difference of the arms
             v, a1, a2 = (ci(x) for x in r["cells"])
-            p.constraints.append({"type": "table", "cells": [v, a1, a2],
-                                  "allowed": [(x, y, z) for y in range(1, D + 1) for z in range(1, D + 1)
-                                              for x in {y + z, abs(y - z)} if 1 <= x <= D]})
-        elif t == "lowhigh":                            # marked cells hold split+1..D, every other cell 1..split
+            p.constraints.append(
+                {
+                    "type": "table",
+                    "cells": [v, a1, a2],
+                    "allowed": [
+                        (x, y, z)
+                        for y in range(1, D + 1)
+                        for z in range(1, D + 1)
+                        for x in {y + z, abs(y - z)}
+                        if 1 <= x <= D
+                    ],
+                }
+            )
+        elif t == "lowhigh":  # marked cells hold split+1..D, every other cell 1..split
             split = int(r.get("split", (D + 1) // 2))
-            hi = sum(1 << (v - 1) for v in range(split + 1, D + 1)); lo = ((1 << D) - 1) & ~hi
+            hi = sum(1 << (v - 1) for v in range(split + 1, D + 1))
+            lo = ((1 << D) - 1) & ~hi
             high = {ci(x) for x in r.get("high", [])}
             for c in range(len(coords)):
                 p.domains[c] &= hi if c in high else lo
-            p.cell_clues = getattr(p, "cell_clues", []) + [(dict(r, high=sorted(high)), {c: (hi if c in high else lo) for c in range(len(coords))})]
+            p.cell_clues = getattr(p, "cell_clues", []) + [
+                (dict(r, high=sorted(high)), {c: (hi if c in high else lo) for c in range(len(coords))})
+            ]
         elif t == "isomorphic":
             # two grids whose digits correspond through an unknown fixed relabelling (Twins). Human model: an explicit
             # digit KEY -- D key cells (key[x] = the right digit that left digit x maps to; a no-repeat group, the
@@ -259,23 +316,35 @@ def from_json(obj) -> M.Puzzle:
             # (left_i, right_i, key[x]): left_i == x -> right_i == key[x]. Engine techniques then read key entries off
             # known pairs, transfer placements / candidates through known entries, and find singles in the key row.
             pairs = [(ci(a), ci(b)) for a, b in r["pairs"]] if "pairs" in r else None
-            if pairs is None:                            # two grids given by their origins: corresponding cells in order
+            if pairs is None:  # two grids given by their origins: corresponding cells in order
                 (r1, c1), (r2, c2) = r["origins"]
                 cid0 = {rc: i for i, rc in enumerate(p.coords)}
                 pairs = [(cid0[(r1 + a, c1 + b)], cid0[(r2 + a, c2 + b)]) for a in range(D) for b in range(D)]
             kr = max(rc[0] for rc in p.coords) + 2
             key = []
             for x in range(D):
-                p.coords.append((kr, x)); p.domains.append((1 << D) - 1); key.append(len(p.coords) - 1)
+                p.coords.append((kr, x))
+                p.domains.append((1 << D) - 1)
+                key.append(len(p.coords) - 1)
             p.N = len(p.coords)
-            p.iso_key = list(getattr(p, "iso_key", [])) + key       # the exchange writer leaves these out
+            p.iso_key = list(getattr(p, "iso_key", [])) + key  # the exchange writer leaves these out
             p.groups.append(M.Group("digit key", tuple(key), "region", True))
             for a, b in pairs:
                 for x in range(1, D + 1):
-                    p.constraints.append({"type": "table", "cells": [a, b, key[x - 1]],
-                                          "allowed": [(u, v, w) for u in range(1, D + 1) for v in range(1, D + 1) for w in range(1, D + 1)
-                                                      if u != x or v == w]})
-        elif t in ("parity", "digit_class", "exclude"):   # graphical cell clues (not "candidates")
+                    p.constraints.append(
+                        {
+                            "type": "table",
+                            "cells": [a, b, key[x - 1]],
+                            "allowed": [
+                                (u, v, w)
+                                for u in range(1, D + 1)
+                                for v in range(1, D + 1)
+                                for w in range(1, D + 1)
+                                if u != x or v == w
+                            ],
+                        }
+                    )
+        elif t in ("parity", "digit_class", "exclude"):  # graphical cell clues (not "candidates")
             if t == "parity":
                 ok = {v for v in range(1, D + 1) if v % 2 == (1 if r["parity"] == "odd" else 0)}
             elif t == "digit_class":
@@ -287,7 +356,7 @@ def from_json(obj) -> M.Puzzle:
             for c_ in cells_:
                 p.domains[c_] &= m
             p.cell_clues = getattr(p, "cell_clues", []) + [(dict(r, cells=cells_), {c_: m for c_ in cells_})]
-        elif t == "pairs" and "where" in r:      # a whole-grid pair rule: every neighbour pair of that kind, minus "except"
+        elif t == "pairs" and "where" in r:  # a whole-grid pair rule: every neighbour pair of that kind, minus "except"
             skip = {frozenset((ci(a), ci(b))) for a, b in r.get("except") or []}
             for a, b in _pairs(list(cid), NEIGHBOURS[r["where"]]):
                 if frozenset((a, b)) not in skip:
@@ -296,7 +365,9 @@ def from_json(obj) -> M.Puzzle:
             for a, b in r["cells"]:
                 p.relations.append((r["rel"], ci(a), ci(b), *r.get("params", [])))
         elif t == "antiknight":
-            M.add_antiknight(p, D) if not d.get("shape") and not layout else _neighbour_neq(p, cid, [(1, 2), (2, 1), (1, -2), (2, -1)])
+            M.add_antiknight(p, D) if not d.get("shape") and not layout else _neighbour_neq(
+                p, cid, [(1, 2), (2, 1), (1, -2), (2, -1)]
+            )
         elif t == "antiking":
             _neighbour_neq(p, cid, [(1, 1), (1, -1)])
         elif t == "nonconsecutive":
@@ -304,13 +375,13 @@ def from_json(obj) -> M.Puzzle:
                 for dr, dc in ((0, 1), (1, 0)):
                     if (r_ + dr, c_ + dc) in cid:
                         p.relations.append(("nonconsec", a, cid[(r_ + dr, c_ + dc)]))
-        elif t == "global_entropy":                     # every 2x2 window holds a low, a middle and a high digit (thirds)
+        elif t == "global_entropy":  # every 2x2 window holds a low, a middle and a high digit (thirds)
             allowed = entropy_table(D)
-            for (r_, c_) in sorted(cid):
+            for r_, c_ in sorted(cid):
                 win = [(r_, c_), (r_, c_ + 1), (r_ + 1, c_), (r_ + 1, c_ + 1)]
                 if all(x in cid for x in win):
                     p.constraints.append({"type": "table", "cells": [cid[x] for x in win], "allowed": allowed})
-        elif t == "quadruple":                          # the listed digits (repeats allowed) all appear in these cells
+        elif t == "quadruple":  # the listed digits (repeats allowed) all appear in these cells
             cs = [ci(x) for x in r["cells"]]
             need = [int(v) for v in r["digits"]]
             p.constraints.append({"type": "table", "cells": cs, "allowed": quadruple_table(D, len(cs), need)})
@@ -340,20 +411,24 @@ NAMED_RULES = {"global_entropy", "quadruple", "rossini", "vudoku", "increasing",
 
 def _remember(p, rule, rels, cons):
     for c in cons:
-        c["_named"] = True              # expansion of a named rule: written back as the rule (underscore keys never reach C++)
+        c["_named"] = True  # expansion of a named rule: written back as the rule (underscore keys never reach C++)
     p.named_rules = getattr(p, "named_rules", []) + [(dict(rule), list(rels))]
 
 
 def entropy_table(D):
     """2x2 window (TL, TR, BL, BR) with a low, a middle and a high digit, classes = thirds of 1..D (sudoku.coach's rule)."""
     import itertools
+
     third = lambda v: (v - 1) * 3 // D
     return [t for t in itertools.product(range(1, D + 1), repeat=4) if len({third(v) for v in t}) == 3]
 
 
 def quadruple_table(D, n, need):
     import itertools
-    return [t for t in itertools.product(range(1, D + 1), repeat=n) if all(t.count(v) >= need.count(v) for v in set(need))]
+
+    return [
+        t for t in itertools.product(range(1, D + 1), repeat=n) if all(t.count(v) >= need.count(v) for v in set(need))
+    ]
 
 
 def add_named(p, rule):
@@ -362,7 +437,8 @@ def add_named(p, rule):
     coords = list(p.coords)
     cname = lambda i: f"r{coords[i][0] + 1}c{coords[i][1] + 1}" if isinstance(i, int) else i
     r = {k: ([cname(x) for x in v] if k in CELL_KEYS else v) for k, v in rule.items()}
-    width = max(c for _, c in coords) + 1; height = max(rr for rr, _ in coords) + 1
+    width = max(c for _, c in coords) + 1
+    height = max(rr for rr, _ in coords) + 1
     shape = ["".join("#" if (y, x) in set(coords) else "." for x in range(width)) for y in range(height)]
     q = from_json({"digits": p.D, "shape": shape, "regions": [], "rules": [r]})
     a, b = len(p.relations), len(p.constraints)
@@ -399,11 +475,12 @@ def _neighbour_neq(p, cid, steps):
 def _compiled_extras(p):
     """Relations / constraints that finalize() derived from line and clone constraints (not part of the definition)."""
     q = M.Puzzle(D=p.D, coords=p.coords)
-    q.groups = list(p.groups)                       # region-sum lines segment by the puzzle's boxes
+    q.groups = list(p.groups)  # region-sum lines segment by the puzzle's boxes
     q.constraints = [{k: v for k, v in c.items() if k != "_compiled"} for c in p.constraints]
-    q._compile_clones(); q._compile_lines()
+    q._compile_clones()
+    q._compile_lines()
     base = [c for c in q.constraints if c.get("type") in ("line", "clone")]
-    extra_cons = q.constraints[len(p.constraints):] if len(q.constraints) > len(p.constraints) else []
+    extra_cons = q.constraints[len(p.constraints) :] if len(q.constraints) > len(p.constraints) else []
     return Counter(q.relations), [json.dumps(c, sort_keys=True, default=list) for c in extra_cons], base
 
 
@@ -422,8 +499,9 @@ def to_json(p: M.Puzzle, solution=None, meta=None) -> dict:
     if full_square:
         bh, bw = BOXES.get(D, (0, 0))
         std = M.standard(D, bh, bw) if bh else None
-        if std and {frozenset(g.cells) for g in p.groups if g.complete and g.total is None and g.kind in ("row", "col", "box")} == \
-                {frozenset(g.cells) for g in std.groups}:
+        if std and {
+            frozenset(g.cells) for g in p.groups if g.complete and g.total is None and g.kind in ("row", "col", "box")
+        } == {frozenset(g.cells) for g in std.groups}:
             implied = True
             out["box"] = f"{bh}x{bw}"
     regs = []
@@ -436,14 +514,17 @@ def to_json(p: M.Puzzle, solution=None, meta=None) -> dict:
         if not g.complete and len(g.cells) == D:
             r["complete"] = False
         if not g.complete and len(g.cells) < D and g.kind == "cage":
-            pass                                         # cages: digits never repeat (engine convention)
+            pass  # cages: digits never repeat (engine convention)
         regs.append(r)
     if regs or not implied:
         out["regions"] = regs if not implied else regs
     # givens over the bounding grid
     cid = {rc: i for i, rc in enumerate(coords)}
-    out["numbers"] = "".join((_sym(p.givens[cid[(r, c)]]) if cid[(r, c)] in p.givens else ".") if (r, c) in cid else "#"
-                             for r in range(height) for c in range(width))
+    out["numbers"] = "".join(
+        (_sym(p.givens[cid[(r, c)]]) if cid[(r, c)] in p.givens else ".") if (r, c) in cid else "#"
+        for r in range(height)
+        for c in range(width)
+    )
     if solution is not None:
         out["solution"] = "".join(_sym(v) for v in solution)
     # graphical cell clues (parity / digit_class / exclude / lowhigh) go back out as rules; "candidates" keeps only what no clue
@@ -458,8 +539,11 @@ def to_json(p: M.Puzzle, solution=None, meta=None) -> dict:
             if k in r_:
                 r_[k] = [cname(x) for x in r_[k]]
         clue_rules.append(r_)
-    cands = {cname(i): "".join(_sym(v) for v in range(1, D + 1) if m >> (v - 1) & 1)
-             for i, m in enumerate(p.domains) if m != implied[i]}
+    cands = {
+        cname(i): "".join(_sym(v) for v in range(1, D + 1) if m >> (v - 1) & 1)
+        for i, m in enumerate(p.domains)
+        if m != implied[i]
+    }
     if cands:
         out["candidates"] = cands
     # rules: relations minus those compiled from lines / clones
@@ -517,20 +601,25 @@ def to_json(p: M.Puzzle, solution=None, meta=None) -> dict:
     m = {"title": p.name} if p.name else {}
     m.update({k: v for k, v in (meta or {}).items() if v not in (None, "")})
     if m:
-        out["meta"] = m                  # metadata in its own object
+        out["meta"] = m  # metadata in its own object
     return out
 
 
 # neighbourhoods a whole-grid pair rule can cover ("where"); forward steps, so each pair appears once
-NEIGHBOURS = {"orthogonal": [(0, 1), (1, 0)], "diagonal": [(1, 1), (1, -1)],
-              "king": [(0, 1), (1, 0), (1, 1), (1, -1)], "knight": [(1, 2), (2, 1), (1, -2), (2, -1)]}
+NEIGHBOURS = {
+    "orthogonal": [(0, 1), (1, 0)],
+    "diagonal": [(1, 1), (1, -1)],
+    "king": [(0, 1), (1, 0), (1, 1), (1, -1)],
+    "knight": [(1, 2), (2, 1), (1, -2), (2, -1)],
+}
 
 
 def _symmetric(kind, params, D=9):
     f = M.RELATIONS.get(kind)
     try:
-        return f is not None and all(bool(f(v, w, *params)) == bool(f(w, v, *params))
-                                     for v in range(1, D + 1) for w in range(1, D + 1))
+        return f is not None and all(
+            bool(f(v, w, *params)) == bool(f(w, v, *params)) for v in range(1, D + 1) for w in range(1, D + 1)
+        )
     except Exception:
         return False
 
@@ -572,5 +661,7 @@ def _pairs(coords, steps):
 def canonical_hash(obj) -> str:
     """md5 of the canonical puzzle definition (sorted keys, no metadata) -- the same puzzle from two sources dedupes."""
     d = json.loads(obj) if isinstance(obj, str) else dict(obj)
-    core = {k: d[k] for k in ("digits", "shape", "box", "layout", "numbers", "regions", "rules", "candidates") if k in d}
+    core = {
+        k: d[k] for k in ("digits", "shape", "box", "layout", "numbers", "regions", "rules", "candidates") if k in d
+    }
     return hashlib.md5(json.dumps(core, sort_keys=True, separators=(",", ":")).encode()).hexdigest()

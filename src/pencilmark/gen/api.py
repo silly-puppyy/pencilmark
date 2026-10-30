@@ -1,4 +1,5 @@
 """generate(spec) -> {"puzzle", "card", "info"}: the public entry point of pencilmark.gen."""
+
 from __future__ import annotations
 
 import math
@@ -7,13 +8,17 @@ import time
 from dataclasses import dataclass, field, fields
 from typing import Any
 
-from .. import puzzle_json as PJ, export as E2, band_path as BP, solver as S
-from . import elements as EL, search as SR
-from .board import Board, BOXES, grid_log2
-from .checks import Checker, params, band_techs, code_techs
+from .. import band_path as BP
+from .. import export as E2
+from .. import puzzle_json as PJ
+from .. import solver as S
+from . import elements as EL
+from . import search as SR
+from .board import BOXES, Board, grid_log2
+from .checks import Checker, band_techs, code_techs, params
 
-BANDS = list(E2.BANDS)                      # "Very Easy" .. "Extreme"
-CLASSIC_MIN_GIVENS = {4: 4, 6: 8, 9: 17}    # known minimum clue counts for a unique classic
+BANDS = list(E2.BANDS)  # "Very Easy" .. "Extreme"
+CLASSIC_MIN_GIVENS = {4: 4, 6: 8, 9: 17}  # known minimum clue counts for a unique classic
 
 
 class GenerationFailed(RuntimeError):
@@ -48,6 +53,7 @@ class Spec:
                       "cpsat" (uniqueness only; min kropki); cage-count and full kropki always use CP-SAT
     seed, time_limit  determinism and the overall budget in seconds
     """
+
     size: int = 9
     elements: dict | None = None
     kinds: list | None = None
@@ -100,7 +106,7 @@ def _known_codes():
             out.setdefault(code, b)
     for code, _name, b in BP._X_CHAIN.values():
         out.setdefault(code, b)
-    for code in ("FRK", "FSW", "FJF", "PHI", "PHV"):        # Hard shape codes of the split techniques
+    for code in ("FRK", "FSW", "FJF", "PHI", "PHV"):  # Hard shape codes of the split techniques
         out.setdefault(code, 3)
     return out
 
@@ -120,14 +126,16 @@ def _plan(s):
     if not els:
         return "classic", [], {}, None
     if len(els) == 1:
-        (k, v), = els.items()
+        ((k, v),) = els.items()
         if isinstance(v, str):
             v = v.lower()
             if k == "kropki" and v in ("full", "min"):
                 return f"kropki_{v}", [k], {}, None
             if k == "cage" and v == "partition":
                 return "partition", [k], {}, None
-            raise ValueError(f"element value {v!r} only means something for kropki ('full' / 'min') or cage ('partition')")
+            raise ValueError(
+                f"element value {v!r} only means something for kropki ('full' / 'min') or cage ('partition')"
+            )
         if k == "cage" and s.max_givens == 0 and isinstance(v, int) and v > 0:
             return "cage_count", [k], {}, v
     seeds, caps = {}, {}
@@ -186,6 +194,7 @@ def feasibility(spec):
             probs.append(f"symmetry applies to givens; mode {mode} has none to place")
     if mode in ("cage_count", "kropki_full") or (mode == "kropki_min" and s.solver == "cpsat"):
         from .. import cpsat_verify as V
+
         if not V.have_ortools():
             probs.append(f"mode {mode} needs the CP-SAT uniqueness oracle; {V.VERIFY_HINT}")
     if s.solver not in ("logic", "cpsat"):
@@ -208,7 +217,9 @@ def feasibility(spec):
         if mode == "classic":
             floor = CLASSIC_MIN_GIVENS.get(s.size, s.size - 1)
             if s.max_givens < floor:
-                probs.append(f"a unique {s.size}x{s.size} classic needs at least {floor} givens (max_givens={s.max_givens})")
+                probs.append(
+                    f"a unique {s.size}x{s.size} classic needs at least {floor} givens (max_givens={s.max_givens})"
+                )
     # information budget for element-only / element-bounded specs
     need = grid_log2(s.size)
     lg_c = lambda n_, k_: (math.lgamma(n_ + 1) - math.lgamma(k_ + 1) - math.lgamma(n_ - k_ + 1)) / math.log(2)
@@ -217,23 +228,32 @@ def feasibility(spec):
         if value > b.N // 2:
             probs.append(f"{value} cages can't tile {b.N} cells without 1-cell cages (max {b.N // 2})")
         if value < math.ceil(b.N / s.size):
-            probs.append(f"{value} cages can't cover {b.N} cells with distinct digits (cage <= {s.size} cells; "
-                         f"need >= {math.ceil(b.N / s.size)})")
+            probs.append(
+                f"{value} cages can't cover {b.N} cells with distinct digits (cage <= {s.size} cells; "
+                f"need >= {math.ceil(b.N / s.size)})"
+            )
         bits = value * EL.element_bits(b, "cage")
         if bits < need:
-            probs.append(f"information budget: {value} cages carry <= {bits:.0f} bits, a {s.size}x{s.size} grid needs "
-                         f"{need:.0f}")
-    elif mode == "dig" and gmax is not None and (s.max_elements is not None or (kinds and all(k in value for k in kinds))):
+            probs.append(
+                f"information budget: {value} cages carry <= {bits:.0f} bits, a {s.size}x{s.size} grid needs {need:.0f}"
+            )
+    elif (
+        mode == "dig"
+        and gmax is not None
+        and (s.max_elements is not None or (kinds and all(k in value for k in kinds)))
+    ):
         gbits = lg_c(b.N, min(gmax, b.N)) + gmax * math.log2(s.size) if gmax else 0.0
         if s.max_elements is not None:
             n_el = s.max_elements
             ebits = n_el * max(EL.element_bits(b, EL.base_kind(k)) for k in kinds)
-        else:                       # every element class has a maximum: the caps bound the elements
+        else:  # every element class has a maximum: the caps bound the elements
             n_el = sum(value.values())
             ebits = sum(m * EL.element_bits(b, EL.base_kind(k)) for k, m in value.items())
         if gbits + ebits < need:
-            probs.append(f"information budget: {gmax} givens + {n_el} elements carry <= {gbits + ebits:.0f} bits, "
-                         f"a {s.size}x{s.size} grid needs {need:.0f} -- too few for a unique puzzle")
+            probs.append(
+                f"information budget: {gmax} givens + {n_el} elements carry <= {gbits + ebits:.0f} bits, "
+                f"a {s.size}x{s.size} grid needs {need:.0f} -- too few for a unique puzzle"
+            )
         if s.max_elements is not None and s.max_elements < sum(seeds.values()):
             probs.append(f"max_elements {s.max_elements} < required element count {sum(seeds.values())}")
     if mode in ("kropki_full", "kropki_min", "cage_count") and s.min_givens:
@@ -276,24 +296,29 @@ def generate(spec, log=None):
     puzzle met it in time."""
     import json as _json
     from pathlib import Path
+
     from .. import spec_format as SF
     from ..api import to_export
+
     doc = spec
     if isinstance(spec, Path) or (isinstance(spec, str) and not spec.lstrip().startswith("{")):
         doc = _json.loads(Path(spec).read_text(encoding="utf-8"))
     elif isinstance(spec, str):
         doc = _json.loads(spec)
     if not isinstance(doc, dict) or doc.get("format") != "sudoku-spec":
-        raise TypeError('generate takes a "sudoku-spec" request (docs/SPEC.md), e.g. {"format": "sudoku-spec", '
-                        '"format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9, "rules": [{"type": "box_grid", '
-                        '"origin": "r1c1", "box": [3, 3]}], "where": {"band": "Hard"}}')
+        raise TypeError(
+            'generate takes a "sudoku-spec" request (docs/SPEC.md), e.g. {"format": "sudoku-spec", '
+            '"format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9, "rules": [{"type": "box_grid", '
+            '"origin": "r1c1", "box": [3, 3]}], "where": {"band": "Hard"}}'
+        )
     r = _generate(SF.spec_to_gen(doc), log)
     meta = {k: v for k, v in (doc.get("meta") or {}).items() if k != SF.NS}
     meta["generated_from"] = SF.spec_fingerprint(doc)
     puzzle = to_export(r["puzzle"], meta=meta)
     card = r["card"]
-    if doc.get("fields") is not None:              # the requested card fields (docs/SPEC.md 5)
+    if doc.get("fields") is not None:  # the requested card fields (docs/SPEC.md 5)
         from ..api import rate
+
         card = rate(puzzle, fields=doc["fields"])
     return {"puzzle": puzzle, "card": card, "info": r["info"]}
 
@@ -322,7 +347,7 @@ def _generate(spec, log=None):
     top = [c for c in req if codes[c] == cap]
     if top and cap > 0:
         allowed = band_techs(P, cap - 1) | set().union(*(code_techs(P, c) for c in top))
-        if not any(code_techs(P, c) for c in top):          # shape-only code (SKY, FRK...): no technique to single out
+        if not any(code_techs(P, c) for c in top):  # shape-only code (SKY, FRK...): no technique to single out
             allowed = band_techs(P, cap)
     else:
         allowed = band_techs(P, cap)
@@ -356,12 +381,33 @@ def _generate(spec, log=None):
     while time.time() < deadline:
         stats["attempts"] += 1
         if mode in ("classic", "dig"):
-            few = s.max_givens is not None and s.max_givens < CLASSIC_MIN_GIVENS.get(s.size, 0)   # elements must carry the puzzle
-            dense = [k for k in kinds if mode == "dig" and few and (value or {}).get(k) is None
-                     and EL.base_kind(k) in ("kropki", "xv", "parity")] if stats["attempts"] % 2 else []
-            r = SR.dig(b, kinds, rng, chk, min_givens=s.min_givens, seeds=seeds,
-                       max_els=s.max_elements if s.max_elements is not None else 10 ** 6, symmetry=s.symmetry,
-                       caps=value if mode == "dig" else None, dense=dense)
+            few = s.max_givens is not None and s.max_givens < CLASSIC_MIN_GIVENS.get(
+                s.size, 0
+            )  # elements must carry the puzzle
+            dense = (
+                [
+                    k
+                    for k in kinds
+                    if mode == "dig"
+                    and few
+                    and (value or {}).get(k) is None
+                    and EL.base_kind(k) in ("kropki", "xv", "parity")
+                ]
+                if stats["attempts"] % 2
+                else []
+            )
+            r = SR.dig(
+                b,
+                kinds,
+                rng,
+                chk,
+                min_givens=s.min_givens,
+                seeds=seeds,
+                max_els=s.max_elements if s.max_elements is not None else 10**6,
+                symmetry=s.symmetry,
+                caps=value if mode == "dig" else None,
+                dense=dense,
+            )
         elif mode == "partition":
             r = SR.partition(b, rng, chk, n_givens=s.min_givens)
         elif mode == "cage_count":
@@ -384,8 +430,11 @@ def _generate(spec, log=None):
         if short:
             reject(f"kind pruned: {'/'.join(short)}")
             continue
-        over = [k for k, m in ((value or {}) if mode == "dig" else {}).items()
-                if m is not None and sum(1 for e in els if EL.in_class(e, k)) > m]
+        over = [
+            k
+            for k, m in ((value or {}) if mode == "dig" else {}).items()
+            if m is not None and sum(1 for e in els if EL.in_class(e, k)) > m
+        ]
         if over:
             reject(f"too many: {'/'.join(over)}")
             continue
@@ -394,9 +443,18 @@ def _generate(spec, log=None):
             # too easy: every other attempt, re-dig with every technique and pull back to the cap (search.pull); measured
             # 2026-10-24 on 9x9 classics: ~1 in 4-6 hits for band targets, never for a required technique, ~2 s each
             if mode in ("classic", "dig") and cap < 5 and not top and stats["attempts"] % 2 == 0:
-                rf = SR.dig(b, kinds, rng, full, sol=sol, min_givens=s.min_givens, seeds=seeds,
-                            max_els=s.max_elements if s.max_elements is not None else 10 ** 6, symmetry=s.symmetry,
-                            caps=value if mode == "dig" else None)
+                rf = SR.dig(
+                    b,
+                    kinds,
+                    rng,
+                    full,
+                    sol=sol,
+                    min_givens=s.min_givens,
+                    seeds=seeds,
+                    max_els=s.max_elements if s.max_elements is not None else 10**6,
+                    symmetry=s.symmetry,
+                    caps=value if mode == "dig" else None,
+                )
                 if rf is not None:
                     got = SR.pull(b, sol, rf[1], rf[2], chk, low, rng, symmetry=s.symmetry, max_givens=s.max_givens)
             if got is None:
@@ -425,14 +483,23 @@ def _generate(spec, log=None):
             continue
         if not screen_alts or screen_fields is not None:
             card = grade(d, alternatives=True, fields=None)
-        info = {"mode": mode, "givens": len(givens),
-                "elements": {k: sum(1 for e in els if EL.element_class(e) == k) for k in sorted({EL.element_class(e) for e in els})},
-                "attempts": stats["attempts"], "seconds": round(time.time() - t0, 1), "rejected": stats["rejected"],
-                "unique_verified": verified, "seed": s.seed}
+        info = {
+            "mode": mode,
+            "givens": len(givens),
+            "elements": {
+                k: sum(1 for e in els if EL.element_class(e) == k) for k in sorted({EL.element_class(e) for e in els})
+            },
+            "attempts": stats["attempts"],
+            "seconds": round(time.time() - t0, 1),
+            "rejected": stats["rejected"],
+            "unique_verified": verified,
+            "seed": s.seed,
+        }
         return {"puzzle": d, "card": card, "info": info}
     rej = ", ".join(f"{k} x{v}" for k, v in sorted(stats["rejected"].items(), key=lambda x: -x[1])) or "none"
-    raise GenerationFailed(f"no puzzle met the spec in {s.time_limit:.0f} s ({stats['attempts']} attempts; rejected: {rej})",
-                           stats)
+    raise GenerationFailed(
+        f"no puzzle met the spec in {s.time_limit:.0f} s ({stats['attempts']} attempts; rejected: {rej})", stats
+    )
 
 
 def _add_back(b, s, sol, givens, els, td, tb, req, grade, build, rng, deadline):
@@ -471,6 +538,7 @@ def _add_back(b, s, sol, givens, els, td, tb, req, grade, build, rng, deadline):
 def _verify(d, sol, time_limit=30.0):
     """independent uniqueness check (CP-SAT): True / False, or None if undecided in time."""
     from .. import cpsat_verify as V
+
     p = PJ.from_json(d)
     p.finalize()
     sols = V.solutions(p, limit=2, time_limit=time_limit)
@@ -482,6 +550,7 @@ def _verify(d, sol, time_limit=30.0):
 def is_unique(puzzle, time_limit=30.0):
     """CP-SAT: does the puzzle JSON have exactly one solution? (None = undecided in time / unsupported rule)."""
     from .. import cpsat_verify as V
+
     p = PJ.from_json(puzzle)
     p.finalize()
     sols = V.solutions(p, limit=2, time_limit=time_limit)
@@ -494,6 +563,7 @@ def uniquify(puzzle, seed=0, time_limit=30.0, minimize=True):
     counterexamples disagree on becomes the next given. With minimize, added givens that turn out unnecessary are
     dropped again. Returns a new puzzle JSON; raises GenerationFailed if there is no solution or CP-SAT can't decide."""
     from .. import cpsat_verify as V
+
     d = dict(puzzle)
     if d.get("layout") or d.get("shape"):
         raise GenerationFailed("uniquify supports single-grid puzzles only")
@@ -518,7 +588,9 @@ def uniquify(puzzle, seed=0, time_limit=30.0, minimize=True):
         q.finalize()
         sols = V.solutions(q, limit=2, time_limit=time_limit)
         if sols is None:
-            raise GenerationFailed("uniqueness could not be decided" + ("" if V.have_ortools() else "; " + V.VERIFY_HINT))
+            raise GenerationFailed(
+                "uniqueness could not be decided" + ("" if V.have_ortools() else "; " + V.VERIFY_HINT)
+            )
         if not sols:
             raise GenerationFailed("puzzle has no solution")
         alts = [list(x) for x in sols if list(x) != sol]

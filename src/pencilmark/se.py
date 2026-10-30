@@ -11,12 +11,43 @@ On classics, with the diuf scale, ER came within 0.3 of Sudoku Explainer's own r
 Approximate by construction: our route is not SE's route, and techniques SE has no
 value for (variant logic) fall back to 7.0. Classic sudoku only is meaningful.
 """
+
 from __future__ import annotations
 
-CLASSIC = {"HSI": 1.2, "NSI": 2.3, "PPR": 2.6, "NPR": 3.0, "XWG": 3.2, "HPR": 3.4, "NTR": 3.6, "SWF": 3.8, "HTR": 4.0, "XYW": 4.2,
-           "XYZ": 4.4, "UR1": 4.5, "URX": 4.6, "NQD": 5.0, "JFH": 5.2, "HQD": 5.4, "BUG": 5.6, "MSI": 3.0,
-           "SKY": 6.5, "KTE": 6.5, "TUR": 6.5, "ERE": 6.5, "XCH": 6.6, "XYC": 6.6, "RMP": 6.6, "WWG": 6.6, "AIC": 7.0, "ALS": 7.0,
-           "SDC": 7.0, "FSH": 6.6, "FCH": 7.5, "NET": 8.5}
+CLASSIC = {
+    "HSI": 1.2,
+    "NSI": 2.3,
+    "PPR": 2.6,
+    "NPR": 3.0,
+    "XWG": 3.2,
+    "HPR": 3.4,
+    "NTR": 3.6,
+    "SWF": 3.8,
+    "HTR": 4.0,
+    "XYW": 4.2,
+    "XYZ": 4.4,
+    "UR1": 4.5,
+    "URX": 4.6,
+    "NQD": 5.0,
+    "JFH": 5.2,
+    "HQD": 5.4,
+    "BUG": 5.6,
+    "MSI": 3.0,
+    "SKY": 6.5,
+    "KTE": 6.5,
+    "TUR": 6.5,
+    "ERE": 6.5,
+    "XCH": 6.6,
+    "XYC": 6.6,
+    "RMP": 6.6,
+    "WWG": 6.6,
+    "AIC": 7.0,
+    "ALS": 7.0,
+    "SDC": 7.0,
+    "FSH": 6.6,
+    "FCH": 7.5,
+    "NET": 8.5,
+}
 DIUF = dict(CLASSIC, HSI=1.2, NSI=1.3, PPR=2.5, NPR=3.0, HPR=3.1, NTR=3.2, HTR=3.3, MSI=3.0)
 SCALES = {"classic": CLASSIC, "diuf": DIUF}
 

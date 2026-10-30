@@ -1,5 +1,6 @@
 """Quick check of an installed wheel (cibuildwheel test-command): the C++ core loads, rates, solves and round-trips.
 The full suite is tests/ (run by tests.yml)."""
+
 import json
 import sys
 import time

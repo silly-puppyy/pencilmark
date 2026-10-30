@@ -1,4 +1,5 @@
 """Package data (model parameters and tables shipped with pencilmark)."""
+
 from __future__ import annotations
 
 import json

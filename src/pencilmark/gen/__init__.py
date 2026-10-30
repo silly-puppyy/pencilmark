@@ -11,6 +11,7 @@ classic and variants, any standard board size.
 The parts of the spec the generator runs are listed in docs/SPEC.md; anything else raises NotSupportedError. Every result
 is unique (re-checked with CP-SAT when OR-Tools is installed). Multi-grid boards are not supported by the generator.
 """
+
 from .api import GenerationFailed, generate
 
 __all__ = ["GenerationFailed", "generate"]

@@ -15,14 +15,33 @@ Each note is (code, severity, text); severity 'reject' = would not be published,
 Every check is adjustable with an object (quality_limits): {"limit": n} replaces its limit (checks with one), {"severity":
 "reject" | "warning" | "off"} overrides its severity or turns it off.
 """
-from . import metrics as MT, solver as S
+
+from . import metrics as MT
+from . import solver as S
 
 UNIQUENESS = {"UniqueRectangle", "BUG+1", "GurthSymmetry"}
-TRIAL = {"Trial", "ShortTrial", "EitherWay", "WhatIf", "ForcingChains", "DynamicForcingChains",
-         "NestedForcingChains", "NishioForcingNet", "PatternOverlay"}
+TRIAL = {
+    "Trial",
+    "ShortTrial",
+    "EitherWay",
+    "WhatIf",
+    "ForcingChains",
+    "DynamicForcingChains",
+    "NestedForcingChains",
+    "NishioForcingNet",
+    "PatternOverlay",
+}
 BASE_UNITS = ("row", "col", "box", "column")
-QUALITY = {"spike": 0.6, "trivial": 0.6, "tedious": 60, "barely_used": 3,      # default limits (GRADE.md 4); None: no limit
-           "decorative": None, "redundant": None, "uniqueness": None, "trial": None}
+QUALITY = {
+    "spike": 0.6,
+    "trivial": 0.6,
+    "tedious": 60,
+    "barely_used": 3,  # default limits (GRADE.md 4); None: no limit
+    "decorative": None,
+    "redundant": None,
+    "uniqueness": None,
+    "trial": None,
+}
 SEVERITIES = ("reject", "warning", "off")
 
 
@@ -35,11 +54,13 @@ def quality_limits(q=None):
         if k not in QUALITY:
             raise ValueError(f"unknown quality check {k!r}; known: {list(QUALITY)}")
         if not isinstance(v, dict) or not v or set(v) - {"limit", "severity"}:
-            raise ValueError(f'quality {k} must be an object with "limit" and / or "severity", e.g. {{"severity": "off"}}')
+            raise ValueError(
+                f'quality {k} must be an object with "limit" and / or "severity", e.g. {{"severity": "off"}}'
+            )
         if "limit" in v:
             lim = v["limit"]
             if QUALITY[k] is None:
-                raise ValueError(f"quality {k} has no limit; it takes only \"severity\"")
+                raise ValueError(f'quality {k} has no limit; it takes only "severity"')
             if isinstance(lim, bool) or not isinstance(lim, (int, float)) or lim < 0:
                 raise ValueError(f"quality {k} limit must be a number >= 0")
             out[k]["limit"] = lim
@@ -67,6 +88,7 @@ def _top3_share(puzzle, steps):
     """share of the solve's effort in its 3 hardest steps; effort per step = price^beta x candidate density / moves
     offered, as the card's difficulty"""
     from . import _data
+
     beta = _data.load_json("card_score.json")["beta"]
     nd = puzzle.N * puzzle.D
     v = []
@@ -98,7 +120,9 @@ def notes(puzzle, P, steps, tier, forced, required, work_min, check_rules=True):
         out.append(("tedious", "note", f"{tier} but about {work_min:.0f} min of routine work"))
     req = set(required or [])
     if on("uniqueness") and req & UNIQUENESS:
-        out.append(("uniqueness", "note", "relies on the uniqueness assumption (" + ", ".join(sorted(req & UNIQUENESS)) + ")"))
+        out.append(
+            ("uniqueness", "note", "relies on the uniqueness assumption (" + ", ".join(sorted(req & UNIQUENESS)) + ")")
+        )
     if on("trial") and req & TRIAL:
         out.append(("trial", "note", "needs trial / forcing chains (" + ", ".join(sorted(req & TRIAL)) + ")"))
     if check_rules and (on("decorative") or on("redundant") or on("barely_used")):
@@ -109,6 +133,7 @@ def notes(puzzle, P, steps, tier, forced, required, work_min, check_rules=True):
 def _rule_notes(puzzle, P, q=None):
     q = q or quality_limits()
     from . import usage as U
+
     out = []
     try:
         cls = [c for c in U.element_classes(puzzle) if not any(c.startswith(b) for b in BASE_UNITS)]
@@ -121,11 +146,21 @@ def _rule_notes(puzzle, P, q=None):
     # pair relations are often credited under derived labels (chains of signs become detected lines; bounds are
     # reported as "thermo / inequality") -- an x-sums + greater-than card said "lt relation used in only 0 steps" while 8 steps
     # used the signs as a detected line. Relation classes count those labels too.
-    rel_aliases = ("line from pair relations", "pair relation", "thermo / inequality", "line / rule", "thermo line",
-                   "slow_thermo line", "parity line")
+    rel_aliases = (
+        "line from pair relations",
+        "pair relation",
+        "thermo / inequality",
+        "line / rule",
+        "thermo line",
+        "slow_thermo line",
+        "parity line",
+    )
     for c in cls:
-        n_used = sum(v for k, v in use.items() if str(k) == c or str(k).startswith(c)
-                     or (c.endswith(" relation") and str(k) in rel_aliases))
+        n_used = sum(
+            v
+            for k, v in use.items()
+            if str(k) == c or str(k).startswith(c) or (c.endswith(" relation") and str(k) in rel_aliases)
+        )
         needed = need.get(c)
         # (code, severity, text, element class, uses): the card names the rules of the class (export.grade "issues")
         if needed is False and n_used == 0:
@@ -133,5 +168,13 @@ def _rule_notes(puzzle, P, q=None):
         elif needed is False:
             out.append(("redundant", "note", f"{c} used {n_used}x but the puzzle is unique without it", c, n_used))
         elif q["barely_used"]["severity"] != "off" and n_used < q["barely_used"]["limit"]:
-            out.append(("barely_used", "reject" if n_used == 0 else "note", f"{c} used in only {n_used} step{'s' if n_used != 1 else ''}", c, n_used))
+            out.append(
+                (
+                    "barely_used",
+                    "reject" if n_used == 0 else "note",
+                    f"{c} used in only {n_used} step{'s' if n_used != 1 else ''}",
+                    c,
+                    n_used,
+                )
+            )
     return out

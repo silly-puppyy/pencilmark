@@ -11,54 +11,98 @@ a technique also covers its special cases (covered(), lesson()).
 
     band_path(puzzle, P) -> {"solved", "band", "steps": [{code, name, band, place, elims}], "profile": {code: uses}}
 """
-from collections import Counter
-import copy
 
-from . import solver as S, cbackend as CB, export as E2
+import copy
+from collections import Counter
+
+from . import cbackend as CB
+from . import export as E2
+from . import solver as S
 
 BANDS = E2.BANDS
-FORCING_FALLBACK = True     # when no listed move exists, take the solver's forcing step (Extreme)
-FISH_CAP = True            # up to Hard, list fish of size 2 only (X-Wing; Swordfish and larger are Very Hard; speed)
+FORCING_FALLBACK = True  # when no listed move exists, take the solver's forcing step (Extreme)
+FISH_CAP = True  # up to Hard, list fish of size 2 only (X-Wing; Swordfish and larger are Very Hard; speed)
 FORCING_TECHS = {S.FORCING, S.DYN_FORCING, S.NESTED_FORCING, S.NISHIO, S.POM, S.TRIAL}
 
 # most specific shape of an engine move -> (code, display name, band)
-_X_CHAIN = {"SKY": ("SKY", "Skyscraper", 3), "2SK": ("KTE", "2-String Kite", 3), "TUR": ("TUR", "Turbot Fish", 3),
-            "ER": ("ERE", "Empty Rectangle", 4), "XCH": ("XCL", "X-Chain", 4), "GXC": ("XCL", "Grouped X-Chain", 4)}
+_X_CHAIN = {
+    "SKY": ("SKY", "Skyscraper", 3),
+    "2SK": ("KTE", "2-String Kite", 3),
+    "TUR": ("TUR", "Turbot Fish", 3),
+    "ER": ("ERE", "Empty Rectangle", 4),
+    "XCH": ("XCL", "X-Chain", 4),
+    "GXC": ("XCL", "Grouped X-Chain", 4),
+}
 
 # study order inside a band; codes not listed fall back to the proposal csv order
-_ORDER = {"FHS": 1, "HSI": 2, "LSI": 4, "CSI": 5,                      # Very Easy
-          "NSI": 0.5, "PPR": 1, "SNY": 3, "MSI": 6,                       # Easy: naked singles before pointing (SE, HoDoKu, coach)
-          "NPR": 4, "HPR": 5, "NTR": 21, "HTR": 22,                       # Medium
-          "XWG": 1, "SKY": 2.1, "KTE": 2.2, "TUR": 2.3, "SCL": 4,           # Hard
-          "FXW": 1.3, "ERE": 2.5,                                         # Very Hard: after Swordfish (csv 1), with the wings
-          # Hard: shape codes beside their relatives (csv: SWF 1 .. JLF 9, XYC 11, MCL 12, 3DM 13, SUM 16); Franken fish
-          # late for its obscurity
-          "FSW": 1.5, "FJF": 9.5, "XCL": 10.8, "FRK": 12.5, "PHI": 16.5, "PHV": 16.6}
+_ORDER = {
+    "FHS": 1,
+    "HSI": 2,
+    "LSI": 4,
+    "CSI": 5,  # Very Easy
+    "NSI": 0.5,
+    "PPR": 1,
+    "SNY": 3,
+    "MSI": 6,  # Easy: naked singles before pointing (SE, HoDoKu, coach)
+    "NPR": 4,
+    "HPR": 5,
+    "NTR": 21,
+    "HTR": 22,  # Medium
+    "XWG": 1,
+    "SKY": 2.1,
+    "KTE": 2.2,
+    "TUR": 2.3,
+    "SCL": 4,  # Hard
+    "FXW": 1.3,
+    "ERE": 2.5,  # Very Hard: after Swordfish (csv 1), with the wings
+    # Hard: shape codes beside their relatives (csv: SWF 1 .. JLF 9, XYC 11, MCL 12, 3DM 13, SUM 16); Franken fish
+    # late for its obscurity
+    "FSW": 1.5,
+    "FJF": 9.5,
+    "XCL": 10.8,
+    "FRK": 12.5,
+    "PHI": 16.5,
+    "PHV": 16.6,
+}
 
 # A -> the codes A is always a special case of (theory; transitive closure below)
 SUBSET = {
     "FHS": ["NSI", "HSI"],
-    "XWG": ["SKY", "FXW", "FRK", "SWF"],   # an X-Wing is a Skyscraper whose ends line up; a finless finned X-Wing; a
-                                           # Franken X-Wing using two lines; a Swordfish with a degenerate third line
-    "SKY": ["TUR"], "KTE": ["TUR"], "ERE": ["TUR"],          # turbot fish = any 3-link single-digit chain
-    "TUR": ["XCL"], "SCL": ["XCL"], "MCL": ["XCL"], "FXW": ["XCL"],   # colour traps / wraps, finned fish = (grouped) X-Chains
+    "XWG": ["SKY", "FXW", "FRK", "SWF"],  # an X-Wing is a Skyscraper whose ends line up; a finless finned X-Wing; a
+    # Franken X-Wing using two lines; a Swordfish with a degenerate third line
+    "SKY": ["TUR"],
+    "KTE": ["TUR"],
+    "ERE": ["TUR"],  # turbot fish = any 3-link single-digit chain
+    "TUR": ["XCL"],
+    "SCL": ["XCL"],
+    "MCL": ["XCL"],
+    "FXW": ["XCL"],  # colour traps / wraps, finned fish = (grouped) X-Chains
     "XCL": ["AIC"],
-    "YWG": ["XYC"], "RMP": ["XYC"], "XYC": ["AIC"],          # Y-Wing = 3-cell XY-Chain; remote pairs = same-pair XY-Chain
-    "XYZ": ["ALS"], "WXZ": ["ALS"],                          # XYZ / WXYZ-Wing are ALS-XZ cases
-    "ALS": ["AAC"], "AXY": ["AAC", "DEB"], "AIC": ["AAC"], "NLP": ["AIC"],   # nice loop = AIC as a loop
-    "PHI": ["LOL"], "PHV": ["LOL"],                          # Phistomefel is a law-of-leftovers instance (but Hard)
-    "MSI": ["NPR", "NTR"],                                   # a subset seen without notes is still the subset
+    "YWG": ["XYC"],
+    "RMP": ["XYC"],
+    "XYC": ["AIC"],  # Y-Wing = 3-cell XY-Chain; remote pairs = same-pair XY-Chain
+    "XYZ": ["ALS"],
+    "WXZ": ["ALS"],  # XYZ / WXYZ-Wing are ALS-XZ cases
+    "ALS": ["AAC"],
+    "AXY": ["AAC", "DEB"],
+    "AIC": ["AAC"],
+    "NLP": ["AIC"],  # nice loop = AIC as a loop
+    "PHI": ["LOL"],
+    "PHV": ["LOL"],  # Phistomefel is a law-of-leftovers instance (but Hard)
+    "MSI": ["NPR", "NTR"],  # a subset seen without notes is still the subset
 }
 
 
 def _closure():
     out = {}
+
     def up(c, seen):
         for s in SUBSET.get(c, ()):
             if s not in seen:
                 seen.add(s)
                 up(s, seen)
         return seen
+
     for c in set(SUBSET) | {s for v in SUBSET.values() for s in v}:
         out[c] = up(c, set())
     return out
@@ -81,14 +125,14 @@ def classify(m, p):
     t, n, c = m["tech"], m["name"], m.get("code")
     if n == "X-Chain" and c in _X_CHAIN:
         return _X_CHAIN[c]
-    if n == "MentalChain(direct)" and c in ("SKY", "2SK", "TUR", "ER"):     # a short chain seen without notes
+    if n == "MentalChain(direct)" and c in ("SKY", "2SK", "TUR", "ER"):  # a short chain seen without notes
         code, name, band = _X_CHAIN[c]
         return code, name + " (in the head)", band
     if n in ("X-Wing", "Swordfish") and m.get("pattern"):
         k = 2 if n == "X-Wing" else 3
         rows = {p.coords[x][0] for x in m["pattern"]}
         cols = {p.coords[x][1] for x in m["pattern"]}
-        plain = min(len(rows), len(cols)) <= k and max(len(rows), len(cols)) <= k   # base and cover lines only
+        plain = min(len(rows), len(cols)) <= k and max(len(rows), len(cols)) <= k  # base and cover lines only
         if not plain:
             return "FRK", f"Franken {n}", 4
         return ("XWG", "X-Wing", 3) if n == "X-Wing" else ("SWF", "Swordfish", 4)
@@ -98,19 +142,55 @@ def classify(m, p):
         return "FRK", "Franken Jellyfish", 4
     code, band = E2.chip_of(t, str(c) if c and n in E2.SPLIT else None)
     from .card import _code
+
     name = str(c) if c and n in E2.SPLIT else _code(n)[1]
     return code, name, band if band is not None else 9
 
 
 # techniques that reason about variant rules: only switched on when the puzzle has such rules (per-variant techniques are only considered for their variants). Fireworks and Gurth's theorem
 # are classic techniques and stay on everywhere.
-VARIANT_ANY = ["ConstraintSingle(direct)", "LineSingle(direct)", "PairwiseConstraint", "TableCombination", "LineRange",
-               "LineScan", "LineClass", "SandwichCombination", "XSumCombination", "SkyscraperCombination",
-               "CountCombination", "SetCombination", "ArrowCombination", "EqualDigits", "DigitCount", "RuleIntersection",
-               "ImpliedHouses", "Domino", "ClassCount", "BandLogic", "ColourAlgebra", "CliqueHouse", "LineSets", "LineClues",
-               "ClassColouring", "ClueFacts", "ClueShape"]
-VARIANT_SUM = ["CageCombination", "SumCombination", "Innie/Outie(direct)", "Innie/Outie(notes)", "Innie/Outie(sum)",
-               "EqualSumCombination", "ComboLock", "SumBound", "SumAlgebra", "WeightedSums", "ComboPositions"]
+VARIANT_ANY = [
+    "ConstraintSingle(direct)",
+    "LineSingle(direct)",
+    "PairwiseConstraint",
+    "TableCombination",
+    "LineRange",
+    "LineScan",
+    "LineClass",
+    "SandwichCombination",
+    "XSumCombination",
+    "SkyscraperCombination",
+    "CountCombination",
+    "SetCombination",
+    "ArrowCombination",
+    "EqualDigits",
+    "DigitCount",
+    "RuleIntersection",
+    "ImpliedHouses",
+    "Domino",
+    "ClassCount",
+    "BandLogic",
+    "ColourAlgebra",
+    "CliqueHouse",
+    "LineSets",
+    "LineClues",
+    "ClassColouring",
+    "ClueFacts",
+    "ClueShape",
+]
+VARIANT_SUM = [
+    "CageCombination",
+    "SumCombination",
+    "Innie/Outie(direct)",
+    "Innie/Outie(notes)",
+    "Innie/Outie(sum)",
+    "EqualSumCombination",
+    "ComboLock",
+    "SumBound",
+    "SumAlgebra",
+    "WeightedSums",
+    "ComboPositions",
+]
 _SUM_WORDS = ("sum", "cage", "killer", "arrow", "sandwich", "little")
 
 
@@ -118,6 +198,7 @@ def variant_gate(p):
     """engine techniques to switch off for this puzzle: variant techniques without any variant rule, sum techniques
     without a sum rule, law of leftovers without sums or irregular / extra regions."""
     from .usage import element_classes
+
     rev = {v: k for k, v in S.TECH_NAMES.items()}
     try:
         cls = [c for c in element_classes(p) if not any(c.startswith(b) for b in ("row", "col", "box", "column"))]
@@ -125,18 +206,25 @@ def variant_gate(p):
         cls = []
     has_sum = any(g.total is not None for g in p.groups) or any(any(w in c.lower() for w in _SUM_WORDS) for c in cls)
     boxes = [g for g in p.groups if g.kind == "box"]
+
     def rect(g):
-        rs = {p.coords[c][0] for c in g.cells}; cs = {p.coords[c][1] for c in g.cells}
+        rs = {p.coords[c][0] for c in g.cells}
+        cs = {p.coords[c][1] for c in g.cells}
         return len(rs) * len(cs) == len(g.cells)
-    regions = any(not rect(g) for g in boxes) or any(g.kind not in ("row", "col", "box") and g.complete for g in p.groups)
+
+    regions = any(not rect(g) for g in boxes) or any(
+        g.kind not in ("row", "col", "box") and g.complete for g in p.groups
+    )
     # overlapping grids (samurai, twodoku, ...): set theory / implied houses come from the geometry, not a rule
     overlap = any(sum(1 for gi in p.groups_of[c] if p.groups[gi].kind == "box") > 1 for c in range(p.N))
     regions = regions or overlap
     off = set()
     if not cls and not has_sum and not regions:
         off |= {rev[n] for n in VARIANT_ANY if n in rev}
-    elif not cls and not has_sum:       # geometry only (irregular / extra regions / overlapping grids): region logic stays
-        off |= {rev[n] for n in VARIANT_ANY if n in rev and n not in ("ImpliedHouses", "DigitCount", "RuleIntersection")}
+    elif not cls and not has_sum:  # geometry only (irregular / extra regions / overlapping grids): region logic stays
+        off |= {
+            rev[n] for n in VARIANT_ANY if n in rev and n not in ("ImpliedHouses", "DigitCount", "RuleIntersection")
+        }
     if not has_sum:
         off |= {rev[n] for n in VARIANT_SUM if n in rev}
         if not regions:
@@ -144,7 +232,7 @@ def variant_gate(p):
     return off
 
 
-_CACHE = None       # position -> state_moves, shared by the many routes of one contents() call (same openings)
+_CACHE = None  # position -> state_moves, shared by the many routes of one contents() call (same openings)
 
 
 def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes=(), guard=None, prefix=(), max_band=6):
@@ -157,8 +245,8 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
     P = dict(P or {}, search="human")
     notes = set(S.NOTE_TECHS)
     comp = set(CB.search_disabled(P)) | {S.GUESS}
-    ct = _code_techs(P)                 # whole-technique codes are switched off in the engine (it then reports a
-    whole = set(ban_codes) & set(ct)    # placement under another technique); shape codes are filtered below
+    ct = _code_techs(P)  # whole-technique codes are switched off in the engine (it then reports a
+    whole = set(ban_codes) & set(ct)  # placement under another technique); shape codes are filtered below
     disabled = set(disabled) | {t for c in whole for t in ct[c]} | variant_gate(p)
     ban_codes = set(ban_codes) - whole
     human = {t for t in S.TECH_NAMES if t not in comp and t not in notes and t not in set(disabled)}
@@ -171,10 +259,10 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
         if vals[c]:
             for x in p.peer_list[c]:
                 cand[x] &= ~(1 << (vals[c] - 1))
-    q = copy.copy(p)                    # the puzzle keeps its own domains; each state's candidates go in as a mask
+    q = copy.copy(p)  # the puzzle keeps its own domains; each state's candidates go in as a mask
     cp = getattr(p, "_bp_cpuzzle", None)
     if cp is None:
-        cp = CB.to_cpuzzle(p)           # built once per puzzle (the expensive part of a move listing)
+        cp = CB.to_cpuzzle(p)  # built once per puzzle (the expensive part of a move listing)
         try:
             p._bp_cpuzzle = cp
         except Exception:
@@ -182,6 +270,7 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
     steps = []
     allowed0 = {t for t in human if tband[t] == 0}
     off0 = set(S.TECH_NAMES) - allowed0 - notes
+
     def apply(m):
         if m["place"]:
             c, d = m["place"]
@@ -190,15 +279,18 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
                 cand[x] &= ~(1 << (d - 1))
         for c, d in m["elim"]:
             cand[c] &= ~(1 << (d - 1))
+
     counts = Counter()
     aborted = False
-    seg = max((st.get("seg", 0) for st in prefix), default=0)   # engine call each step came from
+    seg = max((st.get("seg", 0) for st in prefix), default=0)  # engine call each step came from
+
     def record(stp):
         nonlocal aborted
         steps.append(stp)
         counts[stp["code"]] += 1
         if guard is not None and not guard(stp, counts):
             aborted = True
+
     for stp in prefix:
         steps.append(stp)
         counts[stp["code"]] += 1
@@ -215,11 +307,19 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
             batch = _CACHE.get(key0) if key0 is not None else None
             if batch is None:
                 st0, _ = CB.solve(q, P, disabled=off0, cpuzzle=cp, cand=mask, max_steps=N + 5, assume_unique=False)
-                batch = [{"tech": x.move.feat[0], "name": S.TECH_NAMES.get(x.move.feat[0], "?"), "code": x.move.code,
-                          "place": tuple(x.move.place) if x.move.place else None,
-                          "elim": [tuple(e) for e in (x.move.elim or ())], "xmeta": getattr(x.move, "xmeta", None),
-                          "d": float(x.move.d) if x.move.d is not None else None}
-                         for x in st0 if x.move.feat[0] not in notes and x.move.feat[0] in allowed0]
+                batch = [
+                    {
+                        "tech": x.move.feat[0],
+                        "name": S.TECH_NAMES.get(x.move.feat[0], "?"),
+                        "code": x.move.code,
+                        "place": tuple(x.move.place) if x.move.place else None,
+                        "elim": [tuple(e) for e in (x.move.elim or ())],
+                        "xmeta": getattr(x.move, "xmeta", None),
+                        "d": float(x.move.d) if x.move.d is not None else None,
+                    }
+                    for x in st0
+                    if x.move.feat[0] not in notes and x.move.feat[0] in allowed0
+                ]
                 if key0 is not None:
                     _CACHE[key0] = batch
             moved = False
@@ -231,9 +331,21 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
                     continue
                 code, name, mb = classify(m, p)
                 apply(m)
-                record({"code": code, "name": name, "band": mb, "technique": m["name"], "ecode": m.get("code"),
-                        "xmeta": m.get("xmeta"), "tech": m["tech"], "place": m["place"], "elims": list(m["elim"]),
-                        "seg": seg, "d": m.get("d")})
+                record(
+                    {
+                        "code": code,
+                        "name": name,
+                        "band": mb,
+                        "technique": m["name"],
+                        "ecode": m.get("code"),
+                        "xmeta": m.get("xmeta"),
+                        "tech": m["tech"],
+                        "place": m["place"],
+                        "elims": list(m["elim"]),
+                        "seg": seg,
+                        "d": m.get("d"),
+                    }
+                )
                 moved = True
                 if aborted or (target is not None and vals[target]):
                     break
@@ -251,8 +363,9 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
             key = (tuple(vals), tuple(cand), frozenset(allowed), capped) if _CACHE is not None else None
             mv = _CACHE.get(key) if key is not None else None
             if mv is None:
-                mv = CB.state_moves(q, Pb, disabled=set(S.TECH_NAMES) - allowed, limit_per_tech=8, details=True,
-                                    cpuzzle=cp, cand=mask)
+                mv = CB.state_moves(
+                    q, Pb, disabled=set(S.TECH_NAMES) - allowed, limit_per_tech=8, details=True, cpuzzle=cp, cand=mask
+                )
                 if key is not None:
                     _CACHE[key] = mv
             cands = []
@@ -265,7 +378,7 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
                 if mb <= b:
                     hit = 0 if target is not None and m["place"] and m["place"][0] == target else 1
                     key = (mb, hit, rng.random()) if rng is not None else (mb, hit, _order(code), m["d"])
-                    cands.append((key, code, name, mb, m))   # rng: any move of the lowest band (other solvers)
+                    cands.append((key, code, name, mb, m))  # rng: any move of the lowest band (other solvers)
             if cands:
                 pick = min(cands, key=lambda x: x[0])
                 break
@@ -273,15 +386,20 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
             # nothing listed in any band -> one solver step from this state. The solver's stuck-fallback
             # tries forcing chains / dynamic / nested forcing / Nishio / pattern overlay (state_moves never lists them);
             # such a step is an Extreme move. A guess means really stuck -> Unknown.
-            st1, _ = CB.solve(q, P, cpuzzle=cp, cand=mask, max_steps=4, assume_unique=False)   # first steps may be notes
+            st1, _ = CB.solve(q, P, cpuzzle=cp, cand=mask, max_steps=4, assume_unique=False)  # first steps may be notes
             x = next((y for y in st1 if y.move.feat[0] not in notes), None)
             # guessing off (default): the solver's last resort is a proof by full search (TRIAL), an Extreme step too
             stop = (S.GUESS, S.TRIAL) if P.get("allow_guess", False) else (S.GUESS,)
             if x is not None and x.move.feat[0] not in stop and (x.move.place or x.move.elim):
-                m = {"tech": x.move.feat[0], "name": S.TECH_NAMES.get(x.move.feat[0], "?"), "code": x.move.code,
-                     "place": tuple(x.move.place) if x.move.place else None,
-                     "elim": [tuple(e) for e in (x.move.elim or ())], "xmeta": getattr(x.move, "xmeta", None),
-                     "d": float(x.move.d) if x.move.d is not None else None}
+                m = {
+                    "tech": x.move.feat[0],
+                    "name": S.TECH_NAMES.get(x.move.feat[0], "?"),
+                    "code": x.move.code,
+                    "place": tuple(x.move.place) if x.move.place else None,
+                    "elim": [tuple(e) for e in (x.move.elim or ())],
+                    "xmeta": getattr(x.move, "xmeta", None),
+                    "d": float(x.move.d) if x.move.d is not None else None,
+                }
                 code, name, mb = classify(m, p)
                 # a forcing step is Extreme; any other human step the move listing missed keeps its own band
                 pick = ((mb, 1, 0, m["d"]), code, name, max(mb, 6) if m["tech"] in FORCING_TECHS else mb, m)
@@ -290,21 +408,44 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
         _, code, name, mb, m = pick
         apply(m)
         seg += 1
-        record({"code": code, "name": name, "band": mb, "technique": m["name"], "ecode": m.get("code"),
-                "xmeta": m.get("xmeta"), "tech": m["tech"],
-                "place": tuple(m["place"]) if m["place"] else None, "elims": [tuple(e) for e in m["elim"]],
-                "seg": seg, "d": m.get("d")})
+        record(
+            {
+                "code": code,
+                "name": name,
+                "band": mb,
+                "technique": m["name"],
+                "ecode": m.get("code"),
+                "xmeta": m.get("xmeta"),
+                "tech": m["tech"],
+                "place": tuple(m["place"]) if m["place"] else None,
+                "elims": [tuple(e) for e in m["elim"]],
+                "seg": seg,
+                "d": m.get("d"),
+            }
+        )
     if target is not None:
         top = max((s_["band"] for s_ in steps), default=0)
-        return {"placed": bool(vals[target]), "band_index": top if vals[target] else None, "steps": steps,
-                "codes": dict(Counter(s_["code"] for s_ in steps))}
+        return {
+            "placed": bool(vals[target]),
+            "band_index": top if vals[target] else None,
+            "steps": steps,
+            "codes": dict(Counter(s_["code"] for s_ in steps)),
+        }
     solved = all(vals) and not aborted
     prof = Counter(s["code"] for s in steps)
     top = max((s["band"] for s in steps), default=0)
-    return {"solved": solved, "band": BANDS[top] if solved else "Unknown", "band_index": top if solved else None,
-            "steps": steps, "profile": dict(prof),
-            "hints": {BANDS[b]: dict(Counter(s["code"] for s in steps if s["band"] == b))
-                      for b in range(0, 6) if any(s["band"] == b for s in steps)}}
+    return {
+        "solved": solved,
+        "band": BANDS[top] if solved else "Unknown",
+        "band_index": top if solved else None,
+        "steps": steps,
+        "profile": dict(prof),
+        "hints": {
+            BANDS[b]: dict(Counter(s["code"] for s in steps if s["band"] == b))
+            for b in range(0, 6)
+            if any(s["band"] == b for s in steps)
+        },
+    }
 
 
 def _code_techs(P):
@@ -346,6 +487,7 @@ def _check(bp, code, ban, extra=()):
     b = max(st["band"] for st in bp["steps"] if st["code"] == code)
     base = bp["profile"]
     sup = SUPERSETS.get(code, set())
+
     def guard(st, counts):
         c = st["code"]
         if st["band"] > B:
@@ -355,9 +497,10 @@ def _check(bp, code, ban, extra=()):
         if counts[c] > base.get(c, 0) and (st["band"] > b or c in sup):
             return False
         return True
+
     k = next((i for i, st in enumerate(bp["steps"]) if st["code"] in ban), len(bp["steps"]))
-    if k < len(bp["steps"]):    # resume only where the base route also made a fresh engine call: a batched-singles
-        sg = bp["steps"][k].get("seg")      # call carries mode state, so restarting mid-batch could drift
+    if k < len(bp["steps"]):  # resume only where the base route also made a fresh engine call: a batched-singles
+        sg = bp["steps"][k].get("seg")  # call carries mode state, so restarting mid-batch could drift
         while k > 0 and bp["steps"][k - 1].get("seg") == sg:
             k -= 1
     return guard, bp["steps"][:k]
@@ -412,18 +555,21 @@ def contents(p, P, alternatives=True, deadline=None, base=None):
 
 def _contents(p, P, alternatives, deadline=None, base=None):
     import time
+
     late = lambda: deadline is not None and time.time() > deadline
     truncated = False
-    bp = base if base is not None else band_path(p, P)     # base: the caller's band_path(p, P) (same route, not recomputed)
+    bp = (
+        base if base is not None else band_path(p, P)
+    )  # base: the caller's band_path(p, P) (same route, not recomputed)
     if not bp["solved"]:
         return dict(bp, removed=[], alternatives={}, profile=fold(bp["profile"]))
     ban, removed, failed = set(), [], set()
-    while True:                         # passes over the list; a code that failed is retried only after a change
+    while True:  # passes over the list; a code that failed is retried only after a change
         bandof = {st["code"]: st["band"] for st in bp["steps"]}
         changed = False
         for code, _ in sorted(bp["profile"].items(), key=lambda x: (-bandof[x[0]], -_order(x[0]), x[1])):
             if code == "FHS" or code in failed or code not in bp["profile"]:
-                continue                # full houses fold in at the end, never removed
+                continue  # full houses fold in at the end, never removed
             if late():
                 truncated = True
                 break
@@ -451,23 +597,28 @@ def _contents(p, P, alternatives, deadline=None, base=None):
                 break
             b = spots[0][0]["band"]
             seen = set()
-            for st, q in spots[:6]:                 # what else of this band was on offer where X was used
+            for st, q in spots[:6]:  # what else of this band was on offer where X was used
                 g = copy.copy(p)
                 g.givens = q.givens
-                for m in CB.state_moves(g, dict(P, fish_max_n=2) if b <= 3 and FISH_CAP else P,
-                                        disabled=set(S.TECH_NAMES) - {t for t in allowed_t if E2.tech_band(t) <= b},
-                                        limit_per_tech=8, details=True, cpuzzle=getattr(p, "_bp_cpuzzle", None),
-                                        cand=q.domains):
+                for m in CB.state_moves(
+                    g,
+                    dict(P, fish_max_n=2) if b <= 3 and FISH_CAP else P,
+                    disabled=set(S.TECH_NAMES) - {t for t in allowed_t if E2.tech_band(t) <= b},
+                    limit_per_tech=8,
+                    details=True,
+                    cpuzzle=getattr(p, "_bp_cpuzzle", None),
+                    cand=q.domains,
+                ):
                     c2, _, b2 = classify(m, p)
                     if b2 == b and c2 != code and (m["place"] or m["elim"]):
                         seen.add(c2)
             alt0 = None
-            for y in sorted(seen, key=lambda c_: (_order(c_), c_)):     # ties by code: deterministic in every process
+            for y in sorted(seen, key=lambda c_: (_order(c_), c_)):  # ties by code: deterministic in every process
                 if y in bp["profile"] or covered(y, {code}) or covered(code, {y}):
-                    continue                        # listed already, or on X's chain: the subset table covers it
-                base = (ban - {y}) | {code}         # a technique dropped in the shrink may still be an alternative
+                    continue  # listed already, or on X's chain: the subset table covers it
+                base = (ban - {y}) | {code}  # a technique dropped in the shrink may still be an alternative
                 if y not in ban:
-                    if alt0 is None:     # no guard: shared by every candidate y (each may differ in what's allowed)
+                    if alt0 is None:  # no guard: shared by every candidate y (each may differ in what's allowed)
                         alt0 = band_path(p, P, ban_codes=base, max_band=bp["band_index"])
                     if alt0["profile"].get(y) and _route_ok(bp, alt0, code, extra={y}):
                         alts.setdefault(code, []).append(y)
@@ -478,8 +629,8 @@ def _contents(p, P, alternatives, deadline=None, base=None):
                 alt = band_path(p, P, ban_codes=base | others, guard=g_, max_band=bp["band_index"])
                 if alt["profile"].get(y) and _route_ok(bp, alt, code, extra={y}):
                     alts.setdefault(code, []).append(y)
-    for code, ys in list(alts.items()):     # keep the most specific: drop an alternative that generalises another
-        chip = [code] + ys                  # one in the same chip (a mental subset working implies NPR works)
+    for code, ys in list(alts.items()):  # keep the most specific: drop an alternative that generalises another
+        chip = [code] + ys  # one in the same chip (a mental subset working implies NPR works)
         alts[code] = [y for y in ys if not any(z != y and y in SUPERSETS.get(z, set()) for z in chip)]
     out = dict(bp, removed=removed, alternatives={c: ys for c, ys in alts.items() if ys}, profile=fold(bp["profile"]))
     if truncated:
@@ -519,9 +670,10 @@ def _cells_notation(p, cells):
     rc = sorted({(p.coords[c][0] + 1, p.coords[c][1] + 1) for c in cells})
     if not rc:
         return ""
-    if p.D > 9 or max(max(r, c) for r, c in rc) > 9:           # two-digit rows / columns: no run-together digits
+    if p.D > 9 or max(max(r, c) for r, c in rc) > 9:  # two-digit rows / columns: no run-together digits
         return ",".join(f"r{r}c{c}" for r, c in rc)
-    def grouped(cells, flip):                  # rows sharing the same columns merge (r56c8); flip: the same by columns
+
+    def grouped(cells, flip):  # rows sharing the same columns merge (r56c8); flip: the same by columns
         by = {}
         for r, c in cells:
             a, b = (c, r) if flip else (r, c)
@@ -532,6 +684,7 @@ def _cells_notation(p, cells):
         parts = sorted(merged.items(), key=lambda kv: (kv[1][0], kv[0]))
         fmt = lambda xs: "".join(map(str, xs))
         return ",".join((f"r{fmt(bs)}c{fmt(a_)}" if flip else f"r{fmt(a_)}c{fmt(bs)}") for bs, a_ in parts)
+
     return min((grouped(rc, False), grouped(rc, True)), key=lambda t: (len(t), t.count(",")))
 
 
@@ -574,15 +727,15 @@ def step_notation(p, st, just=None):
         if digs:
             parts.append(",".join(str(d) for d in sorted(set(digs))))
         fish = j.get("base_units") and j.get("cover_units")
-        if cells and not fish:                       # subsets, wings, patterns: the cells (HoDoKu: "4,8 in r4c48")
+        if cells and not fish:  # subsets, wings, patterns: the cells (HoDoKu: "4,8 in r4c48")
             parts.append(f"in {_cells_notation(p, cells)}")
-        elif units:                                  # fish: base and cover houses ("3 r58 c68")
+        elif units:  # fish: base and cover houses ("3 r58 c68")
             parts.append(_unit_notation(p, units))
         if j.get("fins"):
             parts.append(f"fins {_cells_notation(p, j['fins'])}")
         pat = " ".join(parts)
     name = st["name"]
-    if st.get("code") == "PPR" and j.get("base_units"):     # one step is pointing (box -> line) or claiming (line -> box)
+    if st.get("code") == "PPR" and j.get("base_units"):  # one step is pointing (box -> line) or claiming (line -> box)
         boxes = {i for i, g in enumerate(p.groups) if str(g.name).startswith("b")}
         bu = j["base_units"][0]
         name = "Locked Candidates Type 1 (Pointing)" if bu in boxes else "Locked Candidates Type 2 (Claiming)"
@@ -596,8 +749,9 @@ def explain_steps(p, P, steps):
     (one short solve with only that technique), take the move with exactly the same placement / eliminations and
     explain it (pencilmark/explain). -> [{"short", "teach"} or None] aligned with steps."""
     from . import explain as E
-    E.derived(p)        # build the explainer's derived puzzle from the ORIGINAL p (its domains are rules); each step's copy
-                        # inherits it -- otherwise a copy builds it from its candidate masks and reads them as cell rules
+
+    E.derived(p)  # build the explainer's derived puzzle from the ORIGINAL p (its domains are rules); each step's copy
+    # inherits it -- otherwise a copy builds it from its candidate masks and reads them as cell rules
     P = dict(P or {}, search="human")
     notes = set(S.NOTE_TECHS)
     rev = {v: k for k, v in S.TECH_NAMES.items()}
@@ -617,20 +771,39 @@ def explain_steps(p, P, steps):
         want = (tuple(st["place"]) if st["place"] else None, frozenset(map(tuple, st["elims"])))
         t = rev.get(st["technique"])
         ex = None
-        try:        # the band path's own move, explained directly (the explainer rebuilds the pattern itself)
+        try:  # the band path's own move, explained directly (the explainer rebuilds the pattern itself)
             from types import SimpleNamespace as NS
-            mv = NS(feat=(t,), place=tuple(st["place"]) if st["place"] else None, elim=tuple(map(tuple, st["elims"])),
-                    code=st.get("ecode"), explain={}, xmeta=st.get("xmeta") or {}, name=st["technique"], d=0.0, family=0)
+
+            mv = NS(
+                feat=(t,),
+                place=tuple(st["place"]) if st["place"] else None,
+                elim=tuple(map(tuple, st["elims"])),
+                code=st.get("ecode"),
+                explain={},
+                xmeta=st.get("xmeta") or {},
+                name=st["technique"],
+                d=0.0,
+                family=0,
+            )
             mode = "direct" if "(direct)" in st["technique"] else "notes"
-            e = E.explain(NS(move=mv, alts=[], mode=mode, n_empty=sum(1 for v in vals if not v)), q,
-                          E.State(q, vals, q.domains, mode))
+            e = E.explain(
+                NS(move=mv, alts=[], mode=mode, n_empty=sum(1 for v in vals if not v)),
+                q,
+                E.State(q, vals, q.domains, mode),
+            )
             if e.get("short") and not e.get("error") and e.get("derived", True) is not None:
-                ex = {"short": e.get("short"), "teach": e.get("teach"), "notation": step_notation(p, st, e.get("justification"))}
+                ex = {
+                    "short": e.get("short"),
+                    "teach": e.get("teach"),
+                    "notation": step_notation(p, st, e.get("justification")),
+                }
         except Exception:
             ex = None
         if ex is None and t is not None:
             try:
-                st1, _ = CB.solve(q, P, disabled=set(S.TECH_NAMES) - {t} - notes, max_steps=81 if st["band"] == 0 else 30)
+                st1, _ = CB.solve(
+                    q, P, disabled=set(S.TECH_NAMES) - {t} - notes, max_steps=81 if st["band"] == 0 else 30
+                )
                 for _, step, state in E.replay(q, st1):
                     mv = step.move
                     if mv.feat[0] != t:
@@ -638,18 +811,23 @@ def explain_steps(p, P, steps):
                     got = (tuple(mv.place) if mv.place else None, frozenset(map(tuple, mv.elim or ())))
                     mc = CB.code_name(mv.code) if isinstance(mv.code, int) else mv.code
                     if got != want or mc != st.get("ecode"):
-                        continue        # same eliminations from another pattern would explain the wrong thing
+                        continue  # same eliminations from another pattern would explain the wrong thing
                     e = E.explain(step, q, state)
                     tn = str((e.get("technique") or {}).get("pattern") or (e.get("technique") or {}).get("name") or "")
-                    if (st["code"] == "FRK") != ("franken" in tn.lower() or "mutant" in tn.lower()) and \
-                            st["technique"] in ("X-Wing", "Swordfish", "Jellyfish", "FinnedFish"):
+                    if (st["code"] == "FRK") != ("franken" in tn.lower() or "mutant" in tn.lower()) and st[
+                        "technique"
+                    ] in ("X-Wing", "Swordfish", "Jellyfish", "FinnedFish"):
                         continue
-                    ex = {"short": e.get("short"), "teach": e.get("teach"), "notation": step_notation(p, st, e.get("justification"))}
+                    ex = {
+                        "short": e.get("short"),
+                        "teach": e.get("teach"),
+                        "notation": step_notation(p, st, e.get("justification")),
+                    }
                     break
             except Exception:
                 ex = None
         if ex is None:
-            ex = {"notation": step_notation(p, st)}     # the notation needs no pattern: technique and result
+            ex = {"notation": step_notation(p, st)}  # the notation needs no pattern: technique and result
         out.append(ex)
         if st["place"]:
             c, d = st["place"]

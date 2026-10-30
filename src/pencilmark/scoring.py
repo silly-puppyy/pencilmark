@@ -25,11 +25,10 @@ clipped at d_max. Counting hard steps as a DENSITY means a samurai (five
 9x9s each needing one X-Wing) grades like one of its 9x9s, while a single
 9x9 needing five X-Wings grades higher than one needing one.
 """
+
 from __future__ import annotations
 
 import math
-
-
 
 from . import solver as S
 
@@ -40,36 +39,106 @@ CMAX = 10
 
 DEFAULT_PARAMS = {
     "B": {
-        S.FULL_HOUSE: 1.0, S.NAKED_D: 1.2, S.HIDDEN_D: 1.0, S.NAKED_DL: 2.2, S.HIDDEN_DL: 2.0,
-        S.TAKE_NOTES: 2.5, S.NAKED_N: 0.8, S.HIDDEN_N: 1.0, S.LOCKED: 2.6,
-        S.NPAIR: 3.0, S.HPAIR: 3.6, S.NTRIPLE: 4.0, S.HTRIPLE: 4.6, S.NQUAD: 5.0, S.HQUAD: 5.6,
-        S.XWING: 4.6, S.SWORDFISH: 5.6, S.XYWING: 4.8, S.XYZWING: 5.2, S.COLORING: 5.0,
-        S.PAIRARC: 2.6, S.TRIAL: 7.0, S.GUESS: 10.0,
-        S.INNIE_D: 2.5, S.CAGE_COMBO: 1.8, S.INNIE_N: 2.6,
-        S.SUM_COMBO: 1.8, S.ARROW_COMBO: 2.0, S.SET_COMBO: 2.0, S.EQSUM_COMBO: 2.6, S.TABLE_COMBO: 2.6,
-        S.COMBO_LOCK: 2.8, S.NARY_D: 2.0, S.INNIE_X: 3.2,
-        S.FINNED_FISH: 5.4, S.JELLYFISH: 6.4, S.X_CHAIN: 5.2, S.XY_CHAIN: 5.6, S.AIC_CHAIN: 6.4,
+        S.FULL_HOUSE: 1.0,
+        S.NAKED_D: 1.2,
+        S.HIDDEN_D: 1.0,
+        S.NAKED_DL: 2.2,
+        S.HIDDEN_DL: 2.0,
+        S.TAKE_NOTES: 2.5,
+        S.NAKED_N: 0.8,
+        S.HIDDEN_N: 1.0,
+        S.LOCKED: 2.6,
+        S.NPAIR: 3.0,
+        S.HPAIR: 3.6,
+        S.NTRIPLE: 4.0,
+        S.HTRIPLE: 4.6,
+        S.NQUAD: 5.0,
+        S.HQUAD: 5.6,
+        S.XWING: 4.6,
+        S.SWORDFISH: 5.6,
+        S.XYWING: 4.8,
+        S.XYZWING: 5.2,
+        S.COLORING: 5.0,
+        S.PAIRARC: 2.6,
+        S.TRIAL: 7.0,
+        S.GUESS: 10.0,
+        S.INNIE_D: 2.5,
+        S.CAGE_COMBO: 1.8,
+        S.INNIE_N: 2.6,
+        S.SUM_COMBO: 1.8,
+        S.ARROW_COMBO: 2.0,
+        S.SET_COMBO: 2.0,
+        S.EQSUM_COMBO: 2.6,
+        S.TABLE_COMBO: 2.6,
+        S.COMBO_LOCK: 2.8,
+        S.NARY_D: 2.0,
+        S.INNIE_X: 3.2,
+        S.FINNED_FISH: 5.4,
+        S.JELLYFISH: 6.4,
+        S.X_CHAIN: 5.2,
+        S.XY_CHAIN: 5.6,
+        S.AIC_CHAIN: 6.4,
         S.NICE_LOOP: 6.8,
-        S.SANDWICH_COMBO: 2.6, S.XSUM_COMBO: 2.6, S.SKYLINE_COMBO: 2.6, S.LOL_COMBO: 3.0, S.IMPLIED: 3.0,
-        S.UNIQUE_RECT: 4.6, S.BUG_PLUS1: 5.6, S.ALS_XZ: 6.6, S.ALS_XYWING: 7.0, S.DEATH_BLOSSOM: 7.4,
-        S.ALS_AIC: 7.6, S.CANONICAL: 1.0, S.COUNT_COMBO: 2.0,
-        S.LINE_D: 1.6, S.LINE_RANGE: 2.0, S.MENTAL_D: 2.4, S.SHORT_TRIAL: 6.2, S.MENTAL_CHAIN: 4.0, S.EITHER_WAY: 5.8, S.LINE_CLASS: 1.6,
-        S.DIGIT_COUNT: 4.6, S.EQUAL_DIGITS: 5.0, S.LINE_SCAN: 1.8,
-        S.FORCING: 6.0, S.DYN_FORCING: 6.4, S.NESTED_FORCING: 6.6,
-        S.MEDUSA: 6.3, S.SUM_BOUND: 1.5, S.CLASS_COUNT: 2.4, S.CLASS_COLOUR: 5.0, S.DOMINO: 2.2,
-        S.COLOUR_ALGEBRA: 5.4, S.N_WING: 6.2, S.SUE_DE_COQ: 6.6, S.APE: 6.8, S.CHUTE_RP: 5.6, S.POM: 7.2,
-        S.GURTH: 5.0, S.NISHIO: 5.6, S.WHAT_IF: 5.2, S.MENTAL_NOTES: 3.0, S.MULTI_COLOR: 5.9, S.REMOTE_PAIRS: 4.8, S.EMPTY_RECT: 4.6, S.RULE_INTERSECT: 5.0, S.SUM_ALGEBRA: 6.0, S.SNYDER_MARKS: 1.5, S.SNYDER_D: 2.3, S.BAND_LOGIC: 6.6,
+        S.SANDWICH_COMBO: 2.6,
+        S.XSUM_COMBO: 2.6,
+        S.SKYLINE_COMBO: 2.6,
+        S.LOL_COMBO: 3.0,
+        S.IMPLIED: 3.0,
+        S.UNIQUE_RECT: 4.6,
+        S.BUG_PLUS1: 5.6,
+        S.ALS_XZ: 6.6,
+        S.ALS_XYWING: 7.0,
+        S.DEATH_BLOSSOM: 7.4,
+        S.ALS_AIC: 7.6,
+        S.CANONICAL: 1.0,
+        S.COUNT_COMBO: 2.0,
+        S.LINE_D: 1.6,
+        S.LINE_RANGE: 2.0,
+        S.MENTAL_D: 2.4,
+        S.SHORT_TRIAL: 6.2,
+        S.MENTAL_CHAIN: 4.0,
+        S.EITHER_WAY: 5.8,
+        S.LINE_CLASS: 1.6,
+        S.DIGIT_COUNT: 4.6,
+        S.EQUAL_DIGITS: 5.0,
+        S.LINE_SCAN: 1.8,
+        S.FORCING: 6.0,
+        S.DYN_FORCING: 6.4,
+        S.NESTED_FORCING: 6.6,
+        S.MEDUSA: 6.3,
+        S.SUM_BOUND: 1.5,
+        S.CLASS_COUNT: 2.4,
+        S.CLASS_COLOUR: 5.0,
+        S.DOMINO: 2.2,
+        S.COLOUR_ALGEBRA: 5.4,
+        S.N_WING: 6.2,
+        S.SUE_DE_COQ: 6.6,
+        S.APE: 6.8,
+        S.CHUTE_RP: 5.6,
+        S.POM: 7.2,
+        S.GURTH: 5.0,
+        S.NISHIO: 5.6,
+        S.WHAT_IF: 5.2,
+        S.MENTAL_NOTES: 3.0,
+        S.MULTI_COLOR: 5.9,
+        S.REMOTE_PAIRS: 4.8,
+        S.EMPTY_RECT: 4.6,
+        S.RULE_INTERSECT: 5.0,
+        S.SUM_ALGEBRA: 6.0,
+        S.SNYDER_MARKS: 1.5,
+        S.SNYDER_D: 2.3,
+        S.BAND_LOGIC: 6.6,
     },
-    "K": [0.15, 0.2, 0.25, 0.3, 0.05, 0.4, 0.3, 0.35, 0.45],   # house, cage, neq, nonconsec, domain, lock,
-                                                                # cage-sum, line/relation inference, mental subset
+    "K": [0.15, 0.2, 0.25, 0.3, 0.05, 0.4, 0.3, 0.35, 0.45],  # house, cage, neq, nonconsec, domain, lock,
+    # cage-sum, line/relation inference, mental subset
     "gamma": 0.5,
     "alpha": 1.0,
     "beta": 1.0,
-    "c": 1.0,          # seconds per scanned empty cell (before difficulty)
-    "t_place": 1.5,    # seconds to write a digit
-    "t_mark": 0.4,     # seconds per pencil mark written
-    "t_erase": 0.3,    # seconds per pencil mark erased
-    "t0": 10.0,        # fixed overhead
+    "c": 1.0,  # seconds per scanned empty cell (before difficulty)
+    "t_place": 1.5,  # seconds to write a digit
+    "t_mark": 0.4,  # seconds per pencil mark written
+    "t_erase": 0.3,  # seconds per pencil mark erased
+    "t0": 10.0,  # fixed overhead
     "tau": 0.15,
     "ref_steps": 55.0,
 }
@@ -97,7 +166,9 @@ def complete_params(P):
     P = copy_params(P)
     for t, v in DEFAULT_PARAMS["B"].items():
         P["B"].setdefault(t, v)
-    P["B"].setdefault(S.FIREWORKS, P["B"].get(S.HTRIPLE, 3.0))  # no own price: the fallback B (no meta model) is the Hidden Triple's
+    P["B"].setdefault(
+        S.FIREWORKS, P["B"].get(S.HTRIPLE, 3.0)
+    )  # no own price: the fallback B (no meta model) is the Hidden Triple's
     P["B"].setdefault(S.HUMAN_CASE, P["B"].get(S.ALS_XZ, 5.0))  # no own price either: fallback = ALS-XZ's B
     P["B"].setdefault(S.COMBO_POS, P["B"].get(S.HTRIPLE, 3.0))
     P["B"].setdefault(S.CLIQUE_HOUSE, P["B"].get(S.HTRIPLE, 3.0))
@@ -105,7 +176,7 @@ def complete_params(P):
     P["B"].setdefault(S.LINE_CLUES, P["B"].get(S.HTRIPLE, 3.0))
     P["B"].setdefault(S.WEIGHTED_SUMS, P["B"].get(S.HTRIPLE, 3.0))
     K = list(P["K"])
-    K += DEFAULT_PARAMS["K"][len(K):]
+    K += DEFAULT_PARAMS["K"][len(K) :]
     P["K"] = K
     for k, v in DEFAULT_PARAMS.items():
         P.setdefault(k, v)
@@ -115,8 +186,18 @@ def complete_params(P):
     return P
 
 
-META_NAMES = ["const", "log cells", "log groups", "log digits", "links", "hidden", "arith",
-              "relation", "notes", "log spread"]
+META_NAMES = [
+    "const",
+    "log cells",
+    "log groups",
+    "log digits",
+    "links",
+    "hidden",
+    "arith",
+    "relation",
+    "notes",
+    "log spread",
+]
 
 
 # structural descriptors (csolver desc.cpp; meta[10:16] of canonical-mode moves = featurize m_meta[:, 10:16]):
@@ -129,12 +210,22 @@ def meta_vector(meta, desc=True):
     desc.cpp, meta[10:18]; zeros for moves / older binaries without them) = the 18 columns of C++ featurize
     m_meta. desc=False: the 10 pricing columns only (what Scorer.difficulty prices with)."""
     cells, groups, digits, links, hidden, arith, rel, notes, spread = meta[:9]  # meta[9]: table live tuples
-    x = [1.0, math.log(max(cells, 1)), math.log(max(groups, 1)), math.log(max(digits, 1)),
-         float(links), float(hidden), float(arith), float(rel), float(notes), math.log(max(spread, 1e-6))]
+    x = [
+        1.0,
+        math.log(max(cells, 1)),
+        math.log(max(groups, 1)),
+        math.log(max(digits, 1)),
+        float(links),
+        float(hidden),
+        float(arith),
+        float(rel),
+        float(notes),
+        math.log(max(spread, 1e-6)),
+    ]
     if desc:
         nd = len(DESC_NAMES)
         if len(meta) >= 10 + nd:
-            x += [float(v) for v in meta[10:10 + nd]]
+            x += [float(v) for v in meta[10 : 10 + nd]]
         elif len(meta) >= 16:  # dev68-72 layout: 6 descriptors
             x += [float(v) for v in meta[10:16]] + [0.0] * (nd - 6)
         else:
@@ -173,9 +264,14 @@ class Scorer:
         meta = feat[4] if len(feat) > 4 else None
         # params mental_floor (mirrors csolver Params::difficulty): a move done in the head costs at least its
         # written counterpart -- the same pattern with notes (MentalNotesSingle: the notes technique in 'extra')
-        if (P.get("mental_floor") and not getattr(self, "_in_floor", False) and meta is not None
-                and (meta_priced(meta) or P.get("meta_theta_full")) and meta[7] == 0
-                and tech in (S.MENTAL_D, S.MENTAL_CHAIN, S.MENTAL_NOTES, S.EITHER_WAY, S.WHAT_IF, S.SHORT_TRIAL)):
+        if (
+            P.get("mental_floor")
+            and not getattr(self, "_in_floor", False)
+            and meta is not None
+            and (meta_priced(meta) or P.get("meta_theta_full"))
+            and meta[7] == 0
+            and tech in (S.MENTAL_D, S.MENTAL_CHAIN, S.MENTAL_NOTES, S.EITHER_WAY, S.WHAT_IF, S.SHORT_TRIAL)
+        ):
             self._in_floor = True
             try:
                 base = self.difficulty(feat, D)
@@ -200,18 +296,22 @@ class Scorer:
                 x.append(float(meta[19]) if len(meta) > 19 else 0.0)
             z = sum(a * b for a, b in zip(full, x))
             te = P.get("meta_theta_enum")
-            if te:                           # D5 mirror: enumeration size of the sum rules the move touches (meta[20])
+            if te:  # D5 mirror: enumeration size of the sum rules the move touches (meta[20])
                 z += te * (float(meta[20]) if len(meta) > 20 else 0.0)
             ti = P.get("meta_theta_interact")
-            if ti and len(ti) >= 3:          # D6 mirror: log depth x (log cells, links, log branches)
+            if ti and len(ti) >= 3:  # D6 mirror: log depth x (log cells, links, log branches)
                 br, dp = x[10], x[11]
                 z += ti[0] * dp * x[1] + ti[1] * dp * x[4] + ti[2] * dp * br
-            to = P.get("tech_obscurity")     # obscurity mirror: per-technique log-price offset by tech code
+            to = P.get("tech_obscurity")  # obscurity mirror: per-technique log-price offset by tech code
             if to and 0 <= tech < len(to):
                 z += to[tech]
-            d = math.exp(min(z, 6.907755278982137)) * self.size(D)   # cap log price at log(1000), as C++
-        elif (self.meta is not None and meta_priced(meta) and (tech < P.get("meta_max_tech", 68) or tech in STRUCTURAL_ONLY)
-                and tech not in (P.get("meta_exclude") or ())):
+            d = math.exp(min(z, 6.907755278982137)) * self.size(D)  # cap log price at log(1000), as C++
+        elif (
+            self.meta is not None
+            and meta_priced(meta)
+            and (tech < P.get("meta_max_tech", 68) or tech in STRUCTURAL_ONLY)
+            and tech not in (P.get("meta_exclude") or ())
+        ):
             x = meta_vector(meta, desc=False)
             z = sum(a * b for a, b in zip(self.meta, x))
             tac = P.get("meta_theta_arith_cells") or 0.0
@@ -222,28 +322,37 @@ class Scorer:
             if off and tech in off:
                 d *= math.exp(off[tech])
         else:
-            d = P["B"][tech] * (base_shape ** g if base_shape > 0 or g >= 0 else math.inf) * self.size(D)
+            d = P["B"][tech] * (base_shape**g if base_shape > 0 or g >= 0 else math.inf) * self.size(D)
         if tech in DIRECT:
             K = P["K"]
             for kind, shape, u in cover:
-                d += K[kind] * (shape ** g) * u
+                d += K[kind] * (shape**g) * u
         pm = meta_priced(meta) and not (full and meta is not None)  # (meta_theta_full: no technique multipliers)
         if tech in (S.FORCING, S.DYN_FORCING, S.NESTED_FORCING) and pm:
             # forcing chains: nesting level, branching (extra = options) and propagation size (links)
             level = tech - S.FORCING
-            d *= (math.exp(P.get("forcing_depth", 1.0) * level) * max(extra, 1) ** P.get("forcing_branch", 1.0)
-                  * (1.0 + math.log1p(max(meta[0], 0))))
+            d *= (
+                math.exp(P.get("forcing_depth", 1.0) * level)
+                * max(extra, 1) ** P.get("forcing_branch", 1.0)
+                * (1.0 + math.log1p(max(meta[0], 0)))
+            )
         if tech == S.COLOUR_ALGEBRA and pm and P.get("colour_chain_k", 0.0):
             # colours / labels involved and the relation-chain length (off by default = published build)
             d *= 1.0 + P.get("colour_chain_k", 0.0) * (0.1 * max(meta[1] - 1, 0) + 0.15 * meta[3])
-        if (pm and len(meta) > 9 and meta[9] > 1 and P.get("k_tab", 0.5)
-                and tech in (S.LINE_D, S.MENTAL_D, S.NARY_D, S.TABLE_COMBO)):
+        if (
+            pm
+            and len(meta) > 9
+            and meta[9] > 1
+            and P.get("k_tab", 0.5)
+            and tech in (S.LINE_D, S.MENTAL_D, S.NARY_D, S.TABLE_COMBO)
+        ):
             d *= 1.0 + P.get("k_tab", 0.5) * math.log(meta[9])  # case analysis over the table's live tuples
         if tech == S.SUM_ALGEBRA and pm:  # units combined, chain of bounds
             d *= 1.0 + 0.1 * max(meta[1] - 2, 0) + 0.25 * max(meta[3] - 1, 0)
         if tech == S.BAND_LOGIC and pm:  # units, open cells; search needed (cases)
-            d *= ((1.0 + 0.1 * max(meta[1] - 3, 0) + 0.02 * max(meta[0] - 9, 0))
-                  * (1.0 + P.get("band_k", 0.25) * math.log(max(meta[3], 1))))
+            d *= (1.0 + 0.1 * max(meta[1] - 3, 0) + 0.02 * max(meta[0] - 9, 0)) * (
+                1.0 + P.get("band_k", 0.25) * math.log(max(meta[3], 1))
+            )
         if tech == S.RULE_INTERSECT and pm:  # cells held together, rules combined
             d *= 1.0 + 0.1 * max(meta[0] - 4, 0) + 0.25 * max(meta[3] - 2, 0)
         if tech == S.GUESS and pm:  # expected refutation work of the wrong candidates
@@ -255,10 +364,10 @@ class Scorer:
             d *= (1.0 + math.log1p(max(meta[0], 0))) / (1.0 + math.log1p(10.0))
         hm = P.get("human_mode")
         if hm is not None and len(feat) > 5 and feat[5] is not None:
-            bud = list(hm.get("budget", HUMAN_BUDGET)) + HUMAN_BUDGET[len(hm.get("budget", HUMAN_BUDGET)):]
-            kk = list(hm.get("k", HUMAN_K)) + HUMAN_K[len(hm.get("k", HUMAN_K)):]
+            bud = list(hm.get("budget", HUMAN_BUDGET)) + HUMAN_BUDGET[len(hm.get("budget", HUMAN_BUDGET)) :]
+            kk = list(hm.get("k", HUMAN_K)) + HUMAN_K[len(hm.get("k", HUMAN_K)) :]
             e = 0.0
-            for j, load in enumerate(feat[5][:len(HUMAN_BUDGET)]):
+            for j, load in enumerate(feat[5][: len(HUMAN_BUDGET)]):
                 over = load - bud[j]
                 if over > 0.0:
                     e += kk[j] * over
@@ -271,12 +380,12 @@ class Scorer:
             # computer-only techniques extrapolate instead of flattening; cap_tau -> 0 = hard cap
             tau = P.get("cap_tau", 1.0)
             pw = P.get("cap_pow") or 0.0  # > 0: power cap, steeper than log1p (1 = uncapped)
-            d = (cap + (d - cap) ** pw if pw > 0 else
-                 cap + tau * math.log1p((d - cap) / tau) if tau > 0 else cap)
+            d = cap + (d - cap) ** pw if pw > 0 else cap + tau * math.log1p((d - cap) / tau) if tau > 0 else cap
         return d
 
 
 # ---------------------------------------------------------------- grading --
+
 
 def _d_ref(P):
     return P["B"].get(S.HIDDEN_D, 1.0)
@@ -317,7 +426,7 @@ def predict_time(steps, puzzle, params):
             den = max(sum(math.exp(-P["beta"] * min(sc.difficulty(f, puzzle.D), dr)) for f in st.alts), 1e-300)
             easy = P["c"] * st.n_empty / den
         if w is not None:  # Guess / Trial: linear in the expected refutation work, each unit the solve's mean
-            gwork += w     # easy-step time (a refutation branch is easy propagation steps)
+            gwork += w  # easy-step time (a refutation branch is easy propagation steps)
             gfall += easy * w
         else:
             if easy is not None and tech not in (S.GUESS, S.TRIAL, S.SHORT_TRIAL):
@@ -351,12 +460,17 @@ def work_time(steps, puzzle, params):
     # grid-size scaling of scanning (sudokuleader 4x4..25x25 + lisudoku): humans take
     # far longer on big grids than the 9x9-fitted model predicts -> scan term x (D/9)^gamma, rectangular boxes x e^k
     # (2x3, 3x4 boxes are slower to scan). 9x9 classics are unchanged by construction.
-    rect = any(len({c // puzzle.D for c in g.cells}) != len({c % puzzle.D for c in g.cells})
-               for g in getattr(puzzle, "groups", []) if g.kind == "box")
+    rect = any(
+        len({c // puzzle.D for c in g.cells}) != len({c % puzzle.D for c in g.cells})
+        for g in getattr(puzzle, "groups", [])
+        if g.kind == "box"
+    )
     # composite boards (samurai, twins: more cells than one D x D grid): a solver scans one region at a time, so the
     # scan area per step is one D x D grid's share of the empty cells, not the whole board (else time grows quadratically)
     local = min(1.0, puzzle.D * puzzle.D / max(puzzle.N, 1))
-    size_scan = (puzzle.D / 9.0) ** P.get("time_size_gamma", 2.79) * (math.exp(P.get("time_rect_k", 0.72)) if rect else 1.0)
+    size_scan = (puzzle.D / 9.0) ** P.get("time_size_gamma", 2.79) * (
+        math.exp(P.get("time_rect_k", 0.72)) if rect else 1.0
+    )
     total = P["t0"]
     for st in steps:
         if st.move.feat[0] in S.NOTE_TECHS:
@@ -371,7 +485,7 @@ def work_time(steps, puzzle, params):
     return total
 
 
-VOLUME_REF = 881.3     # median work volume of a 9x9 classic (fed, 700 puzzles) -> time grade 5.0
+VOLUME_REF = 881.3  # median work volume of a 9x9 classic (fed, 700 puzzles) -> time grade 5.0
 
 
 def work_volume(steps, puzzle, params):
@@ -380,10 +494,15 @@ def work_volume(steps, puzzle, params):
     move prices are left out (they are difficulty). The route length adds the most human-time information
     beyond difficulty and correlates only 0.26 with it on 9x9 classics."""
     P = params
-    rect = any(len({c // puzzle.D for c in g.cells}) != len({c % puzzle.D for c in g.cells})
-               for g in getattr(puzzle, "groups", []) if g.kind == "box")
+    rect = any(
+        len({c // puzzle.D for c in g.cells}) != len({c % puzzle.D for c in g.cells})
+        for g in getattr(puzzle, "groups", [])
+        if g.kind == "box"
+    )
     local = min(1.0, puzzle.D * puzzle.D / max(puzzle.N, 1))
-    size_scan = (puzzle.D / 9.0) ** P.get("time_size_gamma", 2.79) * (math.exp(P.get("time_rect_k", 0.72)) if rect else 1.0)
+    size_scan = (puzzle.D / 9.0) ** P.get("time_size_gamma", 2.79) * (
+        math.exp(P.get("time_rect_k", 0.72)) if rect else 1.0
+    )
     d_ref = P["B"].get(S.HIDDEN_D, 1.0)
     unit = P["c"] * math.exp(P["beta"] * d_ref)
     return sum(unit * st.n_empty * local * size_scan for st in steps if st.move.feat[0] not in S.NOTE_TECHS)
@@ -398,7 +517,9 @@ def time_grade(steps, puzzle, params):
 def grade(steps, puzzle, params=None, solved=True):
     P = params or DEFAULT_PARAMS
     cap = P["B"].get(S.GUESS, float("inf"))
-    ds = [st.move.d if (P.get("cap_tau", 1.0) > 0 or P.get("cap_pow")) else min(st.move.d, cap) for st in steps]  # soft cap lives in d
+    ds = [
+        st.move.d if (P.get("cap_tau", 1.0) > 0 or P.get("cap_pow")) else min(st.move.d, cap) for st in steps
+    ]  # soft cap lives in d
     if not ds:
         return {"difficulty": 0.0, "time": P["t0"], "tediousness": 0.0}
     dmax = max(ds)
@@ -469,12 +590,13 @@ def quality_metrics(steps, puzzle, params=None):
     alts = [len(st.alts) for st in real]
     hardest_at = ds.index(dmax) / max(n - 1, 1)
     first_half = sum(ds[: n // 2]) / max(n // 2, 1)
-    second_half = sum(ds[n // 2:]) / max(n - n // 2, 1)
+    second_half = sum(ds[n // 2 :]) / max(n - n // 2, 1)
     notes_idx = next((i for i, st in enumerate(steps) if st.move.feat[0] == S.TAKE_NOTES), None)
-    placed_before_notes = sum(1 for st in steps[: notes_idx] if st.move.place) if notes_idx is not None else None
+    placed_before_notes = sum(1 for st in steps[:notes_idx] if st.move.place) if notes_idx is not None else None
     total_empty = sum(1 for st in steps if st.move.place) or 1
-    from collections import Counter
     import math as _m
+    from collections import Counter
+
     tc = Counter(S.TECH_NAMES[st.move.feat[0]] for st in real)
     ent = -sum((c / n) * _m.log2(c / n) for c in tc.values())
     # time breakdown
@@ -500,22 +622,25 @@ def quality_metrics(steps, puzzle, params=None):
     else:
         symmetry = 0.0
     return {
-        "max_step": dmax, "mean_step": mean, "median_step": median,
-        "spikiness": dmax / mean if mean else 0.0,         # one hard step in an easy solve -> high
-        "step_sd": var ** 0.5,
-        "bottlenecks": bottlenecks,                        # near-max steps ("stuck points")
+        "max_step": dmax,
+        "mean_step": mean,
+        "median_step": median,
+        "spikiness": dmax / mean if mean else 0.0,  # one hard step in an easy solve -> high
+        "step_sd": var**0.5,
+        "bottlenecks": bottlenecks,  # near-max steps ("stuck points")
         "difficulty_peaks": peaks,
-        "forced_steps_frac": sum(forced) / n,              # only one move available
+        "forced_steps_frac": sum(forced) / n,  # only one move available
         "longest_forced_run": longest,
         "mean_alternatives": sum(alts) / n,
         "min_alternatives": min(alts),
-        "hardest_at": hardest_at,                          # 0 = opening, 1 = endgame
-        "back_loading": second_half - first_half,          # >0: harder late
+        "hardest_at": hardest_at,  # 0 = opening, 1 = endgame
+        "back_loading": second_half - first_half,  # >0: harder late
         "direct_progress": (placed_before_notes / total_empty) if placed_before_notes is not None else 1.0,
         "n_techniques": len(tc),
         "technique_entropy": ent,
-        "time_search": search, "time_writing": write, "time_notes": notes_t,
+        "time_search": search,
+        "time_writing": write,
+        "time_notes": notes_t,
         "givens": len(g),
         "givens_symmetry": symmetry,
     }
-

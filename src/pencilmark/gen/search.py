@@ -2,14 +2,29 @@
 
 All functions take a Board, a random.Random and return (solution, givens {cell: digit}, elements) or None.
 """
+
 from __future__ import annotations
 
 from . import elements as EL
 from .checks import Oracle
 
 
-def dig(b, kinds, rng, chk, sol=None, min_givens=0, seeds=None, max_els=10 ** 6, symmetry=None, fixed=None, blocked=(),
-        pool_tries=25, caps=None, dense=()):
+def dig(
+    b,
+    kinds,
+    rng,
+    chk,
+    sol=None,
+    min_givens=0,
+    seeds=None,
+    max_els=10**6,
+    symmetry=None,
+    fixed=None,
+    blocked=(),
+    pool_tries=25,
+    caps=None,
+    dense=(),
+):
     """givens-digging with elements added on demand.
 
     1. `seeds` {kind: count} elements are placed first (disjoint) and their cells, then their peers, are emptied first,
@@ -27,12 +42,17 @@ def dig(b, kinds, rng, chk, sol=None, min_givens=0, seeds=None, max_els=10 ** 6,
     givens = {i: sol[i] for i in range(b.N) if fixed.get(i, True)}
     els, used = [], set(blocked)
     caps = dict(caps or {})
-    room = lambda e: all(sum(1 for x in els if EL.in_class(x, k)) < m for k, m in caps.items() if m is not None and EL.in_class(e, k))
+    room = lambda e: all(
+        sum(1 for x in els if EL.in_class(x, k)) < m for k, m in caps.items() if m is not None and EL.in_class(e, k)
+    )
     for kind, cnt in (seeds or {}).items():
         for _ in range(cnt):
             for _try in range(40):
-                g_ = [e for e in EL.grow(b, EL.base_kind(kind), sol, rng.randrange(b.N), used, rng, n=8)
-                      if used.isdisjoint(e[1]) and EL.in_class(e, kind)]
+                g_ = [
+                    e
+                    for e in EL.grow(b, EL.base_kind(kind), sol, rng.randrange(b.N), used, rng, n=8)
+                    if used.isdisjoint(e[1]) and EL.in_class(e, kind)
+                ]
                 if g_:
                     els.append(g_[0])
                     used |= set(g_[0][1])
@@ -45,12 +65,16 @@ def dig(b, kinds, rng, chk, sol=None, min_givens=0, seeds=None, max_els=10 ** 6,
         for i in range(b.N):
             for e in EL.grow(b, bk, sol, i, set(blocked), rng):
                 if EL.in_class(e, kind) and e[1] not in seen and (bk != "parity" or i not in used):
-                    els.append(e); seen.add(e[1])
+                    els.append(e)
+                    seen.add(e[1])
     el_cells = used - set(blocked)
     peers = {j for c in el_cells for j in b.peers[c]} - el_cells
     rest = [i for i in range(b.N) if i not in el_cells and i not in peers]
-    order = sorted(el_cells, key=lambda _: rng.random()) + sorted(peers, key=lambda _: rng.random()) + \
-        sorted(rest, key=lambda _: rng.random())
+    order = (
+        sorted(el_cells, key=lambda _: rng.random())
+        + sorted(peers, key=lambda _: rng.random())
+        + sorted(rest, key=lambda _: rng.random())
+    )
     order = [i for i in order if i not in fixed]
     if not chk.ok(givens, els):
         return None
@@ -69,9 +93,17 @@ def dig(b, kinds, rng, chk, sol=None, min_givens=0, seeds=None, max_els=10 ** 6,
             continue
         restored = False
         if kinds and len(els) < max_els:
-            taken = {c for x in els for c in x[1]} | set(blocked)      # elements never share cells
-            cand = [] if i in taken else [e for k in kinds for e in EL.grow(b, EL.base_kind(k), sol, i, taken, rng)
-                                          if EL.in_class(e, k) and room(e)]
+            taken = {c for x in els for c in x[1]} | set(blocked)  # elements never share cells
+            cand = (
+                []
+                if i in taken
+                else [
+                    e
+                    for k in kinds
+                    for e in EL.grow(b, EL.base_kind(k), sol, i, taken, rng)
+                    if EL.in_class(e, k) and room(e)
+                ]
+            )
             cand.sort(key=lambda e: (EL.ncomb(b.n, len(e[1]), e[2]) if e[0] == "cage" else 0, rng.random()))
             for e in cand[:pool_tries]:
                 if chk.ok(givens, els + [e]):
@@ -81,7 +113,7 @@ def dig(b, kinds, rng, chk, sol=None, min_givens=0, seeds=None, max_els=10 ** 6,
         if not restored:
             givens.update(removed)
     mins = {k: n for k, n in (seeds or {}).items() if n}
-    for e in list(els):                                 # prune decorative elements (never below a class's minimum)
+    for e in list(els):  # prune decorative elements (never below a class's minimum)
         rest_ = [x for x in els if x != e]
         if any(EL.in_class(e, k) and sum(1 for x in rest_ if EL.in_class(x, k)) < n for k, n in mins.items()):
             continue
@@ -110,10 +142,13 @@ def partition(b, rng, chk, n_givens=0, min_els=0, cover=True):
         j = min(opts, key=lambda j: (EL.ncomb(b.n, 2, sol[c] + sol[j]), rng.random()))
         els.append(("cage", tuple(sorted((c, j))), sol[c] + sol[j]))
         owner[c] = owner[j] = 1
-    for e in [e for e in els if len(e[1]) == 1]:      # absorb single cells into a neighbouring cage
+    for e in [e for e in els if len(e[1]) == 1]:  # absorb single cells into a neighbouring cage
         c = e[1][0]
-        hosts = [x for x in els if x is not e and len(x[1]) < 4 and any(j in x[1] for j in NB[c])
-                 and sol[c] not in {sol[y] for y in x[1]}]
+        hosts = [
+            x
+            for x in els
+            if x is not e and len(x[1]) < 4 and any(j in x[1] for j in NB[c]) and sol[c] not in {sol[y] for y in x[1]}
+        ]
         if not hosts:
             return None
         h = min(hosts, key=lambda x: (EL.ncomb(b.n, len(x[1]) + 1, x[2] + sol[c]), rng.random()))
@@ -148,7 +183,7 @@ def partition(b, rng, chk, n_givens=0, min_els=0, cover=True):
                     break
         if not changed:
             break
-    if any(len(e[1]) == 1 for e in els) or len(els) < min_els:     # a 1-cell cage is a given in disguise
+    if any(len(e[1]) == 1 for e in els) or len(els) < min_els:  # a 1-cell cage is a given in disguise
         return None
     return sol, givens, els
 
@@ -158,6 +193,7 @@ def cage_count(b, n_cages, rng, time_limit=30.0, deadline=None, log=None):
     digits) in batches while the puzzle stays UNIQUE (CP-SAT oracle with a counterexample cache; a failed batch is
     bisected). No human-solvability cap: the card grades whatever results."""
     import time as _t
+
     sol = b.solution(rng)
     NB = b.nb
     owner, els = {}, []
@@ -189,7 +225,9 @@ def cage_count(b, n_cages, rng, time_limit=30.0, deadline=None, log=None):
             if i in used:
                 continue
             ea = els[i]
-            nb = sorted({own[j] for c in ea[1] for j in NB[c]} - {i} - used, key=lambda j: (len(els[j][1]), rng.random()))
+            nb = sorted(
+                {own[j] for c in ea[1] for j in NB[c]} - {i} - used, key=lambda j: (len(els[j][1]), rng.random())
+            )
             for j in nb:
                 eb = els[j]
                 if {sol[x] for x in ea[1]} & {sol[x] for x in eb[1]}:
@@ -201,8 +239,9 @@ def cage_count(b, n_cages, rng, time_limit=30.0, deadline=None, log=None):
 
     def apply(els, ms):
         drop = {x for m in ms for x in m}
-        return [e for i, e in enumerate(els) if i not in drop] + \
-               [("cage", tuple(sorted(els[i][1] + els[j][1])), els[i][2] + els[j][2]) for i, j in ms]
+        return [e for i, e in enumerate(els) if i not in drop] + [
+            ("cage", tuple(sorted(els[i][1] + els[j][1])), els[i][2] + els[j][2]) for i, j in ms
+        ]
 
     def try_batch(els, ms):
         if not ms:
@@ -214,7 +253,7 @@ def cage_count(b, n_cages, rng, time_limit=30.0, deadline=None, log=None):
             return els
         h = len(ms) // 2
         els2 = try_batch(els, ms[:h])
-        return try_batch(els, ms[h:]) if els2 is els else els2    # indices shift once the first half applied
+        return try_batch(els, ms[h:]) if els2 is els else els2  # indices shift once the first half applied
 
     batch, stall = 8, 0
     while len(els) > n_cages and stall < 30:
@@ -299,4 +338,3 @@ def pull(b, sol, givens, els, chk, low, rng, symmetry=None, max_givens=None):
         if chk.ok(givens, rest_) and not low.ok(givens, rest_):
             els = rest_
     return givens, els
-

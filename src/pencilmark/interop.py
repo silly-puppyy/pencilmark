@@ -11,6 +11,7 @@
 The sudokuwiki encodings are checked against sudokuwiki.org's solver; the decoder reads exactly what the encoder writes
 and refuses anything else (placed digits in plain forms, candidate masks, 6x6 killer operators other than '+').
 """
+
 from __future__ import annotations
 
 import re
@@ -49,7 +50,7 @@ def _box_grid(D):
 _PACKED = re.compile(r"([SXWCJLM])(\d+)([BC])([0-9a-zA-Z]+)")
 
 
-_SEPARATOR_LINE = re.compile(r"[\s|*]*[\-+=][\s\-+=|*]*")      # needs a - + or =: "*********" is a row of empties
+_SEPARATOR_LINE = re.compile(r"[\s|*]*[\-+=][\s\-+=|*]*")  # needs a - + or =: "*********" is a row of empties
 _COMMENT = re.compile(r"\s*[#;].*$")
 
 
@@ -70,15 +71,19 @@ def from_string(s, symbols=None):
         if len(tokens) in PJ.SIZES and any(len(tok) > 1 for tok in tokens) and all(tok.isalnum() for tok in tokens):
             return _from_pencilmarks(tokens)
         body = "".join(re.sub(r"[\s|]+", "", ln) for ln in rows)
-        if len(body) not in PJ.SIZES and len(body) != 729:   # a row of '-' empties looks like a separator: keep bare dash rows
-            rows = [ln for ln in lines if ln.strip() and not (_SEPARATOR_LINE.fullmatch(ln) and re.search(r"[+=|*]", ln))]
+        if (
+            len(body) not in PJ.SIZES and len(body) != 729
+        ):  # a row of '-' empties looks like a separator: keep bare dash rows
+            rows = [
+                ln for ln in lines if ln.strip() and not (_SEPARATOR_LINE.fullmatch(ln) and re.search(r"[+=|*]", ln))
+            ]
             body = "".join(re.sub(r"[\s|]+", "", ln) for ln in rows)
         if len(body) == 729 and re.fullmatch(r"[0-9.]+", body):
             return _from_candidate_string(body)
         if len(body) in PJ.SIZES:
             return _from_plain(body.replace("*", "."))
         first = s.split()[0] if s.split() else ""
-        if len(first) in PJ.SIZES and len(first) >= 16 and len(s.splitlines()) == 1:    # "<81 chars> rating / comment"
+        if len(first) in PJ.SIZES and len(first) >= 16 and len(s.splitlines()) == 1:  # "<81 chars> rating / comment"
             return _from_plain(first)
     return _from_plain(t, symbols)
 
@@ -95,8 +100,11 @@ def _from_hodoku_library(line):
         if not re.fullmatch(r"[1-9]{3}", tok) or D != 9:
             raise FormatError(f"HoDoKu library line: removed candidate {tok!r} is not 'digit row column'")
         removed.setdefault(cell_name(int(tok[1]) - 1, int(tok[2]) - 1), set()).add(int(tok[0]))
-    cands = {c: [v for v in range(1, D + 1) if v not in rm] for c, rm in removed.items()
-             if not d["givens"][parse_cell(c)[0] * D + parse_cell(c)[1]]}
+    cands = {
+        c: [v for v in range(1, D + 1) if v not in rm]
+        for c, rm in removed.items()
+        if not d["givens"][parse_cell(c)[0] * D + parse_cell(c)[1]]
+    }
     if cands:
         d["candidates"] = dict(sorted(cands.items(), key=lambda kv: parse_cell(kv[0])))
     return d
@@ -127,7 +135,7 @@ def _from_candidate_string(body):
     one candidate is a given"""
     givens, cands = [], {}
     for i in range(81):
-        chunk = body[9 * i:9 * i + 9]
+        chunk = body[9 * i : 9 * i + 9]
         vals = [k + 1 for k, ch in enumerate(chunk) if ch not in ".0"]
         if any(ch not in ".0" and ch != str(k + 1) for k, ch in enumerate(chunk)):
             raise FormatError(f"candidate string: cell {i + 1} ({chunk!r}) has a digit out of place")
@@ -167,14 +175,23 @@ def _from_plain(t, symbols=None):
 
 
 def _from_sudokuwiki(kind, D, ver, body):
-    if (kind, D, ver) not in {("S", 9, "B"), ("S", 6, "B"), ("X", 9, "B"), ("W", 9, "B"), ("C", 9, "B"), ("J", 9, "B"),
-                              ("L", 9, "B"), ("M", 9, "B"), ("L", 6, "C")}:
+    if (kind, D, ver) not in {
+        ("S", 9, "B"),
+        ("S", 6, "B"),
+        ("X", 9, "B"),
+        ("W", 9, "B"),
+        ("C", 9, "B"),
+        ("J", 9, "B"),
+        ("L", 9, "B"),
+        ("M", 9, "B"),
+        ("L", 6, "C"),
+    }:
         raise NotSupportedError(f"sudokuwiki string {kind}{D}{ver} is not supported")
     w = WIDTH[kind]
-    vals = [int(body[i * w:(i + 1) * w], 36) for i in range(D * D)]
+    vals = [int(body[i * w : (i + 1) * w], 36) for i in range(D * D)]
     full = (1 << D) - 1
     killer = kind in ("L", "M")
-    empty = full + 18 if not (kind == "L" and D == 6) else 75          # the encoder's empty-cell values (S6B 81, L6C 75)
+    empty = full + 18 if not (kind == "L" and D == 6) else 75  # the encoder's empty-cell values (S6B 81, L6C 75)
     givens, box_lab, col, clue = [], [], [], []
     for v in vals:
         if kind in ("S", "X", "W", "C"):
@@ -184,13 +201,17 @@ def _from_sudokuwiki(kind, D, ver, body):
             box_lab.append(box_lab_)
         elif kind == "L" and D == 9:
             n, clue_, col_ = v & 1023, (v >> 10) & 63, (v >> 16) + 1
-            clue.append(clue_); col.append(col_)
+            clue.append(clue_)
+            col.append(col_)
         elif kind == "M":
             n, clue_, col_, box_ = v & 1023, (v >> 10) & 63, ((v >> 16) & 7) + 1, (v >> 19) + 1
-            clue.append(clue_); col.append(col_); box_lab.append(box_)
-        else:                                       # L6C
+            clue.append(clue_)
+            col.append(col_)
+            box_lab.append(box_)
+        else:  # L6C
             n, clue_, col_ = v & 127, (v >> 7) & 2047, (v >> 18) + 1
-            clue.append(clue_); col.append(col_)
+            clue.append(clue_)
+            col.append(col_)
         if n == empty:
             givens.append(0)
         elif not killer and 1 <= n <= D:
@@ -213,13 +234,20 @@ def _from_sudokuwiki(kind, D, ver, body):
         rules.append(_box_grid(D))
     nm = lambda i: cell_name(*divmod(i, D))
     if kind == "X":
-        rules += [{"type": "region", "kind": "diagonal", "cells": [nm(i * D + i) for i in range(D)]},
-                  {"type": "region", "kind": "diagonal", "cells": [nm(i * D + D - 1 - i) for i in range(D)]}]
+        rules += [
+            {"type": "region", "kind": "diagonal", "cells": [nm(i * D + i) for i in range(D)]},
+            {"type": "region", "kind": "diagonal", "cells": [nm(i * D + D - 1 - i) for i in range(D)]},
+        ]
     elif kind == "W":
         for wr in (1, 5):
             for wc in (1, 5):
-                rules.append({"type": "region", "kind": "window",
-                              "cells": [nm((wr + a) * 9 + wc + b) for a in range(3) for b in range(3)]})
+                rules.append(
+                    {
+                        "type": "region",
+                        "kind": "window",
+                        "cells": [nm((wr + a) * 9 + wc + b) for a in range(3) for b in range(3)],
+                    }
+                )
     elif kind == "C":
         groups = {}
         for i, ch in enumerate(COLOUR_COL):
@@ -244,7 +272,9 @@ def _cages_from_colours(D, col, clue, ops):
             for rr, cc in ((r + 1, c), (r - 1, c), (r, c + 1), (r, c - 1)):
                 y = rr * D + cc
                 if 0 <= rr < D and 0 <= cc < D and y not in owner and col[y] == col[x]:
-                    owner[y] = len(comps); comp.append(y); st.append(y)
+                    owner[y] = len(comps)
+                    comp.append(y)
+                    st.append(y)
         comps.append(sorted(comp))
     rules = []
     for comp in comps:
@@ -261,7 +291,7 @@ def _cages_from_colours(D, col, clue, ops):
             elif clue[x]:
                 raise FormatError("a killer clue outside the cage's first cell")
         if len(comp) == 1 and total == 0:
-            continue                               # uncaged cell
+            continue  # uncaged cell
         r_ = {"type": "cage"}
         if total:
             r_["sum"] = total
@@ -273,6 +303,7 @@ def _cages_from_colours(D, col, clue, ops):
 # ------------------------------------------------------------------------------------------------------------ writing
 def _puzzle(x):
     from .api import load
+
     return load(x)
 
 
@@ -283,17 +314,19 @@ def to_string(puzzle, form="plain"):
     if form == "plain":
         D = p.D
         if kind not in ("classic", "classic6") and not (kind is None and _plain_ok(p)):
-            raise NotSupportedError(f"plain strings carry only classic sudoku with standard boxes ({info.get('why') or kind})")
+            raise NotSupportedError(
+                f"plain strings carry only classic sudoku with standard boxes ({info.get('why') or kind})"
+            )
         g = info.get("givens") if kind else {p.coords[i][0] * D + p.coords[i][1]: v for i, v in p.givens.items()}
         return "".join(PJ._sym(g[i]) if i in g else "." for i in range(D * D))
-    if form == "grid":                          # text grid: rows on lines, boxes separated by | and ------+------ lines
+    if form == "grid":  # text grid: rows on lines, boxes separated by | and ------+------ lines
         flat = to_string(p, "plain")
         D = p.D
         bh, bw = PJ.BOXES[D]
         rows = []
         for r in range(D):
-            cells = flat[r * D:(r + 1) * D]
-            rows.append(" | ".join(" ".join(cells[c:c + bw]) for c in range(0, D, bw)))
+            cells = flat[r * D : (r + 1) * D]
+            rows.append(" | ".join(" ".join(cells[c : c + bw]) for c in range(0, D, bw)))
             if (r + 1) % bh == 0 and r + 1 < D:
                 rows.append("-+-".join("-" * (2 * bw - 1) for _ in range(0, D, bw)))
         return "\n".join(rows)
@@ -309,8 +342,15 @@ def _plain_ok(p):
     if D not in PJ.BOXES or len(p.coords) != D * D or p.relations or p.constraints:
         return False
     bh, bw = PJ.BOXES[D]
-    want = {frozenset(range(r * D, r * D + D)) for r in range(D)} | {frozenset(range(c, D * D, D)) for c in range(D)} | \
-           {frozenset((br + i) * D + bc + j for i in range(bh) for j in range(bw)) for br in range(0, D, bh) for bc in range(0, D, bw)}
+    want = (
+        {frozenset(range(r * D, r * D + D)) for r in range(D)}
+        | {frozenset(range(c, D * D, D)) for c in range(D)}
+        | {
+            frozenset((br + i) * D + bc + j for i in range(bh) for j in range(bw))
+            for br in range(0, D, bh)
+            for bc in range(0, D, bw)
+        }
+    )
     idx = lambda i: p.coords[i][0] * D + p.coords[i][1]
     have = {frozenset(idx(c) for c in g.cells) for g in p.groups}
     full = (1 << D) - 1
@@ -325,7 +365,7 @@ def _sets(labels, n):
 
 
 def analyse(p):
-    """-> (kind or None, info) for the sudokuwiki forms """
+    """-> (kind or None, info) for the sudokuwiki forms"""
     D = p.D
     if D not in (6, 9) or len(p.coords) != D * D or sorted(p.coords) != [(r, c) for r in range(D) for c in range(D)]:
         return None, {"why": f"board D={D} N={len(p.coords)}"}
@@ -350,7 +390,11 @@ def analyse(p):
         return None, {"why": "rows/cols missing"}
     rest = houses - rows - cols
     bh, bw = (3, 3) if D == 9 else (2, 3)
-    std = {frozenset((br + i) * D + bc + j for i in range(bh) for j in range(bw)) for br in range(0, D, bh) for bc in range(0, D, bw)}
+    std = {
+        frozenset((br + i) * D + bc + j for i in range(bh) for j in range(bw))
+        for br in range(0, D, bh)
+        for bc in range(0, D, bw)
+    }
     transposed = False
     if D == 6 and not std <= rest:
         T = lambda c: (c % 6) * 6 + c // 6
@@ -376,7 +420,11 @@ def analyse(p):
         extra = rest - set(part)
         irregular = True
     diags = {frozenset(i * D + i for i in range(D)), frozenset(i * D + D - 1 - i for i in range(D))}
-    win4 = {frozenset((wr + i) * 9 + wc + j for i in range(3) for j in range(3)) for wr in (1, 5) for wc in (1, 5)} if D == 9 else set()
+    win4 = (
+        {frozenset((wr + i) * 9 + wc + j for i in range(3) for j in range(3)) for wr in (1, 5) for wc in (1, 5)}
+        if D == 9
+        else set()
+    )
     winall = _sets(WINDOKU_COL, 81) if D == 9 else set()
     colour = _sets(COLOUR_COL, 81) if D == 9 else set()
     info = {"boxes": boxlab, "cages": cages, "givens": givens, "D": D, "transposed": transposed}
@@ -438,7 +486,9 @@ def _enc_jigsaw(info):
 def _enc_killer(info):
     col, clue = _colouring(info["cages"], 9)
     g = info["givens"]
-    return "L9B" + "".join(_b36((((col[i] - 1) << 6) + clue[i] << 10) + (g[i] + 9 if i in g else 529), 4) for i in range(81))
+    return "L9B" + "".join(
+        _b36((((col[i] - 1) << 6) + clue[i] << 10) + (g[i] + 9 if i in g else 529), 4) for i in range(81)
+    )
 
 
 def _enc_killer_jigsaw(info):
@@ -469,10 +519,17 @@ def _enc_killer6(info):
     return s
 
 
-ENCODERS = {"classic": lambda i: _plain_packed(i, "S9B"), "classic6": lambda i: _plain_packed(i, "S6B"),
-            "x": lambda i: _plain_packed(i, "X9B"), "windoku": lambda i: _plain_packed(i, "W9B"),
-            "colour": lambda i: _plain_packed(i, "C9B"), "jigsaw": _enc_jigsaw, "killer": _enc_killer,
-            "killer_jigsaw": _enc_killer_jigsaw, "killer6": _enc_killer6}
+ENCODERS = {
+    "classic": lambda i: _plain_packed(i, "S9B"),
+    "classic6": lambda i: _plain_packed(i, "S6B"),
+    "x": lambda i: _plain_packed(i, "X9B"),
+    "windoku": lambda i: _plain_packed(i, "W9B"),
+    "colour": lambda i: _plain_packed(i, "C9B"),
+    "jigsaw": _enc_jigsaw,
+    "killer": _enc_killer,
+    "killer_jigsaw": _enc_killer_jigsaw,
+    "killer6": _enc_killer6,
+}
 
 
 # --------------------------------------------------------------------------------------------------------------- ipuz
@@ -483,9 +540,16 @@ def to_ipuz(puzzle):
     """sudoku-puzzle (or any accepted input) -> ipuz 2 dict, for classic / Latin square / diagonal / windoku / jigsaw /
     killer and their combinations; refuses everything else with NotSupportedError."""
     from .api import to_export
-    doc = puzzle if isinstance(puzzle, dict) and puzzle.get("format") == FORMAT and puzzle.get("format_version") == FORMAT_VERSION \
+
+    doc = (
+        puzzle
+        if isinstance(puzzle, dict)
+        and puzzle.get("format") == FORMAT
+        and puzzle.get("format_version") == FORMAT_VERSION
         else to_export(puzzle)
+    )
     from .exchange import validate
+
     B = validate(doc)
     D = doc["digits"]
     R, C = doc["board"]["rows"], doc["board"]["cols"]
@@ -512,19 +576,26 @@ def to_ipuz(puzzle):
         t = r["type"]
         if t in ("grid", "box_grid", "box"):
             continue
-        if t == "region" and r["kind"] == "diagonal" and r["cells"] in (diag_main, diag_anti, diag_main[::-1], diag_anti[::-1]):
+        if (
+            t == "region"
+            and r["kind"] == "diagonal"
+            and r["cells"] in (diag_main, diag_anti, diag_main[::-1], diag_anti[::-1])
+        ):
             diags.append(r)
             zones.append({"cells": [rc(c) for c in r["cells"]], "style": {"highlight": True}})
         elif t == "region" and r["kind"] == "window":
             co = [parse_cell(c) for c in r["cells"]]
-            r0, c0 = min(co); r1, c1 = max(co)
+            r0, c0 = min(co)
+            r1, c1 = max(co)
             if (r1 - r0 + 1) * (c1 - c0 + 1) != len(co):
                 raise NotSupportedError("a window that is not a rectangle")
             zones.append({"rect": [c0 + 1, r0 + 1, c1 + 1, r1 + 1], "style": {"highlight": True}})
         elif t == "cage" and "sum" in r:
             cages.append({"cells": [rc(c) for c in r["cells"]], "value": r["sum"]})
         else:
-            raise NotSupportedError(f"ipuz cannot express a {t} rule" + (f" ({r.get('kind')})" if r.get("kind") else ""))
+            raise NotSupportedError(
+                f"ipuz cannot express a {t} rule" + (f" ({r.get('kind')})" if r.get("kind") else "")
+            )
     if len(diags) not in (0, 2):
         raise NotSupportedError("ipuz diagonal sudoku needs both main diagonals")
     if boxes:
@@ -540,7 +611,7 @@ def to_ipuz(puzzle):
         kinds.append("http://ipuz.org/sudoku/hypersudoku#1")
     if cages:
         kinds.append("http://ipuz.org/sudoku/killersudoku#1")
-    rows = lambda flat: [[v for v in flat[r * C:(r + 1) * C]] for r in range(R)]
+    rows = lambda flat: [[v for v in flat[r * C : (r + 1) * C]] for r in range(R)]
     out = {"version": "http://ipuz.org/v2", "kind": kinds}
     m = doc.get("meta") or {}
     for k, ik in (("title", "title"), ("author", "author"), ("url", "url"), ("id", "uniqueid")):
@@ -569,6 +640,7 @@ def from_ipuz(ipuz):
     diagonals, windows, other regions) and `cages`; a file written by to_ipuz gives back its embedded puzzle unless the
     grid was edited. Refuses kinds other than sudoku and cells it cannot read."""
     import json
+
     d = json.loads(ipuz) if isinstance(ipuz, str) else ipuz
     kinds = d.get("kind") or []
     if not str(d.get("version", "")).startswith("http://ipuz.org/v") or not any("ipuz.org/sudoku" in k for k in kinds):
@@ -597,7 +669,7 @@ def from_ipuz(ipuz):
     emb = d.get(f"{IPUZ_NS}:puzzle")
     if isinstance(emb, dict) and emb.get("givens") == givens:
         return emb
-    name = lambda cr: cell_name(int(cr[1]) - 1, int(cr[0]) - 1)          # ipuz coordinates are [col, row], 1-based
+    name = lambda cr: cell_name(int(cr[1]) - 1, int(cr[0]) - 1)  # ipuz coordinates are [col, row], 1-based
     rules, boxes = [], []
     diag_main = [cell_name(i, i) for i in range(D)]
     diag_anti = [cell_name(i, D - 1 - i) for i in range(D)]
@@ -618,7 +690,13 @@ def from_ipuz(ipuz):
         if jigsaw and kind == "region" and len(cells) == D:
             boxes.append(sorted(cells, key=lambda c: parse_cell(c)))
         else:
-            rules.append({"type": "region", "kind": kind, "cells": sorted(cells, key=lambda c: parse_cell(c)) if kind != "diagonal" else cells})
+            rules.append(
+                {
+                    "type": "region",
+                    "kind": kind,
+                    "cells": sorted(cells, key=lambda c: parse_cell(c)) if kind != "diagonal" else cells,
+                }
+            )
     for cg in d.get("cages") or []:
         cells = sorted((name(cr) for cr in cg.get("cells") or []), key=lambda c: parse_cell(c))
         if "value" not in cg or not cells:
@@ -641,5 +719,6 @@ def from_ipuz(ipuz):
     if isinstance(d.get("solution"), list) and len(d["solution"]) == D:
         doc["solution"] = [value(x) for row in d["solution"] for x in row]
     from .exchange import validate
+
     validate(doc)
     return doc

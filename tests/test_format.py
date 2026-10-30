@@ -3,23 +3,25 @@ strings, ipuz, describe, sudoku-spec.
 
     pytest tests/test_format.py        (synthetic puzzles only: tests/fixtures/variants.json, docs/FORMAT.md examples)
 """
+
 import copy
-import pytest
 import json
 import re
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-import pencilmark                                     # noqa: E402
-from pencilmark import exchange as X                  # noqa: E402
-from pencilmark import interop as I                   # noqa: E402
-from pencilmark import puzzle_json as PJ              # noqa: E402
-from pencilmark import spec_format as SF              # noqa: E402
-from pencilmark import variants as VR                 # noqa: E402
-from pencilmark.__main__ import _to_puzzle_json       # noqa: E402
+import pencilmark  # noqa: E402
+from pencilmark import exchange as X  # noqa: E402
+from pencilmark import interop as I  # noqa: E402
+from pencilmark import puzzle_json as PJ  # noqa: E402
+from pencilmark import spec_format as SF  # noqa: E402
+from pencilmark import variants as VR  # noqa: E402
+from pencilmark.__main__ import _to_puzzle_json  # noqa: E402
 
 FIXTURES = ROOT / "tests" / "fixtures" / "variants.json"
 SCHEMA = ROOT / "docs" / "sudoku-puzzle.schema.json"
@@ -34,17 +36,34 @@ def pack():
     if _pack is None:
         _pack = [v["puzzle"] for v in json.load(open(FIXTURES, encoding="utf-8"))]
         text = (ROOT / "docs" / "FORMAT.md").read_text(encoding="utf-8")
-        _pack += [json.loads(b) for b in re.findall(r"```json\n(.*?)```", text, re.S)
-                  if b.startswith('{"format": "sudoku-puzzle"') and "…" not in b]
+        _pack += [
+            json.loads(b)
+            for b in re.findall(r"```json\n(.*?)```", text, re.S)
+            if b.startswith('{"format": "sudoku-puzzle"') and "…" not in b
+        ]
         g9 = VR.Grid(9, (3, 3))
-        for extra in (VR.x_sudoku(g9), VR.windoku(g9), VR.argyle(g9), VR.disjoint(g9),
-                      [{"type": "line", "kind": "thermo", "cells": ["r1c1", "r1c2", "r1c3"]},
-                       {"type": "arrow", "bulb": ["r5c5"], "lines": [["r6c6", "r7c7"]]},
-                       {"type": "edge", "kind": "kropki", "color": "white", "cells": ["r9c1", "r9c2"]},
-                       {"type": "edge", "kind": "xv", "letter": "X", "cells": ["r8c1", "r8c2"]}, {"type": "negative", "of": "xv"},
-                       {"type": "sandwich", "sum": 12, "side": "left", "cells": [f"r3c{c}" for c in range(1, 10)]},
-                       {"type": "sum", "kind": "little_killer", "sum": 15, "side": "top", "cells": ["r1c4", "r2c5", "r3c6", "r4c7", "r5c8", "r6c9"]},
-                       {"type": "neighbours", "kind": "antiknight", "within": "box"}]):
+        for extra in (
+            VR.x_sudoku(g9),
+            VR.windoku(g9),
+            VR.argyle(g9),
+            VR.disjoint(g9),
+            [
+                {"type": "line", "kind": "thermo", "cells": ["r1c1", "r1c2", "r1c3"]},
+                {"type": "arrow", "bulb": ["r5c5"], "lines": [["r6c6", "r7c7"]]},
+                {"type": "edge", "kind": "kropki", "color": "white", "cells": ["r9c1", "r9c2"]},
+                {"type": "edge", "kind": "xv", "letter": "X", "cells": ["r8c1", "r8c2"]},
+                {"type": "negative", "of": "xv"},
+                {"type": "sandwich", "sum": 12, "side": "left", "cells": [f"r3c{c}" for c in range(1, 10)]},
+                {
+                    "type": "sum",
+                    "kind": "little_killer",
+                    "sum": 15,
+                    "side": "top",
+                    "cells": ["r1c4", "r2c5", "r3c6", "r4c7", "r5c8", "r6c9"],
+                },
+                {"type": "neighbours", "kind": "antiknight", "within": "box"},
+            ],
+        ):
             d = json.loads(json.dumps(pencilmark.from_string(CLASSIC)))
             d["rules"] += extra
             _pack.append(d)
@@ -61,11 +80,19 @@ def struct(p):
     q = copy.deepcopy(p)
     if not hasattr(q, "groups_of"):
         q.finalize()
-    clean = lambda c: json.dumps({k: (list(map(list, v)) if k == "allowed" else v) for k, v in c.items() if not k.startswith("_")},
-                                 sort_keys=True, default=list)
-    return (list(map(tuple, q.coords)), sorted(q.givens.items()), list(q.domains),
-            [(g.kind, tuple(g.cells), bool(g.complete), g.total) for g in q.groups], [repr(r) for r in q.relations],
-            [clean(c) for c in q.constraints])
+    clean = lambda c: json.dumps(
+        {k: (list(map(list, v)) if k == "allowed" else v) for k, v in c.items() if not k.startswith("_")},
+        sort_keys=True,
+        default=list,
+    )
+    return (
+        list(map(tuple, q.coords)),
+        sorted(q.givens.items()),
+        list(q.domains),
+        [(g.kind, tuple(g.cells), bool(g.complete), g.total) for g in q.groups],
+        [repr(r) for r in q.relations],
+        [clean(c) for c in q.constraints],
+    )
 
 
 def doc_of(entry):
@@ -116,38 +143,73 @@ def _refuses(doc, needle):
 def test_strict_refusal():
     d = _classic_doc()
     X.validate(d)
-    bad = dict(d, extra=1); _refuses(bad, "unknown top-level key")
-    bad = dict(d, format_version=2); _refuses(bad, "newer")
-    bad = copy.deepcopy(d); bad["rules"].append({"type": "thermo", "cells": ["r1c1", "r1c2"]}); _refuses(bad, "unknown rule type")
-    bad = copy.deepcopy(d); bad["rules"].append({"type": "custom", "rule": "x"}); _refuses(bad, "reserved")
-    bad = copy.deepcopy(d); bad["rules"].append({"type": "com.example:foo"}); _refuses(bad, "vendor")
-    bad = copy.deepcopy(d); bad["rules"].append({"type": "line", "kind": "thermo", "cells": ["r1c1", "r1c2"], "colour": "red"})
+    bad = dict(d, extra=1)
+    _refuses(bad, "unknown top-level key")
+    bad = dict(d, format_version=2)
+    _refuses(bad, "newer")
+    bad = copy.deepcopy(d)
+    bad["rules"].append({"type": "thermo", "cells": ["r1c1", "r1c2"]})
+    _refuses(bad, "unknown rule type")
+    bad = copy.deepcopy(d)
+    bad["rules"].append({"type": "custom", "rule": "x"})
+    _refuses(bad, "reserved")
+    bad = copy.deepcopy(d)
+    bad["rules"].append({"type": "com.example:foo"})
+    _refuses(bad, "vendor")
+    bad = copy.deepcopy(d)
+    bad["rules"].append({"type": "line", "kind": "thermo", "cells": ["r1c1", "r1c2"], "colour": "red"})
     _refuses(bad, "unknown key")
-    bad = copy.deepcopy(d); bad["rules"].append({"type": "line", "kind": "wiggle", "cells": ["r1c1", "r1c2"]}); _refuses(bad, "unknown kind")
-    bad = copy.deepcopy(d); bad["rules"].append({"type": "edge", "kind": "xv", "letter": "X", "cells": ["r1c1", "r2c2"]})
+    bad = copy.deepcopy(d)
+    bad["rules"].append({"type": "line", "kind": "wiggle", "cells": ["r1c1", "r1c2"]})
+    _refuses(bad, "unknown kind")
+    bad = copy.deepcopy(d)
+    bad["rules"].append({"type": "edge", "kind": "xv", "letter": "X", "cells": ["r1c1", "r2c2"]})
     _refuses(bad, "orthogonally adjacent")
-    bad = copy.deepcopy(d); bad["rules"].append({"type": "edge", "kind": "xv", "letter": "X", "cells": ["r1c1", "r1c10"]})
+    bad = copy.deepcopy(d)
+    bad["rules"].append({"type": "edge", "kind": "xv", "letter": "X", "cells": ["r1c1", "r1c10"]})
     _refuses(bad, "does not exist")
-    bad = copy.deepcopy(d); bad["board"]["implied_houses"] = False; _refuses(bad, "board")
-    bad = copy.deepcopy(d); bad["grid"] = bad.pop("board"); _refuses(bad, "unknown top-level key")
-    bad = dict(d, format="sudoku-puzzle/2"); _refuses(bad, "not a sudoku-puzzle")
-    bad = copy.deepcopy(d); bad["candidates"] = {"R1C3": [1, 2]}; _refuses(bad, "bad cell name")
-    bad = copy.deepcopy(d); bad["rules"][0]["count"] = [3, 3]; _refuses(bad, "unknown key")
-    bad = copy.deepcopy(d); bad["rules"][0]["box"] = [2, 3]; _refuses(bad, "does not hold")
-    bad = copy.deepcopy(d); bad["rules"].append({"type": "grid", "origin": "r2c1"}); _refuses(bad, "missing cell")
-    bad = copy.deepcopy(d); bad["rules"].append({"type": "subgrid", "size": 9, "origin": "r1c1"}); _refuses(bad, "unknown rule type")
-    bad = copy.deepcopy(d); bad["rules"].append({"type": "sandwich", "sum": 5, "side": "top", "cells": ["r2c1", "r3c1"]})
+    bad = copy.deepcopy(d)
+    bad["board"]["implied_houses"] = False
+    _refuses(bad, "board")
+    bad = copy.deepcopy(d)
+    bad["grid"] = bad.pop("board")
+    _refuses(bad, "unknown top-level key")
+    bad = dict(d, format="sudoku-puzzle/2")
+    _refuses(bad, "not a sudoku-puzzle")
+    bad = copy.deepcopy(d)
+    bad["candidates"] = {"R1C3": [1, 2]}
+    _refuses(bad, "bad cell name")
+    bad = copy.deepcopy(d)
+    bad["rules"][0]["count"] = [3, 3]
+    _refuses(bad, "unknown key")
+    bad = copy.deepcopy(d)
+    bad["rules"][0]["box"] = [2, 3]
+    _refuses(bad, "does not hold")
+    bad = copy.deepcopy(d)
+    bad["rules"].append({"type": "grid", "origin": "r2c1"})
+    _refuses(bad, "missing cell")
+    bad = copy.deepcopy(d)
+    bad["rules"].append({"type": "subgrid", "size": 9, "origin": "r1c1"})
+    _refuses(bad, "unknown rule type")
+    bad = copy.deepcopy(d)
+    bad["rules"].append({"type": "sandwich", "sum": 5, "side": "top", "cells": ["r2c1", "r3c1"]})
     _refuses(bad, "is a cell")
     # ignorable containers and rule id / label / style are accepted
-    ok = copy.deepcopy(d); ok["meta"] = {"anything": [1, 2]}; ok["style"] = {"x": 1}; ok["meta"]["com.example"] = {"x": 1}
-    ok["rules"][0]["label"] = "board"; ok["rules"][0]["id"] = "b"; ok["rules"][0]["style"] = {"color": "#000000"}
+    ok = copy.deepcopy(d)
+    ok["meta"] = {"anything": [1, 2]}
+    ok["style"] = {"x": 1}
+    ok["meta"]["com.example"] = {"x": 1}
+    ok["rules"][0]["label"] = "board"
+    ok["rules"][0]["id"] = "b"
+    ok["rules"][0]["style"] = {"color": "#000000"}
     X.validate(ok)
-    bad = copy.deepcopy(d); bad["ext"] = {"com.example": {}}         # vendor data goes in meta (FORMAT.md 2.1)
+    bad = copy.deepcopy(d)
+    bad["ext"] = {"com.example": {}}  # vendor data goes in meta (FORMAT.md 2.1)
     _refuses(bad, "ext")
 
 
 def test_required_parameters_off_9x9():
-    d = pencilmark.from_string("1..." + "." * 12)          # 4x4
+    d = pencilmark.from_string("1..." + "." * 12)  # 4x4
     d = copy.deepcopy(d)
     d["rules"].append({"type": "line", "kind": "whisper", "cells": ["r1c1", "r1c2"]})
     _refuses(d, "requires")
@@ -158,6 +220,7 @@ def test_required_parameters_off_9x9():
 # --------------------------------------------------------------------------------------------------------------- schema
 def test_schema_validates_pack():
     import pytest
+
     jsonschema = pytest.importorskip("jsonschema")
     schema = json.load(open(SCHEMA, encoding="utf-8"))
     jsonschema.Draft202012Validator.check_schema(schema)
@@ -165,8 +228,18 @@ def test_schema_validates_pack():
     for n, e in enumerate(pack()):
         errs = list(v.iter_errors(doc_of(e)))
         assert not errs, f"pack line {n}: {errs[0].message}"
-    assert list(v.iter_errors({"format": "sudoku-puzzle", "format_version": 1, "board": {"rows": 1, "cols": 1}, "digits": 1,
-                               "givens": [0], "rules": [{"type": "nope"}]}))
+    assert list(
+        v.iter_errors(
+            {
+                "format": "sudoku-puzzle",
+                "format_version": 1,
+                "board": {"rows": 1, "cols": 1},
+                "digits": 1,
+                "givens": [0],
+                "rules": [{"type": "nope"}],
+            }
+        )
+    )
 
 
 def test_format_md_examples():
@@ -189,18 +262,27 @@ def test_fingerprint_stable():
     f = pencilmark.fingerprint(d)
     assert f == "sha256:a96eb0bb99b3f4a588d8d3f97dd28eaf321a4f453de36e60b4bab8f5eac239a6", f
     # metadata, style and solution do not matter; another spelling of the same houses does not matter
-    d2 = copy.deepcopy(d); d2["meta"] = {"title": "x"}; d2["style"] = {"a": 1}
+    d2 = copy.deepcopy(d)
+    d2["meta"] = {"title": "x"}
+    d2["style"] = {"a": 1}
     assert pencilmark.fingerprint(d2) == f
-    boxes = [{"type": "box", "cells": [X.cell_name(br + i, bc + j) for i in range(3) for j in range(3)]}
-             for br in (0, 3, 6) for bc in (0, 3, 6)]
-    d3 = copy.deepcopy(d)                  # a grid plus boxes as single rules
+    boxes = [
+        {"type": "box", "cells": [X.cell_name(br + i, bc + j) for i in range(3) for j in range(3)]}
+        for br in (0, 3, 6)
+        for bc in (0, 3, 6)
+    ]
+    d3 = copy.deepcopy(d)  # a grid plus boxes as single rules
     d3["rules"] = [{"type": "grid", "origin": "r1c1"}] + boxes
     assert pencilmark.fingerprint(d3) == f
-    d5 = copy.deepcopy(d)                  # explicit rows / columns and boxes
-    d5["rules"] = ([{"type": "row", "cells": [X.cell_name(r, c) for c in range(9)]} for r in range(9)] +
-                   [{"type": "column", "cells": [X.cell_name(r, c) for r in range(9)]} for c in range(9)] + boxes)
+    d5 = copy.deepcopy(d)  # explicit rows / columns and boxes
+    d5["rules"] = (
+        [{"type": "row", "cells": [X.cell_name(r, c) for c in range(9)]} for r in range(9)]
+        + [{"type": "column", "cells": [X.cell_name(r, c) for r in range(9)]} for c in range(9)]
+        + boxes
+    )
     assert pencilmark.fingerprint(d5) == f
-    d4 = copy.deepcopy(d); d4["givens"][2] = 5
+    d4 = copy.deepcopy(d)
+    d4["givens"][2] = 5
     assert pencilmark.fingerprint(d4) != f
 
 
@@ -222,7 +304,9 @@ def _semantic(p):
     D = p.D
     idx = lambda c: p.coords[c][0] * D + p.coords[c][1]
     houses = sorted(sorted(idx(c) for c in g.cells) for g in p.groups if g.total is None and g.kind != "cage")
-    cages = sorted((g.total, sorted(idx(c) for c in g.cells)) for g in p.groups if g.total is not None or g.kind == "cage")
+    cages = sorted(
+        (g.total, sorted(idx(c) for c in g.cells)) for g in p.groups if g.total is not None or g.kind == "cage"
+    )
     return houses, cages, sorted((idx(c), v) for c, v in p.givens.items())
 
 
@@ -235,7 +319,9 @@ def test_sudokuwiki_round_trip():
             kinds[k] = p
     g9 = VR.Grid(9, (3, 3))
     jig = "111222233111222233114452333144455633444555666774556669777856699778888999778888999"
-    boxes = [{"type": "box", "cells": [X.cell_name(*divmod(i, 9)) for i in range(81) if jig[i] == ch]} for ch in "123456789"]
+    boxes = [
+        {"type": "box", "cells": [X.cell_name(*divmod(i, 9)) for i in range(81) if jig[i] == ch]} for ch in "123456789"
+    ]
     cage = {"type": "cage", "sum": 10, "cells": ["r1c1", "r1c2", "r2c1"]}
     giv = "1" + "." * 79 + "9"
     synth = {"x": VR.x_sudoku(g9), "windoku": VR.windoku(g9), "colour": VR.disjoint(g9), "killer": [cage]}
@@ -243,20 +329,29 @@ def test_sudokuwiki_round_trip():
         d = pencilmark.from_string(giv)
         d["rules"] += extra
         kinds.setdefault(k, pencilmark.load(d))
-    d = pencilmark.from_string(giv); d["rules"] = [{"type": "grid", "origin": "r1c1"}] + boxes    # jigsaw
+    d = pencilmark.from_string(giv)
+    d["rules"] = [{"type": "grid", "origin": "r1c1"}] + boxes  # jigsaw
     kinds["jigsaw"] = pencilmark.load(d)
-    d = copy.deepcopy(d); d["rules"].append(cage)
+    d = copy.deepcopy(d)
+    d["rules"].append(cage)
     kinds["killer_jigsaw"] = pencilmark.load(d)
-    d = pencilmark.from_string("1" + "." * 35); d["rules"].append({"type": "cage", "sum": 7, "cells": ["r2c2", "r2c3", "r3c2"]})
+    d = pencilmark.from_string("1" + "." * 35)
+    d["rules"].append({"type": "cage", "sum": 7, "cells": ["r2c2", "r2c3", "r3c2"]})
     kinds["killer6"] = pencilmark.load(d)
-    gen4 = pencilmark.load({"digits": 4, "box": "2x2", "numbers": "." * 16,
-                        "regions": [{"kind": "cage", "cells": ["r1c1", "r1c2"], "sum": 3}]})
+    gen4 = pencilmark.load(
+        {
+            "digits": 4,
+            "box": "2x2",
+            "numbers": "." * 16,
+            "regions": [{"kind": "cage", "cells": ["r1c1", "r1c2"], "sum": 3}],
+        }
+    )
     for k, p in kinds.items():
         s = pencilmark.to_string(p, "sudokuwiki")
         back = pencilmark.load(pencilmark.from_string(s))
         assert I.analyse(back)[0] == k, (k, I.analyse(back))
         assert _semantic(back) == _semantic(p), f"{k}: {s[:12]}..."
-        again = pencilmark.to_string(back, "sudokuwiki")      # cage colours may differ; the puzzle may not
+        again = pencilmark.to_string(back, "sudokuwiki")  # cage colours may differ; the puzzle may not
         assert again[:3] == s[:3] and _semantic(pencilmark.load(pencilmark.from_string(again))) == _semantic(p)
     try:
         pencilmark.to_string(gen4, "sudokuwiki")
@@ -281,10 +376,18 @@ def test_ipuz_export():
     assert ip["version"] == "http://ipuz.org/v2" and ip["kind"] == ["http://ipuz.org/sudoku#1"]
     assert ip["puzzle"][0][:3] == [7, 9, 0] and ip["boxes"] is True
     assert ip[f"{I.IPUZ_NS}:puzzle"]["format"] == "sudoku-puzzle"
-    killer = pencilmark.load({"digits": 4, "box": "2x2", "numbers": "." * 16,
-                          "regions": [{"kind": "cage", "cells": ["r1c1", "r1c2"], "sum": 3}]})
+    killer = pencilmark.load(
+        {
+            "digits": 4,
+            "box": "2x2",
+            "numbers": "." * 16,
+            "regions": [{"kind": "cage", "cells": ["r1c1", "r1c2"], "sum": 3}],
+        }
+    )
     ip = pencilmark.to_ipuz(killer)
-    assert "http://ipuz.org/sudoku/killersudoku#1" in ip["kind"] and ip["cages"] == [{"cells": [[1, 1], [2, 1]], "value": 3}]
+    assert "http://ipuz.org/sudoku/killersudoku#1" in ip["kind"] and ip["cages"] == [
+        {"cells": [[1, 1], [2, 1]], "value": 3}
+    ]
     d = _classic_doc()
     d["rules"].append({"type": "line", "kind": "thermo", "cells": ["r1c3", "r2c3"]})
     try:
@@ -317,15 +420,28 @@ def test_describe_names():
     killer_x = _with(VR.x_sudoku(g9) + [{"type": "cage", "sum": 3, "cells": ["r1c1", "r1c2"]}])
     dsc = pencilmark.describe(killer_x)
     assert dsc["type"] == "Variant Sudoku" and list(dsc["rules"]) == ["Sudoku", "X", "Killer"]
-    nxv = _with([{"type": "edge", "kind": "xv", "letter": "X", "cells": ["r1c1", "r1c2"]}, {"type": "negative", "of": "xv"}])
+    nxv = _with(
+        [{"type": "edge", "kind": "xv", "letter": "X", "cells": ["r1c1", "r1c2"]}, {"type": "negative", "of": "xv"}]
+    )
     dsc = pencilmark.describe(nxv)
     assert dsc["type"] == "XV Sudoku" and "All X's and V's are given." in dsc["rules"]["XV"]
     ak = _with([{"type": "neighbours", "kind": "antiknight", "within": "box"}])
     assert "within the same box" in pencilmark.describe(ak)["rules"]["Anti-Knight"]
     assert pencilmark.describe(pencilmark.load({"layout": "samurai", "numbers": ""}))["type"] == "Samurai Sudoku"
     assert pencilmark.describe(pencilmark.load({"layout": "butterfly", "numbers": ""}))["type"] == "Butterfly Sudoku"
-    assert pencilmark.describe(pencilmark.load({"digits": 4, "box": "2x2", "numbers": "." * 16,
-                                        "regions": [{"kind": "cage", "cells": ["r1c1", "r1c2"], "sum": 3}]}))["type"] == "Tiny Killer Sudoku"
+    assert (
+        pencilmark.describe(
+            pencilmark.load(
+                {
+                    "digits": 4,
+                    "box": "2x2",
+                    "numbers": "." * 16,
+                    "regions": [{"kind": "cage", "cells": ["r1c1", "r1c2"], "sum": 3}],
+                }
+            )
+        )["type"]
+        == "Tiny Killer Sudoku"
+    )
 
 
 # ---------------------------------------------------------------------------------------------------------- sudoku-spec
@@ -347,7 +463,7 @@ def test_card_fields():
     else:
         raise AssertionError("unknown field accepted")
     d = pencilmark.from_string(CLASSIC)
-    d["rules"].append({"type": "line", "kind": "thermo", "cells": ["r1c5", "r1c4"]})      # true, but never needed
+    d["rules"].append({"type": "line", "kind": "thermo", "cells": ["r1c5", "r1c4"]})  # true, but never needed
     i = pencilmark.rate(d, fields=["issues", "reject"])
     assert i["reject"] is True and i["issues"][0]["rules"] == [1] and "rule 1" in i["issues"][0]["text"], i
 
@@ -363,24 +479,33 @@ def test_houses():
     classic = pencilmark.from_string(CLASSIC)
     h = _houses(classic)
     assert [k for k, _ in h] == ["row"] * 9 + ["col"] * 9 + ["box"] * 9
-    boxes = [{"type": "box", "cells": [X.cell_name(br + i, bc + j) for i in range(3) for j in range(3)]}
-             for br in (0, 3, 6) for bc in (0, 3, 6)]
+    boxes = [
+        {"type": "box", "cells": [X.cell_name(br + i, bc + j) for i in range(3) for j in range(3)]}
+        for br in (0, 3, 6)
+        for bc in (0, 3, 6)
+    ]
     jig = copy.deepcopy(classic)
     jig["rules"] = [{"type": "grid", "origin": "r1c1"}] + boxes
     assert _houses(jig) == h
-    only_boxes = copy.deepcopy(classic); only_boxes["rules"] = boxes
-    assert [k for k, _ in _houses(only_boxes)] == ["box"] * 9                  # no rows / columns without a grid
-    latin = copy.deepcopy(classic); latin["rules"] = [{"type": "grid", "origin": "r1c1"}]
+    only_boxes = copy.deepcopy(classic)
+    only_boxes["rules"] = boxes
+    assert [k for k, _ in _houses(only_boxes)] == ["box"] * 9  # no rows / columns without a grid
+    latin = copy.deepcopy(classic)
+    latin["rules"] = [{"type": "grid", "origin": "r1c1"}]
     assert [k for k, _ in _houses(latin)] == ["row"] * 9 + ["col"] * 9
     # a jigsaw written from the engine: one grid plus its pieces
     pieces = copy.deepcopy(boxes)
     pieces[0]["cells"][8], pieces[1]["cells"][6] = pieces[1]["cells"][6], pieces[0]["cells"][8]
-    jig2 = copy.deepcopy(classic); jig2["rules"] = [{"type": "grid", "origin": "r1c1"}] + pieces
+    jig2 = copy.deepcopy(classic)
+    jig2["rules"] = [{"type": "grid", "origin": "r1c1"}] + pieces
     assert [r["type"] for r in X.write(X.read(jig2))["rules"]] == ["grid"] + ["box"] * 9
     # explicit houses whose rows / columns make a grid are written as one
     expl = copy.deepcopy(classic)
-    expl["rules"] = ([{"type": "column", "cells": [X.cell_name(r, c) for r in range(9)]} for c in range(9)] + boxes +
-                     [{"type": "row", "cells": [X.cell_name(r, c) for c in range(9)]} for r in range(9)])
+    expl["rules"] = (
+        [{"type": "column", "cells": [X.cell_name(r, c) for r in range(9)]} for c in range(9)]
+        + boxes
+        + [{"type": "row", "cells": [X.cell_name(r, c) for c in range(9)]} for r in range(9)]
+    )
     assert X.write(X.read(expl))["rules"] == [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}]
     sam = pencilmark.load({"layout": "samurai", "numbers": ""})
     d = X.write(sam)
@@ -390,11 +515,21 @@ def test_houses():
 
 def test_spec_round_trip():
     from pencilmark.gen.api import Spec
-    specs = [{"size": 9, "target_band": "Hard", "seed": 3},
-             {"size": 6, "elements": {"kropki": "min"}, "symmetry": "rot180"},
-             {"size": 9, "elements": {"cage": "partition"}, "require": ["XWG"], "strict_require": True, "time_limit": 30},
-             {"size": 9, "kinds": ["thermo", "arrow"], "max_elements": 6, "target_difficulty": [4, 6], "min_givens": 20, "max_givens": 30},
-             {"size": 4, "elements": {"cage": 5}, "max_givens": 0, "solver": "cpsat"}]
+
+    specs = [
+        {"size": 9, "target_band": "Hard", "seed": 3},
+        {"size": 6, "elements": {"kropki": "min"}, "symmetry": "rot180"},
+        {"size": 9, "elements": {"cage": "partition"}, "require": ["XWG"], "strict_require": True, "time_limit": 30},
+        {
+            "size": 9,
+            "kinds": ["thermo", "arrow"],
+            "max_elements": 6,
+            "target_difficulty": [4, 6],
+            "min_givens": 20,
+            "max_givens": 30,
+        },
+        {"size": 4, "elements": {"cage": 5}, "max_givens": 0, "solver": "cpsat"},
+    ]
     for s in specs:
         doc = SF.spec_from_gen(s)
         assert doc["format"] == "sudoku-spec"
@@ -403,8 +538,13 @@ def test_spec_round_trip():
         assert norm(back) == norm(s), (s, back)
     bad = SF.spec_from_gen(specs[0])
     bad["rules"].append({"type": "line", "kind": "thermo", "cells": ["r1c1", "r1c2"]})
-    for extra in ({"rules": bad["rules"]}, {"quality": {"trivial": {"limit": 0.4}}}, {"givens": {"mask": [1] * 81}},
-                  {"where": {"difficulty": "max"}}, {"limits": {"results": 3}}):
+    for extra in (
+        {"rules": bad["rules"]},
+        {"quality": {"trivial": {"limit": 0.4}}},
+        {"givens": {"mask": [1] * 81}},
+        {"where": {"difficulty": "max"}},
+        {"limits": {"results": 3}},
+    ):
         d = dict(SF.spec_from_gen(specs[0]), **extra)
         try:
             SF.spec_to_gen(d)
@@ -412,6 +552,7 @@ def test_spec_round_trip():
             continue
         raise AssertionError(f"must be refused: {extra}")
     from pencilmark import spec_format as SF2
+
     try:
         SF2.validate_spec(dict(SF.spec_from_gen(specs[0]), target={"band": "Hard"}))
     except pencilmark.FormatError:
@@ -423,8 +564,25 @@ def test_spec_round_trip():
 def _plan_of(s):
     """what the generator does with a Spec (kinds is shorthand for elements {k: 1})"""
     from pencilmark.gen import api as GA
-    d = {f: getattr(s, f) for f in ("size", "target_band", "target_difficulty", "require", "strict_require", "symmetry",
-                                    "min_givens", "max_givens", "max_elements", "solver", "seed", "time_limit", "grade_seconds")}
+
+    d = {
+        f: getattr(s, f)
+        for f in (
+            "size",
+            "target_band",
+            "target_difficulty",
+            "require",
+            "strict_require",
+            "symmetry",
+            "min_givens",
+            "max_givens",
+            "max_elements",
+            "solver",
+            "seed",
+            "time_limit",
+            "grade_seconds",
+        )
+    }
     d["target_difficulty"] = list(d["target_difficulty"]) if d["target_difficulty"] else None
     d["plan"] = GA._plan(s)
     return d
@@ -440,6 +598,7 @@ if __name__ == "__main__":
             except Exception as e:  # noqa: BLE001
                 fails += 1
                 import traceback
+
                 traceback.print_exc()
                 print(f"FAIL {name}: {e}")
     sys.exit(1 if fails else 0)
@@ -448,13 +607,22 @@ if __name__ == "__main__":
 def test_multigrid_written_compact():
     """a samurai whose houses the engine lists out of grid order is still written as five box_grids"""
     R = 21
-    giv = [0 if (r < 9 or r >= 12 or 6 <= c < 15) and (c < 9 or c >= 12 or 6 <= r < 15) else None
-           for r in range(R) for c in range(R)]
+    giv = [
+        0 if (r < 9 or r >= 12 or 6 <= c < 15) and (c < 9 or c >= 12 or 6 <= r < 15) else None
+        for r in range(R)
+        for c in range(R)
+    ]
     grids = [(0, 0), (0, 12), (6, 6), (12, 0), (12, 12)]
-    doc = {"format": "sudoku-puzzle", "format_version": 1, "board": {"rows": R, "cols": R}, "digits": 9, "givens": giv,
-           "rules": [{"type": "box_grid", "origin": X.cell_name(r, c), "box": [3, 3]} for r, c in grids]}
+    doc = {
+        "format": "sudoku-puzzle",
+        "format_version": 1,
+        "board": {"rows": R, "cols": R},
+        "digits": 9,
+        "givens": giv,
+        "rules": [{"type": "box_grid", "origin": X.cell_name(r, c), "box": [3, 3]} for r, c in grids],
+    }
     p = X.read(doc)
-    p.groups.sort(key=lambda g: (g.kind != "box", g.kind != "row", g.cells))     # boxes first, then rows, then columns
+    p.groups.sort(key=lambda g: (g.kind != "box", g.kind != "row", g.cells))  # boxes first, then rows, then columns
     p.finalize()
     out = X.write(p)
     assert [r for r in out["rules"] if r["type"] in ("box_grid", "box", "row", "column")] == doc["rules"]
@@ -464,30 +632,52 @@ def test_multigrid_written_compact():
 def test_area_scope():
     """area = a grid's origin or a cell list (FORMAT.md 5); one grid of a samurai with anti-knight round-trips compactly"""
     R = 21
-    giv = [0 if (r < 9 or r >= 12 or 6 <= c < 15) and (c < 9 or c >= 12 or 6 <= r < 15) else None
-           for r in range(R) for c in range(R)]
+    giv = [
+        0 if (r < 9 or r >= 12 or 6 <= c < 15) and (c < 9 or c >= 12 or 6 <= r < 15) else None
+        for r in range(R)
+        for c in range(R)
+    ]
     grids = [X.cell_name(r, c) for r, c in [(0, 0), (0, 12), (6, 6), (12, 0), (12, 12)]]
-    doc = {"format": "sudoku-puzzle", "format_version": 1, "board": {"rows": R, "cols": R}, "digits": 9, "givens": giv,
-           "rules": [{"type": "box_grid", "origin": o, "box": [3, 3]} for o in grids] +
-                    [{"type": "neighbours", "kind": "antiknight", "area": "r13c13"},
-                     {"type": "negative", "of": "xv", "area": "r1c13"}]}
+    doc = {
+        "format": "sudoku-puzzle",
+        "format_version": 1,
+        "board": {"rows": R, "cols": R},
+        "digits": 9,
+        "givens": giv,
+        "rules": [{"type": "box_grid", "origin": o, "box": [3, 3]} for o in grids]
+        + [
+            {"type": "neighbours", "kind": "antiknight", "area": "r13c13"},
+            {"type": "negative", "of": "xv", "area": "r1c13"},
+        ],
+    }
     X.validate(doc)
     assert X.write(X.read(doc))["rules"][5:] == doc["rules"][5:]
     as_cells = copy.deepcopy(doc)
     as_cells["rules"][5]["area"] = [X.cell_name(r, c) for r in range(12, 21) for c in range(12, 21)]
     assert pencilmark.fingerprint(as_cells) == pencilmark.fingerprint(doc)
-    bad = copy.deepcopy(doc); bad["rules"][5]["area"] = "r2c2"; _refuses(bad, "not the origin")
-    bad = copy.deepcopy(doc); bad["rules"][5]["cells"] = ["r1c1"]; _refuses(bad, "unknown key")
+    bad = copy.deepcopy(doc)
+    bad["rules"][5]["area"] = "r2c2"
+    _refuses(bad, "not the origin")
+    bad = copy.deepcopy(doc)
+    bad["rules"][5]["cells"] = ["r1c1"]
+    _refuses(bad, "unknown key")
 
 
 def test_card_schema():
     import pytest
+
     jsonschema = pytest.importorskip("jsonschema")
     schema = json.load(open(ROOT / "docs" / "sudoku-grade.schema.json", encoding="utf-8"))
     jsonschema.Draft202012Validator.check_schema(schema)
     v = jsonschema.Draft202012Validator(schema)
-    cards = [pencilmark.rate(CLASSIC), pencilmark.rate(CLASSIC, fields=list(pencilmark.export.DEFAULT_FIELDS) +
-                                                        list(pencilmark.export.OPTIONAL_FIELDS), explain=True)]
+    cards = [
+        pencilmark.rate(CLASSIC),
+        pencilmark.rate(
+            CLASSIC,
+            fields=list(pencilmark.export.DEFAULT_FIELDS) + list(pencilmark.export.OPTIONAL_FIELDS),
+            explain=True,
+        ),
+    ]
     cards += [x["card"] for x in json.load(open(FIXTURES, encoding="utf-8"))]
     for c in cards:
         errs = list(v.iter_errors(c))
@@ -499,14 +689,23 @@ def test_quality_limits():
     assert pencilmark.rate(CLASSIC, fields=["issues"])["issues"] == []
     low = pencilmark.rate(CLASSIC, fields=["issues", "reject", "warning"], quality={"trivial": {"limit": 0.2}})
     assert [i["code"] for i in low["issues"]] == ["trivial"] and low["reject"] is True and low["warning"] is False
-    soft = pencilmark.rate(CLASSIC, fields=["issues", "reject", "warning"], quality={"trivial": {"limit": 0.2, "severity": "warning"}})
+    soft = pencilmark.rate(
+        CLASSIC, fields=["issues", "reject", "warning"], quality={"trivial": {"limit": 0.2, "severity": "warning"}}
+    )
     assert soft["issues"][0]["severity"] == "warning" and soft["reject"] is False and soft["warning"] is True
     d = pencilmark.from_string(CLASSIC)
     d["rules"].append({"type": "line", "kind": "thermo", "cells": ["r1c5", "r1c4"]})
     assert pencilmark.rate(d, fields=["issues"], quality={"decorative": {"severity": "off"}})["issues"] == []
     import pytest
-    for bad in ({"nope": {"severity": "off"}}, {"trial": {"limit": 0.5}}, {"trivial": 0.5}, {"trial": False},
-                {"trial": {"severity": "maybe"}}, {"spike": {"limit": -1}}):
+
+    for bad in (
+        {"nope": {"severity": "off"}},
+        {"trial": {"limit": 0.5}},
+        {"trivial": 0.5},
+        {"trial": False},
+        {"trial": {"severity": "maybe"}},
+        {"spike": {"limit": -1}},
+    ):
         with pytest.raises(ValueError):
             pencilmark.rate(CLASSIC, quality=bad)
 
@@ -515,6 +714,7 @@ def test_spec_fields_are_card_keys():
     doc = SF.spec_from_gen({"size": 9, "target_band": "Hard"})
     SF.validate_spec(dict(doc, fields=["difficulty", "time_p80"]))
     import pytest
+
     with pytest.raises(X.FormatError):
         SF.validate_spec(dict(doc, fields=["time.p80"]))
 
@@ -522,15 +722,26 @@ def test_spec_fields_are_card_keys():
 def test_describe_names_grids():
     """on a multi-grid board, rules confined to some grids say which"""
     R = 21
-    giv = [0 if (r < 9 or r >= 12 or 6 <= c < 15) and (c < 9 or c >= 12 or 6 <= r < 15) else None
-           for r in range(R) for c in range(R)]
+    giv = [
+        0 if (r < 9 or r >= 12 or 6 <= c < 15) and (c < 9 or c >= 12 or 6 <= r < 15) else None
+        for r in range(R)
+        for c in range(R)
+    ]
     rules = [{"type": "box_grid", "origin": o, "box": [3, 3]} for o in ("r1c1", "r1c13", "r7c7", "r13c1", "r13c13")]
-    rules += [{"type": "region", "kind": "diagonal", "cells": [X.cell_name(i, i) for i in range(9)]},
-              {"type": "region", "kind": "diagonal", "cells": [X.cell_name(i, 8 - i) for i in range(9)]},
-              {"type": "cage", "sum": 10, "cells": ["r13c1", "r13c2", "r14c1"]},
-              {"type": "neighbours", "kind": "antiknight", "area": "r13c13"}]
-    doc = {"format": "sudoku-puzzle", "format_version": 1, "board": {"rows": R, "cols": R}, "digits": 9, "givens": giv,
-           "rules": rules}
+    rules += [
+        {"type": "region", "kind": "diagonal", "cells": [X.cell_name(i, i) for i in range(9)]},
+        {"type": "region", "kind": "diagonal", "cells": [X.cell_name(i, 8 - i) for i in range(9)]},
+        {"type": "cage", "sum": 10, "cells": ["r13c1", "r13c2", "r14c1"]},
+        {"type": "neighbours", "kind": "antiknight", "area": "r13c13"},
+    ]
+    doc = {
+        "format": "sudoku-puzzle",
+        "format_version": 1,
+        "board": {"rows": R, "cols": R},
+        "digits": 9,
+        "givens": giv,
+        "rules": rules,
+    }
     d = pencilmark.describe(doc)
     assert d["type"] == "Variant Samurai Sudoku"
     assert d["rules"]["X"].endswith("Only in the top-left grid.")
@@ -545,17 +756,26 @@ def test_operators_named_parameters():
     v = lambda c: sol[(int(c[1]) - 1) * 9 + int(c[3]) - 1]
     a, b, c = "r1c1", "r3c3", "r5c9"
     doc = pencilmark.to_export(s)
-    doc["rules"] += [{"type": "relation", "op": "difference", "value": abs(v(a) - v(b)), "pairs": [[a, b]]},
-                     {"type": "relation", "op": "any_of", "any_of": [{"op": "sum", "sum": v(a) + v(c)}, {"op": "equal"}],
-                      "pairs": [[a, c]]}]
+    doc["rules"] += [
+        {"type": "relation", "op": "difference", "value": abs(v(a) - v(b)), "pairs": [[a, b]]},
+        {
+            "type": "relation",
+            "op": "any_of",
+            "any_of": [{"op": "sum", "sum": v(a) + v(c)}, {"op": "equal"}],
+            "pairs": [[a, c]],
+        },
+    ]
     X.validate(doc)
     out = pencilmark.to_export(doc)["rules"]
     assert {"type": "relation", "op": "difference", "value": abs(v(a) - v(b)), "pairs": [[a, b]]} in out, out
     assert pencilmark.rate(doc)["band"]
-    for bad_rule in ({"type": "relation", "op": "difference", "params": [2], "pairs": [[a, b]]},
-                     {"type": "relation", "op": "difference", "sum": 2, "pairs": [[a, b]]},
-                     {"type": "relation", "op": "different", "value": 1, "pairs": [[a, b]]}):
-        bad = copy.deepcopy(doc); bad["rules"].append(bad_rule)
+    for bad_rule in (
+        {"type": "relation", "op": "difference", "params": [2], "pairs": [[a, b]]},
+        {"type": "relation", "op": "difference", "sum": 2, "pairs": [[a, b]]},
+        {"type": "relation", "op": "different", "value": 1, "pairs": [[a, b]]},
+    ):
+        bad = copy.deepcopy(doc)
+        bad["rules"].append(bad_rule)
         with pytest.raises(pencilmark.FormatError):
             X.validate(bad)
 
@@ -563,7 +783,10 @@ def test_operators_named_parameters():
 def test_tables_reserved():
     """FORMAT.md 6.17: digit tables and the allowed operator are reserved for the planned custom rule type"""
     d = pencilmark.from_string(CLASSIC)
-    for rule in ({"type": "table", "cells": ["r1c1", "r1c2"], "allowed": [[1, 2], [2, 1]]},
-                 {"type": "relation", "op": "allowed", "allowed": [[1, 2]], "pairs": [["r1c1", "r3c3"]]}):
-        bad = copy.deepcopy(d); bad["rules"].append(rule)
+    for rule in (
+        {"type": "table", "cells": ["r1c1", "r1c2"], "allowed": [[1, 2], [2, 1]]},
+        {"type": "relation", "op": "allowed", "allowed": [[1, 2]], "pairs": [["r1c1", "r3c3"]]},
+    ):
+        bad = copy.deepcopy(d)
+        bad["rules"].append(rule)
         _refuses(bad, "reserved")

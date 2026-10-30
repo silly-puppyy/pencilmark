@@ -1,4 +1,5 @@
 """Standard n x n board geometry and random full grids."""
+
 from __future__ import annotations
 
 import math
@@ -7,8 +8,14 @@ import math
 BOXES = {4: (2, 2), 6: (2, 3), 8: (2, 4), 9: (3, 3), 10: (2, 5), 12: (3, 4), 16: (4, 4)}
 
 # log2 of the number of valid grids (known enumerations; used by the information-budget pre-check)
-GRID_LOG2 = {4: math.log2(288), 6: math.log2(28_200_960), 8: math.log2(29_136_487_207_403_520),
-             9: math.log2(6_670_903_752_021_072_936_960), 12: math.log2(8.1171437e46), 16: math.log2(5.96e98)}
+GRID_LOG2 = {
+    4: math.log2(288),
+    6: math.log2(28_200_960),
+    8: math.log2(29_136_487_207_403_520),
+    9: math.log2(6_670_903_752_021_072_936_960),
+    12: math.log2(8.1171437e46),
+    16: math.log2(5.96e98),
+}
 
 
 def grid_log2(n):
@@ -28,16 +35,22 @@ class Board:
         self.bh, self.bw = BOXES[n]
         rows = [[r * n + c for c in range(n)] for r in range(n)]
         cols = [[r * n + c for r in range(n)] for c in range(n)]
-        boxes = [[(br + i) * n + bc + j for i in range(self.bh) for j in range(self.bw)]
-                 for br in range(0, n, self.bh) for bc in range(0, n, self.bw)]
+        boxes = [
+            [(br + i) * n + bc + j for i in range(self.bh) for j in range(self.bw)]
+            for br in range(0, n, self.bh)
+            for bc in range(0, n, self.bw)
+        ]
         self.units = rows + cols + boxes
         self.peers = [sorted({j for u in self.units if i in u for j in u} - {i}) for i in range(self.N)]
         # orthogonal neighbours
-        self.nb = [[j for j in (i - n, i + n, i - 1 if i % n else -1, i + 1 if i % n < n - 1 else -1) if 0 <= j < self.N]
-                   for i in range(self.N)]
+        self.nb = [
+            [j for j in (i - n, i + n, i - 1 if i % n else -1, i + 1 if i % n < n - 1 else -1) if 0 <= j < self.N]
+            for i in range(self.N)
+        ]
         # orthogonal edges (i < j), used by kropki / xv
-        self.edges = [(i, j) for i in range(self.N) for j in (i + 1, i + n)
-                      if j < self.N and not (j == i + 1 and j % n == 0)]
+        self.edges = [
+            (i, j) for i in range(self.N) for j in (i + 1, i + n) if j < self.N and not (j == i + 1 and j % n == 0)
+        ]
 
     def rc(self, i):
         return f"r{i // self.n + 1}c{i % self.n + 1}"
@@ -88,8 +101,8 @@ class Board:
         maps = {
             "rot180": [(n - 1 - r, n - 1 - c)],
             "rot90": [(c, n - 1 - r), (n - 1 - r, n - 1 - c), (n - 1 - c, r)],
-            "mirror": [(r, n - 1 - c)],          # left-right
-            "mirror_v": [(n - 1 - r, c)],        # top-bottom
+            "mirror": [(r, n - 1 - c)],  # left-right
+            "mirror_v": [(n - 1 - r, c)],  # top-bottom
             "diagonal": [(c, r)],
             "antidiagonal": [(n - 1 - c, n - 1 - r)],
         }

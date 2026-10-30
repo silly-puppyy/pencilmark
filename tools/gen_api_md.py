@@ -1,12 +1,30 @@
 """Write docs/api.md from the docstrings of pencilmark's public API (read from the source with ast, so the C++ engine
 need not be built).
   python tools/gen_api_md.py"""
+
 import ast
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-NAMES = ["rate", "rate_many", "solve", "generate", "load", "to_export", "dumps", "fingerprint", "validate", "describe",
-         "from_string", "to_string", "from_ipuz", "to_ipuz", "NotUnique", "NoSolution", "Undecided"]
+NAMES = [
+    "rate",
+    "rate_many",
+    "solve",
+    "generate",
+    "load",
+    "to_export",
+    "dumps",
+    "fingerprint",
+    "validate",
+    "describe",
+    "from_string",
+    "to_string",
+    "from_ipuz",
+    "to_ipuz",
+    "NotUnique",
+    "NoSolution",
+    "Undecided",
+]
 
 
 def signature(node):
@@ -20,9 +38,13 @@ def main():
     src = (ROOT / "src/pencilmark/api.py").read_text(encoding="utf-8")
     tree = ast.parse(src)
     defs = {n.name: n for n in tree.body if isinstance(n, (ast.FunctionDef, ast.ClassDef))}
-    L = ["# Python API", "",
-         "Everything below is importable from `pencilmark` directly (`pencilmark.rate`, `pencilmark.to_export`, …). "
-         "This page is generated from the docstrings (`tools/gen_api_md.py`).", ""]
+    L = [
+        "# Python API",
+        "",
+        "Everything below is importable from `pencilmark` directly (`pencilmark.rate`, `pencilmark.to_export`, …). "
+        "This page is generated from the docstrings (`tools/gen_api_md.py`).",
+        "",
+    ]
     for name in NAMES:
         n = defs[name]
         doc = ast.get_docstring(n) or ""
@@ -31,7 +53,7 @@ def main():
             L += [f"## `{name}`", "", f"```python\nclass {name}({bases})\n```", ""]
         else:
             L += [f"## `{name}`", "", f"```python\n{signature(n)}\n```", ""]
-        if doc:                     # docstring lines are hard-wrapped: join them into flowing paragraphs
+        if doc:  # docstring lines are hard-wrapped: join them into flowing paragraphs
             paras = [" ".join(x.split()) for x in doc.split("\n\n")]
             L += [p.replace("*", "\\*") + "\n" for p in paras if p]
     (ROOT / "docs/api.md").write_text("\n".join(L), encoding="utf-8")

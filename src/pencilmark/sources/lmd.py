@@ -13,6 +13,7 @@ User-Agent (pencilmark.sources._common.USER_AGENT; override with PENCILMARK_UA),
     to_puzzle(lmd_id_or_record, resolve_short=True) -> puzzle JSON from the first linked puzzle that converts
                                                        (SudokuPad > f-puzzles > penpa), with the page text as rules.
 """
+
 from __future__ import annotations
 
 import html as _html
@@ -25,9 +26,12 @@ BASE = "https://logic-masters.de/Raetselportal"
 HTTP = Http(min_gap=2.5, respect_robots=True)
 ID_RE = re.compile(r"^[0-9A-Za-z]{6}$")
 SHORTENERS = ("tinyurl.com", "bit.ly", "git.io", "is.gd", "tiny.cc", "t.ly", "rb.gy", "shorturl.at")
-ROW = re.compile(r'<tr><td style="text-align:right">(\d+)\.<td>.*?zeigen\.php\?id=([0-9A-Za-z]{6})">([^<]*)</a>'
-                 r'.*?name=[^"]*">([^<]*)</a> \(on ([^)]*)\)</span><td align="center">(\d+)<td align="center">'
-                 r'(?:<img src="/Raetselportal/bilder/level(\d+)\.png"[^>]*>)?(?:<br><span[^>]*>(\d+)&nbsp;%)?', re.S)
+ROW = re.compile(
+    r'<tr><td style="text-align:right">(\d+)\.<td>.*?zeigen\.php\?id=([0-9A-Za-z]{6})">([^<]*)</a>'
+    r'.*?name=[^"]*">([^<]*)</a> \(on ([^)]*)\)</span><td align="center">(\d+)<td align="center">'
+    r'(?:<img src="/Raetselportal/bilder/level(\d+)\.png"[^>]*>)?(?:<br><span[^>]*>(\d+)&nbsp;%)?',
+    re.S,
+)
 
 
 def _text(fragment):
@@ -79,29 +83,47 @@ def parse_puzzle(pid, h):
     m = re.search(r'<div class="rp_html">(.*?)</div>\s*(?:<div|<h3|<hr)', h, flags=re.S)
     body = m.group(1) if m else ""
     r["text"] = _text(body)[:20000] if m else None
-    hrefs = re.findall(r'href="(https?://[^"]+)"', h)     # whole page, as lmd_scrape (comments can carry links)
+    hrefs = re.findall(r'href="(https?://[^"]+)"', h)  # whole page, as lmd_scrape (comments can carry links)
     r["links"] = classify_links([u for u in hrefs if "logic-masters.de" not in u])
     r["sudokupad"], r["other_links"] = r["links"]["sudokupad"], r["links"]["fpuzzles"] + r["links"]["penpa"]
     comments = []
-    cz = h[h.find("<h3>Comments</h3>"):] if "<h3>Comments</h3>" in h else ""
+    cz = h[h.find("<h3>Comments</h3>") :] if "<h3>Comments</h3>" in h else ""
     for cm in re.finditer(r"<p><b>(?:on )?([^<]*?) by ([^<]*)</b><br>(.*?)</div>", cz, flags=re.S):
-        comments.append({"time": cm.group(1).strip(), "user": _html.unescape(cm.group(2)).strip(),
-                         "text": _text(cm.group(3))[:2000]})
+        comments.append(
+            {
+                "time": cm.group(1).strip(),
+                "user": _html.unescape(cm.group(2)).strip(),
+                "text": _text(cm.group(3))[:2000],
+            }
+        )
     r["comments"] = comments
     r["is_sudoku"] = any("udoku" in t for t in r["tags"]) or any("udoku" in (lb or "") for lb in r["labels"])
     return r
 
 
 def parse_solvers(h):
-    return [(_html.unescape(n).strip(), t.strip()) for n, t in
-            re.findall(r'<td><a href="/Raetselportal/Benutzer/allgemein\.php\?name=[^"]*">([^<]+)</a><td>on ([^<]+)', h)]
+    return [
+        (_html.unescape(n).strip(), t.strip())
+        for n, t in re.findall(
+            r'<td><a href="/Raetselportal/Benutzer/allgemein\.php\?name=[^"]*">([^<]+)</a><td>on ([^<]+)', h
+        )
+    ]
 
 
 def parse_listing(h):
-    rows = [{"rank": int(rank), "id": pid, "title": _html.unescape(title), "author": _html.unescape(author),
-             "date": date, "solved": int(solved), "difficulty": int(level) if level else None,
-             "rating": int(rating) if rating else None}
-            for rank, pid, title, author, date, solved, level, rating in ROW.findall(h)]
+    rows = [
+        {
+            "rank": int(rank),
+            "id": pid,
+            "title": _html.unescape(title),
+            "author": _html.unescape(author),
+            "date": date,
+            "solved": int(solved),
+            "difficulty": int(level) if level else None,
+            "rating": int(rating) if rating else None,
+        }
+        for rank, pid, title, author, date, solved, level, rating in ROW.findall(h)
+    ]
     starts = [int(x) for x in re.findall(r"einfach\.php\?start=(\d+)&amp;sort=", h)]
     return rows, (max(starts) // 20 if starts else None)
 
@@ -130,7 +152,9 @@ def puzzle(lmd_id, solvers=False, http=None):
 
 
 def lmd_id_of(url):
-    m = re.search(r"logic-masters\.de/Raetselportal/Raetsel/(?:zeigen|loeserliste)\.php\?(?:[^#]*&)?id=([0-9A-Za-z]{6})", url)
+    m = re.search(
+        r"logic-masters\.de/Raetselportal/Raetsel/(?:zeigen|loeserliste)\.php\?(?:[^#]*&)?id=([0-9A-Za-z]{6})", url
+    )
     return m.group(1) if m else None
 
 
@@ -159,6 +183,7 @@ def to_puzzle(lmd_id_or_record, resolve_short=True, infer=False, http=None):
     """LMD id (fetches the page) or a parsed record -> puzzle JSON of the first linked puzzle that converts, with the
     page text as the rules text. Raises UnsupportedPuzzle with every link's reason when none converts."""
     from . import load
+
     rec = lmd_id_or_record if isinstance(lmd_id_or_record, dict) else puzzle(lmd_id_or_record, http=http)
     cands = candidate_links(rec, resolve_short, http)
     if not cands:
@@ -183,5 +208,16 @@ def to_puzzle(lmd_id_or_record, resolve_short=True, infer=False, http=None):
     raise UnsupportedPuzzle(reasons, f"LMD {rec.get('id')}")
 
 
-__all__ = ["listing", "puzzle", "parse_puzzle", "parse_listing", "parse_solvers", "to_puzzle", "classify_links",
-           "candidate_links", "resolve_short", "lmd_id_of", "fetch_page"]
+__all__ = [
+    "listing",
+    "puzzle",
+    "parse_puzzle",
+    "parse_listing",
+    "parse_solvers",
+    "to_puzzle",
+    "classify_links",
+    "candidate_links",
+    "resolve_short",
+    "lmd_id_of",
+    "fetch_page",
+]

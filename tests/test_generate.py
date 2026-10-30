@@ -1,4 +1,5 @@
 """Generator tests: pencilmark.generate takes a sudoku-spec request (docs/SPEC.md). Each case runs in a few seconds."""
+
 import time
 
 import pytest
@@ -12,8 +13,13 @@ from pencilmark.gen import api as GA
 def spec(D=9, box=None, where=None, rules=(), givens=None, symmetry=None, seed=None, time_limit=300):
     """a sudoku-spec for a D x D board with standard boxes plus the given templates / targets"""
     box = box or {4: [2, 2], 6: [2, 3], 9: [3, 3]}[D]
-    d = {"format": "sudoku-spec", "format_version": 1, "board": {"rows": D, "cols": D}, "digits": D,
-         "rules": [{"type": "box_grid", "origin": "r1c1", "box": box}, *rules]}
+    d = {
+        "format": "sudoku-spec",
+        "format_version": 1,
+        "board": {"rows": D, "cols": D},
+        "digits": D,
+        "rules": [{"type": "box_grid", "origin": "r1c1", "box": box}, *rules],
+    }
     if givens is not None:
         d["givens"] = givens
     if symmetry:
@@ -31,7 +37,7 @@ def unique(puzzle):
     return len(sols) == 1 and list(sols[0]) == [v for v in puzzle["solution"] if v is not None]
 
 
-def run(doc, budget=150):          # a runaway guard; CI on Windows is about 2x slower than Linux
+def run(doc, budget=150):  # a runaway guard; CI on Windows is about 2x slower than Linux
     t = time.time()
     r = pencilmark.generate(doc)
     assert time.time() - t < budget
@@ -80,8 +86,14 @@ def test_only_specs():
 def test_feasibility_fails_fast():
     t = time.time()
     with pytest.raises(GenerationFailed, match="information budget"):
-        pencilmark.generate(spec(9, givens={"count": 0}, rules=[{"type": "edge", "kind": "kropki", "count": [5, None]}],
-                                 where={"elements": {"max": 5}}))
+        pencilmark.generate(
+            spec(
+                9,
+                givens={"count": 0},
+                rules=[{"type": "edge", "kind": "kropki", "count": [5, None]}],
+                where={"elements": {"max": 5}},
+            )
+        )
     with pytest.raises(GenerationFailed, match="at least 17 givens"):
         pencilmark.generate(spec(9, givens={"count": [0, 12]}))
     assert any("Hard technique" in p for p in GA.feasibility({"size": 9, "target_band": "Easy", "require": ["SWF"]}))
@@ -97,25 +109,38 @@ def test_uniquify():
 
 def test_capped_classes_budget():
     """when every element class has a maximum, the caps bound the information budget"""
-    probs = GA.feasibility(GA.Spec.from_any({"size": 9, "max_givens": 0,
-                                             "elements": {"kropki_black": [0, 2], "kropki_white": [0, 3]}}))
+    probs = GA.feasibility(
+        GA.Spec.from_any({"size": 9, "max_givens": 0, "elements": {"kropki_black": [0, 2], "kropki_white": [0, 3]}})
+    )
     assert any("information budget" in p for p in probs), probs
 
 
 def test_element_classes_and_ranges():
     """per-class counts: 6 givens, exactly 2 black kropki, any number of white (the dense-seeding path)"""
-    r = run(spec(9, where={"band": "Easy"}, givens={"count": 6}, seed=1,
-                 rules=[{"type": "edge", "kind": "kropki", "color": "black", "count": 2},
-                        {"type": "edge", "kind": "kropki", "color": "white", "count": "auto"}]))
+    r = run(
+        spec(
+            9,
+            where={"band": "Easy"},
+            givens={"count": 6},
+            seed=1,
+            rules=[
+                {"type": "edge", "kind": "kropki", "color": "black", "count": 2},
+                {"type": "edge", "kind": "kropki", "color": "white", "count": "auto"},
+            ],
+        )
+    )
     els = r["info"]["elements"]
     assert r["info"]["givens"] == 6 and els.get("kropki_black") == 2 and els.get("kropki_white", 0) >= 1, r["info"]
 
 
 def test_spec_examples():
     """SPEC.md's example and docs/examples/specs run (spec_to_gen accepts them); reserved/ examples are refused"""
-    import json, re
+    import json
+    import re
     from pathlib import Path
+
     from pencilmark import spec_format as SF
+
     docs = Path(__file__).resolve().parents[1] / "docs"
     text = (docs / "SPEC.md").read_text(encoding="utf-8")
     example = json.loads(re.search(r"```json\n(.*?)```", text, re.S).group(1))

@@ -11,6 +11,7 @@ An element is a tuple (kind, cells, extra):
   ("xv", (i, j), "X" | "V")              sum 10 / sum 5
   ("parity", (i,), 1 | 0)                odd / even cell (graphical rule, not candidates)
 """
+
 from __future__ import annotations
 
 import math
@@ -19,15 +20,36 @@ from itertools import combinations
 from .. import puzzle_json as PJ
 
 KINDS = ("cage", "thermo", "whisper", "renban", "between", "arrow", "kropki", "xv", "parity")
-ALIASES = {"killer": "cage", "cages": "cage", "evenodd": "parity", "odd_even": "parity", "oddeven": "parity",
-           "german_whisper": "whisper", "whispers": "whisper", "thermometer": "thermo", "thermos": "thermo",
-           "arrows": "arrow", "dots": "kropki"}
+ALIASES = {
+    "killer": "cage",
+    "cages": "cage",
+    "evenodd": "parity",
+    "odd_even": "parity",
+    "oddeven": "parity",
+    "german_whisper": "whisper",
+    "whispers": "whisper",
+    "thermometer": "thermo",
+    "thermos": "thermo",
+    "arrows": "arrow",
+    "dots": "kropki",
+}
 
 
 # element classes: a kind, or one colour / letter / parity of it (counted separately in Spec.elements)
-CLASSES = {"kropki_white": ("kropki", "white"), "kropki_black": ("kropki", "black"), "x": ("xv", "X"), "v": ("xv", "V"),
-           "odd": ("parity", 1), "even": ("parity", 0)}
-CLASS_ALIASES = {"white_kropki": "kropki_white", "black_kropki": "kropki_black", "white": "kropki_white", "black": "kropki_black"}
+CLASSES = {
+    "kropki_white": ("kropki", "white"),
+    "kropki_black": ("kropki", "black"),
+    "x": ("xv", "X"),
+    "v": ("xv", "V"),
+    "odd": ("parity", 1),
+    "even": ("parity", 0),
+}
+CLASS_ALIASES = {
+    "white_kropki": "kropki_white",
+    "black_kropki": "kropki_black",
+    "white": "kropki_white",
+    "black": "kropki_black",
+}
 
 
 def norm_kind(k):
@@ -77,7 +99,7 @@ def grow(b, kind, sol, start, taken, rng, n=40):
     out = set()
     if kind == "parity":
         return [("parity", (start,), sol[start] % 2)] if start not in taken else []
-    if kind in ("kropki", "xv"):                       # 2-cell markers true in the solution
+    if kind in ("kropki", "xv"):  # 2-cell markers true in the solution
         for j in NB[start]:
             if j in taken:
                 continue
@@ -110,7 +132,9 @@ def grow(b, kind, sol, start, taken, rng, n=40):
             circ = start if rng.random() < 0.5 else rng.choice([j for j in NB[start] if j not in taken] or [start])
             shaft, tot, cur = [], 0, circ
             while tot < sol[circ]:
-                nxt = [j for j in NB[cur] if j not in taken and j != circ and j not in shaft and tot + sol[j] <= sol[circ]]
+                nxt = [
+                    j for j in NB[cur] if j not in taken and j != circ and j not in shaft and tot + sol[j] <= sol[circ]
+                ]
                 if not nxt:
                     break
                 cur = rng.choice(nxt)
@@ -161,6 +185,7 @@ def grow(b, kind, sol, start, taken, rng, n=40):
         if e[0] == "cage":
             return (ncomb(b.n, len(e[1]), e[2]), len(e[1]))
         return (-len(e[1]),)
+
     return sorted(out, key=lambda e: (info(e), rng.random()))
 
 
@@ -202,7 +227,7 @@ def satisfies(b, g, givens, els):
             lo, hi = sorted((ds[0], ds[-1]))
             if not all(lo < d < hi for d in ds[1:-1]):
                 return False
-        elif kind == "notdots":                         # full kropki's negative rule over the listed pairs
+        elif kind == "notdots":  # full kropki's negative rule over the listed pairs
             a, c = ds
             if abs(a - c) == 1 or a == 2 * c or c == 2 * a:
                 return False
@@ -212,8 +237,14 @@ def satisfies(b, g, givens, els):
 def to_json(b, givens, els, sol=None, title=None):
     """puzzle JSON (pencilmark/puzzle_json format) for givens {cell: digit} and elements."""
     rc = b.rc
-    d = {"v": 1, "digits": b.n, "box": f"{b.bh}x{b.bw}",
-         "numbers": "".join(PJ._sym(givens[i]) if i in givens else "." for i in range(b.N)), "rules": [], "regions": []}
+    d = {
+        "v": 1,
+        "digits": b.n,
+        "box": f"{b.bh}x{b.bw}",
+        "numbers": "".join(PJ._sym(givens[i]) if i in givens else "." for i in range(b.N)),
+        "rules": [],
+        "regions": [],
+    }
     none_pairs = []
     for kind, cells, x in els:
         if kind == "cage":
@@ -222,7 +253,7 @@ def to_json(b, givens, els, sol=None, title=None):
             d["rules"].append({"type": "line", "kind": kind, "k": whisper_gap(b.n), "cells": [rc(c) for c in cells]})
         elif kind in ("thermo", "renban", "between"):
             d["rules"].append({"type": "line", "kind": kind, "cells": [rc(c) for c in cells]})
-        elif kind == "parity":                          # graphical rule, not candidates
+        elif kind == "parity":  # graphical rule, not candidates
             d["rules"].append({"type": "parity", "parity": "odd" if x else "even", "cells": [rc(cells[0])]})
         elif kind == "kropki":
             d["rules"].append({"type": "kropki", "color": x, "cells": [rc(c) for c in cells]})
@@ -234,7 +265,7 @@ def to_json(b, givens, els, sol=None, title=None):
             none_pairs.append(cells)
         else:
             raise ValueError(f"unknown element kind {kind!r}")
-    if none_pairs:                                      # no dot = neither consecutive nor 1:2 (full kropki)
+    if none_pairs:  # no dot = neither consecutive nor 1:2 (full kropki)
         cl = [[rc(i), rc(j)] for i, j in none_pairs]
         d["rules"].append({"type": "pairs", "rel": "notdiff", "params": [1], "cells": cl})
         d["rules"].append({"type": "pairs", "rel": "notratio", "params": [2], "cells": cl})
@@ -273,6 +304,6 @@ def element_bits(b, kind):
         return lg(E) + 1
     if kind == "parity":
         return lg(N) + 1
-    if kind == "cage":                                   # up to n cells: placement (start + 3 directions per step) + sum
+    if kind == "cage":  # up to n cells: placement (start + 3 directions per step) + sum
         return lg(N) + (n - 1) * lg(3) + lg(n * (n + 1) // 2)
-    return lg(N) + (n - 1) * lg(3) + 1                  # lines: start + path; (thermo direction etc.)
+    return lg(N) + (n - 1) * lg(3) + 1  # lines: start + path; (thermo direction etc.)

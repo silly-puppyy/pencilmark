@@ -26,6 +26,7 @@ that are not drawn with a supported tool -- raises UnsupportedPuzzle listing the
 
     decode(link_or_payload) -> dict      to_puzzle(link_or_payload_or_decoded) -> puzzle JSON dict
 """
+
 from __future__ import annotations
 
 import base64
@@ -38,39 +39,111 @@ from collections import Counter, defaultdict
 from ._common import DecodeError, UnsupportedPuzzle, to_puzzle_json
 
 COMPRESS_SUB = [
-    ["z", "zZ"], ['"qa"', "z9"], ['"pu_q"', "zQ"], ['"pu_a"', "zA"], ['"grid"', "zG"], ['"edit_mode"', "zM"],
-    ['"surface"', "zS"], ['"line"', "zL"], ['"lineE"', "zE"], ['"wall"', "zW"], ['"cage"', "zC"], ['"number"', "zN"],
-    ['"symbol"', "zY"], ['"special"', "zP"], ['"board"', "zB"], ['"command_redo"', "zR"], ['"command_undo"', "zU"],
-    ['"command_replay"', "z8"], ['"numberS"', "z1"], ['"freeline"', "zF"], ['"freelineE"', "z2"], ['"thermo"', "zT"],
-    ['"arrows"', "z3"], ['"direction"', "zD"], ['"squareframe"', "z0"], ['"polygon"', "z5"], ['"deletelineE"', "z4"],
-    ['"killercages"', "z6"], ['"nobulbthermo"', "z7"], ['"__a"', "z_"], ["null", "zO"]]
-HEADER = ["gridtype", "nx", "ny", "size", "theta", "reflect0", "reflect1", "canvasx", "canvasy", "center_n",
-          "center_n0", "sudoku0", "sudoku1", "sudoku2", "sudoku3", "title", "author", "source", "rules", "border",
-          "multisolution", "bg_image"]
+    ["z", "zZ"],
+    ['"qa"', "z9"],
+    ['"pu_q"', "zQ"],
+    ['"pu_a"', "zA"],
+    ['"grid"', "zG"],
+    ['"edit_mode"', "zM"],
+    ['"surface"', "zS"],
+    ['"line"', "zL"],
+    ['"lineE"', "zE"],
+    ['"wall"', "zW"],
+    ['"cage"', "zC"],
+    ['"number"', "zN"],
+    ['"symbol"', "zY"],
+    ['"special"', "zP"],
+    ['"board"', "zB"],
+    ['"command_redo"', "zR"],
+    ['"command_undo"', "zU"],
+    ['"command_replay"', "z8"],
+    ['"numberS"', "z1"],
+    ['"freeline"', "zF"],
+    ['"freelineE"', "z2"],
+    ['"thermo"', "zT"],
+    ['"arrows"', "z3"],
+    ['"direction"', "zD"],
+    ['"squareframe"', "z0"],
+    ['"polygon"', "z5"],
+    ['"deletelineE"', "z4"],
+    ['"killercages"', "z6"],
+    ['"nobulbthermo"', "z7"],
+    ['"__a"', "z_"],
+    ["null", "zO"],
+]
+HEADER = [
+    "gridtype",
+    "nx",
+    "ny",
+    "size",
+    "theta",
+    "reflect0",
+    "reflect1",
+    "canvasx",
+    "canvasy",
+    "center_n",
+    "center_n0",
+    "sudoku0",
+    "sudoku1",
+    "sudoku2",
+    "sudoku3",
+    "title",
+    "author",
+    "source",
+    "rules",
+    "border",
+    "multisolution",
+    "bg_image",
+]
 HOST = re.compile(r"penpa", re.I)
-THICK = {2, 21}                    # bold black border styles (set_line_style: 2 = width 3, 21 = width 5)
-COSMETIC_EDGE = {0, 1, 11, 80}     # transparent / grid / grid dash / grid-like edge lines
+THICK = {2, 21}  # bold black border styles (set_line_style: 2 = width 3, 21 = width 5)
+COSMETIC_EDGE = {0, 1, 11, 80}  # transparent / grid / grid dash / grid-like edge lines
 HISTORY = ("command_redo", "command_undo", "command_replay")
 # rules-text words for variant rules this mapper cannot take from a supported drawing tool
-TEXT_RULES = [("anti-knight", r"anti[- ]?knight|chess knight|knight'?s? move|\bknights?\b"),
-              ("anti-king", r"anti[- ]?king|chess king|king'?s? move|\bkings?\b"),
-              ("toroidal / wrap-around", r"toro|wrap|opposite edges"), ("mountain", r"mountain"), ("doubler", r"doubler"),
-              ("remote / pointing clues", r"\bremote\b|points? to"), ("either / both clue", r"either both|both digits"),
-              ("nonconsecutive", r"non[- ]?consecutive"), ("disjoint groups", r"disjoint"),
-              ("extra regions", r"windoku|hyper[- ]?sudoku|extra regions?|shaded regions?"),
-              ("sandwich", r"sandwich"), ("little killer", r"little killer"), ("x-sum", r"x[- ]?sums?"),
-              ("skyscraper", r"skyscraper"), ("kropki", r"kropki|white dot|black dot"), ("xv", r"\bxv\b|\bx and v\b"),
-              ("odd / even", r"\b(?:odd|even) (?:digits?|numbers?|cells?|squares?|circles?)\b|\bgr[ae]y (?:circles?|squares?)"),
-              ("renban", r"renban"), ("whisper", r"whisper"), ("palindrome", r"palindrom"), ("between line", r"between"),
-              ("region sum", r"region[- ]sum"), ("entropic", r"entrop"), ("parity line", r"parity"),
-              ("zipper", r"zipper"), ("quadruple", r"quadruple"), ("chaos construction", r"chaos"),
-              ("slow thermo", r"slow[- ]?thermo|never decrease|may repeat on (?:a |the )?thermo"),
-              ("fog of war", r"\bfog\b"), ("clone", r"\bclones?\b"), ("German / Dutch lines", r"german|dutch"),
-              ("minimum / maximum", r"\bminim|\bmaxim"), ("inequality", r"inequalit|greater than|less than"),
-              ("difference / ratio", r"\bdifference\b|\bratio\b"), ("indexing", r"index"), ("sum lines", r"\blines?\b.{0,40}\bsum\b"),
-              ("cage digits may repeat", r"cages?\b[^.]{0,80}\bmay repeat|\brepeat\b[^.]{0,60}\bcages?"),
-              ("average", r"\baverage"), ("product", r"\bproduct"), ("rounding", r"\bround(?:ed|ing)?\b(?! the)"),
-              ("all or nothing", r"all[- ]or[- ]nothing"), ("multiple", r"\bmultiples? of\b")]
+TEXT_RULES = [
+    ("anti-knight", r"anti[- ]?knight|chess knight|knight'?s? move|\bknights?\b"),
+    ("anti-king", r"anti[- ]?king|chess king|king'?s? move|\bkings?\b"),
+    ("toroidal / wrap-around", r"toro|wrap|opposite edges"),
+    ("mountain", r"mountain"),
+    ("doubler", r"doubler"),
+    ("remote / pointing clues", r"\bremote\b|points? to"),
+    ("either / both clue", r"either both|both digits"),
+    ("nonconsecutive", r"non[- ]?consecutive"),
+    ("disjoint groups", r"disjoint"),
+    ("extra regions", r"windoku|hyper[- ]?sudoku|extra regions?|shaded regions?"),
+    ("sandwich", r"sandwich"),
+    ("little killer", r"little killer"),
+    ("x-sum", r"x[- ]?sums?"),
+    ("skyscraper", r"skyscraper"),
+    ("kropki", r"kropki|white dot|black dot"),
+    ("xv", r"\bxv\b|\bx and v\b"),
+    ("odd / even", r"\b(?:odd|even) (?:digits?|numbers?|cells?|squares?|circles?)\b|\bgr[ae]y (?:circles?|squares?)"),
+    ("renban", r"renban"),
+    ("whisper", r"whisper"),
+    ("palindrome", r"palindrom"),
+    ("between line", r"between"),
+    ("region sum", r"region[- ]sum"),
+    ("entropic", r"entrop"),
+    ("parity line", r"parity"),
+    ("zipper", r"zipper"),
+    ("quadruple", r"quadruple"),
+    ("chaos construction", r"chaos"),
+    ("slow thermo", r"slow[- ]?thermo|never decrease|may repeat on (?:a |the )?thermo"),
+    ("fog of war", r"\bfog\b"),
+    ("clone", r"\bclones?\b"),
+    ("German / Dutch lines", r"german|dutch"),
+    ("minimum / maximum", r"\bminim|\bmaxim"),
+    ("inequality", r"inequalit|greater than|less than"),
+    ("difference / ratio", r"\bdifference\b|\bratio\b"),
+    ("indexing", r"index"),
+    ("sum lines", r"\blines?\b.{0,40}\bsum\b"),
+    ("cage digits may repeat", r"cages?\b[^.]{0,80}\bmay repeat|\brepeat\b[^.]{0,60}\bcages?"),
+    ("average", r"\baverage"),
+    ("product", r"\bproduct"),
+    ("rounding", r"\bround(?:ed|ing)?\b(?! the)"),
+    ("all or nothing", r"all[- ]or[- ]nothing"),
+    ("multiple", r"\bmultiples? of\b"),
+]
 KILLER_TEXT = re.compile(r"\bsum|\btotal|\bkiller|\badd (?:up )?to\b")
 
 
@@ -85,8 +158,12 @@ def _b64inflate(s):
 
 
 def is_penpa_url(s):
-    return isinstance(s, str) and "://" in s and bool(HOST.search(urllib.parse.urlsplit(s.strip()).path + urllib.parse.urlsplit(s.strip()).netloc)) \
+    return (
+        isinstance(s, str)
+        and "://" in s
+        and bool(HOST.search(urllib.parse.urlsplit(s.strip()).path + urllib.parse.urlsplit(s.strip()).netloc))
         and re.search(r"[?#&]p=", s) is not None
+    )
 
 
 def params(link):
@@ -153,16 +230,27 @@ def decode(link_or_payload):
         except DecodeError:
             sol_raw = None
     mode = prm.get("m", "edit")
-    return {"format": "penpa", "mode": mode, "gridtype": head["gridtype"],
-            "nx": int(head["nx"]) if head["nx"].isdigit() else None, "ny": int(head["ny"]) if head["ny"].isdigit() else None,
-            "space": js(1, [0, 0, 0, 0]), "header": head,
-            "title": re.sub(r"^Title:\s?", "", _field(head["title"])).strip(),
-            "author": re.sub(r"^Author:\s?", "", _field(head["author"])).strip(),
-            "source_link": _field(head["source"]).strip(), "rules": _field(head["rules"]).strip(),
-            "multisolution": head["multisolution"] == "true",
-            "pu_q": js(3, {}) or {}, "pu_a": js(4, {}) if mode == "edit" else {},
-            "centerlist": cl, "version": js(10), "tags": js(17, []), "solution_raw": sol_raw,
-            "url": s if "://" in s else None}
+    return {
+        "format": "penpa",
+        "mode": mode,
+        "gridtype": head["gridtype"],
+        "nx": int(head["nx"]) if head["nx"].isdigit() else None,
+        "ny": int(head["ny"]) if head["ny"].isdigit() else None,
+        "space": js(1, [0, 0, 0, 0]),
+        "header": head,
+        "title": re.sub(r"^Title:\s?", "", _field(head["title"])).strip(),
+        "author": re.sub(r"^Author:\s?", "", _field(head["author"])).strip(),
+        "source_link": _field(head["source"]).strip(),
+        "rules": _field(head["rules"]).strip(),
+        "multisolution": head["multisolution"] == "true",
+        "pu_q": js(3, {}) or {},
+        "pu_a": js(4, {}) if mode == "edit" else {},
+        "centerlist": cl,
+        "version": js(10),
+        "tags": js(17, []),
+        "solution_raw": sol_raw,
+        "url": s if "://" in s else None,
+    }
 
 
 def _solution(d, board, D):
@@ -200,6 +288,7 @@ def translate(x, rules_text=None):
     cages are read as sums only when it speaks of sums / totals / killer. Raises UnsupportedPuzzle with every
     element it cannot map exactly."""
     from .. import model as M
+
     d = decode(x)
     gt = d["gridtype"]
     if gt not in ("square", "sudoku"):
@@ -216,27 +305,46 @@ def translate(x, rules_text=None):
     cols = sorted({k % nx0 for k in board})
     D = len(rows)
     bad = []
-    if len(cols) != D or len(board) != D * D or len(set(board)) != D * D or \
-            rows != list(range(rows[0], rows[0] + D)) or cols != list(range(cols[0], cols[0] + D)):
-        raise UnsupportedPuzzle([f"board is not a full square ({len(board)} cells in {len(rows)}x{len(cols)})"], "penpa")
+    if (
+        len(cols) != D
+        or len(board) != D * D
+        or len(set(board)) != D * D
+        or rows != list(range(rows[0], rows[0] + D))
+        or cols != list(range(cols[0], cols[0] + D))
+    ):
+        raise UnsupportedPuzzle(
+            [f"board is not a full square ({len(board)} cells in {len(rows)}x{len(cols)})"], "penpa"
+        )
     if D < 4 or D > 16:
         raise UnsupportedPuzzle([f"board size {D}"], "penpa")
     r0, c0 = rows[0], cols[0]
     inboard = set(board)
-    cid = {k: (k // nx0 - r0) * D + (k % nx0 - c0) for k in board}      # penpa cell index -> our cell id
+    cid = {k: (k // nx0 - r0) * D + (k % nx0 - c0) for k in board}  # penpa cell index -> our cell id
     p = M.Puzzle(D=D, coords=M._grid_coords(D))
     for r in range(D):
-        p.groups.append(M.Group(f"r{r+1}", tuple(r * D + c for c in range(D)), "row", True))
+        p.groups.append(M.Group(f"r{r + 1}", tuple(r * D + c for c in range(D)), "row", True))
     for c in range(D):
-        p.groups.append(M.Group(f"c{c+1}", tuple(r * D + c for r in range(D)), "col", True))
+        p.groups.append(M.Group(f"c{c + 1}", tuple(r * D + c for r in range(D)), "col", True))
     used, ignored = Counter(), Counter()
 
     def where(k):
         k = int(k)
         if k < N:
             return "cell" if k in inboard else "outside cell"
-        return ["cell", "vertex", "edge", "edge", "corner", "corner", "corner", "corner", "compass", "compass",
-                "compass", "compass"][min(k // N, 11)]
+        return [
+            "cell",
+            "vertex",
+            "edge",
+            "edge",
+            "corner",
+            "corner",
+            "corner",
+            "corner",
+            "compass",
+            "compass",
+            "compass",
+            "compass",
+        ][min(k // N, 11)]
 
     # ---- regions: thick vertex-to-vertex edge lines; diagonals
     blocked, diag_pairs = set(), []
@@ -251,7 +359,7 @@ def translate(x, rules_text=None):
             continue
         va, vb = a - N, b - N
         (ja, ia), (jb, ib) = divmod(va, nx0), divmod(vb, nx0)
-        xa, ya, xb, yb = ia + 1, ja + 1, ib + 1, jb + 1               # grid-point coordinates
+        xa, ya, xb, yb = ia + 1, ja + 1, ib + 1, jb + 1  # grid-point coordinates
         if abs(xa - xb) == 1 and abs(ya - yb) == 1:
             diag_pairs.append(((xa, ya), (xb, yb)))
             continue
@@ -261,10 +369,10 @@ def translate(x, rules_text=None):
         if style not in THICK:
             bad.append(f"edge line style {style}")
             continue
-        if ya == yb and abs(xa - xb) == 1:                              # horizontal: cells above / below
+        if ya == yb and abs(xa - xb) == 1:  # horizontal: cells above / below
             x = min(xa, xb)
             blocked.add(frozenset({(ya - 1) * nx0 + x, ya * nx0 + x}))
-        elif xa == xb and abs(ya - yb) == 1:                            # vertical: cells left / right
+        elif xa == xb and abs(ya - yb) == 1:  # vertical: cells left / right
             y = min(ya, yb)
             blocked.add(frozenset({y * nx0 + xa - 1, y * nx0 + xa}))
         else:
@@ -286,11 +394,13 @@ def translate(x, rules_text=None):
     if len(regions) == 1:
         bad.append("no region borders drawn")
     elif len(regions) != D or any(len(g) != D for g in regions):
-        bad.append(f"thick borders do not split the board into {D} regions of {D} cells "
-                   f"(sizes {sorted(len(g) for g in regions)})")
+        bad.append(
+            f"thick borders do not split the board into {D} regions of {D} cells "
+            f"(sizes {sorted(len(g) for g in regions)})"
+        )
     else:
         for k, g in enumerate(sorted(regions)):
-            p.groups.append(M.Group(f"b{k+1}", tuple(g), "box", True))
+            p.groups.append(M.Group(f"b{k + 1}", tuple(g), "box", True))
         used["regions"] = D
     rules = "\n".join(t for t in (d.get("rules"), rules_text) if t)
     tl = rules.lower()
@@ -299,7 +409,7 @@ def translate(x, rules_text=None):
         bad.append("no rules text (pass the linking page's rules as rules_text)")
     if diag_pairs:
         segs = {frozenset(pq) for pq in diag_pairs}
-        x0, y0 = c0, r0                                                 # board's top-left grid point (x = col, y = row)
+        x0, y0 = c0, r0  # board's top-left grid point (x = col, y = row)
         d1 = {frozenset({(x0 + t, y0 + t), (x0 + t + 1, y0 + t + 1)}) for t in range(D)}
         d2 = {frozenset({(x0 + D - t, y0 + t), (x0 + D - t - 1, y0 + t + 1)}) for t in range(D)}
         rest = segs - d1 - d2
@@ -308,7 +418,10 @@ def translate(x, rules_text=None):
         if not re.search(r"diagonal", tl):
             bad.append("drawn diagonal lines (rules text does not mention diagonals)")
         else:
-            for name, full, cells in (("d1", d1, [i * D + i for i in range(D)]), ("d2", d2, [i * D + D - 1 - i for i in range(D)])):
+            for name, full, cells in (
+                ("d1", d1, [i * D + i for i in range(D)]),
+                ("d2", d2, [i * D + D - 1 - i for i in range(D)]),
+            ):
                 if full & segs:
                     if full <= segs:
                         p.groups.append(M.Group(name, tuple(cells), "diag", True))
@@ -319,7 +432,7 @@ def translate(x, rules_text=None):
         bad.append("diagonal rule in text without drawn diagonals")
 
     # ---- givens and numbers
-    corner_nums = []                                                    # (corner point, text)
+    corner_nums = []  # (corner point, text)
     for key, val in (q.get("number") or {}).items():
         k = int(str(key).rstrip("E")) if str(key).rstrip("E").isdigit() else None
         if k is None or not isinstance(val, list) or not val:
@@ -382,8 +495,12 @@ def translate(x, rules_text=None):
         p.groups.append(M.Group(f"k{ci_}", cells, "cage", len(cells) == D, total))
         used["killer"] += 1
     if q.get("cage"):
-        cells_drawn = {(int(t) - 4 * N) // 4 for key in q["cage"] for t in str(key).split(",") if t.isdigit()
-                       and 4 * N <= int(t) < 8 * N}
+        cells_drawn = {
+            (int(t) - 4 * N) // 4
+            for key in q["cage"]
+            for t in str(key).split(",")
+            if t.isdigit() and 4 * N <= int(t) < 8 * N
+        }
         orphan = {c for c in cells_drawn if c not in cage_of}
         if orphan:
             bad.append("cage outlines without a killer-cage grouping")
@@ -391,8 +508,15 @@ def translate(x, rules_text=None):
             ignored["cage outlines (drawn killer cages)"] += 1
 
     # ---- thermometers, arrows
-    circles = {int(k) for k, v in (q.get("symbol") or {}).items() if str(k).isdigit() and isinstance(v, list)
-               and len(v) > 1 and str(v[1]).startswith("circle") and int(k) in inboard}
+    circles = {
+        int(k)
+        for k, v in (q.get("symbol") or {}).items()
+        if str(k).isdigit()
+        and isinstance(v, list)
+        and len(v) > 1
+        and str(v[1]).startswith("circle")
+        and int(k) in inboard
+    }
     consumed = set()
 
     def path_ok(path):
@@ -431,12 +555,24 @@ def translate(x, rules_text=None):
         bad.append(f"symbol {name} at {where(kk) if kk is not None else k}")
 
     # ---- elements this mapper never takes
-    for key in ("surface", "line", "wall", "freeline", "freelineE", "direction", "squareframe", "polygon", "nobulbthermo"):
+    for key in (
+        "surface",
+        "line",
+        "wall",
+        "freeline",
+        "freelineE",
+        "direction",
+        "squareframe",
+        "polygon",
+        "nobulbthermo",
+    ):
         v = q.get(key)
         if _nonempty(v):
             n = len(v) if isinstance(v, (list, dict)) else 1
-            bad.append({"surface": "shaded cells", "line": "lines", "nobulbthermo": "thermo without bulb"}.get(key, key)
-                       + f" ({n})")
+            bad.append(
+                {"surface": "shaded cells", "line": "lines", "nobulbthermo": "thermo without bulb"}.get(key, key)
+                + f" ({n})"
+            )
     if _nonempty(q.get("deletelineE")):
         ignored["deleted grid lines"] += 1
     if d["header"].get("bg_image"):
@@ -460,11 +596,17 @@ def to_puzzle(x, rules_text=None, url=None):
     board = sorted(d["centerlist"]) if d["centerlist"] else None
     if board is None:
         sp = d["space"] or [0, 0, 0, 0]
-        board = [i + j * nx0 for j in range(2 + sp[0], d["ny"] + 2 - sp[1]) for i in range(2 + sp[2], d["nx"] + 2 - sp[3])]
+        board = [
+            i + j * nx0 for j in range(2 + sp[0], d["ny"] + 2 - sp[1]) for i in range(2 + sp[2], d["nx"] + 2 - sp[3])
+        ]
     board.sort(key=lambda k: (k // nx0, k % nx0))
     sol = _solution(d, board, D)
-    meta = {"title": d.get("title"), "author": d.get("author"), "rules_text": d.get("rules") or rules_text,
-            "source": url or d.get("url")}
+    meta = {
+        "title": d.get("title"),
+        "author": d.get("author"),
+        "rules_text": d.get("rules") or rules_text,
+        "source": url or d.get("url"),
+    }
     return to_puzzle_json(p, solution=sol, meta=meta)
 
 

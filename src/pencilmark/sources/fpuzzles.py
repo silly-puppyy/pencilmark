@@ -14,6 +14,7 @@ unless reading= gives the line kinds per colour or infer=True searches them with
     fetch(short_link) -> f-puzzles dict           translate(x, rules_text=None, reading=None, infer=False) -> (Puzzle, info)
     to_puzzle(x, rules_text=None, reading=None, infer=False, fetch=True) -> puzzle JSON dict
 """
+
 from __future__ import annotations
 
 import re
@@ -43,6 +44,7 @@ def short_id(url):
 def decode(x, fetch=False):
     """f-puzzles link / payload / dict -> the f-puzzles JSON dict (grid, size, killercage, thermometer, ...)."""
     from ._fpuz_translate import decode_fpuz
+
     if isinstance(x, dict):
         if "puzzle" in x and x.get("format") == "fpuzzles":
             return x["puzzle"]
@@ -59,10 +61,13 @@ def decode(x, fetch=False):
                 if short_id(s):
                     if fetch:
                         return globals()["fetch"](s)
-                    raise DecodeError(f"{s!r} is an f-puzzles short link (TinyURL alias); resolve it with fpuzzles.fetch()")
+                    raise DecodeError(
+                        f"{s!r} is an f-puzzles short link (TinyURL alias); resolve it with fpuzzles.fetch()"
+                    )
                 raise DecodeError(f"no puzzle in f-puzzles link {s[:80]!r}")
-        else:                                    # e.g. a SudokuPad link carrying an f-puzzles payload
+        else:  # e.g. a SudokuPad link carrying an f-puzzles payload
             from .sudokupad import payload_key
+
             pl = payload_key(s)
     else:
         pl = s if s.startswith(("fpuzzles", "fpuz")) else "fpuzzles" + s
@@ -87,6 +92,7 @@ def translate(x, rules_text=None, reading=None, infer=False, fetch=True):
     """-> (engine Puzzle (not finalized), info). rules_text fills a missing 'ruleset' (it is read for negative
     constraints and line keywords). Raises UnsupportedPuzzle / DecodeError."""
     from . import _fpuz_translate as FT
+
     fp = dict(decode(x, fetch=fetch))
     if rules_text and not fp.get("ruleset"):
         fp["ruleset"] = rules_text
@@ -104,11 +110,16 @@ def translate(x, rules_text=None, reading=None, infer=False, fetch=True):
 def to_puzzle(x, rules_text=None, reading=None, infer=False, fetch=True, url=None):
     """f-puzzles link / payload / dict -> puzzle JSON dict (title, author, rules_text, source, embedded solution)."""
     from ._fpuz_translate import solution_of
+
     fp = decode(x, fetch=fetch)
     p, _ = translate(fp, rules_text=rules_text, reading=reading, infer=infer)
     src = url or (x if isinstance(x, str) and "://" in x else None)
-    meta = {"title": fp.get("title"), "author": fp.get("author"), "rules_text": fp.get("ruleset") or rules_text,
-            "source": src}
+    meta = {
+        "title": fp.get("title"),
+        "author": fp.get("author"),
+        "rules_text": fp.get("ruleset") or rules_text,
+        "source": src,
+    }
     return to_puzzle_json(p, solution=solution_of(fp), meta=meta)
 
 

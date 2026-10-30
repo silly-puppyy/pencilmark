@@ -6,12 +6,17 @@ Checker  -- band-capped human solve (the engine with only techniques of band <= 
 Oracle   -- CP-SAT uniqueness with a counterexample cache (CEGAR): every alternative solution CP-SAT finds is kept and
             refutes later candidates in pure Python; only candidates that refute the whole cache reach CP-SAT.
 """
+
 from __future__ import annotations
 
-from .. import puzzle_json as PJ, cbackend as CB, solver as S, export as E2, band_path as BP
 from .. import _data
+from .. import band_path as BP
+from .. import cbackend as CB
+from .. import export as E2
+from .. import puzzle_json as PJ
+from .. import solver as S
 from ..scoring import complete_params
-from .elements import to_json, satisfies
+from .elements import satisfies, to_json
 
 _PARAMS = None
 
@@ -22,7 +27,10 @@ def params(path=None):
     if path is not None:
         import json
         from pathlib import Path
-        return dict(complete_params(_data._int_keys(json.loads(Path(path).read_text(encoding="utf-8")))), search="human")
+
+        return dict(
+            complete_params(_data._int_keys(json.loads(Path(path).read_text(encoding="utf-8")))), search="human"
+        )
     if _PARAMS is None:
         _PARAMS = dict(complete_params(_data.load_params("params.json")), search="human")
     return _PARAMS
@@ -62,8 +70,9 @@ class Checker:
         p = PJ.from_json(to_json(self.b, givens, els))
         p.finalize()
         allowed = self.allowed - BP.variant_gate(p)
-        st, _ = CB.solve(p, self.P, disabled=set(S.TECH_NAMES) - allowed - NOTES, max_steps=self.max_steps,
-                         assume_unique=False)
+        st, _ = CB.solve(
+            p, self.P, disabled=set(S.TECH_NAMES) - allowed - NOTES, max_steps=self.max_steps, assume_unique=False
+        )
         placed = sum(1 for s in st if s.move.place and s.move.feat[0] != S.GUESS)
         return p.N - len(p.givens) - placed
 
@@ -84,16 +93,17 @@ class Oracle:
                 self.hits += 1
                 return False
         from .. import cpsat_verify as V
+
         self.calls += 1
         p = PJ.from_json(to_json(self.b, givens, els))
         p.finalize()
         sols = V.solutions(p, limit=2, time_limit=self.tl, workers=self.workers)
         if sols is None:
-            return False                       # timeout / not expressible: not proven unique
+            return False  # timeout / not expressible: not proven unique
         alts = [list(x) for x in sols if list(x) != self.sol]
         if alts:
             self.pool.insert(0, alts[0])
-            del self.pool[self.max_pool:]
+            del self.pool[self.max_pool :]
             return False
         return len(sols) == 1
 

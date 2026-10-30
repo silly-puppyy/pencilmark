@@ -10,15 +10,13 @@ Steps are real pencilmark.solver.Step / Move objects, so pencilmark.scoring.grad
 predict_time() and quality_metrics() work unchanged. Build first with
 csolver/build.sh.
 """
+
 from __future__ import annotations
 
 import os
-import sys
 from collections import defaultdict
-from pathlib import Path
 
 from . import _csolver as _C  # noqa: E402  (the compiled C++ engine, sources in csrc/)
-
 from . import model as M  # noqa: E402
 from . import solver as S  # noqa: E402
 from .scoring import Scorer  # noqa: E402
@@ -28,27 +26,70 @@ _NM_NONE, _NM_GROUP, _NM_LOCK, _NM_INNIE, _NM_OUTIE, _NM_NARY = range(6)
 # techniques without a Python reference implementation (C++ only); pass as
 # `disabled` to reproduce the frozen Python solver exactly
 NEW_TECHS = frozenset(S.NEW_TECHS)
-CTYPES = ("sum", "arrow", "equal_sum", "set", "table", "sandwich", "xsum", "skyscraper", "leftovers", "count",
-          "line", "between", "counting_circles", "first_seen", "digit_set", "distinct_count", "contains")
+CTYPES = (
+    "sum",
+    "arrow",
+    "equal_sum",
+    "set",
+    "table",
+    "sandwich",
+    "xsum",
+    "skyscraper",
+    "leftovers",
+    "count",
+    "line",
+    "between",
+    "counting_circles",
+    "first_seen",
+    "digit_set",
+    "distinct_count",
+    "contains",
+)
 # forcing chains: level (0 static / 1 dynamic / 2 nested), options, unit (0 cell / 1 unit),
 # surviving branches, propagation steps over all branches, contradicting branches
 _FORCING_KEYS = ("level", "options", "unit", "survivors", "steps", "contradictions")
 _COMBO_KEYS = ("ctype", "constraint", "combos", "set_unique", "sum", "distinct", "n_vars", "complete")
 _DESC_KEYS = ("log branches", "log depth", "search", "uniqueness", "counting", "contradiction", "held", "coverage")
 XMETA_KEYS = {
-    S.SUM_COMBO: _COMBO_KEYS, S.ARROW_COMBO: _COMBO_KEYS, S.SET_COMBO: _COMBO_KEYS,
-    S.EQSUM_COMBO: _COMBO_KEYS, S.TABLE_COMBO: _COMBO_KEYS,
+    S.SUM_COMBO: _COMBO_KEYS,
+    S.ARROW_COMBO: _COMBO_KEYS,
+    S.SET_COMBO: _COMBO_KEYS,
+    S.EQSUM_COMBO: _COMBO_KEYS,
+    S.TABLE_COMBO: _COMBO_KEYS,
     # mode 0: digit in every combination, confined to one group -> removed from the group
     # mode 1: a house's candidates for `digit` all inside the scope -> combinations must use it
-    S.SANDWICH_COMBO: _COMBO_KEYS, S.XSUM_COMBO: _COMBO_KEYS, S.SKYLINE_COMBO: _COMBO_KEYS,
-    S.LOL_COMBO: _COMBO_KEYS, S.COUNT_COMBO: _COMBO_KEYS,
+    S.SANDWICH_COMBO: _COMBO_KEYS,
+    S.XSUM_COMBO: _COMBO_KEYS,
+    S.SKYLINE_COMBO: _COMBO_KEYS,
+    S.LOL_COMBO: _COMBO_KEYS,
+    S.COUNT_COMBO: _COMBO_KEYS,
     # direct mental layer: reasons = bitmask (1 relation arc, 2 inequality bound, 4 line, 8 mental subset);
     # depth = inference rounds; line_* = the most distant informing line; subset = mental subset size;
     # inferences = number of mental exclusions used; hidden = hidden-single form
-    S.LINE_D: ("reasons", "depth", "line_kind", "line_len", "line_dist", "line_informing", "transitive",
-               "subset", "inferences", "hidden"),
-    S.MENTAL_D: ("reasons", "depth", "line_kind", "line_len", "line_dist", "line_informing", "transitive",
-                 "subset", "inferences", "hidden"),
+    S.LINE_D: (
+        "reasons",
+        "depth",
+        "line_kind",
+        "line_len",
+        "line_dist",
+        "line_informing",
+        "transitive",
+        "subset",
+        "inferences",
+        "hidden",
+    ),
+    S.MENTAL_D: (
+        "reasons",
+        "depth",
+        "line_kind",
+        "line_len",
+        "line_dist",
+        "line_informing",
+        "transitive",
+        "subset",
+        "inferences",
+        "hidden",
+    ),
     S.SHORT_TRIAL: ("rounds", "placements"),
     S.EITHER_WAY: ("placements_a", "placements_b", "same_cell_choice", "no_notes"),
     S.LINE_CLASS: ("line_kind", "constraint", "line_len", "classes", "n_elims"),
@@ -82,7 +123,8 @@ XMETA_KEYS = {
     # ClassColouring: kind (0 low / high, 1 odd / even), why (0 known cell, 1 house count, 2 house quota), cells, links, houses
     S.CLASS_COLOUR: ("kind", "why", "cells", "links", "houses"),
     # ClueFacts / ClueShape: level (1 clue alone, 2 with the shape), cells, eliminations
-    S.CLUE_FACTS: ("level", "cells", "n_elims"), S.CLUE_SHAPE: ("level", "cells", "n_elims"),
+    S.CLUE_FACTS: ("level", "cells", "n_elims"),
+    S.CLUE_SHAPE: ("level", "cells", "n_elims"),
     S.DOMINO: ("dominoes", "digit_or_mask", "cell_a", "cell_b", "fillings"),
     # seed: 0 house argument only, 1 equality rule / case split, 2 human colouring (consistent with the
     # solution), 3 human colouring without a solution to check against (soft hypothesis)
@@ -94,12 +136,15 @@ XMETA_KEYS = {
     S.POM: ("digit", "templates", "n_elims"),
     S.GURTH: ("symmetry", "n_elims"),
     S.NISHIO: ("digit", "rounds", "placements", "empty_house"),
-    S.FORCING: _FORCING_KEYS, S.DYN_FORCING: _FORCING_KEYS, S.NESTED_FORCING: _FORCING_KEYS,
+    S.FORCING: _FORCING_KEYS,
+    S.DYN_FORCING: _FORCING_KEYS,
+    S.NESTED_FORCING: _FORCING_KEYS,
     S.MULTI_COLOR: ("digit", "cells", "n_elims"),
     # Guess (priced as the expected human cost of guessing): candidates, mean / max refutation work of
     # the wrong candidates, how many survive basic propagation (deep bifurcations), expected work x10
     S.GUESS: ("k", "mean_refutation", "max_refutation", "deep", "expected_work_x10"),
-    S.WHAT_IF: _FORCING_KEYS, S.MENTAL_NOTES: ("via_technique", "via_eliminations", "hidden"),
+    S.WHAT_IF: _FORCING_KEYS,
+    S.MENTAL_NOTES: ("via_technique", "via_eliminations", "hidden"),
     S.FINNED_FISH: ("size", "fins", "sashimi", "kind", "n_elims", "digit", "n_base_cells"),
     S.JELLYFISH: ("size", "fins", "sashimi", "kind", "n_elims", "digit", "n_base_cells"),
 }
@@ -107,30 +152,147 @@ XMETA_KEYS = {
 # group, constraint must-contain, pair relation), weak links by source (same
 # cell, peer cells, pair relation), max hop (Chebyshev distance between
 # consecutive cells), number of digits
-_CHAIN_KEYS = ("links", "strong_bivalue", "strong_bilocal", "strong_constraint", "strong_relation",
-               "weak_cell", "weak_house", "weak_relation", "max_hop", "n_digits")
+_CHAIN_KEYS = (
+    "links",
+    "strong_bivalue",
+    "strong_bilocal",
+    "strong_constraint",
+    "strong_relation",
+    "weak_cell",
+    "weak_house",
+    "weak_relation",
+    "max_hop",
+    "n_digits",
+)
 for _t in (S.X_CHAIN, S.XY_CHAIN, S.AIC_CHAIN, S.NICE_LOOP, S.MENTAL_CHAIN, S.REMOTE_PAIRS, S.EMPTY_RECT):
     XMETA_KEYS[_t] = _CHAIN_KEYS
 XMETA_KEYS[S.ALS_AIC] = _CHAIN_KEYS[:5] + ("n_als",) + _CHAIN_KEYS[6:]
 # sudokuwiki-style codes for chain special cases
-CHAIN_CODES = {1: "SKY", 2: "2SK", 3: "TUR", 4: "XCH", 5: "XYC", 6: "RMP", 7: "WWG", 8: "AIC", 9: "DNL",
-               3001: "UR1", 3002: "UR2", 3003: "UR3", 3004: "UR4", 3005: "HUR", 3006: "BUG",
-               3101: "AXZ", 3102: "AXZ2", 3103: "AXY", 3104: "DBL", 3105: "ALS",
-               3201: "IMH", 3301: "SND", 3302: "XSM", 3303: "SKL", 3304: "LOL", 3305: "SET", 3306: "PHI", 3307: "set theory", 3308: "Phistomefel variant", 3320: "digit set", 3330: "rule and house together", 3331: "two rules together", 3332: "two houses with their dots", 3333: "three rules together", 3341: "sum algebra (house)", 3342: "sum algebra (two houses)", 3343: "sum algebra (three houses)", 3354: "house with its rules", 3355: "line and box with their rules", 3356: "band with its rules", 5201: "Snyder hidden pair", 5401: "fireworks", 5501: "case refutation", 5502: "cell case analysis", 5503: "house case analysis", 3910: "cage combination positions", 3920: "clique house", 3930: "renban digit sets in a house", 3940: "outside clues together", 3950: "weighted sums", 3951: "weighted sums (one cell left)", 5202: "Snyder X-wing", 5203: "Snyder hidden triple",
-               10: "GXC", 11: "GAIC", 12: "ER", 3007: "UR5", 3008: "AR1", 3009: "XUR1", 3010: "BUG+2", 3011: "AR2", 3401: "cell forcing", 3402: "unit forcing", 3411: "dynamic cell forcing",
-               3412: "dynamic unit forcing", 3431: "Nishio", 3441: "what if (cell)", 3442: "what if (house)",
-               3451: "notes in the head", 3421: "nested cell forcing", 3422: "nested unit forcing",
-               3501: "medusa trap", 3502: "medusa wrap (cell)", 3503: "medusa wrap (unit)",
-               3504: "medusa wrap (emptied cell)", 3505: "medusa",
-               3601: "secret", 3602: "rule of 45", 3610: "cage/unit overlap", 3611: "captured candidates",
-               3605: "set theory (arrows / little killers)", 3612: "innie region must contain", 3613: "captured by an innie region", 3603: "secret (outie, cage splitting)", 3604: "rule of 45 (outie, cage splitting)",
-               3701: "min/max bound", 3702: "triangular bound", 3703: "arrow min/max bound",
-               3704: "arrow triangular bound", 3705: "renban span", 3801: "odd/even count", 3802: "sum parity",
-               3803: "low/middle/high count", 3804: "rule of parity", 3901: "domino must contain",
-               3902: "domino pair lock", 3903: "kropki black chain", 3904: "middle squeeze", 3506: "colour algebra", 3507: "colour must fit every house", 3508: "colour resolved", 3509: "coloured like a solved cell", 3510: "colour class (odd/even/low/high)", 3520: "multi-colouring", 3511: "colour bounds (order / min-max)", 3512: "label break-in (abstract digits)", 3513: "colour disambiguation", 3514: "colour sum", 3515: "colour arithmetic", 4604: "WXYZ-Wing", 4605: "VWXYZ-Wing", 4606: "6-Y-Wing", 4607: "7-Y-Wing", 4608: "8-Y-Wing",
-               4609: "9-Y-Wing",
-               4701: "Sue de Coq", 4801: "APE", 4901: "chute remote pairs", 5001: "pattern overlay",
-               5101: "Gurth rot180", 5102: "Gurth diagonal", 5103: "Gurth anti-diagonal", 5104: "Gurth rot90"}
+CHAIN_CODES = {
+    1: "SKY",
+    2: "2SK",
+    3: "TUR",
+    4: "XCH",
+    5: "XYC",
+    6: "RMP",
+    7: "WWG",
+    8: "AIC",
+    9: "DNL",
+    3001: "UR1",
+    3002: "UR2",
+    3003: "UR3",
+    3004: "UR4",
+    3005: "HUR",
+    3006: "BUG",
+    3101: "AXZ",
+    3102: "AXZ2",
+    3103: "AXY",
+    3104: "DBL",
+    3105: "ALS",
+    3201: "IMH",
+    3301: "SND",
+    3302: "XSM",
+    3303: "SKL",
+    3304: "LOL",
+    3305: "SET",
+    3306: "PHI",
+    3307: "set theory",
+    3308: "Phistomefel variant",
+    3320: "digit set",
+    3330: "rule and house together",
+    3331: "two rules together",
+    3332: "two houses with their dots",
+    3333: "three rules together",
+    3341: "sum algebra (house)",
+    3342: "sum algebra (two houses)",
+    3343: "sum algebra (three houses)",
+    3354: "house with its rules",
+    3355: "line and box with their rules",
+    3356: "band with its rules",
+    5201: "Snyder hidden pair",
+    5401: "fireworks",
+    5501: "case refutation",
+    5502: "cell case analysis",
+    5503: "house case analysis",
+    3910: "cage combination positions",
+    3920: "clique house",
+    3930: "renban digit sets in a house",
+    3940: "outside clues together",
+    3950: "weighted sums",
+    3951: "weighted sums (one cell left)",
+    5202: "Snyder X-wing",
+    5203: "Snyder hidden triple",
+    10: "GXC",
+    11: "GAIC",
+    12: "ER",
+    3007: "UR5",
+    3008: "AR1",
+    3009: "XUR1",
+    3010: "BUG+2",
+    3011: "AR2",
+    3401: "cell forcing",
+    3402: "unit forcing",
+    3411: "dynamic cell forcing",
+    3412: "dynamic unit forcing",
+    3431: "Nishio",
+    3441: "what if (cell)",
+    3442: "what if (house)",
+    3451: "notes in the head",
+    3421: "nested cell forcing",
+    3422: "nested unit forcing",
+    3501: "medusa trap",
+    3502: "medusa wrap (cell)",
+    3503: "medusa wrap (unit)",
+    3504: "medusa wrap (emptied cell)",
+    3505: "medusa",
+    3601: "secret",
+    3602: "rule of 45",
+    3610: "cage/unit overlap",
+    3611: "captured candidates",
+    3605: "set theory (arrows / little killers)",
+    3612: "innie region must contain",
+    3613: "captured by an innie region",
+    3603: "secret (outie, cage splitting)",
+    3604: "rule of 45 (outie, cage splitting)",
+    3701: "min/max bound",
+    3702: "triangular bound",
+    3703: "arrow min/max bound",
+    3704: "arrow triangular bound",
+    3705: "renban span",
+    3801: "odd/even count",
+    3802: "sum parity",
+    3803: "low/middle/high count",
+    3804: "rule of parity",
+    3901: "domino must contain",
+    3902: "domino pair lock",
+    3903: "kropki black chain",
+    3904: "middle squeeze",
+    3506: "colour algebra",
+    3507: "colour must fit every house",
+    3508: "colour resolved",
+    3509: "coloured like a solved cell",
+    3510: "colour class (odd/even/low/high)",
+    3520: "multi-colouring",
+    3511: "colour bounds (order / min-max)",
+    3512: "label break-in (abstract digits)",
+    3513: "colour disambiguation",
+    3514: "colour sum",
+    3515: "colour arithmetic",
+    4604: "WXYZ-Wing",
+    4605: "VWXYZ-Wing",
+    4606: "6-Y-Wing",
+    4607: "7-Y-Wing",
+    4608: "8-Y-Wing",
+    4609: "9-Y-Wing",
+    4701: "Sue de Coq",
+    4801: "APE",
+    4901: "chute remote pairs",
+    5001: "pattern overlay",
+    5101: "Gurth rot180",
+    5102: "Gurth diagonal",
+    5103: "Gurth anti-diagonal",
+    5104: "Gurth rot90",
+}
 _FISH_SIZE = {2: "X-Wing", 3: "Swordfish", 4: "Jellyfish"}
 
 
@@ -141,8 +303,15 @@ def code_name(code):
     if 4000 <= code < 4200:  # line rule: kind + flavour
         kind, sub = divmod(code - 4000, 10)
         name = M.LINE_KINDS[kind] if kind < len(M.LINE_KINDS) else f"line{kind}"
-        return name + {0: "", 1: " bounds", 2: " no-5", 3: " adjacent", 4: " transitive",
-                       5: " classes", 6: " scan"}.get(sub, f" {sub}")
+        return name + {
+            0: "",
+            1: " bounds",
+            2: " no-5",
+            3: " adjacent",
+            4: " transitive",
+            5: " classes",
+            6: " scan",
+        }.get(sub, f" {sub}")
     if code == 4200:
         return "relation arc"
     if code == 4300:
@@ -162,18 +331,22 @@ def code_name(code):
         n, kind, fin = (code // 100) % 10, (code // 10) % 10, code % 10
         if kind > 2 or fin > 2:
             return f"code {code}"
-        return " ".join(x for x in (("", "Finned", "Sashimi")[fin], ("", "Franken", "Mutant")[kind],
-                                    _FISH_SIZE.get(n, f"fish{n}")) if x)
+        return " ".join(
+            x
+            for x in (("", "Finned", "Sashimi")[fin], ("", "Franken", "Mutant")[kind], _FISH_SIZE.get(n, f"fish{n}"))
+            if x
+        )
     return CHAIN_CODES.get(code, f"code {code}")
 
 
 class CMove(S.Move):
     """pencilmark.solver.Move plus structured metadata of the C++-only
     techniques: xmeta (dict, see XMETA_KEYS), family, code."""
+
     __slots__ = ("xmeta", "family", "code", "explain")
 
 
-_CPUZZLES = {}       # repr of the make_puzzle arguments -> C++ puzzle; a card builds the same puzzle about 6 times
+_CPUZZLES = {}  # repr of the make_puzzle arguments -> C++ puzzle; a card builds the same puzzle about 6 times
 
 
 def to_cpuzzle(p):
@@ -185,7 +358,7 @@ def to_cpuzzle(p):
     key = repr(args)
     cp = _CPUZZLES.get(key)
     if cp is None:
-        if len(_CPUZZLES) >= 16:         # a few recent puzzles: rate_many and the generator move on quickly
+        if len(_CPUZZLES) >= 16:  # a few recent puzzles: rate_many and the generator move on quickly
             _CPUZZLES.pop(next(iter(_CPUZZLES)))
         cp = _CPUZZLES[key] = _C.make_puzzle(*args)
     return cp
@@ -312,8 +485,20 @@ def _colour_list(colours, N):
     return out
 
 
-def solve(puzzle, params=None, disabled=(), solution=None, allow_direct=True, max_steps=5000, cpuzzle=None,
-          assume_unique=True, all_tiers=False, explain=False, colour_seeds=None, cand=None):
+def solve(
+    puzzle,
+    params=None,
+    disabled=(),
+    solution=None,
+    allow_direct=True,
+    max_steps=5000,
+    cpuzzle=None,
+    assume_unique=True,
+    all_tiers=False,
+    explain=False,
+    colour_seeds=None,
+    cand=None,
+):
     """Run the C++ solver. Returns (steps, solved) with steps as
     pencilmark.solver.Step objects (alts = feature tuples, move.d set).
     cand = per-cell candidate mask of a mid-solve state (as state_moves(cand=)): pass the original puzzle + a
@@ -324,9 +509,20 @@ def solve(puzzle, params=None, disabled=(), solution=None, allow_direct=True, ma
     cp = cpuzzle if cpuzzle is not None else to_cpuzzle(puzzle)
     sol = [int(x) for x in solution] if solution is not None else None
     cp_p = no_guess_params(sc.p, params, disabled)
-    disabled = [int(t) for t in _extra_disabled(set(disabled) | search_disabled(params))]  # env override, e.g. "58,59,60"
-    args = [cp, list(puzzle.givens.items()), cp_p, disabled, sol, bool(allow_direct), int(max_steps),
-            bool(assume_unique), bool(all_tiers)]
+    disabled = [
+        int(t) for t in _extra_disabled(set(disabled) | search_disabled(params))
+    ]  # env override, e.g. "58,59,60"
+    args = [
+        cp,
+        list(puzzle.givens.items()),
+        cp_p,
+        disabled,
+        sol,
+        bool(allow_direct),
+        int(max_steps),
+        bool(assume_unique),
+        bool(all_tiers),
+    ]
     args.append(bool(explain))
     args.append(_colour_list(colour_seeds, puzzle.N))
     if cand is not None:
@@ -368,16 +564,36 @@ def solve(puzzle, params=None, disabled=(), solution=None, allow_direct=True, ma
 
 
 # ------------------------------------------------------------ explanations --
-_LINK = {0: "weak", 1: "strong (bivalue cell)", 2: "strong (only two places in a group)",
-         3: "strong (constraint must contain the digit)", 4: "strong (pair relation)",
-         5: "strong (inside an almost locked set)", 6: "equivalence (equality relation)"}
-_TRIAL_VIEW = {0: "candidates", 1: "no notes (mental view)", 2: "candidates, singles only",
-               10: "candidates, basic propagation", 11: "candidates, dynamic (techniques in the branches)",
-               12: "candidates, nested (forcing chains in the branches)",
-               13: "candidates, light logic (what if)", 14: "no notes, light logic (what if)"}
-_EVENTS = {1: "naked single", 2: "hidden single", 3: "relation", 4: "rule",
-           5: "empty cell", 6: "house missing digit", 7: "rule unsatisfiable", 8: "conflicting singles",
-           9: "technique"}
+_LINK = {
+    0: "weak",
+    1: "strong (bivalue cell)",
+    2: "strong (only two places in a group)",
+    3: "strong (constraint must contain the digit)",
+    4: "strong (pair relation)",
+    5: "strong (inside an almost locked set)",
+    6: "equivalence (equality relation)",
+}
+_TRIAL_VIEW = {
+    0: "candidates",
+    1: "no notes (mental view)",
+    2: "candidates, singles only",
+    10: "candidates, basic propagation",
+    11: "candidates, dynamic (techniques in the branches)",
+    12: "candidates, nested (forcing chains in the branches)",
+    13: "candidates, light logic (what if)",
+    14: "no notes, light logic (what if)",
+}
+_EVENTS = {
+    1: "naked single",
+    2: "hidden single",
+    3: "relation",
+    4: "rule",
+    5: "empty cell",
+    6: "house missing digit",
+    7: "rule unsatisfiable",
+    8: "conflicting singles",
+    9: "technique",
+}
 
 
 _STEP_EVENTS = ("naked single", "hidden single", "relation", "rule", "technique")
@@ -421,11 +637,17 @@ def _constraint(p, idx, info=None):
         return {"type": "line (detected from pair relations)", "description": ex[idx - len(cons)]}
     for lo in (info or {}).get("leftovers", ()):
         if lo["index"] == idx:
-            return {"type": "leftovers", "kind": lo["kind"], "index": idx,
-                    "a": list(lo["a"]), "b": list(lo["b"]),
-                    "a_rc": [_rc(p, c) for c in lo["a"]], "b_rc": [_rc(p, c) for c in lo["b"]],
-                    "lines": [_group(p, g, info) for g in lo["lines"]],
-                    "regions": [_group(p, g, info) for g in lo["regions"]]}
+            return {
+                "type": "leftovers",
+                "kind": lo["kind"],
+                "index": idx,
+                "a": list(lo["a"]),
+                "b": list(lo["b"]),
+                "a_rc": [_rc(p, c) for c in lo["a"]],
+                "b_rc": [_rc(p, c) for c in lo["b"]],
+                "lines": [_group(p, g, info) for g in lo["lines"]],
+                "regions": [_group(p, g, info) for g in lo["regions"]],
+            }
     return {"type": "leftovers (derived set equivalence)", "index": idx}
 
 
@@ -533,7 +755,7 @@ def _records(exs):
     i = 0
     while i + 1 < len(exs):
         tag, n = exs[i], exs[i + 1]
-        yield tag, list(exs[i + 2: i + 2 + n])
+        yield tag, list(exs[i + 2 : i + 2 + n])
         i += 2 + n
 
 
@@ -542,10 +764,19 @@ def _explain(p, m, nm, pats, exs, info=None):
     nk, na, nb = nm
     tech = m.feat[0]
     out = {
-        "technique": S.TECH_NAMES[tech], "code": m.code, "difficulty": m.d,
-        "placement": None, "eliminations": [], "digits": [], "targets": [],
-        "pattern_cells": [int(c) for c in pats], "base": {"units": [], "cells": []},
-        "cover": {"units": [], "cells": []}, "constraints": [], "chain": [], "als": [],
+        "technique": S.TECH_NAMES[tech],
+        "code": m.code,
+        "difficulty": m.d,
+        "placement": None,
+        "eliminations": [],
+        "digits": [],
+        "targets": [],
+        "pattern_cells": [int(c) for c in pats],
+        "base": {"units": [], "cells": []},
+        "cover": {"units": [], "cells": []},
+        "constraints": [],
+        "chain": [],
+        "als": [],
         "xmeta": m.xmeta,
     }
     digits = set()
@@ -580,8 +811,7 @@ def _explain(p, m, nm, pats, exs, info=None):
             aid = -1 - data[0]
             if aid in als:
                 continue
-            als[aid] = {"id": aid, "digits": _digits(data[1]), "cells": data[2:],
-                        "rc": [_rc(p, c) for c in data[2:]]}
+            als[aid] = {"id": aid, "digits": _digits(data[1]), "cells": data[2:], "rc": [_rc(p, c) for c in data[2:]]}
             out["als"].append(als[aid])
     for tag, data in recs:
         n = len(data)
@@ -594,7 +824,7 @@ def _explain(p, m, nm, pats, exs, info=None):
         elif tag == 5 and n % 4 == 0:
             prev = None
             for k in range(0, n, 4):
-                c, v, t, src = data[k: k + 4]
+                c, v, t, src = data[k : k + 4]
                 node = {"digit": v}
                 if c >= 0:
                     node.update(cell=c, rc=_rc(p, c))
@@ -603,8 +833,9 @@ def _explain(p, m, nm, pats, exs, info=None):
                     node.update(group=g, group_rc=[_rc(p, x) for x in g])
                 else:
                     a = als.get(-1 - c, {})
-                    node.update(als=-1 - c, als_cells=a.get("cells", []), als_rc=a.get("rc", []),
-                                als_digits=a.get("digits", []))
+                    node.update(
+                        als=-1 - c, als_cells=a.get("cells", []), als_rc=a.get("rc", []), als_digits=a.get("digits", [])
+                    )
                 if prev is not None:
                     node["link_in"] = _LINK.get(t, str(t))
                     via = None
@@ -628,44 +859,62 @@ def _explain(p, m, nm, pats, exs, info=None):
                 prev = node
                 digits.add(v)
         elif tag == 6 and n % 5 == 0:
-            out["reasons"] = [_reason(p, *data[k: k + 5], info) for k in range(0, n, 5)]
+            out["reasons"] = [_reason(p, *data[k : k + 5], info) for k in range(0, n, 5)]
         elif tag == 7 and n >= 2:
             view, nopt = data[0], data[1]
-            out["trial"] = {"view": _TRIAL_VIEW.get(view, str(view)),
-                            "options": [{"cell": data[2 + 2 * i], "rc": _rc(p, data[2 + 2 * i]),
-                                         "digit": data[3 + 2 * i]} for i in range(nopt)],
-                            "branches": []}
+            out["trial"] = {
+                "view": _TRIAL_VIEW.get(view, str(view)),
+                "options": [
+                    {"cell": data[2 + 2 * i], "rc": _rc(p, data[2 + 2 * i]), "digit": data[3 + 2 * i]}
+                    for i in range(nopt)
+                ],
+                "branches": [],
+            }
         elif tag == 8 and n >= 3:
             c, v, rnd = data[:3]
-            evs = [_event(p, *data[k: k + 5], info) for k in range(3, n - 4, 5)]
-            br = {"assume": {"cell": c, "rc": _rc(p, c), "digit": v}, "contradiction_round": rnd or None,
-                  "steps": [e for e in evs if e["event"] in _STEP_EVENTS],
-                  "contradiction": next((e for e in evs if e["event"] not in _STEP_EVENTS), None)}
+            evs = [_event(p, *data[k : k + 5], info) for k in range(3, n - 4, 5)]
+            br = {
+                "assume": {"cell": c, "rc": _rc(p, c), "digit": v},
+                "contradiction_round": rnd or None,
+                "steps": [e for e in evs if e["event"] in _STEP_EVENTS],
+                "contradiction": next((e for e in evs if e["event"] not in _STEP_EVENTS), None),
+            }
             out.setdefault("trial", {"view": None, "options": [], "branches": []})["branches"].append(br)
         elif tag == 9 and n >= 6 and data[0] == 0:  # multi-digit (3D Medusa): entries cell*32+digit
             _, wrap, side, ca, cb, n0 = data[:6]
-            cols = [data[6: 6 + n0], data[6 + n0:]]
-            out["coloring"] = {"digit": None, "type": "wrap" if wrap else "trap",
-                               "colors": [[{"cell": e // 32, "rc": _rc(p, e // 32), "digit": e % 32} for e in col]
-                                          for col in cols],
-                               "eliminated_color": side if wrap else None,
-                               "clash": [ca, cb] if wrap else None}
+            cols = [data[6 : 6 + n0], data[6 + n0 :]]
+            out["coloring"] = {
+                "digit": None,
+                "type": "wrap" if wrap else "trap",
+                "colors": [[{"cell": e // 32, "rc": _rc(p, e // 32), "digit": e % 32} for e in col] for col in cols],
+                "eliminated_color": side if wrap else None,
+                "clash": [ca, cb] if wrap else None,
+            }
         elif tag == 9 and n >= 6:
             v, wrap, side, ca, cb, n0 = data[:6]
-            cols = [data[6: 6 + n0], data[6 + n0:]]
-            out["coloring"] = {"digit": v, "type": "wrap" if wrap else "trap", "colors": cols,
-                               "rc": [[_rc(p, c) for c in col] for col in cols],
-                               "eliminated_color": side if wrap else None,
-                               "clash": [ca, cb] if wrap else None}
+            cols = [data[6 : 6 + n0], data[6 + n0 :]]
+            out["coloring"] = {
+                "digit": v,
+                "type": "wrap" if wrap else "trap",
+                "colors": cols,
+                "rc": [[_rc(p, c) for c in col] for col in cols],
+                "eliminated_color": side if wrap else None,
+                "clash": [ca, cb] if wrap else None,
+            }
         elif tag == 10 and n >= 4:
             total, outie, nh = data[:3]
-            houses = data[3: 3 + nh]
+            houses = data[3 : 3 + nh]
             ncg = data[3 + nh]
-            cages = data[4 + nh: 4 + nh + ncg]
-            cells = data[4 + nh + ncg:]
-            out["region"] = {"type": "outie" if outie else "innie", "total": total, "cells": cells,
-                             "rc": [_rc(p, c) for c in cells], "houses": [_group(p, g, info) for g in houses],
-                             "cages": [_group(p, g, info) for g in cages]}
+            cages = data[4 + nh : 4 + nh + ncg]
+            cells = data[4 + nh + ncg :]
+            out["region"] = {
+                "type": "outie" if outie else "innie",
+                "total": total,
+                "cells": cells,
+                "rc": [_rc(p, c) for c in cells],
+                "houses": [_group(p, g, info) for g in houses],
+                "cages": [_group(p, g, info) for g in cages],
+            }
             hu = [_group(p, g, info) for g in houses]
             names = {h["name"] for h in hu}
             out["base"]["units"] = hu + [u for u in out["base"]["units"] if u and u["name"] not in names]
@@ -673,25 +922,48 @@ def _explain(p, m, nm, pats, exs, info=None):
         elif tag == 11 and n >= 1:
             if tech == S.ALS_XYWING and n == 4:
                 a = als.get(-1 - data[0], {})
-                out["hinge"] = {"als": -1 - data[0], "cells": a.get("cells", []), "rc": a.get("rc", []),
-                                "x": data[1], "y": data[2], "z": _digits(data[3])}
+                out["hinge"] = {
+                    "als": -1 - data[0],
+                    "cells": a.get("cells", []),
+                    "rc": a.get("rc", []),
+                    "x": data[1],
+                    "y": data[2],
+                    "z": _digits(data[3]),
+                }
             elif tech == S.DEATH_BLOSSOM:
-                out["stem"] = {"cell": data[0], "rc": _rc(p, data[0]),
-                               "petals": [{"digit": data[k], "als": -1 - data[k + 1],
-                                           "cells": als.get(-1 - data[k + 1], {}).get("cells", [])}
-                                          for k in range(1, n - 1, 2)]}
+                out["stem"] = {
+                    "cell": data[0],
+                    "rc": _rc(p, data[0]),
+                    "petals": [
+                        {
+                            "digit": data[k],
+                            "als": -1 - data[k + 1],
+                            "cells": als.get(-1 - data[k + 1], {}).get("cells", []),
+                        }
+                        for k in range(1, n - 1, 2)
+                    ],
+                }
         elif tag == 12:
             rules = [_constraint(p, i, info) for i in data]
             out["base"]["rules"] = rules
             out["constraints"] += rules
         elif tag == 15 and n >= 2:
-            out["dominoes"] = [{"cells": [data[k], data[k + 1]], "rc": [_rc(p, data[k]), _rc(p, data[k + 1])],
-                                "relation": _relkinds(p, data[k], data[k + 1])} for k in range(0, n - 1, 2)]
+            out["dominoes"] = [
+                {
+                    "cells": [data[k], data[k + 1]],
+                    "rc": [_rc(p, data[k]), _rc(p, data[k + 1])],
+                    "relation": _relkinds(p, data[k], data[k + 1]),
+                }
+                for k in range(0, n - 1, 2)
+            ]
         elif tag == 13 and n >= 2:
             mode, v = data[:2]
             hs = [_group(p, g, info) for g in data[2:]]
-            out["lock"] = {"mode": "must contain" if mode == 0 else "house forces the digit into the rule",
-                           "digit": v, "houses": hs}
+            out["lock"] = {
+                "mode": "must contain" if mode == 0 else "house forces the digit into the rule",
+                "digit": v,
+                "houses": hs,
+            }
             out["cover" if mode == 0 else "base"]["units"] += hs
     for side in ("base", "cover"):
         cells = set()
@@ -707,8 +979,19 @@ def _explain(p, m, nm, pats, exs, info=None):
     return out
 
 
-def state_moves(puzzle, params=None, all_tiers=True, assume_unique=False, limit_per_tech=0, disabled=(),
-                solution=None, cpuzzle=None, written=None, details=False, cand=None):
+def state_moves(
+    puzzle,
+    params=None,
+    all_tiers=True,
+    assume_unique=False,
+    limit_per_tech=0,
+    disabled=(),
+    solution=None,
+    cpuzzle=None,
+    written=None,
+    details=False,
+    cand=None,
+):
     """Every move available at ONE state (puzzle.givens = filled cells; puzzle.domains = the marks / allowed
     digits per cell), across all technique families (direct and notes; tiers not gated -- all_tiers is
     accepted for clarity, the enumeration is always ungated). Returns a list of dicts sorted by price:
@@ -728,11 +1011,19 @@ def state_moves(puzzle, params=None, all_tiers=True, assume_unique=False, limit_
     sc = Scorer(params)
     cp = cpuzzle if cpuzzle is not None else to_cpuzzle(puzzle)
     sol = [int(x) for x in solution] if solution is not None else None
-    args = [cp, list(puzzle.givens.items()), sc.p, [int(t) for t in _extra_disabled(disabled)], sol,
-            bool(assume_unique), int(limit_per_tech)]
-    if cand is not None:        # mid-solve candidates as a mask; cpuzzle keeps the puzzle's own domains (build it once)
-        raw = _C.state_moves(*args, None if written is None else [int(x) for x in written], bool(details),
-                             [int(x) for x in cand])
+    args = [
+        cp,
+        list(puzzle.givens.items()),
+        sc.p,
+        [int(t) for t in _extra_disabled(disabled)],
+        sol,
+        bool(assume_unique),
+        int(limit_per_tech),
+    ]
+    if cand is not None:  # mid-solve candidates as a mask; cpuzzle keeps the puzzle's own domains (build it once)
+        raw = _C.state_moves(
+            *args, None if written is None else [int(x) for x in written], bool(details), [int(x) for x in cand]
+        )
     elif written is not None or details:
         raw = _C.state_moves(*args, None if written is None else [int(x) for x in written], bool(details))
     else:
@@ -740,7 +1031,14 @@ def state_moves(puzzle, params=None, all_tiers=True, assume_unique=False, limit_
     out = []
     for r in raw:
         t, code, pl, el, d = r[:5]
-        m = {"tech": t, "name": S.TECH_NAMES.get(t, str(t)), "code": code_name(code), "place": pl, "elim": list(el), "d": d}
+        m = {
+            "tech": t,
+            "name": S.TECH_NAMES.get(t, str(t)),
+            "code": code_name(code),
+            "place": pl,
+            "elim": list(el),
+            "d": d,
+        }
         if len(r) > 5:
             meta, xm, scan, pat = r[5:9]
             m["meta"] = meta
@@ -758,6 +1056,7 @@ class BruteResult(list):
     """brute_solve result: the solutions found (a list, as before) plus .complete: False when the
     node limit stopped the search before a verdict (then [] does NOT mean "no solution", and
     one solution does not mean "unique")."""
+
     complete = True
 
 
@@ -791,7 +1090,7 @@ def search_disabled(params):
         # (band Extreme); Unknown is for guessing only, so human mode switches off unbounded trial alone
         out |= {S.TRIAL} if p.get("r6_extreme", True) else computer_search()
         if not p.get("allow_guess", False):
-            out.add(S.GUESS)        # guessing off (default): the stuck fallback proves instead (no_guess_params)
+            out.add(S.GUESS)  # guessing off (default): the stuck fallback proves instead (no_guess_params)
     return out
 
 

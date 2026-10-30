@@ -12,6 +12,7 @@ digits 1..D, and constraints. Nothing downstream assumes rows/columns/boxes:
                anti-king, ...), 'nonconsec' (|a-b| != 1)
   domains   -- per-cell allowed-digit masks (odd/even shading, etc.)
 """
+
 from __future__ import annotations
 
 import math
@@ -54,32 +55,32 @@ def shape_ratio(coords) -> float:
 class Group:
     name: str
     cells: tuple
-    kind: str            # 'row' 'col' 'box' 'region' 'diag' 'window' 'cage' ...
-    complete: bool       # True = house (contains every digit exactly once)
-    total: int | None = None   # killer cage sum
+    kind: str  # 'row' 'col' 'box' 'region' 'diag' 'window' 'cage' ...
+    complete: bool  # True = house (contains every digit exactly once)
+    total: int | None = None  # killer cage sum
     shape: float = 1.0
 
 
 # pairwise rules ok(value_a, value_b, *args) -> allowed?
 RELATIONS = {
     "nonconsec": lambda v, w: abs(v - w) != 1,
-    "lt": lambda v, w: v < w,                       # thermo step, greater-than sign
-    "diffge": lambda v, w, k: abs(v - w) >= k,      # German whisper (k=5), Dutch (k=4)
-    "diffle": lambda v, w, k: abs(v - w) <= k,      # renban relaxation
-    "diff": lambda v, w, k: abs(v - w) == k,        # kropki white dot (k=1)
+    "lt": lambda v, w: v < w,  # thermo step, greater-than sign
+    "diffge": lambda v, w, k: abs(v - w) >= k,  # German whisper (k=5), Dutch (k=4)
+    "diffle": lambda v, w, k: abs(v - w) <= k,  # renban relaxation
+    "diff": lambda v, w, k: abs(v - w) == k,  # kropki white dot (k=1)
     "notdiff": lambda v, w, k: abs(v - w) != k,
-    "ratio": lambda v, w, k: v == k * w or w == k * v,   # kropki black dot (k=2)
+    "ratio": lambda v, w, k: v == k * w or w == k * v,  # kropki black dot (k=2)
     "notratio": lambda v, w, k: v != k * w and w != k * v,
-    "sum": lambda v, w, s: v + w == s,              # XV
+    "sum": lambda v, w, s: v + w == s,  # XV
     "notsum": lambda v, w, s: v + w != s,
-    "eq": lambda v, w: v == w,                      # palindrome
+    "eq": lambda v, w: v == w,  # palindrome
     "neqval": lambda v, w: v != w,
-    "samegroup3": lambda v, w: (v - 1) // 3 == (w - 1) // 3,   # entropic, 3 apart
-    "diffgroup3": lambda v, w: (v - 1) // 3 != (w - 1) // 3,   # entropic, 1-2 apart
-    "le": lambda v, w: v <= w,                      # slow thermo step
-    "parity": lambda v, w: (v - w) % 2 == 1,        # parity line: adjacent digits differ in parity
-    "diffmod3": lambda v, w: (v - w) % 3 != 0,      # modular line, 1-2 apart
-    "samemod3": lambda v, w: (v - w) % 3 == 0,      # modular line, 3 apart
+    "samegroup3": lambda v, w: (v - 1) // 3 == (w - 1) // 3,  # entropic, 3 apart
+    "diffgroup3": lambda v, w: (v - 1) // 3 != (w - 1) // 3,  # entropic, 1-2 apart
+    "le": lambda v, w: v <= w,  # slow thermo step
+    "parity": lambda v, w: (v - w) % 2 == 1,  # parity line: adjacent digits differ in parity
+    "diffmod3": lambda v, w: (v - w) % 3 != 0,  # modular line, 1-2 apart
+    "samemod3": lambda v, w: (v - w) % 3 == 0,  # modular line, 3 apart
     # any 2-cell rule given by its allowed digit pairs (a generic 2-cell "table" was solved as costly table logic;
     # as a relation it is read like a dot) -- args = ([[v, w], ...],)
     "allowed": lambda v, w, pairs: [v, w] in pairs,
@@ -93,10 +94,32 @@ RELATIONS = {
 
 # line rules (Puzzle.constraints {"type": "line", "kind": ..., "cells": [ordered], params}); compiled
 # by finalize() into pair relations / n-ary constraints, recognised as lines by the C++ core
-LINE_KINDS = ("thermo", "slow_thermo", "whisper", "dutch_whisper", "renban", "palindrome", "entropic",
-              "kropki_chain", "region_sum", "parity", "between", "modular", "zipper")
-PAIRWISE_LINE_KINDS = {"thermo", "slow_thermo", "whisper", "dutch_whisper", "palindrome", "entropic",
-                       "kropki_chain", "parity", "modular"}
+LINE_KINDS = (
+    "thermo",
+    "slow_thermo",
+    "whisper",
+    "dutch_whisper",
+    "renban",
+    "palindrome",
+    "entropic",
+    "kropki_chain",
+    "region_sum",
+    "parity",
+    "between",
+    "modular",
+    "zipper",
+)
+PAIRWISE_LINE_KINDS = {
+    "thermo",
+    "slow_thermo",
+    "whisper",
+    "dutch_whisper",
+    "palindrome",
+    "entropic",
+    "kropki_chain",
+    "parity",
+    "modular",
+}
 
 
 @dataclass
@@ -104,7 +127,7 @@ class Puzzle:
     D: int
     coords: list
     groups: list = field(default_factory=list)
-    relations: list = field(default_factory=list)   # (kind, a, b)
+    relations: list = field(default_factory=list)  # (kind, a, b)
     domains: list | None = None
     givens: dict = field(default_factory=dict)
     name: str = ""
@@ -166,9 +189,16 @@ class Puzzle:
                 g = lambda v: (v - 1) * 3 // self.D
                 for k in range(len(ids)):
                     for j in range(k + 1, min(k + 3, len(ids))):
-                        self.constraints.append({"type": "table", "cells": [ids[k], ids[j]], "allowed": [
-                            (v, w) for v in range(1, self.D + 1) for w in range(1, self.D + 1) if g(v) != g(w)]})
-            elif kind == "entropic":   # 9x9, and sudoku.coach's fixed classes on sizes not divisible by 3
+                        self.constraints.append(
+                            {
+                                "type": "table",
+                                "cells": [ids[k], ids[j]],
+                                "allowed": [
+                                    (v, w) for v in range(1, self.D + 1) for w in range(1, self.D + 1) if g(v) != g(w)
+                                ],
+                            }
+                        )
+            elif kind == "entropic":  # 9x9, and sudoku.coach's fixed classes on sizes not divisible by 3
                 for k in range(len(ids)):
                     for j in range(k + 1, min(k + 4, len(ids))):
                         R.append(("samegroup3" if j - k == 3 else "diffgroup3", ids[k], ids[j]))
@@ -194,8 +224,12 @@ class Puzzle:
                 self.constraints.append({"type": "equal_sum", "segments": segs, "line_kind": kind})
             elif kind == "region_sum":
                 # segments break only at box / region borders (not diagonals, windows, size-D cages)
-                box = {c: gi for gi, g in enumerate(self.groups) if g.complete and g.kind in ("box", "region", "jigsaw")
-                       for c in g.cells}
+                box = {
+                    c: gi
+                    for gi, g in enumerate(self.groups)
+                    if g.complete and g.kind in ("box", "region", "jigsaw")
+                    for c in g.cells
+                }
                 segs, cur = [], [ids[0]]
                 for c in ids[1:]:
                     if box.get(c) == box.get(cur[-1]):
@@ -253,7 +287,7 @@ class Puzzle:
                 for v in range(1, self.D + 1):
                     allowed = 0
                     for w in range(1, self.D + 1):
-                        if (ok(v, w, *args) if fwd else ok(w, v, *args)):
+                        if ok(v, w, *args) if fwd else ok(w, v, *args):
                             allowed |= 1 << (w - 1)
                     tab[v] = self.full & ~allowed
                 old = self.rel_ex[x].get(y)
@@ -286,6 +320,7 @@ class Puzzle:
 
 # --------------------------------------------------------------- builders ----
 
+
 def _grid_coords(size):
     return [(r, c) for r in range(size) for c in range(size)]
 
@@ -295,13 +330,13 @@ def standard(size: int, box_h: int, box_w: int, grid: str = "", name="") -> Puzz
     for blanks and 1-9 then A-Z for digits >9 (or space-separated numbers)."""
     p = Puzzle(D=size, coords=_grid_coords(size), name=name)
     for r in range(size):
-        p.groups.append(Group(f"r{r+1}", tuple(r * size + c for c in range(size)), "row", True))
+        p.groups.append(Group(f"r{r + 1}", tuple(r * size + c for c in range(size)), "row", True))
     for c in range(size):
-        p.groups.append(Group(f"c{c+1}", tuple(r * size + c for r in range(size)), "col", True))
+        p.groups.append(Group(f"c{c + 1}", tuple(r * size + c for r in range(size)), "col", True))
     for br in range(0, size, box_h):
         for bc in range(0, size, box_w):
             cells = tuple((br + i) * size + (bc + j) for i in range(box_h) for j in range(box_w))
-            p.groups.append(Group(f"b{len([g for g in p.groups if g.kind=='box'])+1}", cells, "box", True))
+            p.groups.append(Group(f"b{len([g for g in p.groups if g.kind == 'box']) + 1}", cells, "box", True))
     if grid:
         p.givens = parse_grid(grid, size)
     return p
@@ -337,9 +372,9 @@ def jigsaw(size: int, regions: str, grid: str = "", name="") -> Puzzle:
     """regions: size*size chars, each a region id; replaces boxes."""
     p = Puzzle(D=size, coords=_grid_coords(size), name=name)
     for r in range(size):
-        p.groups.append(Group(f"r{r+1}", tuple(r * size + c for c in range(size)), "row", True))
+        p.groups.append(Group(f"r{r + 1}", tuple(r * size + c for c in range(size)), "row", True))
     for c in range(size):
-        p.groups.append(Group(f"c{c+1}", tuple(r * size + c for r in range(size)), "col", True))
+        p.groups.append(Group(f"c{c + 1}", tuple(r * size + c for r in range(size)), "col", True))
     reg = {}
     for i, ch in enumerate(regions.strip()[: size * size]):
         reg.setdefault(ch, []).append(i)
@@ -374,7 +409,7 @@ def add_antiknight(p: Puzzle, size: int) -> Puzzle:
 def add_cages(p: Puzzle, cages) -> Puzzle:
     """cages: list of (sum_or_None, [cell indices])"""
     for k, (total, cells) in enumerate(cages):
-        p.groups.append(Group(f"k{k+1}", tuple(cells), "cage", len(cells) == p.D, total))
+        p.groups.append(Group(f"k{k + 1}", tuple(cells), "cage", len(cells) == p.D, total))
     return p
 
 
@@ -395,8 +430,14 @@ def apply_variant_to_subgrid(p: Puzzle, k: int, variant: str) -> Puzzle:
     elif variant == "windoku":
         for wr in (1, 5):
             for wc in (1, 5):
-                p.groups.append(Group(f"{tag}w{wr}{wc}", tuple(ids[(wr + i) * 9 + wc + j] for i in range(3) for j in range(3)),
-                                      "window", True))
+                p.groups.append(
+                    Group(
+                        f"{tag}w{wr}{wc}",
+                        tuple(ids[(wr + i) * 9 + wc + j] for i in range(3) for j in range(3)),
+                        "window",
+                        True,
+                    )
+                )
     elif variant == "nonconsec":
         for r in range(9):
             for c in range(9):
@@ -421,7 +462,7 @@ def samurai(grids: list[str] | None = None, name="") -> Puzzle:
     origins = [(0, 0), (0, 12), (6, 6), (12, 0), (12, 12)]
     cell_id = {}
     coords = []
-    for (orr, oc) in origins:
+    for orr, oc in origins:
         for r in range(9):
             for c in range(9):
                 key = (orr + r, oc + c)
@@ -432,14 +473,14 @@ def samurai(grids: list[str] | None = None, name="") -> Puzzle:
     for gi_, (orr, oc) in enumerate(origins):
         tag = "abcde"[gi_]
         for r in range(9):
-            p.groups.append(Group(f"{tag}r{r+1}", tuple(cell_id[(orr + r, oc + c)] for c in range(9)), "row", True))
+            p.groups.append(Group(f"{tag}r{r + 1}", tuple(cell_id[(orr + r, oc + c)] for c in range(9)), "row", True))
         for c in range(9):
-            p.groups.append(Group(f"{tag}c{c+1}", tuple(cell_id[(orr + r, oc + c)] for r in range(9)), "col", True))
+            p.groups.append(Group(f"{tag}c{c + 1}", tuple(cell_id[(orr + r, oc + c)] for r in range(9)), "col", True))
         for br in range(0, 9, 3):
             for bc in range(0, 9, 3):
                 cells = tuple(cell_id[(orr + br + i, oc + bc + j)] for i in range(3) for j in range(3))
                 if not any(set(cells) == set(g.cells) for g in p.groups if g.kind == "box"):
-                    p.groups.append(Group(f"{tag}b{br//3*3+bc//3+1}", cells, "box", True))
+                    p.groups.append(Group(f"{tag}b{br // 3 * 3 + bc // 3 + 1}", cells, "box", True))
     p.origins = origins
     p.cell_id = cell_id
     if grids:
@@ -459,6 +500,7 @@ def add_predicate(p: Puzzle, cells, fn, name="custom", max_tuples=200_000) -> Pu
     four orthogonal neighbours): add_predicate(p, [ctr, n, e, s, w], lambda c, *v: sum(v) % c == 0, "diamond").
     Keep groups small (domain product <= max_tuples); larger sums should use sum constraints."""
     import itertools
+
     cells = list(cells)
     doms = []
     for c in cells:

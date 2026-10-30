@@ -9,6 +9,7 @@ For each puzzle the record holds the full card (every field except elapsed, with
 levels), describe(), the canonical export and the engine's structural input (the arguments of the C++ puzzle), or the
 error a puzzle raises.
 """
+
 import argparse
 import hashlib
 import json
@@ -16,11 +17,27 @@ import sys
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
-FIELDS = ["difficulty", "time", "band", "contains", "band_index", "time_p80", "time_p20", "time_mean", "time_dist",
-          "issues", "reject", "warning", "se", "steps", "describe", "symmetry"]
+FIELDS = [
+    "difficulty",
+    "time",
+    "band",
+    "contains",
+    "band_index",
+    "time_p80",
+    "time_p20",
+    "time_mean",
+    "time_dist",
+    "issues",
+    "reject",
+    "warning",
+    "se",
+    "steps",
+    "describe",
+    "symmetry",
+]
 
 
-_LIMIT = 600     # far above every corpus puzzle's time; only a hang reaches it
+_LIMIT = 600  # far above every corpus puzzle's time; only a hang reaches it
 
 
 class LimitReached(RuntimeError):
@@ -35,22 +52,27 @@ def record(item):
     """Every output for one corpus item (runs in a worker process)."""
     import pencilmark
     from pencilmark import cbackend
+
     name, puzzle = item["name"], item["puzzle"]
     out = {"name": name}
     try:
-        fields = item.get("fields", FIELDS)      # a very hard puzzle records a smaller card: the technique list takes minutes
+        fields = item.get(
+            "fields", FIELDS
+        )  # a very hard puzzle records a smaller card: the technique list takes minutes
         out["card"] = pencilmark.rate(puzzle, fields=fields, explain="steps" in fields or None, max_seconds=_LIMIT)
         if out["card"].get("completed") is False:
             raise LimitReached(f"{name}: stopped at the {_LIMIT} s limit; give it fewer fields")
         if "steps" in fields:
-            out["notation"] = [s.get("explanation", {}).get("notation") for s in
-                               pencilmark.rate(puzzle, fields=["steps"], explain="notation")["steps"]]
+            out["notation"] = [
+                s.get("explanation", {}).get("notation")
+                for s in pencilmark.rate(puzzle, fields=["steps"], explain="notation")["steps"]
+            ]
         out["describe"] = pencilmark.describe(puzzle)
         out["export"] = pencilmark.dumps(pencilmark.to_export(puzzle))
         out["engine_input"] = _digest(cbackend._cpuzzle_args(pencilmark.load(puzzle)))
     except LimitReached as e:
         return {"name": name, "limit_reached": str(e)}
-    except Exception as e:                       # an error is an output too (NotUnique, NoSolution, FormatError, ...)
+    except Exception as e:  # an error is an output too (NotUnique, NoSolution, FormatError, ...)
         out["error"] = f"{type(e).__name__}: {e}"
     return out
 
