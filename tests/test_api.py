@@ -12,7 +12,7 @@ CLASSIC_SOLUTION = None
 def test_classic_card():
     card = pencilmark.rate(CLASSIC)
     assert card["format"] == "sudoku-grade"
-    assert (card["band"], card["band_index"], card["difficulty"], card["time"]) == ("Medium", 2, 5.9, 10.7)
+    assert (card["band"], card["difficulty"], card["time"]) == ("Medium", 5.9, 10.7) and "band_index" not in card
     assert "time_p80" not in card and "issues" not in card and "reject" not in card     # publishing checks on request
     t = pencilmark.rate(CLASSIC, fields=["time", "time_p20", "time_p80", "time_mean"])
     assert t["time_p20"] < t["time"] < t["time_mean"] < t["time_p80"], t
@@ -69,7 +69,7 @@ def test_no_guessing_by_default():
 
 
 def test_unknown_band_when_guessing():
-    card = pencilmark.rate(EASTER_MONSTER, max_seconds=30, allow_guessing=True)
+    card = pencilmark.rate(EASTER_MONSTER, max_seconds=30, allow_guessing=True, fields=["band", "band_index", "contains"])
     assert card["band"] == "Unknown" and card["band_index"] is None and card["stopped_at_step"] >= 1
 
 

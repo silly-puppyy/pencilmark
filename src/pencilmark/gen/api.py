@@ -252,8 +252,8 @@ def _check_card(card, tb, td, req, strict):
     """None if the card meets the targets, else the reason."""
     if card.get("band") == "Unknown" and (tb is not None or td is not None):
         return "band Unknown"
-    if tb is not None and card.get("band_index") != tb:
-        bi = card.get("band_index")
+    bi = BANDS.index(card["band"]) if card.get("band") in BANDS else None
+    if tb is not None and bi != tb:
         return "band too low" if bi is not None and bi < tb else "band too high"
     if td is not None:
         d = card.get("difficulty")
@@ -317,7 +317,7 @@ def generate(spec, log=None):
     # non-strict `require` can be met by an alternative; the result's card is then made in full
     # without `require` the technique list isn't needed at all: band / difficulty / time only
     screen_alts = bool(s.require) and not s.strict_require
-    screen_fields = None if s.require else ["difficulty", "time", "band", "band_index"]
+    screen_fields = None if s.require else ["difficulty", "time", "band"]
 
     def grade(d, alternatives=screen_alts, fields=screen_fields):
         p = PJ.from_json(d)

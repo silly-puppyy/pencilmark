@@ -17,6 +17,8 @@
   pencilmark's `__main__`, which spawn does not re-import); it now passes them from the importable module and reads all
   input first and reads / writes UTF-8 on every platform; the test suite runs on Windows and macOS too.
 - HoDoKu library lines (`:0901:4:<puzzle>:<removed candidates>:...`) are read by `from_string`.
+- `band_index` is no longer a default field (ask for it with `fields=[...]`); `se_diuf` removed (`se` gives the classic
+  Sudoku Explainer scale).
 - Docs: philosophy page (goals, exact meaning of band / difficulty / time, format rules); README known issues.
 
 ## 1.0.0rc2

@@ -9,8 +9,8 @@
     text  = pencilmark.dumps(exp); pencilmark.fingerprint(puzzle); pencilmark.describe(puzzle)
     pencilmark.to_ipuz(puzzle); pencilmark.from_string("S9B..."); pencilmark.to_string(puzzle, "sudokuwiki")  # -> "sudoku-puzzle" dict, metadata under "meta"
 
-`rate` returns the "sudoku-grade" card: difficulty, time (minutes), band, band_index, contains (+ issues / reject,
-time_pNN, ... with fields=[...], + steps with steps=True, + "se": {er, ep, ed, scale} with se=True / se="diuf").
+`rate` returns the "sudoku-grade" card: difficulty, time (minutes), band, contains (+ issues / reject,
+time_pNN, ... with fields=[...], + steps with steps=True, + "se": {er, ep, ed, scale} with se=True).
 mode="human" (default) is the human route; mode="computer" also allows forcing chains / trial.
 Guessing is off by default: where no technique applies, the engine refutes a candidate by full search (Trial and error,
 band Extreme), so every unique puzzle gets a band. allow_guessing=True lets it guess there instead (faster); the card
@@ -82,10 +82,10 @@ def load(puzzle):
 def rate(puzzle, steps=False, max_seconds=None, mode="human", se=False, fields=None, allow_guessing=False, explain=None,
          quality=None, alternatives=True):
     """the "sudoku-grade" card of one puzzle (docs/GRADE.md) with the requested top-level fields only. Default fields:
-    difficulty, time, band, band_index, contains (format, format_version, grader always). Optional: issues, reject
-    (publishing checks), time_mean / time_pNN (any percentile 1-99, e.g. time_p80), time_dist, elapsed (wall seconds of the call), se, se_diuf, steps, describe, symmetry. explain="short" /
+    difficulty, time, band, contains (format, format_version, grader always). Optional: band_index, issues, reject
+    (publishing checks), time_mean / time_pNN (any percentile 1-99, e.g. time_p80), time_dist, elapsed (wall seconds of the call), se, steps, describe, symmetry. explain="short" /
     "teach" / True (both) adds explanations to the steps. steps=True is shorthand for the steps field with both explanation
-    levels; se=True / se="diuf" for se / se_diuf.
+    levels; se=True for se.
     Raises NotUnique / NoSolution / Undecided for a puzzle without exactly one solution. allow_guessing=True: guess
     where no technique applies (band "Unknown") instead of proving by full search (Trial and error, Extreme).
     quality: the issue checks' limits, e.g. {"trivial": 0.5, "trial": False} (docs/GRADE.md 4). alternatives=False skips

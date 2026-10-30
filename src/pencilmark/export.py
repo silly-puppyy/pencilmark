@@ -13,7 +13,7 @@ grade (format "sudoku-grade", format_version 1):
               scale (data/card_score.json "map")
   time        minutes for today's median player (classic units x minutes_per_unit, data/time_model.json); on request
               time_pNN = the NN-th percentile over today's players and time_mean = the mean (log-normal, sigma spread_sigma)
-  band        "Very Easy" … "Extreme" or "Unknown" (not solvable without computer search); band_index 0..5 (null for Unknown)
+  band        "Very Easy" … "Extreme" or "Unknown" (not solvable without computer search); on request band_index 0..5
   contains    what a solver meets going easy -> hard (band path): [{"code", "chip", "name", "band", "uses", "alternatives"}];
               a chip "XWG/KTE/SCL" = each of these alone also gets you through here; singles listed without counts
   notes       publishing notes: [{"code": "spike", "severity": "reject" | "note", "text": "…"}]
@@ -365,8 +365,8 @@ def time_units(effort_l1, empty_cells, difficulty=None, geometry=None):
 
 
 ALWAYS = ("format", "format_version", "grader")
-DEFAULT_FIELDS = ("difficulty", "time", "band", "band_index", "contains")
-OPTIONAL_FIELDS = ("time_p80", "time_dist", "elapsed", "issues", "reject", "se", "se_diuf", "steps", "describe", "symmetry")   # + time_mean / time_pNN
+DEFAULT_FIELDS = ("difficulty", "time", "band", "contains")
+OPTIONAL_FIELDS = ("band_index", "time_p80", "time_dist", "elapsed", "issues", "reject", "se", "steps", "describe", "symmetry")   # + time_mean / time_pNN
 EXPLAIN_LEVELS = ("short", "teach")
 
 
@@ -404,7 +404,7 @@ def _time_stat(field, variant=False):
 
 def card_fields(fields=None, steps=False, se=False):
     """the field mask (GRADE.md 2): the requested top-level card keys; None = the default fields. format,
-    format_version and grader are always present. steps=True / se=True / se="diuf" are shorthands."""
+    format_version and grader are always present. steps=True / se=True are shorthands."""
     out = set(DEFAULT_FIELDS) if fields is None else set(fields) - set(ALWAYS)
     bad = {f for f in out - set(DEFAULT_FIELDS) - set(OPTIONAL_FIELDS) if _time_stat(f) is None}
     if bad:
@@ -412,7 +412,7 @@ def card_fields(fields=None, steps=False, se=False):
     if steps:
         out.add("steps")
     if se:
-        out.add("se_diuf" if se == "diuf" else "se")
+        out.add("se")
     return out
 
 
@@ -647,11 +647,10 @@ def _grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expl
         g["describe"] = _describe(doc) if doc is not None else None
     if "symmetry" in want:
         g["symmetry"] = symmetry_of(p)
-    for f, scale in (("se", "classic"), ("se_diuf", "diuf")):
-        if f in want:
-            from . import se as SE
-            sb = BP.band_path(p, P)
-            g[f] = SE.ratings(sb["steps"], scale=scale) if sb["solved"] else None
+    if "se" in want:
+        from . import se as SE
+        sb = BP.band_path(p, P)
+        g["se"] = SE.ratings(sb["steps"], scale="classic") if sb["solved"] else None
     if "steps" in want:
         cn = lambda c: f"r{p.coords[c][0] + 1}c{p.coords[c][1] + 1}"
         expl = BP.explain_steps(p, P, bp["steps"]) if levels else [None] * len(bp["steps"])

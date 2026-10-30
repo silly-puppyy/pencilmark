@@ -192,40 +192,6 @@
     }
    ]
   },
-  "se_diuf": {
-   "oneOf": [
-    {
-     "type": "null"
-    },
-    {
-     "type": "object",
-     "required": [
-      "er",
-      "ep",
-      "ed",
-      "scale"
-     ],
-     "additionalProperties": false,
-     "properties": {
-      "er": {
-       "type": "number"
-      },
-      "ep": {
-       "type": "number"
-      },
-      "ed": {
-       "type": "number"
-      },
-      "scale": {
-       "enum": [
-        "classic",
-        "diuf"
-       ]
-      }
-     }
-    }
-   ]
-  },
   "steps": {
    "type": "array",
    "items": {

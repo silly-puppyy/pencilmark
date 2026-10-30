@@ -63,9 +63,9 @@ are computed ([docs/GRADE.md](https://github.com/silly-puppyy/pencilmark/blob/ma
 |---|---|
 | `difficulty` | how hard each step feels, continuous from 0 (one empty cell) with no ceiling; a typical newspaper medium is about 5 |
 | `time` | expected minutes for the median player (on request `time_mean` or any percentile `time_pNN`, e.g. `time_p80`: 80% of players finish within it) |
-| `band`, `band_index` | Very Easy (0), Easy, Medium, Hard, Very Hard, Extreme (5); `"Unknown"` (null) only with `allow_guessing=True`, when the engine had to guess |
+| `band` | Very Easy, Easy, Medium, Hard, Very Hard, Extreme; `"Unknown"` when guessing was allowed and used, or `max_seconds` passed (on request `band_index` 0..5) |
 | `contains` | techniques met going easy to hard: `code`, `chip`, `name`, `band`, `uses`, `alternatives`; with `stopped_at_step` when human logic ran out |
-| on request | `issues` / `reject` (publishing checks, below), `time_mean` / `time_pNN`, `steps` (technique, placement `r2c8=3` or eliminations `r4c5#7`; `explain="short"` / `"teach"` adds explanations), `se` / `se_diuf`, `describe`, `symmetry` |
+| on request | `issues` / `reject` (publishing checks, below), `time_mean` / `time_pNN`, `steps` (technique, placement `r2c8=3` or eliminations `r4c5#7`; `explain="short"` / `"teach"` adds explanations), `se`, `band_index`, `describe`, `symmetry` |
 
 A chip like `XWG/KTE/SCL` means any one of those techniques gets you through at that point.
 

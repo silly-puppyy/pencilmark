@@ -61,7 +61,7 @@ card["difficulty"], card["time"], card["band"], card["contains"]
 card  = pencilmark.rate(puzzle, steps=True, max_seconds=60, mode="human")   # mode="computer" allows chains / trial
 cards = pencilmark.rate_many(puzzles, jobs=4)       # input order kept; a failing puzzle gives {"error": ...}
 card  = pencilmark.rate(puzzle, se=True)            # + card["se"] = {"er", "ep", "ed", "scale"}: Sudoku Explainer-style
-                                                    #   ratings from our route (se="diuf" for the DiufSudoku fork's values)
+                                                    #   ratings from our route
 sol   = pencilmark.solve(puzzle)                    # digits; raises NotUnique / NoSolution (Undecided if the search
                                                     #   hits its limit and OR-Tools is not installed)
 exp   = pencilmark.to_export(puzzle, title="Escargot", author="Arto Inkala", source="example.org", id="42")
@@ -134,9 +134,9 @@ $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7..
 - **issues** (on request, `fields=[..., "issues", "reject"]`) are publishing checks (`spike`, `decorative`, `barely_used`, `redundant`, `trivial`, `tedious`,
   `uniqueness`, `trial`), severity `reject` or `warning`; rule problems name the offending rules by index in the exported
   puzzle (`"rules": [3, 4]`). **reject** is `true` when any issue is a reject.
-- Fields: `difficulty`, `time`, `band`, `band_index`, `contains` by default (`grader`, `format`, `format_version`
+- Fields: `difficulty`, `time`, `band`, `contains` by default (`grader`, `format`, `format_version`
   always); `rate(puzzle, fields=[...])` / `pencilmark rate --fields ...` takes key names and adds `issues` / `reject`,
-  `time_mean` / `time_pNN`, `steps`, `se` / `se_diuf`, `describe`, `symmetry`. `explain="short"` / `"teach"` (CLI `--explain`) adds step
+  `band_index`, `time_mean` / `time_pNN`, `steps`, `se`, `describe`, `symmetry`. `explain="short"` / `"teach"` (CLI `--explain`) adds step
   explanations. Every key is listed in docs/GRADE.md.
 
 ## Other sites' labels on this scale

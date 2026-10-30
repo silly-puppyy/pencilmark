@@ -329,12 +329,12 @@ def test_describe_names():
 def test_card_fields():
     """field mask = top-level keys, explanation levels, the issues / reject shape (GRADE.md)"""
     c = pencilmark.rate(CLASSIC)
-    assert list(c) == ["format", "format_version", "grader", "difficulty", "time", "band", "band_index", "contains"], list(c)
+    assert list(c) == ["format", "format_version", "grader", "difficulty", "time", "band", "contains"], list(c)
     assert c["grader"] == {"name": "pencilmark", "version": "1.0.0rc2"} and "reject" not in c
-    m = pencilmark.rate(CLASSIC, fields=["difficulty", "time_p80", "steps", "symmetry", "se_diuf"], explain="short")
-    assert set(m) == {"format", "format_version", "grader", "difficulty", "time_p80", "steps", "symmetry", "se_diuf"}
+    m = pencilmark.rate(CLASSIC, fields=["difficulty", "time_p80", "steps", "symmetry", "se"], explain="short")
+    assert set(m) == {"format", "format_version", "grader", "difficulty", "time_p80", "steps", "symmetry", "se"}
     assert m["difficulty"] == c["difficulty"] and set(m["steps"][0]["explanation"]) == {"short"}
-    assert m["se_diuf"]["scale"] == "diuf"
+    assert m["se"]["scale"] == "classic"
     assert "explanation" not in pencilmark.rate(CLASSIC, fields=["steps"])["steps"][0]
     assert {"kind": "rot180", "of": "givens"} in m["symmetry"]
     try:
