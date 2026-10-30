@@ -48,11 +48,18 @@ def _digest(obj):
     return hashlib.sha256(json.dumps(obj, sort_keys=True, default=repr).encode()).hexdigest()[:16]
 
 
-def record(item):
+def record(item, reserved_ok=False):
     """Every output for one corpus item (runs in a worker process)."""
-    import pencilmark
-    from pencilmark import cbackend
+    import contextlib
 
+    import pencilmark
+    from pencilmark import cbackend, exchange
+
+    with exchange._reserved_ok() if reserved_ok else contextlib.nullcontext():
+        return _record(pencilmark, cbackend, item)
+
+
+def _record(pencilmark, cbackend, item):
     name, puzzle = item["name"], item["puzzle"]
     out = {"name": name}
     try:
@@ -77,10 +84,10 @@ def record(item):
     return out
 
 
-def run(corpus, jobs):
+def run(corpus, jobs, reserved_ok=False):
     items = [json.loads(line) for line in (corpus / "inputs.jsonl").read_text(encoding="utf-8").splitlines() if line]
     with ProcessPoolExecutor(jobs) as ex:
-        return list(ex.map(record, items))
+        return list(ex.map(record, items, [reserved_ok] * len(items)))
 
 
 def diff(a, b, path=""):
@@ -101,8 +108,11 @@ def main(argv=None):
     ap.add_argument("action", choices=["write", "check"])
     ap.add_argument("--corpus", type=Path, default=Path(__file__).resolve().parents[1] / "tests/golden")
     ap.add_argument("-j", "--jobs", type=int, default=8)
+    ap.add_argument(
+        "--reserved-ok", action="store_true", help="accept reserved format parts (digit tables), as the benchmark does"
+    )
     a = ap.parse_args(argv)
-    got = run(a.corpus, a.jobs)
+    got = run(a.corpus, a.jobs, a.reserved_ok)
     slow = [r["limit_reached"] for r in got if "limit_reached" in r]
     if slow:
         print("\n".join(slow))
