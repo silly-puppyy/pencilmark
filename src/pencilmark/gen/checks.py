@@ -28,7 +28,7 @@ def params(path=None):
     return _PARAMS
 
 
-NOTES = set(getattr(S, "NOTE_TECHS", (S.TAKE_NOTES,)))
+NOTES = set(S.NOTE_TECHS)
 
 
 def logic_techs(P):

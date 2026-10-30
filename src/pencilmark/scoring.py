@@ -97,20 +97,13 @@ def complete_params(P):
     P = copy_params(P)
     for t, v in DEFAULT_PARAMS["B"].items():
         P["B"].setdefault(t, v)
-    if hasattr(S, "FIREWORKS"):  # no own price: the fallback B (no meta model) is the Hidden Triple's
-        P["B"].setdefault(S.FIREWORKS, P["B"].get(S.HTRIPLE, 3.0))
-    if hasattr(S, "HUMAN_CASE"):  # no own price either: fallback = ALS-XZ's B
-        P["B"].setdefault(S.HUMAN_CASE, P["B"].get(S.ALS_XZ, 5.0))
-    if hasattr(S, "COMBO_POS"):
-        P["B"].setdefault(S.COMBO_POS, P["B"].get(S.HTRIPLE, 3.0))
-    if hasattr(S, "CLIQUE_HOUSE"):
-        P["B"].setdefault(S.CLIQUE_HOUSE, P["B"].get(S.HTRIPLE, 3.0))
-    if hasattr(S, "LINE_SETS"):
-        P["B"].setdefault(S.LINE_SETS, P["B"].get(S.HTRIPLE, 3.0))
-    if hasattr(S, "LINE_CLUES"):
-        P["B"].setdefault(S.LINE_CLUES, P["B"].get(S.HTRIPLE, 3.0))
-    if hasattr(S, "WEIGHTED_SUMS"):
-        P["B"].setdefault(S.WEIGHTED_SUMS, P["B"].get(S.HTRIPLE, 3.0))
+    P["B"].setdefault(S.FIREWORKS, P["B"].get(S.HTRIPLE, 3.0))  # no own price: the fallback B (no meta model) is the Hidden Triple's
+    P["B"].setdefault(S.HUMAN_CASE, P["B"].get(S.ALS_XZ, 5.0))  # no own price either: fallback = ALS-XZ's B
+    P["B"].setdefault(S.COMBO_POS, P["B"].get(S.HTRIPLE, 3.0))
+    P["B"].setdefault(S.CLIQUE_HOUSE, P["B"].get(S.HTRIPLE, 3.0))
+    P["B"].setdefault(S.LINE_SETS, P["B"].get(S.HTRIPLE, 3.0))
+    P["B"].setdefault(S.LINE_CLUES, P["B"].get(S.HTRIPLE, 3.0))
+    P["B"].setdefault(S.WEIGHTED_SUMS, P["B"].get(S.HTRIPLE, 3.0))
     K = list(P["K"])
     K += DEFAULT_PARAMS["K"][len(K):]
     P["K"] = K
@@ -150,7 +143,7 @@ def meta_vector(meta, desc=True):
 
 
 # named patterns without an own price: always priced by the structural meta model when params have one
-STRUCTURAL_ONLY = {getattr(S, "FIREWORKS", 93), getattr(S, "HUMAN_CASE", 94), getattr(S, "COMBO_POS", 95), getattr(S, "CLIQUE_HOUSE", 96), getattr(S, "LINE_SETS", 97), getattr(S, "LINE_CLUES", 98), getattr(S, "WEIGHTED_SUMS", 99)}
+STRUCTURAL_ONLY = {S.FIREWORKS, S.HUMAN_CASE, S.COMBO_POS, S.CLIQUE_HOUSE, S.LINE_SETS, S.LINE_CLUES, S.WEIGHTED_SUMS}
 
 
 def meta_priced(meta):
@@ -248,7 +241,7 @@ class Scorer:
             d *= 1.0 + P.get("k_tab", 0.5) * math.log(meta[9])  # case analysis over the table's live tuples
         if tech == S.SUM_ALGEBRA and pm:  # units combined, chain of bounds
             d *= 1.0 + 0.1 * max(meta[1] - 2, 0) + 0.25 * max(meta[3] - 1, 0)
-        if tech == getattr(S, "BAND_LOGIC", -1) and pm:  # units, open cells; search needed (cases)
+        if tech == S.BAND_LOGIC and pm:  # units, open cells; search needed (cases)
             d *= ((1.0 + 0.1 * max(meta[1] - 3, 0) + 0.02 * max(meta[0] - 9, 0))
                   * (1.0 + P.get("band_k", 0.25) * math.log(max(meta[3], 1))))
         if tech == S.RULE_INTERSECT and pm:  # cells held together, rules combined
@@ -286,7 +279,7 @@ class Scorer:
 # ---------------------------------------------------------------- grading --
 
 def _d_ref(P):
-    return P["B"].get(S.HIDDEN_D if hasattr(S, "HIDDEN_D") else 2, 1.0)
+    return P["B"].get(S.HIDDEN_D, 1.0)
 
 
 def guess_work(feat, P):
@@ -354,7 +347,7 @@ def work_time(steps, puzzle, params):
     = think time, the extra cost of hard steps. Decorrelated from difficulty by construction."""
     P = params
     sc = Scorer(P)
-    d_ref = P["B"].get(S.HIDDEN_D if hasattr(S, "HIDDEN_D") else 2, 1.0)
+    d_ref = P["B"].get(S.HIDDEN_D, 1.0)
     # grid-size scaling of scanning (sudokuleader 4x4..25x25 + lisudoku): humans take
     # far longer on big grids than the 9x9-fitted model predicts -> scan term x (D/9)^gamma, rectangular boxes x e^k
     # (2x3, 3x4 boxes are slower to scan). 9x9 classics are unchanged by construction.
@@ -391,7 +384,7 @@ def work_volume(steps, puzzle, params):
                for g in getattr(puzzle, "groups", []) if g.kind == "box")
     local = min(1.0, puzzle.D * puzzle.D / max(puzzle.N, 1))
     size_scan = (puzzle.D / 9.0) ** P.get("time_size_gamma", 2.79) * (math.exp(P.get("time_rect_k", 0.72)) if rect else 1.0)
-    d_ref = P["B"].get(S.HIDDEN_D if hasattr(S, "HIDDEN_D") else 2, 1.0)
+    d_ref = P["B"].get(S.HIDDEN_D, 1.0)
     unit = P["c"] * math.exp(P["beta"] * d_ref)
     return sum(unit * st.n_empty * local * size_scan for st in steps if st.move.feat[0] not in S.NOTE_TECHS)
 
@@ -440,7 +433,7 @@ def grade(steps, puzzle, params=None, solved=True):
         "think_time": max(t - wt, 0.0),
         "tediousness": sum(ted) / len(ted) if ted else 0.0,
         "notes_needed": any(st.move.feat[0] == S.TAKE_NOTES for st in steps),
-        "snyder_needed": any(st.move.feat[0] == getattr(S, "SNYDER_MARKS", -1) for st in steps),
+        "snyder_needed": any(st.move.feat[0] == S.SNYDER_MARKS for st in steps),
         "required": dict(sorted(required.items(), key=lambda kv: kv[1])),
         "hardest": S.TECH_NAMES[hardest.move.feat[0]],
         "n_steps": len(steps),
@@ -526,9 +519,3 @@ def quality_metrics(steps, puzzle, params=None):
         "givens_symmetry": symmetry,
     }
 
-
-def grade_puzzle(puzzle, params=None, allow_direct=True):
-    sc = Scorer(params)
-    s = S.Solver(puzzle, sc, allow_direct=allow_direct)
-    steps = s.solve()
-    return grade(steps, s.p, sc.p, s.solved), steps

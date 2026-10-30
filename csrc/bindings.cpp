@@ -1,15 +1,10 @@
-#include <pybind11/numpy.h>
 #include "portable.hpp"
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include <atomic>
 #include <stdexcept>
 #include <string>
-#include <chrono>
-#include <cstdio>
 #include <cstdlib>
-#include <thread>
 
 #include "model.hpp"
 #include "solver.hpp"
@@ -17,7 +12,6 @@
 namespace py = pybind11;
 using namespace cs;
 
-static const int CMAX = 10;
 
 static Params params_from(const py::dict& P) {
     Params pr;
@@ -371,70 +365,6 @@ static py::tuple py_solve(const Puzzle& p, const std::vector<std::pair<int, int>
     return py::make_tuple(steps, r.solved);
 }
 
-template <class F>
-static void parallel_for(size_t n, int threads, F&& f) {
-    std::atomic<size_t> next(0);
-    auto work = [&]() {
-        while (true) {
-            size_t i = next.fetch_add(1);
-            if (i >= n) break;
-            f(i);
-        }
-    };
-    int nt = std::max(1, threads);
-    if (nt == 1) {
-        work();
-        return;
-    }
-    std::vector<std::thread> th;
-    for (int t = 0; t < nt; ++t) th.emplace_back(work);
-    for (auto& t : th) t.join();
-}
-
-// per-strategy time / calls / hits of one solve: {name: (ms, calls, hits)}
-static py::dict py_solve_stats(const Puzzle& p, const std::vector<std::pair<int, int>>& givens, const py::dict& params,
-                               const std::vector<int>& disabled, const py::object& solution, bool assume_unique,
-                               bool allow_direct) {
-    Params P = params_from(params);
-    SolveOptions o;
-    o.disabled = disabled;
-    o.assume_unique = assume_unique;
-    o.allow_direct = allow_direct;
-    o.stats = true;
-    if (!solution.is_none()) o.solution = solution.cast<std::vector<int>>();
-    SolveResult r;
-    double total = 0;
-    {
-        py::gil_scoped_release rel;
-        const auto t0 = std::chrono::steady_clock::now();
-        Solver s(p, P, o);
-        s.solve(givens, r);
-        total = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
-    }
-    py::dict d;
-    for (auto& kv : r.stats) d[py::str(kv.first)] = py::make_tuple(kv.second.ms, kv.second.calls, kv.second.hits);
-    d["_total_ms"] = total;
-    d["_steps"] = (int)r.steps.size();
-    return d;
-}
-
-static py::list py_finding_profile(const Puzzle& p, const std::vector<std::pair<int, int>>& givens, const py::dict& params,
-                                   const std::vector<int>& solution, int max_stuck, int K) {
-    Params P = params_from(params);
-    SolveOptions o;
-    std::vector<std::array<int, 5>> out;
-    {
-        py::gil_scoped_release rel;
-        Solver s(p, P, o);
-        s.refK = K;
-        s.finding_profile(givens, solution, max_stuck, out);
-    }
-    py::list l;
-    for (auto& r : out) l.append(py::make_tuple(r[0], r[1], r[2], r[3], r[4]));
-    return l;
-}
-
-// every move available at one state (any technique family), priced: (tech, code, place, elims, d)
 static py::list py_refute_profile(const Puzzle& p, const std::vector<std::pair<int, int>>& givens, const py::dict& params,
                                   const std::vector<int>& solution, int max_stuck, int K) {
     Params P = params_from(params);
@@ -451,20 +381,7 @@ static py::list py_refute_profile(const Puzzle& p, const std::vector<std::pair<i
     return l;
 }
 
-static py::list py_cell_features(const Puzzle& p, const std::vector<std::pair<int, int>>& givens, const py::dict& params) {
-    Params P = params_from(params);
-    SolveOptions o;
-    std::vector<std::array<double, 8>> out;
-    {
-        py::gil_scoped_release rel;
-        Solver s(p, P, o);
-        s.cell_features(givens, out);
-    }
-    py::list l;
-    for (auto& r : out) l.append(py::make_tuple((int)r[0], (int)r[1], r[2], r[3], (int)r[4], (int)r[5], (int)r[6], r[7]));
-    return l;
-}
-
+// every move available at one state (any technique family), priced: (tech, code, place, elims, d)
 static py::list py_state_moves(const Puzzle& p, const std::vector<std::pair<int, int>>& givens, const py::dict& params,
                                const std::vector<int>& disabled, const py::object& solution, bool assume_unique,
                                int limit_per_tech, const py::object& written, bool details, const py::object& cand) {
@@ -506,155 +423,6 @@ static py::list py_state_moves(const Puzzle& p, const std::vector<std::pair<int,
         out.append(py::make_tuple(m.tech, m.code, place, el, m.d, meta, xm, m.scan, pat));
     }
     return out;
-}
-
-// stochastic rollouts: n sampled solve paths (threads), each summarised like grader.scoring.grade
-static py::list py_rollouts(const Puzzle& p, const std::vector<std::pair<int, int>>& givens, const py::dict& params,
-                            const std::vector<int>& disabled, const py::object& solution, int n, double temperature,
-                            uint64_t seed, int threads, bool focus, bool all_families, const std::vector<double>& attract,
-                            double eta, const std::vector<double>& gfocus, int max_steps, bool assume_unique) {
-    Params P = params_from(params);
-    SolveOptions base;
-    base.disabled = disabled;
-    base.max_steps = max_steps;
-    if (!solution.is_none()) base.solution = solution.cast<std::vector<int>>();
-    base.rollout = true;
-    base.assume_unique = assume_unique;
-    base.temperature = temperature;
-    base.focus = focus;
-    base.all_families = all_families;
-    base.attract = attract;
-    base.eta = eta;
-    for (size_t i = 0; i < gfocus.size() && i < 4; ++i) base.gfocus[i] = gfocus[i];
-    struct R { double t, d; int hardest, steps; bool notes, solved; };
-    std::vector<R> res(std::max(n, 0));
-    {
-        py::gil_scoped_release rel;
-        parallel_for(res.size(), threads, [&](size_t i) {
-            SolveOptions o = base;
-            o.seed = seed + 1000003ULL * (uint64_t)i;
-            SolveResult r;
-            Solver s(p, P, o);
-            s.solve(givens, r);
-            res[i] = {r.r_time, r.r_difficulty, r.r_hardest, r.r_steps, r.r_notes, r.solved};
-        });
-    }
-    py::list out;
-    for (auto& r : res) out.append(py::make_tuple(r.t, r.d, r.hardest, r.notes, r.steps, r.solved));
-    return out;
-}
-
-// roll_to_placement: K rollouts of the human race from one state to the next placement (rollplace.cpp)
-static py::dict py_roll_to_placement(const Puzzle& p, const std::vector<std::pair<int, int>>& givens,
-                                     const py::dict& params, const std::vector<int>& disabled, int k,
-                                     double temperature, uint64_t seed, int max_moves, int phase,
-                                     const py::object& written, const py::object& rate_w, bool all_lists,
-                                     int threads) {
-    Params P = params_from(params);
-    SolveOptions o;
-    o.disabled = disabled;
-    RollSpec sp;
-    sp.k = std::max(k, 1);
-    sp.temperature = temperature;
-    sp.seed = seed;
-    sp.max_moves = std::max(max_moves, 1);
-    sp.phase = phase;
-    if (!written.is_none()) sp.written = written.cast<std::vector<uint32_t>>();
-    if (!rate_w.is_none()) sp.rate_w = rate_w.cast<std::vector<double>>();
-    RollOut out;
-    std::vector<std::vector<RollStep>> steps(sp.k);
-    {
-        py::gil_scoped_release rel;
-        std::mutex mu;
-        std::unordered_map<uint64_t, int> cache;
-        parallel_for((size_t)sp.k, threads, [&](size_t i) {
-            Solver s(p, P, o);
-            s.roll_place(givens, sp, (int)i, out, mu, cache, steps[i]);
-        });
-    }
-    // steps: rollout, k, state, row, n_empty, n_cands, held_mental, hash
-    std::vector<RollStep> all;
-    for (auto& v : steps) all.insert(all.end(), v.begin(), v.end());
-    {  // deterministic numbering: states in order of first visit (rollout, k), rows follow their state
-        const int ns = (int)out.st_hash.size();
-        std::vector<int> nid(ns, -1), order;
-        for (auto& r : all)
-            if (nid[r.state] < 0) nid[r.state] = (int)order.size(), order.push_back(r.state);
-        for (int sid = 0; sid < ns; ++sid)
-            if (nid[sid] < 0) nid[sid] = (int)order.size(), order.push_back(sid);
-        RollOut o2;
-        std::vector<int> rowmap(out.mv_tech.size(), -1);
-        for (int old : order) {
-            o2.st_hash.push_back(out.st_hash[old]);
-            o2.st_row0.push_back((int)o2.mv_tech.size());
-            o2.st_n.push_back(out.st_n[old]);
-            o2.st_phase.push_back(out.st_phase[old]);
-            for (int i = 0; i < out.st_n[old]; ++i) {
-                const int r = out.st_row0[old] + i;
-                rowmap[r] = (int)o2.mv_tech.size();
-                o2.mv_tech.push_back(out.mv_tech[r]);
-                o2.mv_code.push_back(out.mv_code[r]);
-                o2.mv_pc.push_back(out.mv_pc[r]);
-                o2.mv_pv.push_back(out.mv_pv[r]);
-                o2.mv_nel.push_back(out.mv_nel[r]);
-                o2.mv_el0.push_back(0);
-                o2.mv_d.push_back(out.mv_d[r]);
-                o2.mv_x.insert(o2.mv_x.end(), out.mv_x.begin() + (size_t)r * 19, out.mv_x.begin() + (size_t)r * 19 + 19);
-            }
-        }
-        for (auto& r : all) r.state = nid[r.state], r.row = rowmap[r.row];
-        for (auto& v : steps)
-            for (auto& r : v) r.state = nid[r.state], r.row = rowmap[r.row];
-        out = std::move(o2);
-    }
-    const py::ssize_t S = (py::ssize_t)all.size();
-    py::array_t<pm_long> s_roll(S), s_k(S), s_state(S), s_row(S), s_empty(S), s_cands(S), s_held(S);
-    py::array_t<uint64_t> s_hash(S);
-    for (py::ssize_t i = 0; i < S; ++i) {
-        const RollStep& r = all[i];
-        s_roll.mutable_data()[i] = r.rollout, s_k.mutable_data()[i] = r.k, s_state.mutable_data()[i] = r.state;
-        s_row.mutable_data()[i] = r.row, s_empty.mutable_data()[i] = r.n_empty, s_cands.mutable_data()[i] = r.n_cands;
-        s_held.mutable_data()[i] = r.held_mental, s_hash.mutable_data()[i] = r.hash;
-    }
-    // per rollout: moves taken, ended in a placement
-    py::array_t<pm_long> r_n(sp.k);
-    py::array_t<bool> r_place(sp.k);
-    for (int i = 0; i < sp.k; ++i) {
-        r_n.mutable_data()[i] = (pm_long)steps[i].size();
-        r_place.mutable_data()[i] = !steps[i].empty() && out.mv_pc[steps[i].back().row] >= 0;
-    }
-    // states / rows (all visited, or only those of the start states when all_lists is false)
-    const py::ssize_t NS = (py::ssize_t)out.st_hash.size(), NR = (py::ssize_t)out.mv_tech.size();
-    std::vector<char> keep(NS, all_lists ? 1 : 0);
-    if (!all_lists)
-        for (auto& r : all)
-            if (r.k == 0) keep[r.state] = 1;
-    py::array_t<uint64_t> st_hash(NS);
-    py::array_t<pm_long> st_row0(NS), st_n(NS), st_phase(NS);
-    py::array_t<bool> st_kept(NS);
-    for (py::ssize_t i = 0; i < NS; ++i) {
-        st_hash.mutable_data()[i] = out.st_hash[i];
-        st_row0.mutable_data()[i] = out.st_row0[i];
-        st_n.mutable_data()[i] = out.st_n[i];
-        st_phase.mutable_data()[i] = out.st_phase[i];
-        st_kept.mutable_data()[i] = keep[i];
-    }
-    py::array_t<pm_long> mv_tech(NR), mv_code(NR), mv_pc(NR), mv_pv(NR), mv_nel(NR);
-    py::array_t<double> mv_d(NR), mv_x({NR, (py::ssize_t)19});
-    for (py::ssize_t i = 0; i < NR; ++i) {
-        mv_tech.mutable_data()[i] = out.mv_tech[i], mv_code.mutable_data()[i] = out.mv_code[i];
-        mv_pc.mutable_data()[i] = out.mv_pc[i], mv_pv.mutable_data()[i] = out.mv_pv[i];
-        mv_nel.mutable_data()[i] = out.mv_nel[i], mv_d.mutable_data()[i] = out.mv_d[i];
-        for (int j = 0; j < 19; ++j) mv_x.mutable_data()[i * 19 + j] = out.mv_x[(size_t)i * 19 + j];
-    }
-    py::dict d;
-    d["s_rollout"] = s_roll; d["s_k"] = s_k; d["s_state"] = s_state; d["s_row"] = s_row;
-    d["s_n_empty"] = s_empty; d["s_n_cands"] = s_cands; d["s_held_mental"] = s_held; d["s_hash"] = s_hash;
-    d["r_n_moves"] = r_n; d["r_placement"] = r_place;
-    d["st_hash"] = st_hash; d["st_row0"] = st_row0; d["st_n"] = st_n; d["st_phase"] = st_phase; d["st_listed"] = st_kept;
-    d["mv_tech"] = mv_tech; d["mv_code"] = mv_code; d["mv_place_cell"] = mv_pc; d["mv_place_digit"] = mv_pv;
-    d["mv_n_elims"] = mv_nel; d["mv_d"] = mv_d; d["mv_x"] = mv_x;
-    return d;
 }
 
 static py::object py_brute(const Puzzle& p, const std::vector<std::pair<int, int>>& givens, int limit, pm_long node_limit,
@@ -715,243 +483,6 @@ static py::dict puzzle_info(const Puzzle& pz, const std::vector<int>& disabled) 
     return d;
 }
 
-static py::dict debug_info(const Puzzle& p) {
-    py::dict d;
-    d["neq"] = p.neq;
-    d["rel"] = p.rel;
-    std::vector<double> shapes;
-    for (auto& g : p.groups) shapes.push_back(g.shape);
-    d["shapes"] = shapes;
-    d["house_unions"] = p.house_unions;
-    py::list inn;
-    for (auto& s : p.innies) inn.append(py::make_tuple(s.hi, s.cells, s.total, s.cages, s.outie ? "outie" : "innie"));
-    d["innies"] = inn;
-    d["peer_list"] = p.peer_list;
-    return d;
-}
-
-// ------------------------------------------------------------ featurize --
-struct Spec {
-    std::shared_ptr<Puzzle> pz;  // generic spec ("cpuzzle", cp, givens, solution)
-    bool raw = false;            // ("praw", ...): pz is the unfinalized input; built + freed in the worker
-    int tab;  // 0 classic, 1 nonc, 2 killer
-    std::vector<std::pair<int, int>> givens;
-    std::vector<std::pair<int, std::vector<int>>> cages;
-    std::vector<int> solution;
-    int max_steps = 5000;
-    int seed_cell = -1, seed_digit = 0, seed_run = 1;
-    bool all_tiers = false;
-    std::vector<int> colours;  // per cell colour id (-1 none): human colouring seeds
-    bool assume_unique = true;
-};
-static inline int tech_idx(int t) { return t < 5 ? t : t - 5; }
-
-// classic / nonc share structure: finalized once, read-only across threads
-static void solve_spec(const Spec& sp, const Params& P, const Puzzle* tmpl, const std::vector<int>& disabled,
-                       bool rich, SolveResult& r) {
-    SolveOptions o;
-    o.rich = rich;
-    o.disabled = disabled;
-    o.solution = sp.solution;
-    o.max_steps = sp.max_steps;
-    o.seed_cell = sp.seed_cell;
-    o.seed_digit = sp.seed_digit;
-    o.seed_run = sp.seed_run;
-    o.all_tiers = sp.all_tiers;
-    o.colours = sp.colours;
-    o.assume_unique = sp.assume_unique;
-    o.prune_tiers = false;  // featurize: every alternative of the tier
-    if (sp.pz && sp.raw) {  // build this state's puzzle here, free it when the solve is done
-        Puzzle p = *sp.pz;
-        p.finalize();
-        Solver s(p, P, o);
-        s.solve(sp.givens, r);
-        return;
-    }
-    if (sp.pz) {  // generic puzzle (finalized by make_puzzle; read-only, shared across threads)
-        Solver s(*sp.pz, P, o);
-        s.solve(sp.givens, r);
-        return;
-    }
-    if (sp.tab != 2) {
-        Solver s(tmpl[sp.tab], P, o);
-        s.solve(sp.givens, r);
-        return;
-    }
-    Puzzle p = make_standard(9, 3, 3);
-    add_cages(p, sp.cages);
-    p.finalize();
-    Solver s(p, P, o);
-    s.solve(sp.givens, r);
-}
-
-
-// grader.features.featurize_raw: solve every spec in worker threads, then
-// fill preallocated numpy arrays (also in parallel, at per-puzzle offsets)
-static py::dict py_featurize(const py::list& specs_in, const py::dict& params, int threads,
-                             const std::vector<int>& disabled, bool rich) {
-    Params P = params_from(params);
-    std::vector<Spec> specs;
-    for (auto o : specs_in) {
-        py::tuple t = o.cast<py::tuple>();
-        Spec s;
-        if (py::isinstance<py::str>(t[0])) {  // ("cpuzzle" | "praw", cp, givens, solution)
-            s.raw = t[0].cast<std::string>() == "praw";
-            s.pz = t[1].cast<std::shared_ptr<Puzzle>>();
-            s.tab = -1;
-            s.givens = t[2].cast<std::vector<std::pair<int, int>>>();
-            if (!t[3].is_none()) s.solution = t[3].cast<std::vector<int>>();
-            if (t.size() > 4 && !t[4].is_none()) s.max_steps = t[4].cast<int>();
-            if (t.size() > 5 && !t[5].is_none()) {  // last move: (cell, digit[, run length])
-                py::tuple lm = t[5].cast<py::tuple>();
-                s.seed_cell = lm[0].cast<int>();
-                s.seed_digit = lm[1].cast<int>();
-                if (lm.size() > 2) s.seed_run = lm[2].cast<int>();
-            }
-            if (t.size() > 6 && !t[6].is_none()) s.all_tiers = t[6].cast<bool>();
-            if (t.size() > 7 && !t[7].is_none()) s.colours = t[7].cast<std::vector<int>>();
-            if (t.size() > 8 && !t[8].is_none()) s.assume_unique = t[8].cast<bool>();
-            specs.push_back(std::move(s));
-            continue;
-        }
-        s.tab = t[0].cast<int>();
-        s.givens = t[1].cast<std::vector<std::pair<int, int>>>();
-        s.cages = t[2].cast<std::vector<std::pair<int, std::vector<int>>>>();
-        if (!t[3].is_none()) s.solution = t[3].cast<std::vector<int>>();
-        specs.push_back(std::move(s));
-    }
-    const size_t n = specs.size();
-    std::vector<SolveResult> res(n);
-    const bool timing = std::getenv("CSOLVER_TIMING") != nullptr;
-    auto t0 = std::chrono::steady_clock::now();
-    {
-        py::gil_scoped_release rel;
-        Puzzle tmpl[2] = {make_standard(9, 3, 3), make_standard(9, 3, 3)};
-        add_nonconsecutive(tmpl[1], 9);
-        tmpl[0].finalize();
-        tmpl[1].finalize();
-        parallel_for(n, threads, [&](size_t i) { solve_spec(specs[i], P, tmpl, disabled, rich, res[i]); });
-    }
-    auto t1 = std::chrono::steady_clock::now();
-    std::vector<size_t> soff(n + 1, 0), moff(n + 1, 0);
-    for (size_t i = 0; i < n; ++i) {
-        soff[i + 1] = soff[i] + res[i].steps.size();
-        moff[i + 1] = moff[i] + res[i].alts.size();
-    }
-    const py::ssize_t S = (py::ssize_t)soff[n], M = (py::ssize_t)moff[n];
-    py::array_t<pm_long> m_place(M), m_value(M);
-    pm_long *pm_place = m_place.mutable_data(), *pm_value = m_value.mutable_data();
-    py::array_t<pm_long> m_step(M), m_tech(M), s_puz(S), s_nempty(S), s_place(S), s_erase(S), s_notes(S), s_mode(S),
-        s_chosen(S);
-    py::array_t<pm_long> m_ck({M, (py::ssize_t)CMAX}), m_cu({M, (py::ssize_t)CMAX});
-    py::array_t<double> m_shape(M), m_cs({M, (py::ssize_t)CMAX}), m_meta({M, (py::ssize_t)18}),
-        m_desc({M, (py::ssize_t)8});
-    py::array_t<bool> m_hasmeta(M), m_metapriced(M), m_hasdesc(M), solved((py::ssize_t)n);
-    py::array_t<double> m_enum(M);   // D5 enumeration per move (separate array: m_meta stays 18 columns)
-    const py::ssize_t RC = (py::ssize_t)rich_names().size(), SC = (py::ssize_t)step_names().size();
-    py::array_t<float> m_rich({rich ? M : 0, RC}), s_rich({rich ? S : 0, SC});
-    float* pm_rich = m_rich.mutable_data();
-    float* ps_rich = s_rich.mutable_data();
-    pm_long *pm_step = m_step.mutable_data(), *pm_tech = m_tech.mutable_data(), *ps_puz = s_puz.mutable_data(),
-         *ps_nempty = s_nempty.mutable_data(), *ps_place = s_place.mutable_data(), *ps_erase = s_erase.mutable_data(),
-         *ps_notes = s_notes.mutable_data(), *ps_mode = s_mode.mutable_data(), *ps_chosen = s_chosen.mutable_data(),
-         *pm_ck = m_ck.mutable_data(), *pm_cu = m_cu.mutable_data();
-    double* pm_enum = m_enum.mutable_data();
-    std::fill(pm_enum, pm_enum + M, 0.0);
-    double *pm_shape = m_shape.mutable_data(), *pm_cs = m_cs.mutable_data(), *pm_meta = m_meta.mutable_data(),
-           *pm_desc = m_desc.mutable_data();
-    bool *pm_hasmeta = m_hasmeta.mutable_data(), *pm_metapriced = m_metapriced.mutable_data(), *pm_hasdesc = m_hasdesc.mutable_data(), *psolved = solved.mutable_data();
-    {
-        py::gil_scoped_release rel;
-        parallel_for(n, threads, [&](size_t pi) {
-            SolveResult& r = res[pi];
-            psolved[pi] = r.solved;
-            size_t si = soff[pi], mi = moff[pi];
-            if (rich) {
-                std::copy(r.m_rich.begin(), r.m_rich.end(), pm_rich + mi * RC);
-                std::copy(r.s_rich.begin(), r.s_rich.end(), ps_rich + si * SC);
-            }
-            for (const StepRec& st : r.steps) {
-                ps_puz[si] = (pm_long)pi;
-                ps_nempty[si] = st.n_empty;
-                ps_place[si] = st.move.pc >= 0 ? 1 : 0;
-                ps_erase[si] = st.erasures;
-                ps_notes[si] = st.notes_written;
-                ps_mode[si] = st.mode;
-                ps_chosen[si] = (pm_long)(mi + st.chosen);
-                for (int i = 0; i < st.alt_n; ++i, ++mi) {
-                    const Move& m = r.alts[st.alt_off + i];
-                    pm_step[mi] = (pm_long)si;
-                    pm_place[mi] = m.pc;
-                    pm_value[mi] = m.pc >= 0 ? m.pv : 0;
-                    pm_tech[mi] = tech_idx(m.tech);
-                    pm_shape[mi] = m.shape;
-                    for (int j = 0; j < CMAX; ++j) {
-                        if (j < m.cov_n) {
-                            const Cover& c = r.covers[m.cov_off + j];
-                            pm_ck[mi * CMAX + j] = c.kind;
-                            pm_cs[mi * CMAX + j] = c.shape;
-                            pm_cu[mi * CMAX + j] = c.u;
-                        } else {
-                            pm_ck[mi * CMAX + j] = 0;
-                            pm_cs[mi * CMAX + j] = 1.0;
-                            pm_cu[mi * CMAX + j] = 0;
-                        }
-                    }
-                    double x[10] = {0};
-                    if (m.has_meta) meta_vector(m, x);
-                    std::copy(x, x + 10, pm_meta + mi * 18);
-                    pm_hasmeta[mi] = m.has_meta;  // every technique in canonical mode (meta_synth ones too)
-                    pm_metapriced[mi] = priced_meta(m);  // priced by the meta model today (else by B)
-                    for (int j = 0; j < 8; ++j) pm_meta[mi * 18 + 10 + j] = m.has_desc ? m.desc[j] : 0.0;
-                    pm_enum[mi] = m.has_desc ? m.enumv : 0.0;
-                    for (int j = 0; j < 8; ++j) pm_desc[mi * 8 + j] = m.has_desc ? m.desc[j] : 0.0;  // structural
-                    pm_hasdesc[mi] = m.has_desc;                                                   // descriptors
-                }
-                ++si;
-            }
-            r = SolveResult();  // free early
-        });
-    }
-    py::dict out;
-    out["m_step"] = m_step;
-    out["m_place"] = m_place;
-    out["m_value"] = m_value;
-    out["m_tech"] = m_tech;
-    out["m_shape"] = m_shape;
-    out["m_ck"] = m_ck;
-    out["m_cs"] = m_cs;
-    out["m_cu"] = m_cu;
-    out["m_meta"] = m_meta;
-    out["m_enum"] = m_enum;
-    out["m_hasmeta"] = m_hasmeta;
-    out["m_metapriced"] = m_metapriced;  // has_meta as today's pricing sees it (meta_synth moves: False)
-    out["m_desc"] = m_desc;  // log branches, log depth, search, uniqueness, counting, contradiction, held, coverage
-    out["m_hasdesc"] = m_hasdesc;
-    out["s_puz"] = s_puz;
-    out["s_nempty"] = s_nempty;
-    out["s_place"] = s_place;
-    out["s_erase"] = s_erase;
-    out["s_notes"] = s_notes;
-    out["s_mode"] = s_mode;
-    out["s_chosen"] = s_chosen;
-    out["solved"] = solved;
-    out["n_puz"] = (pm_long)n;
-    if (rich) {
-        out["m_rich"] = m_rich;
-        out["s_rich"] = s_rich;
-        out["rich_names"] = rich_names();
-        out["step_names"] = step_names();
-    }
-    if (timing) {
-        auto t2 = std::chrono::steady_clock::now();
-        std::fprintf(stderr, "featurize: solve %.3fs fill %.3fs (%ld steps, %ld moves)\n",
-                     std::chrono::duration<double>(t1 - t0).count(), std::chrono::duration<double>(t2 - t1).count(),
-                     (pm_long)S, (pm_long)M);
-    }
-    return out;
-}
-
 PYBIND11_MODULE(_csolver, m) {
     m.doc() = "C++ port of grader.solver (see csolver/README.md)";
     py::class_<Puzzle, std::shared_ptr<Puzzle>>(m, "Puzzle")
@@ -959,7 +490,6 @@ PYBIND11_MODULE(_csolver, m) {
         .def_readonly("D", &Puzzle::D)
         .def_readonly("has_cages", &Puzzle::has_cages);
     m.def("make_puzzle", &make_puzzle);
-    m.def("make_puzzle_raw", &make_puzzle_raw);
     m.def("set_deadline", [](double seconds) { set_deadline(seconds); }, py::arg("seconds"),
           "wall-clock limit for the following solves in this thread (seconds; <= 0 switches it off)");
     m.def("deadline_hit", []() { return g_deadline_hit; }, "True once the deadline set by set_deadline has passed");
@@ -969,28 +499,10 @@ PYBIND11_MODULE(_csolver, m) {
           py::arg("cand") = py::none());
     m.def("brute_solve", &py_brute, py::arg("puzzle"), py::arg("givens"), py::arg("limit"), py::arg("node_limit"),
           py::arg("start") = py::none(), py::arg("with_status") = false);
-    m.def("featurize", &py_featurize, py::arg("specs"), py::arg("params"), py::arg("threads"),
-          py::arg("disabled") = std::vector<int>(), py::arg("rich") = false);
-    m.def("rich_names", &rich_names);
-    m.def("step_names", &step_names);
-    m.def("debug_info", &debug_info);
     m.def("puzzle_info", &puzzle_info, py::arg("puzzle"), py::arg("disabled") = std::vector<int>());
-    m.def("solve_stats", &py_solve_stats, py::arg("puzzle"), py::arg("givens"), py::arg("params"),
-          py::arg("disabled"), py::arg("solution"), py::arg("assume_unique") = false, py::arg("allow_direct") = true);
-    m.def("roll_to_placement", &py_roll_to_placement, py::arg("puzzle"), py::arg("givens"), py::arg("params"),
-          py::arg("disabled"), py::arg("k") = 20, py::arg("temperature") = 1.0, py::arg("seed") = 1,
-          py::arg("max_moves") = 40, py::arg("phase") = -1, py::arg("written") = py::none(),
-          py::arg("rate_w") = py::none(), py::arg("all_lists") = true, py::arg("threads") = 16);
-    m.def("cell_features", &py_cell_features, py::arg("puzzle"), py::arg("givens"), py::arg("params"));
-    m.def("finding_profile", &py_finding_profile, py::arg("puzzle"), py::arg("givens"), py::arg("params"), py::arg("solution"),
-          py::arg("max_stuck") = 400, py::arg("K") = 0);
     m.def("refute_profile", &py_refute_profile, py::arg("puzzle"), py::arg("givens"), py::arg("params"), py::arg("solution"),
           py::arg("max_stuck") = 400, py::arg("K") = 0);
     m.def("state_moves", &py_state_moves, py::arg("puzzle"), py::arg("givens"), py::arg("params"),
           py::arg("disabled"), py::arg("solution"), py::arg("assume_unique") = false, py::arg("limit_per_tech") = 0,
           py::arg("written") = py::none(), py::arg("details") = false, py::arg("cand") = py::none());
-    m.def("rollouts", &py_rollouts, py::arg("puzzle"), py::arg("givens"), py::arg("params"), py::arg("disabled"),
-          py::arg("solution"), py::arg("n"), py::arg("temperature"), py::arg("seed"), py::arg("threads"),
-          py::arg("focus"), py::arg("all_families"), py::arg("attract"), py::arg("eta"), py::arg("gfocus"),
-          py::arg("max_steps") = 5000, py::arg("assume_unique") = false);
 }

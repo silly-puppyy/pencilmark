@@ -146,8 +146,8 @@ CONCEPTS = {
 }
 
 # techniques newer than metrics.FAMILIES (used only while FAMILIES doesn't list them)
-EXTRA_FAMILY = {getattr(S, "MENTAL_CHAIN", -1): "chains", getattr(S, "EITHER_WAY", -2): "trial",
-                getattr(S, "LINE_CLASS", -3): "intersections+combos"}
+EXTRA_FAMILY = {S.MENTAL_CHAIN: "chains", S.EITHER_WAY: "trial",
+                S.LINE_CLASS: "intersections+combos"}
 
 FAMILY_DISPLAY = {"singles": "Singles", "intersections+combos": "Intersections and combinations",
                   "subsets": "Subsets", "fish+wings": "Fish and wings", "chains": "Chains",
@@ -3191,8 +3191,8 @@ def _chain_conclusion(nm, p, path, done):
 
 def _h_chain(ctx):
     nm, p, st = ctx.nm, ctx.p, ctx.st
-    kind = {S.X_CHAIN: "x", S.XY_CHAIN: "xy", getattr(S, "EMPTY_RECT", -98): "x",
-            getattr(S, "REMOTE_PAIRS", -97): "xy"}.get(ctx.tech, "aic")
+    kind = {S.X_CHAIN: "x", S.XY_CHAIN: "xy", S.EMPTY_RECT: "x",
+            S.REMOTE_PAIRS: "xy"}.get(ctx.tech, "aic")
     if ctx.code in ("SKY", "2SK", "TUR", "XCH"):
         kind = "x"
     if ctx.code == "XYC":
@@ -4451,7 +4451,7 @@ def _generic(ctx):
 
 HANDLERS = {
     S.FULL_HOUSE: _h_full_house, S.NAKED_D: _h_naked_direct, S.HIDDEN_D: _h_hidden_direct,
-    S.NAKED_DL: _h_pointing_direct, S.HIDDEN_DL: _h_pointing_direct, S.TAKE_NOTES: _h_take_notes, getattr(S, "SNYDER_MARKS", -90): _h_snyder_marks,
+    S.NAKED_DL: _h_pointing_direct, S.HIDDEN_DL: _h_pointing_direct, S.TAKE_NOTES: _h_take_notes, S.SNYDER_MARKS: _h_snyder_marks,
     S.NAKED_N: _h_naked_notes, S.HIDDEN_N: _h_hidden_notes, S.LOCKED: _h_locked,
     S.NPAIR: _h_subset, S.HPAIR: _h_subset, S.NTRIPLE: _h_subset, S.HTRIPLE: _h_subset, S.NQUAD: _h_subset,
     S.HQUAD: _h_subset, S.XWING: _h_fish, S.SWORDFISH: _h_fish, S.JELLYFISH: _h_fish, S.FINNED_FISH: _h_fish,
@@ -4476,24 +4476,20 @@ for _code, _h, _name, _lesson in (
          "Two cells can be forced to hold the same unknown digit; then each keeps only the candidates both share."),
         ("LINE_SCAN", _h_line_scan, "Local line scan",
          "On long lines, look at a few consecutive cells at a time; local windows often carry the whole logic.")):
-    if hasattr(S, _code):
-        HANDLERS[getattr(S, _code)] = _h
-        CONCEPTS.setdefault(getattr(S, _code), (_name, _lesson))
-        EXTRA_FAMILY.setdefault(getattr(S, _code), "fish+wings" if _code == "DIGIT_COUNT" else
-                                "intersections+combos")
-if hasattr(S, "LINE_CLASS"):
-    HANDLERS[S.LINE_CLASS] = _h_line_class
-    CONCEPTS.setdefault(S.LINE_CLASS, ("Line classes", "Group digits into classes (low/high, odd/even, thirds) "
-                                       "and reason about the pattern of classes along a line before exact digits."))
-if hasattr(S, "EITHER_WAY"):
-    HANDLERS[S.EITHER_WAY] = _h_either_way
-    CONCEPTS.setdefault(S.EITHER_WAY, ("Either way (two-case check)", "When something must be one of two things, follow both "
-                                       "options a few steps; whatever happens in both branches is true."))
-if hasattr(S, "MENTAL_CHAIN"):
-    HANDLERS[S.MENTAL_CHAIN] = _h_mental_chain
-    CONCEPTS.setdefault(S.MENTAL_CHAIN, ("Chain without notes", "A couple of 'if this, then that' steps can "
-                                         "be held in the head: follow what each cell can still be until the "
-                                         "chain forces a digit."))
+    HANDLERS[getattr(S, _code)] = _h
+    CONCEPTS.setdefault(getattr(S, _code), (_name, _lesson))
+    EXTRA_FAMILY.setdefault(getattr(S, _code), "fish+wings" if _code == "DIGIT_COUNT" else
+                            "intersections+combos")
+HANDLERS[S.LINE_CLASS] = _h_line_class
+CONCEPTS.setdefault(S.LINE_CLASS, ("Line classes", "Group digits into classes (low/high, odd/even, thirds) "
+                                   "and reason about the pattern of classes along a line before exact digits."))
+HANDLERS[S.EITHER_WAY] = _h_either_way
+CONCEPTS.setdefault(S.EITHER_WAY, ("Either way (two-case check)", "When something must be one of two things, follow both "
+                                   "options a few steps; whatever happens in both branches is true."))
+HANDLERS[S.MENTAL_CHAIN] = _h_mental_chain
+CONCEPTS.setdefault(S.MENTAL_CHAIN, ("Chain without notes", "A couple of 'if this, then that' steps can "
+                                     "be held in the head: follow what each cell can still be until the "
+                                     "chain forces a digit."))
 
 
 def _engine_override(ctx, out):
@@ -4533,7 +4529,7 @@ def explain(step, puzzle, state):
     out.setdefault("derived", True)
     out = _engine_override(ctx, out)
     name, lesson = CONCEPTS.get(ctx.tech, (S.TECH_NAMES.get(ctx.tech, "?"), ""))
-    fam = FAMILIES[family_of(ctx.tech)][0] if ctx.tech not in (S.TAKE_NOTES, S.GUESS, getattr(S, "SNYDER_MARKS", -90)) \
+    fam = FAMILIES[family_of(ctx.tech)][0] if ctx.tech not in (S.TAKE_NOTES, S.GUESS, S.SNYDER_MARKS) \
         else ("trial" if ctx.tech == S.GUESS else "setup")
     if not any(ctx.tech in ts for _, ts in FAMILIES) and ctx.tech in EXTRA_FAMILY:
         fam = EXTRA_FAMILY[ctx.tech]
@@ -4889,7 +4885,7 @@ def _technique_key(ctx, out):
         return "single_after_pointing"
     if t == S.TAKE_NOTES:
         return "pencil_marks"
-    if t == getattr(S, "SNYDER_MARKS", -90):
+    if t == S.SNYDER_MARKS:
         return "snyder_marks"
     if t == S.LOCKED:
         bu, cu = J.get("base_units") or [], J.get("cover_units") or []
@@ -4934,17 +4930,17 @@ def _technique_key(ctx, out):
         tg = [c for c, _ in ctx.elims]
         lab = rel_label(p, bc[0], tg[0]) if bc and tg else ""
         return _REL_KEY.get(lab.split(" / ")[0], "pair_rule")
-    if t == getattr(S, "MENTAL_CHAIN", -1):
+    if t == S.MENTAL_CHAIN:
         return "chain_without_notes"
-    if t == getattr(S, "EITHER_WAY", -1):
+    if t == S.EITHER_WAY:
         return "either_way"
-    if t == getattr(S, "LINE_CLASS", -1):
+    if t == S.LINE_CLASS:
         return _rule_key(_rule_from_move(ctx))
-    if t == getattr(S, "DIGIT_COUNT", -1):
+    if t == S.DIGIT_COUNT:
         return "digit_counting"
-    if t == getattr(S, "EQUAL_DIGITS", -1):
+    if t == S.EQUAL_DIGITS:
         return "equal_cells"
-    if t == getattr(S, "LINE_SCAN", -1):
+    if t == S.LINE_SCAN:
         return _rule_key(_rule_from_move(ctx))
     return "rule_logic"
 
@@ -5174,7 +5170,7 @@ def _h_forcing(ctx):
     p = nm.p
     tr = eng.get("trial") or {}
     opts = tr.get("options") or []
-    level = -1 if ctx.tech == getattr(S, "WHAT_IF", -9) else -2 if ctx.tech == getattr(S, "HUMAN_CASE", -9) else ctx.tech - S.FORCING
+    level = -1 if ctx.tech == S.WHAT_IF else -2 if ctx.tech == S.HUMAN_CASE else ctx.tech - S.FORCING
     head, goal = _x_head(ctx)
     cells, units = set(), []
     for o in opts:
@@ -5767,10 +5763,9 @@ _X_HANDLERS = {
 }
 
 for _code, (_h, _key, _fam, _concept) in _X_HANDLERS.items():
-    if hasattr(S, _code):
-        HANDLERS[getattr(S, _code)] = _h
-        CONCEPTS.setdefault(getattr(S, _code), _concept)
-        EXTRA_FAMILY.setdefault(getattr(S, _code), _fam)
+    HANDLERS[getattr(S, _code)] = _h
+    CONCEPTS.setdefault(getattr(S, _code), _concept)
+    EXTRA_FAMILY.setdefault(getattr(S, _code), _fam)
 
 _FAM_IDX = {"singles": 0, "intersections+combos": 1, "subsets": 2, "fish+wings": 3, "chains": 4, "ALS": 5, "trial": 6}
 for _code, (_h, _key, _fam, _concept) in _X_HANDLERS.items():
@@ -5820,17 +5815,16 @@ def _h_empty_rect(ctx):
                    f"{nm.cell(c)}-{nm.cell(e)}", teach, True, extra_cells=set(in_box) | {c, e})
 
 
-if hasattr(S, "REMOTE_PAIRS"):
-    HANDLERS[S.REMOTE_PAIRS] = _h_chain
-    HANDLERS[S.EMPTY_RECT] = _h_empty_rect
-    CONCEPTS.setdefault(S.REMOTE_PAIRS, ("Remote Pairs", "A chain of cells holding the same pair: alternate cells "
-                                         "take alternate digits, so a cell seeing both ends of an odd-length run "
-                                         "loses both digits."))
-    CONCEPTS.setdefault(S.EMPTY_RECT, ("Empty Rectangle", "A box whose candidates for a digit form a cross works "
-                                       "as one end of a strong link; with a conjugate pair it removes the digit "
-                                       "where the two meet."))
-    EXTRA_FAMILY.setdefault(S.REMOTE_PAIRS, "chains")
-    EXTRA_FAMILY.setdefault(S.EMPTY_RECT, "chains")
+HANDLERS[S.REMOTE_PAIRS] = _h_chain
+HANDLERS[S.EMPTY_RECT] = _h_empty_rect
+CONCEPTS.setdefault(S.REMOTE_PAIRS, ("Remote Pairs", "A chain of cells holding the same pair: alternate cells "
+                                     "take alternate digits, so a cell seeing both ends of an odd-length run "
+                                     "loses both digits."))
+CONCEPTS.setdefault(S.EMPTY_RECT, ("Empty Rectangle", "A box whose candidates for a digit form a cross works "
+                                   "as one end of a strong link; with a conjugate pair it removes the digit "
+                                   "where the two meet."))
+EXTRA_FAMILY.setdefault(S.REMOTE_PAIRS, "chains")
+EXTRA_FAMILY.setdefault(S.EMPTY_RECT, "chains")
 
 _technique_key_base = _technique_key
 
@@ -5839,9 +5833,9 @@ def _technique_key(ctx, out):  # noqa: F811 -- extended for 68-82 and the new co
     for _code, (_h, _key, _fam, _concept) in _X_HANDLERS.items():
         if ctx.tech == getattr(S, _code, -99):
             return _key
-    if ctx.tech == getattr(S, "EMPTY_RECT", -98) or (ctx.tech == S.X_CHAIN and ctx.code == "ER"):
+    if ctx.tech == S.EMPTY_RECT or (ctx.tech == S.X_CHAIN and ctx.code == "ER"):
         return "empty_rectangle"
-    if ctx.tech == getattr(S, "REMOTE_PAIRS", -97):
+    if ctx.tech == S.REMOTE_PAIRS:
         return "remote_pair"
     if ctx.tech == S.X_CHAIN and ctx.code == "TUR":
         return "turbot_fish"

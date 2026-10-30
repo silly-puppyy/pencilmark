@@ -84,7 +84,7 @@ def notes(puzzle, P, steps, tier, forced, required, work_min, check_rules=True):
     on = lambda k: q[k]["severity"] != "off"
     out = []
     rev = {v: k for k, v in S.TECH_NAMES.items()}
-    note_techs = getattr(S, "NOTE_TECHS", (S.TAKE_NOTES,))
+    note_techs = S.NOTE_TECHS
     mv = [st for st in steps if st.move.feat[0] not in note_techs]
     bi = MT.BANDS.index(tier) if tier in MT.BANDS else -1
     if bi >= 2 and on("spike"):

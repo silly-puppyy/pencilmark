@@ -320,27 +320,6 @@ struct StepRec {
     Move move;  // cov/el offsets index into SolveResult pools
 };
 
-// roll_to_placement (rollplace.cpp): rollouts of the human race from one state to the next placement
-struct RollSpec {
-    int k = 20, max_moves = 40, phase = -1;  // phase 0 direct, 1 notes, -1 auto (notes if any mark is written)
-    double temperature = 1.0;
-    uint64_t seed = 1;
-    std::vector<uint32_t> written;           // per cell: candidates written down
-    std::vector<double> rate_w;              // selection weights over the 19 move features (+ optional intercept)
-};
-struct RollStep {
-    int rollout = 0, k = 0, state = 0, row = 0, n_empty = 0;
-    pm_long n_cands = 0, held_mental = 0;
-    uint64_t hash = 0;
-};
-struct RollOut {  // states (deduplicated) and their move rows; features per row: meta10, 8 descriptors, log1p(scan)
-    std::vector<uint64_t> st_hash;
-    std::vector<int> st_row0, st_n, st_phase;
-    std::vector<int> mv_tech, mv_code, mv_pc, mv_pv, mv_nel, mv_el0;
-    std::vector<double> mv_d, mv_x;
-    std::vector<uint32_t> el;
-};
-
 struct SolveResult {
     std::vector<StepRec> steps;
     std::vector<Move> alts;  // features only (cov offsets into covers)
@@ -603,9 +582,6 @@ public:
     // every move available at the current state (direct and notes families; tiers ungated), priced;
     // at most limit_per_tech per technique (0 = all)
     void state_moves(const std::vector<std::pair<int, int>>& givens, MoveBuf& b, int limit_per_tech);  // every cell filled consistently with every rule
-    int roll_state(int phase, RollOut& out, std::mutex& mu, std::unordered_map<uint64_t, int>& cache, uint64_t& hash_out);
-    void roll_place(const std::vector<std::pair<int, int>>& givens, const RollSpec& sp, int rollout, RollOut& out,
-                    std::mutex& mu, std::unordered_map<uint64_t, int>& cache, std::vector<RollStep>& steps);
     void init_state(const std::vector<std::pair<int, int>>& givens);
 
 private:

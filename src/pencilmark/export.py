@@ -29,7 +29,7 @@ import math
 from collections import Counter
 from pathlib import Path
 
-from . import _data, cbackend as CB, solver as S, metrics as MT, puzzle_json as PJ
+from . import _data, solver as S, metrics as MT, puzzle_json as PJ
 
 GRADER_NAME, GRADER_VERSION = "pencilmark", "1.0.0"   # on every card: a grade is only meaningful with the engine that made it
 FORMAT_VERSION = 1          # of both formats; bumped only on a breaking change (additive fields don't bump it)
@@ -109,45 +109,6 @@ def chip_of(tech_id, specific=None):
     return code, band
 
 
-def _solved(p, P, disabled):
-    st, ok = CB.solve(p, P, disabled=disabled)
-    filled = len(p.givens) + sum(1 for s in st if s.move.place)
-    return filled == p.N and not any(s.move.feat[0] == S.GUESS for s in st), st
-
-
-# concept families for joint chips (technique map): alternatives inside one concept give ONE chip (the simplest);
-# a joint chip only joins different concepts
-CONCEPT = {}
-for _c, _names in {
-    "singles": ["FullHouse", "NakedSingle(direct)", "HiddenSingle(direct)", "NakedSingle(notes)", "HiddenSingle(notes)",
-                "ConstraintSingle(direct)", "LineSingle(direct)"],
-    "intersections": ["LockedCandidates", "NakedSingle+Pointing(direct)", "HiddenSingle+Pointing(direct)", "SnyderSingle"],
-    "subsets": ["NakedPair", "HiddenPair", "NakedTriple", "HiddenTriple", "MentalSingle(direct)", "MentalNotesSingle"],
-    "variant combinations": ["CageCombination", "SumCombination", "ArrowCombination", "SetCombination", "Innie/Outie(direct)",
-                             "PairwiseConstraint", "TableCombination", "LineRange", "LineScan", "LineClass", "SandwichCombination",
-                             "XSumCombination", "SkyscraperCombination", "CountCombination"],
-    "single-digit patterns": ["X-Wing", "X-Chain", "EmptyRectangle", "Coloring", "FinnedFish", "MultiColouring"],
-    "variant implications": ["EqualDigits", "DigitCount", "LawOfLeftovers", "EqualSumCombination", "ComboLock", "RuleIntersection",
-                             "ImpliedHouses", "Domino", "ClassCount", "SumBound", "Innie/Outie(notes)", "Innie/Outie(sum)",
-                             "ClassColouring"],
-    "fish": ["Swordfish", "Jellyfish"],
-    "wings": ["XYZ-Wing", "WXYZ-Wing"],     # XY-Wing is a 3-cell XY-Chain: subsumed, so it sits with the chains
-    "uniqueness": ["UniqueRectangle", "BUG+1", "GurthSymmetry"],
-    "multi-digit chains": ["XY-Wing", "XY-Chain", "RemotePairs", "ChuteRemotePairs", "3DMedusa", "MentalChain(direct)", "ColourAlgebra"],
-    "quads": ["NakedQuad", "HiddenQuad"],
-    "advanced variant logic": ["SumAlgebra", "WeightedSums", "BandLogic", "Fireworks", "ComboPositions", "CliqueHouse", "LineSets", "LineClues"],
-    "inference chains": ["AIC", "NiceLoop(discontinuous)"],
-    "ALS": ["ALS-XZ", "ALS-XY-Wing", "SueDeCoq", "AlignedPairExclusion", "ALS-AIC", "DeathBlossom"],
-    "case work": ["CaseAnalysis", "EitherWay", "WhatIf", "ShortTrial"],
-}.items():
-    for _n in _names:
-        CONCEPT[_n] = _c
-
-
-def concept_of(t):
-    return CONCEPT.get(S.TECH_NAMES.get(t, ""), S.TECH_NAMES.get(t, str(t)))
-
-
 _ORDER = None
 
 
@@ -162,24 +123,9 @@ def _order_table():
     return _ORDER
 
 
-def _specific_in(p, steps, t):
-    """most specific pattern name the explainer gives technique t's steps in this solve (e.g. Skyscraper)."""
-    from . import explain as E
-    c = Counter()
-    try:
-        for i, step, state in E.replay(p, steps):
-            if step.move.feat[0] == t:      # the pattern ("Sashimi Franken X-Wing") is more specific than the name
-                ti = E.explain(step, p, state)["technique"]
-                nm = ti.get("pattern") or ti.get("name")
-                if nm: c[nm] += 1
-    except Exception:
-        return None
-    return c.most_common(1)[0][0] if c else None
-
-
 # techniques whose band depends on the named shape: plain X-Wing / short X-Chains / finned X-Wing / basic set theory
 # Medium; Franken / Mutant X-Wings, long X-Chains, larger finned fish and Phistomefel-type set theory Hard. The engine can't cap the shape it looks for, so
-# band-limited solves allow them from Medium on and required_chips checks the shapes actually used.
+# band-limited solves allow them from Medium on and band_path checks the shapes actually used.
 SINGLE_CODES = {"FHS", "HSI", "NSI", "LSI", "CSI"}   # singles: no use counts on the card (GRADE.md 3)
 SPLIT = ("X-Wing", "X-Chain", "FinnedFish", "LawOfLeftovers")   # engine X-Wing includes Franken / Mutant 2-fish
 SPLIT_LOW = {"X-Wing": 3, "X-Chain": 3, "FinnedFish": 4, "LawOfLeftovers": 2}   # their lower band; larger shapes one above
@@ -191,110 +137,6 @@ def tech_band(t):
         return SPLIT_LOW[S.TECH_NAMES[t]]
     code, b = chip_of(t)
     return b if b is not None else 9
-
-
-def _split_hard(p, steps, techs):
-    """SPLIT techniques of `techs` used in `steps` with a Hard shape (by the explainer's pattern name)."""
-    out = set()
-    for t in techs:
-        if S.TECH_NAMES.get(t) in SPLIT and any(s.move.feat[0] == t for s in steps):
-            nm = _specific_in(p, steps, t)
-            if nm and chip_of(t, nm)[1] > SPLIT_LOW[S.TECH_NAMES[t]]:
-                out.add(t)
-    return out
-
-
-def required_chips(p, P, steps=None, specific_by_step=None):
-    """Band-limited requirement. B = the lowest band whose techniques solve the puzzle (human mode). Within that limit
-    a technique is required if switching it off leaves the puzzle unsolvable; if a technique of ANOTHER family can
-    replace it (and switching off both fails) the chip is joint ("XWG/SCL"); interchangeable techniques of the same
-    family give one chip for the cheapest used. -> (band index or None, chips)"""
-    notes = set(getattr(S, "NOTE_TECHS", (S.TAKE_NOTES,)))
-    singles = {t for nm, ts in MT.FAMILIES if nm == "singles" for t in ts}
-    ALL = set(S.TECH_NAMES)
-    comp = set(CB.search_disabled(dict(P, search="human"))) | {S.GUESS}
-    techs = [t for t in ALL if t not in comp and t not in notes]
-    def run(allowed):
-        return _solved(p, P, ALL - (set(allowed) | notes))
-    B, stB, allowedB = None, None, None
-    for b in range(len(BANDS)):
-        allowed = {t for t in techs if tech_band(t) <= b}
-        ok, st = run(allowed)
-        while ok:              # this band only if no larger shape of a split technique (long X-Chain, larger fish) is needed
-            hard = {t for t in _split_hard(p, st, allowed) if tech_band(t) == b}
-            if not hard:
-                break
-            allowed -= hard
-            ok, st = run(allowed)
-        if ok:
-            B, stB, allowedB = b, st, allowed
-            break
-    if B is None:
-        return None, []
-    uses = Counter(s.move.feat[0] for s in stB if s.move.feat[0] not in notes | singles)
-    spec = {}
-    if specific_by_step is not None:
-        for i, s in enumerate(stB):
-            nm = specific_by_step.get(i)
-            if nm: spec.setdefault(s.move.feat[0], Counter())[nm] += 1
-    if specific_by_step is None:
-        for t in uses:
-            if S.TECH_NAMES.get(t) in SPLIT:
-                nm = _specific_in(p, stB, t)
-                if nm: spec[t] = Counter({nm: 1})
-    sp = lambda t: spec[t].most_common(1)[0][0] if t in spec else None
-    chips, seen = [], set()
-    for t in sorted(uses, key=lambda t: -tech_band(t)):
-        ok, st2 = run(allowedB - {t})
-        if not ok:
-            c, b = chip_of(t, sp(t)); chips.append({"chip": c, "band": b, "uses": uses[t]}); continue
-        new = {x.move.feat[0] for x in st2 if x.move.feat[0] not in notes | singles} - set(uses)
-        cross = {a for a in new if concept_of(a) != concept_of(t)}
-        key = frozenset({t} | cross)
-        if cross and key not in seen:
-            seen.add(key)
-            if not run(allowedB - {t} - cross)[0]:
-                parts = [chip_of(t, sp(t))] + [chip_of(a) for a in sorted(cross)]
-                chips.append({"chip": "/".join(c for c, _ in parts), "band": min(b for _, b in parts if b is not None),
-                              "uses": uses[t], "joint": True})
-    # the needed band's chip: each band-B technique ALONE (with everything below B), simplest first; different
-    # families that each suffice -> joint chip (simplest per family); none alone -> the used ones (fallback below)
-    if B > 0:
-        order = _order_table()
-        lower = {t for t in allowedB if tech_band(t) < B}
-        cand = [t for t in allowedB if tech_band(t) == B]
-        if B == 3:   # at Hard the SPLIT techniques are candidates in their Hard shapes, not free helpers below
-            split = {t for t in lower if S.TECH_NAMES.get(t) in SPLIT}
-            lower -= split
-            cand += sorted(split)
-        cand.sort(key=lambda t: order.get(chip_of(t)[0], 99))
-        suff = []
-        for t in cand:
-            ok, st1 = run(lower | {t})
-            if ok and B == 2 and _split_hard(p, st1, {t}):
-                ok = False      # solves only with a Hard shape: not a Medium way through
-            if ok:
-                suff.append((t, st1))
-        if suff:
-            by_fam = {}
-            for t, st1 in suff:
-                by_fam.setdefault(concept_of(t), (t, st1))
-            parts = []
-            for t, st1 in sorted(by_fam.values(), key=lambda x: order.get(chip_of(x[0])[0], 99)):
-                nm = None
-                if S.TECH_NAMES.get(t) in SPLIT:
-                    nm = _specific_in(p, st1, t)
-                parts.append(chip_of(t, nm) + (sum(1 for x in st1 if x.move.feat[0] == t),))
-            chips = [c for c in chips if c["band"] != B]
-            chips.append({"chip": "/".join(c for c, _, _ in parts), "band": B, "uses": parts[0][2],
-                          **({"joint": True} if len(parts) > 1 else {})})
-    if B > 0 and not any(c["band"] == B for c in chips):     # band needed, but only interchangeable same-family ways
-        top = [t for t in uses if tech_band(t) == B or (S.TECH_NAMES.get(t) in SPLIT and chip_of(t, sp(t))[1] == B)]
-        if top:
-            t = min(top, key=lambda t: (MT.band_of(t), -uses[t]))
-            c, b = chip_of(t, sp(t)); chips.append({"chip": c, "band": B, "uses": uses[t]})
-    chips.sort(key=lambda c: (-(c["band"] if c["band"] is not None else -1), c["chip"]))
-    return B, chips
 
 
 META_KEYS = ("title", "author", "source", "id", "url", "date", "rules_text", "type", "license", "tags")

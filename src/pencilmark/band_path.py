@@ -147,18 +147,6 @@ def variant_gate(p):
 _CACHE = None       # position -> state_moves, shared by the many routes of one contents() call (same openings)
 
 
-LAZY = False   # off: not exact (covers pricing, techniques that need others in the same call)
-_SHAPED = set(E2.SPLIT) | {"MentalChain(direct)", "Swordfish", "Jellyfish"}   # classify() may give these a lower shape
-
-
-def _lb(t, tb):
-    """lower bound of the pick key (band, study order) for any move of engine technique t: exact for techniques named by
-    their chip, conservative (the lowest shape band, order 0) for the ones classify() names by shape."""
-    if S.TECH_NAMES.get(t) in _SHAPED:
-        return (min(tb, 3), 0)
-    return (tb, _order(E2.chip_of(t)[0]))
-
-
 def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes=(), guard=None, prefix=(), max_band=6):
     """solve band by band (see module doc). Moves are taken in full-notes mode: each placement clears its peers.
     target = a cell: stop once it is placed, preferring (within the current band) a move that places it -- "what does
@@ -167,7 +155,7 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
     if not hasattr(p, "groups_of"):
         p.finalize()
     P = dict(P or {}, search="human")
-    notes = set(getattr(S, "NOTE_TECHS", (S.TAKE_NOTES,)))
+    notes = set(S.NOTE_TECHS)
     comp = set(CB.search_disabled(P)) | {S.GUESS}
     ct = _code_techs(P)                 # whole-technique codes are switched off in the engine (it then reports a
     whole = set(ban_codes) & set(ct)    # placement under another technique); shape codes are filtered below
@@ -256,50 +244,28 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
             allowed = {t for t in human if tband[t] <= b}
             if not allowed:
                 continue
-            # LAZY: techniques in lower-bound order of the pick key (band, study order); stop
-            # once the best move found beats every technique not yet run -- the expensive ones (RuleIntersection,
-            # SumAlgebra ...) only run when nothing simpler exists. rng mode keeps the one-call form.
-            if LAZY and rng is None:
-                groups = {}
-                for t in allowed:
-                    groups.setdefault(_lb(t, tband[t]), set()).add(t)
-                tiers = sorted(groups)
-            else:
-                tiers = [None]
-            enabled = set()
+            # below Hard only size-2 finned fish can be picked (larger ones are Hard): don't list them (windoku:
+            # sizes 3-4 were 90% of a listing over 58 houses)
+            capped = b <= 3 and FISH_CAP
+            Pb = dict(P, fish_max_n=2) if capped else P
+            key = (tuple(vals), tuple(cand), frozenset(allowed), capped) if _CACHE is not None else None
+            mv = _CACHE.get(key) if key is not None else None
+            if mv is None:
+                mv = CB.state_moves(q, Pb, disabled=set(S.TECH_NAMES) - allowed, limit_per_tech=8, details=True,
+                                    cpuzzle=cp, cand=mask)
+                if key is not None:
+                    _CACHE[key] = mv
             cands = []
-            mv_all = []
-            for k_, lbk in enumerate(tiers):
-                run = groups[lbk] if lbk is not None else allowed   # each group runs once; its moves are merged
-                enabled |= run
-                # below Hard only size-2 finned fish can be picked (larger ones are Hard): don't list them (windoku:
-                # sizes 3-4 were 90% of a listing over 58 houses)
-                capped = b <= 3 and FISH_CAP
-                Pb = dict(P, fish_max_n=2) if capped else P
-                key = (tuple(vals), tuple(cand), frozenset(run), capped) if _CACHE is not None else None
-                mv = _CACHE.get(key) if key is not None else None
-                if mv is None:
-                    mv = CB.state_moves(q, Pb, disabled=set(S.TECH_NAMES) - run, limit_per_tech=8, details=True,
-                                        cpuzzle=cp, cand=mask)
-                    if key is not None:
-                        _CACHE[key] = mv
-                mv_all.extend(mv)
-                cands = []
-                for m in mv_all:
-                    if m["tech"] not in enabled or not (m["place"] or m["elim"]):
-                        continue
-                    code, name, mb = classify(m, p)
-                    if code in ban_codes:
-                        continue
-                    if mb <= b:
-                        hit = 0 if target is not None and m["place"] and m["place"][0] == target else 1
-                        key = (mb, hit, rng.random()) if rng is not None else (mb, hit, _order(code), m["d"])
-                        cands.append((key, code, name, mb, m))   # rng: any move of the lowest band (other solvers)
-                if cands and lbk is not None and k_ + 1 < len(tiers):
-                    best = min(c_[0] for c_ in cands)
-                    nb, no = tiers[k_ + 1]
-                    if (best[0], best[1], best[2]) < (nb, 0, no):
-                        break
+            for m in mv:
+                if m["tech"] not in allowed or not (m["place"] or m["elim"]):
+                    continue
+                code, name, mb = classify(m, p)
+                if code in ban_codes:
+                    continue
+                if mb <= b:
+                    hit = 0 if target is not None and m["place"] and m["place"][0] == target else 1
+                    key = (mb, hit, rng.random()) if rng is not None else (mb, hit, _order(code), m["d"])
+                    cands.append((key, code, name, mb, m))   # rng: any move of the lowest band (other solvers)
             if cands:
                 pick = min(cands, key=lambda x: x[0])
                 break
@@ -633,7 +599,7 @@ def explain_steps(p, P, steps):
     E.derived(p)        # build the explainer's derived puzzle from the ORIGINAL p (its domains are rules); each step's copy
                         # inherits it -- otherwise a copy builds it from its candidate masks and reads them as cell rules
     P = dict(P or {}, search="human")
-    notes = set(getattr(S, "NOTE_TECHS", (S.TAKE_NOTES,)))
+    notes = set(S.NOTE_TECHS)
     rev = {v: k for k, v in S.TECH_NAMES.items()}
     N, D = p.N, p.D
     vals = [p.givens.get(c, 0) for c in range(N)]

@@ -10,8 +10,7 @@
           that tier (data/tiers.json, fitted from the
           calibrated per-technique levels).
   time    predicted solve time in minutes for the reference solver (the median
-          fed-sudoku solver). Each person learns their own multiplier:
-          personal_multiplier() = typical ratio of their times to predictions.
+          fed-sudoku solver).
 """
 import json
 import math
@@ -41,10 +40,6 @@ def level(G, D, P):
     g = G / max(sc.size(D), 1e-9) * sc.size(9)
     k = P.get("level_slope") or P["beta"]
     return k * (g - ref_difficulty(P)) / math.log(2)
-
-
-def move_level(d, D, P):
-    return level(d, D, P)
 
 
 def tiers():
@@ -158,7 +153,7 @@ FAMILIES = [
     ("trial", [26, 61, 63, 68, 69, 70, 80, 82, 83]),
 ]
 _FAM_OF = {t: k for k, (_, ts) in enumerate(FAMILIES) for t in ts}
-_unlisted = set(S.TECH_NAMES) - set(_FAM_OF) - {S.TAKE_NOTES, getattr(S, "SNYDER_MARKS", 90), getattr(S, "GUESS", 27), getattr(S, "CANONICAL", 56)}
+_unlisted = set(S.TECH_NAMES) - set(_FAM_OF) - {S.TAKE_NOTES, S.SNYDER_MARKS, S.GUESS, S.CANONICAL}
 if _unlisted:   # a new technique without a family would silently count as a single
     import warnings
     warnings.warn(f"metrics.FAMILIES lacks technique codes {sorted(_unlisted)}: add them")
@@ -194,7 +189,7 @@ def required_techniques(puzzle, P):
     cp = CB.to_cpuzzle(puzzle)
     T = tiers()
     lv = (T or {}).get("technique_levels", {})
-    always = {S.TAKE_NOTES, S.CANONICAL} if hasattr(S, "CANONICAL") else {S.TAKE_NOTES}
+    always = {S.TAKE_NOTES, S.CANONICAL}
     order = []
     for _, ts in FAMILIES:   # simplest pattern first (textbook order), fitted level only breaks ties
         order += sorted((t for t in ts if t in S.TECH_NAMES),
@@ -236,13 +231,6 @@ def required_techniques(puzzle, P):
             steps = st2
     req = sorted({st.move.feat[0] for st in steps} - always, key=lambda t: (family_of(t), lv.get(S.TECH_NAMES[t], 0.0)))
     return req, steps
-
-
-def personal_multiplier(observed_seconds, predicted_seconds):
-    """Your typical time / predicted time (geometric median-ish: median of log ratios)."""
-    import statistics
-    r = [math.log(o / p) for o, p in zip(observed_seconds, predicted_seconds) if o > 0 and p > 0]
-    return math.exp(statistics.median(r)) if r else 1.0
 
 
 def grade_puzzle_checked(puzzle, P, explain=False, time_limit=60.0, tier_by_family=True):

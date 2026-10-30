@@ -4,7 +4,6 @@ Drop-in fast paths with behavioural parity to the Python reference:
 
     from pencilmark import cbackend as CB
     steps, solved = CB.solve(puzzle, params)            # ~ Solver(puzzle, Scorer(params)).solve()
-    raw = CB.featurize_raw(rows, params, threads=16)
     sols = CB.brute_solve(puzzle, limit=2)               # ~ pencilmark.solver.brute_solve
 
 Steps are real pencilmark.solver.Step / Move objects, so pencilmark.scoring.grade(),
@@ -13,7 +12,6 @@ csolver/build.sh.
 """
 from __future__ import annotations
 
-import json
 import os
 import sys
 from collections import defaultdict
@@ -21,16 +19,8 @@ from pathlib import Path
 
 from . import _csolver as _C  # noqa: E402  (the compiled C++ engine, sources in csrc/)
 
-# optional arguments of the loaded build (older builds lack the newer ones): checked once at import
-_SOLVE_DOC = (getattr(_C.solve, "__doc__", "") or "")
-_SOLVE_HAS = {k: (k + ":") in _SOLVE_DOC or (k + " :") in _SOLVE_DOC for k in ("explain", "colours")}
-_HAS_ROLLOUTS = hasattr(_C, "rollouts")
-_HAS_INFO = hasattr(_C, "puzzle_info")
-_HAS_RAW = hasattr(_C, "make_puzzle_raw")  # featurize builds each state's puzzle inside the workers
-
 from . import model as M  # noqa: E402
 from . import solver as S  # noqa: E402
-from .model import parse_grid  # noqa: E402
 from .scoring import Scorer  # noqa: E402
 
 _NM_NONE, _NM_GROUP, _NM_LOCK, _NM_INNIE, _NM_OUTIE, _NM_NARY = range(6)
@@ -75,14 +65,14 @@ XMETA_KEYS = {
     S.NARY_D: ("ctype", "constraint", "n_vars"),
     S.RULE_INTERSECT: ("cells", "n_elims", "rules", "nodes"),
     S.SUM_ALGEBRA: ("houses", "pieces", "n_elims", "rounds"),
-    **({S.BAND_LOGIC: ("lines", "boxes", "rules", "n_elims", "cells", "level", "cases")} if hasattr(S, "BAND_LOGIC") else {}),
-    **({S.FIREWORKS: ("cell_x", "cell_a", "cell_b", "digit_mask", "n_elims", "region")} if hasattr(S, "FIREWORKS") else {}),
-    **({S.HUMAN_CASE: ("cases", "rounds", "placed", "refutation", "options", "house")} if hasattr(S, "HUMAN_CASE") else {}),
-    **({S.COMBO_POS: ("cage", "house", "digit_mask", "max_in_cage", "need_outside", "fillings")} if hasattr(S, "COMBO_POS") else {}),
-    **({S.CLIQUE_HOUSE: ("size", "digit_mask", "n_elims", "placement")} if hasattr(S, "CLIQUE_HOUSE") else {}),
-    **({S.LINE_SETS: ("house", "lines", "options", "n_elims")} if hasattr(S, "LINE_SETS") else {}),
-    **({S.LINE_CLUES: ("house", "clues", "fillings", "n_elims")} if hasattr(S, "LINE_CLUES") else {}),
-    **({S.WEIGHTED_SUMS: ("facts", "cells", "max_weight", "n_elims", "total")} if hasattr(S, "WEIGHTED_SUMS") else {}),
+    S.BAND_LOGIC: ("lines", "boxes", "rules", "n_elims", "cells", "level", "cases"),
+    S.FIREWORKS: ("cell_x", "cell_a", "cell_b", "digit_mask", "n_elims", "region"),
+    S.HUMAN_CASE: ("cases", "rounds", "placed", "refutation", "options", "house"),
+    S.COMBO_POS: ("cage", "house", "digit_mask", "max_in_cage", "need_outside", "fillings"),
+    S.CLIQUE_HOUSE: ("size", "digit_mask", "n_elims", "placement"),
+    S.LINE_SETS: ("house", "lines", "options", "n_elims"),
+    S.LINE_CLUES: ("house", "clues", "fillings", "n_elims"),
+    S.WEIGHTED_SUMS: ("facts", "cells", "max_weight", "n_elims", "total"),
     S.INNIE_X: ("house", "outie", "n_cells", "combos", "n_cages", "distinct", "complete"),
     S.MEDUSA: ("rule", "nodes", "digits", "n_elims", "false_color"),
     # SumBound: allowed range [lo, hi] of the target, triangular bound used, positions, rule type
@@ -326,17 +316,13 @@ def solve(puzzle, params=None, disabled=(), solution=None, allow_direct=True, ma
     disabled = [int(t) for t in _extra_disabled(set(disabled) | search_disabled(params))]  # env override, e.g. "58,59,60"
     args = [cp, list(puzzle.givens.items()), cp_p, disabled, sol, bool(allow_direct), int(max_steps),
             bool(assume_unique), bool(all_tiers)]
-    if _SOLVE_HAS["explain"]:
-        args.append(bool(explain))
-        if _SOLVE_HAS["colours"]:
-            args.append(_colour_list(colour_seeds, puzzle.N))
+    args.append(bool(explain))
+    args.append(_colour_list(colour_seeds, puzzle.N))
     if cand is not None:
-        if "cand" not in (_C.solve.__doc__ or ""):
-            raise RuntimeError("solve(cand=) needs a csolver build with the candidate mask")
         raw, solved = _C.solve(*args, cand=[int(x) for x in cand])
     else:
         raw, solved = _C.solve(*args)
-    info = _C.puzzle_info(cp, disabled) if explain and _HAS_INFO else None
+    info = _C.puzzle_info(cp, disabled) if explain else None
     steps = []
     for row in raw:
         alts, chosen, place, el, nm, d, mode, n_empty, er, nw, xm, code, pats, exs = row[:14]
@@ -368,32 +354,6 @@ def solve(puzzle, params=None, disabled=(), solution=None, allow_direct=True, ma
         m.explain = _explain(puzzle, m, nm, pats, exs, info) if explain else None
         steps.append(S.Step(m, alts, "notes" if mode else "direct", n_empty, er, nw, n_cands))
     return steps, solved
-
-
-def required_techniques(puzzle, scorer):
-    """pencilmark.solver.required_techniques on the C++ solver (same algorithm)."""
-    if not hasattr(puzzle, "groups_of"):
-        puzzle.finalize()
-    cp = to_cpuzzle(puzzle)
-    B = scorer.p["B"]
-    techs = sorted((t for t in S.TECH_NAMES if t != S.GUESS), key=lambda t: (t == S.TRIAL, B.get(t, 99)))
-    for k in range(1, len(techs) + 1):
-        allowed = set(techs[:k])
-        steps, solved = solve(puzzle, scorer.p, disabled=set(S.TECH_NAMES) - allowed, cpuzzle=cp)
-        if solved:
-            break
-    else:
-        return None, []
-    disabled = set(S.TECH_NAMES) - allowed
-    used = sorted({st.move.feat[0] for st in steps}, key=lambda t: -B.get(t, 0))
-    for t in used:
-        if t == techs[k - 1]:
-            continue
-        st2, solved2 = solve(puzzle, scorer.p, disabled=disabled | {t}, cpuzzle=cp)
-        if solved2:
-            disabled |= {t}
-            steps = st2
-    return sorted({st.move.feat[0] for st in steps}, key=lambda t: B.get(t, 0)), steps
 
 
 # ------------------------------------------------------------ explanations --
@@ -736,61 +696,6 @@ def _explain(p, m, nm, pats, exs, info=None):
     return out
 
 
-def rollouts(puzzle, params=None, n=200, temperature=1.0, seed=1, focus=True, choice=None, threads=16,
-             disabled=(), solution=None, all_families=False, cpuzzle=None, max_steps=5000, assume_unique=False):
-    """Stochastic, human-like solve paths for distribution grading. At each step a move is sampled with
-    P(m) ∝ exp((-d(m) + attract[technique] + eta·log(1+effect) + focus·g) / temperature)
-    (focus: log distance / same digit / same box / same house as the previous placement). choice: one
-    population dict of data/choice_fit.pkl ({"attract": {technique name: a}, "eta", "focus": {...}}) or
-    None (difficulty race only). all_families=True races every family of the phase (slower); default:
-    the solver's tier gating. assume_unique (default False): allow uniqueness techniques -- only for a
-    puzzle proven unique (pencilmark.metrics.grade_puzzle_checked). Returns n dicts: time (seconds,
-    scoring.predict_time model), difficulty
-    (soft bottleneck, scoring.grade), hardest (technique name), notes (bool), steps, solved."""
-    if not hasattr(puzzle, "groups_of"):
-        puzzle.finalize()
-    sc = Scorer(params)
-    cp = cpuzzle if cpuzzle is not None else to_cpuzzle(puzzle)
-    sol = [int(x) for x in solution] if solution is not None else None
-    if sol is None:
-        sol = getattr(puzzle, "_pm_solution", None)   # known when rate() proved uniqueness
-    if sol is None:  # one brute-force solve up front, so Guess steps never search again
-        b = brute_solve(puzzle, limit=1, cpuzzle=cp)
-        sol = list(b[0]) if b else None
-    attract = [0.0] * 128
-    eta, gf = 0.0, [0.0] * 4
-    if choice:
-        code = {v: k for k, v in S.TECH_NAMES.items()}
-        for k, v in (choice.get("attract") or {}).items():
-            t = code.get(k, k if isinstance(k, int) else None)
-            if t is not None and 0 <= t < 128:
-                attract[t] = float(v)
-        eta = float(choice.get("eta") or 0.0)
-        f = choice.get("focus") or {}
-        gf = [float(f.get(k, 0.0)) for k in ("log_dist_last", "same_digit_last", "same_box_last", "near_last")]
-    rargs = [cp, list(puzzle.givens.items()), sc.p, [int(t) for t in _extra_disabled(disabled)], sol,
-             int(n), float(temperature), int(seed), int(threads), bool(focus), bool(all_families),
-             attract, eta, gf, int(max_steps)]
-    if "assume_unique" in (getattr(_C.rollouts, "__doc__", "") or ""):
-        rargs.append(bool(assume_unique))
-    raw = _C.rollouts(*rargs)
-    return [{"time": t, "difficulty": d, "hardest": S.TECH_NAMES.get(h, str(h)) if h >= 0 else None,
-             "notes": bool(nt), "steps": k, "solved": bool(ok)} for t, d, h, nt, k, ok in raw]
-
-
-def solve_stats(puzzle, params=None, disabled=(), solution=None, assume_unique=False, cpuzzle=None, allow_direct=True):
-    """Per-strategy profile of one default solve: {strategy: (ms, calls, hits)} plus "_total_ms", "_steps".
-    Strategy names: notes-tier strategies (singles, combination, locked, chains3-5, forcing, ...) and
-    direct stages ("d:singles", "d:line", "d:mental", ...); hits = calls that produced a move."""
-    if not hasattr(puzzle, "groups_of"):
-        puzzle.finalize()
-    sc = Scorer(params)
-    cp = cpuzzle if cpuzzle is not None else to_cpuzzle(puzzle)
-    sol = [int(x) for x in solution] if solution is not None else None
-    return dict(_C.solve_stats(cp, list(puzzle.givens.items()), sc.p, [int(t) for t in _extra_disabled(disabled)], sol,
-                               bool(assume_unique), bool(allow_direct)))
-
-
 def state_moves(puzzle, params=None, all_tiers=True, assume_unique=False, limit_per_tech=0, disabled=(),
                 solution=None, cpuzzle=None, written=None, details=False, cand=None):
     """Every move available at ONE state (puzzle.givens = filled cells; puzzle.domains = the marks / allowed
@@ -815,13 +720,9 @@ def state_moves(puzzle, params=None, all_tiers=True, assume_unique=False, limit_
     args = [cp, list(puzzle.givens.items()), sc.p, [int(t) for t in _extra_disabled(disabled)], sol,
             bool(assume_unique), int(limit_per_tech)]
     if cand is not None:        # mid-solve candidates as a mask; cpuzzle keeps the puzzle's own domains (build it once)
-        if "cand" not in (_C.state_moves.__doc__ or ""):
-            raise RuntimeError("state_moves(cand=) needs a csolver build with the candidate mask")
         raw = _C.state_moves(*args, None if written is None else [int(x) for x in written], bool(details),
                              [int(x) for x in cand])
     elif written is not None or details:
-        if "details" not in (_C.state_moves.__doc__ or ""):
-            raise RuntimeError("state_moves(written=, details=) needs a dev75+ csolver build")
         raw = _C.state_moves(*args, None if written is None else [int(x) for x in written], bool(details))
     else:
         raw = _C.state_moves(*args)
@@ -842,37 +743,6 @@ def state_moves(puzzle, params=None, all_tiers=True, assume_unique=False, limit_
     return out
 
 
-ROLL_X_NAMES = None  # filled lazily: META_NAMES + DESC_NAMES + ["log scan"] (the 19 columns of mv_x)
-
-
-def roll_to_placement(puzzle, params=None, written=None, k=20, temperature=1.0, seed=1, max_moves=40, phase="auto",
-                      lists="all", rate_w=None, disabled=(), threads=16, cpuzzle=None):
-    """dev83+: K rollouts of the human-mode race from ONE state (puzzle.givens = filled cells, puzzle.domains = the
-    candidate view) to the next placement. Each step enumerates every move (as state_moves), picks one by softmax
-    over -d / temperature, or over rate_w . x / temperature when rate_w (19 weights over mv_x, + an optional
-    intercept) is given, and applies it; TakeNotes is a move in the direct phase. written = per-cell bitmask of the
-    marks on the board (sets held / coverage; eliminations erase them; an eliminated unwritten candidate counts in
-    s_held_mental). phase: "direct" / "notes" / "auto" (notes if any mark is written). Returns numpy arrays:
-    s_* per rollout step (rollout, k, state, row = chosen move row, n_empty, n_cands, held_mental, hash), r_* per
-    rollout (n_moves, placement), st_* per visited state (deduplicated; hash, row0, n, phase, listed),
-    mv_* per move row (tech, code, place_cell / place_digit, n_elims, d, x = 19 features: ROLL_X_NAMES).
-    lists="first" marks only the start state's rows as listed (all rows are returned either way)."""
-    global ROLL_X_NAMES
-    from .scoring import META_NAMES, DESC_NAMES
-    ROLL_X_NAMES = list(META_NAMES) + list(DESC_NAMES) + ["log scan"]
-    if not hasattr(_C, "roll_to_placement"):
-        raise RuntimeError("roll_to_placement needs a dev83+ csolver build")
-    if not hasattr(puzzle, "groups_of"):
-        puzzle.finalize()
-    sc = Scorer(params)
-    cp = cpuzzle if cpuzzle is not None else to_cpuzzle(puzzle)
-    ph = {"direct": 0, "notes": 1, "auto": -1}[phase] if isinstance(phase, str) else int(phase)
-    return _C.roll_to_placement(cp, list(puzzle.givens.items()), sc.p, [int(t) for t in _extra_disabled(disabled)],
-                                int(k), float(temperature), int(seed), int(max_moves), ph,
-                                None if written is None else [int(x) for x in written],
-                                None if rate_w is None else [float(x) for x in rate_w], lists == "all", int(threads))
-
-
 class BruteResult(list):
     """brute_solve result: the solutions found (a list, as before) plus .complete: False when the
     node limit stopped the search before a verdict (then [] does NOT mean "no solution", and
@@ -887,62 +757,9 @@ def brute_solve(puzzle, limit=2, start=None, node_limit=2_000_000, cpuzzle=None)
         puzzle.finalize()
     cp = cpuzzle if cpuzzle is not None else to_cpuzzle(puzzle)
     st = None if start is None else (list(start[0]), list(start[1]))
-    try:
-        sols, complete = _C.brute_solve(cp, list(puzzle.givens.items()), int(limit), int(node_limit), st, True)
-    except TypeError:  # older build without the status flag
-        sols, complete = _C.brute_solve(cp, list(puzzle.givens.items()), int(limit), int(node_limit), st), True
+    sols, complete = _C.brute_solve(cp, list(puzzle.givens.items()), int(limit), int(node_limit), st, True)
     out = BruteResult(sols)
     out.complete = bool(complete)
-    return out
-
-
-def _spec(row):
-    """a feature-table row as a plain spec for the C++ builder."""
-    sol = row.get("solution")
-    sol = [int(x) for x in sol] if isinstance(sol, str) and len(sol) == 81 else None
-    if row["tab"] == "killer":
-        cages = [(int(t), [int(c) for c in cells]) for t, cells in json.loads(row["cages_json"])]
-        return (2, [], cages, sol)
-    givens = list(parse_grid(row["grid"], 9).items())
-    return (1 if row["tab"] == "nonc" else 0, givens, [], sol)
-
-
-def featurize_puzzles(puzzles, params, threads=16, rich=False, solutions=None, disabled=(), as_lists=False,
-                      max_steps=5000, last_moves=None, all_tiers=False, colour_seeds=None, assume_unique=False):
-    """featurize_raw for arbitrary finalized pencilmark.model.Puzzle objects (any
-    size D, groups, relations, n-ary constraints and lines). solutions: optional
-    list (per puzzle) of solution lists used by Guess; same keys as featurize_raw.
-    max_steps=1 emits only the first step's alternatives (human-choice fitting).
-    Both featurize functions also return m_place / m_value per move (-1 / 0 when
-    the move only eliminates). last_moves: optional per-puzzle (cell, digit) or
-    (cell, digit, run_length) or None -- the move before the first step (e.g. the
-    human's previous placement), seeding the rich "previous placement" features.
-    all_tiers=True: at every state the moves of EVERY technique family (direct, line /
-    mental, all notes tiers) are emitted, not only the solver's current tier; the
-    chosen move and the path are unchanged. colour_seeds: optional per-puzzle {cell: colour} (human
-    colouring; a colour = "same digit" hypothesis seeding ColourAlgebra, used where consistent with the
-    solution, soft without one). assume_unique (default False; bool or per-puzzle list): allow uniqueness
-    techniques only for puzzles proven unique (pencilmark.metrics.grade_puzzle_checked). params["human_mode"] = {"budget", "k"}
-    switches the solver to human mode (all families of a phase compete, loads priced)."""
-    sc = Scorer(params)
-    specs = []
-    for i, p in enumerate(puzzles):
-        if not hasattr(p, "groups_of"):
-            p.finalize()
-        sol = solutions[i] if solutions is not None else None
-        sol = [int(x) for x in sol] if sol is not None and len(sol) == p.N else None
-        lm = last_moves[i] if last_moves is not None else None
-        lm = tuple(int(x) for x in lm) if lm is not None and all(x is not None for x in lm[:2]) else None
-        cs = _colour_list(colour_seeds[i], p.N) if colour_seeds is not None else None
-        au = assume_unique[i] if isinstance(assume_unique, (list, tuple)) else assume_unique
-        # newer builds: the C++ puzzle is built (and freed) per state inside the worker threads -- holding
-        # every finalized puzzle at once was the transient memory peak of large featurize calls
-        cp = _C.make_puzzle_raw(*_cpuzzle_args(p)) if _HAS_RAW else to_cpuzzle(p)
-        specs.append(("praw" if _HAS_RAW else "cpuzzle", cp, list(p.givens.items()), sol, int(max_steps), lm,
-                      bool(all_tiers), cs, bool(au)))
-    out = _C.featurize(specs, sc.p, int(threads), [int(t) for t in _extra_disabled(disabled)], bool(rich))
-    if as_lists:
-        out = {k: (v.tolist() if hasattr(v, "tolist") else v) for k, v in out.items()}
     return out
 
 
@@ -983,18 +800,3 @@ def _extra_disabled(disabled):
     if os.environ.get("CSOLVER_EXTRA_DISABLED"):
         return set(disabled) | {int(x) for x in os.environ["CSOLVER_EXTRA_DISABLED"].split(",") if x}
     return disabled
-
-
-def featurize_raw(rows, params, threads=16, as_lists=False, disabled=(), rich=False):
-    """Feature table computed by C++
-    worker threads. Values are numpy arrays (np.array of the Python lists
-    gives identical arrays); as_lists=True converts to plain lists.
-    rich=True adds m_rich (one row per candidate move, same order as m_step),
-    s_rich (one row per step) and their column names rich_names / step_names
-    (feature columns)."""
-    sc = Scorer(params)
-    out = _C.featurize([_spec(r) for r in rows], sc.p, int(threads), [int(t) for t in _extra_disabled(disabled)],
-                       bool(rich))
-    if as_lists:
-        out = {k: (v.tolist() if hasattr(v, "tolist") else v) for k, v in out.items()}
-    return out

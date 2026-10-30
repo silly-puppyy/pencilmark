@@ -1,7 +1,6 @@
 """Human-readable grade card: a label, two numbers, and a row of technique chips.
 
   card = grade_card(puzzle, P)        # uniqueness-checked (metrics.grade_puzzle_checked)
-  print(card_text(card)); html = card_html(card)
 
   label        family tier of the REQUIRED strategies (metrics.family_tier), with its meaning
   difficulty   level of the hardest insight (+ amount of hard reasoning), the difficulty head
@@ -74,7 +73,6 @@ CODES = {
     "SnyderMarks": ("SNY", "Snyder notation (box pairs)"), "SnyderSingle": ("SNY", "Snyder notation (box pairs)"),
     "CaseAnalysis": ("CAS", "Case analysis"),
 }
-ICONS = {"difficulty": "◆", "tediousness": "⏱"}
 
 
 def _code(name):
@@ -88,7 +86,7 @@ def forced_counts(steps):
     out = Counter()
     for st in steps:
         t = st.move.feat[0]
-        if t in getattr(S, "NOTE_TECHS", (S.TAKE_NOTES,)):
+        if t in S.NOTE_TECHS:
             continue
         fam = MT.family_of(t)
         avail = [MT.family_of(f[0]) for f in st.alts if f[0] != S.TAKE_NOTES]
@@ -150,7 +148,7 @@ def grade_card(puzzle, P, specific=True, check_rules=True, band=None):
         tier, req = MT.band_label(puzzle, P)      # user's six bands (Very Easy .. Extreme) from required techniques
     req = [S.TECH_NAMES.get(t, str(t)) if isinstance(t, int) else t for t in (req or [])]
     forced = forced_counts(steps)
-    notes = getattr(S, "NOTE_TECHS", (S.TAKE_NOTES,))
+    notes = S.NOTE_TECHS
     used = Counter(S.TECH_NAMES[st.move.feat[0]] for st in steps if st.move.feat[0] not in notes)
     rev = {v: k for k, v in S.TECH_NAMES.items()}
     singles = [n for n in used if MT.family_of(rev[n]) == 0]          # the base everyone uses
@@ -180,7 +178,7 @@ def grade_card(puzzle, P, specific=True, check_rules=True, band=None):
     # ran out) does not make the card Unknown -- band and score stay consistent
     if gi and (band is None or band[0] == "Unknown"):   # a guess is not a grade: report where logic ran out
         pre = steps[:gi[0]]
-        band = max((MT.band_of(st.move.feat[0]) for st in pre if st.move.feat[0] not in getattr(S, "NOTE_TECHS", (S.TAKE_NOTES,))), default=0)
+        band = max((MT.band_of(st.move.feat[0]) for st in pre if st.move.feat[0] not in S.NOTE_TECHS), default=0)
         human = (P or {}).get("search") == "human"
         # no available technique can continue: we can't grade it (rated unknown)
         return {"status": "beyond human logic" if human else "beyond engine", "label": "Unknown",
@@ -215,28 +213,3 @@ def grade_card(puzzle, P, specific=True, check_rules=True, band=None):
             "flags": flags, "difficulty": round(lvl, 1), "tediousness_min": round(g["grade"]["work_time"] / 60, 1),
             "think_min": round(g["grade"]["think_time"] / 60, 1), "chips": chips, "_notes_raw": pnotes}
 
-
-def card_text(card):
-    if "label" not in card:
-        return f"[{card.get('status')}]"
-    chips = " ".join(c["code"] + (f"×{c['forced']}" if c["forced"] > 1 else "") for c in card["chips"])
-    if card.get("status") == "beyond engine":
-        return f"{card['label']:10s} ? (beyond engine at step {card['guess_at']})   {chips}"
-    sc = card.get("score")
-    return (f"{card['label']:9s} {ICONS['difficulty']} {sc if sc is not None else card['difficulty']:4.1f}  {ICONS['tediousness']} {card['tediousness_min']:5.1f} min  "
-            f"[{card.get('balance', '')}{', ' + card['score_fit'] if card.get('score_fit') else ''}]  {chips}"
-            + ("".join(f"\n   ! {x}" for x in card.get("flags", []))))
-
-
-def card_html(card):
-    """Inline HTML snippet: label, two metrics, shaded chips (darker = harder family)."""
-    if "label" not in card:
-        return f"<span class='card'>{card.get('status')}</span>"
-    def chip(c):
-        light = 92 - int(62 * c["shade"])
-        fg = "#fff" if light < 55 else "#222"
-        x = f"<sub>×{c['forced']}</sub>" if c["forced"] > 1 else ""
-        return (f"<span title='{c['name']} ({c['family']})' style='background:hsl(215,35%,{light}%);color:{fg};"
-                f"font:600 11px ui-monospace,monospace;padding:2px 5px;border-radius:4px;margin-right:3px'>{c['code']}{x}</span>")
-    return (f"<span class='card'><b>{card['label']}</b> &nbsp;{ICONS['difficulty']} {card.get('score') if card.get('score') is not None else card['difficulty']} &nbsp;"
-            f"{ICONS['tediousness']} {card['tediousness_min']} min &nbsp;" + "".join(chip(c) for c in card["chips"]) + "</span>")
