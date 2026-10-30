@@ -60,9 +60,13 @@ available, so the band is the least a solver must know.
 
 ### `difficulty`
 
-**Definition.** How hard the puzzle feels while solving it, on Andrew Stuart's scale: a classic sudoku gets about the
-number his sudokuwiki.org grader gives it (fed-sudoku easy / medium / hard: 3.9 / 5.1 / 6.5 against sudokuwiki's 3.9 /
-5.2 / 6.7). Continuous, 0 for a puzzle with one empty cell, no ceiling.
+**Definition.** How hard the puzzle feels while solving it. The scale is meant to hover around the scales of the most
+popular graders, which run from about 1 to 10 on classics (Sudoku Explainer 1.0 to about 11), and to extrapolate past
+them on the same curve. On classics it follows Andrew Stuart's scale: a classic sudoku gets about the number his
+sudokuwiki.org grader gives it (fed-sudoku easy / medium / hard: 3.9 / 5.1 / 6.5 against sudokuwiki's 3.9 / 5.2 / 6.7).
+Below that range, an almost finished grid goes towards 0 (0 is one empty cell; 0.1 the lowest on the benchmark); above
+it, puzzles harder than those graders rate keep climbing with no ceiling (the top 1% of the benchmark is above 14, its
+hardest variant 22.6). Continuous.
 
 - **Hardness, not amount.** It measures how hard the steps are, not how many there are: on grandgames, Easy Samurai rate
   4.9 and Easy 9x9 classics 6.3 (medians), while the Samurai take about four times as long. Size and length belong to `time`.
