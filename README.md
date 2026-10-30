@@ -133,10 +133,14 @@ Rules that cannot be translated exactly are refused, never dropped silently.
 ## Generator
 
 ```python
-from pencilmark.gen import generate
-r = generate({"size": 9, "target_band": "Hard", "seed": 1})
-r["puzzle"], r["card"], r["info"]
+r = pencilmark.generate({"format": "sudoku-spec", "format_version": 1,
+                         "board": {"rows": 9, "cols": 9}, "digits": 9,
+                         "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}],
+                         "where": {"band": "Hard"}})
+r["puzzle"], r["card"], r["info"]       # sudoku-puzzle, its card, run details
 ```
+
+The request is a `sudoku-spec` ([docs/SPEC.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/SPEC.md)).
 
 Targets: band, difficulty range, required techniques, symmetry, given counts, and rule elements (cages, thermos,
 whispers, renban, between lines, arrows, kropki, XV, parity). Every result is checked for uniqueness. Multi-grid boards

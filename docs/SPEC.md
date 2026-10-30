@@ -1,66 +1,104 @@
 # Generator spec: `sudoku-spec`, format_version 1
 
 A request to a puzzle generator. It reuses the vocabulary of the puzzle format ([FORMAT.md](FORMAT.md)) and the keys
-of the grade card ([GRADE.md](GRADE.md)), and is otherwise independent of both. Example specs:
-[examples/specs](examples/specs/README.md).
+of the grade card ([GRADE.md](GRADE.md)). Version 1 contains exactly what pencilmark's generator runs
+(`pencilmark.generate(spec)`); the parts planned for later versions are listed in section 7 and refused today. Example
+specs: [examples/specs](examples/specs/README.md).
 
-A request to the generator **is a puzzle file with blanks**: the same envelope and rule vocabulary, its own `format` (no
-puzzle reader mistakes it for a puzzle), plus four blocks that say what the result must satisfy and how long to try.
+A request **is a puzzle file with blanks**: the same envelope and rule vocabulary, its own `format` (no puzzle reader
+mistakes it for a puzzle), plus blocks that say what the result must satisfy and how long to try.
 
 ```json
 {"format": "sudoku-spec", "format_version": 1,
- "meta": {"title": "Whisper showcase"},
+ "meta": {"title": "Killer with whispers"},
  "board": {"rows": 9, "cols": 9},
  "digits": 9,
- "givens": {"count": [0, 6]},
+ "givens": {"count": [0, 2]},
  "rules": [
   {"type": "box_grid", "origin": "r1c1", "box": [3, 3]},
-  {"type": "line", "kind": "whisper", "value": 5, "cells": ["r1c1", "r2c2", "r3c2", "r4c3"]},
-  {"type": "line", "kind": "whisper", "value": 5, "cells": ["r9c1", "r8c2", "r7c2"]},
-  {"type": "line", "kind": "whisper", "value": 5, "cells": ["r5c4", "r5c5", "r5c6"]},
-  {"type": "cage", "count": "auto", "size": [2, 5]}],
+  {"type": "cage", "count": "auto"},
+  {"type": "line", "kind": "whisper", "count": [2, null]}],
  "symmetry": [{"kind": "rot180", "of": "givens"}],
- "where": {"band": "Hard", "difficulty": [6.5, 8], "contains": ["XWG"], "issues": "no_reject"},
- "quality": {"trivial": {"limit": 0.4}},
- "limits": {"results": 3, "attempts": 2000, "time": 600, "seed": 42},
- "fields": ["difficulty", "band", "contains", "issues"]}
+ "where": {"band": "Hard", "difficulty": [6.5, 9]},
+ "limits": {"time": 300, "seed": 42},
+ "fields": ["difficulty", "time", "band", "contains"]}
 ```
 
-**Fixed vs open.** A rule **with cells is locked**: copied into every result exactly as drawn (`"lock": false` = a
-starting point the generator may move or drop). A rule **with `count` and no cells** is a template the generator fills;
-`count` is a number, `[min, max]` (`max` may be `null`), `"auto"` (as many as needed), `"all"` (every true clue: for
-edge kinds this adds the matching `negative`), `"min"` (a minimal set) or `"tile"` (cages / boxes partitioning the
-area). Templates take shape limits where meaningful: `size` (cells per cage / box), `length` (cells per line), `value`
-(e.g. whisper difference), `displaced` (jigsaw: cells moved out of the regular boxes). A template may also name the variety it wants with the rule's own key: `"color": "black"` on a kropki edge, `"letter": "X"` on an XV edge, `kind` `odd` / `even` on a cell rule; one template per variety, each with its own count. Any template or locked rule may
-carry `"area"` ([FORMAT.md section 5](FORMAT.md#5-rules-common-shape-and-pair-operators): a grid's origin or a cell list), limiting where it lives.
+The result is an ordinary `sudoku-puzzle` with its `solution`; `meta.generated_from` carries the spec's fingerprint
+(section 6), and `meta` of the spec (title, author, ...) is copied to it.
 
-**Givens.** `"givens"` is either the puzzle form (a flat list: digits are locked givens, `0` = must stay empty, `null`
-= no cell) or an object: `count` (number or range), `mask` (flat list, `1` = must be given, `0` = must be empty,
-`null` = generator decides), `values` (`{"r1c1": 5, …}` locked digits).
+## 1. Board
 
-**Symmetry** is a list; each entry has `kind` (`rot180`, `rot90`, `mirror` with `axis` `horizontal` | `vertical` |
-`diagonal` | `antidiagonal`) and `of`: `"givens"`, `"all"` (givens and every rule), or a rule selector such as
-`{"type": "line"}` / `{"type": "line", "kind": "whisper"}`. The same entries are a quality check and are reported by
-`describe()`.
+`board`, `digits` and the house rules as in the puzzle format, restricted to one gap-free D × D grid with standard
+boxes (D = 4, 6, 8, 9, 10, 12, 16): a single `box_grid` rule. It is copied into the result.
 
-**`where`: targets on the card**, using the card's keys ([GRADE.md](GRADE.md)): `band` (value or list), `difficulty`
-(`[lo, hi]` or `"max"` / `"min"`), `time` (`{"max": minutes}`), `contains` (codes that must appear; `{"codes": [...],
-"strict": true}` = as the code itself, not only as an alternative in a chip; `{"only": [...]}` to allow nothing else, and
-per-code `{"uses": n}`), `not_contains`, `issues` (`"none"`, `"no_reject"` (warnings allowed) or a list of allowed codes), `elements` (`{"max": n}`: at most
-n placed rule elements in total).
-**Per-area targets**: `"areas": [{"area": "r1c13", "where": {"band": "Medium"}}]`, measured on the **joint** solve (the
-steps that place or eliminate in that area on the whole-board route), never on the area generated alone.
+## 2. Templates
 
-**`quality`: the checks' limits**, the same object as `rate(..., quality=…)` ([GRADE.md section 4](GRADE.md#4-issues)): `{"trivial": {"limit": 0.4}, "trial": {"severity": "off"}}`.
-It changes what the card reports as `issues`; `where.issues` chooses which of them a result may have.
+A rule with `count` and no cells is a **template**: the generator places rules of that family.
 
-**`limits`** bound every run: `results` (puzzles to return), `attempts`, `time` (seconds), `seed` (reproducible runs).
-The run stops at the first limit; `"max"` / `"min"` targets are best-so-far and the result reports achieved vs
-requested.
+| Template | Varieties |
+|---|---|
+| `{"type": "cage"}` | killer cages |
+| `{"type": "line", "kind": "thermo" \| "whisper" \| "renban" \| "between"}` | whisper gap: the default (5 on 9 × 9) |
+| `{"type": "arrow"}` | |
+| `{"type": "edge", "kind": "kropki"}` | `"color": "white" \| "black"` for one colour |
+| `{"type": "edge", "kind": "xv"}` | `"letter": "X" \| "V"` for one letter |
+| `{"type": "cell", "kind": "odd" \| "even"}` | |
 
-**`fields`**: which card fields to return with each result ([GRADE.md](GRADE.md)).
+One template per variety, each with its own `count`:
 
-pencilmark's generator implements a subset of this language and refuses the rest with a clear message, never silently
-ignoring a part; see [USAGE.md](USAGE.md#generator). Example specs are in `docs/examples/specs/`.
+| `count` | Meaning |
+|---|---|
+| n | exactly n of them in the result |
+| [min, max] | between min and max; `max` `null` = no cap |
+| `"auto"` | allowed, as many as the puzzle needs (possibly none) |
+| `"all"` | kropki only: every true dot drawn, with the matching `negative` (no dot = neither relation) |
+| `"min"` | kropki only: a minimal set of dots |
+| `"tile"` | cages only: the grid tiled by cages |
 
-A run's result is an ordinary `sudoku-puzzle`; `meta.generated_from` may carry the spec's fingerprint.
+## 3. Givens and symmetry
+
+- `givens`: `{"count": n}` or `{"count": [min, max]}` (`max` may be `null`). Without it, the generator digs as far as
+  the targets allow.
+- `symmetry`: at most one entry, `{"kind": "rot180" | "rot90" | "mirror", "axis"?: "horizontal" | "vertical" |
+  "diagonal" | "antidiagonal", "of": "givens"}`. The same entries are reported by `describe()` and the `symmetry` card
+  field.
+
+## 4. Targets: `where`
+
+Conditions on the result's card, using the card's keys ([GRADE.md](GRADE.md)):
+
+| Key | Value |
+|---|---|
+| `band` | one band name |
+| `difficulty` | `[lo, hi]` |
+| `contains` | technique codes that must appear in `contains`; `{"codes": [...], "strict": true}` = as the code itself, not only as an alternative in a chip |
+| `elements` | `{"max": n}`: at most n placed rule elements in total |
+
+## 5. Limits, fields and program data
+
+- `limits`: `time` (seconds for the whole run, default 120), `seed` (reproducible runs, default 1). The run returns one
+  puzzle or fails with the reason after `time`.
+- `fields`: which card fields to return with the result ([GRADE.md](GRADE.md)); default fields without it.
+- `meta`: free information as in the puzzle format. pencilmark reads its own knobs from
+  `meta["io.github.silly-puppyy.pencilmark"]`: `{"solver": "logic" | "cpsat", "grade_seconds": s}`.
+
+A part of a request the generator cannot meet in time is never ignored: the run fails and says why.
+
+## 6. Fingerprint
+
+`sha256:` of the canonical JSON of `board`, `digits`, `givens`, `rules`, `symmetry` and `where` (the parts that decide
+which puzzles qualify; `meta`, `limits` and `fields` do not).
+
+## 7. Reserved for later versions
+
+Refused by format_version 1 readers with a message naming the part:
+
+- other boards: multi-grid layouts, jigsaw boxes, locked clue rules (rules with cells), `"lock": false` starting points;
+- givens in puzzle form, `mask`, `values` (locked digits);
+- template shape limits: `size`, `length`, `displaced`, `area`; other whisper gaps;
+- more symmetry entries, symmetry of rules (`of: "all"` or a rule selector);
+- targets: a list of bands, `difficulty` `"max"` / `"min"` (best-so-far search), `time`, `issues`, `not_contains`,
+  `contains` `only` / `uses`, per-area targets;
+- `quality` (the publishing checks applied as targets);
+- `limits.results` above 1 and `limits.attempts`.

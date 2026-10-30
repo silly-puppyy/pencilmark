@@ -110,7 +110,7 @@ def _board_ok(doc):
     board = ({"type": "box_grid", "origin": "r1c1", "box": [bh, bw]}, {"type": "grid", "origin": "r1c1"})
     for r in locked:
         if {k: v for k, v in r.items() if k not in ("id", "label", "style")} not in board:
-            return f"locked rules other than the board's grid / box_grid are not supported by the generator yet ({r.get('type')})"
+            return f"locked rules other than the board's grid / box_grid are reserved for a later version of the spec (docs/SPEC.md 7) ({r.get('type')})"
     return None
 
 
@@ -125,10 +125,10 @@ def spec_to_gen(doc):
     giv = doc.get("givens")
     if isinstance(giv, list):
         if any(v not in (0, None) for v in giv) or any(v is None for v in giv):
-            raise NotSupportedError("givens in puzzle form (locked digits / gaps) are not supported by the generator yet")
+            raise NotSupportedError("givens in puzzle form (locked digits / gaps) are reserved for a later version of the spec (docs/SPEC.md 7)")
     elif isinstance(giv, dict):
         if "mask" in giv or "values" in giv:
-            raise NotSupportedError("givens masks / locked values are not supported by the generator yet")
+            raise NotSupportedError("givens masks / locked values are reserved for a later version of the spec (docs/SPEC.md 7)")
         c = giv.get("count")
         if isinstance(c, int):
             out["min_givens"], out["max_givens"] = c, c
@@ -143,7 +143,7 @@ def spec_to_gen(doc):
             raise NotSupportedError(f"the generator cannot place {r['type']} {r.get('kind') or ''}".strip())
         for k in ("size", "length", "displaced", "area"):
             if k in r:
-                raise NotSupportedError(f"template {r['type']}: {k!r} is not supported by the generator yet")
+                raise NotSupportedError(f"template {r['type']}: {k!r} is reserved for a later version of the spec (docs/SPEC.md 7)")
         kind = RULE_KIND[key]
         # one colour / letter / parity of a kind is its own element class (counted separately)
         cls = {("kropki", "white"): "kropki_white", ("kropki", "black"): "kropki_black", ("xv", "X"): "x", ("xv", "V"): "v"}
@@ -192,14 +192,14 @@ def spec_to_gen(doc):
     w = doc.get("where") or {}
     for k in ("time", "not_contains", "issues", "areas"):
         if k in w:
-            raise NotSupportedError(f"where.{k} is not supported by the generator yet")
+            raise NotSupportedError(f"where.{k} is reserved for a later version of the spec (docs/SPEC.md 7)")
     if "band" in w:
         if isinstance(w["band"], list):
             raise NotSupportedError("a list of bands is not supported (one band)")
         out["target_band"] = w["band"]
     if "difficulty" in w:
         if not isinstance(w["difficulty"], list):
-            raise NotSupportedError("difficulty 'max' / 'min' (best-so-far search) is not supported by the generator yet")
+            raise NotSupportedError("difficulty 'max' / 'min' (best-so-far search) is reserved for a later version of the spec (docs/SPEC.md 7)")
         out["target_difficulty"] = list(w["difficulty"])
     if "contains" in w:
         c = w["contains"]
@@ -210,14 +210,14 @@ def spec_to_gen(doc):
             if c.get("strict"):
                 out["strict_require"] = True
         else:
-            raise NotSupportedError("contains 'only' / per-code uses are not supported by the generator yet")
+            raise NotSupportedError("contains 'only' / per-code uses are reserved for a later version of the spec (docs/SPEC.md 7)")
     if "elements" in w:
         if set(w["elements"]) != {"max"}:
             raise NotSupportedError('where.elements takes {"max": n}')
         out["max_elements"] = w["elements"]["max"]
     q = doc.get("quality") or {}
     if q:
-        raise NotSupportedError("quality checks are not applied by the generator yet (every result is unique and graded)")
+        raise NotSupportedError("quality is reserved for a later version of the spec (docs/SPEC.md 7); every result is unique and graded")
     lim = doc.get("limits") or {}
     if lim.get("results", 1) != 1:
         raise NotSupportedError("the generator returns one puzzle per run (limits.results 1; run several seeds)")

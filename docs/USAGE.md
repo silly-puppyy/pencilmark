@@ -74,7 +74,6 @@ pencilmark.describe(puzzle)                         # {"type": "Killer Sudoku", 
 pencilmark.to_ipuz(puzzle)                          # optional other formats (docs/INTEROP.md): ipuz 2 export,
 pencilmark.from_string("S9B...")                    #   plain / sudokuwiki.org strings -> sudoku-puzzle dict
 pencilmark.to_string(puzzle, "sudokuwiki")          #   ... and back ("plain" for classic strings)
-pencilmark.spec_from_gen({"size": 9, "target_band": "Hard"})   # generator spec <-> "sudoku-spec" (spec_to_gen)
 p     = pencilmark.load(puzzle)                     # the engine's Puzzle object
 ```
 `rate` returns the same card as `pencilmark rate --json`.
@@ -82,27 +81,18 @@ p     = pencilmark.load(puzzle)                     # the engine's Puzzle object
 ## Generator
 
 ```python
-from pencilmark.gen import generate
-r = generate({"size": 9, "target_band": "Hard", "seed": 1})
-r["puzzle"], r["card"], r["info"]
+import pencilmark
+r = pencilmark.generate({"format": "sudoku-spec", "format_version": 1,
+                         "board": {"rows": 9, "cols": 9}, "digits": 9,
+                         "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]},
+                                   {"type": "cage", "count": "auto"}],
+                         "where": {"band": "Hard"}, "limits": {"time": 300, "seed": 1}})
+r["puzzle"], r["card"], r["info"]       # sudoku-puzzle (with solution), sudoku-grade card, run details
 ```
 
-Requests can also be written as a `sudoku-spec` file (docs/SPEC.md; `spec_to_gen` converts it). The
-generator supports this part of the spec and refuses everything else with a clear message:
-
-| Spec part | Supported |
-|---|---|
-| board | a gap-free D×D grid (D = 4, 6, 8, 9, 10, 12, 16) whose only locked rule is the standard `box_grid` |
-| templates | `cage`, `line` thermo / whisper / renban / between, `arrow`, `edge` kropki / xv, `cell` `parity` (odd / even cells); `count` `[n, null]` (at least n needed), `"auto"` (allowed, not required), `"all"` / `"min"` (kropki), `"tile"` (cages), an exact number only for cages with 0 givens; whisper `value` only at the generator's gap (5 on 9×9) |
-| givens | `{"count": n | [min, max]}` |
-| symmetry | one entry with `of: "givens"` |
-| where | `band` (one), `difficulty` `[lo, hi]`, `contains` (codes, optionally strict), `elements.max` |
-| limits | `time`, `seed`; `results` 1 |
-| meta | `{"io.github.silly-puppyy.pencilmark": {"solver": "logic" \| "cpsat", "grade_seconds": s}}`: generator knobs |
-
-Not supported: locked clue rules, masks / locked givens, `size` / `length` / `displaced` / `area`, upper count bounds,
-`"max"` / `"min"` difficulty, time / issues / not_contains / per-area targets, `quality`, several results, attempts.
-Showcase specs are in `docs/examples/specs/`; those the generator cannot run say so.
+The request is a `sudoku-spec` (docs/SPEC.md): board, rule templates with counts, givens count, symmetry, targets on
+the card (`band`, `difficulty`, `contains`, `elements`), `limits` and `fields`. Parts reserved for later versions are
+refused with a message naming them, never ignored. Example requests: `docs/examples/specs/`.
 
 ## Example
 ```

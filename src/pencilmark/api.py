@@ -22,7 +22,7 @@ import json
 from pathlib import Path
 
 __all__ = ["rate", "rate_many", "solve", "to_export", "load", "NotUnique", "NoSolution", "Undecided", "dumps", "fingerprint",
-           "validate", "describe", "rules_text", "to_ipuz", "from_ipuz", "from_string", "to_string", "spec_from_gen", "spec_to_gen",
+           "validate", "describe", "rules_text", "to_ipuz", "from_ipuz", "from_string", "to_string", "generate",
            "FormatError", "NotSupportedError"]
 
 from .exchange import FormatError, NotSupportedError  # noqa: E402
@@ -270,11 +270,8 @@ def to_string(puzzle, form="plain"):
     return t(puzzle, form)
 
 
-def spec_from_gen(spec):
-    from .spec_format import spec_from_gen as f
-    return f(spec)
-
-
-def spec_to_gen(doc):
-    from .spec_format import spec_to_gen as f
-    return f(doc)
+def generate(spec):
+    """one puzzle for a "sudoku-spec" request (docs/SPEC.md: dict, JSON text or path) -> {"puzzle": sudoku-puzzle,
+    "card": sudoku-grade card, "info": {...}}; see pencilmark.gen.generate"""
+    from .gen.api import generate as g
+    return g(spec)

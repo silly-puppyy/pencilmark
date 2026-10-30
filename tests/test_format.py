@@ -396,24 +396,24 @@ def test_spec_round_trip():
              {"size": 9, "kinds": ["thermo", "arrow"], "max_elements": 6, "target_difficulty": [4, 6], "min_givens": 20, "max_givens": 30},
              {"size": 4, "elements": {"cage": 5}, "max_givens": 0, "solver": "cpsat"}]
     for s in specs:
-        doc = pencilmark.spec_from_gen(s)
+        doc = SF.spec_from_gen(s)
         assert doc["format"] == "sudoku-spec"
-        back = pencilmark.spec_to_gen(json.loads(json.dumps(doc)))
+        back = SF.spec_to_gen(json.loads(json.dumps(doc)))
         norm = lambda x: _plan_of(Spec.from_any(x))
         assert norm(back) == norm(s), (s, back)
-    bad = pencilmark.spec_from_gen(specs[0])
+    bad = SF.spec_from_gen(specs[0])
     bad["rules"].append({"type": "line", "kind": "thermo", "cells": ["r1c1", "r1c2"]})
     for extra in ({"rules": bad["rules"]}, {"quality": {"trivial": {"limit": 0.4}}}, {"givens": {"mask": [1] * 81}},
                   {"where": {"difficulty": "max"}}, {"limits": {"results": 3}}):
-        d = dict(pencilmark.spec_from_gen(specs[0]), **extra)
+        d = dict(SF.spec_from_gen(specs[0]), **extra)
         try:
-            pencilmark.spec_to_gen(d)
+            SF.spec_to_gen(d)
         except pencilmark.NotSupportedError:
             continue
         raise AssertionError(f"must be refused: {extra}")
     from pencilmark import spec_format as SF2
     try:
-        SF2.validate_spec(dict(pencilmark.spec_from_gen(specs[0]), target={"band": "Hard"}))
+        SF2.validate_spec(dict(SF.spec_from_gen(specs[0]), target={"band": "Hard"}))
     except pencilmark.FormatError:
         pass
     else:

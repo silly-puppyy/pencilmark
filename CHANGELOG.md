@@ -36,6 +36,11 @@
 - `"type": "table"` and the `allowed` operator are reserved: explicit digit tables made files large and could not be
   drawn; a custom rule type is planned to replace them. Mechanics without a rule family cannot be written in
   format_version 1. The Rossini test puzzle now uses `rossini` rules and `negative` instead of edges and tables.
+- Generator: one vocabulary. `pencilmark.generate(spec)` (also `pencilmark.gen.generate`) takes a `sudoku-spec` request and
+  returns a `sudoku-puzzle` (with `meta.generated_from`), honouring the spec's `fields`; the internal Spec dicts
+  (`target_band`, `max_givens`, ...) and `spec_from_gen` / `spec_to_gen` are no longer public. `SPEC.md` version 1
+  describes exactly what the generator runs; the rest is listed as reserved and refused with a message naming it.
+  Example specs that use reserved parts moved to `docs/examples/specs/reserved/`.
 - Docs: philosophy page (goals, exact meaning of band / difficulty / time, format rules); README known issues.
 
 ## 1.0.0rc2

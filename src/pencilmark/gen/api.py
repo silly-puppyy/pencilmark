@@ -270,8 +270,37 @@ def _check_card(card, tb, td, req, strict):
 
 
 def generate(spec, log=None):
-    """generate one puzzle meeting `spec` (Spec or dict, see Spec). Returns {"puzzle": puzzle JSON (with solution),
-    "card": sudoku-grade card, "info": {...}} or raises GenerationFailed with the reason."""
+    """generate one puzzle meeting a sudoku-spec request (docs/SPEC.md; a dict, JSON text or a path). Returns
+    {"puzzle": sudoku-puzzle (with solution; meta.generated_from = the spec's fingerprint), "card": sudoku-grade card,
+    "info": {...}}. Raises NotSupportedError for a part of the spec the generator does not run, GenerationFailed when no
+    puzzle met it in time."""
+    import json as _json
+    from pathlib import Path
+    from .. import spec_format as SF
+    from ..api import to_export
+    doc = spec
+    if isinstance(spec, Path) or (isinstance(spec, str) and not spec.lstrip().startswith("{")):
+        doc = _json.loads(Path(spec).read_text(encoding="utf-8"))
+    elif isinstance(spec, str):
+        doc = _json.loads(spec)
+    if not isinstance(doc, dict) or doc.get("format") != "sudoku-spec":
+        raise TypeError('generate takes a "sudoku-spec" request (docs/SPEC.md), e.g. {"format": "sudoku-spec", '
+                        '"format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9, "rules": [{"type": "box_grid", '
+                        '"origin": "r1c1", "box": [3, 3]}], "where": {"band": "Hard"}}')
+    r = _generate(SF.spec_to_gen(doc), log)
+    meta = {k: v for k, v in (doc.get("meta") or {}).items() if k != SF.NS}
+    meta["generated_from"] = SF.spec_fingerprint(doc)
+    puzzle = to_export(r["puzzle"], meta=meta)
+    card = r["card"]
+    if doc.get("fields") is not None:              # the requested card fields (docs/SPEC.md 5)
+        from ..api import rate
+        card = rate(puzzle, fields=doc["fields"])
+    return {"puzzle": puzzle, "card": card, "info": r["info"]}
+
+
+def _generate(spec, log=None):
+    """generate one puzzle meeting an internal Spec (or its dict). Returns {"puzzle": puzzle JSON (with solution),
+    "card", "info"} or raises GenerationFailed with the reason."""
     s = Spec.from_any(spec)
     probs = feasibility(s)
     if probs:
