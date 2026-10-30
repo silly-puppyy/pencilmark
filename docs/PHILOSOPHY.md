@@ -49,6 +49,10 @@ Each technique belongs to one band (USAGE.md lists them). The route always prefe
 available, so the band is the least a solver must know.
 
 - It is a rule, not an estimate: the same route gives the same band, whatever people's solve times say.
+- Bands order **knowledge**, not effort. A Hard puzzle needs a learned pattern somewhere; a Medium puzzle never does, but it
+  can be long and demanding. So a Hard puzzle is often easier and quicker than a Medium one, and people agree: among
+  pairs of puzzles of one type where the two disagree, solvers side with the difficulty number about three times in four
+  (sudoku.coach, 384 puzzles; grandgames and Puzzle Duel the same way).
 - Where no technique in the catalogue applies, the engine proves the next step by search (Trial and error) and the
   band is Extreme. **Unknown** means the band could not be determined: guessing was allowed and used, or the time
   limit (`max_seconds`) passed first.
@@ -87,7 +91,7 @@ without long breaks. A median classic takes about 12 minutes.
 
 | Combination | What it says |
 |---|---|
-| High band, low difficulty for it | One hard step in an otherwise easy puzzle, or a hard technique in an easy-to-spot form |
+| High band, low difficulty for it | One hard step in an otherwise easy puzzle, or a hard technique in an easy-to-spot form. Often quicker than a long puzzle of a lower band. |
 | Low band, high difficulty for it | Only basic techniques, but well hidden or demanding: many candidates to track, clues to read, sums to keep in mind |
 | Low difficulty, long time | Easy but big or long (multi-grid layouts, giant boards) |
 | High difficulty, short time | Small but sharp |

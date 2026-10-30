@@ -159,6 +159,9 @@ the `PENCILMARK_UA` environment variable.
 
 ## Limitations
 
+- Bands and difficulty measure different things. The band is the hardest technique a puzzle needs; difficulty is how
+  hard it is overall. A puzzle that needs one X-Wing (Hard) is often easier than a long Medium one, and solvers agree
+  (docs/PHILOSOPHY.md). This is by design, not an error.
 - Difficulty and time are models fitted to human solving data. Differences under one point of difficulty are not
   meaningful, and a single solve can vary a lot from the predicted time.
 - Bands depend on the technique catalogue; a puzzle that needs a technique the engine does not have is solved with

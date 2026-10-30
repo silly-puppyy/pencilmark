@@ -30,6 +30,10 @@ def steps(p):
             st, ok = CB.solve(p, dict(P, exhaust_fallback=1), disabled=gate | {S.GUESS})
             if not ok:
                 return []                  # beyond engine: no score
+    return _record(p, st)
+
+
+def _record(p, st):
     out, cells_, xs_ = [], [], []
     for s in st:
         t = s.move.feat[0]
