@@ -73,7 +73,7 @@ Modular, Parity, Zipper, Between Lines, Lockout, Double Arrow, Kropki (white dot
 Non-Kropki), XV (negative alone: Non-XV), Difference, Sum Pairs, Product, Ratio, Greater-Than, Battenburg, Mathrax,
 Exclusion, Quadruple (`contains`), Cupid (`appears`), Clone, Twin (`isomorphic`), Odd-Even, Low-High, Digit Class,
 Double / Counting Circles / Count (`count`), Distinct Count, Equal Sums, Vudoku, Entropy (`global_entropy`),
-Anti-Knight, Anti-King, Non-Consecutive, Neighbours (generic), Relation, Custom (`table`, vendor rules), Sukaku
+Anti-Knight, Anti-King, Non-Consecutive, Neighbours (generic), Relation, Custom (vendor rules), Sukaku
 (`candidates`). Each has one sentence, filled from its rules (whisper gap, sandwich digits, scope "within the same box",
 "All X's and V's are given." for a negative, …).
 

@@ -558,3 +558,12 @@ def test_operators_named_parameters():
         bad = copy.deepcopy(doc); bad["rules"].append(bad_rule)
         with pytest.raises(pencilmark.FormatError):
             X.validate(bad)
+
+
+def test_tables_reserved():
+    """FORMAT.md 6.17: digit tables and the allowed operator are reserved for the planned custom rule type"""
+    d = pencilmark.from_string(CLASSIC)
+    for rule in ({"type": "table", "cells": ["r1c1", "r1c2"], "allowed": [[1, 2], [2, 1]]},
+                 {"type": "relation", "op": "allowed", "allowed": [[1, 2]], "pairs": [["r1c1", "r3c3"]]}):
+        bad = copy.deepcopy(d); bad["rules"].append(rule)
+        _refuses(bad, "reserved")

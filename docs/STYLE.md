@@ -62,6 +62,6 @@ edge / corner clues, digits, outside clues.
 | `equal_sum` | Thin dashed outline around each segment. |
 | `isomorphic`, `count`, `global_entropy`, `neighbours`, `negative` | Nothing in the grid (listed in the legend). |
 | `relation` | Thin grey connector between the two cell centres. |
-| `table`, vendor rules | Light highlight of the cells plus the `label` text in the first cell. |
+| Vendor rules | Light highlight of the cells plus the `label` text in the first cell. |
 | givens | Large digit. |
 | candidates | Small digits in a 3×3 keypad layout (centred for D > 9). |

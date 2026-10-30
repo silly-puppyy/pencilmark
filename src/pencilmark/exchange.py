@@ -612,6 +612,24 @@ def area_cells(B, a):
     return _cells(B, a, "area")
 
 
+# Reserved for a planned custom rule type (FORMAT.md 6.17): explicit digit tables. Tables make files huge and no renderer
+# can draw them, so format_version 1 readers refuse them and the writer never produces them. The engine still builds
+# tables internally (edge clues, lockout, entropy, ...); _reserved_ok() lets internal tooling read old files that hold them.
+RESERVED_MSG = ("is reserved: digit tables are replaced by a custom rule type planned for a later version of the format; "
+                "use a rule family (FORMAT.md 6)")
+_RESERVED_OK = [False]
+
+
+class _reserved_ok:
+    """internal tooling only (not part of the format): read and write table rules / the allowed operator"""
+    def __enter__(self):
+        self.old = _RESERVED_OK[0]
+        _RESERVED_OK[0] = True
+
+    def __exit__(self, *a):
+        _RESERVED_OK[0] = self.old
+
+
 def resolve_areas(B, rules):
     """rules with every "area" replaced by its cell list ("cells"), as the engine expansion reads them"""
     return [dict({k: v for k, v in r.items() if k != "area"}, cells=[B.name(c) for c in area_cells(B, r["area"])])
@@ -626,6 +644,8 @@ def _validate_rule(r, B):
     if t == "custom":
         raise FormatError('"type": "custom" is reserved for a future rule language (custom rules written in the file); '
                           'format_version 1 readers refuse it')
+    if t == "table" and not _RESERVED_OK[0]:
+        raise FormatError('"type": "table" ' + RESERVED_MSG)
     if isinstance(t, str) and ":" in t:
         raise FormatError(f"vendor rule type {t!r} is not implemented by this reader")
     if t not in RULE_KEYS:
@@ -825,6 +845,8 @@ def _check_op(r, where="rule"):
     op = r.get("op")
     if op not in OPS:
         raise FormatError(f"unknown operator {op!r}")
+    if op == "allowed" and not _RESERVED_OK[0]:
+        raise FormatError('operator "allowed" ' + RESERVED_MSG)
     want = OP_KEY.get(op)
     have = set(r) & OP_PARAM_KEYS
     if have != ({want} if want else set()):
@@ -1635,6 +1657,9 @@ class _Writer:
                     items.append({"pos": run[pos], "rules": [edge_rule(f[0], f[1], a, b, B)], "rel": [run[pos]]})
                 else:
                     op = REL_OP[kind]
+                    if op == "allowed" and not _RESERVED_OK[0]:
+                        raise NotSupportedError("a pair clue with no rule family (an explicit digit-pair list); the allowed "
+                                                "operator is reserved for the planned custom rule type")
                     params = _engine_params_to_op(kind, args)
                     last = items[-1]["rules"][-1] if items else None
                     if last and last.get("type") == "relation" and last["op"] == op and op_params(last) == params:
@@ -1901,6 +1926,8 @@ class _Writer:
         if t == "equal_sum":
             return [self.equal_sum_rule(c)]
         if t == "table":
+            if not _RESERVED_OK[0]:
+                raise NotSupportedError("a digit table with no rule family; tables " + RESERVED_MSG.split(": ", 1)[1].split(";")[0])
             return [{"type": "table", "cells": nm(c["cells"]), "allowed": [list(x) for x in c["allowed"]]}]
         if t == "count":
             r = {"type": "count"}

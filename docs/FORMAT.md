@@ -150,8 +150,8 @@ clues competing for one gap) is the renderer's business; the semantics never dep
 | `arrow` `bulb` (a pill reads as a number in `bulb` order) and each shaft in `lines` (away from the bulb) | `cell`, `contains`, `appears` cells, `count`, `distinct_count` without `side` |
 | outside clues (`sandwich`, `xsum`, `skyscraper`, `rossini`, `first_seen`, `sum` kinds `little_killer` / `frame`, `distinct_count` with `side`): from the cell next to the clue outwards | `equal_sum` segments (each a set; the segment list is unordered) |
 | `clone` / `isomorphic` regions: corresponding positions | `edge` pairs except `less`, `relation` pairs of symmetric operators |
-| `edge` kind `less` and `relation` pairs of `less` / `less_equal` / `allowed` / `any_of`: `[a, b]` in operator order | `corner` cells (written TL, TR, BL, BR = reading order) |
-| `vudoku` cells (vertex first), `table` cells (columns of `allowed`), `box` / `row` / `column` `cells` | `area` cell lists, `except` pairs |
+| `edge` kind `less` and `relation` pairs of `less` / `less_equal` / `any_of`: `[a, b]` in operator order | `corner` cells (written TL, TR, BL, BR = reading order) |
+| `vudoku` cells (vertex first), `box` / `row` / `column` `cells` | `area` cell lists, `except` pairs |
 
 The order of the `rules` array carries **no meaning**. Writers SHOULD keep the order they were given (the
 fingerprint sorts, section 8.2).
@@ -202,7 +202,7 @@ semantics and drawing). Every rule MAY carry:
 | Key | Meaning |
 |---|---|
 | `id` | String. Ignorable. |
-| `label` | Short plain text. Ignorable. Optional everywhere; for `table` and vendor rules it is what a renderer shows. |
+| `label` | Short plain text. Ignorable. Optional everywhere; for vendor rules it is what a renderer shows. |
 | `style` | Cosmetic drawing hints for this rule (section 7). Ignorable. |
 
 **Areas.** A rule that applies to part of the board says where with `area`: the `origin` of a `grid` / `box_grid` rule
@@ -241,10 +241,9 @@ else in the format (`value` for a number, `sum` for a sum):
 | `parity_differs` | – | one is odd, the other even |
 | `same_third` / `different_third` | – | a and b are / are not in the same third of 1..9 (entropic) |
 | `same_mod3` / `different_mod3` | – | a ≡ b / a ≢ b (mod 3) |
-| `allowed` | `allowed` [[v, w], …] | `[a, b]` is one of the listed digit pairs (escape hatch; also how a product clue is built) |
 | `any_of` | `any_of` [{`op`, parameter}, …] | at least one of the listed operators holds |
 
-`less`, `less_equal`, `allowed` and `any_of` are directional (pair order matters); the others are symmetric.
+`less`, `less_equal` and `any_of` are directional (pair order matters); the others are symmetric.
 
 ## 6. Rule families
 
@@ -462,7 +461,6 @@ edge kind has, or a pair rule a site defines):
 {"type": "global_entropy"}
 {"type": "equal_sum", "segments": [["r1c1", "r1c2"], ["r2c3"]]}
 {"type": "vudoku", "cells": ["r2c2", "r3c1", "r3c3"]}
-{"type": "table", "label": "T", "cells": ["r1c1", "r1c2", "r2c1"], "allowed": [[1, 2, 3], [3, 2, 1]]}
 ```
 
 | `type` | Meaning |
@@ -476,7 +474,6 @@ edge kind has, or a pair rule a site defines):
 | `global_entropy` | Every 2×2 window of existing cells holds a low, a middle and a high digit (thirds of 1..D; D divisible by 3). |
 | `equal_sum` | Every segment (a cell set) has the same sum. For lines, use the `line` kinds `zipper`, `region_sum`, `double_arrow`. |
 | `vudoku` | `cells` = [vertex, arm, arm]: the vertex digit is the sum or the difference of the two arm digits. |
-| `table` | Escape hatch: the ordered `cells` take one of the `allowed` digit tuples. With `where` (a list of `[dr, dc]` offsets) instead of `cells`, the table applies to every placement of that window whose cells all exist, the offsets giving the column order. |
 
 ### 6.14 `negative`
 
@@ -525,8 +522,10 @@ and `decorations` only.
 ### 6.17 Reserved
 
 - `"type": "custom"`: reserved for a future rule language (rules defined in the file itself); every format_version 1
-  reader refuses it with a message saying so.
-  Mechanics without a named rule use `table` (and `relation` with `allowed`).
+  reader refuses it with a message saying so. Until then, a mechanic without a rule family cannot be written in the
+  format.
+- `"type": "table"` and the operator `allowed` (explicit lists of allowed digit tuples): reserved and refused. Such
+  lists make files large and cannot be drawn; the custom rule type is meant to replace them.
 - `digits` as an object (`{"values": [0, …, 8], "symbols": {…}}`, with an `empty` sentinel) for digit sets other
   than 1..D, and digit-selection puzzles: reserved; refused in format_version 1.
 
@@ -558,7 +557,7 @@ Coordinates are cell units `[row, col]` with the origin at the top-left corner o
 - Rule key order: `type`, `kind`, then the parameters (`op`, `any_of`, `color`, `letter`, `value`, `sum`, `split`,
   `values`, `digits`, `groups`, `each`, `counts`, `arrow`, `size`, `repeat`, `box`, `where`, `within`, `closed`),
   then `side`, then the cell keys (`origin`, `source`, `bulb`, `lines`, `cells`, `regions`, `segments`, `pairs`,
-  `except`, `allowed`), then `id`, `label`, `style`.
+  `except`), then `id`, `label`, `style`.
 - Houses as described in 6.1. Rules in the order given (a grader's tie-breaks can depend on it); a `box_grid` expands
   to rows, then columns, then boxes. Candidate lists ascending; `candidates` keys in reading order. Cells of sets as the source listed them (the
   fingerprint sorts them).

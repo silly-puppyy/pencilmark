@@ -816,7 +816,6 @@
     },
     "op": {
      "enum": [
-      "allowed",
       "any_of",
       "difference",
       "difference_at_least",
@@ -858,18 +857,6 @@
     "sum": {
      "type": "integer"
     },
-    "allowed": {
-     "type": "array",
-     "items": {
-      "type": "array",
-      "items": {
-       "type": "integer"
-      },
-      "minItems": 2,
-      "maxItems": 2
-     },
-     "minItems": 1
-    },
     "any_of": {
      "type": "array",
      "minItems": 1,
@@ -882,7 +869,6 @@
       "properties": {
        "op": {
         "enum": [
-         "allowed",
          "any_of",
          "difference",
          "difference_at_least",
@@ -909,9 +895,6 @@
        },
        "sum": {
         "type": "integer"
-       },
-       "allowed": {
-        "type": "array"
        }
       }
      }
@@ -946,11 +929,6 @@
        {
         "required": [
          "sum"
-        ]
-       },
-       {
-        "required": [
-         "allowed"
         ]
        },
        {
@@ -991,7 +969,6 @@
     },
     "op": {
      "enum": [
-      "allowed",
       "any_of",
       "difference",
       "difference_at_least",
@@ -1031,18 +1008,6 @@
     "sum": {
      "type": "integer"
     },
-    "allowed": {
-     "type": "array",
-     "items": {
-      "type": "array",
-      "items": {
-       "type": "integer"
-      },
-      "minItems": 2,
-      "maxItems": 2
-     },
-     "minItems": 1
-    },
     "any_of": {
      "type": "array",
      "minItems": 1,
@@ -1055,7 +1020,6 @@
       "properties": {
        "op": {
         "enum": [
-         "allowed",
          "any_of",
          "difference",
          "difference_at_least",
@@ -1082,9 +1046,6 @@
        },
        "sum": {
         "type": "integer"
-       },
-       "allowed": {
-        "type": "array"
        }
       }
      }
@@ -1446,64 +1407,6 @@
    ],
    "additionalProperties": false
   },
-  "rule_table": {
-   "type": "object",
-   "properties": {
-    "type": {
-     "const": "table"
-    },
-    "id": {
-     "type": "string"
-    },
-    "label": {
-     "type": "string"
-    },
-    "style": {
-     "$ref": "#/$defs/style"
-    },
-    "allowed": {
-     "type": "array",
-     "items": {
-      "type": "array",
-      "items": {
-       "type": "integer"
-      }
-     }
-    },
-    "cells": {
-     "$ref": "#/$defs/cells"
-    },
-    "where": {
-     "type": "array",
-     "items": {
-      "type": "array",
-      "items": {
-       "type": "integer"
-      },
-      "minItems": 2,
-      "maxItems": 2
-     },
-     "minItems": 1
-    }
-   },
-   "required": [
-    "type",
-    "allowed"
-   ],
-   "additionalProperties": false,
-   "oneOf": [
-    {
-     "required": [
-      "cells"
-     ]
-    },
-    {
-     "required": [
-      "where"
-     ]
-    }
-   ]
-  },
   "rule_negative": {
    "type": "object",
    "properties": {
@@ -1661,9 +1564,6 @@
     },
     {
      "$ref": "#/$defs/rule_vudoku"
-    },
-    {
-     "$ref": "#/$defs/rule_table"
     },
     {
      "$ref": "#/$defs/rule_negative"

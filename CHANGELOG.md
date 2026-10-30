@@ -33,6 +33,9 @@
 - Pair operators take their parameter under its own key, as the rest of the format: `{"op": "difference", "value": 3}`,
   `{"op": "sum", "sum": 10}`, `allowed` / `any_of` lists of objects; positional `params` lists are refused. Writing an
   `any_of` relation back no longer crashes.
+- `"type": "table"` and the `allowed` operator are reserved: explicit digit tables made files large and could not be
+  drawn; a custom rule type is planned to replace them. Mechanics without a rule family cannot be written in
+  format_version 1. The Rossini test puzzle now uses `rossini` rules and `negative` instead of edges and tables.
 - Docs: philosophy page (goals, exact meaning of band / difficulty / time, format rules); README known issues.
 
 ## 1.0.0rc2
