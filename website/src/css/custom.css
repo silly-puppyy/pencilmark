@@ -122,3 +122,9 @@ html[data-theme='dark'] .inline-json .token.punctuation, html[data-theme='dark']
    :root; restate the palette there */
 .footer--dark { --ifm-footer-background-color: #3b2a1a; --ifm-footer-link-color: #e8dccb; --ifm-footer-title-color: #fffdf8; }
 [data-theme='dark'] .footer--dark { --ifm-footer-background-color: #13110f; }
+
+/* graphics switch (src/components/GraphicsToggle.js): optional graphics carry .pm-graphic and disappear when the reader
+   turns them off; tutorial figures use .pm-figure and always show */
+.pm-graphics-toggle { display: flex; align-items: center; width: 2rem; height: 2rem; border-radius: 50%; color: var(--ifm-navbar-link-color); }
+.pm-graphics-toggle:hover { background: var(--ifm-color-emphasis-200); }
+html[data-graphics='off'] .pm-graphic { display: none !important; }

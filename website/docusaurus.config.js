@@ -18,6 +18,7 @@ module.exports = async function createConfig() {
   trailingSlash: true,
   onBrokenLinks: 'throw',
   markdown: {format: 'detect', mermaid: true, hooks: {onBrokenMarkdownLinks: 'throw'}},
+  clientModules: [require.resolve('./src/clientModules/graphics.js')],
   themes: [
     '@docusaurus/theme-mermaid',
     ['@easyops-cn/docusaurus-search-local', {hashed: true, docsDir: '../docs', docsRouteBasePath: '/', indexBlog: false, highlightSearchTermsOnTargetPage: true}],
@@ -47,6 +48,7 @@ module.exports = async function createConfig() {
         {to: '/FORMAT/', label: 'Puzzle format', position: 'left'},
         {to: '/GRADE/', label: 'Grade card', position: 'left'},
         {to: '/api/', label: 'Python API', position: 'left'},
+        {type: 'custom-graphicsToggle', position: 'right'},
         {href: 'https://pypi.org/project/pencilmark/', label: 'PyPI', position: 'right'},
         {href: GH, label: 'GitHub', position: 'right'},
       ],
