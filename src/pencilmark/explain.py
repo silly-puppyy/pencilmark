@@ -6694,7 +6694,7 @@ def _h_class_count(ctx):
 
 
 def _h_domino(ctx):
-    nm, eng = ctx.nm, ctx.raw_engine
+    eng = ctx.raw_engine
     head, goal = _x_head(ctx)
     doms = eng.get("dominoes") or []
     cells = {c for d in doms for c in d["cells"]}
@@ -6744,7 +6744,7 @@ def _h_mental_notes(ctx):
 
 
 def _h_rule_intersect(ctx):
-    nm, eng = ctx.nm, ctx.raw_engine
+    eng = ctx.raw_engine
     head, goal = _x_head(ctx)
     pc = eng.get("pattern_cells") or []
     base = eng.get("base") or {}
@@ -6770,7 +6770,7 @@ def _h_rule_intersect(ctx):
 
 
 def _h_sum_algebra(ctx):
-    nm, eng, xm = ctx.nm, ctx.raw_engine, ctx.xm or {}
+    eng, xm = ctx.raw_engine, ctx.xm or {}
     head, goal = _x_head(ctx)
     pc = eng.get("pattern_cells") or []
     base = eng.get("base") or {}
@@ -6987,7 +6987,6 @@ def _h_line_clues(ctx):
 def _h_weighted_sums(ctx):
     """WeightedSums: sum facts (houses, cages, sum rules, arrows, equal sums) added / subtracted with small
     multiples until only a few cells remain, some counted more than once."""
-    nm = ctx.nm
     xm = ctx.xm or {}
     head, goal = _x_head(ctx)
     pc = (ctx.raw_engine or {}).get("pattern_cells") or []

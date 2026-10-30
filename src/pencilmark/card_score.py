@@ -210,7 +210,7 @@ def score_parts(p, cfg):
     pth = steps_enum(p) if w else [(nm, d, f, 0.0) for nm, d, f in steps(p)]
     if not pth:
         return None
-    pth_time, x_time = pth, _LAST_X
+    pth_time = pth
     if cfg.get("price_params"):  # difficulty from the card-fit price weights on THEIR route; time (L1) from the
         global P
         P_old = P  # production route above (time / bands / everything else unchanged)

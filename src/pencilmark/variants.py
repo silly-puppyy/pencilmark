@@ -596,7 +596,6 @@ def describe(puzzle):
     for i, r in enumerate(rules):
         sigs.setdefault(_sig(r), []).append(i)
     found = []  # (name, text, n_rules)
-    box_txt = {}
     for v in sorted((v for v in REGISTRY if v.kind == "placement"), key=lambda v: v.order):
         hit = False
         hit_grids = []

@@ -59,19 +59,6 @@ def tier_of(points):
     return T["tiers"][-1]
 
 
-def move_difficulty(st, P):
-    """One step's move difficulty on the difficulty head."""
-    from .scoring import meta_priced, meta_vector
-
-    dth = P.get("difficulty_dtheta") if head else None  # head=False: no per-move difficulty-head multiplier
-    cap = P["B"].get(S.GUESS, float("inf"))
-    d = min(st.move.d, cap)
-    meta = st.move.feat[4] if len(st.move.feat) > 4 else None
-    if dth and meta_priced(meta):
-        d = min(d * math.exp(sum(a * b for a, b in zip(dth, meta_vector(meta, desc=False)))), cap)
-    return d
-
-
 def difficulty_grade(steps, P, tau=None, cap=True, head=True):
     """Soft-bottleneck grade on the DIFFICULTY head: each chosen move's race difficulty
     times exp(dtheta . meta) (absent -> the time-head grade).

@@ -550,7 +550,7 @@ def to_ipuz(puzzle):
     )
     from .exchange import validate
 
-    B = validate(doc)
+    validate(doc)
     D = doc["digits"]
     R, C = doc["board"]["rows"], doc["board"]["cols"]
     if not (R == C == D) or None in doc["givens"]:

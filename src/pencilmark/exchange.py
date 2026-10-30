@@ -1659,7 +1659,7 @@ class _Writer:
 
     # ---------------------------------------------------------------- relations / constraints
     def write_rules(self):
-        p, B, D = self.p, self.B, self.D
+        p = self.p
         rels = list(p.relations)
         cons = list(p.constraints)
         compiled = any(c.get("_compiled") for c in cons if c.get("type") in ("line", "clone"))
@@ -1706,7 +1706,6 @@ class _Writer:
                     "prov": {"relations": set(range(pos, pos + len(nrels))) if nrels else set()},
                 }
             )
-        nk = 0
         named_cons = [k for k, c in enumerate(cons) if c.get("_named") and not drop_con[k]]
         # assign named constraints to named rules in order (each named rule's constraints are contiguous)
         cursor = 0
@@ -2009,9 +2008,8 @@ class _Writer:
 
     # ------------------------------------------------ constraints
     def constraint_items(self, cons, drop):
-        B, D = self.B, self.D
+        B = self.B
         items = []
-        k = 0
         live = [i for i in range(len(cons)) if not drop[i] and not cons[i].get("_named")]
         # tables: battenburg blocks / global entropy blocks are detected over runs
         i = 0

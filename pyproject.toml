@@ -67,6 +67,10 @@ ignore = [
   "E501",   # the formatter sets code width; long comments and strings are left as written
 ]
 
+[tool.ruff.lint.per-file-ignores]
+"src/pencilmark/__init__.py" = ["F401"]   # re-exports the public API
+
+
 [tool.cibuildwheel]
 build = "cp310-* cp311-* cp312-* cp313-* cp314-*"
 skip = "*-win32 *_i686 *-musllinux_*"

@@ -34,7 +34,6 @@ def render(doc, dark=False, cell=48):
     u = float(cell)
     B = X.validate(doc)
     R, C = doc["board"]["rows"], doc["board"]["cols"]
-    D = doc["digits"]
     rules = X.resolve_areas(B, doc["rules"])
     has_out = any(
         r["type"] in OUTSIDE
