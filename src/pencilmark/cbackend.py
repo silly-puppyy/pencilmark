@@ -173,11 +173,22 @@ class CMove(S.Move):
     __slots__ = ("xmeta", "family", "code", "explain")
 
 
+_CPUZZLES = {}       # repr of the make_puzzle arguments -> C++ puzzle; a card builds the same puzzle about 6 times
+
+
 def to_cpuzzle(p):
     """Finalized pencilmark.model.Puzzle -> C++ puzzle (structure only; givens are
     passed per solve). Relation tables are taken from p.rel_ex, so any
-    relation kind (including ones registered at runtime) works."""
-    return _C.make_puzzle(*_cpuzzle_args(p))
+    relation kind (including ones registered at runtime) works. Cached on the full
+    arguments, so a puzzle whose rules or domains change gets a new build."""
+    args = _cpuzzle_args(p)
+    key = repr(args)
+    cp = _CPUZZLES.get(key)
+    if cp is None:
+        if len(_CPUZZLES) >= 16:         # a few recent puzzles: rate_many and the generator move on quickly
+            _CPUZZLES.pop(next(iter(_CPUZZLES)))
+        cp = _CPUZZLES[key] = _C.make_puzzle(*args)
+    return cp
 
 
 def _cpuzzle_args(p):
