@@ -1428,7 +1428,10 @@ void Solver::class_colour(MoveBuf& out) {
             for (int c : cs)
                 if (!vals[c]) pc.push_back(c);
             set_pattern(out, m, pc);
-            meta8(m, (int)cs.size(), links[r], houses_used, why, S.kind, 0, 0, 1, 1.0);
+            uint32_t dg = 0;
+            for (auto& e : el) dg |= bit(e.second);
+            // (cells, houses used, digits eliminated, links of the colouring, hidden, arith, relation = rule links, notes)
+            meta8(m, (int)cs.size(), std::max(1, houses_used), popc(dg), links[r], 0, 0, 1, 1, pspread(pc));
             m.code = 10001 + 10 * S.kind + why;
             pm_long xm[XM_N] = {S.kind, why, (pm_long)cs.size(), links[r], houses_used, 0, 0, 0, 0, 0};
             std::copy(xm, xm + XM_N, m.xm);
@@ -1519,7 +1522,11 @@ void Solver::clue_facts(MoveBuf& out) {
         Move& mv = new_move(out, tech, 1.0, (int)pc.size());
         for (auto& e : el) add_el(out, mv, e.first, e.second);
         set_pattern(out, mv, pc);
-        meta8(mv, (int)pc.size(), (int)el.size(), lvl, 0, 0, 0, 0, 1, 1.0);
+        uint32_t dg = 0;
+        for (auto& e : el) dg |= bit(e.second);
+        // (cells changed, houses used: none for a clue alone / its one house for the shape, digits eliminated, links,
+        //  hidden, arith, relation = read off rules, notes); the count of eliminations is in xm[2]
+        meta8(mv, (int)pc.size(), 1, popc(dg), 0, 0, 0, 1, 1, pspread(pc));
         mv.code = 10101 + lvl;
         pm_long xm[XM_N] = {lvl, (pm_long)pc.size(), (pm_long)el.size(), 0, 0, 0, 0, 0, 0, 0};
         std::copy(xm, xm + XM_N, mv.xm);

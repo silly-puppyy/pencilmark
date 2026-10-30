@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Class colouring and clue facts (two variant techniques) record their move descriptors in the right slots (cells,
+  houses used, digits eliminated, links); the descriptors were shifted, which mispriced those steps. Cards with these
+  steps move slightly: time by about 0.1 minutes on typical kropki / XV / thermo puzzles, difficulty by a median 0.01.
+- Faster cards: the C++ puzzle is built once per card instead of about six times (classics 25-50% faster).
+
 ## 1.0.0
 
 First stable release: the `sudoku-puzzle`, `sudoku-grade` and `sudoku-spec` formats are format_version 1, and the card's
