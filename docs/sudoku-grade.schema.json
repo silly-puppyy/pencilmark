@@ -331,6 +331,10 @@
   "elapsed": {
    "type": "number",
    "description": "On request: wall-clock seconds the grader took (machine-dependent, not part of the grade)."
+  },
+  "warning": {
+   "type": "boolean",
+   "description": "On request: true when any issue has severity warning."
   }
  },
  "patternProperties": {
@@ -341,13 +345,5 @@
    ],
    "description": "On request: time_mean, or time_pNN = the NN-th percentile of solve times over today's players (minutes)."
   }
- },
- "dependentRequired": {
-  "issues": [
-   "reject"
-  ],
-  "reject": [
-   "issues"
-  ]
  }
 }

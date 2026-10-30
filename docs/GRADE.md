@@ -38,6 +38,7 @@ A card exists only for a puzzle with exactly one solution. For any other puzzle,
 | `elapsed` | optional | number | Wall-clock seconds the grader took for this card (for `rate()`: the uniqueness proof plus the card). Machine-dependent; not part of the grade. |
 | `issues` | optional | list | Publishing checks (section 4). |
 | `reject` | optional | boolean | True when any issue has severity `reject`. |
+| `warning` | optional | boolean | True when any issue has severity `warning`. |
 | `se` | optional | `{"er", "ep", "ed", "scale"}` or null | Sudoku Explainer-style ratings of the route on the classic SE scale (`scale` is `"classic"`). Meaningful for classic sudoku only. |
 | `steps` | optional | list | The step-by-step route (section 5). |
 | `describe` | optional | object | The `describe()` output ([NAMING.md](NAMING.md)). |
@@ -72,20 +73,27 @@ Each entry is one technique on the route:
 `rules`, when present, lists the offending rules as indices into the `rules` array of the puzzle file that was graded
 (0-based; for other inputs, of the puzzle as `to_export` writes it); `ids` lists those rules' `id`s where they have one.
 
-Each check can be adjusted with a **quality object** keyed by code: `rate(puzzle, quality={"trivial": 0.5, "trial":
-false})`, CLI `--quality trivial=0.5,trial=false`, or the generator spec's `quality` ([SPEC.md](SPEC.md)). A check with a limit
-takes a number (`true` = the default limit); every check takes `false` to turn it off.
+Each check can be adjusted with a **quality object** keyed by code. Every entry is an object with `limit` (checks that
+have one) and / or `severity` (`"reject"`, `"warning"`, or `"off"` to turn the check off):
 
-| Code | Severity | Meaning | Limit (default) |
+```python
+rate(puzzle, fields=["issues", "reject", "warning"],
+     quality={"trivial": {"limit": 0.5}, "trial": {"severity": "reject"}, "tedious": {"severity": "off"}})
+```
+
+CLI: `--quality trivial.limit=0.5,trial.severity=reject,tedious.severity=off`. The generator spec's `quality`
+([SPEC.md](SPEC.md)) is the same object.
+
+| Code | Default severity | Meaning | Limit (default) |
 |---|---|---|---|
 | `spike` | warning | A Medium or harder puzzle whose 3 hardest steps carry more than *limit* of its effort (effort per step as in `difficulty`). | share (0.6) |
-| `decorative` | reject | A rule that is neither needed for uniqueness nor used by any step. | on / off |
+| `decorative` | reject | A rule that is neither needed for uniqueness nor used by any step. | – |
 | `barely_used` | reject when never used, else warning | A rule used in fewer than *limit* steps. | steps (3) |
-| `redundant` | warning | A rule the puzzle is unique without, although the solve uses it. | on / off |
+| `redundant` | warning | A rule the puzzle is unique without, although the solve uses it. | – |
 | `trivial` | reject | More than *limit* of the cells are given (0.6 = 60%). | share (0.6) |
 | `tedious` | warning | Very Easy or Easy, but over *limit* minutes of routine work. | minutes (60) |
-| `uniqueness` | warning | Needs a uniqueness-based technique (relies on assuming one solution). | on / off |
-| `trial` | warning | Needs trial and error or forcing chains. | on / off |
+| `uniqueness` | warning | Needs a uniqueness-based technique (relies on assuming one solution). | – |
+| `trial` | warning | Needs trial and error or forcing chains. | – |
 
 Example: `{"code": "barely_used", "severity": "reject", "text": "thermo lines (rules 3, 4, 5, 6): used in only 0 steps
 of the solve", "rules": [3, 4, 5, 6]}`.

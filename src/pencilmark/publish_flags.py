@@ -12,7 +12,8 @@ common sense first; the coach analysis only informed the spike rule's direction)
   uniqueness   needs a uniqueness-based technique (UR, BUG, Gurth): relies on assuming a unique solution
   trial        needs trial / forcing chains: computer-strength logic, not a human-friendly finish
 Each note is (code, severity, text); severity 'reject' = would not be published, 'note' = informational.
-The limits are adjustable (quality_limits): a number replaces a check's limit, false turns the check off.
+Every check is adjustable with an object (quality_limits): {"limit": n} replaces its limit (checks with one), {"severity":
+"reject" | "warning" | "off"} overrides its severity or turns it off.
 """
 from . import metrics as MT, solver as S
 
@@ -20,24 +21,45 @@ UNIQUENESS = {"UniqueRectangle", "BUG+1", "GurthSymmetry"}
 TRIAL = {"Trial", "ShortTrial", "EitherWay", "WhatIf", "ForcingChains", "DynamicForcingChains",
          "NestedForcingChains", "NishioForcingNet", "PatternOverlay"}
 BASE_UNITS = ("row", "col", "box", "column")
-QUALITY = {"spike": 0.6, "trivial": 0.6, "tedious": 60, "barely_used": 3,      # numeric limits (GRADE.md 4)
-           "decorative": True, "redundant": True, "uniqueness": True, "trial": True}
+QUALITY = {"spike": 0.6, "trivial": 0.6, "tedious": 60, "barely_used": 3,      # default limits (GRADE.md 4); None: no limit
+           "decorative": None, "redundant": None, "uniqueness": None, "trial": None}
+SEVERITIES = ("reject", "warning", "off")
 
 
 def quality_limits(q=None):
-    """quality object -> every check's limit: a number for spike / trivial / tedious / barely_used (true = the default),
-    true / false for the others; false = check off. Raises ValueError for unknown checks or bad values."""
-    out = dict(QUALITY)
+    """quality object -> {check: {"limit": number or None, "severity": "reject" | "warning" | "off" | None}} for every check.
+    Each entry of q is an object with "limit" (checks with a limit: a number >= 0) and / or "severity"; severity None =
+    the check's own (GRADE.md 4). Raises ValueError for unknown checks, keys or values."""
+    out = {k: {"limit": v, "severity": None} for k, v in QUALITY.items()}
     for k, v in (q or {}).items():
         if k not in QUALITY:
             raise ValueError(f"unknown quality check {k!r}; known: {list(QUALITY)}")
-        numeric = not isinstance(QUALITY[k], bool)
-        if isinstance(v, bool):
-            out[k] = QUALITY[k] if (v and numeric) else v
-        elif numeric and isinstance(v, (int, float)) and v >= 0:
-            out[k] = v
-        else:
-            raise ValueError(f"quality {k} must be " + ("a number >= 0 or true / false" if numeric else "true / false"))
+        if not isinstance(v, dict) or not v or set(v) - {"limit", "severity"}:
+            raise ValueError(f'quality {k} must be an object with "limit" and / or "severity", e.g. {{"severity": "off"}}')
+        if "limit" in v:
+            lim = v["limit"]
+            if QUALITY[k] is None:
+                raise ValueError(f"quality {k} has no limit; it takes only \"severity\"")
+            if isinstance(lim, bool) or not isinstance(lim, (int, float)) or lim < 0:
+                raise ValueError(f"quality {k} limit must be a number >= 0")
+            out[k]["limit"] = lim
+        if "severity" in v:
+            if v["severity"] not in SEVERITIES:
+                raise ValueError(f"quality {k} severity must be one of {list(SEVERITIES)}")
+            out[k]["severity"] = v["severity"]
+    return out
+
+
+def _apply_severity(notes, q):
+    """the user's severity per check: "off" drops the note, "reject" / "warning" replace the check's own"""
+    out = []
+    for n in notes:
+        sev = q[n[0]]["severity"]
+        if sev == "off":
+            continue
+        if sev is not None:
+            n = (n[0], "reject" if sev == "reject" else "note") + tuple(n[2:])
+        out.append(n)
     return out
 
 
@@ -58,28 +80,30 @@ def _top3_share(puzzle, steps):
 
 def notes(puzzle, P, steps, tier, forced, required, work_min, check_rules=True):
     q = quality_limits(P.get("quality"))
+    lim = lambda k: q[k]["limit"]
+    on = lambda k: q[k]["severity"] != "off"
     out = []
     rev = {v: k for k, v in S.TECH_NAMES.items()}
     note_techs = getattr(S, "NOTE_TECHS", (S.TAKE_NOTES,))
     mv = [st for st in steps if st.move.feat[0] not in note_techs]
     bi = MT.BANDS.index(tier) if tier in MT.BANDS else -1
-    if bi >= 2 and q["spike"] is not False:
+    if bi >= 2 and on("spike"):
         share = _top3_share(puzzle, mv)
-        if share > q["spike"]:
+        if share > lim("spike"):
             out.append(("spike", "note", f"{share:.0%} of the effort is in the 3 hardest steps"))
     given_share = len(puzzle.givens) / max(puzzle.N, 1)
-    if q["trivial"] is not False and given_share > q["trivial"]:
+    if on("trivial") and given_share > lim("trivial"):
         out.append(("trivial", "reject", f"{given_share:.0%} of the cells are given"))
-    if q["tedious"] is not False and bi in (0, 1) and work_min is not None and work_min > q["tedious"]:
+    if on("tedious") and bi in (0, 1) and work_min is not None and work_min > lim("tedious"):
         out.append(("tedious", "note", f"{tier} but about {work_min:.0f} min of routine work"))
     req = set(required or [])
-    if q["uniqueness"] and req & UNIQUENESS:
+    if on("uniqueness") and req & UNIQUENESS:
         out.append(("uniqueness", "note", "relies on the uniqueness assumption (" + ", ".join(sorted(req & UNIQUENESS)) + ")"))
-    if q["trial"] and req & TRIAL:
+    if on("trial") and req & TRIAL:
         out.append(("trial", "note", "needs trial / forcing chains (" + ", ".join(sorted(req & TRIAL)) + ")"))
-    if check_rules and (q["decorative"] or q["redundant"] or q["barely_used"] is not False):
-        out += [n for n in _rule_notes(puzzle, P, q) if q[n[0]] is not False]
-    return out
+    if check_rules and (on("decorative") or on("redundant") or on("barely_used")):
+        out += _rule_notes(puzzle, P, q)
+    return _apply_severity(out, q)
 
 
 def _rule_notes(puzzle, P, q=None):
@@ -108,6 +132,6 @@ def _rule_notes(puzzle, P, q=None):
             out.append(("decorative", "reject", f"decorative {c}: not needed for uniqueness and never used", c, n_used))
         elif needed is False:
             out.append(("redundant", "note", f"{c} used {n_used}x but the puzzle is unique without it", c, n_used))
-        elif q["barely_used"] is not False and n_used < q["barely_used"]:
+        elif q["barely_used"]["severity"] != "off" and n_used < q["barely_used"]["limit"]:
             out.append(("barely_used", "reject" if n_used == 0 else "note", f"{c} used in only {n_used} step{'s' if n_used != 1 else ''}", c, n_used))
     return out

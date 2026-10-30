@@ -75,7 +75,7 @@ offending rules' indices in the exported puzzle); `reject` is true when any issu
 adjustable:
 
 ```python
-card = pencilmark.rate(puzzle, fields=["difficulty", "band", "issues", "reject"], quality={"trivial": 0.4, "trial": False})
+card = pencilmark.rate(puzzle, fields=["difficulty", "band", "issues", "reject"], quality={"trivial": {"limit": 0.4}, "trial": {"severity": "off"}})
 ```
 
 Guessing is off by default: where no technique applies, the engine proves an elimination by full search (Trial and

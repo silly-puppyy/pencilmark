@@ -19,7 +19,7 @@ rate(
 )
 ```
 
-the "sudoku-grade" card of one puzzle (docs/GRADE.md) with the requested top-level fields only. Default fields: difficulty, time, band, band_index, contains (format, format_version, grader always). Optional: issues, reject (publishing checks), time_mean / time_pNN (any percentile 1-99, e.g. time_p80), se, se_diuf, steps, describe, symmetry. explain="short" / "teach" / True (both) adds explanations to the steps. steps=True is shorthand for the steps field with both explanation levels; se=True / se="diuf" for se / se_diuf. Raises NotUnique / NoSolution / Undecided for a puzzle without exactly one solution. allow_guessing=True: guess where no technique applies (band "Unknown") instead of proving by full search (Trial and error, Extreme). quality: the issue checks' limits, e.g. {"trivial": 0.5, "trial": False} (docs/GRADE.md 4). alternatives=False skips the search for interchangeable techniques (each chip in contains lists one code); band, difficulty and time are the same either way, and the card comes much faster.
+the "sudoku-grade" card of one puzzle (docs/GRADE.md) with the requested top-level fields only. Default fields: difficulty, time, band, contains (format, format_version, grader always). Optional: band_index, issues, reject, warning (publishing checks), time_mean / time_pNN (any percentile 1-99, e.g. time_p80), time_dist, elapsed (wall seconds of the call), se, steps, describe, symmetry. explain="short" / "teach" / True (both) adds explanations to the steps. steps=True is shorthand for the steps field with both explanation levels; se=True for se. Raises NotUnique / NoSolution / Undecided for a puzzle without exactly one solution. allow_guessing=True: guess where no technique applies (band "Unknown") instead of proving by full search (Trial and error, Extreme). quality: the issue checks, e.g. {"trivial": {"limit": 0.5}, "trial": {"severity": "off"}} (docs/GRADE.md 4). alternatives=False skips the search for interchangeable techniques (each chip in contains lists one code); band, difficulty and time are the same either way, and the card comes much faster.
 
 ## `rate_many`
 
@@ -43,10 +43,10 @@ cards for many puzzles, in input order; jobs > 1 uses worker processes. A puzzle
 ## `solve`
 
 ```python
-solve(puzzle)
+solve(puzzle, info=False)
 ```
 
-the unique solution as a list of digits (cell order of the puzzle); NotUnique / NoSolution otherwise. Uses the engine's exhaustive C++ search; CP-SAT (optional OR-Tools) only if that search hits its node limit.
+the unique solution as a list of digits (cell order of the puzzle); NotUnique / NoSolution otherwise. Uses the engine's exhaustive C++ search; CP-SAT (optional OR-Tools) only if that search hits its node limit. info=True: {"solution": [...], "seconds": wall-clock seconds of the search} instead of the bare list.
 
 ## `load`
 

@@ -21,7 +21,7 @@ puzzle reader mistakes it for a puzzle), plus four blocks that say what the resu
   {"type": "cage", "count": "auto", "size": [2, 5]}],
  "symmetry": [{"kind": "rot180", "of": "givens"}],
  "where": {"band": "Hard", "difficulty": [6.5, 8], "contains": ["XWG"], "issues": "no_reject"},
- "quality": {"trivial": 0.4},
+ "quality": {"trivial": {"limit": 0.4}},
  "limits": {"results": 3, "attempts": 2000, "time": 600, "seed": 42},
  "fields": ["difficulty", "band", "contains", "issues"]}
 ```
@@ -51,7 +51,7 @@ n placed rule elements in total).
 **Per-area targets**: `"areas": [{"area": "r1c13", "where": {"band": "Medium"}}]`, measured on the **joint** solve (the
 steps that place or eliminate in that area on the whole-board route), never on the area generated alone.
 
-**`quality`: the checks' limits**, the same object as `rate(..., quality=…)` ([GRADE.md section 4](GRADE.md#4-issues)): `{"trivial": 0.4, "trial": false}`.
+**`quality`: the checks' limits**, the same object as `rate(..., quality=…)` ([GRADE.md section 4](GRADE.md#4-issues)): `{"trivial": {"limit": 0.4}, "trial": {"severity": "off"}}`.
 It changes what the card reports as `issues`; `where.issues` chooses which of them a result may have.
 
 **`limits`** bound every run: `results` (puzzles to return), `attempts`, `time` (seconds), `seed` (reproducible runs).

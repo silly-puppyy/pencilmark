@@ -366,7 +366,7 @@ def time_units(effort_l1, empty_cells, difficulty=None, geometry=None):
 
 ALWAYS = ("format", "format_version", "grader")
 DEFAULT_FIELDS = ("difficulty", "time", "band", "contains")
-OPTIONAL_FIELDS = ("band_index", "time_p80", "time_dist", "elapsed", "issues", "reject", "se", "steps", "describe", "symmetry")   # + time_mean / time_pNN
+OPTIONAL_FIELDS = ("band_index", "time_p80", "time_dist", "elapsed", "issues", "reject", "warning", "se", "steps", "describe", "symmetry")   # + time_mean / time_pNN
 EXPLAIN_LEVELS = ("short", "teach")
 
 
@@ -559,8 +559,8 @@ def _grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expl
         CB._C.set_deadline(float(max_seconds))
     t_end = None if max_seconds is None else (_OUTER_END[0] or time.time() + float(max_seconds))
     hit = lambda: timed and CB._C.deadline_hit()
-    need_list = bool(want & {"contains", "issues", "reject"})
-    checks = bool(want & {"issues", "reject"})      # publishing checks read the shortest list's required techniques: list first
+    need_list = bool(want & {"contains", "issues", "reject", "warning"})
+    checks = bool(want & {"issues", "reject", "warning"})      # publishing checks read the shortest list's required techniques: list first
     try:
         base = BP.band_path(p, P)                   # the band (first route; shrinking keeps it)
 
@@ -633,18 +633,19 @@ def _grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expl
         if unknown:
             g["stopped_at_step"] = len(bp["steps"]) + 1
     doc = prov = None
-    if want & {"issues", "reject", "describe"}:
+    if want & {"issues", "reject", "warning", "describe"}:
         try:
             from . import exchange as X
             doc, prov = X.write(p, provenance=True)
         except Exception:
             doc = prov = None
-    if want & {"issues", "reject"}:
+    if want & {"issues", "reject", "warning"}:
         issues = _issues(p, card, doc, prov or [])
         if "issues" in want:
             g["issues"] = issues
-        if "reject" in want:
-            g["reject"] = any(i["severity"] == "reject" for i in issues)
+        for f in ("reject", "warning"):
+            if f in want:
+                g[f] = any(i["severity"] == f for i in issues)
     if "describe" in want:
         from .variants import describe as _describe
         g["describe"] = _describe(doc) if doc is not None else None

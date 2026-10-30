@@ -22,6 +22,10 @@
 - Rules keep the file's order: `to_export` writes a puzzle file's rules back in the order given, with their `id`, `label`
   and `style` (it used to reorder them and drop those keys), and `issues` count rules in the graded file (`rules`), plus
   their `ids` where present.
+- Quality checks: every entry of `quality` is an object, `{"limit": n, "severity": "reject" | "warning" | "off"}`
+  (CLI `--quality trivial.limit=0.5,trial.severity=reject`), so a check's severity can be changed as well as its limit;
+  bare numbers and `true` / `false` are no longer accepted. New optional field `warning` (true when any issue is a
+  warning), next to `reject`.
 - Docs: philosophy page (goals, exact meaning of band / difficulty / time, format rules); README known issues.
 
 ## 1.0.0rc2

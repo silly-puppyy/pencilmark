@@ -104,15 +104,17 @@ def report2(g, k=None):
 
 
 def _quality_arg(text):
-    """--quality "trivial=0.5,trial=false" -> {"trivial": 0.5, "trial": False}"""
+    """--quality "trivial.limit=0.5,trial.severity=reject" -> {"trivial": {"limit": 0.5}, "trial": {"severity": "reject"}}"""
     if not text:
         return {}
     from .publish_flags import quality_limits
     out = {}
     for part in text.split(","):
         k, _, v = part.partition("=")
-        v = v.strip().lower()
-        out[k.strip()] = True if v in ("", "true", "on") else False if v in ("false", "off") else float(v)
+        check, dot, key = k.strip().partition(".")
+        if not dot or key not in ("limit", "severity"):
+            raise ValueError(f"{part!r}: expected check.limit=N or check.severity=reject|warning|off")
+        out.setdefault(check, {})[key] = float(v) if key == "limit" else v.strip().lower()
     quality_limits(out)
     return out
 
@@ -228,7 +230,7 @@ def main(argv=None):
     r.add_argument("--allow-guessing", action="store_true", help="guess where no technique applies (faster; band Unknown) "
                    "instead of proving by full search (Trial and error, band Extreme)")
     r.add_argument("--steps", action="store_true", help="with --json: include the step-by-step solve (with both explanation levels)")
-    r.add_argument("--quality", default=None, help='issue check limits, e.g. "trivial=0.5,tedious=90,trial=false" '
+    r.add_argument("--quality", default=None, help='issue checks, e.g. "trivial.limit=0.5,trial.severity=reject,tedious.severity=off" '
                    "(docs/GRADE.md 4)")
     r.add_argument("--explain", default=None, help="step explanation levels, comma-separated: short, teach")
     r.add_argument("--fields", default=None, help="card fields, comma-separated (docs/GRADE.md 2), e.g. "

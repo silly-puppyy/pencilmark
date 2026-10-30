@@ -85,13 +85,13 @@ def load(puzzle):
 def rate(puzzle, steps=False, max_seconds=None, mode="human", se=False, fields=None, allow_guessing=False, explain=None,
          quality=None, alternatives=True):
     """the "sudoku-grade" card of one puzzle (docs/GRADE.md) with the requested top-level fields only. Default fields:
-    difficulty, time, band, contains (format, format_version, grader always). Optional: band_index, issues, reject
+    difficulty, time, band, contains (format, format_version, grader always). Optional: band_index, issues, reject, warning
     (publishing checks), time_mean / time_pNN (any percentile 1-99, e.g. time_p80), time_dist, elapsed (wall seconds of the call), se, steps, describe, symmetry. explain="short" /
     "teach" / True (both) adds explanations to the steps. steps=True is shorthand for the steps field with both explanation
     levels; se=True for se.
     Raises NotUnique / NoSolution / Undecided for a puzzle without exactly one solution. allow_guessing=True: guess
     where no technique applies (band "Unknown") instead of proving by full search (Trial and error, Extreme).
-    quality: the issue checks' limits, e.g. {"trivial": 0.5, "trial": False} (docs/GRADE.md 4). alternatives=False skips
+    quality: the issue checks, e.g. {"trivial": {"limit": 0.5}, "trial": {"severity": "off"}} (docs/GRADE.md 4). alternatives=False skips
     the search for interchangeable techniques (each chip in contains lists one code); band, difficulty and time are the
     same either way, and the card comes much faster."""
     from .export import grade, card_fields

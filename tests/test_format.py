@@ -400,7 +400,7 @@ def test_spec_round_trip():
         assert norm(back) == norm(s), (s, back)
     bad = pencilmark.spec_from_gen(specs[0])
     bad["rules"].append({"type": "line", "kind": "thermo", "cells": ["r1c1", "r1c2"]})
-    for extra in ({"rules": bad["rules"]}, {"quality": {"trivial": 0.4}}, {"givens": {"mask": [1] * 81}},
+    for extra in ({"rules": bad["rules"]}, {"quality": {"trivial": {"limit": 0.4}}}, {"givens": {"mask": [1] * 81}},
                   {"where": {"difficulty": "max"}}, {"limits": {"results": 3}}):
         d = dict(pencilmark.spec_from_gen(specs[0]), **extra)
         try:
@@ -492,18 +492,20 @@ def test_card_schema():
 
 
 def test_quality_limits():
-    """quality = per-check limits keyed by issue code (GRADE.md 4): numbers adjust, false turns a check off"""
+    """quality = one object per check keyed by issue code (GRADE.md 4): limit and / or severity (reject / warning / off)"""
     assert pencilmark.rate(CLASSIC, fields=["issues"])["issues"] == []
-    low = pencilmark.rate(CLASSIC, fields=["issues", "reject"], quality={"trivial": 0.2})
-    assert [i["code"] for i in low["issues"]] == ["trivial"] and low["reject"] is True
+    low = pencilmark.rate(CLASSIC, fields=["issues", "reject", "warning"], quality={"trivial": {"limit": 0.2}})
+    assert [i["code"] for i in low["issues"]] == ["trivial"] and low["reject"] is True and low["warning"] is False
+    soft = pencilmark.rate(CLASSIC, fields=["issues", "reject", "warning"], quality={"trivial": {"limit": 0.2, "severity": "warning"}})
+    assert soft["issues"][0]["severity"] == "warning" and soft["reject"] is False and soft["warning"] is True
     d = pencilmark.from_string(CLASSIC)
     d["rules"].append({"type": "line", "kind": "thermo", "cells": ["r1c5", "r1c4"]})
-    assert pencilmark.rate(d, fields=["issues"], quality={"decorative": False})["issues"] == []
+    assert pencilmark.rate(d, fields=["issues"], quality={"decorative": {"severity": "off"}})["issues"] == []
     import pytest
-    with pytest.raises(ValueError):
-        pencilmark.rate(CLASSIC, quality={"nope": 1})
-    with pytest.raises(ValueError):
-        pencilmark.rate(CLASSIC, quality={"trial": 0.5})
+    for bad in ({"nope": {"severity": "off"}}, {"trial": {"limit": 0.5}}, {"trivial": 0.5}, {"trial": False},
+                {"trial": {"severity": "maybe"}}, {"spike": {"limit": -1}}):
+        with pytest.raises(ValueError):
+            pencilmark.rate(CLASSIC, quality=bad)
 
 
 def test_spec_fields_are_card_keys():
