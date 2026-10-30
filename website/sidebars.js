@@ -17,5 +17,9 @@ module.exports = {
       {type: 'doc', id: 'ENGINE', label: 'Engine mapping'},
       {type: 'doc', id: 'api', label: 'Python API'},
     ]},
+    {type: 'category', label: 'Contributing', collapsed: true, link: {type: 'generated-index', slug: '/dev/'}, items: [
+      {type: 'doc', id: 'dev/WRITING_STYLE', label: 'Writing style'},
+      {type: 'doc', id: 'dev/CODE_STYLE', label: 'Code style'},
+    ]},
   ],
 };
