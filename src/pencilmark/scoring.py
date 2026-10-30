@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import math
 
+from . import registry as R
 from . import solver as S
 
 TECHS = sorted(S.TECH_NAMES)
@@ -144,6 +145,7 @@ DEFAULT_PARAMS = {
 }
 
 DIRECT = set(S.DIRECT_TECHS)
+MENTAL = {t.id for t in R.techniques() if t.mental}  # worked out in the head on the no-notes view
 
 
 # human mode (params["human_mode"] = {"budget": [...], "k": [...]}, any omitted -> these):
@@ -158,7 +160,11 @@ def copy_params(p):
     return {k: (dict(v) if isinstance(v, dict) else list(v) if isinstance(v, list) else v) for k, v in p.items()}
 
 
-TRIAL_FAMILY_META_EXCLUDE = (26, 61, 63, 68, 69, 70, 80, 82, 83)
+TRIAL_FAMILY_META_EXCLUDE = tuple(t.id for t in R.techniques() if t.family == "trial")
+# technique -> the technique whose B it borrows (data/techniques.csv price_fallback), by id
+_PRICE_FALLBACK = {
+    t.id: R.by_name()[t.price_fallback].id for t in sorted(R.techniques(), key=lambda t: t.id) if t.price_fallback
+}
 
 
 def complete_params(P):
@@ -166,15 +172,8 @@ def complete_params(P):
     P = copy_params(P)
     for t, v in DEFAULT_PARAMS["B"].items():
         P["B"].setdefault(t, v)
-    P["B"].setdefault(
-        S.FIREWORKS, P["B"].get(S.HTRIPLE, 3.0)
-    )  # no own price: the fallback B (no meta model) is the Hidden Triple's
-    P["B"].setdefault(S.HUMAN_CASE, P["B"].get(S.ALS_XZ, 5.0))  # no own price either: fallback = ALS-XZ's B
-    P["B"].setdefault(S.COMBO_POS, P["B"].get(S.HTRIPLE, 3.0))
-    P["B"].setdefault(S.CLIQUE_HOUSE, P["B"].get(S.HTRIPLE, 3.0))
-    P["B"].setdefault(S.LINE_SETS, P["B"].get(S.HTRIPLE, 3.0))
-    P["B"].setdefault(S.LINE_CLUES, P["B"].get(S.HTRIPLE, 3.0))
-    P["B"].setdefault(S.WEIGHTED_SUMS, P["B"].get(S.HTRIPLE, 3.0))
+    for t in _PRICE_FALLBACK:  # no own price: the B used without a meta model is another technique's
+        P["B"].setdefault(t, P["B"][_PRICE_FALLBACK[t]])
     K = list(P["K"])
     K += DEFAULT_PARAMS["K"][len(K) :]
     P["K"] = K
@@ -234,7 +233,7 @@ def meta_vector(meta, desc=True):
 
 
 # named patterns without an own price: always priced by the structural meta model when params have one
-STRUCTURAL_ONLY = {S.FIREWORKS, S.HUMAN_CASE, S.COMBO_POS, S.CLIQUE_HOUSE, S.LINE_SETS, S.LINE_CLUES, S.WEIGHTED_SUMS}
+STRUCTURAL_ONLY = set(_PRICE_FALLBACK)
 
 
 def meta_priced(meta):
@@ -270,7 +269,7 @@ class Scorer:
             and meta is not None
             and (meta_priced(meta) or P.get("meta_theta_full"))
             and meta[7] == 0
-            and tech in (S.MENTAL_D, S.MENTAL_CHAIN, S.MENTAL_NOTES, S.EITHER_WAY, S.WHAT_IF, S.SHORT_TRIAL)
+            and tech in MENTAL
         ):
             self._in_floor = True
             try:

@@ -1,74 +1,98 @@
-"""The technique registry (pencilmark/registry.py, data/techniques.csv / codes.csv / patterns.csv): the tables the
-modules derive from it equal the literal tables they replace. Fast: nothing is graded."""
+"""The technique registry (pencilmark/registry.py; data/techniques.csv, codes.csv, patterns.csv) is complete and agrees
+with the engine: every technique has the facts the grader needs, every code a route step can carry has a name, a band
+and a Sudoku Explainer rating. Fast: nothing is graded."""
+
+import re
+from pathlib import Path
+
+import pytest
 
 from pencilmark import band_path as BP
-from pencilmark import card as K
-from pencilmark import cbackend as CB
-from pencilmark import explain as EX
 from pencilmark import export as E2
-from pencilmark import metrics as MT
 from pencilmark import registry as R
-from pencilmark import scoring as SC
-from pencilmark import se as SE
 from pencilmark import solver as S
 
 T = R.techniques()
+C = R.codes()
+HEADER = Path(__file__).resolve().parents[1] / "csrc" / "solver.hpp"
 
 
-def test_solver_tables():
-    assert {t.id: t.name for t in T} == S.TECH_NAMES
-    assert all(getattr(S, t.const) == t.id for t in T)
-    assert {t.id for t in T if t.direct} == S.DIRECT_TECHS
-    assert tuple(sorted(t.id for t in T if t.role == "notes")) == S.NOTE_TECHS
+def test_rows_unique():
+    for key in ("id", "const", "name"):
+        vals = [getattr(t, key) for t in T]
+        assert len(vals) == len(set(vals)), f"techniques.csv: duplicate {key}"
+    assert len({p.cpp_code for p in R.patterns()}) == len({p.engine_code for p in R.patterns()}) == len(R.patterns())
 
 
-def test_metrics_tables():
-    fams = [(f, [t.id for t in T if t.family == f]) for f in R.FAMILIES]
-    assert fams == MT.FAMILIES  # lists in order: ties in the required-technique search follow it
-    assert {t.name: t.simplicity for t in T if t.simplicity is not None} == MT.SIMPLICITY
-    assert {t.name: t.band for t in T if t.band is not None} == MT._BAND_BY_NAME
-    assert R.BANDS == MT.BANDS == E2.BANDS
+def test_python_constants_match():
+    assert {t.const: t.id for t in T} == {t.const: getattr(S, t.const) for t in T}
 
 
-def test_card_codes():
-    assert {t.name: R.chip(t) for t in T if t.code} == K.CODES
+@pytest.mark.skipif(not HEADER.is_file(), reason="needs the source tree (csrc/solver.hpp)")
+def test_engine_enum_matches():
+    """csrc/solver.hpp enum Tech and is_direct() say what techniques.csv says."""
+    src = HEADER.read_text(encoding="utf-8")
+    enum = re.search(r"enum Tech \{(.*?)\};", src, re.S).group(1)
+    enum = re.sub(r"//[^\n]*", "", enum)
+    ids = {k: int(v) for k, v in re.findall(r"\b([A-Z][A-Z0-9_]*)\s*=\s*(\d+)", enum) if k != "N_TECH"}
+    assert ids == {t.const: t.id for t in T}
+    body = re.search(r"inline bool is_direct\(int t\) \{(.*?)\}", src, re.S).group(1)
+    assert set(re.findall(r"t == ([A-Z_]+)", body)) == {t.const for t in T if t.direct}
 
 
-def test_scoring_flags():
-    assert {t.id for t in T if t.price_fallback} == SC.STRUCTURAL_ONLY
-    trial = tuple(t.id for t in T if t.family == "trial")
-    assert trial == SC.TRIAL_FAMILY_META_EXCLUDE
+def test_every_technique_has_its_facts():
+    names = R.by_name()
+    for t in T:
+        if t.role == "logic":
+            assert t.code and t.band is not None and t.family, f"{t.name}: logic needs code, band, family"
+        else:
+            assert not t.family and not t.gate and t.simplicity is None, f"{t.name}: a {t.role} row is not priced"
+        if t.code:
+            assert t.display or t.code in C, f"{t.name}: code {t.code} has no name (codes.csv) and no display"
+        if t.split:
+            assert C[t.code].shape_band is not None, f"{t.name}: split, so {t.code} needs a shape_band"
+        if t.price_fallback:
+            fb = names.get(t.price_fallback)
+            assert fb and not fb.price_fallback, f"{t.name}: price_fallback must name a technique with its own price"
 
 
-def test_band_path_tables():
-    assert sorted(t.name for t in T if t.gate == "any") == sorted(BP.VARIANT_ANY)
-    assert sorted(t.name for t in T if t.gate == "sum") == sorted(BP.VARIANT_SUM)
-    assert {t.name for t in T if t.split} == set(E2.SPLIT)
-    assert {n: R.by_name()[n].band for n in E2.SPLIT} == E2.SPLIT_LOW
-    C = R.codes()
-    assert {c: C[c].order for c in C} == {c: float(BP._order(c)) for c in C}
-    assert {c: list(v.subset_of) for c, v in C.items() if v.subset_of} == BP.SUBSET
-    xc = {p.engine_code: (p.code, p.step_name, C[p.code].shape_band) for p in R.patterns() if p.technique == "X-Chain"}
-    assert xc == BP._X_CHAIN
+def _shape_codes():
+    """every code export._shape can give a split technique's step"""
+    out = set()
+    for name in ("X-Chain", "X-Wing", "FinnedFish", "LawOfLeftovers"):
+        for specific in list(E2.X_CHAIN_SHAPES) + [
+            "x-chain",
+            "franken x-wing",
+            "mutant swordfish",
+            "finned x-wing",
+            "sashimi swordfish",
+            "finned jellyfish",
+            "phistomefel ring",
+            "phistomefel variant",
+            "set theory",
+        ]:
+            sh = E2._shape(name, specific)
+            if sh:
+                assert sh[1] is not None, (name, specific, sh)
+                out.add(sh[0])
+    return out
 
 
-def test_export_tables():
-    assert {c: v.name for c, v in R.codes().items()} == E2.code_names()
-    shapes = {p.step_name.lower(): p.code for p in R.patterns() if p.technique == "X-Chain" and p.code != "XCL"}
-    assert list(shapes.items()) == list(E2.X_CHAIN_SHAPES.items())
+def test_route_codes_complete():
+    """the codes a route step can carry: technique chips, pattern codes, shape codes -- each has a name, a band and an
+    SE rating (a number, or "-": SE has no such technique), and codes.csv lists nothing else"""
+    tech = {t.code: t.band for t in T if t.role == "logic"}
+    route = set(tech) | {p.code for p in R.patterns() if p.code} | _shape_codes() | {"SWF", "FRK"}
+    assert route == set(C), f"carried but missing: {route - set(C)}; listed but never carried: {set(C) - route}"
+    for code, c in C.items():
+        assert c.name, code
+        assert c.shape_band is not None or tech.get(code) is not None, f"{code}: no band"
+        assert all(s in C for s in c.subset_of), f"{code}: subset_of names an unknown code"
 
 
-def test_se_tables():
-    C = R.codes()
-    classic = {c: v.se_classic for c, v in C.items() if v.se_classic is not None}
-    diuf = {c: v.se_diuf if v.se_diuf is not None else v.se_classic for c, v in C.items() if v.se_classic is not None}
-    unreachable = set(SE.CLASSIC) - set(C)  # keyed by codes no route step carries: never looked up
-    assert unreachable == {"FSH", "JFH", "NET", "UR1", "URX", "WWG", "XCH", "XYW"}
-    assert classic == {c: v for c, v in SE.CLASSIC.items() if c in C}
-    assert diuf == {c: v for c, v in SE.DIUF.items() if c in C}
-
-
-def test_pattern_tables():
-    assert {p.cpp_code: p.engine_code for p in R.patterns()} == CB.CHAIN_CODES
-    assert {p.engine_code: p.explain_name for p in R.patterns() if p.explain_name} == EX._PATTERN_NAMES
-    assert {p.engine_code: p.catalog_key for p in R.patterns() if p.catalog_key} == EX._CODE_KEY
+def test_patterns_point_at_split_techniques():
+    names = R.by_name()
+    for p in R.patterns():
+        if p.code:
+            assert p.code in C and names[p.technique].split and p.step_name, p
+    assert {c for c, _, _ in BP._X_CHAIN.values()} <= set(C)

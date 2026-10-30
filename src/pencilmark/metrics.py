@@ -16,6 +16,7 @@ time    predicted solve time in minutes for the reference solver (the median
 import math
 
 from . import _data
+from . import registry as R
 from . import solver as S
 from .scoring import Scorer
 
@@ -137,59 +138,10 @@ def report(g, puzzle, P, steps=None, tier_by_family=True):
     }
 
 
-FAMILIES = [
-    ("singles", [0, 1, 2, 11, 12, 37, 58]),
-    (
-        "intersections+combos",
-        [
-            101,
-            102,
-            3,
-            4,
-            13,
-            25,
-            28,
-            29,
-            30,
-            31,
-            32,
-            33,
-            34,
-            35,
-            36,
-            38,
-            45,
-            46,
-            47,
-            48,
-            49,
-            57,
-            59,
-            99,
-            64,
-            65,
-            66,
-            67,
-            72,
-            73,
-            74,
-            88,
-            89,
-            91,
-        ],
-    ),
-    ("subsets", [14, 15, 16, 17, 18, 19, 60, 84, 95, 96, 97, 98]),
-    ("fish+wings", [20, 21, 22, 23, 39, 40, 50, 51, 76, 81, 93]),
-    ("chains", [24, 41, 42, 43, 44, 62, 71, 75, 79, 85, 86, 87, 92, 94, 100]),
-    ("ALS", [52, 53, 54, 55, 77, 78]),
-    ("trial", [26, 61, 63, 68, 69, 70, 80, 82, 83]),
-]
+# pricing families (the engine's structural groups for features and the family-ordered search), simplest first, from
+# the technique registry (data/techniques.csv); inside a family, techniques in registry order
+FAMILIES = [(f, [t.id for t in R.techniques() if t.family == f]) for f in R.FAMILIES]
 _FAM_OF = {t: k for k, (_, ts) in enumerate(FAMILIES) for t in ts}
-_unlisted = set(S.TECH_NAMES) - set(_FAM_OF) - {S.TAKE_NOTES, S.SNYDER_MARKS, S.GUESS, S.CANONICAL}
-if _unlisted:  # a new technique without a family would silently count as a single
-    import warnings
-
-    warnings.warn(f"metrics.FAMILIES lacks technique codes {sorted(_unlisted)}: add them")
 
 
 def family_of(tech):
@@ -198,61 +150,7 @@ def family_of(tech):
 
 # within-family order for the required-technique search: pattern size / textbook order, so the minimal
 # set names the technique a teacher would (Y-Wing, not WXYZ-Wing, when both work); unlisted = 50
-SIMPLICITY = {
-    n: i
-    for i, n in enumerate(
-        [
-            "LockedCandidates",
-            "HiddenSingle+Pointing(direct)",
-            "NakedSingle+Pointing(direct)",
-            "NakedPair",
-            "HiddenPair",
-            "MentalSingle(direct)",
-            "MentalNotesSingle",
-            "NakedTriple",
-            "HiddenTriple",
-            "NakedQuad",
-            "HiddenQuad",
-            "XY-Wing",
-            "X-Wing",
-            "XYZ-Wing",
-            "FinnedFish",
-            "Swordfish",
-            "WXYZ-Wing",
-            "Jellyfish",
-            "UniqueRectangle",
-            "BUG+1",
-            "GurthSymmetry",
-            "RemotePairs",
-            "MentalChain(direct)",
-            "X-Chain",
-            "EmptyRectangle",
-            "Coloring",
-            "XY-Chain",
-            "MultiColouring",
-            "AIC",
-            "NiceLoop(discontinuous)",
-            "ChuteRemotePairs",
-            "3DMedusa",
-            "ColourAlgebra",
-            "ALS-XZ",
-            "SueDeCoq",
-            "AlignedPairExclusion",
-            "ALS-XY-Wing",
-            "DeathBlossom",
-            "ALS-AIC",
-            "ShortTrial",
-            "EitherWay",
-            "WhatIf",
-            "ForcingChains",
-            "NishioForcingNet",
-            "DynamicForcingChains",
-            "NestedForcingChains",
-            "PatternOverlay",
-            "Trial",
-        ]
-    )
-}
+SIMPLICITY = {t.name: t.simplicity for t in R.techniques() if t.simplicity is not None}
 
 
 def required_techniques(puzzle, P):
@@ -352,7 +250,7 @@ def grade_puzzle_checked(puzzle, P, explain=False, time_limit=60.0, tier_by_fami
 # ---- user-facing difficulty BANDS (labels), separate from the pricing FAMILIES ----------------
 # The label is the band of the hardest REQUIRED technique; variant techniques are placed by what they
 # demand of a human (the pricing families lump all variant logic with pointing pairs).
-BANDS = ["Very Easy", "Easy", "Medium", "Hard", "Very Hard", "Expert", "Extreme"]
+BANDS = R.BANDS
 BAND_MEANING = {
     "Very Easy": "the entry point: scanning without candidates (full house, hidden singles) and the obvious consequences "
     "of a rule ('a 6 in a cage of 11')",
@@ -365,128 +263,10 @@ BAND_MEANING = {
     "Expert": "chains and almost locked sets: XY-Chains, AIC, nice loops, Medusa, multi-colouring, case analysis",
     "Extreme": "the limit of human solving: forcing chains / nets, Nishio, pattern overlay, trial and error",
 }
-# technique -> band: the band assignment. FAMILIES above stay the
-# engine's structural groups (pricing / features); only the band assignment changed. X-Chain, FinnedFish and LawOfLeftovers
-# sit at their lower (Medium) level here; pencilmark/export rates long X-Chains, larger finned fish and Phistomefel-type
-# set theory Hard by pattern name.
-_BAND_BY_NAME = {}
-for _band, _names in {
-    # Very Easy, the entry point: scanning without candidates (full house, hidden singles, a rule's last cell)
-    0: [
-        "FullHouse",
-        "HiddenSingle(direct)",
-        "HiddenSingle(notes)",
-        "ClueFacts",
-        "LineSingle(direct)",
-        "ConstraintSingle(direct)",
-    ],
-    # Easy: one cell's candidates (naked single), pointing / claiming, and reading one rule's combinations
-    1: [
-        "NakedSingle(direct)",
-        "NakedSingle(notes)",
-        "NakedSingle+Pointing(direct)",
-        "HiddenSingle+Pointing(direct)",
-        "LockedCandidates",
-        "SnyderMarks",
-        "SnyderSingle",
-        "MentalSingle(direct)",
-        "MentalNotesSingle",
-        "CageCombination",
-        "SumCombination",
-        "ArrowCombination",
-        "SetCombination",
-        "Innie/Outie(direct)",
-        "PairwiseConstraint",
-        "TableCombination",
-        "LineRange",
-        "LineScan",
-        "LineClass",
-        "SandwichCombination",
-        "XSumCombination",
-        "SkyscraperCombination",
-        "CountCombination",
-        "ClueShape",
-    ],
-    # Medium: subsets (naked / hidden pairs, triples, quads) and the implications of each variant rule
-    2: [
-        "NakedPair",
-        "HiddenPair",
-        "NakedTriple",
-        "HiddenTriple",
-        "NakedQuad",
-        "HiddenQuad",
-        "EqualDigits",
-        "DigitCount",
-        "LawOfLeftovers",
-        "EqualSumCombination",
-        "ComboLock",
-        "RuleIntersection",
-        "ImpliedHouses",
-        "Domino",
-        "ClassCount",
-        "SumBound",
-        "Innie/Outie(notes)",
-        "Innie/Outie(sum)",
-        "ClassColouring",
-    ],
-    # Hard: the first learned patterns (X-Wing, Skyscraper, 2-String Kite, Turbot Fish, simple colouring)
-    3: ["X-Wing", "X-Chain", "Coloring", "MentalChain(direct)"],
-    # Very Hard: Empty Rectangle, finned fish, larger fish, wings, uniqueness, advanced variant logic
-    4: [
-        "EmptyRectangle",
-        "FinnedFish",
-        "Swordfish",
-        "Jellyfish",
-        "XY-Wing",
-        "XYZ-Wing",
-        "WXYZ-Wing",
-        "RemotePairs",
-        "UniqueRectangle",
-        "BUG+1",
-        "ChuteRemotePairs",
-        "SumAlgebra",
-        "WeightedSums",
-        "BandLogic",
-        "Fireworks",
-        "GurthSymmetry",
-        "ColourAlgebra",
-        "ComboPositions",
-        "CliqueHouse",
-        "LineSets",
-        "LineClues",
-    ],
-    # Expert: chains and almost locked sets (bounded case splits and ALS chains are within the expert hobby limit)
-    5: [
-        "XY-Chain",
-        "MultiColouring",
-        "3DMedusa",
-        "AIC",
-        "NiceLoop(discontinuous)",
-        "ALS-XZ",
-        "ALS-XY-Wing",
-        "SueDeCoq",
-        "AlignedPairExclusion",
-        "CaseAnalysis",
-        "ALS-AIC",
-        "DeathBlossom",
-        "EitherWay",
-        "WhatIf",
-        "ShortTrial",
-    ],
-    # Extreme: borderline-computer logic: forcing chains / nets, Nishio, pattern overlay, trial and error
-    6: ["Trial", "ForcingChains", "DynamicForcingChains", "NestedForcingChains", "NishioForcingNet", "PatternOverlay"],
-}.items():
-    for _n in _names:
-        _BAND_BY_NAME[_n] = _band
-_missing = [
-    n
-    for n in S.TECH_NAMES.values()
-    if n not in _BAND_BY_NAME and n not in ("TakeNotes", "Guess", "CanonicalEnumeration")
-]
-if _missing:
-    import warnings
-
-    warnings.warn(f"metrics band map lacks techniques {_missing}")
+# technique -> band (data/techniques.csv). FAMILIES above stay the engine's structural groups (pricing / features).
+# X-Chain, X-Wing, FinnedFish and LawOfLeftovers sit at their lowest shape's band here; band_path / export rate long
+# X-Chains, Franken fish and Phistomefel-type set theory by the shape found (data/codes.csv shape_band).
+_BAND_BY_NAME = {t.name: t.band for t in R.techniques() if t.band is not None}
 
 
 def band_of(tech):

@@ -35,6 +35,7 @@ import zlib
 from collections import defaultdict
 from itertools import combinations
 
+from . import registry as R
 from . import solver as S
 from .metrics import FAMILIES, family_of
 from .model import bit, digits_of, popcount
@@ -3601,17 +3602,7 @@ def _clash(nm, p, t, end):
     return f"{rel_label(p, ec, c)}-linked to {nm.cell(ec)}"
 
 
-_PATTERN_NAMES = {
-    "SKY": "Skyscraper",
-    "2SK": "2-String Kite",
-    "TUR": "Turbot fish",
-    "XCH": "X-Chain",
-    "XYC": "XY-Chain",
-    "RMP": "Remote pair",
-    "WWG": "W-Wing",
-    "AIC": "AIC",
-    "DNL": "discontinuous nice loop",
-}
+_PATTERN_NAMES = {p.engine_code: p.explain_name for p in R.patterns() if p.explain_name}  # data/patterns.csv
 
 
 def _chain_links(path):
@@ -3786,18 +3777,7 @@ def _h_chain(ctx):
     return r
 
 
-_CODE_KEY = {
-    "SKY": "skyscraper",
-    "2SK": "two_string_kite",
-    "TUR": "turbot_fish",
-    "XCH": "x_chain",
-    "XYC": "xy_chain",
-    "RMP": "remote_pair",
-    "WWG": "w_wing",
-    "AIC": "aic",
-    "DNL": "nice_loop",
-    "ALS": "als_chain",
-}
+_CODE_KEY = {p.engine_code: p.catalog_key for p in R.patterns() if p.catalog_key}  # engine code -> CATALOG key
 
 
 _SRC = (

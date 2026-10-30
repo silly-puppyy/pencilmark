@@ -20,6 +20,8 @@ data/techniques.csv, one row per engine technique (solver.TECH_NAMES):
                   WXYZ-Wing); blank = after every ranked technique
   gate            any: switched on only for puzzles with some variant rule; sum: only with a sum rule; blank: always
   direct          1: a move made without pencil marks (also csrc/solver.hpp is_direct)
+  mental          1: worked out in the head on the no-notes view (a subset, short chain or case split without notes):
+                  priced at least as its written form (params mental_floor), left out of the card score's first solve
   price_fallback  blank: the technique has its own fitted price B. Otherwise it has none: it is always priced by the
                   structural meta model and borrows this technique's B when params carry no meta model
 Row order matters in one place: inside a family, metrics.required_techniques tries techniques with equal simplicity and
@@ -35,6 +37,7 @@ data/codes.csv, one row per chip code a route step can carry:
   se_classic  Sudoku Explainer rating (Juillerat's table, the one expert solvers quote); "-": SE has no such
               technique (se.py rates it 7.0)
   se_diuf     the DiufSudoku fork's rating where it differs from se_classic; blank = the same
+  note        why: the reason for a subset_of entry or an order (free text, not read by the code)
 
 data/patterns.csv, one row per pattern code the engine puts on a move (Move.code, an int):
   cpp_code      the int the engine writes
@@ -78,6 +81,7 @@ class Technique:
     simplicity: int | None
     gate: str
     direct: bool
+    mental: bool
     price_fallback: str
 
 
@@ -151,6 +155,7 @@ def techniques() -> tuple[Technique, ...]:
                 simplicity=int(r["simplicity"]) if r["simplicity"] else None,
                 gate=_choice(r["gate"], GATES, w),
                 direct=_flag(r["direct"], w),
+                mental=_flag(r["mental"], w),
                 price_fallback=r["price_fallback"],
             )
         )
@@ -164,6 +169,8 @@ def codes() -> dict[str, Code]:
     for r in _rows("codes.csv"):
         w = f"codes.csv {r['code']}"
         se = r["se_classic"]
+        if not se:
+            raise ValueError(f"{w}: se_classic is empty; give Sudoku Explainer's rating, or '-' when SE has none")
         out[r["code"]] = Code(
             code=r["code"],
             name=r["name"],

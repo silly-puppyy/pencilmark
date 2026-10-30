@@ -22,14 +22,13 @@ grade (format "sudoku-grade", format_version 1):
 
 from __future__ import annotations
 
-import csv
-import io
 import math
 import time
 from collections import Counter
 
 from . import _data
 from . import metrics as MT
+from . import registry as R
 from . import solver as S
 
 GRADER_NAME, GRADER_VERSION = (
@@ -37,7 +36,7 @@ GRADER_NAME, GRADER_VERSION = (
     "1.0.0",
 )  # on every card: a grade is only meaningful with the engine that made it
 FORMAT_VERSION = 1  # of both formats; bumped only on a breaking change (additive fields don't bump it)
-BANDS = ["Very Easy", "Easy", "Medium", "Hard", "Very Hard", "Expert", "Extreme"]
+BANDS = R.BANDS
 SITES = {
     "fed": "fed-sudoku.eu",
     "lisudoku": "lisudoku.com",
@@ -48,84 +47,51 @@ SITES = {
     "sudoku.one": "sudoku.one",
     "hard set": "sudokuwiki.org",
 }
-# shape names (explainer pattern or technique name) -> chip code; Medium shapes of the SPLIT techniques
-X_CHAIN_SHAPES = {"skyscraper": "SKY", "2-string kite": "KTE", "turbot fish": "TUR", "empty rectangle": "ERE"}
+# named X-Chain shapes (data/patterns.csv): lower-case step name -> chip code, matched inside explainer pattern names
+X_CHAIN_SHAPES = {p.step_name.lower(): p.code for p in R.patterns() if p.technique == "X-Chain" and p.code != "XCL"}
 
 
 def _shape(name, specific):
-    """(code, band) of a SPLIT technique step from its most specific name; None if the name doesn't decide."""
-    sl = specific.lower()
-    if name == "X-Chain":  # Skyscraper / 2-String Kite / Turbot Hard; Empty Rectangle and longer chains Very Hard
-        for k, c in X_CHAIN_SHAPES.items():
-            if k in sl:
-                return c, 4 if c == "ERE" else 3
-        return "XCL", 4
-    if name == "X-Wing":  # plain row / column X-Wing Hard; Franken (a box as base or cover) / Mutant Very Hard
+    """(code, band) of a SPLIT technique step from its most specific name; None if the name doesn't decide. The band is
+    the shape's (data/codes.csv shape_band)."""
+    code = _shape_code(name, specific.lower())
+    return None if code is None else (code, R.codes()[code].shape_band)
+
+
+def _shape_code(name, sl):
+    if name == "X-Chain":  # Skyscraper / 2-String Kite / Turbot / Empty Rectangle by name, else a long X-Chain
+        return next((c for k, c in X_CHAIN_SHAPES.items() if k in sl), "XCL")
+    if name == "X-Wing":  # plain row / column X-Wing, or Franken (a box as base or cover) / Mutant
+        return "FRK" if "franken" in sl or "mutant" in sl else "XWG"
+    if name == "FinnedFish":  # every finned / sashimi fish and Franken (box) fish
         if "franken" in sl or "mutant" in sl:
-            return "FRK", 4
-        return "XWG", 3
-    if name == "FinnedFish":  # every finned / sashimi fish and Franken (box) fish Very Hard
-        if "franken" in sl or "mutant" in sl:
-            return "FRK", 4
-        if "jellyfish" in sl:
-            return "FJF", 4
-        if "swordfish" in sl:
-            return "FSW", 4
-        if "x-wing" in sl:
-            return "FXW", 4
+            return "FRK"
+        for size, code in (("jellyfish", "FJF"), ("swordfish", "FSW"), ("x-wing", "FXW")):
+            if size in sl:
+                return code
         return None
     if name == "LawOfLeftovers":
         if "phistomefel" in sl:
-            return ("PHV" if "variant" in sl else "PHI"), 3
-        return "LOL", 2
+            return "PHV" if "variant" in sl else "PHI"
+        return "LOL"
     return None
 
 
-_BAND = None
-
-
-def _band_table():
-    """technique display name -> band index, from the accepted proposal (docs/technique_bands_proposal.csv)."""
-    global _BAND
-    if _BAND is None:
-        _BAND = {}
-        if _data.exists("technique_bands.csv"):
-            for r in csv.DictReader(io.StringIO(_data.read_text("technique_bands.csv"))):
-                b = r["proposed"]
-                _BAND[r["technique"]] = BANDS.index(b) if b in BANDS else None
-    return _BAND
-
-
 def code_names():
-    """chip code -> technique name (technique_bands.csv; first row of each code)"""
-    out = {
-        "SKY": "Skyscraper",
-        "KTE": "2-String Kite",
-        "TUR": "Turbot Fish",
-        "FRK": "Franken Fish",
-        "FSW": "Finned Swordfish",
-        "FJF": "Finned Jellyfish",
-        "PHI": "Phistomefel Ring",
-        "PHV": "Phistomefel Variant",
-        "CFX": "Clue Facts",
-        "CSH": "Clue Shape",
-        "CCL": "High / Low and Odd / Even Colouring",
-    }
-    for r in csv.DictReader(io.StringIO(_data.read_text("technique_bands.csv"))):
-        out.setdefault(r["code"], r["technique"])
-    return out
+    """chip code -> technique name (data/codes.csv)"""
+    return {c: v.name for c, v in R.codes().items()}
 
 
 def chip_of(tech_id, specific=None):
     """(chip code, band index) for a technique, using its most specific pattern name where the band depends on it:
-    short X-Chains (Skyscraper / 2-String Kite / Turbot) Medium, longer ones Hard; finned X-Wing Medium, larger Hard."""
+    short X-Chains (Skyscraper / 2-String Kite / Turbot) Hard, longer ones Very Hard; Franken X-Wing Very Hard."""
     from .card import _code
 
     name = S.TECH_NAMES.get(tech_id, str(tech_id))
-    code, disp = _code(name)
-    # base band from the engine-name map (metrics._BAND_BY_NAME, the accepted proposal; it separates forms that share
-    # a code, e.g. direct innies/outies Easy vs set-theory forms Medium); computer search stays Unknown (None)
-    band = None if _band_table().get(disp, 0) is None else MT._BAND_BY_NAME.get(name, MT.band_of(tech_id))
+    code, _ = _code(name)
+    # base band: the technique's (data/techniques.csv; it separates forms that share a code, e.g. direct innies / outies
+    # Easy vs set-theory forms Medium)
+    band = MT.band_of(tech_id)
     if specific and name in SPLIT:
         sh = _shape(name, specific)
         if sh:
@@ -133,39 +99,17 @@ def chip_of(tech_id, specific=None):
     return code, band
 
 
-_ORDER = None
-
-
-def _order_table():
-    """chip code -> order within its band (docs/technique_bands_proposal.csv): simplest first."""
-    global _ORDER
-    if _ORDER is None:
-        _ORDER = {}
-        if _data.exists("technique_bands.csv"):
-            for r in csv.DictReader(io.StringIO(_data.read_text("technique_bands.csv"))):
-                _ORDER.setdefault(r["code"], float(r["order"] or 99))
-    return _ORDER
-
-
-# techniques whose band depends on the named shape: plain X-Wing / short X-Chains / finned X-Wing / basic set theory
-# Medium; Franken / Mutant X-Wings, long X-Chains, larger finned fish and Phistomefel-type set theory Hard. The engine can't cap the shape it looks for, so
-# band-limited solves allow them from Medium on and band_path checks the shapes actually used.
-SINGLE_CODES = {"FHS", "HSI", "NSI", "LSI", "CSI"}  # singles: no use counts on the card (GRADE.md 3)
-SPLIT = ("X-Wing", "X-Chain", "FinnedFish", "LawOfLeftovers")  # engine X-Wing includes Franken / Mutant 2-fish
-SPLIT_LOW = {
-    "X-Wing": 3,
-    "X-Chain": 3,
-    "FinnedFish": 4,
-    "LawOfLeftovers": 2,
-}  # their lower band; larger shapes one above
+# techniques whose band depends on the named shape (SPLIT): plain X-Wing, short X-Chains and basic set theory sit at
+# the technique's band; Franken / Mutant X-Wings, long X-Chains and Phistomefel-type set theory at their shape's. The
+# engine can't cap the shape it looks for, so band-limited solves allow them from the technique's band on and band_path
+# checks the shapes actually used.
+SINGLE_CODES = {t.code for t in R.techniques() if t.family == "singles"}  # no use counts on the card (GRADE.md 3)
+SPLIT = tuple(t.name for t in R.techniques() if t.split)  # engine X-Wing includes Franken / Mutant 2-fish
 
 
 def tech_band(t):
-    """band index of an engine technique under the accepted proposal (SPLIT techniques at their lower level)."""
-    if S.TECH_NAMES.get(t) in SPLIT:
-        return SPLIT_LOW[S.TECH_NAMES[t]]
-    code, b = chip_of(t)
-    return b if b is not None else 9
+    """band index of an engine technique (data/techniques.csv; SPLIT techniques at their lowest shape's band)."""
+    return MT.band_of(t)
 
 
 META_KEYS = ("title", "author", "source", "id", "url", "date", "rules_text", "type", "license", "tags")

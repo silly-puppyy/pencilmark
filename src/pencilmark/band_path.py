@@ -1,7 +1,7 @@
 """Band-by-band human solve and technique hints.
 
 The solve uses Very Easy moves until none are left, then Easy, then Medium, and so on, dropping back to the lowest band
-after every move. Within a band it takes the simplest technique first (study order, docs/technique_bands_proposal.csv),
+after every move. Within a band it takes the simplest technique first (study order, data/codes.csv),
 then the cheapest move. Each step is named by its most specific shape (a Skyscraper, not "X-Chain"; a Franken X-Wing,
 not "X-Wing"), and its band comes from that shape.
 
@@ -17,80 +17,24 @@ from collections import Counter
 
 from . import cbackend as CB
 from . import export as E2
+from . import registry as R
 from . import solver as S
 
 BANDS = E2.BANDS
 FORCING_FALLBACK = True  # when no listed move exists, take the solver's forcing step (Extreme)
 FISH_CAP = True  # up to Hard, list fish of size 2 only (X-Wing; Swordfish and larger are Very Hard; speed)
-FORCING_TECHS = {S.FORCING, S.DYN_FORCING, S.NESTED_FORCING, S.NISHIO, S.POM, S.TRIAL}
+FORCING_TECHS = CB.computer_search()  # a forcing step taken as the fallback is Extreme
 
-# most specific shape of an engine move -> (code, display name, band)
+# most specific shape of an X-Chain move: engine pattern code -> (code, display name, band) (data/patterns.csv)
 _X_CHAIN = {
-    "SKY": ("SKY", "Skyscraper", 3),
-    "2SK": ("KTE", "2-String Kite", 3),
-    "TUR": ("TUR", "Turbot Fish", 3),
-    "ER": ("ERE", "Empty Rectangle", 4),
-    "XCH": ("XCL", "X-Chain", 4),
-    "GXC": ("XCL", "Grouped X-Chain", 4),
+    p.engine_code: (p.code, p.step_name, R.codes()[p.code].shape_band) for p in R.patterns() if p.technique == "X-Chain"
 }
+_NAMED_CHAINS = {c for c, (code, _, _) in _X_CHAIN.items() if code != "XCL"}  # Skyscraper, 2-String Kite, Turbot, ER
+# Phistomefel forms of a law-of-leftovers move: engine pattern code -> (code, display name)
+_LEFTOVERS = {p.engine_code: (p.code, p.step_name) for p in R.patterns() if p.technique == "LawOfLeftovers"}
 
-# study order inside a band; codes not listed fall back to the proposal csv order
-_ORDER = {
-    "FHS": 1,
-    "HSI": 2,
-    "LSI": 4,
-    "CSI": 5,  # Very Easy
-    "NSI": 0.5,
-    "PPR": 1,
-    "SNY": 3,
-    "MSI": 6,  # Easy: naked singles before pointing (SE, HoDoKu, coach)
-    "NPR": 4,
-    "HPR": 5,
-    "NTR": 21,
-    "HTR": 22,  # Medium
-    "XWG": 1,
-    "SKY": 2.1,
-    "KTE": 2.2,
-    "TUR": 2.3,
-    "SCL": 4,  # Hard
-    "FXW": 1.3,
-    "ERE": 2.5,  # Very Hard: after Swordfish (csv 1), with the wings
-    # Hard: shape codes beside their relatives (csv: SWF 1 .. JLF 9, XYC 11, MCL 12, 3DM 13, SUM 16); Franken fish
-    # late for its obscurity
-    "FSW": 1.5,
-    "FJF": 9.5,
-    "XCL": 10.8,
-    "FRK": 12.5,
-    "PHI": 16.5,
-    "PHV": 16.6,
-}
-
-# A -> the codes A is always a special case of (theory; transitive closure below)
-SUBSET = {
-    "FHS": ["NSI", "HSI"],
-    "XWG": ["SKY", "FXW", "FRK", "SWF"],  # an X-Wing is a Skyscraper whose ends line up; a finless finned X-Wing; a
-    # Franken X-Wing using two lines; a Swordfish with a degenerate third line
-    "SKY": ["TUR"],
-    "KTE": ["TUR"],
-    "ERE": ["TUR"],  # turbot fish = any 3-link single-digit chain
-    "TUR": ["XCL"],
-    "SCL": ["XCL"],
-    "MCL": ["XCL"],
-    "FXW": ["XCL"],  # colour traps / wraps, finned fish = (grouped) X-Chains
-    "XCL": ["AIC"],
-    "YWG": ["XYC"],
-    "RMP": ["XYC"],
-    "XYC": ["AIC"],  # Y-Wing = 3-cell XY-Chain; remote pairs = same-pair XY-Chain
-    "XYZ": ["ALS"],
-    "WXZ": ["ALS"],  # XYZ / WXYZ-Wing are ALS-XZ cases
-    "ALS": ["AAC"],
-    "AXY": ["AAC", "DEB"],
-    "AIC": ["AAC"],
-    "NLP": ["AIC"],  # nice loop = AIC as a loop
-    "PHI": ["LOL"],
-    "PHV": ["LOL"],  # Phistomefel is a law-of-leftovers instance (but Hard)
-    "MSI": ["NPR", "NTR"],  # a subset seen without notes is still the subset
-}
+# A -> the codes A is always a special case of (data/codes.csv subset_of; transitive closure below)
+SUBSET = {c: list(v.subset_of) for c, v in R.codes().items() if v.subset_of}
 
 
 def _closure():
@@ -117,7 +61,13 @@ def covered(code, known):
 
 
 def _order(code):
-    return _ORDER.get(code, E2._order_table().get(code, 99))
+    """study order inside a band (data/codes.csv): simplest first."""
+    c = R.codes().get(code)
+    return c.order if c else 99
+
+
+def _shape_band(code):
+    return R.codes()[code].shape_band
 
 
 def classify(m, p):
@@ -125,7 +75,7 @@ def classify(m, p):
     t, n, c = m["tech"], m["name"], m.get("code")
     if n == "X-Chain" and c in _X_CHAIN:
         return _X_CHAIN[c]
-    if n == "MentalChain(direct)" and c in ("SKY", "2SK", "TUR", "ER"):  # a short chain seen without notes
+    if n == "MentalChain(direct)" and c in _NAMED_CHAINS:  # a short chain seen without notes
         code, name, band = _X_CHAIN[c]
         return code, name + " (in the head)", band
     if n in ("X-Wing", "Swordfish") and m.get("pattern"):
@@ -133,13 +83,13 @@ def classify(m, p):
         rows = {p.coords[x][0] for x in m["pattern"]}
         cols = {p.coords[x][1] for x in m["pattern"]}
         plain = min(len(rows), len(cols)) <= k and max(len(rows), len(cols)) <= k  # base and cover lines only
-        if not plain:
-            return "FRK", f"Franken {n}", 4
-        return ("XWG", "X-Wing", 3) if n == "X-Wing" else ("SWF", "Swordfish", 4)
-    if n == "LawOfLeftovers" and c in ("PHI", "Phistomefel variant"):
-        return ("PHI", "Phistomefel ring", 3) if c == "PHI" else ("PHV", "Phistomefel variant", 3)
+        code = ("XWG" if n == "X-Wing" else "SWF") if plain else "FRK"
+        return code, n if plain else f"Franken {n}", _shape_band(code)
+    if n == "LawOfLeftovers" and c in _LEFTOVERS:
+        code, name = _LEFTOVERS[c]
+        return code, name, _shape_band(code)
     if n == "Jellyfish" and c and "franken" in str(c).lower():
-        return "FRK", "Franken Jellyfish", 4
+        return "FRK", "Franken Jellyfish", _shape_band("FRK")
     code, band = E2.chip_of(t, str(c) if c and n in E2.SPLIT else None)
     from .card import _code
 
@@ -149,48 +99,8 @@ def classify(m, p):
 
 # techniques that reason about variant rules: only switched on when the puzzle has such rules (per-variant techniques are only considered for their variants). Fireworks and Gurth's theorem
 # are classic techniques and stay on everywhere.
-VARIANT_ANY = [
-    "ConstraintSingle(direct)",
-    "LineSingle(direct)",
-    "PairwiseConstraint",
-    "TableCombination",
-    "LineRange",
-    "LineScan",
-    "LineClass",
-    "SandwichCombination",
-    "XSumCombination",
-    "SkyscraperCombination",
-    "CountCombination",
-    "SetCombination",
-    "ArrowCombination",
-    "EqualDigits",
-    "DigitCount",
-    "RuleIntersection",
-    "ImpliedHouses",
-    "Domino",
-    "ClassCount",
-    "BandLogic",
-    "ColourAlgebra",
-    "CliqueHouse",
-    "LineSets",
-    "LineClues",
-    "ClassColouring",
-    "ClueFacts",
-    "ClueShape",
-]
-VARIANT_SUM = [
-    "CageCombination",
-    "SumCombination",
-    "Innie/Outie(direct)",
-    "Innie/Outie(notes)",
-    "Innie/Outie(sum)",
-    "EqualSumCombination",
-    "ComboLock",
-    "SumBound",
-    "SumAlgebra",
-    "WeightedSums",
-    "ComboPositions",
-]
+VARIANT_ANY = [t.name for t in R.techniques() if t.gate == "any"]  # data/techniques.csv gate
+VARIANT_SUM = [t.name for t in R.techniques() if t.gate == "sum"]
 _SUM_WORDS = ("sum", "cage", "killer", "arrow", "sandwich", "little")
 
 

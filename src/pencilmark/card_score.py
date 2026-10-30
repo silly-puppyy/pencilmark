@@ -8,14 +8,13 @@ import math
 from . import _data
 from . import cbackend as CB
 from . import solver as S
+from .scoring import MENTAL, complete_params
 from .scoring import Scorer as _Scorer
-from .scoring import complete_params
 
-MENTAL = ("MentalChain(direct)", "MentalSingle(direct)", "MentalNotesSingle", "WhatIf", "EitherWay", "ShortTrial")
 P = complete_params(_data.load_params("params.json"))
 SC = _Scorer(P)
 
-dis = {t for t, n in S.TECH_NAMES.items() if n in MENTAL}
+dis = set(MENTAL)  # the first solve leaves out the moves worked out in the head
 
 
 _LAST_CELLS = []

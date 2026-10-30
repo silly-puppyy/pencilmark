@@ -32,6 +32,7 @@ with each step.
 | Grader | `band_path.py`, `card_score.py`, `scoring.py`, `metrics.py`, `export.py`, `card.py` | route, prices, difficulty, time, band, contents |
 | Words | `explain.py`, `variants.py`, `usage.py` | explanations, variant names and rule text |
 | Generator | `gen/` | puzzles for a `sudoku-spec` request |
+| Registry | `registry.py` over `data/techniques.csv`, `codes.csv`, `patterns.csv` | every fact about a technique, chip code and engine pattern code (name, band, order, family, flags, SE rating) |
 | Data | `data/*.json`, `data/*.csv` | fitted parameters and tables |
 
 ## The engine (`csrc/`)
@@ -60,7 +61,10 @@ with each step.
 
 Being fixed by the restructure (docs/dev/CODE_STYLE.md says how code should look):
 
-- Adding a technique touches about 17 files; there is no single technique table yet.
+- Adding a technique still touches the C++ engine (enum in `solver.hpp`, the technique, its tier, its descriptors), the
+  constant in `solver.py`, a row in `data/techniques.csv` (and `codes.csv` for a new chip), its fitted price, its
+  explanation and, for extra move fields, `cbackend.XMETA_KEYS`. `tests/test_registry.py` fails until the registry
+  and the engine enum agree.
 - A rule family is represented four times (public format, `puzzle_json`, `model.Puzzle`, the C++ spec).
 - `explain.py` re-derives patterns the engine already found.
 - Some results pass between modules through module globals (`card._LAST_EFFORT`, `card_score._LAST_X`).

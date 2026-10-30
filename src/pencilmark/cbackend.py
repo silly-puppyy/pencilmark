@@ -18,14 +18,12 @@ from collections import defaultdict
 
 from . import _csolver as _C  # noqa: E402  (the compiled C++ engine, sources in csrc/)
 from . import model as M  # noqa: E402
+from . import registry as R  # noqa: E402
 from . import solver as S  # noqa: E402
 from .scoring import Scorer  # noqa: E402
 
 _NM_NONE, _NM_GROUP, _NM_LOCK, _NM_INNIE, _NM_OUTIE, _NM_NARY = range(6)
 
-# techniques without a Python reference implementation (C++ only); pass as
-# `disabled` to reproduce the frozen Python solver exactly
-NEW_TECHS = frozenset(S.NEW_TECHS)
 CTYPES = (
     "sum",
     "arrow",
@@ -167,132 +165,9 @@ _CHAIN_KEYS = (
 for _t in (S.X_CHAIN, S.XY_CHAIN, S.AIC_CHAIN, S.NICE_LOOP, S.MENTAL_CHAIN, S.REMOTE_PAIRS, S.EMPTY_RECT):
     XMETA_KEYS[_t] = _CHAIN_KEYS
 XMETA_KEYS[S.ALS_AIC] = _CHAIN_KEYS[:5] + ("n_als",) + _CHAIN_KEYS[6:]
-# sudokuwiki-style codes for chain special cases
-CHAIN_CODES = {
-    1: "SKY",
-    2: "2SK",
-    3: "TUR",
-    4: "XCH",
-    5: "XYC",
-    6: "RMP",
-    7: "WWG",
-    8: "AIC",
-    9: "DNL",
-    3001: "UR1",
-    3002: "UR2",
-    3003: "UR3",
-    3004: "UR4",
-    3005: "HUR",
-    3006: "BUG",
-    3101: "AXZ",
-    3102: "AXZ2",
-    3103: "AXY",
-    3104: "DBL",
-    3105: "ALS",
-    3201: "IMH",
-    3301: "SND",
-    3302: "XSM",
-    3303: "SKL",
-    3304: "LOL",
-    3305: "SET",
-    3306: "PHI",
-    3307: "set theory",
-    3308: "Phistomefel variant",
-    3320: "digit set",
-    3330: "rule and house together",
-    3331: "two rules together",
-    3332: "two houses with their dots",
-    3333: "three rules together",
-    3341: "sum algebra (house)",
-    3342: "sum algebra (two houses)",
-    3343: "sum algebra (three houses)",
-    3354: "house with its rules",
-    3355: "line and box with their rules",
-    3356: "band with its rules",
-    5201: "Snyder hidden pair",
-    5401: "fireworks",
-    5501: "case refutation",
-    5502: "cell case analysis",
-    5503: "house case analysis",
-    3910: "cage combination positions",
-    3920: "clique house",
-    3930: "renban digit sets in a house",
-    3940: "outside clues together",
-    3950: "weighted sums",
-    3951: "weighted sums (one cell left)",
-    5202: "Snyder X-wing",
-    5203: "Snyder hidden triple",
-    10: "GXC",
-    11: "GAIC",
-    12: "ER",
-    3007: "UR5",
-    3008: "AR1",
-    3009: "XUR1",
-    3010: "BUG+2",
-    3011: "AR2",
-    3401: "cell forcing",
-    3402: "unit forcing",
-    3411: "dynamic cell forcing",
-    3412: "dynamic unit forcing",
-    3431: "Nishio",
-    3441: "what if (cell)",
-    3442: "what if (house)",
-    3451: "notes in the head",
-    3421: "nested cell forcing",
-    3422: "nested unit forcing",
-    3501: "medusa trap",
-    3502: "medusa wrap (cell)",
-    3503: "medusa wrap (unit)",
-    3504: "medusa wrap (emptied cell)",
-    3505: "medusa",
-    3601: "secret",
-    3602: "rule of 45",
-    3610: "cage/unit overlap",
-    3611: "captured candidates",
-    3605: "set theory (arrows / little killers)",
-    3612: "innie region must contain",
-    3613: "captured by an innie region",
-    3603: "secret (outie, cage splitting)",
-    3604: "rule of 45 (outie, cage splitting)",
-    3701: "min/max bound",
-    3702: "triangular bound",
-    3703: "arrow min/max bound",
-    3704: "arrow triangular bound",
-    3705: "renban span",
-    3801: "odd/even count",
-    3802: "sum parity",
-    3803: "low/middle/high count",
-    3804: "rule of parity",
-    3901: "domino must contain",
-    3902: "domino pair lock",
-    3903: "kropki black chain",
-    3904: "middle squeeze",
-    3506: "colour algebra",
-    3507: "colour must fit every house",
-    3508: "colour resolved",
-    3509: "coloured like a solved cell",
-    3510: "colour class (odd/even/low/high)",
-    3520: "multi-colouring",
-    3511: "colour bounds (order / min-max)",
-    3512: "label break-in (abstract digits)",
-    3513: "colour disambiguation",
-    3514: "colour sum",
-    3515: "colour arithmetic",
-    4604: "WXYZ-Wing",
-    4605: "VWXYZ-Wing",
-    4606: "6-Y-Wing",
-    4607: "7-Y-Wing",
-    4608: "8-Y-Wing",
-    4609: "9-Y-Wing",
-    4701: "Sue de Coq",
-    4801: "APE",
-    4901: "chute remote pairs",
-    5001: "pattern overlay",
-    5101: "Gurth rot180",
-    5102: "Gurth diagonal",
-    5103: "Gurth anti-diagonal",
-    5104: "Gurth rot90",
-}
+# pattern codes the engine puts on moves (data/patterns.csv): sudokuwiki-style codes for chain special cases, names
+# of uniqueness / ALS / set-theory / forcing / colouring forms
+CHAIN_CODES = {p.cpp_code: p.engine_code for p in R.patterns()}
 _FISH_SIZE = {2: "X-Wing", 3: "Swordfish", 4: "Jellyfish"}
 
 
@@ -1076,7 +951,7 @@ def brute_solve(puzzle, limit=2, start=None, node_limit=2_000_000, cpuzzle=None)
 def computer_search():
     """Pure computer search: unbounded trial, forcing chains / nets (basic, dynamic, nested), Nishio nets, pattern
     overlay. Humans don't solve this way (CTC hosts: 0 'bifurcate' at 119 engine guess points)."""
-    return {S.TRIAL, S.FORCING, S.DYN_FORCING, S.NESTED_FORCING, S.NISHIO, S.POM}
+    return {t.id for t in R.techniques() if t.band == R.BANDS.index("Extreme")}  # Extreme is this search, by definition
 
 
 def search_disabled(params):
