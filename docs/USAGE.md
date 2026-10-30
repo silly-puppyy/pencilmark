@@ -103,7 +103,7 @@ $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7..
 
 ## The card
 - **difficulty** is how hard the puzzle *feels* to a human, independent of its size (exact definitions of all three
-  numbers: [PHILOSOPHY.md](PHILOSOPHY.md)). The scale is continuous: 0 means one empty cell, and there is no ceiling.
+  numbers: [PHILOSOPHY.md](PHILOSOPHY.md)). The scale is continuous and positive (a nearly finished grid is about 0.2), with no ceiling.
   - A typical newspaper medium is about 5; [fed-sudoku](https://www.fed-sudoku.eu/) "hard" is about 6.5.
   - It measures effort and is independent of the band: variants often sit above the classic range for their band, because the same techniques are harder to find there (clues to read, sums to track).
 - **time** is the predicted median time in minutes over the people who solve puzzles like it.

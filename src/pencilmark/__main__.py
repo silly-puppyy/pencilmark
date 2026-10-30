@@ -3,7 +3,7 @@
   python -m pencilmark rate [FILE|-] [--format FMT] [--json] [--steps]
       One puzzle per line: a classic string ('.'/'0' blanks; 16 / 36 / 81 / 256 / 625 symbols), a JSON object in the
       pencilmark.puzzle_json format or the sudoku-puzzle exchange format (pencilmark.export), or a path to a .json file. Prints one
-      result line per puzzle. Card "sudoku-grade": FMT fields %d difficulty (continuous, floor 0, no ceiling; ~5 = typical medium),
+      result line per puzzle. Card "sudoku-grade": FMT fields %d difficulty (continuous, above 0, no ceiling; ~5 = typical medium),
       %m time in minutes for today's average player, %p 80th-percentile minutes, %b band, %h hardest technique met,
       %c contents chips (band > 0, with uses), %n issue codes, %s status ("ok" or the error), %u unique?, %i line number.
       Default: "%b\t%d\t%m\t%h". --json prints the full card (add --steps for the step list, --explain for its

@@ -176,6 +176,26 @@ def steps_enum(p):
     return [(nm, d, f, max((cage_of.get(c, 0.0) for c in cs), default=0.0)) for (nm, d, f), cs in zip(pth, cells)]
 
 
+def _softplus_map(mp, r):
+    x = (r - mp["r0"]) / mp["w"]
+    return mp["A"] * mp["w"] * (math.log1p(math.exp(-abs(x))) + max(x, 0.0))
+
+
+_R_AT = {}
+
+
+def _r_at(mp, score):
+    """r where the softplus map reaches `score` (bisection; cached per map)."""
+    key = (mp["A"], mp["r0"], mp["w"], score)
+    if key not in _R_AT:
+        lo, hi = mp["r0"] - 50.0, mp["r0"] + 50.0
+        for _ in range(100):
+            mid = 0.5 * (lo + hi)
+            lo, hi = (mid, hi) if _softplus_map(mp, mid) < score else (lo, mid)
+        _R_AT[key] = 0.5 * (lo + hi)
+    return _R_AT[key]
+
+
 def score_parts(p, cfg):
     """(card score, L1 = log of the step-value sum) for one puzzle; None if the engine must guess. L1 is the effort
     the time model reads (data/time_model.json)."""
@@ -204,9 +224,11 @@ def score_parts(p, cfg):
     else:                               # mean of the hardest quarter of steps
         top = v[:max(1, len(v) // 4)]
         r = 2 * math.log(max(sum(top) / len(top), 1e-9)) / math.log(5)
-    if cfg.get("map"):            # one continuous formula, floor 0, no ceiling: A * w * softplus((r - r0) / w)
-        mp = cfg["map"]; x = (r - mp["r0"]) / mp["w"]
-        score = mp["A"] * mp["w"] * (math.log1p(math.exp(-abs(x))) + max(x, 0.0))
+    if cfg.get("map"):            # one continuous formula, no ceiling: A * w * softplus((r - r0) / w) from score 2 up;
+        mp = cfg["map"]               # below 2, 2 * exp(A * (r - r2) / 2) (same value and slope at 2, about the square root
+        score = _softplus_map(mp, r)  # of effort, never negative; human times keep rising there, 2026-10-30)
+        if score < 2.0:
+            score = 2.0 * math.exp(mp["A"] * (r - _r_at(mp, 2.0)) / 2.0)
     else:
         score = cfg["a"] + cfg["b"] * r + cfg.get("c", 0.0) * r * r     # map refitted on fed + sudokuwiki-rated hard puzzles
     if cfg.get("price_params"):   # time effort from the production route

@@ -55,6 +55,9 @@ meaning is set out in docs/PHILOSOPHY.md. Changes since 1.0.0rc2:
   only when asked for (`--fields ...,time_p80`) and names alternatives in full.
 - Singles never carry `uses`; alternatives inside a chip are ordered deterministically (the order depended on Python's
   per-process hashing); `max_seconds` also checked in the generalised fish search.
+- Difficulty below 2: the score map turns gentler there (about the square root of effort, the same value and slope at 2)
+  instead of bending into 0, so very easy puzzles keep apart (an easy 4x4 about 0.1-0.4, a nearly finished grid about
+  0.2; most used to read 0.0). Scores of 2 and above, every ranking and every time are unchanged.
 - Docs: philosophy page (goals, exact meaning of band / difficulty / time, format rules); README known issues.
 
 ## 1.0.0rc2

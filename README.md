@@ -61,7 +61,7 @@ are computed ([docs/GRADE.md](https://github.com/silly-puppyy/pencilmark/blob/ma
 
 | Field | Meaning |
 |---|---|
-| `difficulty` | how hard each step feels, continuous from 0 (one empty cell) with no ceiling; a typical newspaper medium is about 5 |
+| `difficulty` | how hard each step feels, continuous, above 0 (a nearly finished grid is about 0.2), no ceiling; a typical newspaper medium is about 5 |
 | `time` | expected minutes for the median player (on request `time_mean` or any percentile `time_pNN`, e.g. `time_p80`: 80% of players finish within it) |
 | `band` | Very Easy, Easy, Medium, Hard, Very Hard, Expert, Extreme; `"Unknown"` when guessing was allowed and used, or `max_seconds` passed (on request `band_index` 0..6) |
 | `contains` | techniques met going easy to hard: `code`, `chip`, `name`, `band`, `uses`, `alternatives`; with `stopped_at_step` when human logic ran out |
@@ -190,8 +190,8 @@ Being worked on after 1.0:
   variants often score above the classic range of their band). Time is most off for the same reason (about 1.4x per
   puzzle type).
 - **The ends of the scale.** Between about 2 and 8, each point of difficulty means about 20-40% more solving time per
-  cell. Above about 8 a point is worth less time (5-15% on three sources). At the bottom the scale bends into 0, so very
-  easy puzzles (an easy 4x4, a nearly finished grid) all read 0.0 although their solve times still differ.
+  cell. Above about 8 a point is worth less time (5-15% on three sources). Below 2 the scale is gentler (about the square root of
+  effort, so it never goes negative); there it predicts solve times about 1.5% worse than a pure log scale would.
 - **Uniqueness on some killers.** A few large killers can raise `Undecided` without OR-Tools (`pip install
   "pencilmark[verify]"`) although human logic solves them.
 
