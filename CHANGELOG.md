@@ -26,6 +26,10 @@
   (CLI `--quality trivial.limit=0.5,trial.severity=reject`), so a check's severity can be changed as well as its limit;
   bare numbers and `true` / `false` are no longer accepted. New optional field `warning` (true when any issue is a
   warning), next to `reject`.
+- Format: `ext` removed; data for one program goes in `meta` under a reverse-DNS key, next to the suggested common keys
+  (the generator's own knobs too). Reserved items (`"type": "custom"`, `digits` as an object) are refused with a
+  message naming them as future work. `neighbours` kinds are documented as exact shortcuts for an operator on a pair
+  pattern.
 - Docs: philosophy page (goals, exact meaning of band / difficulty / time, format rules); README known issues.
 
 ## 1.0.0rc2

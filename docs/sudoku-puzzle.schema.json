@@ -96,12 +96,6 @@
   },
   "style": {
    "type": "object"
-  },
-  "ext": {
-   "type": "object",
-   "propertyNames": {
-    "pattern": "^[a-z0-9-]+(\\.[a-z0-9-]+)+$"
-   }
   }
  },
  "$defs": {

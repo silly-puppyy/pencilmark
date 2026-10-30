@@ -98,7 +98,7 @@ generator supports this part of the spec and refuses everything else with a clea
 | symmetry | one entry with `of: "givens"` |
 | where | `band` (one), `difficulty` `[lo, hi]`, `contains` (codes, optionally strict), `elements.max` |
 | limits | `time`, `seed`; `results` 1 |
-| ext | `{"io.github.silly-puppyy.pencilmark": {"solver": "logic" \| "cpsat", "grade_seconds": s}}`: generator knobs |
+| meta | `{"io.github.silly-puppyy.pencilmark": {"solver": "logic" \| "cpsat", "grade_seconds": s}}`: generator knobs |
 
 Not supported: locked clue rules, masks / locked givens, `size` / `length` / `displaced` / `area`, upper count bounds,
 `"max"` / `"min"` difficulty, time / issues / not_contains / per-area targets, `quality`, several results, attempts.

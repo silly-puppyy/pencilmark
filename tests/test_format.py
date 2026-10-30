@@ -138,9 +138,11 @@ def test_strict_refusal():
     bad = copy.deepcopy(d); bad["rules"].append({"type": "sandwich", "sum": 5, "side": "top", "cells": ["r2c1", "r3c1"]})
     _refuses(bad, "is a cell")
     # ignorable containers and rule id / label / style are accepted
-    ok = copy.deepcopy(d); ok["meta"] = {"anything": [1, 2]}; ok["style"] = {"x": 1}; ok["ext"] = {"com.example": {}}
+    ok = copy.deepcopy(d); ok["meta"] = {"anything": [1, 2]}; ok["style"] = {"x": 1}; ok["meta"]["com.example"] = {"x": 1}
     ok["rules"][0]["label"] = "board"; ok["rules"][0]["id"] = "b"; ok["rules"][0]["style"] = {"color": "#000000"}
     X.validate(ok)
+    bad = copy.deepcopy(d); bad["ext"] = {"com.example": {}}         # vendor data goes in meta (FORMAT.md 2.1)
+    _refuses(bad, "ext")
 
 
 def test_required_parameters_off_9x9():

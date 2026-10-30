@@ -488,7 +488,7 @@ EDGE_PARAMS = {"kropki": {"color"}, "xv": {"letter"}, "difference": {"value"}, "
                "ratio": {"value"}, "less": set()}
 NEG_OF = {"kropki", "xv", "difference", "sum", "ratio", "product", "rossini", "battenburg", "cell"}
 TOP_KEYS = {"format", "format_version", "$schema", "meta", "board", "digits", "givens", "solution", "candidates", "rules",
-            "decorations", "style", "ext"}
+            "decorations", "style"}
 
 
 def _int(x, what, lo=None):
@@ -516,6 +516,9 @@ def validate(doc):
     if not isinstance(g, dict) or set(g) != {"rows", "cols"}:
         raise FormatError('"board" must be {"rows": R, "cols": C}')
     R, C = _int(g["rows"], "grid.rows", 1), _int(g["cols"], "grid.cols", 1)
+    if isinstance(doc["digits"], dict):
+        raise FormatError('"digits" as an object (other digit sets, symbols) is reserved for a future version of the '
+                          'format; format_version 1 takes an integer D (digits 1..D)')
     D = _int(doc["digits"], "digits", 1)
     giv = doc["givens"]
     if not isinstance(giv, list) or len(giv) != R * C:
@@ -601,7 +604,8 @@ def _validate_rule(r, B):
         raise FormatError("a rule must be an object with a type")
     t = r["type"]
     if t == "custom":
-        raise FormatError('"custom" is reserved for a later rule language and refused by format_version 1 readers')
+        raise FormatError('"type": "custom" is reserved for a future rule language (custom rules written in the file); '
+                          'format_version 1 readers refuse it')
     if isinstance(t, str) and ":" in t:
         raise FormatError(f"vendor rule type {t!r} is not implemented by this reader")
     if t not in RULE_KEYS:
@@ -1934,7 +1938,7 @@ class _Writer:
 
 # --------------------------------------------------------------------------------------------- canonical text + hash
 KEY_ORDER = ["format", "format_version", "$schema", "meta", "board", "digits", "givens", "solution", "candidates", "rules",
-             "decorations", "style", "ext"]
+             "decorations", "style"]
 RULE_ORDER = ["type", "kind", "of", "op", "params", "color", "letter", "value", "sum", "split", "values", "digits", "groups",
               "each", "counts", "arrow", "size", "repeat", "box", "where", "within", "area", "closed", "side", "origin", "source",
               "bulb", "lines", "cells", "regions", "segments", "pairs", "except", "allowed", "id", "label", "style"]

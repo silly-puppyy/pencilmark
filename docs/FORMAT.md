@@ -72,8 +72,7 @@ are optional for readers: cosmetic layers may be ignored, and only a writer that
  "candidates": {"r1c1": [1, 3, 7]},
  "rules": [ … ],
  "decorations": [ … ],
- "style": { … },
- "ext": {"com.example": { … }}}
+ "style": { … }}
 ```
 
 | Key | Required | Meaning |
@@ -90,14 +89,15 @@ are optional for readers: cosmetic layers may be ignored, and only a writer that
 | `rules` | yes | Every constraint, houses included (section 6). Nothing is implied: a board without house rules has no houses. |
 | `decorations` | no | Cosmetic drawing primitives (section 7). Never semantic. |
 | `style` | no | Cosmetic, puzzle-wide drawing hints (section 7). Never semantic. |
-| `ext` | no | Vendor data, keyed by reverse-DNS namespace (`"com.example"`). Never semantic. |
 
 There is no uniqueness flag: whether a puzzle has one solution is a property a tool checks, not a field.
 
 ### 2.1 meta
 
-Every key is optional and free-form, and tools keep keys they do not know. Text is plain (no HTML, no language
-maps). Common keys:
+Everything a program wants to carry about the puzzle goes here: every key is optional and free-form, and tools keep
+keys they do not know, so adding `"author"` is all attribution needs. Text is plain (no HTML, no language maps). Data
+for one program goes under a reverse-DNS key, e.g. `"com.example.app": {…}`. The suggested keys, so that programs
+agree on the common ones:
 
 | Key | Meaning |
 |---|---|
@@ -173,8 +173,8 @@ these holds:
 
 1. `format` is not `"sudoku-puzzle"`, or `format_version` is missing, not an integer, or higher than supported.
 2. A key it does not know appears **anywhere**: at the top level, in `board`, or inside a rule. The only exceptions are
-   these containers, which are always safe to ignore: `meta`, `style` (top level and per rule), `decorations`,
-   `ext`, and a rule's `id` and `label`.
+   these, which are always safe to ignore: `meta`, `style` (top level and per rule), `decorations`, and a rule's `id`
+   and `label`.
 3. A rule `type` it does not know, or a `kind` it does not know for a known type.
 4. A vendor rule type (`"com.example:foo"`: reverse-DNS namespace, colon, name) it does not implement. Core type names
    never contain a colon.
@@ -191,8 +191,8 @@ pencilmark engine cannot build (e.g. a modular line with modulus 4); then it rai
 `ValueError`) naming the rule and the reason, never a partial puzzle.
 
 A program that only *draws* MAY draw what it understands and show a warning, but MUST NOT present the puzzle as
-complete. Ignorable containers never carry rules: no constraint may be derived from `meta`, `style`, `decorations`
-or `ext`.
+complete. Ignorable containers never carry rules: no constraint may be derived from `meta`, `style` or
+`decorations`.
 
 ## 5. Rules: common shape and pair operators
 
@@ -408,7 +408,7 @@ A rule over neighbouring pairs of the whole board.
 
 | Field | Meaning |
 |---|---|
-| `kind` | `antiknight` (cells a knight's move apart differ), `antiking` (cells a king's move apart differ), `nonconsecutive` (orthogonal neighbours are not consecutive). Or omit `kind` and give `op` + `params` + `where`. |
+| `kind` | A named shortcut for one exact `op` + `where`: `antiknight` = `different` on `knight` pairs, `antiking` = `different` on `diagonal` pairs (orthogonal neighbours already share a row or column), `nonconsecutive` = `not_consecutive` on `orthogonal` pairs. Writers SHOULD use the kind when one matches. Or omit `kind` and give `op` (+ parameters) and `where`. |
 | `op`, `params` | A symmetric pair operator (5.1). |
 | `where` | `orthogonal` \| `diagonal` \| `king` \| `knight`. |
 | `within` | Optional scope: `"box"` (only pairs inside one box) or `"region"` (only pairs inside one `region` rule). |
@@ -518,7 +518,8 @@ and `decorations` only.
 
 ### 6.17 Reserved
 
-- `"type": "custom"`: reserved for a rule language in a later version; every format_version 1 reader refuses it.
+- `"type": "custom"`: reserved for a future rule language (rules defined in the file itself); every format_version 1
+  reader refuses it with a message saying so.
   Mechanics without a named rule use `table` (and `relation` with `allowed`).
 - `digits` as an object (`{"values": [0, …, 8], "symbols": {…}}`, with an `empty` sentinel) for digit sets other
   than 1..D, and digit-selection puzzles: reserved; refused in format_version 1.
@@ -547,7 +548,7 @@ Coordinates are cell units `[row, col]` with the origin at the top-left corner o
 ### 8.1 Canonical writer (`pencilmark.dumps`)
 
 - Top-level key order: `format`, `format_version`, `$schema`, `meta`, `board`, `digits`, `givens`, `solution`,
-  `candidates`, `rules`, `decorations`, `style`, `ext`.
+  `candidates`, `rules`, `decorations`, `style`.
 - Rule key order: `type`, `kind`, then the parameters (`op`, `params`, `color`, `letter`, `value`, `sum`, `split`,
   `values`, `digits`, `groups`, `each`, `counts`, `arrow`, `size`, `repeat`, `box`, `where`, `within`, `closed`),
   then `side`, then the cell keys (`origin`, `source`, `bulb`, `lines`, `cells`, `regions`, `segments`, `pairs`,
@@ -576,7 +577,7 @@ Coordinates are cell units `[row, col]` with the origin at the top-left corner o
 5. Sort `rules` by their compact canonical JSON text.
 6. Serialise with RFC 8785 (JSON Canonicalization Scheme) and hash with SHA-256.
 
-`solution`, `meta`, `style`, `decorations` and `ext` never affect it, and neither does the order of rules or of the
+`solution`, `meta`, `style` and `decorations` never affect it, and neither does the order of rules or of the
 engine's houses, so the same puzzle from two importers gets the same fingerprint. It is not symmetry-invariant: a
 rotated or relabelled copy has another fingerprint.
 

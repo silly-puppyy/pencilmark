@@ -29,7 +29,7 @@ GEN_SYM = {("rot180", None): "rot180", ("rot90", None): "rot90", ("mirror", "ver
            ("mirror", "horizontal"): "mirror_v", ("mirror", "diagonal"): "diagonal", ("mirror", "antidiagonal"): "antidiagonal"}
 SYM_GEN = {v: k for k, v in GEN_SYM.items()}
 SPEC_KEYS = {"format", "format_version", "$schema", "meta", "board", "digits", "givens", "rules", "symmetry", "where",
-             "quality", "limits", "fields", "ext"}
+             "quality", "limits", "fields"}
 WHERE_KEYS = {"band", "difficulty", "time", "contains", "not_contains", "issues", "areas", "elements"}
 LIMIT_KEYS = {"results", "attempts", "time", "seed"}
 TEMPLATE_KEYS = {"type", "kind", "count", "size", "length", "value", "displaced", "area", "id", "label", "style", "color", "letter"}
@@ -227,7 +227,7 @@ def spec_to_gen(doc):
         out["time_limit"] = lim["time"]
     if "seed" in lim:
         out["seed"] = lim["seed"]
-    out.update(((doc.get("ext") or {}).get(NS) or {}))
+    out.update(((doc.get("meta") or {}).get(NS) or {}))    # pencilmark's own generator knobs live in meta (FORMAT.md 2.1)
     return out
 
 
@@ -304,7 +304,7 @@ def spec_from_gen(spec):
         doc["limits"] = lim
     ext = {k: getattr(s, k) for k in ("solver", "grade_seconds") if getattr(s, k) != DEFAULTS[k]}
     if ext:
-        doc["ext"] = {NS: ext}
+        doc.setdefault("meta", {})[NS] = ext
     return doc
 
 
