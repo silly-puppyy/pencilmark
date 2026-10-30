@@ -3,6 +3,7 @@ module.exports = {
     {type: 'doc', id: 'index', label: 'Overview'},
     {type: 'doc', id: 'USAGE', label: 'Usage'},
     {type: 'doc', id: 'PHILOSOPHY', label: 'Philosophy'},
+    {type: 'doc', id: 'MODEL', label: 'How a card is computed'},
     {type: 'doc', id: 'BENCHMARK', label: 'Benchmark'},
     {type: 'category', label: 'Formats', collapsed: false, items: [
       {type: 'doc', id: 'FORMAT', label: 'Puzzle format'},
