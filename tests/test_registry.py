@@ -96,3 +96,25 @@ def test_patterns_point_at_split_techniques():
         if p.code:
             assert p.code in C and names[p.technique].split and p.step_name, p
     assert {c for c, _, _ in BP._X_CHAIN.values()} <= set(C)
+
+
+USAGE = Path(__file__).resolve().parents[1] / "docs" / "USAGE.md"
+
+
+@pytest.mark.skipif(not USAGE.is_file(), reason="needs the source tree (docs/USAGE.md)")
+def test_usage_code_table_matches():
+    """docs/USAGE.md's code table: every code, with its band and what it is a special case of"""
+    tech = {}
+    for t in T:
+        if t.code and t.band is not None:
+            tech.setdefault(t.code, t.band)
+    doc = {}
+    for line in USAGE.read_text(encoding="utf-8").splitlines():
+        f = [x.strip() for x in line.strip().strip("|").split("|")]
+        if len(f) == 4 and re.fullmatch(r"[A-Z0-9]{3}", f[0]):
+            doc[f[0]] = (f[2], f[3])
+    want = {}
+    for code, c in C.items():
+        band = c.shape_band if c.shape_band is not None else tech[code]
+        want[code] = (R.BANDS[band], ", ".join(sorted(BP.SUPERSETS.get(code, ()))))
+    assert doc == want

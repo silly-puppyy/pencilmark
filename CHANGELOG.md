@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- `data/technique_bands.csv` is replaced by the technique registry: `data/techniques.csv` (one row per engine
+  technique), `data/codes.csv` (one row per chip code) and `data/patterns.csv` (engine pattern codes), described in
+  `pencilmark/registry.py`. Every module reads its technique tables from there. The old file gave X-Chain as Very Hard
+  while the grader rates the technique Hard; the registry keeps the technique (Hard, short shapes) apart from the long
+  X-Chain chip XCL (Very Hard). Cards are unchanged.
 - Class colouring and clue facts (two variant techniques) record their move descriptors in the right slots (cells,
   houses used, digits eliminated, links); the descriptors were shifted, which mispriced those steps. Cards with these
   steps move slightly: time by about 0.1 minutes on typical kropki / XV / thermo puzzles, difficulty by a median 0.01.

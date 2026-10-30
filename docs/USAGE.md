@@ -165,7 +165,9 @@ Each chip is a 3-letter code named by the most specific shape found, e.g. SKY, n
 - A joint chip like `SKY/KTE` means that *either* technique gets you through at that point. Joint chips are only listed for different
   families in the same band.
 
-Machine-readable version: `pencilmark/data/technique_bands.csv` (installed with the package).
+Machine-readable version: `pencilmark/data/codes.csv` (one row per code: name, band of a shape, study order, special
+case of, Sudoku Explainer rating) and `pencilmark/data/techniques.csv` (one row per engine technique: code, band,
+family), installed with the package; `pencilmark/registry.py` describes every column.
 
 | Code | Technique | Band | Special case of |
 |---|---|---|---|
