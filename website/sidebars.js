@@ -2,6 +2,9 @@ module.exports = {
   docs: [
     {type: 'doc', id: 'index', label: 'Overview'},
     {type: 'doc', id: 'USAGE', label: 'Usage'},
+    {type: 'category', label: 'Tutorials', collapsed: false, items: [
+      {type: 'doc', id: 'tutorials/first-puzzle', label: 'Grade your first puzzle'},
+    ]},
     {type: 'doc', id: 'PHILOSOPHY', label: 'Philosophy'},
     {type: 'doc', id: 'MODEL', label: 'How a card is computed'},
     {type: 'doc', id: 'BENCHMARK', label: 'Benchmark'},
