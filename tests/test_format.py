@@ -902,3 +902,12 @@ def test_region_sum_breaks_only_at_boxes():
     d["rules"].append({"type": "region", "kind": "extra", "cells": [f"r{r}c{c}" for r in (2, 3, 4) for c in (2, 3, 4)]})
     d["rules"].append({"type": "line", "kind": "region_sum", "cells": ["r1c1", "r2c2", "r3c3"]})
     assert not [c for c in pencilmark.load(d).constraints if c.get("line_kind") == "region_sum"]
+
+
+def test_lockout_puzzle_grades():
+    """a lockout line reaches the engine and grades (the line matrix only reads and writes: a build of the engine without
+    the lockout line kind passed every other test)"""
+    d = pencilmark.to_export(CLASSIC)
+    d["rules"].append({"type": "line", "kind": "lockout", "cells": ["r2c7", "r2c8", "r2c9"]})  # 9 . 4 in the solution
+    card = pencilmark.rate(d)
+    assert card["band"] and card["difficulty"] is not None

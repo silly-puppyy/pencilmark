@@ -8,6 +8,7 @@ kept so universal and cross builds work. CXX picks the compiler; PENCILMARK_CXXF
 import os
 import shlex
 import sys
+from pathlib import Path
 
 import pybind11
 from setuptools import Extension, setup
@@ -56,7 +57,8 @@ class BuildExt(build_ext):
         super().build_extensions()
 
 
+# depends: a header newer than the built module rebuilds it (without it a header-only change left stale objects in build/)
 ext = Extension("pencilmark._csolver", [f"csrc/{s}.cpp" for s in SOURCES], include_dirs=["csrc", pybind11.get_include()],
-                language="c++")   # flags set in BuildExt
+                depends=sorted(str(h) for h in Path("csrc").glob("*.hpp")), language="c++")   # flags set in BuildExt
 
 setup(ext_modules=[ext], cmdclass={"build_ext": BuildExt})
