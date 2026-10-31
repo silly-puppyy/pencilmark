@@ -65,8 +65,8 @@ One template per variety, each with its own `count`:
 - `givens`: `{"count": n}` or `{"count": [min, max]}` (`max` may be `null`). Without it, the generator digs as far as
   the targets allow.
 - `symmetry`: at most one entry, `{"kind": "rot180" | "rot90" | "mirror", "axis"?: "horizontal" | "vertical" |
-  "diagonal" | "antidiagonal", "of": "givens"}`. The same entries are reported by `describe()` and the `symmetry` card
-  field.
+  "diagonal" | "antidiagonal", "of": "givens"}`. `rot90` and the diagonal mirrors need square boxes (4×4, 9×9, 16×16);
+  on other boards the request is refused. The same entries are reported by `describe()` and the `symmetry` card field.
 
 ## 4. Targets: `where`
 

@@ -1,0 +1,253 @@
+{
+ "title": "An Easy classic with 30 givens",
+ "shows": "an exact given count, mirror symmetry",
+ "spec": {
+  "format": "sudoku-spec",
+  "format_version": 1,
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "rules": [
+   {
+    "type": "box_grid",
+    "origin": "r1c1",
+    "box": [
+     3,
+     3
+    ]
+   }
+  ],
+  "givens": {
+   "count": 30
+  },
+  "symmetry": [
+   {
+    "kind": "mirror",
+    "axis": "vertical",
+    "of": "givens"
+   }
+  ],
+  "where": {
+   "band": "Easy"
+  },
+  "limits": {
+   "time": 180,
+   "seed": 1
+  }
+ },
+ "puzzle": {
+  "format": "sudoku-puzzle",
+  "format_version": 1,
+  "meta": {
+   "title": "generated 9x9 classic, 30 givens",
+   "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.",
+   "type": "Sudoku",
+   "generated_from": "sha256:396a16171b892311ee4228a29ad292747b172794cce84d652db61e87356335ae"
+  },
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "givens": [
+   6,
+   3,
+   0,
+   0,
+   0,
+   0,
+   0,
+   4,
+   8,
+   0,
+   0,
+   0,
+   3,
+   0,
+   7,
+   0,
+   0,
+   0,
+   0,
+   7,
+   0,
+   0,
+   0,
+   0,
+   0,
+   6,
+   0,
+   0,
+   8,
+   0,
+   0,
+   1,
+   0,
+   0,
+   9,
+   0,
+   0,
+   0,
+   0,
+   0,
+   3,
+   0,
+   0,
+   0,
+   0,
+   7,
+   0,
+   1,
+   0,
+   9,
+   0,
+   4,
+   0,
+   3,
+   0,
+   0,
+   0,
+   1,
+   0,
+   5,
+   0,
+   0,
+   0,
+   0,
+   2,
+   5,
+   9,
+   7,
+   4,
+   6,
+   3,
+   0,
+   9,
+   0,
+   7,
+   0,
+   0,
+   0,
+   5,
+   0,
+   4
+  ],
+  "solution": [
+   6,
+   3,
+   9,
+   2,
+   5,
+   1,
+   7,
+   4,
+   8,
+   4,
+   5,
+   8,
+   3,
+   6,
+   7,
+   9,
+   1,
+   2,
+   1,
+   7,
+   2,
+   8,
+   4,
+   9,
+   3,
+   6,
+   5,
+   5,
+   8,
+   3,
+   4,
+   1,
+   6,
+   2,
+   9,
+   7,
+   2,
+   9,
+   4,
+   7,
+   3,
+   8,
+   1,
+   5,
+   6,
+   7,
+   6,
+   1,
+   5,
+   9,
+   2,
+   4,
+   8,
+   3,
+   3,
+   4,
+   6,
+   1,
+   2,
+   5,
+   8,
+   7,
+   9,
+   8,
+   2,
+   5,
+   9,
+   7,
+   4,
+   6,
+   3,
+   1,
+   9,
+   1,
+   7,
+   6,
+   8,
+   3,
+   5,
+   2,
+   4
+  ],
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "origin": "r1c1"
+   }
+  ]
+ },
+ "card": {
+  "band": "Easy",
+  "difficulty": 3.6,
+  "time": 6.0,
+  "contains": [
+   {
+    "code": "HSI",
+    "chip": "HSI",
+    "name": "Hidden Single",
+    "band": 0
+   },
+   {
+    "code": "NSI",
+    "chip": "NSI/MSI",
+    "name": "Naked Single",
+    "band": 1,
+    "alternatives": [
+     "MSI"
+    ]
+   }
+  ]
+ }
+}

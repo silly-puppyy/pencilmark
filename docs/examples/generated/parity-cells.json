@@ -1,0 +1,315 @@
+{
+ "title": "Odd and even cells",
+ "shows": "the parity template (odd or even cells, either kind)",
+ "spec": {
+  "format": "sudoku-spec",
+  "format_version": 1,
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "rules": [
+   {
+    "type": "box_grid",
+    "origin": "r1c1",
+    "box": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "parity",
+    "count": 4
+   }
+  ],
+  "limits": {
+   "time": 180,
+   "seed": 1
+  }
+ },
+ "puzzle": {
+  "format": "sudoku-puzzle",
+  "format_version": 1,
+  "meta": {
+   "title": "generated 9x9 4 parity, 23 givens",
+   "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nOdd-Even: A digit in a grey circle is odd; a digit in a grey square is even.",
+   "type": "Odd-Even Sudoku",
+   "generated_from": "sha256:d241899358736a6b80f2afcf2e88f9430dc326c3aaed56adac193abca48538d0"
+  },
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "givens": [
+   0,
+   3,
+   0,
+   0,
+   5,
+   0,
+   0,
+   0,
+   8,
+   0,
+   0,
+   8,
+   3,
+   0,
+   0,
+   0,
+   0,
+   0,
+   1,
+   0,
+   2,
+   0,
+   4,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   1,
+   0,
+   0,
+   0,
+   7,
+   2,
+   9,
+   0,
+   7,
+   3,
+   0,
+   0,
+   0,
+   6,
+   0,
+   6,
+   1,
+   5,
+   9,
+   0,
+   0,
+   0,
+   3,
+   3,
+   0,
+   0,
+   0,
+   0,
+   0,
+   8,
+   0,
+   9,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "solution": [
+   6,
+   3,
+   9,
+   2,
+   5,
+   1,
+   7,
+   4,
+   8,
+   4,
+   5,
+   8,
+   3,
+   6,
+   7,
+   9,
+   1,
+   2,
+   1,
+   7,
+   2,
+   8,
+   4,
+   9,
+   3,
+   6,
+   5,
+   5,
+   8,
+   3,
+   4,
+   1,
+   6,
+   2,
+   9,
+   7,
+   2,
+   9,
+   4,
+   7,
+   3,
+   8,
+   1,
+   5,
+   6,
+   7,
+   6,
+   1,
+   5,
+   9,
+   2,
+   4,
+   8,
+   3,
+   3,
+   4,
+   6,
+   1,
+   2,
+   5,
+   8,
+   7,
+   9,
+   8,
+   2,
+   5,
+   9,
+   7,
+   4,
+   6,
+   3,
+   1,
+   9,
+   1,
+   7,
+   6,
+   8,
+   3,
+   5,
+   2,
+   4
+  ],
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "origin": "r1c1"
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r8c6"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r8c7"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r9c8"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "odd",
+    "cells": [
+     "r9c7"
+    ]
+   }
+  ]
+ },
+ "card": {
+  "band": "Expert",
+  "difficulty": 10.3,
+  "time": 24.5,
+  "contains": [
+   {
+    "code": "HSI",
+    "chip": "HSI",
+    "name": "Hidden Single",
+    "band": 0
+   },
+   {
+    "code": "NSI",
+    "chip": "NSI",
+    "name": "Naked Single",
+    "band": 1
+   },
+   {
+    "code": "PPR",
+    "chip": "PPR",
+    "name": "Pointing / Box-Line Reduction",
+    "band": 1,
+    "uses": 11
+   },
+   {
+    "code": "NPR",
+    "chip": "NPR",
+    "name": "Naked Pair",
+    "band": 2,
+    "uses": 3
+   },
+   {
+    "code": "YWG",
+    "chip": "YWG",
+    "name": "Y-Wing",
+    "band": 4,
+    "uses": 2
+   },
+   {
+    "code": "WXZ",
+    "chip": "WXZ",
+    "name": "WXYZ-Wing",
+    "band": 4,
+    "uses": 1
+   },
+   {
+    "code": "CRP",
+    "chip": "CRP",
+    "name": "Chute Remote Pairs",
+    "band": 4,
+    "uses": 1
+   },
+   {
+    "code": "AIC",
+    "chip": "AIC/CAS",
+    "name": "Alternating Inference Chain",
+    "band": 5,
+    "alternatives": [
+     "CAS"
+    ],
+    "uses": 7
+   }
+  ]
+ }
+}

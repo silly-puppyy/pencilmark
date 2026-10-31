@@ -1,0 +1,386 @@
+{
+ "title": "Whispers and renbans together",
+ "shows": "two templates, a count range and \"auto\"",
+ "spec": {
+  "format": "sudoku-spec",
+  "format_version": 1,
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "rules": [
+   {
+    "type": "box_grid",
+    "origin": "r1c1",
+    "box": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "count": [
+     2,
+     4
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "renban",
+    "count": "auto"
+   }
+  ],
+  "limits": {
+   "time": 180,
+   "seed": 1
+  }
+ },
+ "puzzle": {
+  "format": "sudoku-puzzle",
+  "format_version": 1,
+  "meta": {
+   "title": "generated 9x9 4 renban, 4 whisper, 12 givens",
+   "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nGerman Whispers: Adjacent digits on a whisper line differ by at least 5.\nRenban: A renban line holds a set of consecutive digits in any order, without repeats.",
+   "type": "Variant Sudoku",
+   "generated_from": "sha256:bce1d8e6b323e3f3239b80e93838278cbd736ac6ae66af5e6ec573d7a1f3880e"
+  },
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "givens": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   7,
+   0,
+   8,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   6,
+   0,
+   0,
+   0,
+   0,
+   4,
+   1,
+   0,
+   0,
+   9,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   7,
+   6,
+   0,
+   0,
+   0,
+   0,
+   4,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   1,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   5,
+   2,
+   0
+  ],
+  "solution": [
+   6,
+   3,
+   9,
+   2,
+   5,
+   1,
+   7,
+   4,
+   8,
+   4,
+   5,
+   8,
+   3,
+   6,
+   7,
+   9,
+   1,
+   2,
+   1,
+   7,
+   2,
+   8,
+   4,
+   9,
+   3,
+   6,
+   5,
+   5,
+   8,
+   3,
+   4,
+   1,
+   6,
+   2,
+   9,
+   7,
+   2,
+   9,
+   4,
+   7,
+   3,
+   8,
+   1,
+   5,
+   6,
+   7,
+   6,
+   1,
+   5,
+   9,
+   2,
+   4,
+   8,
+   3,
+   3,
+   4,
+   6,
+   1,
+   2,
+   5,
+   8,
+   7,
+   9,
+   8,
+   2,
+   5,
+   9,
+   7,
+   4,
+   6,
+   3,
+   1,
+   9,
+   1,
+   7,
+   6,
+   8,
+   3,
+   5,
+   2,
+   4
+  ],
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "origin": "r1c1"
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "value": 5,
+    "cells": [
+     "r3c4",
+     "r2c4",
+     "r2c3",
+     "r3c3",
+     "r3c2",
+     "r3c1"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "value": 5,
+    "cells": [
+     "r7c5",
+     "r6c5",
+     "r6c6",
+     "r5c6"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "value": 5,
+    "cells": [
+     "r5c2",
+     "r5c1",
+     "r6c1"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "value": 5,
+    "cells": [
+     "r4c3",
+     "r4c2"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "renban",
+    "cells": [
+     "r1c5",
+     "r2c5",
+     "r2c6"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "renban",
+    "cells": [
+     "r2c2",
+     "r2c1",
+     "r1c1"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "renban",
+    "cells": [
+     "r8c8",
+     "r8c7",
+     "r9c7",
+     "r9c8",
+     "r9c9"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "renban",
+    "cells": [
+     "r4c9",
+     "r3c9",
+     "r3c8"
+    ]
+   }
+  ]
+ },
+ "card": {
+  "band": "Medium",
+  "difficulty": 11.8,
+  "time": 42.6,
+  "contains": [
+   {
+    "code": "HSI",
+    "chip": "HSI",
+    "name": "Hidden Single",
+    "band": 0
+   },
+   {
+    "code": "LSI",
+    "chip": "LSI",
+    "name": "Line / dot read without notes",
+    "band": 0
+   },
+   {
+    "code": "CFX",
+    "chip": "CFX",
+    "name": "Clue Facts",
+    "band": 0,
+    "uses": 1
+   },
+   {
+    "code": "NSI",
+    "chip": "NSI",
+    "name": "Naked Single",
+    "band": 1
+   },
+   {
+    "code": "PPR",
+    "chip": "PPR",
+    "name": "Pointing / Box-Line Reduction",
+    "band": 1,
+    "uses": 14
+   },
+   {
+    "code": "MSI",
+    "chip": "MSI",
+    "name": "Notes in the head",
+    "band": 1,
+    "uses": 3
+   },
+   {
+    "code": "LNR",
+    "chip": "LNR/LNS",
+    "name": "Line ranges (thermo / whisper bounds)",
+    "band": 1,
+    "alternatives": [
+     "LNS"
+    ],
+    "uses": 12
+   },
+   {
+    "code": "NPR",
+    "chip": "NPR/DGC/HQD",
+    "name": "Naked Pair",
+    "band": 2,
+    "alternatives": [
+     "DGC",
+     "HQD"
+    ],
+    "uses": 2
+   },
+   {
+    "code": "RUL",
+    "chip": "RUL",
+    "name": "Two rules together",
+    "band": 2,
+    "uses": 15
+   }
+  ]
+ }
+}

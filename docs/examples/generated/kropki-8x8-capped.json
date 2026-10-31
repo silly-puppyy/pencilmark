@@ -1,0 +1,325 @@
+{
+ "title": "An 8×8 with at most six dots",
+ "shows": "an 8×8 board and the element cap (where.elements)",
+ "spec": {
+  "format": "sudoku-spec",
+  "format_version": 1,
+  "board": {
+   "rows": 8,
+   "cols": 8
+  },
+  "digits": 8,
+  "rules": [
+   {
+    "type": "box_grid",
+    "origin": "r1c1",
+    "box": [
+     2,
+     4
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "count": "auto"
+   }
+  ],
+  "where": {
+   "elements": {
+    "max": 6
+   }
+  },
+  "limits": {
+   "time": 180,
+   "seed": 1
+  }
+ },
+ "puzzle": {
+  "format": "sudoku-puzzle",
+  "format_version": 1,
+  "meta": {
+   "title": "generated 8x8 6 kropki, 14 givens",
+   "rules_text": "8x8 Sudoku: Place 1–8 in every row, column and 2×4 box.\nKropki: Digits separated by a white dot are consecutive; digits separated by a black dot are in a 1:2 ratio.",
+   "type": "8x8 Kropki Sudoku",
+   "generated_from": "sha256:328a6aa9bb8cff256dd3fc6df62d8a262d9c0980965fb2cd9f0fc7cee7427ffa"
+  },
+  "board": {
+   "rows": 8,
+   "cols": 8
+  },
+  "digits": 8,
+  "givens": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   8,
+   0,
+   6,
+   0,
+   0,
+   1,
+   0,
+   0,
+   0,
+   2,
+   7,
+   5,
+   0,
+   0,
+   1,
+   0,
+   2,
+   0,
+   0,
+   0,
+   6,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   6,
+   0,
+   5,
+   0,
+   0,
+   0,
+   0,
+   2,
+   0,
+   0,
+   0,
+   0,
+   1,
+   0,
+   3,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "solution": [
+   4,
+   3,
+   2,
+   5,
+   7,
+   6,
+   8,
+   1,
+   6,
+   8,
+   7,
+   1,
+   4,
+   5,
+   3,
+   2,
+   7,
+   5,
+   4,
+   3,
+   1,
+   8,
+   2,
+   6,
+   2,
+   1,
+   6,
+   8,
+   5,
+   3,
+   4,
+   7,
+   5,
+   4,
+   8,
+   6,
+   2,
+   1,
+   7,
+   3,
+   3,
+   2,
+   1,
+   7,
+   6,
+   4,
+   5,
+   8,
+   8,
+   6,
+   5,
+   2,
+   3,
+   7,
+   1,
+   4,
+   1,
+   7,
+   3,
+   4,
+   8,
+   2,
+   6,
+   5
+  ],
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     2,
+     4
+    ],
+    "origin": "r1c1"
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "color": "white",
+    "cells": [
+     "r4c6",
+     "r4c7"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "color": "black",
+    "cells": [
+     "r5c5",
+     "r5c6"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "color": "white",
+    "cells": [
+     "r6c1",
+     "r6c2"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "color": "white",
+    "cells": [
+     "r2c5",
+     "r2c6"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "color": "white",
+    "cells": [
+     "r7c2",
+     "r8c2"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "color": "white",
+    "cells": [
+     "r5c1",
+     "r5c2"
+    ]
+   }
+  ]
+ },
+ "card": {
+  "band": "Hard",
+  "difficulty": 9.0,
+  "time": 17.5,
+  "contains": [
+   {
+    "code": "HSI",
+    "chip": "HSI",
+    "name": "Hidden Single",
+    "band": 0
+   },
+   {
+    "code": "LSI",
+    "chip": "LSI",
+    "name": "Line / dot read without notes",
+    "band": 0
+   },
+   {
+    "code": "PPR",
+    "chip": "PPR",
+    "name": "Pointing / Box-Line Reduction",
+    "band": 1,
+    "uses": 4
+   },
+   {
+    "code": "MSI",
+    "chip": "MSI",
+    "name": "Notes in the head",
+    "band": 1,
+    "uses": 4
+   },
+   {
+    "code": "PWC",
+    "chip": "PWC",
+    "name": "Pair rules (dots, whispers, anti-knight...)",
+    "band": 1,
+    "uses": 11
+   },
+   {
+    "code": "HPR",
+    "chip": "HPR/NQD",
+    "name": "Hidden Pair",
+    "band": 2,
+    "alternatives": [
+     "NQD"
+    ],
+    "uses": 1
+   },
+   {
+    "code": "RUL",
+    "chip": "RUL/DOM",
+    "name": "Two rules together",
+    "band": 2,
+    "alternatives": [
+     "DOM"
+    ],
+    "uses": 1
+   },
+   {
+    "code": "XWG",
+    "chip": "XWG",
+    "name": "X-Wing",
+    "band": 3,
+    "uses": 1
+   },
+   {
+    "code": "SKY",
+    "chip": "SKY/MCH",
+    "name": "Skyscraper",
+    "band": 3,
+    "alternatives": [
+     "MCH"
+    ],
+    "uses": 1
+   }
+  ]
+ }
+}

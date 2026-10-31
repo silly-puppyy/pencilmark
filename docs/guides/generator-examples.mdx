@@ -1,0 +1,259 @@
+---
+title: Generator examples
+description: "One generator request per feature (templates, counts, targets, symmetry, board sizes), each with the puzzle it produced and its card."
+---
+
+import Swatch from '@site/src/components/Swatch';
+
+# Generator examples
+
+One request per feature of the [generator spec](../formats/generator-spec.md), each with the puzzle it produced and its card. The seed fixes the result: the same request on the same version gives the same puzzle. Written by `tools/gen_generator_examples.py`.
+
+## A Hard classic with an X-Wing
+
+Shows a band target, a required technique (strict), 180° symmetry.
+
+```json
+{"format": "sudoku-spec",
+ "format_version": 1,
+ "board": {"rows": 9, "cols": 9},
+ "digits": 9,
+ "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}],
+ "symmetry": [{"kind": "rot180", "of": "givens"}],
+ "where": {"band": "Hard", "contains": {"codes": ["XWG"], "strict": true}},
+ "limits": {"time": 180, "seed": 1}}
+```
+
+<Swatch name="generated-classic-hard-xwing" />
+
+**Hard**, difficulty 6.1, about 12.0 min. Contains: Hidden Single, Pointing / Box-Line Reduction, Naked Pair, Hidden Pair, X-Wing.
+
+## An Easy classic with 30 givens
+
+Shows an exact given count, mirror symmetry.
+
+```json
+{"format": "sudoku-spec",
+ "format_version": 1,
+ "board": {"rows": 9, "cols": 9},
+ "digits": 9,
+ "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}],
+ "givens": {"count": 30},
+ "symmetry": [{"kind": "mirror", "axis": "vertical", "of": "givens"}],
+ "where": {"band": "Easy"},
+ "limits": {"time": 180, "seed": 1}}
+```
+
+<Swatch name="generated-classic-easy-30" />
+
+**Easy**, difficulty 3.6, about 6.0 min. Contains: Hidden Single, Naked Single.
+
+## A classic of difficulty 3 to 4
+
+Shows a difficulty range instead of a band.
+
+```json
+{"format": "sudoku-spec",
+ "format_version": 1,
+ "board": {"rows": 9, "cols": 9},
+ "digits": 9,
+ "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}],
+ "where": {"difficulty": [3, 4]},
+ "limits": {"time": 180, "seed": 1}}
+```
+
+<Swatch name="generated-classic-difficulty" />
+
+**Very Easy**, difficulty 3.0, about 4.5 min. Contains: Hidden Single.
+
+## A 6×6 with 10 to 16 givens
+
+Shows another board size, a given range, 180° symmetry.
+
+```json
+{"format": "sudoku-spec",
+ "format_version": 1,
+ "board": {"rows": 6, "cols": 6},
+ "digits": 6,
+ "rules": [{"type": "box_grid", "origin": "r1c1", "box": [2, 3]}],
+ "givens": {"count": [10, 16]},
+ "symmetry": [{"kind": "rot180", "of": "givens"}],
+ "limits": {"time": 180, "seed": 1}}
+```
+
+<Swatch name="generated-mini-6x6" />
+
+**Hard**, difficulty 3.4, about 2.8 min. Contains: Hidden Single, Skyscraper (in the head).
+
+## A 4×4 with quarter-turn symmetry
+
+Shows the smallest board; 90° symmetry (it needs square boxes).
+
+```json
+{"format": "sudoku-spec",
+ "format_version": 1,
+ "board": {"rows": 4, "cols": 4},
+ "digits": 4,
+ "rules": [{"type": "box_grid", "origin": "r1c1", "box": [2, 2]}],
+ "symmetry": [{"kind": "rot90", "of": "givens"}],
+ "limits": {"time": 180, "seed": 1}}
+```
+
+<Swatch name="generated-tiny-4x4-rot90" />
+
+**Very Easy**, difficulty 0.1, about 0.7 min. Contains: Hidden Single.
+
+## A 6×6 killer tiled by cages
+
+Shows the cage template with count "tile".
+
+```json
+{"format": "sudoku-spec",
+ "format_version": 1,
+ "board": {"rows": 6, "cols": 6},
+ "digits": 6,
+ "rules": [{"type": "box_grid", "origin": "r1c1", "box": [2, 3]}, {"type": "cage", "count": "tile"}],
+ "limits": {"time": 180, "seed": 1}}
+```
+
+<Swatch name="generated-killer-6x6-tiled" />
+
+**Very Easy**, difficulty 1.0, about 3.2 min. Contains: Hidden Single.
+
+## A Medium killer
+
+Shows the cage template with a minimum count and a band target.
+
+```json
+{"format": "sudoku-spec",
+ "format_version": 1,
+ "board": {"rows": 9, "cols": 9},
+ "digits": 9,
+ "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}, {"type": "cage", "count": [4, null]}],
+ "where": {"band": "Medium"},
+ "limits": {"time": 180, "seed": 1}}
+```
+
+<Swatch name="generated-killer-medium" />
+
+**Medium**, difficulty 10.7, about 46.6 min. Contains: Hidden Single, Naked Single, Pointing / Box-Line Reduction, Notes in the head, Killer cage combinations, Naked Pair, Hidden Pair, Equal cells (same digit), Innies & outies over several houses, Two rules together.
+
+## Exactly three thermometers
+
+Shows an exact count of a line template.
+
+```json
+{"format": "sudoku-spec",
+ "format_version": 1,
+ "board": {"rows": 9, "cols": 9},
+ "digits": 9,
+ "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}, {"type": "line", "kind": "thermo", "count": 3}],
+ "limits": {"time": 180, "seed": 1}}
+```
+
+<Swatch name="generated-thermo-3" />
+
+**Medium**, difficulty 7.6, about 21.4 min. Contains: Hidden Single, Line / dot read without notes, Clue Facts, Naked Single, Pointing / Box-Line Reduction, Pair rules (dots, whispers, anti-knight...), Hidden Pair, Two rules together.
+
+## Whispers and renbans together
+
+Shows two templates, a count range and "auto".
+
+```json
+{"format": "sudoku-spec",
+ "format_version": 1,
+ "board": {"rows": 9, "cols": 9},
+ "digits": 9,
+ "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}, {"type": "line", "kind": "whisper", "count": [2, 4]}, {"type": "line", "kind": "renban", "count": "auto"}],
+ "limits": {"time": 180, "seed": 1}}
+```
+
+<Swatch name="generated-whisper-renban" />
+
+**Medium**, difficulty 11.8, about 42.6 min. Contains: Hidden Single, Line / dot read without notes, Clue Facts, Naked Single, Pointing / Box-Line Reduction, Notes in the head, Line ranges (thermo / whisper bounds), Naked Pair, Two rules together.
+
+## Arrows and between lines
+
+Shows the arrow template and a second line kind.
+
+```json
+{"format": "sudoku-spec",
+ "format_version": 1,
+ "board": {"rows": 9, "cols": 9},
+ "digits": 9,
+ "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}, {"type": "arrow", "count": 2}, {"type": "line", "kind": "between", "count": "auto"}],
+ "limits": {"time": 180, "seed": 1}}
+```
+
+<Swatch name="generated-arrow-between" />
+
+**Expert**, difficulty 11.8, about 42.7 min. Contains: Hidden Single, Line / dot read without notes, Naked Single, Pointing / Box-Line Reduction, Arrow sums, Line ranges (thermo / whisper bounds), Equal cells (same digit), Digit counting, Two rules together, Skyscraper, Short chain in the head, Band set theory with cages, Equal-digit colouring, Case analysis.
+
+## White and black dots
+
+Shows kropki by colour: an exact count of one, "auto" for the other.
+
+```json
+{"format": "sudoku-spec",
+ "format_version": 1,
+ "board": {"rows": 9, "cols": 9},
+ "digits": 9,
+ "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}, {"type": "edge", "kind": "kropki", "color": "white", "count": 4}, {"type": "edge", "kind": "kropki", "color": "black", "count": "auto"}],
+ "limits": {"time": 180, "seed": 1}}
+```
+
+<Swatch name="generated-kropki-colours" />
+
+**Expert**, difficulty 10.4, about 28.3 min. Contains: Hidden Single, Line / dot read without notes, Naked Single, Pointing / Box-Line Reduction, Notes in the head, Naked Pair, Two rules together, Short chain in the head, Alternating Inference Chain.
+
+## X and V
+
+Shows XV by letter.
+
+```json
+{"format": "sudoku-spec",
+ "format_version": 1,
+ "board": {"rows": 9, "cols": 9},
+ "digits": 9,
+ "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}, {"type": "edge", "kind": "xv", "letter": "X", "count": 3}, {"type": "edge", "kind": "xv", "letter": "V", "count": "auto"}],
+ "limits": {"time": 180, "seed": 1}}
+```
+
+<Swatch name="generated-xv-letters" />
+
+**Expert**, difficulty 12.5, about 43.4 min. Contains: Hidden Single, Line / dot read without notes, Clue Facts, Naked Single, Pointing / Box-Line Reduction, Pair rules (dots, whispers, anti-knight...), Hidden Pair, Two rules together, Empty Rectangle, Band set theory with cages, Alternating Inference Chain.
+
+## Odd and even cells
+
+Shows the parity template (odd or even cells, either kind).
+
+```json
+{"format": "sudoku-spec",
+ "format_version": 1,
+ "board": {"rows": 9, "cols": 9},
+ "digits": 9,
+ "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}, {"type": "cell", "kind": "parity", "count": 4}],
+ "limits": {"time": 180, "seed": 1}}
+```
+
+<Swatch name="generated-parity-cells" />
+
+**Expert**, difficulty 10.3, about 24.5 min. Contains: Hidden Single, Naked Single, Pointing / Box-Line Reduction, Naked Pair, Y-Wing, WXYZ-Wing, Chute Remote Pairs, Alternating Inference Chain.
+
+## An 8×8 with at most six dots
+
+Shows an 8×8 board and the element cap (where.elements).
+
+```json
+{"format": "sudoku-spec",
+ "format_version": 1,
+ "board": {"rows": 8, "cols": 8},
+ "digits": 8,
+ "rules": [{"type": "box_grid", "origin": "r1c1", "box": [2, 4]}, {"type": "edge", "kind": "kropki", "count": "auto"}],
+ "where": {"elements": {"max": 6}},
+ "limits": {"time": 180, "seed": 1}}
+```
+
+<Swatch name="generated-kropki-8x8-capped" />
+
+**Hard**, difficulty 9.0, about 17.5 min. Contains: Hidden Single, Line / dot read without notes, Pointing / Box-Line Reduction, Notes in the head, Pair rules (dots, whispers, anti-knight...), Hidden Pair, Two rules together, X-Wing, Skyscraper.

@@ -1,0 +1,326 @@
+{
+ "title": "Exactly three thermometers",
+ "shows": "an exact count of a line template",
+ "spec": {
+  "format": "sudoku-spec",
+  "format_version": 1,
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "rules": [
+   {
+    "type": "box_grid",
+    "origin": "r1c1",
+    "box": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "thermo",
+    "count": 3
+   }
+  ],
+  "limits": {
+   "time": 180,
+   "seed": 1
+  }
+ },
+ "puzzle": {
+  "format": "sudoku-puzzle",
+  "format_version": 1,
+  "meta": {
+   "title": "generated 9x9 3 thermo, 17 givens",
+   "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nThermo: Digits strictly increase along a thermometer from the bulb.",
+   "type": "Thermo Sudoku",
+   "generated_from": "sha256:302ddd12433f50dfc6de854b9fd76a7ef05cf7dedd02f72fcf8ffb6ac33801e7"
+  },
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "givens": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   4,
+   0,
+   4,
+   5,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   8,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   3,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   2,
+   0,
+   0,
+   0,
+   3,
+   0,
+   0,
+   0,
+   6,
+   7,
+   0,
+   1,
+   0,
+   0,
+   2,
+   4,
+   0,
+   0,
+   0,
+   4,
+   6,
+   0,
+   0,
+   0,
+   8,
+   0,
+   9,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   1,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "solution": [
+   6,
+   3,
+   9,
+   2,
+   5,
+   1,
+   7,
+   4,
+   8,
+   4,
+   5,
+   8,
+   3,
+   6,
+   7,
+   9,
+   1,
+   2,
+   1,
+   7,
+   2,
+   8,
+   4,
+   9,
+   3,
+   6,
+   5,
+   5,
+   8,
+   3,
+   4,
+   1,
+   6,
+   2,
+   9,
+   7,
+   2,
+   9,
+   4,
+   7,
+   3,
+   8,
+   1,
+   5,
+   6,
+   7,
+   6,
+   1,
+   5,
+   9,
+   2,
+   4,
+   8,
+   3,
+   3,
+   4,
+   6,
+   1,
+   2,
+   5,
+   8,
+   7,
+   9,
+   8,
+   2,
+   5,
+   9,
+   7,
+   4,
+   6,
+   3,
+   1,
+   9,
+   1,
+   7,
+   6,
+   8,
+   3,
+   5,
+   2,
+   4
+  ],
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "origin": "r1c1"
+   },
+   {
+    "type": "line",
+    "kind": "thermo",
+    "cells": [
+     "r9c6",
+     "r8c6",
+     "r8c5",
+     "r8c4"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "thermo",
+    "cells": [
+     "r5c7",
+     "r4c7",
+     "r3c7",
+     "r3c8",
+     "r4c8"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "thermo",
+    "cells": [
+     "r1c6",
+     "r1c5",
+     "r2c5",
+     "r2c6",
+     "r3c6"
+    ]
+   }
+  ]
+ },
+ "card": {
+  "band": "Medium",
+  "difficulty": 7.6,
+  "time": 21.4,
+  "contains": [
+   {
+    "code": "HSI",
+    "chip": "HSI",
+    "name": "Hidden Single",
+    "band": 0
+   },
+   {
+    "code": "LSI",
+    "chip": "LSI",
+    "name": "Line / dot read without notes",
+    "band": 0
+   },
+   {
+    "code": "CFX",
+    "chip": "CFX",
+    "name": "Clue Facts",
+    "band": 0,
+    "uses": 1
+   },
+   {
+    "code": "NSI",
+    "chip": "NSI/MSI",
+    "name": "Naked Single",
+    "band": 1,
+    "alternatives": [
+     "MSI"
+    ]
+   },
+   {
+    "code": "PPR",
+    "chip": "PPR",
+    "name": "Pointing / Box-Line Reduction",
+    "band": 1,
+    "uses": 12
+   },
+   {
+    "code": "PWC",
+    "chip": "PWC/LNR/LNS",
+    "name": "Pair rules (dots, whispers, anti-knight...)",
+    "band": 1,
+    "alternatives": [
+     "LNR",
+     "LNS"
+    ],
+    "uses": 5
+   },
+   {
+    "code": "HPR",
+    "chip": "HPR/NPR/HQD",
+    "name": "Hidden Pair",
+    "band": 2,
+    "alternatives": [
+     "NPR",
+     "HQD"
+    ],
+    "uses": 2
+   },
+   {
+    "code": "RUL",
+    "chip": "RUL",
+    "name": "Two rules together",
+    "band": 2,
+    "uses": 8
+   }
+  ]
+ }
+}

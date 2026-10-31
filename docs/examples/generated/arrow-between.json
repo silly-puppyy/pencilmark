@@ -1,0 +1,459 @@
+{
+ "title": "Arrows and between lines",
+ "shows": "the arrow template and a second line kind",
+ "spec": {
+  "format": "sudoku-spec",
+  "format_version": 1,
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "rules": [
+   {
+    "type": "box_grid",
+    "origin": "r1c1",
+    "box": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "arrow",
+    "count": 2
+   },
+   {
+    "type": "line",
+    "kind": "between",
+    "count": "auto"
+   }
+  ],
+  "limits": {
+   "time": 180,
+   "seed": 1
+  }
+ },
+ "puzzle": {
+  "format": "sudoku-puzzle",
+  "format_version": 1,
+  "meta": {
+   "title": "generated 9x9 2 arrow, 9 between, 11 givens",
+   "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nArrow: Digits along an arrow sum to the number in its circle.\nBetween Lines: Digits on a between line lie strictly between the digits in its end circles.",
+   "type": "Variant Sudoku",
+   "generated_from": "sha256:d807c8780bfb2ae6a2dac8aa43133bd94410ea099535c511139a9dff16daa4d5"
+  },
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "givens": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   7,
+   4,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   1,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   5,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   4,
+   8,
+   3,
+   0,
+   4,
+   6,
+   0,
+   2,
+   0,
+   0,
+   0,
+   9,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "solution": [
+   6,
+   3,
+   9,
+   2,
+   5,
+   1,
+   7,
+   4,
+   8,
+   4,
+   5,
+   8,
+   3,
+   6,
+   7,
+   9,
+   1,
+   2,
+   1,
+   7,
+   2,
+   8,
+   4,
+   9,
+   3,
+   6,
+   5,
+   5,
+   8,
+   3,
+   4,
+   1,
+   6,
+   2,
+   9,
+   7,
+   2,
+   9,
+   4,
+   7,
+   3,
+   8,
+   1,
+   5,
+   6,
+   7,
+   6,
+   1,
+   5,
+   9,
+   2,
+   4,
+   8,
+   3,
+   3,
+   4,
+   6,
+   1,
+   2,
+   5,
+   8,
+   7,
+   9,
+   8,
+   2,
+   5,
+   9,
+   7,
+   4,
+   6,
+   3,
+   1,
+   9,
+   1,
+   7,
+   6,
+   8,
+   3,
+   5,
+   2,
+   4
+  ],
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "origin": "r1c1"
+   },
+   {
+    "type": "arrow",
+    "bulb": [
+     "r8c5"
+    ],
+    "lines": [
+     [
+      "r8c6",
+      "r9c6"
+     ]
+    ]
+   },
+   {
+    "type": "arrow",
+    "bulb": [
+     "r5c6"
+    ],
+    "lines": [
+     [
+      "r5c5",
+      "r4c5",
+      "r4c4"
+     ]
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "between",
+    "cells": [
+     "r9c8",
+     "r8c8",
+     "r7c8",
+     "r7c7"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "between",
+    "cells": [
+     "r5c7",
+     "r4c7",
+     "r3c7",
+     "r3c8"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "between",
+    "cells": [
+     "r8c4",
+     "r9c4",
+     "r9c3",
+     "r8c3",
+     "r7c3",
+     "r7c4"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "between",
+    "cells": [
+     "r4c8",
+     "r4c9",
+     "r5c9",
+     "r5c8",
+     "r6c8",
+     "r6c7"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "between",
+    "cells": [
+     "r2c5",
+     "r1c5",
+     "r1c4"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "between",
+    "cells": [
+     "r2c2",
+     "r2c1",
+     "r3c1"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "between",
+    "cells": [
+     "r3c2",
+     "r4c2",
+     "r5c2"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "between",
+    "cells": [
+     "r2c3",
+     "r3c3",
+     "r4c3",
+     "r5c3",
+     "r6c3"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "between",
+    "cells": [
+     "r6c2",
+     "r7c2",
+     "r8c2",
+     "r9c2"
+    ]
+   }
+  ]
+ },
+ "card": {
+  "band": "Expert",
+  "difficulty": 11.8,
+  "time": 42.7,
+  "contains": [
+   {
+    "code": "HSI",
+    "chip": "HSI",
+    "name": "Hidden Single",
+    "band": 0
+   },
+   {
+    "code": "LSI",
+    "chip": "LSI",
+    "name": "Line / dot read without notes",
+    "band": 0
+   },
+   {
+    "code": "NSI",
+    "chip": "NSI",
+    "name": "Naked Single",
+    "band": 1
+   },
+   {
+    "code": "PPR",
+    "chip": "PPR",
+    "name": "Pointing / Box-Line Reduction",
+    "band": 1,
+    "uses": 11
+   },
+   {
+    "code": "ARW",
+    "chip": "ARW",
+    "name": "Arrow sums",
+    "band": 1,
+    "uses": 4
+   },
+   {
+    "code": "LNR",
+    "chip": "LNR",
+    "name": "Line ranges (thermo / whisper bounds)",
+    "band": 1,
+    "uses": 12
+   },
+   {
+    "code": "EQD",
+    "chip": "EQD",
+    "name": "Equal cells (same digit)",
+    "band": 2,
+    "uses": 3
+   },
+   {
+    "code": "DGC",
+    "chip": "DGC/NPR/HPR/HQD/IOM/CBL",
+    "name": "Digit counting",
+    "band": 2,
+    "alternatives": [
+     "NPR",
+     "HPR",
+     "HQD",
+     "IOM",
+     "CBL"
+    ],
+    "uses": 4
+   },
+   {
+    "code": "RUL",
+    "chip": "RUL",
+    "name": "Two rules together",
+    "band": 2,
+    "uses": 7
+   },
+   {
+    "code": "SKY",
+    "chip": "SKY/SCL",
+    "name": "Skyscraper",
+    "band": 3,
+    "alternatives": [
+     "SCL"
+    ],
+    "uses": 1
+   },
+   {
+    "code": "MCH",
+    "chip": "MCH",
+    "name": "Short chain in the head",
+    "band": 3,
+    "uses": 1
+   },
+   {
+    "code": "BAN",
+    "chip": "BAN",
+    "name": "Band set theory with cages",
+    "band": 4,
+    "uses": 13
+   },
+   {
+    "code": "CAL",
+    "chip": "CAL",
+    "name": "Equal-digit colouring",
+    "band": 4,
+    "uses": 1
+   },
+   {
+    "code": "CAS",
+    "chip": "CAS/STR",
+    "name": "Case analysis",
+    "band": 5,
+    "alternatives": [
+     "STR"
+    ],
+    "uses": 2
+   }
+  ]
+ }
+}

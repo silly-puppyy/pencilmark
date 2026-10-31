@@ -349,6 +349,9 @@ def drawings():
             rules=[BOXES] + variants.preset_rules(v),
         )
         out["variant-" + v.lower().replace(" ", "-")] = lambda dark, doc=doc: RENDER(doc, dark=dark, cell=24)
+    for f in sorted((Path(__file__).resolve().parents[1] / "docs" / "examples" / "generated").glob("*.json")):
+        doc = json.loads(f.read_text(encoding="utf-8"))["puzzle"]  # the generator examples (gen_generator_examples.py)
+        out["generated-" + f.stem] = lambda dark, doc=doc: RENDER(doc, dark=dark, cell=40)
     for f in EXAMPLES:  # example puzzles: plain, and annotated with row / column numbers for the board + JSON view
         doc = json.loads(f.read_text(encoding="utf-8"))
         out["example-" + f.stem] = lambda dark, doc=doc: RENDER(doc, dark=dark, cell=40)
