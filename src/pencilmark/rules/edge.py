@@ -1,4 +1,4 @@
-"""The `edge` rule family (docs/rules/edges-and-corners.mdx): every public kind with its one parameter, its words (the
+"""The `edge` rule family (docs/formats/rules/edges-and-corners.mdx): every public kind with its one parameter, its words (the
 variant name, the one-sentence rule describe() writes, the noun a card note uses) and how it is drawn; and the
 translation between an edge clue and the engine's pair relation, both ways, with the "all clues shown" negatives."""
 

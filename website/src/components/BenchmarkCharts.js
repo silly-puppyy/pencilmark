@@ -1,4 +1,4 @@
-// Charts for docs/BENCHMARK.mdx. The numbers are the page's own tables (aggregates of the frozen benchmark); every chart
+// Charts for docs/grades/benchmark.mdx. The numbers are the page's own tables (aggregates of the frozen benchmark); every chart
 // sits next to its table, so hiding graphics loses nothing. pencilmark in the site accent, other graders in grey.
 import React, {useEffect, useRef} from 'react';
 import {reserve} from './reserve';

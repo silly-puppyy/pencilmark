@@ -103,5 +103,5 @@ pencilmark.generate(dict(spec, where={"band": "Hard", "not_contains": ["XWG"]}))
 ```
 
 ```
-pencilmark.exchange.NotSupportedError: where.not_contains is reserved for a later version of the spec (docs/SPEC.md 7)
+pencilmark.exchange.NotSupportedError: where.not_contains is reserved for a later version of the spec (docs/formats/generator-spec.md 7)
 ```

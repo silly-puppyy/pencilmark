@@ -1,4 +1,4 @@
-"""Write docs/dev/PARAMETERS.md: every grader-model parameter by name (grader_model.names()), its value and where it
+"""Write docs/dev/parameters.md: every grader-model parameter by name (grader_model.names()), its value and where it
 comes from. Reads the source tree; the C++ engine need not be built.
   python tools/gen_parameters_md.py [--check]      --check: exit 1 if the page is out of date"""
 
@@ -96,14 +96,14 @@ def page():
 
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
-    out = ROOT / "docs" / "dev" / "PARAMETERS.md"
+    out = ROOT / "docs" / "dev" / "parameters.md"
     text = page()
     if "--check" in argv:
         ok = out.is_file() and out.read_text(encoding="utf-8") == text
         print(
-            "docs/dev/PARAMETERS.md is up to date"
+            "docs/dev/parameters.md is up to date"
             if ok
-            else "docs/dev/PARAMETERS.md is out of date: run tools/gen_parameters_md.py"
+            else "docs/dev/parameters.md is out of date: run tools/gen_parameters_md.py"
         )
         return 0 if ok else 1
     out.write_text(text, encoding="utf-8")

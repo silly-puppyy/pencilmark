@@ -1,4 +1,4 @@
-"""The "sudoku-spec" generator request (docs/SPEC.md): a puzzle file with blanks.
+"""The "sudoku-spec" generator request (docs/formats/generator-spec.md): a puzzle file with blanks.
 
     validate_spec(doc)                    strict reading of the spec language (unknown keys refused)
     spec_to_gen(doc) -> dict              the part pencilmark.gen can run, as a Spec dict; anything else -> NotSupportedError
@@ -91,7 +91,7 @@ def _is_template(r):
 
 
 def validate_spec(doc):
-    """strict reading of a sudoku-spec (SPEC.md); locked rules are checked like puzzle rules"""
+    """strict reading of a sudoku-spec (docs/formats/generator-spec.md); locked rules are checked like puzzle rules"""
     if not isinstance(doc, dict) or doc.get("format") != FORMAT:
         raise FormatError('not a sudoku-spec ("format" must be "sudoku-spec")')
     fv = doc.get("format_version")
@@ -168,7 +168,7 @@ def _board_ok(doc):
     board = ({"type": "box_grid", "origin": "r1c1", "box": [bh, bw]}, {"type": "grid", "origin": "r1c1"})
     for r in locked:
         if {k: v for k, v in r.items() if k not in ("id", "label", "style")} not in board:
-            return f"locked rules other than the board's grid / box_grid are reserved for a later version of the spec (docs/SPEC.md 7) ({r.get('type')})"
+            return f"locked rules other than the board's grid / box_grid are reserved for a later version of the spec (docs/formats/generator-spec.md 7) ({r.get('type')})"
     return None
 
 
@@ -184,12 +184,12 @@ def spec_to_gen(doc):
     if isinstance(giv, list):
         if any(v not in (0, None) for v in giv) or any(v is None for v in giv):
             raise NotSupportedError(
-                "givens in puzzle form (locked digits / gaps) are reserved for a later version of the spec (docs/SPEC.md 7)"
+                "givens in puzzle form (locked digits / gaps) are reserved for a later version of the spec (docs/formats/generator-spec.md 7)"
             )
     elif isinstance(giv, dict):
         if "mask" in giv or "values" in giv:
             raise NotSupportedError(
-                "givens masks / locked values are reserved for a later version of the spec (docs/SPEC.md 7)"
+                "givens masks / locked values are reserved for a later version of the spec (docs/formats/generator-spec.md 7)"
             )
         c = giv.get("count")
         if isinstance(c, int):
@@ -206,7 +206,7 @@ def spec_to_gen(doc):
         for k in ("size", "length", "displaced", "area"):
             if k in r:
                 raise NotSupportedError(
-                    f"template {r['type']}: {k!r} is reserved for a later version of the spec (docs/SPEC.md 7)"
+                    f"template {r['type']}: {k!r} is reserved for a later version of the spec (docs/formats/generator-spec.md 7)"
                 )
         kind = RULE_KIND[key]
         # one colour / letter / parity of a kind is its own element class (counted separately)
@@ -264,7 +264,9 @@ def spec_to_gen(doc):
     w = doc.get("where") or {}
     for k in ("time", "not_contains", "issues", "areas"):
         if k in w:
-            raise NotSupportedError(f"where.{k} is reserved for a later version of the spec (docs/SPEC.md 7)")
+            raise NotSupportedError(
+                f"where.{k} is reserved for a later version of the spec (docs/formats/generator-spec.md 7)"
+            )
     if "band" in w:
         if isinstance(w["band"], list):
             raise NotSupportedError("a list of bands is not supported (one band)")
@@ -272,7 +274,7 @@ def spec_to_gen(doc):
     if "difficulty" in w:
         if not isinstance(w["difficulty"], list):
             raise NotSupportedError(
-                "difficulty 'max' / 'min' (best-so-far search) is reserved for a later version of the spec (docs/SPEC.md 7)"
+                "difficulty 'max' / 'min' (best-so-far search) is reserved for a later version of the spec (docs/formats/generator-spec.md 7)"
             )
         out["target_difficulty"] = list(w["difficulty"])
     if "contains" in w:
@@ -285,7 +287,7 @@ def spec_to_gen(doc):
                 out["strict_require"] = True
         else:
             raise NotSupportedError(
-                "contains 'only' / per-code uses are reserved for a later version of the spec (docs/SPEC.md 7)"
+                "contains 'only' / per-code uses are reserved for a later version of the spec (docs/formats/generator-spec.md 7)"
             )
     if "elements" in w:
         if set(w["elements"]) != {"max"}:
@@ -294,7 +296,7 @@ def spec_to_gen(doc):
     q = doc.get("quality") or {}
     if q:
         raise NotSupportedError(
-            "quality is reserved for a later version of the spec (docs/SPEC.md 7); every result is unique and graded"
+            "quality is reserved for a later version of the spec (docs/formats/generator-spec.md 7); every result is unique and graded"
         )
     lim = doc.get("limits") or {}
     if lim.get("results", 1) != 1:
@@ -305,7 +307,9 @@ def spec_to_gen(doc):
         out["time_limit"] = lim["time"]
     if "seed" in lim:
         out["seed"] = lim["seed"]
-    out.update(((doc.get("meta") or {}).get(NS) or {}))  # pencilmark's own generator knobs live in meta (FORMAT.md 2.1)
+    out.update(
+        ((doc.get("meta") or {}).get(NS) or {})
+    )  # pencilmark's own generator knobs live in meta (docs/formats/puzzle-format.md 2.1)
     return out
 
 

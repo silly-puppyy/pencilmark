@@ -1,4 +1,4 @@
-"""The `line` rule family (docs/rules/lines-and-arrows.mdx): every public kind with its parameters, whether it can be
+"""The `line` rule family (docs/formats/rules/lines-and-arrows.mdx): every public kind with its parameters, whether it can be
 closed, and its words (the variant name and the one-sentence rule describe() writes). Parameters are REQUIRED when
 digits != 9 (on 9 x 9 each has a default the reader fills in)."""
 

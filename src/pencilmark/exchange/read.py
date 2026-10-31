@@ -37,7 +37,7 @@ def to_internal(doc):
     if doc.get("solution"):
         out["solution"] = "".join("#" if v is None else sym(v) for v in doc["solution"])
     rules = resolve_areas(B, doc["rules"])
-    # houses (docs/rules/houses-and-regions.mdx 6.1; a house equal to an earlier one is the same house)
+    # houses (docs/formats/rules/houses-and-regions.mdx 6.1; a house equal to an earlier one is the same house)
     houses, areas = read_houses(rules, B)
     regions = [dict({"kind": k, "cells": [B.name(c) for c in cells]}, **kw) for k, cells, kw in houses]
     boxes = [set(cells) for k, cells, kw in houses if k == "box"]

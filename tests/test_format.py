@@ -1,7 +1,7 @@
-"""Tests for the sudoku-puzzle exchange format v1 (docs/FORMAT.md): round trips, strict reading, schema, fingerprint, interop
+"""Tests for the sudoku-puzzle exchange format v1 (docs/formats/puzzle-format.md): round trips, strict reading, schema, fingerprint, interop
 strings, ipuz, describe, sudoku-spec.
 
-    pytest tests/test_format.py        (synthetic puzzles only: tests/fixtures/variants.json, docs/FORMAT.md examples)
+    pytest tests/test_format.py        (synthetic puzzles only: tests/fixtures/variants.json, docs/formats/puzzle-format.md examples)
 """
 
 import copy
@@ -31,11 +31,11 @@ _pack = None
 
 
 def pack():
-    """synthetic puzzles: the variant fixtures, the FORMAT.md example files, and generated variant boards"""
+    """synthetic puzzles: the variant fixtures, the docs/formats/puzzle-format.md example files, and generated variant boards"""
     global _pack
     if _pack is None:
         _pack = [v["puzzle"] for v in json.load(open(FIXTURES, encoding="utf-8"))]
-        text = (ROOT / "docs" / "FORMAT.md").read_text(encoding="utf-8")
+        text = (ROOT / "docs" / "formats" / "puzzle-format.md").read_text(encoding="utf-8")
         _pack += [
             json.loads(b)
             for b in re.findall(r"```json\n(.*?)```", text, re.S)
@@ -204,7 +204,7 @@ def test_strict_refusal():
     ok["rules"][0]["style"] = {"color": "#000000"}
     X.validate(ok)
     bad = copy.deepcopy(d)
-    bad["ext"] = {"com.example": {}}  # vendor data goes in meta (FORMAT.md 2.1)
+    bad["ext"] = {"com.example": {}}  # vendor data goes in meta (docs/formats/puzzle-format.md 2.1)
     _refuses(bad, "ext")
 
 
@@ -243,9 +243,9 @@ def test_schema_validates_pack():
 
 
 def test_format_md_examples():
-    """the complete example files in docs/FORMAT.md, the rule family pages and the guides are valid"""
+    """the complete example files in docs/formats/puzzle-format.md, the rule family pages and the guides are valid"""
     pages = [
-        ROOT / "docs" / "FORMAT.md",
+        ROOT / "docs" / "formats" / "puzzle-format.md",
         *sorted((ROOT / "docs").glob("rules/*.mdx")),
         *(ROOT / "docs").glob("guides/*"),
     ]
@@ -456,7 +456,7 @@ def test_describe_names():
 
 # ---------------------------------------------------------------------------------------------------------- sudoku-spec
 def test_card_fields():
-    """field mask = top-level keys, explanation levels, the issues / reject shape (GRADE.md)"""
+    """field mask = top-level keys, explanation levels, the issues / reject shape (docs/formats/grade-card.md)"""
     c = pencilmark.rate(CLASSIC)
     assert list(c) == ["format", "format_version", "grader", "difficulty", "time", "band", "contains"], list(c)
     assert c["grader"] == {"name": "pencilmark", "version": pencilmark.__version__} and "reject" not in c
@@ -485,7 +485,7 @@ def _houses(doc):
 
 def test_houses():
     """grid gives rows and columns, box_grid adds regular boxes, box / row / column are explicit, nothing is inferred;
-    the writer finds grids in any house order (FORMAT.md 6.1)"""
+    the writer finds grids in any house order (docs/formats/puzzle-format.md 6.1)"""
     classic = pencilmark.from_string(CLASSIC)
     h = _houses(classic)
     assert [k for k, _ in h] == ["row"] * 9 + ["col"] * 9 + ["box"] * 9
@@ -640,7 +640,7 @@ def test_multigrid_written_compact():
 
 
 def test_area_scope():
-    """area = a grid's origin or a cell list (FORMAT.md 5); one grid of a samurai with anti-knight round-trips compactly"""
+    """area = a grid's origin or a cell list (docs/formats/puzzle-format.md 5); one grid of a samurai with anti-knight round-trips compactly"""
     R = 21
     giv = [
         0 if (r < 9 or r >= 12 or 6 <= c < 15) and (c < 9 or c >= 12 or 6 <= r < 15) else None
@@ -695,7 +695,7 @@ def test_card_schema():
 
 
 def test_quality_limits():
-    """quality = one object per check keyed by issue code (GRADE.md 4): limit and / or severity (reject / warning / off)"""
+    """quality = one object per check keyed by issue code (docs/formats/grade-card.md 4): limit and / or severity (reject / warning / off)"""
     assert pencilmark.rate(CLASSIC, fields=["issues"])["issues"] == []
     low = pencilmark.rate(CLASSIC, fields=["issues", "reject", "warning"], quality={"trivial": {"limit": 0.2}})
     assert [i["code"] for i in low["issues"]] == ["trivial"] and low["reject"] is True and low["warning"] is False
@@ -760,7 +760,7 @@ def test_describe_names_grids():
 
 
 def test_operators_named_parameters():
-    """FORMAT.md 5.1: an operator's parameter has its own key (value / sum / allowed / any_of); positional params are refused"""
+    """docs/formats/puzzle-format.md 5.1: an operator's parameter has its own key (value / sum / allowed / any_of); positional params are refused"""
     s = "....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9......."
     sol = pencilmark.solve(s)
     v = lambda c: sol[(int(c[1]) - 1) * 9 + int(c[3]) - 1]
@@ -791,7 +791,7 @@ def test_operators_named_parameters():
 
 
 def test_tables_reserved():
-    """FORMAT.md 6.17: digit tables and the allowed operator are reserved for the planned custom rule type"""
+    """docs/formats/puzzle-format.md 6.17: digit tables and the allowed operator are reserved for the planned custom rule type"""
     d = pencilmark.from_string(CLASSIC)
     for rule in (
         {"type": "table", "cells": ["r1c1", "r1c2"], "allowed": [[1, 2], [2, 1]]},
@@ -803,7 +803,7 @@ def test_tables_reserved():
 
 
 def test_canonical_board_key_order():
-    """the canonical text does not depend on how board was written (FORMAT.md 8.1)"""
+    """the canonical text does not depend on how board was written (docs/formats/puzzle-format.md 8.1)"""
     d = _classic_doc()
     a = pencilmark.dumps(dict(d, board={"rows": 9, "cols": 9}), pretty=False)
     b = pencilmark.dumps(dict(d, board={"cols": 9, "rows": 9}), pretty=False)
@@ -811,11 +811,11 @@ def test_canonical_board_key_order():
 
 
 def test_card_field_registry_matches_grade_md():
-    """every default / optional key of GRADE.md section 1 is built by the card-field registry (export.FIELDS), is
+    """every default / optional key of docs/formats/grade-card.md section 1 is built by the card-field registry (export.FIELDS), is
     accepted by card_fields(), and the registry builds nothing the page does not list"""
     from pencilmark import export as E2
 
-    text = (ROOT / "docs" / "GRADE.md").read_text(encoding="utf-8")
+    text = (ROOT / "docs" / "formats" / "grade-card.md").read_text(encoding="utf-8")
     keys = set()
     for row in re.findall(r"^\| (`[^|]+`) \| (default|optional)", text, re.M):
         keys |= set(re.findall(r"`(\w+)`", row[0]))
@@ -827,12 +827,12 @@ def test_card_field_registry_matches_grade_md():
 
 
 def test_check_registry_matches_quality_and_grade_md():
-    """every quality code has a check, and GRADE.md section 4 lists exactly these codes"""
+    """every quality code has a check, and docs/formats/grade-card.md section 4 lists exactly these codes"""
     from pencilmark import publish_flags as PF
 
     codes = {k for _, ks in PF.CHECKS for k in ks} | set(PF.RULE_CODES)
     assert codes == set(PF.QUALITY)
-    text = (ROOT / "docs" / "GRADE.md").read_text(encoding="utf-8")
+    text = (ROOT / "docs" / "formats" / "grade-card.md").read_text(encoding="utf-8")
     table = set(re.findall(r"^\| `(\w+)` \| (?:reject|warning)", text, re.M))
     assert table == codes, table ^ codes
 
@@ -847,15 +847,15 @@ def test_line_registry_matches_schema_palette_docs():
     assert {p for k in LINE.values() for p in k.params} <= set(rl["properties"])
     palette = json.loads((ROOT / "docs" / "palette.json").read_text(encoding="utf-8"))["lines"]
     assert set(LINE) <= set(palette), set(LINE) - set(palette)
-    page = (ROOT / "docs" / "rules" / "lines-and-arrows.mdx").read_text(encoding="utf-8")
+    page = (ROOT / "docs" / "formats" / "rules" / "lines-and-arrows.mdx").read_text(encoding="utf-8")
     assert all(f"| `{k}` |" in page for k in LINE), [k for k in LINE if f"| `{k}` |" not in page]
 
 
 def test_style_line_widths_match_registry():
-    """docs/STYLE.md states the width of every line drawn with a number width in rules/line.py"""
+    """docs/library/drawing-style.md states the width of every line drawn with a number width in rules/line.py"""
     from pencilmark.rules import LINE
 
-    text = (ROOT / "docs" / "STYLE.md").read_text(encoding="utf-8")
+    text = (ROOT / "docs" / "library" / "drawing-style.md").read_text(encoding="utf-8")
     for k in LINE.values():
         if isinstance(k.width, (int, float)):
             row = re.search(rf"^\| `line` `{k.kind}` \|[^\n]*", text, re.M)
@@ -877,7 +877,7 @@ def test_edge_registry_matches_schema_docs():
     neg = schema["$defs"]["rule_negative"]["properties"]["of"]["enum"]
     assert {k for k, v in EDGE.items() if v.negative} <= set(neg)
     assert not {k for k, v in EDGE.items() if not v.negative} & set(neg)
-    page = (ROOT / "docs" / "rules" / "edges-and-corners.mdx").read_text(encoding="utf-8")
+    page = (ROOT / "docs" / "formats" / "rules" / "edges-and-corners.mdx").read_text(encoding="utf-8")
     assert all(f"| `{k}` |" in page for k in EDGE), [k for k in EDGE if f"| `{k}` |" not in page]
 
 
@@ -891,7 +891,7 @@ def test_cell_registry_matches_schema_docs():
     assert {k.param for k in CELL.values() if k.param} <= set(rc)
     neg = schema["$defs"]["rule_negative"]["properties"]["kind"]["enum"]
     assert set(neg) == {k for k, v in CELL.items() if v.negative}
-    page = (ROOT / "docs" / "rules" / "cell-clues.mdx").read_text(encoding="utf-8")
+    page = (ROOT / "docs" / "formats" / "rules" / "cell-clues.mdx").read_text(encoding="utf-8")
     assert all(f"`{k}`" in page for k in CELL), [k for k in CELL if f"`{k}`" not in page]
 
 

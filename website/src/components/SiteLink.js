@@ -1,5 +1,5 @@
 // A small external link to another site's explanation, shown as that site's icon with an arrow (the icons are made by
-// tools/site_icons.py). Used in the rule family tables; docs/TECHNIQUES.md writes the same markup directly.
+// tools/site_icons.py). Used in the rule family tables; docs/grades/techniques.md writes the same markup directly.
 import React from 'react';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 

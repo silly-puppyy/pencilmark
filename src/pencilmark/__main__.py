@@ -13,10 +13,10 @@
   python -m pencilmark solve [FILE|-]      the solution (or 'not unique' / 'no solution') per puzzle
   python -m pencilmark count [FILE|-] [--limit N]   how many solutions per puzzle (">=N" when it stops at N)
   python -m pencilmark generate [SPEC|-] [--seed N] [--time S] [--result]
-                                       a puzzle for a "sudoku-spec" request (docs/SPEC.md), as a sudoku-puzzle file
+                                       a puzzle for a "sudoku-spec" request (docs/formats/generator-spec.md), as a sudoku-puzzle file
   python -m pencilmark json  [FILE|-]      validate + normalise to canonical JSON (adds "hash")
   python -m pencilmark export [FILE|-] [--pretty] [--no-solution]
-                                       each puzzle as a "sudoku-puzzle" file (format_version 1, docs/FORMAT.md), canonical
+                                       each puzzle as a "sudoku-puzzle" file (format_version 1, docs/formats/puzzle-format.md), canonical
   python -m pencilmark fingerprint [FILE|-]  the content fingerprint ("sha256:...") per puzzle
   python -m pencilmark describe [FILE|-]     variant name and rules per puzzle (JSON)
 Inputs may also be sudokuwiki.org packed strings (S9B..., L9B..., J9B...).
@@ -402,7 +402,7 @@ def main(argv=None):
     r.add_argument(
         "--quality",
         default=None,
-        help='issue checks, e.g. "trivial.limit=0.5,trial.severity=reject,tedious.severity=off" (docs/GRADE.md 4)',
+        help='issue checks, e.g. "trivial.limit=0.5,trial.severity=reject,tedious.severity=off" (docs/formats/grade-card.md 4)',
     )
     r.add_argument("--explain", default=None, help="step explanation levels, comma-separated: notation, short, teach")
     r.add_argument(
@@ -416,7 +416,7 @@ def main(argv=None):
     r.add_argument(
         "--fields",
         default=None,
-        help="card fields, comma-separated (docs/GRADE.md 2), e.g. difficulty,band,time_p80,steps",
+        help="card fields, comma-separated (docs/formats/grade-card.md 2), e.g. difficulty,band,time_p80,steps",
     )
     r.add_argument(
         "-j", "--jobs", type=int, default=1, help="rate puzzles in N parallel processes (output in input order)"
@@ -436,7 +436,9 @@ def main(argv=None):
     c.add_argument("--limit", type=int, default=1000, help="stop counting here (prints >=N)")
     c.set_defaults(fn=cmd_count)
     g = sub.add_parser("generate")
-    g.add_argument("spec", nargs="?", help="a sudoku-spec file (docs/SPEC.md), or - for standard input")
+    g.add_argument(
+        "spec", nargs="?", help="a sudoku-spec file (docs/formats/generator-spec.md), or - for standard input"
+    )
     g.add_argument("--seed", type=int, help="override limits.seed")
     g.add_argument("--time", type=float, help="override limits.time (seconds)")
     g.add_argument("--result", action="store_true", help='print {"puzzle", "card", "info"} as one JSON line')

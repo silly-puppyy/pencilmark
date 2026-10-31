@@ -103,7 +103,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 @pytest.mark.skipif(not (ROOT / "tools").is_dir(), reason="needs the source tree")
 def test_techniques_page_up_to_date():
-    """docs/TECHNIQUES.md is generated from the registry; a registry change must regenerate it"""
+    """docs/grades/techniques.md is generated from the registry; a registry change must regenerate it"""
     import subprocess
     import sys
 
@@ -162,7 +162,7 @@ def test_code_explain_entries_exist():
 
 @pytest.mark.skipif(not (ROOT / "tools").is_dir(), reason="needs the source tree")
 def test_parameters_page_up_to_date():
-    """docs/dev/PARAMETERS.md lists the shipped grader model; a parameter change must regenerate it"""
+    """docs/dev/parameters.md lists the shipped grader model; a parameter change must regenerate it"""
     import subprocess
     import sys
 

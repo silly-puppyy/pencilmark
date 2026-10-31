@@ -69,8 +69,8 @@ print(card["band"], card["difficulty"], card["time"])     # Hard 5.9 10.7
 print([c["chip"] for c in card["contains"]])              # ['HSI', 'NSI', 'NPR/HPR', 'XWG/KTE/SCL/MCH']
 ```
 
-The card is a plain dictionary; [Grade card](../GRADE.md) lists every key. The `contains` entries carry short codes
-(`XWG` is X-Wing); [Techniques](../TECHNIQUES.md) lists them.
+The card is a plain dictionary; [Grade card](../formats/grade-card.md) lists every key. The `contains` entries carry short codes
+(`XWG` is X-Wing); [Techniques](../grades/techniques.md) lists them.
 
 ## 6. When a puzzle has no single answer
 

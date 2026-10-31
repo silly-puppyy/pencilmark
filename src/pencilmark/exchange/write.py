@@ -44,7 +44,7 @@ def write(p, meta=None, solution=None, provenance=False):
 
 def _input_order(doc, prov, src):
     """the rules of a puzzle read from a sudoku-puzzle file back in the file's order, with their id / label / style
-    (FORMAT.md 8.1: rules in the order given). Only when the written rules are exactly the file's rules up to spelling;
+    (docs/formats/puzzle-format.md 8.1: rules in the order given). Only when the written rules are exactly the file's rules up to spelling;
     otherwise the written order stays."""
     D = doc.get("digits")
     key = lambda r: json.dumps(_norm_rule(r, D), sort_keys=True)
@@ -84,7 +84,7 @@ class _Writer:
 
     # ---------------------------------------------------------------- groups
     def eff_groups(self):
-        """(kind, cells, total) per engine group, with the normalised kinds (ENGINE.md: jigsaw pieces stored as regions ->
+        """(kind, cells, total) per engine group, with the normalised kinds (docs/library/engine-mapping.md: jigsaw pieces stored as regions ->
         box; SudokuPad explicit houses -> row / column / box / region)."""
         p, B, D = self.p, self.B, self.D
         gs = [g for g in p.groups if not (self.key and set(g.cells) & self.key)]
@@ -136,7 +136,7 @@ class _Writer:
         return None
 
     def write_groups(self):
-        """engine groups -> house / region / cage rules (docs/rules/houses-and-regions.mdx, 6.1): every D x D area whose rows and columns are all
+        """engine groups -> house / region / cage rules (docs/formats/rules/houses-and-regions.mdx, 6.1): every D x D area whose rows and columns are all
         houses is a box_grid (its boxes a regular tiling) or a grid, placed where its first own house was; the remaining
         rows / columns / boxes are explicit rules; regions and cages keep their place."""
         B, D = self.B, self.D

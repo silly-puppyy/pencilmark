@@ -16,8 +16,13 @@ import pytest
 import pencilmark
 
 ROOT = Path(__file__).resolve().parents[1]
-PAGES = [ROOT / "README.md", ROOT / "docs" / "USAGE.mdx", ROOT / "docs" / "GRADE.md", ROOT / "docs" / "FORMAT.md"]
-PAGES += sorted((ROOT / "docs" / "guides").glob("*.md*"))
+PAGES = [
+    ROOT / "README.md",
+    ROOT / "docs" / "formats" / "grade-card.md",
+    ROOT / "docs" / "formats" / "puzzle-format.md",
+]
+PAGES += sorted((ROOT / "docs" / "start").glob("*.md*")) + sorted((ROOT / "docs" / "guides").glob("*.md*"))
+PAGES += [ROOT / "docs" / "dev" / "environment.md"]
 CLASSIC = "....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9......."
 FENCE = re.compile(r"```(\w*)[^\n]*\n(.*?)```", re.S)
 SHOWN_ERROR = re.compile(r"^[\w.]*?(\w+(?:Error|Failed|Unique|Solution|Undecided)): ", re.M)

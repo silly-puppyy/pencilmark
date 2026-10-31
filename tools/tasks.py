@@ -8,7 +8,7 @@ python tools/tasks.py lint        ruff check, ruff format --check and codespell
 python tools/tasks.py fixtures    rewrite the snapshot fixtures (only when a change is meant to alter them)
 python tools/tasks.py docs        generate the API, reference, techniques and parameters pages and swatches, build the site
 python tools/tasks.py serve       build, then serve the site on http://localhost:3000/pencilmark/
-python tools/tasks.py release VERSION   check that main is ready to release VERSION (docs/dev/RELEASE.md)
+python tools/tasks.py release VERSION   check that main is ready to release VERSION (docs/dev/release.md)
 """
 
 import re
@@ -22,8 +22,8 @@ PY = sys.executable
 FIXTURES = ["test_line_matrix", "test_edge_matrix", "test_cell_matrix", "test_rule_matrix", "test_input_matrix"]
 GENERATORS = ["gen_api_md", "gen_reference_md", "gen_cpp_reference", "gen_techniques_md", "gen_parameters_md",
               "gen_palette_md", "gen_swatches"]  # fmt: skip
-COPIES = [("README.md", "docs/index.md"), ("ARCHITECTURE.md", "docs/dev/ARCHITECTURE.md"),
-          ("CONTRIBUTING.md", "docs/dev/CONTRIBUTING.md")]  # fmt: skip
+COPIES = [("README.md", "docs/index.md"), ("ARCHITECTURE.md", "docs/dev/architecture.md"),
+          ("CONTRIBUTING.md", "docs/dev/contributing.md")]  # fmt: skip
 
 
 def run(*cmd, cwd=ROOT):

@@ -8,10 +8,10 @@ import Cards, {Card} from '@site/src/components/VariantCards';
 # Named variants
 
 These are the names pencilmark gives a puzzle when its rules match a known pattern: `describe()` and `meta.type` use
-them ("Samurai Sudoku", "Argyle Sudoku"). They are a library feature, not part of the [puzzle format](FORMAT.md): a
+them ("Samurai Sudoku", "Argyle Sudoku"). They are a library feature, not part of the [puzzle format](../formats/puzzle-format.md): a
 samurai file is five `box_grid` rules and an Argyle file a few `region` rules, so any reader that reads those reads the
-puzzle, and no reader needs to know the names. [Variant names](NAMING.md) gives the exact matching rules; rule
-families such as killer cages and thermometers have their own pages under [Rule families](/rule-families/). For an introduction to the popular variants, see Artisanal Sudoku's
+puzzle, and no reader needs to know the names. [Variant names](variant-naming.md) gives the exact matching rules; rule
+families such as killer cages and thermometers have their own pages under [Rule families](/formats/rules/). For an introduction to the popular variants, see Artisanal Sudoku's
 [basics of popular sudoku variants](https://artisanalsudoku.substack.com/p/the-basics-of-popular-sudoku-variants), and
 [sudokuvariants.com](https://sudokuvariants.com/help/variants) for one page per rule.
 
@@ -32,7 +32,7 @@ any board size where it is defined.
 
 ## Multi-grid layouts
 
-A multi-grid board is written as one `box_grid` per 9×9 grid ([Houses and regions](rules/houses-and-regions.mdx)).
+A multi-grid board is written as one `box_grid` per 9×9 grid ([Houses and regions](../formats/rules/houses-and-regions.mdx)).
 When the grids' top-left cells match a named layout, the puzzle takes its name: "Samurai Sudoku", "Killer Twodoku". In
 the drawings, overlapping grids have different tints, so the shared boxes show as a blend. Another arrangement is a
 "Multi-Grid Sudoku" and is graded the same way.

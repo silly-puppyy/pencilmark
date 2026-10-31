@@ -203,7 +203,7 @@ def test_timing_fields():
 
 
 def test_text_grids_and_pencilmarks():
-    """INTEROP.md: text grids with separators, trailing comments, pencil-mark grids, 729-character candidate strings"""
+    """docs/formats/other-formats.md: text grids with separators, trailing comments, pencil-mark grids, 729-character candidate strings"""
     s = "....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9......."
     grid = pencilmark.to_string(s, "grid")
     assert grid.count("\n") == 10 and "|" in grid
@@ -238,7 +238,7 @@ def test_text_grids_and_pencilmarks():
 
 
 def test_mode_and_se_are_checked():
-    """an unknown mode is an error, not human mode in disguise; se is null outside classic sudoku (GRADE.md)"""
+    """an unknown mode is an error, not human mode in disguise; se is null outside classic sudoku (docs/formats/grade-card.md)"""
     with pytest.raises(ValueError, match="unknown mode"):
         pencilmark.rate(CLASSIC, mode="Computer")
     killer = json.loads((ROOT / "docs" / "examples" / "killer-4x4.json").read_text(encoding="utf-8"))
@@ -259,7 +259,7 @@ def test_load_refuses_dicts_that_are_not_puzzles():
 
 
 def test_ipuz_round_trip():
-    """INTEROP.md: from_ipuz reads what to_ipuz writes, with and without the embedded puzzle; candidates are refused"""
+    """docs/formats/other-formats.md: from_ipuz reads what to_ipuz writes, with and without the embedded puzzle; candidates are refused"""
     import copy
 
     base = pencilmark.to_export("....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9.......")
@@ -308,7 +308,7 @@ def test_issue_rules_follow_the_input_file():
 
 
 def test_step_notation_levels():
-    """GRADE.md 5: explanation levels notation / short / teach; notation in the solvers' shared form (HoDoKu's)"""
+    """docs/formats/grade-card.md 5: explanation levels notation / short / teach; notation in the solvers' shared form (HoDoKu's)"""
     s = "....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9......."
     steps = pencilmark.rate(s, fields=["steps"], explain="notation")["steps"]
     lines = [x["explanation"]["notation"] for x in steps]

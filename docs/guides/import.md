@@ -6,7 +6,7 @@ description: Grade puzzles written as text grids, sudokuwiki.org strings, ipuz f
 # Import puzzles from other apps
 
 pencilmark reads the common ways puzzles are shared. Pass any of them to `pencilmark.rate`, `solve` or `describe`, or
-put them one per line in a file for the command line; [Other formats](../INTEROP.md) gives the exact rules of each.
+put them one per line in a file for the command line; [Other formats](../formats/other-formats.md) gives the exact rules of each.
 
 ## Text grids
 

@@ -1,4 +1,4 @@
-"""Generator tests: pencilmark.generate takes a sudoku-spec request (docs/SPEC.md). Each case runs in a few seconds."""
+"""Generator tests: pencilmark.generate takes a sudoku-spec request (docs/formats/generator-spec.md). Each case runs in a few seconds."""
 
 import json
 import os
@@ -158,7 +158,7 @@ def test_element_classes_and_ranges():
 
 
 def test_spec_examples():
-    """SPEC.md's example and docs/examples/specs run (spec_to_gen accepts them); reserved/ examples are refused"""
+    """docs/formats/generator-spec.md's example and docs/examples/specs run (spec_to_gen accepts them); reserved/ examples are refused"""
     import json
     import re
     from pathlib import Path
@@ -166,7 +166,7 @@ def test_spec_examples():
     from pencilmark import spec_format as SF
 
     docs = Path(__file__).resolve().parents[1] / "docs"
-    text = (docs / "SPEC.md").read_text(encoding="utf-8")
+    text = (docs / "formats" / "generator-spec.md").read_text(encoding="utf-8")
     example = json.loads(re.search(r"```json\n(.*?)```", text, re.S).group(1))
     SF.spec_to_gen(example)
     for f in sorted((docs / "examples" / "specs").glob("*.json")):
@@ -177,7 +177,7 @@ def test_spec_examples():
 
 
 def test_parity_templates():
-    """SPEC.md 2: odd, even and parity cell templates are accepted and written back as given"""
+    """docs/formats/generator-spec.md 2: odd, even and parity cell templates are accepted and written back as given"""
     from pencilmark import spec_format as SF
 
     for kind in ("odd", "even", "parity"):

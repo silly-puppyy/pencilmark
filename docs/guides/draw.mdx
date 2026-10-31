@@ -9,7 +9,7 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
 # Draw a puzzle
 
 The repository has a reference renderer, `tools/render_svg.py`, that draws a `sudoku-puzzle` file as SVG in the
-default style of [Drawing and style](../STYLE.md). It is not part of the installed package; run it from a clone.
+default style of [Drawing and style](../library/drawing-style.md). It is not part of the installed package; run it from a clone.
 
 ```
 python tools/render_svg.py docs/examples/mini-thermo-kropki.json mini.svg
@@ -34,6 +34,6 @@ doc = json.load(open("docs/examples/mini-thermo-kropki.json"))
 svg = render_svg.render(doc, dark=False, cell=48)
 ```
 
-The small drawings on the [rule pages](/rule-families/) come from this renderer. It always uses the default style, with
-line colours most puzzle setters use; [Drawing and style](../STYLE.md) lists every size and colour, and
+The small drawings on the [rule pages](/formats/rules/) come from this renderer. It always uses the default style, with
+line colours most puzzle setters use; [Drawing and style](../library/drawing-style.md) lists every size and colour, and
 `docs/palette.json` holds them in one file for other renderers.

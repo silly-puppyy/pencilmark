@@ -26,7 +26,7 @@ editor would send back. A `warning` is worth a look but may be intended.
 
 The warning above is a `spike`: almost all the work is in the three hardest steps, and the rest are singles.
 
-[Grade card](../GRADE.md#4-issues) lists every check with its default limit.
+[Grade card](../formats/grade-card.md#4-issues) lists every check with its default limit.
 
 ## A rule that is not needed
 

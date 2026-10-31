@@ -1,14 +1,14 @@
-"""The "sudoku-puzzle" exchange format, format_version 1 (docs/FORMAT.md): engine Puzzle <-> exchange dict.
+"""The "sudoku-puzzle" exchange format, format_version 1 (docs/formats/puzzle-format.md): engine Puzzle <-> exchange dict.
 
     write(p, meta=None, solution=None) -> dict          engine Puzzle -> canonical sudoku-puzzle dict
     to_internal(doc) -> dict                            sudoku-puzzle dict -> puzzle JSON (pencilmark.puzzle_json)
     read(doc) -> Puzzle                                 sudoku-puzzle dict -> engine Puzzle (not finalized)
-    validate(doc)                                       strict reading checks (FORMAT.md section 4); raises FormatError
-    dumps(doc, pretty=True) -> str                      canonical JSON text (FORMAT.md 8.1)
-    fingerprint(doc) -> "sha256:..."                    content fingerprint (FORMAT.md 8.2)
+    validate(doc)                                       strict reading checks (docs/formats/puzzle-format.md section 4); raises FormatError
+    dumps(doc, pretty=True) -> str                      canonical JSON text (docs/formats/puzzle-format.md 8.1)
+    fingerprint(doc) -> "sha256:..."                    content fingerprint (docs/formats/puzzle-format.md 8.2)
 
 The format is a transport layer: read(write(p)) builds the same engine structure as p (groups in order, relations and
-constraints in order, domains, givens, coordinates), except for the normalisations listed in docs/ENGINE.md (each
+constraints in order, domains, givens, coordinates), except for the normalisations listed in docs/library/engine-mapping.md (each
 mechanic gets ONE engine expansion). The writer therefore works from the engine structure directly and keeps the order of
 relations and constraints (the order changes cards).
 """

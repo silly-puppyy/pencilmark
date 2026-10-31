@@ -10,14 +10,14 @@ the failures given as much room as the successes. Unless an entry says otherwise
 correlation with a human target (solve times corrected for player skill, setters' star ratings, player votes),
 computed within groups of comparable puzzles and, where the entry says so, held out by source. Most experiments ran
 before the frozen benchmark of 2026-10-25, so their numbers are as measured at the time, on the data and engine of the
-time; the [benchmark](BENCHMARK.mdx) has the current accuracy. A change was adopted only if it helped at least two
+time; the [benchmark](benchmark.mdx) has the current accuracy. A change was adopted only if it helped at least two
 independent sources and hurt none beyond noise, and from 2026-10-21 a gain of about 0.02 or less did not justify a
 structural change.
 
 Two terms recur. **Re-solved** means every puzzle was solved again under the changed model before scoring, because
 prices change the route and the route changes the score. **Left out** means a weight was chosen on the other sources
-and the gain measured on the source left out. Only aggregate numbers appear here. [How a card is computed](MODEL.mdx)
-describes the model that came out of these experiments, and [Philosophy](PHILOSOPHY.md) the aims.
+and the gain measured on the source left out. Only aggregate numbers appear here. [How a card is computed](model.mdx)
+describes the model that came out of these experiments, and [Philosophy](philosophy.md) the aims.
 
 ## Targets and data
 
@@ -181,4 +181,4 @@ Comparisons on the same puzzles, before and after the frozen set.
 | 2026-10-19 to 10-21 | Head to head with Andrew Stuart's grader on two communities | fed-sudoku.eu (3,739), sudoku.coach (150 classics) | fed-sudoku.eu 0.860 against 0.843 (difference +0.007 to +0.026), hard tab 0.614 against 0.672. sudoku.coach 0.827 against 0.835, hardest third 0.408 against 0.419 | His hard-end lead is specific to fed-sudoku.eu |
 | 2026-10-25 | A published dataset never used in fitting; other graders on the development split | Wang 2024 (1,533 classics), fed-sudoku.eu, sudoku.today | Wang 2024: 0.603 against average time, 0.673 with at least 20 players; time ×0.98. fed-sudoku.eu ours 0.641, Andrew Stuart 0.622, Sudoku Explainer 0.410, HoDoKu 0.364; variants ours 0.660, Rangsk 0.645, with Rangsk ahead on x-sums | Wang 2024 added to the frozen set; the x-sums gap led to a translation fix |
 | 2026-10-29 | Killers against Andrew Stuart's killer grader | grandgames.net (558), sudoku.coach (36), logic-masters.de (26) | 0.836 against 0.825; 0.647 against 0.787; 0.491 against 0.035 | Slightly ahead on the large set |
-| 2026-10-29 to 10-30 | The frozen benchmark | 7,623 puzzles, 15% of every source | Development numbers close to frozen ones (fed-sudoku.eu 0.641 development, 0.670 frozen); results in the [benchmark](BENCHMARK.mdx) | Published |
+| 2026-10-29 to 10-30 | The frozen benchmark | 7,623 puzzles, 15% of every source | Development numbers close to frozen ones (fed-sudoku.eu 0.641 development, 0.670 frozen); results in the [benchmark](benchmark.mdx) | Published |

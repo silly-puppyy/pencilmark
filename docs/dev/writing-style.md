@@ -1,6 +1,6 @@
 # Writing style
 
-Rules for pencilmark's documentation. Each names its source. Code has its own page: [code style](CODE_STYLE.md).
+Rules for pencilmark's documentation. Each names its source. Code has its own page: [code style](code-style.md).
 
 ## Get the reader to the answer
 

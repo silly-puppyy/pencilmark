@@ -188,7 +188,7 @@ def grid_area(B, r0, c0):
 
 def read_houses(rules, B):
     """the house groups a rule list states, in engine order -> (houses [(kind, cells, extra)], areas [cell sets])
-    (docs/rules/houses-and-regions.mdx, 6.1): grid / box_grid / box / row / column rules in file order, a house equal to an earlier one skipped;
+    (docs/formats/rules/houses-and-regions.mdx, 6.1): grid / box_grid / box / row / column rules in file order, a house equal to an earlier one skipped;
     areas = the grid / box_grid areas."""
     out, seen, areas = [], set(), []
 

@@ -1,9 +1,9 @@
 # Puzzle format
 
 The `sudoku-puzzle` format, version 1: the transport format for sudoku puzzles, classic and variant. It says what a file means, not how to
-draw it or how hard the puzzle is: those are separate documents ([Drawing and style](STYLE.md), [Grade card](GRADE.md)
-and [Generator spec](SPEC.md)). The [JSON Schema](https://json-schema.org/) is
-[`sudoku-puzzle.schema.json`](sudoku-puzzle.schema.json); [pencilmark](https://github.com/silly-puppyy/pencilmark) is the
+draw it or how hard the puzzle is: those are separate documents ([Drawing and style](../library/drawing-style.md), [Grade card](grade-card.md)
+and [Generator spec](generator-spec.md)). The [JSON Schema](https://json-schema.org/) is
+[`sudoku-puzzle.schema.json`](../sudoku-puzzle.schema.json); [pencilmark](https://github.com/silly-puppyy/pencilmark) is the
 reference implementation.
 
 The key words MUST, MUST NOT, SHOULD and MAY are used as in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
@@ -29,7 +29,7 @@ It is written so that:
 
 - a **solver or grader** can rely on every rule having one exact meaning (section 6), with no defaults that depend on
   the board size;
-- a **renderer** can draw the puzzle from the rules alone (how is up to the renderer; [Drawing and style](STYLE.md) lists
+- a **renderer** can draw the puzzle from the rules alone (how is up to the renderer; [Drawing and style](../library/drawing-style.md) lists
   common practice);
 - a reader that meets something it does not understand **refuses** the file instead of silently dropping a rule
   (section 4);
@@ -108,10 +108,10 @@ agree on the common ones:
 | `url` | Link to the puzzle. |
 | `date` | ISO 8601 date. |
 | `rules_text` | The setter's own wording of the rules. Tools never overwrite it. |
-| `type` | Display name of the variant, e.g. `"Killer Sudoku"`. Variant names live **only** here; they never change the rules. `describe()` ([Variant names](NAMING.md)) fills it when it is empty. |
+| `type` | Display name of the variant, e.g. `"Killer Sudoku"`. Variant names live **only** here; they never change the rules. `describe()` ([Variant names](../library/variant-naming.md)) fills it when it is empty. |
 | `license` | Licence of the puzzle. |
 | `tags` | List of strings. |
-| `generated_from` | Fingerprint of the `sudoku-spec` that produced the puzzle ([Generator spec](SPEC.md)). |
+| `generated_from` | Fingerprint of the `sudoku-spec` that produced the puzzle ([Generator spec](generator-spec.md)). |
 
 ## 3. Cells, outside clues and ordering
 
@@ -207,7 +207,7 @@ semantics and drawing). Every rule MAY carry:
 
 **Areas.** A rule that applies to part of the board says where with `area`: the `origin` of a `grid` / `box_grid` rule
 in the file (that grid's D × D cells), or a list of cells. The same key means the same thing everywhere it appears
-(`neighbours`, `negative`, and the generator spec, [Generator spec](SPEC.md)).
+(`neighbours`, `negative`, and the generator spec, [Generator spec](generator-spec.md)).
 
 Number keys: **`sum`** when the clue is a sum of digits (cage, every `sum` kind, sandwich, x-sum, edge kind `sum`),
 **`value`** for every other number (difference, ratio, product, whisper gap, skyscraper count, …). Parameters with a

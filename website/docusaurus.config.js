@@ -39,9 +39,9 @@ module.exports = async function createConfig() {
         // "Edit this page": copies point to their source at the repository root; generated pages (tools/gen_*.py) have
         // no link, since an edit there is overwritten
         editUrl: ({docPath}) => {
-          const copies = {'index.md': 'README.md', 'dev/ARCHITECTURE.md': 'ARCHITECTURE.md',
-                          'dev/CONTRIBUTING.md': 'CONTRIBUTING.md'};
-          const generated = ['api.md', 'TECHNIQUES.md', 'PALETTE.md', 'dev/PARAMETERS.md'];
+          const copies = {'index.md': 'README.md', 'dev/architecture.md': 'ARCHITECTURE.md',
+                          'dev/contributing.md': 'CONTRIBUTING.md'};
+          const generated = ['library/python-api.md', 'grades/techniques.md', 'library/palette.md', 'dev/parameters.md'];
           if (generated.includes(docPath) || docPath.startsWith('dev/reference/')) return undefined;
           return `${GH}/edit/main/${copies[docPath] || 'docs/' + docPath}`;
         },
@@ -59,10 +59,10 @@ module.exports = async function createConfig() {
       title: 'pencilmark',
       logo: {alt: 'pencilmark', src: 'img/favicon.svg'},
       items: [
-        {to: '/USAGE/', label: 'Usage', position: 'left'},
-        {to: '/FORMAT/', label: 'Puzzle format', position: 'left'},
-        {to: '/GRADE/', label: 'Grade card', position: 'left'},
-        {to: '/api/', label: 'Python API', position: 'left'},
+        {to: '/start/usage/', label: 'Usage', position: 'left'},
+        {to: '/formats/puzzle-format/', label: 'Puzzle format', position: 'left'},
+        {to: '/formats/grade-card/', label: 'Grade card', position: 'left'},
+        {to: '/library/python-api/', label: 'Python API', position: 'left'},
         {href: 'https://pypi.org/project/pencilmark/', position: 'right', className: 'pm-nav-icon pm-nav-pypi',
          'aria-label': 'pencilmark on PyPI', title: 'PyPI'},
         {href: GH, position: 'right', className: 'pm-nav-icon pm-nav-github', 'aria-label': 'GitHub repository',
@@ -73,9 +73,9 @@ module.exports = async function createConfig() {
     footer: {
       style: 'dark',
       links: [
-        {title: 'Docs', items: [{label: 'Usage', to: '/USAGE/'}, {label: 'Puzzle format', to: '/FORMAT/'},
-                                {label: 'Grade card', to: '/GRADE/'}, {label: 'Generator spec', to: '/SPEC/'},
-                                {label: 'Drawing and style', to: '/STYLE/'}, {label: 'Engine', to: '/ENGINE/'}]},
+        {title: 'Docs', items: [{label: 'Usage', to: '/start/usage/'}, {label: 'Puzzle format', to: '/formats/puzzle-format/'},
+                                {label: 'Grade card', to: '/formats/grade-card/'}, {label: 'Generator spec', to: '/formats/generator-spec/'},
+                                {label: 'Drawing and style', to: '/library/drawing-style/'}, {label: 'Engine', to: '/library/engine-mapping/'}]},
         {title: 'Schemas', items: [{label: 'sudoku-puzzle', href: 'pathname:///pencilmark/schema/sudoku-puzzle-1.json'},
                                    {label: 'sudoku-grade', href: 'pathname:///pencilmark/schema/sudoku-grade-1.json'}]},
         {title: 'Project', items: [{label: 'GitHub', href: GH}, {label: 'PyPI', href: 'https://pypi.org/project/pencilmark/'}]},

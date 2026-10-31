@@ -1,4 +1,4 @@
-"""Interop strings and ipuz export (docs/INTEROP.md).
+"""Interop strings and ipuz export (docs/formats/other-formats.md).
 
     from_string(s) -> sudoku-puzzle dict        plain classic strings (also as text grids with | - + separators, or with a
                                                 trailing comment), pencil-mark grids, 729-character candidate strings, HoDoKu
@@ -56,7 +56,7 @@ _COMMENT = re.compile(r"\s*[#;].*$")
 
 def from_string(s, symbols=None):
     """plain classic string, text grid, pencil-mark grid, 729-character candidate string or sudokuwiki packed string ->
-    sudoku-puzzle dict (docs/INTEROP.md)"""
+    sudoku-puzzle dict (docs/formats/other-formats.md)"""
     s = s or ""
     t = re.sub(r"\s+", "", s)
     m = _PACKED.fullmatch(t)

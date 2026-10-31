@@ -5,7 +5,7 @@
     card  = pencilmark.rate(puzzle, steps=True)                 #   a sample-pack line {"puzzle": ...}, or a path to a .json file
     cards = pencilmark.rate_many(puzzles, jobs=4)               # parallel, input order kept
     sol   = pencilmark.solve(puzzle)                            # list of digits; raises NotUnique / NoSolution
-    exp   = pencilmark.to_export(puzzle, title=..., author=..., date=...)  # -> "sudoku-puzzle" dict (docs/FORMAT.md)
+    exp   = pencilmark.to_export(puzzle, title=..., author=..., date=...)  # -> "sudoku-puzzle" dict (docs/formats/puzzle-format.md)
     text  = pencilmark.dumps(exp); pencilmark.fingerprint(puzzle); pencilmark.describe(puzzle)
     pencilmark.to_ipuz(puzzle); pencilmark.from_string("S9B..."); pencilmark.to_string(puzzle, "sudokuwiki")  # -> "sudoku-puzzle" dict, metadata under "meta"
 
@@ -130,7 +130,7 @@ def rate(
     quality=None,
     alternatives=True,
 ):
-    """The "sudoku-grade" card of one puzzle (docs/GRADE.md), with only the fields you ask for.
+    """The "sudoku-grade" card of one puzzle (docs/formats/grade-card.md), with only the fields you ask for.
 
     Parameters
     ----------
@@ -156,7 +156,7 @@ def rate(
     explain : str, list of str or bool, optional
         Explanation levels for the steps: "notation", "short", "teach", or True for all of them.
     quality : dict, optional
-        Settings of the issue checks, e.g. {"trivial": {"limit": 0.5}, "trial": {"severity": "off"}} (docs/GRADE.md 4).
+        Settings of the issue checks, e.g. {"trivial": {"limit": 0.5}, "trial": {"severity": "off"}} (docs/formats/grade-card.md 4).
     alternatives : bool
         False skips the search for interchangeable techniques (each chip in contains lists one code). Band, difficulty
         and time are the same either way, and the card comes much faster.
@@ -165,7 +165,7 @@ def rate(
     -------
     dict
         The card. Its steps walk the shortest technique list's route when the card asks for contains (or issues, reject
-        or warning), else the full first route (docs/GRADE.md 5).
+        or warning), else the full first route (docs/formats/grade-card.md 5).
 
     Raises
     ------
@@ -366,7 +366,7 @@ def count_solutions(puzzle, limit=1000):
 
 
 def to_export(puzzle, meta=None, with_solution=True, describe=True, **meta_kw):
-    """The "sudoku-puzzle" exchange dict of a puzzle (format_version 1, docs/FORMAT.md).
+    """The "sudoku-puzzle" exchange dict of a puzzle (format_version 1, docs/formats/puzzle-format.md).
 
     Canonical: houses and rules with "r1c1" cells, keys in a fixed order. Metadata already in a JSON input is kept.
 
@@ -466,7 +466,7 @@ def fingerprint(puzzle):
 
 
 def validate(doc):
-    """Strict reading checks of a format_version 1 dict (docs/FORMAT.md section 4).
+    """Strict reading checks of a format_version 1 dict (docs/formats/puzzle-format.md section 4).
 
     Parameters
     ----------
@@ -514,7 +514,7 @@ def rules_text(described):
 
 
 def to_ipuz(puzzle):
-    """A puzzle as an ipuz 2 dict (docs/INTEROP.md).
+    """A puzzle as an ipuz 2 dict (docs/formats/other-formats.md).
 
     ipuz expresses classic, Latin square, diagonal, windoku, jigsaw and killer sudoku.
 
@@ -539,7 +539,7 @@ def to_ipuz(puzzle):
 
 
 def from_ipuz(ipuz):
-    """An ipuz sudoku -> sudoku-puzzle dict (docs/INTEROP.md).
+    """An ipuz sudoku -> sudoku-puzzle dict (docs/formats/other-formats.md).
 
     Parameters
     ----------
@@ -557,7 +557,7 @@ def from_ipuz(ipuz):
 
 
 def from_string(s, symbols=None):
-    """A puzzle as text -> sudoku-puzzle dict (docs/INTEROP.md).
+    """A puzzle as text -> sudoku-puzzle dict (docs/formats/other-formats.md).
 
     Reads plain classic strings (with or without a trailing comment), text grids with separators, pencil-mark grids,
     729-character candidate strings, HoDoKu library lines and sudokuwiki.org packed strings.
@@ -580,7 +580,7 @@ def from_string(s, symbols=None):
 
 
 def to_string(puzzle, form="plain"):
-    """A puzzle as text (docs/INTEROP.md).
+    """A puzzle as text (docs/formats/other-formats.md).
 
     Parameters
     ----------
@@ -605,7 +605,7 @@ def to_string(puzzle, form="plain"):
 
 
 def generate(spec):
-    """One puzzle for a "sudoku-spec" request (docs/SPEC.md).
+    """One puzzle for a "sudoku-spec" request (docs/formats/generator-spec.md).
 
     Parameters
     ----------

@@ -2,7 +2,7 @@
  "$schema": "https://json-schema.org/draft/2020-12/schema",
  "$id": "https://silly-puppyy.github.io/pencilmark/schema/sudoku-grade-1.json",
  "title": "sudoku-grade format_version 1",
- "description": "pencilmark grade card (docs/GRADE.md).",
+ "description": "pencilmark grade card (docs/formats/grade-card.md).",
  "type": "object",
  "required": [
   "format",
@@ -327,7 +327,7 @@
   },
   "completed": {
    "type": "boolean",
-   "description": "Grading finished within max_seconds (always true without a limit); false: band may be Unknown with difficulty / time null, or the technique list truncated (GRADE.md)."
+   "description": "Grading finished within max_seconds (always true without a limit); false: band may be Unknown with difficulty / time null, or the technique list truncated (docs/formats/grade-card.md)."
   },
   "elapsed": {
    "type": "number",

@@ -1,4 +1,4 @@
-"""The `cell` rule family (docs/rules/cell-clues.mdx): every public kind with its parameter, the variant it belongs to
+"""The `cell` rule family (docs/formats/rules/cell-clues.mdx): every public kind with its parameter, the variant it belongs to
 (odd and even make one variant, low and high another), whether the "every cell of the kind is marked" negative is defined,
 and how it is drawn."""
 

@@ -1,7 +1,7 @@
-"""Write docs/TECHNIQUES.md, the technique codes by family, from the technique registry (data/techniques.csv,
+"""Write docs/grades/techniques.md, the technique codes by family, from the technique registry (data/techniques.csv,
 data/codes.csv) and the explanation catalogue's links (explain.CATALOG). Reads the source tree; the C++ engine need not
 be built.
-  python tools/gen_techniques_md.py [--check]      --check: exit 1 if docs/TECHNIQUES.md is out of date"""
+  python tools/gen_techniques_md.py [--check]      --check: exit 1 if docs/grades/techniques.md is out of date"""
 
 import csv
 import sys
@@ -129,14 +129,14 @@ def page():
 
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
-    out = ROOT / "docs" / "TECHNIQUES.md"
+    out = ROOT / "docs" / "grades" / "techniques.md"
     text = page()
     if "--check" in argv:
         ok = out.is_file() and out.read_text(encoding="utf-8") == text
         print(
-            "docs/TECHNIQUES.md is up to date"
+            "docs/grades/techniques.md is up to date"
             if ok
-            else "docs/TECHNIQUES.md is out of date: run tools/gen_techniques_md.py"
+            else "docs/grades/techniques.md is out of date: run tools/gen_techniques_md.py"
         )
         return 0 if ok else 1
     out.write_text(text, encoding="utf-8")

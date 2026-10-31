@@ -1,6 +1,6 @@
 # Code style
 
-Rules for pencilmark's Python and C++. Each names its source. Docs have their own page: [writing style](WRITING_STYLE.md).
+Rules for pencilmark's Python and C++. Each names its source. Docs have their own page: [writing style](writing-style.md).
 
 ## Where code goes
 

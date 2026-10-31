@@ -9,8 +9,8 @@ import DifficultyCurve from '@site/src/components/DifficultyCurve';
 
 pencilmark solves the puzzle the way a person would, prices every step, and turns the prices into three numbers:
 **band** (what you need to know), **difficulty** (how hard the steps are) and **time** (how long it takes). The diagram
-is the map of this page; click a box to go to its section. [Philosophy](PHILOSOPHY.md) says what the numbers are meant
-to mean; the [benchmark](BENCHMARK.mdx) says how well they do.
+is the map of this page; click a box to go to its section. [Philosophy](philosophy.md) says what the numbers are meant
+to mean; the [benchmark](benchmark.mdx) says how well they do.
 
 ```mermaid
 flowchart TD
@@ -52,7 +52,7 @@ The band route is the order of steps a person would take, choosing the easiest m
 2. Each move is named by its most specific shape (`band_path.classify`): an X-Chain of length 4 with its ends in one
    box is a Skyscraper, not a long X-Chain. The shape decides the band of the move.
 3. The engine searches band by band: first only Very Easy techniques, then up to Easy, and so on. In the first band
-   that has a move, it takes the move with the lowest study order in [`codes.csv`](TECHNIQUES.md) (a hidden single
+   that has a move, it takes the move with the lowest study order in [`codes.csv`](techniques.md) (a hidden single
    before a naked single, a pointing pair before a naked pair), the cheaper one on a tie.
 4. The move is applied and the route goes on until the grid is full.
 
@@ -62,7 +62,7 @@ Where no technique applies, the engine proves an elimination by full search (Tri
 ## 3. Band
 
 The band is the band of the hardest step on the band route: Very Easy, Easy, Medium, Hard, Very Hard, Expert or
-Extreme. [Techniques](TECHNIQUES.md) lists the band of every technique and shape.
+Extreme. [Techniques](techniques.md) lists the band of every technique and shape.
 
 ## 4. Contains
 

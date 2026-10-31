@@ -78,7 +78,7 @@ def to_puzzle_json(obj):
     sample-pack line {"puzzle": ..., "grade": ...}."""
     if "puzzle" in obj and isinstance(obj["puzzle"], dict):
         obj = obj["puzzle"]
-    if "ipuz.org" in str(obj.get("version", "")):  # an ipuz file (docs/INTEROP.md)
+    if "ipuz.org" in str(obj.get("version", "")):  # an ipuz file (docs/formats/other-formats.md)
         from .interop import from_ipuz
 
         obj = from_ipuz(obj)

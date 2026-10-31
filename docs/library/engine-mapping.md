@@ -1,6 +1,6 @@
 # Engine mapping
 
-How pencilmark builds its engine `Puzzle` from a `sudoku-puzzle` file ([Puzzle format](FORMAT.md)). This is for people
+How pencilmark builds its engine `Puzzle` from a `sudoku-puzzle` file ([Puzzle format](../formats/puzzle-format.md)). This is for people
 working on pencilmark or adding a rule; it is not part of the format.
 
 The format is a transport layer: the engine `Puzzle` built from a file equals the one the site loaders build (groups
@@ -56,11 +56,11 @@ the same file and the same card whatever its source.
 
 Mechanics without a named rule (same-parity lines, maximin, minimax, ten-eleven and similar) can be graded when a loader
 builds them as engine tables, but cannot be written in format_version 1: `table` and the `allowed` operator are reserved
-for the planned custom rule type ([docs/rules/other.mdx](rules/other.mdx), 6.17), and `to_export` refuses such puzzles.
+for the planned custom rule type ([docs/formats/rules/other.mdx](../formats/rules/other.mdx), 6.17), and `to_export` refuses such puzzles.
 
 ## Adding a rule
 
-1. Add the rule family or kind to the [rule family pages](FORMAT.md#6-rule-families) (meaning) and section 7 (default drawing), and to
+1. Add the rule family or kind to the [rule family pages](../formats/puzzle-format.md#6-rule-families) (meaning) and section 7 (default drawing), and to
    `docs/sudoku-puzzle.schema.json`.
 2. Read and write it in `src/pencilmark/exchange/` (validate.py: strict checks; read.py: engine expansion; write.py; canonical.py: key order).
 3. If the engine needs a new constraint, add it in `csrc/` (all solving logic lives in C++).

@@ -9,21 +9,21 @@ Everything below is importable from `pencilmark` directly (`pencilmark.rate`, `p
 
 | | |
 |---|---|
-| def [`rate`](#rate) | The "sudoku-grade" card of one puzzle ([Grade card](GRADE.md)), with only the fields you ask for. |
+| def [`rate`](#rate) | The "sudoku-grade" card of one puzzle ([Grade card](../formats/grade-card.md)), with only the fields you ask for. |
 | def [`rate_many`](#rate_many) | Cards for many puzzles, in input order. |
 | def [`describe`](#describe) | The variant name and its rules in words, from the rules alone (pencilmark/variants.py). |
 | def [`solve`](#solve) | The unique solution of a puzzle. |
 | def [`count_solutions`](#count_solutions) | How many solutions a puzzle has, counting up to a limit. |
-| def [`generate`](#generate) | One puzzle for a "sudoku-spec" request ([Generator spec](SPEC.md)). |
+| def [`generate`](#generate) | One puzzle for a "sudoku-spec" request ([Generator spec](../formats/generator-spec.md)). |
 | def [`load`](#load) | Any accepted input -> a finalized engine Puzzle. |
-| def [`validate`](#validate) | Strict reading checks of a format_version 1 dict ([Puzzle format](FORMAT.md) section 4). |
+| def [`validate`](#validate) | Strict reading checks of a format_version 1 dict ([Puzzle format](../formats/puzzle-format.md) section 4). |
 | def [`fingerprint`](#fingerprint) | Content fingerprint of a puzzle: "sha256:&lt;hex>" of its canonical form. |
-| def [`to_export`](#to_export) | The "sudoku-puzzle" exchange dict of a puzzle (format_version 1, [Puzzle format](FORMAT.md)). |
+| def [`to_export`](#to_export) | The "sudoku-puzzle" exchange dict of a puzzle (format_version 1, [Puzzle format](../formats/puzzle-format.md)). |
 | def [`dumps`](#dumps) | Canonical JSON text of a sudoku-puzzle dict: fixed key order; pretty: one grid row per line, one rule per… |
-| def [`from_string`](#from_string) | A puzzle as text -> sudoku-puzzle dict ([Other formats](INTEROP.md)). |
-| def [`to_string`](#to_string) | A puzzle as text ([Other formats](INTEROP.md)). |
-| def [`from_ipuz`](#from_ipuz) | An ipuz sudoku -> sudoku-puzzle dict ([Other formats](INTEROP.md)). |
-| def [`to_ipuz`](#to_ipuz) | A puzzle as an ipuz 2 dict ([Other formats](INTEROP.md)). |
+| def [`from_string`](#from_string) | A puzzle as text -> sudoku-puzzle dict ([Other formats](../formats/other-formats.md)). |
+| def [`to_string`](#to_string) | A puzzle as text ([Other formats](../formats/other-formats.md)). |
+| def [`from_ipuz`](#from_ipuz) | An ipuz sudoku -> sudoku-puzzle dict ([Other formats](../formats/other-formats.md)). |
+| def [`to_ipuz`](#to_ipuz) | A puzzle as an ipuz 2 dict ([Other formats](../formats/other-formats.md)). |
 | class [`NotUnique`](#NotUnique) | the puzzle has more than one solution |
 | class [`NoSolution`](#NoSolution) | the puzzle has no solution |
 | class [`Undecided`](#Undecided) | the exhaustive search hit its node limit and OR-Tools (pip install "pencilmark[verify]") is not available |
@@ -34,7 +34,7 @@ Everything below is importable from `pencilmark` directly (`pencilmark.rate`, `p
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L121)
 
-The "sudoku-grade" card of one puzzle ([Grade card](GRADE.md)), with only the fields you ask for.
+The "sudoku-grade" card of one puzzle ([Grade card](../formats/grade-card.md)), with only the fields you ask for.
 
 **Parameters**
 
@@ -46,12 +46,12 @@ The "sudoku-grade" card of one puzzle ([Grade card](GRADE.md)), with only the fi
 - `fields` *list of str, optional* — The top-level fields to return. Default: difficulty, time, band, contains. Optional: band_index, issues, reject, warning (publishing checks), time_mean, time_pNN (any percentile 1-99, e.g. time_p80), time_dist, elapsed (wall seconds of the call), se, steps, describe, symmetry. format, format_version and grader are always present.
 - `allow_guessing` *bool* — Guess where no technique applies (band "Unknown") instead of proving by full search (Trial and error, Extreme).
 - `explain` *str, list of str or bool, optional* — Explanation levels for the steps: "notation", "short", "teach", or True for all of them.
-- `quality` *dict, optional* — Settings of the issue checks, e.g. {"trivial": {"limit": 0.5}, "trial": {"severity": "off"}} ([Grade card](GRADE.md) 4).
+- `quality` *dict, optional* — Settings of the issue checks, e.g. {"trivial": {"limit": 0.5}, "trial": {"severity": "off"}} ([Grade card](../formats/grade-card.md) 4).
 - `alternatives` *bool* — False skips the search for interchangeable techniques (each chip in contains lists one code). Band, difficulty and time are the same either way, and the card comes much faster.
 
 **Returns**
 
-- *dict* — The card. Its steps walk the shortest technique list's route when the card asks for contains (or issues, reject or warning), else the full first route ([Grade card](GRADE.md) 5).
+- *dict* — The card. Its steps walk the shortest technique list's route when the card asks for contains (or issues, reject or warning), else the full first route ([Grade card](../formats/grade-card.md) 5).
 
 **Raises**
 
@@ -135,7 +135,7 @@ How many solutions a puzzle has, counting up to a limit.
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L607)
 
-One puzzle for a "sudoku-spec" request ([Generator spec](SPEC.md)).
+One puzzle for a "sudoku-spec" request ([Generator spec](../formats/generator-spec.md)).
 
 **Parameters**
 
@@ -174,7 +174,7 @@ Any accepted input -> a finalized engine Puzzle.
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L468)
 
-Strict reading checks of a format_version 1 dict ([Puzzle format](FORMAT.md) section 4).
+Strict reading checks of a format_version 1 dict ([Puzzle format](../formats/puzzle-format.md) section 4).
 
 **Parameters**
 
@@ -208,7 +208,7 @@ Covers the rules, grid, givens and candidates; not meta, style or the solution. 
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L368)
 
-The "sudoku-puzzle" exchange dict of a puzzle (format_version 1, [Puzzle format](FORMAT.md)).
+The "sudoku-puzzle" exchange dict of a puzzle (format_version 1, [Puzzle format](../formats/puzzle-format.md)).
 
 Canonical: houses and rules with "r1c1" cells, keys in a fixed order. Metadata already in a JSON input is kept.
 
@@ -243,7 +243,7 @@ Canonical JSON text of a sudoku-puzzle dict: fixed key order; pretty: one grid r
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L559)
 
-A puzzle as text -> sudoku-puzzle dict ([Other formats](INTEROP.md)).
+A puzzle as text -> sudoku-puzzle dict ([Other formats](../formats/other-formats.md)).
 
 Reads plain classic strings (with or without a trailing comment), text grids with separators, pencil-mark grids, 729-character candidate strings, HoDoKu library lines and sudokuwiki.org packed strings.
 
@@ -260,7 +260,7 @@ Reads plain classic strings (with or without a trailing comment), text grids wit
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L582)
 
-A puzzle as text ([Other formats](INTEROP.md)).
+A puzzle as text ([Other formats](../formats/other-formats.md)).
 
 **Parameters**
 
@@ -279,7 +279,7 @@ A puzzle as text ([Other formats](INTEROP.md)).
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L541)
 
-An ipuz sudoku -> sudoku-puzzle dict ([Other formats](INTEROP.md)).
+An ipuz sudoku -> sudoku-puzzle dict ([Other formats](../formats/other-formats.md)).
 
 **Parameters**
 
@@ -293,7 +293,7 @@ An ipuz sudoku -> sudoku-puzzle dict ([Other formats](INTEROP.md)).
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L516)
 
-A puzzle as an ipuz 2 dict ([Other formats](INTEROP.md)).
+A puzzle as an ipuz 2 dict ([Other formats](../formats/other-formats.md)).
 
 ipuz expresses classic, Latin square, diagonal, windoku, jigsaw and killer sudoku.
 

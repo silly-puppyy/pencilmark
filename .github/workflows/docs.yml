@@ -30,7 +30,7 @@ jobs:
           cache: npm
           cache-dependency-path: website/package-lock.json
       - run: sudo apt-get install -y doxygen   # reads csrc/ for the C++ reference (tools/gen_cpp_reference.py)
-      - run: python3 tools/gen_api_md.py && python3 tools/gen_reference_md.py && python3 tools/gen_cpp_reference.py && python3 tools/gen_techniques_md.py && python3 tools/gen_parameters_md.py && python3 tools/gen_palette_md.py && python3 tools/gen_swatches.py && cp README.md docs/index.md && cp ARCHITECTURE.md docs/dev/ARCHITECTURE.md && cp CONTRIBUTING.md docs/dev/CONTRIBUTING.md
+      - run: python3 tools/gen_api_md.py && python3 tools/gen_reference_md.py && python3 tools/gen_cpp_reference.py && python3 tools/gen_techniques_md.py && python3 tools/gen_parameters_md.py && python3 tools/gen_palette_md.py && python3 tools/gen_swatches.py && cp README.md docs/index.md && cp ARCHITECTURE.md docs/dev/architecture.md && cp CONTRIBUTING.md docs/dev/contributing.md
       - run: npm ci
         working-directory: website
       - run: npm run build

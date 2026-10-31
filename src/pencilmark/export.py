@@ -1,6 +1,6 @@
 """Human-oriented exchange formats: one for the puzzle, one for its grade.
 
-puzzle (format "sudoku-puzzle", format_version 1): specified in docs/FORMAT.md, implemented in pencilmark/exchange/ (strict
+puzzle (format "sudoku-puzzle", format_version 1): specified in docs/formats/puzzle-format.md, implemented in pencilmark/exchange/ (strict
   reader, order-preserving writer, canonical text, fingerprint), schema docs/sudoku-puzzle.schema.json. In short: "board",
   "digits", flat "givens" (0 empty, null no cell), optional "solution" / "candidates", and "rules" holding every constraint,
   houses included ({"type": "box_grid", "origin": "r1c1", "box": [3, 3]} for a classic, {"type": "grid", ...} plus "box"
@@ -102,7 +102,9 @@ def chip_of(tech_id, specific=None):
 # the technique's band; Franken / Mutant X-Wings, long X-Chains and Phistomefel-type set theory at their shape's. The
 # engine can't cap the shape it looks for, so band-limited solves allow them from the technique's band on and band_path
 # checks the shapes actually used.
-SINGLE_CODES = {t.code for t in R.techniques() if t.family == "singles"}  # no use counts on the card (GRADE.md 3)
+SINGLE_CODES = {
+    t.code for t in R.techniques() if t.family == "singles"
+}  # no use counts on the card (docs/formats/grade-card.md 3)
 SPLIT = tuple(t.name for t in R.techniques() if t.split)  # engine X-Wing includes Franken / Mutant 2-fish
 
 
@@ -123,7 +125,7 @@ def read_meta(d):
 
 
 def export_puzzle(p, meta=None, solution=None, source=None, title=None, rules_text=None):
-    """engine Puzzle -> "sudoku-puzzle" dict (format_version 1, docs/FORMAT.md; pencilmark/exchange/). meta: free-form metadata
+    """engine Puzzle -> "sudoku-puzzle" dict (format_version 1, docs/formats/puzzle-format.md; pencilmark/exchange/). meta: free-form metadata
     dict; source / title / rules_text keywords are merged into meta."""
     from . import exchange as X
 
@@ -132,7 +134,7 @@ def export_puzzle(p, meta=None, solution=None, source=None, title=None, rules_te
 
 
 def import_puzzle(d):
-    """sudoku-puzzle (format_version 1, docs/FORMAT.md) -> puzzle JSON (pencilmark.puzzle_json), read strictly by
+    """sudoku-puzzle (format_version 1, docs/formats/puzzle-format.md) -> puzzle JSON (pencilmark.puzzle_json), read strictly by
     pencilmark/exchange/."""
     from . import exchange as X
 
@@ -243,7 +245,7 @@ def _time_stat(field, variant=False):
 
 
 def card_fields(fields=None, steps=False, se=False):
-    """the field mask (GRADE.md 2): the requested top-level card keys; None = the default fields. format,
+    """the field mask (docs/formats/grade-card.md 2): the requested top-level card keys; None = the default fields. format,
     format_version and grader are always present. steps=True / se=True are shorthands."""
     out = set(DEFAULT_FIELDS) if fields is None else set(fields) - set(ALWAYS)
     bad = {f for f in out - set(DEFAULT_FIELDS) - set(OPTIONAL_FIELDS) if _time_stat(f) is None}
@@ -317,7 +319,7 @@ def _noun(rules):
 
 
 def _issues(p, card, doc, prov):
-    """card notes -> issues [{"code", "severity": "reject" | "warning", "text", "rules"?}] (GRADE.md 4). Rule notes
+    """card notes -> issues [{"code", "severity": "reject" | "warning", "text", "rules"?}] (docs/formats/grade-card.md 4). Rule notes
     point at the exported file's rule indices (doc = exchange.write(p) as to_export writes it)."""
     out = []
     raw = card.get("notes") or []
@@ -505,7 +507,9 @@ def _f_se(c):
     from . import se as SE
     from .interop import is_classic9
 
-    if not is_classic9(c.p):  # SE's scale is defined on classic sudoku only (GRADE.md): null elsewhere
+    if not is_classic9(
+        c.p
+    ):  # SE's scale is defined on classic sudoku only (docs/formats/grade-card.md): null elsewhere
         return {"se": None}
     sb = c.base if c.base is not None else BP.band_path(c.p, c.P)  # the card's first route: not computed again
     return {"se": SE.ratings(sb["steps"]) if sb["solved"] else None}
@@ -530,7 +534,7 @@ def _f_steps(c):
     return {"steps": rows}
 
 
-# the card-field registry (GRADE.md 2): field -> builder, in the card's key order. "time_*" stands for time_mean and
+# the card-field registry (docs/formats/grade-card.md 2): field -> builder, in the card's key order. "time_*" stands for time_mean and
 # every time_pNN asked for; "issues" also builds reject / warning. format, format_version, grader (always), elapsed
 # (rate) and completed (max_seconds) are set outside it.
 FIELDS = [
@@ -552,7 +556,7 @@ FIELDS = [
 def grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, explain=None, alternatives=True):
     """grade() under max_seconds, stage by stage: the technique list (contains) truncates at the limit as before; the difficulty
     route stops at its own limit (engine deadline) and the card is then band "Unknown" with difficulty / time null, the
-    techniques found so far in contains and "stopped": "time limit" (GRADE.md 1)."""
+    techniques found so far in contains and "stopped": "time limit" (docs/formats/grade-card.md 1)."""
     t0 = time.perf_counter()
     g, expired = _grade(
         p,
@@ -584,7 +588,7 @@ _OUTER_END = [
 
 
 def _grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, explain=None, alternatives=True):
-    """sudoku-grade card (GRADE.md), only the requested fields (card_fields). explain: step explanation levels
+    """sudoku-grade card (docs/formats/grade-card.md), only the requested fields (card_fields). explain: step explanation levels
     (explain_levels). with_steps=True is shorthand for the steps field with both explanation levels."""
     from . import band_path as BP
     from . import card as K

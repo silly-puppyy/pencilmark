@@ -1,63 +1,70 @@
+// Six sections (after Diataxis: get started, how-to guides, reference, explanation, plus contributing), at most two
+// levels deep except the rule families and the code reference. Each section opens on a card page listing its pages.
+const section = (label, slug, description, items, collapsed = false) => ({
+  type: 'category', label, collapsed, link: {type: 'generated-index', slug, description}, items,
+});
+
 module.exports = {
   docs: [
     {type: 'doc', id: 'index', label: 'Overview'},
-    {type: 'category', label: 'Guides', collapsed: false, link: {type: 'generated-index', slug: '/guides/',
-      description: 'Step by step: grading puzzles, making them (files, generator, imports, drawings), and working on pencilmark itself.'}, items: [
-      {type: 'category', label: 'Grading', collapsed: false, items: [
-        {type: 'doc', id: 'guides/first-puzzle', label: 'Grade your first puzzle'},
-        {type: 'doc', id: 'guides/batch', label: 'Grade many puzzles'},
-        {type: 'doc', id: 'guides/publish-checks', label: 'Check a puzzle before publishing'},
-      ]},
-      {type: 'category', label: 'Making puzzles', collapsed: false, items: [
-        {type: 'doc', id: 'guides/variant-file', label: 'Write a variant puzzle file'},
-        {type: 'doc', id: 'guides/generate', label: 'Generate a puzzle'},
-        {type: 'doc', id: 'guides/import', label: 'Import puzzles from other apps'},
-        {type: 'doc', id: 'guides/draw', label: 'Draw a puzzle'},
-      ]},
-      {type: 'category', label: 'Developing', collapsed: false, items: [
-        {type: 'doc', id: 'guides/dev-environment', label: 'Set up a development environment'},
-      ]},
-    ]},
-    {type: 'doc', id: 'USAGE', label: 'Usage'},
-    {type: 'category', label: 'How the grades work', collapsed: false, items: [
-      {type: 'doc', id: 'PHILOSOPHY', label: 'Philosophy'},
-      {type: 'doc', id: 'MODEL', label: 'How a card is computed'},
-      {type: 'doc', id: 'BENCHMARK', label: 'Benchmark'},
-      {type: 'doc', id: 'TECHNIQUES', label: 'Techniques'},
-      {type: 'doc', id: 'EXPERIMENTS', label: 'Experiment log'},
-    ]},
-    {type: 'category', label: 'Formats', collapsed: true, items: [
-      {type: 'doc', id: 'FORMAT', label: 'Puzzle format'},
-      {type: 'category', label: 'Rule families', collapsed: true, link: {type: 'generated-index', slug: '/rule-families/'}, items: [
-        {type: 'doc', id: 'rules/houses-and-regions', className: 'pm-ico pm-ico-houses', label: 'Houses and regions'},
-        {type: 'doc', id: 'rules/cages-and-sums', className: 'pm-ico pm-ico-cages', label: 'Cages and sums'},
-        {type: 'doc', id: 'rules/lines-and-arrows', className: 'pm-ico pm-ico-lines', label: 'Lines and arrows'},
-        {type: 'doc', id: 'rules/edges-and-corners', className: 'pm-ico pm-ico-edges', label: 'Edges and corners'},
-        {type: 'doc', id: 'rules/outside-clues', className: 'pm-ico pm-ico-outside', label: 'Outside clues'},
-        {type: 'doc', id: 'rules/whole-board-rules', className: 'pm-ico pm-ico-board', label: 'Whole-board rules'},
-        {type: 'doc', id: 'rules/cell-clues', className: 'pm-ico pm-ico-cells', label: 'Cell clues'},
-        {type: 'doc', id: 'rules/other', className: 'pm-ico pm-ico-other', label: 'Other rules'},
-        {type: 'doc', id: 'rules/examples', label: 'Examples'},
-        {type: 'doc', id: 'rules/quick-reference', label: 'Quick reference'},
-      ]},
-      {type: 'doc', id: 'GRADE', label: 'Grade card'},
-      {type: 'doc', id: 'SPEC', label: 'Generator spec'},
+    section('Get started', '/start/', 'Install pencilmark, grade a first puzzle, and the everyday commands.', [
+      {type: 'doc', id: 'start/first-puzzle', label: 'Grade your first puzzle'},
+      {type: 'doc', id: 'start/usage', label: 'Usage'},
+    ]),
+    section('Guides', '/guides/', 'Step by step: grading many puzzles, checking them, writing, generating, importing and drawing them.', [
+      {type: 'doc', id: 'guides/batch', label: 'Grade many puzzles'},
+      {type: 'doc', id: 'guides/publish-checks', label: 'Check a puzzle before publishing'},
+      {type: 'doc', id: 'guides/variant-file', label: 'Write a variant puzzle file'},
+      {type: 'doc', id: 'guides/generate', label: 'Generate a puzzle'},
       {type: 'doc', id: 'examples/specs/README', label: 'Example generator specs'},
-      {type: 'doc', id: 'INTEROP', label: 'Other formats'},
-    ]},
-    {type: 'category', label: 'Library', collapsed: false, items: [
-      {type: 'doc', id: 'api', label: 'Python API'},
-      {type: 'doc', id: 'VARIANTS', label: 'Named variants'},
-      {type: 'doc', id: 'NAMING', label: 'Variant names'},
-      {type: 'doc', id: 'STYLE', label: 'Drawing and style'},
-      {type: 'doc', id: 'PALETTE', label: 'Palette'},
-      {type: 'doc', id: 'ENGINE', label: 'Engine mapping'},
-    ]},
-    {type: 'doc', id: 'GLOSSARY', label: 'Glossary'},
-    {type: 'category', label: 'Contributing', collapsed: true, link: {type: 'generated-index', slug: '/dev/'}, items: [
-      {type: 'doc', id: 'dev/CONTRIBUTING', label: 'Contributing'},
-      {type: 'doc', id: 'dev/ARCHITECTURE', label: 'Architecture'},
-      {type: 'category', label: 'Reference', collapsed: true, link: {type: 'generated-index', slug: '/dev/reference/',
+      {type: 'doc', id: 'guides/import', label: 'Import puzzles from other apps'},
+      {type: 'doc', id: 'guides/draw', label: 'Draw a puzzle'},
+    ]),
+    section('Formats', '/formats/', 'The three formats: a puzzle, its grade card, and a request to the generator.', [
+      {type: 'doc', id: 'formats/puzzle-format', label: 'Puzzle format'},
+      {type: 'category', label: 'Rule families', collapsed: true, link: {type: 'generated-index', slug: '/formats/rules/'}, items: [
+        {type: 'doc', id: 'formats/rules/houses-and-regions', className: 'pm-ico pm-ico-houses', label: 'Houses and regions'},
+        {type: 'doc', id: 'formats/rules/cages-and-sums', className: 'pm-ico pm-ico-cages', label: 'Cages and sums'},
+        {type: 'doc', id: 'formats/rules/lines-and-arrows', className: 'pm-ico pm-ico-lines', label: 'Lines and arrows'},
+        {type: 'doc', id: 'formats/rules/edges-and-corners', className: 'pm-ico pm-ico-edges', label: 'Edges and corners'},
+        {type: 'doc', id: 'formats/rules/outside-clues', className: 'pm-ico pm-ico-outside', label: 'Outside clues'},
+        {type: 'doc', id: 'formats/rules/whole-board-rules', className: 'pm-ico pm-ico-board', label: 'Whole-board rules'},
+        {type: 'doc', id: 'formats/rules/cell-clues', className: 'pm-ico pm-ico-cells', label: 'Cell clues'},
+        {type: 'doc', id: 'formats/rules/other', className: 'pm-ico pm-ico-other', label: 'Other rules'},
+        {type: 'doc', id: 'formats/rules/examples', label: 'Examples'},
+        {type: 'doc', id: 'formats/rules/quick-reference', label: 'Quick reference'},
+      ]},
+      {type: 'doc', id: 'formats/grade-card', label: 'Grade card'},
+      {type: 'doc', id: 'formats/generator-spec', label: 'Generator spec'},
+      {type: 'doc', id: 'formats/other-formats', label: 'Other formats'},
+    ]),
+    section('Library', '/library/', 'The Python library: its API, the variant names it gives, and how it draws puzzles.', [
+      {type: 'doc', id: 'library/python-api', label: 'Python API'},
+      {type: 'doc', id: 'library/variant-catalogue', label: 'Variant catalogue'},
+      {type: 'doc', id: 'library/variant-naming', label: 'How variants are named'},
+      {type: 'doc', id: 'library/drawing-style', label: 'Drawing and style'},
+      {type: 'doc', id: 'library/palette', label: 'Palette'},
+      {type: 'doc', id: 'library/engine-mapping', label: 'Engine mapping'},
+    ]),
+    section('How the grades work', '/grades/', 'What the numbers mean, how they are computed and measured, and what we tried on the way.', [
+      {type: 'doc', id: 'grades/philosophy', label: 'Philosophy'},
+      {type: 'doc', id: 'grades/model', label: 'How a card is computed'},
+      {type: 'doc', id: 'grades/techniques', label: 'Techniques'},
+      {type: 'doc', id: 'grades/benchmark', label: 'Benchmark'},
+      {type: 'doc', id: 'grades/experiments', label: 'Experiment log'},
+      {type: 'doc', id: 'grades/glossary', label: 'Glossary'},
+    ]),
+    section('Contributing', '/dev/', 'Working on pencilmark itself: set-up, architecture, how-tos for new techniques and rules, style, releases.', [
+      {type: 'doc', id: 'dev/contributing', label: 'Contributing'},
+      {type: 'doc', id: 'dev/environment', label: 'Development environment'},
+      {type: 'doc', id: 'dev/architecture', label: 'Architecture'},
+      {type: 'doc', id: 'dev/add-technique', label: 'Add a technique'},
+      {type: 'doc', id: 'dev/add-rule-kind', label: 'Add a rule kind'},
+      {type: 'doc', id: 'dev/parameters', label: 'Grader parameters'},
+      {type: 'doc', id: 'dev/code-style', label: 'Code style'},
+      {type: 'doc', id: 'dev/writing-style', label: 'Writing style'},
+      {type: 'doc', id: 'dev/release', label: 'Release a version'},
+      {type: 'category', label: 'Code reference', collapsed: true, link: {type: 'generated-index', slug: '/dev/reference/',
         description: 'Every module, function and class, generated from the docstrings and the C++ header comments.'}, items: [
         {type: 'category', label: 'Python', collapsed: true, items: [
           {type: 'doc', id: 'dev/reference/card', label: 'The card'},
@@ -76,12 +83,6 @@ module.exports = {
           {type: 'doc', id: 'dev/reference/cpp-util', label: 'Utilities'},
         ]},
       ]},
-      {type: 'doc', id: 'dev/WRITING_STYLE', label: 'Writing style'},
-      {type: 'doc', id: 'dev/CODE_STYLE', label: 'Code style'},
-      {type: 'doc', id: 'dev/ADD_TECHNIQUE', label: 'Add a technique'},
-      {type: 'doc', id: 'dev/ADD_RULE_KIND', label: 'Add a rule kind'},
-      {type: 'doc', id: 'dev/PARAMETERS', label: 'Grader parameters'},
-      {type: 'doc', id: 'dev/RELEASE', label: 'Release a version'},
-    ]},
+    ], true),
   ],
 };

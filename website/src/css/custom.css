@@ -157,7 +157,7 @@ html[data-graphics='off'] .pm-graphic { display: none !important; }
 html[data-graphics='off'] .pm-kinds th:last-child, html[data-graphics='off'] .pm-kinds td:last-child { display: none; }
 .pm-kinds th:last-child, .pm-kinds td:last-child { min-width: 8rem; }
 
-/* variant cards (docs/VARIANTS.mdx) */
+/* variant cards (docs/library/variant-catalogue.mdx) */
 .pm-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
 .pm-card { border: 1px solid var(--ifm-color-emphasis-300); border-radius: 8px; padding: 0.75rem; }
 .pm-card-img { height: 9rem; display: flex; align-items: center; justify-content: center; margin-bottom: 0.5rem; }
@@ -165,7 +165,7 @@ html[data-graphics='off'] .pm-kinds th:last-child, html[data-graphics='off'] .pm
 .pm-card-title { font-weight: 600; }
 .pm-card-text { font-size: 0.85rem; color: var(--ifm-color-emphasis-700); }
 
-/* explainer-site links on docs/TECHNIQUES.md: favicon, or a text badge for a site without one */
+/* explainer-site links on docs/grades/techniques.md: favicon, or a text badge for a site without one */
 img.pm-site { height: 16px; width: 16px; vertical-align: -3px; border-radius: 3px; box-shadow: 0 0 0 1px var(--pm-line); }
 a.pm-site-link { display: inline-block; margin: 1px 7px 1px 0; text-decoration: none; white-space: nowrap; }
 a.pm-site-link::after { content: '↗'; font-size: 0.62rem; margin-left: 1px; vertical-align: 4px; color: var(--pm-muted); }

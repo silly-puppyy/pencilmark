@@ -1,4 +1,4 @@
-"""Make the explainer-site icons of docs/TECHNIQUES.md (website/static/img/sites/*.png, 64x64, committed).
+"""Make the explainer-site icons of docs/grades/techniques.md (website/static/img/sites/*.png, 64x64, committed).
 Each site's favicon, scaled; HoDoKu has none, so its logo's three syllables (Ho / Do / Ku) are cut from the site's
 header image and stacked into a square. Needs network access and Pillow; run it when a site is added or changes its
 icon, not in the docs build.

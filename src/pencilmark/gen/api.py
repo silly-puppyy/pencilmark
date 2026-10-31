@@ -286,7 +286,7 @@ def _check_card(card, tb, td, req, strict):
 
 
 def generate(spec, log=None):
-    """generate one puzzle meeting a sudoku-spec request (docs/SPEC.md; a dict, JSON text or a path). Returns
+    """generate one puzzle meeting a sudoku-spec request (docs/formats/generator-spec.md; a dict, JSON text or a path). Returns
     {"puzzle": sudoku-puzzle (with solution; meta.generated_from = the spec's fingerprint), "card": sudoku-grade card,
     "info": {...}}. Raises NotSupportedError for a part of the spec the generator does not run, GenerationFailed when no
     puzzle met it in time."""
@@ -303,7 +303,7 @@ def generate(spec, log=None):
         doc = _json.loads(spec)
     if not isinstance(doc, dict) or doc.get("format") != "sudoku-spec":
         raise TypeError(
-            'generate takes a "sudoku-spec" request (docs/SPEC.md), e.g. {"format": "sudoku-spec", '
+            'generate takes a "sudoku-spec" request (docs/formats/generator-spec.md), e.g. {"format": "sudoku-spec", '
             '"format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9, "rules": [{"type": "box_grid", '
             '"origin": "r1c1", "box": [3, 3]}], "where": {"band": "Hard"}}'
         )
@@ -315,7 +315,7 @@ def generate(spec, log=None):
 
     validate(puzzle)  # what the generator returns is a valid file: a bad element fails here, not in the user's reader
     card = r["card"]
-    if doc.get("fields") is not None:  # the requested card fields (docs/SPEC.md 5)
+    if doc.get("fields") is not None:  # the requested card fields (docs/formats/generator-spec.md 5)
         from ..api import rate
 
         card = rate(puzzle, fields=doc["fields"])

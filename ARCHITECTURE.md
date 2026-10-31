@@ -23,7 +23,7 @@ flowchart TD
 ```
 
 1. **Read.** `api.load` turns any accepted input (string, JSON, file, link) into a `model.Puzzle`. The public format is
-   read by `exchange/` (`sudoku-puzzle`, docs/FORMAT.md), text forms by `interop.py`, links by `sources/`.
+   read by `exchange/` (`sudoku-puzzle`, docs/formats/puzzle-format.md), text forms by `interop.py`, links by `sources/`.
 2. **Check uniqueness.** `cpsat_verify.decide` runs the C++ search (`cbackend.brute_solve`), with OR-Tools as an optional
    fallback; it raises `NotUnique` / `NoSolution` / `Undecided`.
 3. **Find the human route.** `band_path.band_path` solves band by band: at each position it asks the engine for every
@@ -102,7 +102,7 @@ costliest late techniques (`LATE`) only when they could still give the move it p
 
 ## Known rough edges
 
-Being fixed by the restructure (docs/dev/CODE_STYLE.md says how code should look):
+Being fixed by the restructure (docs/dev/code-style.md says how code should look):
 
 - Adding a technique still touches the C++ engine (enum in `solver.hpp`, the technique, its tier, its descriptors), the
   constant in `solver.py`, a row in `data/techniques.csv` (and `codes.csv` for a new chip), its fitted price, its

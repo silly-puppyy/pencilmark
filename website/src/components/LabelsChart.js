@@ -1,4 +1,4 @@
-// Other sites' difficulty labels on pencilmark's scale (docs/USAGE.mdx): one small bar chart per site, bars at the
+// Other sites' difficulty labels on pencilmark's scale (docs/start/usage.mdx): one small bar chart per site, bars at the
 // median difficulty, whiskers over the interquartile range where it was measured. A button switches to the table;
 // with graphics hidden (navbar switch) the table shows instead of the charts.
 import React, {useEffect, useRef, useState} from 'react';

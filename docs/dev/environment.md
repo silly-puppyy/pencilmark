@@ -41,7 +41,7 @@ python -m pytest -q tests -k listing_cache
 
 The golden check (`tools/golden.py check`) compares every output of 55 puzzles with `tests/golden/expected.jsonl`. A
 change that should alter nothing must keep every record identical; one that should alter output rewrites the records
-in a commit of its own ([Contributing](../dev/CONTRIBUTING.md)).
+in a commit of its own ([Contributing](contributing.md)).
 
 ## 3. The docs site
 
@@ -75,4 +75,4 @@ sorted(stats.items(), key=lambda kv: -kv[1][0])[:5]     # (milliseconds, calls, 
 ```
 
 `_csolver.listing_cache(False)` turns the engine's caches off, to check that a change gives the same moves with and
-without them ([Architecture](../dev/ARCHITECTURE.md)).
+without them ([Architecture](architecture.md)).

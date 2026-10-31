@@ -11,10 +11,17 @@ website/src/plugins/api-reference.mjs recognises the patterns and styles them:
 """
 
 import re
+from pathlib import Path
 
 GH = "https://github.com/silly-puppyy/pencilmark/blob/main/"
+DOCS = Path(__file__).resolve().parents[1] / "docs"
 SECTIONS = ("Parameters", "Returns", "Yields", "Raises", "Examples", "Notes", "See Also")
-PAGE_TITLES = {"FORMAT": "Puzzle format", "GRADE": "Grade card", "SPEC": "Generator spec", "INTEROP": "Other formats"}
+PAGE_TITLES = {
+    "formats/puzzle-format": "Puzzle format",
+    "formats/grade-card": "Grade card",
+    "formats/generator-spec": "Generator spec",
+    "formats/other-formats": "Other formats",
+}
 
 
 def md_esc(text):
@@ -23,10 +30,14 @@ def md_esc(text):
 
 
 def links(text, base):
-    """'docs/FORMAT.md' in a docstring -> a link to that page (`base` = the path from the page to docs/)"""
-    return re.sub(
-        r"docs/([A-Z]+)\.md", lambda m: f"[{PAGE_TITLES.get(m.group(1), m.group(1))}]({base}{m.group(1)}.md)", text
-    )
+    """'docs/formats/grade-card.md' in a docstring -> a link to that page (`base` = the path from the page to docs/)"""
+
+    def link(m):
+        if not (DOCS / m.group(0)[5:]).exists():  # a note outside the published docs (research/...): left as text
+            return m.group(0)
+        return f"[{PAGE_TITLES.get(m.group(1), m.group(1).rsplit('/', 1)[-1])}]({base}{m.group(0)[5:]})"
+
+    return re.sub(r"docs/([a-z0-9/_-]+)\.mdx?\b", link, text)
 
 
 def source(path, line):

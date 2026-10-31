@@ -1,4 +1,4 @@
-"""Strict reading checks (FORMAT.md section 4): validate(doc) raises FormatError."""
+"""Strict reading checks (docs/formats/puzzle-format.md section 4): validate(doc) raises FormatError."""
 
 from __future__ import annotations
 
@@ -90,7 +90,7 @@ def _int(x, what, lo=None):
 
 
 def validate(doc):
-    """strict reading (FORMAT.md section 4) of a format_version 1 dict; raises FormatError. Returns the Board."""
+    """strict reading (docs/formats/puzzle-format.md section 4) of a format_version 1 dict; raises FormatError. Returns the Board."""
     if not isinstance(doc, dict) or doc.get("format") != FORMAT:
         raise FormatError('not a sudoku-puzzle ("format" must be "sudoku-puzzle")')
     if "format_version" not in doc:
@@ -185,7 +185,7 @@ def _merge_negatives(rules, prov):
 
 
 def area_cells(B, a):
-    """an area (FORMAT.md 5): the origin of a grid / box_grid rule -> that grid's D x D cells in reading order, or a list of
+    """an area (docs/formats/puzzle-format.md 5): the origin of a grid / box_grid rule -> that grid's D x D cells in reading order, or a list of
     cell names -> those cells; as engine cell ids"""
     if isinstance(a, str):
         if a not in getattr(B, "grid_origins", ()):
@@ -195,12 +195,12 @@ def area_cells(B, a):
     return _cells(B, a, "area")
 
 
-# Reserved for a planned custom rule type (docs/rules/other.mdx, 6.17): explicit digit tables. Tables make files huge and no renderer
+# Reserved for a planned custom rule type (docs/formats/rules/other.mdx, 6.17): explicit digit tables. Tables make files huge and no renderer
 # can draw them, so format_version 1 readers refuse them and the writer never produces them. The engine still builds
 # tables internally (edge clues, lockout, entropy, ...); _reserved_ok() lets internal tooling read old files that hold them.
 RESERVED_MSG = (
     "is reserved: digit tables are replaced by a custom rule type planned for a later version of the format; "
-    "use a rule family (FORMAT.md 6)"
+    "use a rule family (docs/formats/puzzle-format.md 6)"
 )
 _RESERVED_OK = [False]
 
@@ -461,7 +461,7 @@ def _validate_rule(r, B):
 
 
 def _check_op(r, where="rule"):
-    """an operator and exactly its named parameter (FORMAT.md 5.1), in a rule or an any_of entry"""
+    """an operator and exactly its named parameter (docs/formats/puzzle-format.md 5.1), in a rule or an any_of entry"""
     op = r.get("op")
     if op not in OPS:
         raise FormatError(f"unknown operator {op!r}")

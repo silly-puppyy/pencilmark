@@ -1,4 +1,4 @@
-"""The canonical text and the content fingerprint (FORMAT.md 8)."""
+"""The canonical text and the content fingerprint (docs/formats/puzzle-format.md 8)."""
 
 from __future__ import annotations
 
@@ -71,7 +71,7 @@ def _order(d, order):
 
 
 def canonical(doc):
-    """key order of FORMAT.md 8.1 (content unchanged)"""
+    """key order of docs/formats/puzzle-format.md 8.1 (content unchanged)"""
     out = _order(doc, KEY_ORDER)
     if isinstance(out.get("board"), dict):
         out["board"] = _order(out["board"], ["rows", "cols"])

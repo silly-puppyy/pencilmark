@@ -100,7 +100,7 @@ function rewrite(parent) {
 export default function apiReference() {
   return (tree, file) => {
     const path = (file.path || file.history?.[0] || '').replace(/\\/g, '/');
-    if (!/\/docs\/(api\.md|dev\/reference\/)/.test(path)) return;
+    if (!/\/docs\/(library\/python-api\.md|dev\/reference\/)/.test(path)) return;
     rewrite(tree);
   };
 }

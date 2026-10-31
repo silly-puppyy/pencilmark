@@ -1,4 +1,4 @@
-"""Write docs/api.md from the docstrings of pencilmark's public API (read from the source with ast, so the C++ engine
+"""Write docs/library/python-api.md from the docstrings of pencilmark's public API (read from the source with ast, so the C++ engine
 need not be built), grouped by purpose; tools/apidoc.py renders the entries.
   python tools/gen_api_md.py"""
 
@@ -36,7 +36,7 @@ def main():
     ]
     L += apidoc.table(
         [(name, "class" if isinstance(defs[name], ast.ClassDef) else "def", name,
-          apidoc.summary(ast.get_docstring(defs[name]) or "")) for names in GROUPS.values() for name in names], ""
+          apidoc.summary(ast.get_docstring(defs[name]) or "")) for names in GROUPS.values() for name in names], "../"
     )  # fmt: skip
     for group, names in GROUPS.items():
         L += [f"## {group}", ""]
@@ -49,8 +49,8 @@ def main():
             else:
                 ret = ast.unparse(n.returns) if n.returns else ""
                 L.append(apidoc.heading(3, name, "def", name, f"({ast.unparse(n.args)})", ret=ret, src=src))
-            L += apidoc.docstring(ast.get_docstring(n) or "", "")
-    (ROOT / "docs/api.md").write_text("\n".join(L), encoding="utf-8")
+            L += apidoc.docstring(ast.get_docstring(n) or "", "../")  # the page is in docs/library/
+    (ROOT / "docs/library/python-api.md").write_text("\n".join(L), encoding="utf-8")
 
 
 if __name__ == "__main__":

@@ -11,7 +11,7 @@ FORMAT_VERSION = 1
 SCHEMA_URL = "https://silly-puppyy.github.io/pencilmark/schema/sudoku-puzzle-1.json"
 
 
-# normalisation 8 (ENGINE.md): 2-cell tables that are an edge clue (differences / sums / products / quotients) and mathrax
+# normalisation 8 (docs/library/engine-mapping.md): 2-cell tables that are an edge clue (differences / sums / products / quotients) and mathrax
 # corner tables are written as edge / corner rules. False keeps such tables as "table" rules.
 UNIFY_TABLE_EDGES = True
 # Engine form of NUMBERED pair clues (edge difference / sum / product / ratio, mathrax corners) -- one form for every source.
@@ -48,7 +48,7 @@ def parse_cell(s):
 
 SIDES = {"top": (-1, 0), "bottom": (1, 0), "left": (0, -1), "right": (0, 1)}
 
-# pair operators (FORMAT.md 5.1) <-> engine relation kinds
+# pair operators (docs/formats/puzzle-format.md 5.1) <-> engine relation kinds
 OPS = {
     "different": "neq",
     "equal": "eq",
@@ -91,7 +91,12 @@ OP_KEY = {
     "allowed": "allowed",
     "any_of": "any_of",
 }
-OP_PARAM_KEYS = {"value", "sum", "allowed", "any_of"}  # the operator's named parameter (FORMAT.md 5.1)
+OP_PARAM_KEYS = {
+    "value",
+    "sum",
+    "allowed",
+    "any_of",
+}  # the operator's named parameter (docs/formats/puzzle-format.md 5.1)
 
 
 def op_params(r):

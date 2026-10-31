@@ -1,4 +1,4 @@
-"""The benchmark of docs/BENCHMARK.mdx, on your own data: grade puzzles that have a human target, then report how well
+"""The benchmark of docs/grades/benchmark.mdx, on your own data: grade puzzles that have a human target, then report how well
 the card follows the target. Standard library only (plus pencilmark).
 
   python tools/benchmark.py grade puzzles.jsonl -o grades.jsonl [--jobs 8] [--max-seconds 300]

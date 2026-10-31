@@ -36,7 +36,7 @@ QUALITY = {
     "spike": 0.6,
     "trivial": 0.6,
     "tedious": 60,
-    "barely_used": 3,  # default limits (GRADE.md 4); None: no limit
+    "barely_used": 3,  # default limits (docs/formats/grade-card.md 4); None: no limit
     "decorative": None,
     "redundant": None,
     "uniqueness": None,
@@ -48,7 +48,7 @@ SEVERITIES = ("reject", "warning", "off")
 def quality_limits(q=None):
     """quality object -> {check: {"limit": number or None, "severity": "reject" | "warning" | "off" | None}} for every check.
     Each entry of q is an object with "limit" (checks with a limit: a number >= 0) and / or "severity"; severity None =
-    the check's own (GRADE.md 4). Raises ValueError for unknown checks, keys or values."""
+    the check's own (docs/formats/grade-card.md 4). Raises ValueError for unknown checks, keys or values."""
     out = {k: {"limit": v, "severity": None} for k, v in QUALITY.items()}
     for k, v in (q or {}).items():
         if k not in QUALITY:
@@ -148,7 +148,7 @@ def _c_trial(c):
     return [("trial", "note", "needs trial / forcing chains (" + ", ".join(sorted(hit)) + ")")] if hit else []
 
 
-# the check registry (GRADE.md 4), in the order notes are reported: check -> the quality codes it can raise. The rule
+# the check registry (docs/formats/grade-card.md 4), in the order notes are reported: check -> the quality codes it can raise. The rule
 # checks (decorative, redundant, barely_used) share one pass over the rule families (_rule_notes) and come last.
 CHECKS = [
     (_c_spike, ("spike",)),

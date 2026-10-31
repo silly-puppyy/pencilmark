@@ -1,7 +1,7 @@
 # Philosophy
 
 What pencilmark is for, what its numbers mean, and the rules its formats follow. The specifications
-([Puzzle format](FORMAT.md), [Grade card](GRADE.md), [Generator spec](SPEC.md)) say *how*; this page says *why*, and is the reference
+([Puzzle format](../formats/puzzle-format.md), [Grade card](../formats/grade-card.md), [Generator spec](../formats/generator-spec.md)) say *how*; this page says *why*, and is the reference
 when a change is in doubt.
 
 ## 1. Goals
@@ -45,7 +45,7 @@ learning path, the steps every curriculum takes (HoDoKu, sudokuwiki.org, sudoku.
 | Expert | chains and almost locked sets: XY-Chain, AIC, Medusa |
 | Extreme | forcing chains and nets, trial and error |
 
-Each technique belongs to one band ([Techniques](TECHNIQUES.md) lists them). The route always prefers an easier technique when one is
+Each technique belongs to one band ([Techniques](techniques.md) lists them). The route always prefers an easier technique when one is
 available, so the band is the least a solver must know.
 
 - It is a rule, not an estimate: the same route gives the same band, whatever people's solve times say.

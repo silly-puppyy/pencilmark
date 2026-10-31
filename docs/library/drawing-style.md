@@ -2,15 +2,15 @@
 
 How pencilmark draws puzzles, and the conventions most sudoku software shares. **None of this is part of a format**: a
 `sudoku-puzzle` file says what each rule means, and a renderer may draw it any way that shows that meaning. The
-per-puzzle `style` and `decorations` keys ([Puzzle format, section 7](FORMAT.md#7-cosmetic-layers-style-and-decorations))
+per-puzzle `style` and `decorations` keys ([Puzzle format, section 7](../formats/puzzle-format.md#7-cosmetic-layers-style-and-decorations))
 carry a setter's own choices.
 
 The line colours below are the community defaults, as measured on 6,217 published puzzles drawn in
-[SudokuPad](https://sudokupad.app/). All values, with a dark theme, are in [`palette.json`](palette.json);
+[SudokuPad](https://sudokupad.app/). All values, with a dark theme, are in [`palette.json`](../palette.json);
 `tools/render_svg.py` is a reference renderer that follows this page.
 
 A renderer needs nothing beyond the rules. Sizes are in cell units (1 = a cell's side); colours are defaults that
-`style` may override, and the [Palette](PALETTE.md) page shows every one in both themes. Grid lines 0.031, box borders
+`style` may override, and the [Palette](palette.md) page shows every one in both themes. Grid lines 0.031, box borders
 and frame 0.07 (0.09 in the dark theme, where light lines on dark read thinner). Draw order, bottom to top: cell shading, lines, cage outlines, grid lines and box borders, edge /
 corner clues, digits, outside clues.
 

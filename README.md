@@ -55,13 +55,13 @@ pencilmark rate puzzles.txt --json        # full card per line (python -m pencil
 pencilmark solve puzzles.txt              # the solution, or 'not unique' / 'no solution'
 ```
 
-More in [Usage](https://silly-puppyy.github.io/pencilmark/USAGE).
+More in [Usage](https://silly-puppyy.github.io/pencilmark/start/usage/).
 
 ## The card
 
 `rate` returns a dict (format `"sudoku-grade"`) with these fields by default (`grader`, `format`, `format_version` are
 always there); `rate(puzzle, fields=[...])` / `--fields` asks for others by their key names, and only requested fields
-are computed ([docs/GRADE.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/GRADE.md)):
+are computed ([docs/formats/grade-card.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/formats/grade-card.md)):
 
 | Field | Meaning |
 |---|---|
@@ -92,7 +92,7 @@ says `completed: false` if the limit passed. A puzzle without exactly one soluti
 ## Exchange format
 
 `to_export` writes, and every entry point reads, the `"sudoku-puzzle"` format, **format_version 1**, specified in
-[docs/FORMAT.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/FORMAT.md) (JSON Schema: [docs/sudoku-puzzle.schema.json](https://github.com/silly-puppyy/pencilmark/blob/main/docs/sudoku-puzzle.schema.json)):
+[docs/formats/puzzle-format.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/formats/puzzle-format.md) (JSON Schema: [docs/sudoku-puzzle.schema.json](https://github.com/silly-puppyy/pencilmark/blob/main/docs/sudoku-puzzle.schema.json)):
 
 ```json
 {"format": "sudoku-puzzle", "format_version": 1,
@@ -122,8 +122,8 @@ says `completed: false` if the limit passed. A puzzle without exactly one soluti
 
 For convenience pencilmark also reads and writes [sudokuwiki.org](https://www.sudokuwiki.org/) packed strings, text grids and [ipuz](http://www.ipuz.org/), reads pencil-mark grids, and loads SudokuPad,
 f-puzzles, [Penpa](https://swaroopg92.github.io/penpa-edit/)+ and Logic Masters links. None of these is needed to use the `sudoku-puzzle` format; see
-[docs/INTEROP.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/INTEROP.md). How rules map onto the engine, and how to add one, is in
-[docs/ENGINE.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/ENGINE.md).
+[docs/formats/other-formats.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/formats/other-formats.md). How rules map onto the engine, and how to add one, is in
+[docs/library/engine-mapping.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/library/engine-mapping.md).
 
 ## Supported rules
 
@@ -144,7 +144,7 @@ r = pencilmark.generate({"format": "sudoku-spec", "format_version": 1,
 r["puzzle"], r["card"], r["info"]       # sudoku-puzzle, its card, run details
 ```
 
-The request is a `sudoku-spec` ([docs/SPEC.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/SPEC.md)).
+The request is a `sudoku-spec` ([docs/formats/generator-spec.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/formats/generator-spec.md)).
 
 Targets: band, difficulty range, required techniques, symmetry, given counts, and rule elements (cages, thermos,
 whispers, renban, between lines, arrows, kropki, XV, parity). Every result is checked for uniqueness. Multi-grid boards
@@ -166,7 +166,7 @@ the `PENCILMARK_UA` environment variable.
 
 - Bands and difficulty measure different things. The band is the hardest technique a puzzle needs; difficulty is how
   hard it is overall. A puzzle that needs one X-Wing (Hard) is often easier than a long Medium one, and solvers agree
-  ([philosophy](https://silly-puppyy.github.io/pencilmark/PHILOSOPHY)). This is by design, not an error.
+  ([philosophy](https://silly-puppyy.github.io/pencilmark/grades/philosophy/)). This is by design, not an error.
 - Difficulty and time are models fitted to human solving data. Differences under one point of difficulty are not
   meaningful, and a single solve can vary a lot from the predicted time.
 - Bands depend on the technique catalogue; a puzzle that needs a technique the engine does not have is solved with
@@ -179,7 +179,7 @@ the `PENCILMARK_UA` environment variable.
 
 On a frozen held-out set of 7,623 puzzles with real human solve data from seven sources, pencilmark's difficulty ranks
 puzzles by human solve time at Spearman 0.61 to 0.80 within each group, closer than four established graders on the same
-classics. Details: [docs/BENCHMARK.mdx](https://github.com/silly-puppyy/pencilmark/blob/main/docs/BENCHMARK.mdx).
+classics. Details: [docs/grades/benchmark.mdx](https://github.com/silly-puppyy/pencilmark/blob/main/docs/grades/benchmark.mdx).
 
 ## Known issues
 
