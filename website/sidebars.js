@@ -49,6 +49,7 @@ module.exports = {
       {type: 'doc', id: 'VARIANTS', label: 'Named variants'},
       {type: 'doc', id: 'NAMING', label: 'Variant names'},
       {type: 'doc', id: 'STYLE', label: 'Drawing and style'},
+      {type: 'doc', id: 'PALETTE', label: 'Palette'},
       {type: 'doc', id: 'ENGINE', label: 'Engine mapping'},
     ]},
     {type: 'doc', id: 'GLOSSARY', label: 'Glossary'},
