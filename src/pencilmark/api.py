@@ -270,8 +270,11 @@ def to_export(puzzle, meta=None, with_solution=True, describe=True, **meta_kw):
     Metadata goes in its own optional "meta" object: pass a dict (meta={"title": ..., "author": ..., "date": ...}) and / or
     keywords (title=..., author=..., source=..., id=..., url=..., date=..., rules_text=...); metadata already in a JSON input is
     kept. describe=True fills an EMPTY meta.type / meta.rules_text from describe(); it never overwrites them."""
+    from .__main__ import _link_puzzle
     from .export import export_puzzle, read_meta
 
+    if isinstance(puzzle, str):  # a link: load it once, keeping the title / source it carries
+        puzzle = _link_puzzle(puzzle.strip()) or puzzle
     p = load(puzzle)
     sol = None
     if with_solution:

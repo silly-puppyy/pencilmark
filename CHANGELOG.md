@@ -7,6 +7,7 @@
 - `rate`, `solve`, `describe`, `fingerprint`, `to_export`, `load` and every command-line command accept a puzzle link
   or payload directly (SudokuPad, f-puzzles, Penpa, Logic Masters, short links: what `pencilmark.sources.load`
   reads). A link was read as a grid of digits and failed with "the grid has 490 symbols". An unrecognised link says so.
+  `to_export(link)` keeps the title and source the link carries.
 - Generator: the same spec and seed now give the same puzzle in every process. With variant templates the order of
   candidate elements depended on Python's string hashing, so a seed gave a different puzzle from run to run (classics
   were not affected). Variant puzzles for a given seed differ from 1.0.0. A last check also refuses a result whose

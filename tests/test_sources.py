@@ -90,5 +90,6 @@ def test_links_accepted_everywhere():
     url = fpuzzles_url(fpuzzles_json(CLASSIC))
     assert pencilmark.solve(url) == pencilmark.solve(CLASSIC)
     assert pencilmark.rate(url, fields=["band"])["band"] == pencilmark.rate(CLASSIC, fields=["band"])["band"]
+    assert pencilmark.to_export(url)["meta"]["source"] == url  # the link's metadata is kept
     with pytest.raises(ValueError, match="not a puzzle link"):
         pencilmark.solve("https://example.com/puzzle")
