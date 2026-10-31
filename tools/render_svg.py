@@ -159,7 +159,7 @@ def render(doc, dark=False, cell=48):
                         "shade",
                         f'<rect x="{m + cc * u}" y="{m + rr * u}" width="{u}" height="{u}" fill="{T["shade"]}"/>',
                     )
-            elif k == "colour":
+            elif k in ("colour", "disjoint"):
                 col = PALETTE[colour_i % len(PALETTE)]
                 colour_i += 1
                 for x in r["cells"]:

@@ -132,3 +132,11 @@ html[data-graphics='off'] .pm-graphic { display: none !important; }
 /* "Drawing" column of the rule-family tables (src/components/Swatch.js): gone with the graphics */
 html[data-graphics='off'] .pm-kinds th:last-child, html[data-graphics='off'] .pm-kinds td:last-child { display: none; }
 .pm-kinds th:last-child, .pm-kinds td:last-child { min-width: 5rem; }
+
+/* variant cards (docs/VARIANTS.mdx) */
+.pm-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+.pm-card { border: 1px solid var(--ifm-color-emphasis-300); border-radius: 8px; padding: 0.75rem; }
+.pm-card-img { height: 9rem; display: flex; align-items: center; justify-content: center; margin-bottom: 0.5rem; }
+.pm-card-img img { max-height: 100%; max-width: 100%; }
+.pm-card-title { font-weight: 600; }
+.pm-card-text { font-size: 0.85rem; color: var(--ifm-color-emphasis-700); }

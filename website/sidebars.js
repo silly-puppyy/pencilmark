@@ -7,6 +7,7 @@ module.exports = {
     {type: 'doc', id: 'BENCHMARK', label: 'Benchmark'},
     {type: 'category', label: 'Formats', collapsed: false, items: [
       {type: 'doc', id: 'FORMAT', label: 'Puzzle format'},
+      {type: 'doc', id: 'VARIANTS', label: 'Variants'},
       {type: 'category', label: 'Rule families', collapsed: true, link: {type: 'generated-index', slug: '/rule-families/'}, items: [
         {type: 'doc', id: 'rules/houses-and-regions', label: 'Houses and regions'},
         {type: 'doc', id: 'rules/cages-and-sums', label: 'Cages and sums'},
