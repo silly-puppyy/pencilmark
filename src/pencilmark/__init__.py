@@ -15,6 +15,7 @@ from .api import (
     NotUnique,
     Undecided,
     __all__,  # noqa: F401
+    count_solutions,
     describe,
     dumps,  # noqa: F401
     fingerprint,

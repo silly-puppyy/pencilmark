@@ -26,6 +26,7 @@ __all__ = [
     "rate",
     "rate_many",
     "solve",
+    "count_solutions",
     "to_export",
     "load",
     "NotUnique",
@@ -263,6 +264,17 @@ def solve(puzzle, info=False):
     if info:
         return {"solution": list(sols[0]), "seconds": round(time.perf_counter() - t0, 4)}
     return list(sols[0])
+
+
+def count_solutions(puzzle, limit=1000):
+    """how many solutions a puzzle has, counting up to `limit` -> {"count": n, "exact": bool}. exact False: there are at
+    least n (the count reached `limit`, or the search hit its node limit without OR-Tools installed)."""
+    from . import cpsat_verify as V
+
+    if limit < 1:
+        raise ValueError("limit must be at least 1")
+    sols, decided = V.decide(load(puzzle), limit=limit)
+    return {"count": len(sols), "exact": decided and len(sols) < limit}
 
 
 def to_export(puzzle, meta=None, with_solution=True, describe=True, **meta_kw):

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- `pencilmark.count_solutions(puzzle, limit=1000)` and `pencilmark count FILE`: how many solutions a puzzle has (`>=N`
+  when counting stops at the limit).
+- `pencilmark generate SPEC`: the generator on the command line (`--seed`, `--time`, `--result`).
 - Step explanations: Clue facts, Clue shape and low / high and odd / even colouring have their own explanations;
   they read "ClueFacts (code 10102) pattern removes ...". Explanations of the band route now get the engine's pattern
   cells, so "Two rules together" names its cells (it said "over their 0 open cells") and no-notes steps list the cells

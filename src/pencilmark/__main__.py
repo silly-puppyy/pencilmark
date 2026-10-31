@@ -11,6 +11,9 @@
       explanations, --fields to choose fields); --report a readable summary. A puzzle without exactly one solution
       prints its error ({"line", "error"} with --json).
   python -m pencilmark solve [FILE|-]      the solution (or 'not unique' / 'no solution') per puzzle
+  python -m pencilmark count [FILE|-] [--limit N]   how many solutions per puzzle (">=N" when it stops at N)
+  python -m pencilmark generate [SPEC|-] [--seed N] [--time S] [--result]
+                                       a puzzle for a "sudoku-spec" request (docs/SPEC.md), as a sudoku-puzzle file
   python -m pencilmark json  [FILE|-]      validate + normalise to canonical JSON (adds "hash")
   python -m pencilmark export [FILE|-] [--pretty] [--no-solution]
                                        each puzzle as a "sudoku-puzzle" file (format_version 1, docs/FORMAT.md), canonical
@@ -324,6 +327,36 @@ def cmd_solve(a):
     _each(a, one)
 
 
+def cmd_count(a):
+    from .api import count_solutions
+
+    def one(k, obj):
+        r = count_solutions(obj, limit=a.limit)
+        print(r["count"] if r["exact"] else f">={r['count']}", flush=True)
+
+    _each(a, one)
+
+
+def cmd_generate(a):
+    from .api import dumps, generate
+
+    spec = json.load(sys.stdin) if a.spec in (None, "-") else json.loads(Path(a.spec).read_text(encoding="utf-8"))
+    lim = dict(spec.get("limits") or {})
+    if a.seed is not None:
+        lim["seed"] = a.seed
+    if a.time is not None:
+        lim["time"] = a.time
+    if lim:
+        spec = dict(spec, limits=lim)
+    r = generate(spec)
+    if a.result:
+        print(json.dumps(r, ensure_ascii=False, default=str))
+    else:
+        print(dumps(r["puzzle"], pretty=True), end="")
+        c = r["card"]
+        print(f"{c.get('band')}  difficulty {c.get('difficulty')}  time {c.get('time')} min", file=sys.stderr)
+
+
 def cmd_json(a):
     from .export import read_meta
 
@@ -431,6 +464,16 @@ def main(argv=None):
     s = sub.add_parser("solve")
     s.add_argument("file", nargs="?")
     s.set_defaults(fn=cmd_solve)
+    c = sub.add_parser("count")
+    c.add_argument("file", nargs="?")
+    c.add_argument("--limit", type=int, default=1000, help="stop counting here (prints >=N)")
+    c.set_defaults(fn=cmd_count)
+    g = sub.add_parser("generate")
+    g.add_argument("spec", nargs="?", help="a sudoku-spec file (docs/SPEC.md), or - for standard input")
+    g.add_argument("--seed", type=int, help="override limits.seed")
+    g.add_argument("--time", type=float, help="override limits.time (seconds)")
+    g.add_argument("--result", action="store_true", help='print {"puzzle", "card", "info"} as one JSON line')
+    g.set_defaults(fn=cmd_generate)
     j = sub.add_parser("json")
     j.add_argument("file", nargs="?")
     j.set_defaults(fn=cmd_json)

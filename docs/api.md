@@ -48,6 +48,14 @@ solve(puzzle, info=False)
 
 the unique solution as a list of digits (cell order of the puzzle); NotUnique / NoSolution otherwise. Uses the engine's exhaustive C++ search; CP-SAT (optional OR-Tools) only if that search hits its node limit. info=True: {"solution": [...], "seconds": wall-clock seconds of the search} instead of the bare list.
 
+## `count_solutions`
+
+```python
+count_solutions(puzzle, limit=1000)
+```
+
+how many solutions a puzzle has, counting up to `limit` -> {"count": n, "exact": bool}. exact False: there are at least n (the count reached `limit`, or the search hit its node limit without OR-Tools installed).
+
 ## `generate`
 
 ```python

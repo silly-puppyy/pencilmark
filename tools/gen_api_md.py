@@ -11,6 +11,7 @@ NAMES = [
     "rate",
     "rate_many",
     "solve",
+    "count_solutions",
     "generate",
     "load",
     "to_export",
