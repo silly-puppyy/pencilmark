@@ -851,6 +851,17 @@ def test_line_registry_matches_schema_palette_docs():
     assert all(f"| `{k}` |" in page for k in LINE), [k for k in LINE if f"| `{k}` |" not in page]
 
 
+def test_style_line_widths_match_registry():
+    """docs/STYLE.md states the width of every line drawn with a number width in rules/line.py"""
+    from pencilmark.rules import LINE
+
+    text = (ROOT / "docs" / "STYLE.md").read_text(encoding="utf-8")
+    for k in LINE.values():
+        if isinstance(k.width, (int, float)):
+            row = re.search(rf"^\| `line` `{k.kind}` \|[^\n]*", text, re.M)
+            assert row and f"width {k.width}" in row.group(0), (k.kind, k.width, row and row.group(0))
+
+
 def test_edge_registry_matches_schema_docs():
     """rules/edge.py is the one list of edge kinds: the JSON Schema and the rule page agree"""
     from pencilmark.rules import EDGE

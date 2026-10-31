@@ -37,7 +37,7 @@ edge / corner clues, digits, outside clues.
 | `line` `parity` | Red (`#ff6666`), width 0.15. |
 | `line` `zipper` | Lavender (`#c8adeb`), width 0.15, small dot at the centre. |
 | `line` `between` | Grey line, width 0.1; hollow circles (0.75) at both ends. |
-| `line` `lockout` | Grey line, width 0.1; hollow diamonds at both ends. |
+| `line` `lockout` | Grey line, width 0.05; hollow diamonds at both ends. |
 | `line` `double_arrow` | Grey line, width 0.05; hollow circles at both ends. |
 | closed lines | The segment from the last cell back to the first is drawn too. |
 | `arrow` | Hollow circle (0.75) on a 1-cell bulb, rounded pill over a longer bulb; each shaft a thin grey line from the bulb's edge with an open arrowhead at its last cell. |
