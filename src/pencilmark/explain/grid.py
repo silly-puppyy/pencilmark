@@ -375,6 +375,19 @@ def enum_rule(p, rule, dom, node_limit=150000, keep=400, max_count=None, support
     and distinctness inside the scope. -> dict(sup, count, sols, complete).
     max_count: stop as soon as more fillings exist (-> complete False, count None); support=False: no witness search
     when the enumeration is incomplete (the direct-mode reading mirrors the engine's cap and skips such rules)."""
+    # a pure function of (the rule, its domains, the arguments); the rule belongs to one puzzle, so the memo lives on
+    # it (callers only read the result). Steps and explanation levels ask for the same rule state again and again.
+    memo = rule.__dict__.setdefault("_enum_memo", {})
+    key = (tuple(dom), node_limit, keep, max_count, support)
+    res = memo.get(key)
+    if res is None:
+        if len(memo) > 4000:
+            memo.clear()
+        res = memo[key] = _enum_rule(p, rule, dom, node_limit, keep, max_count, support)
+    return res
+
+
+def _enum_rule(p, rule, dom, node_limit, keep, max_count, support):
     cells = rule.cells
     n = len(cells)
     distinct_all = rule.distinct
@@ -389,6 +402,7 @@ def enum_rule(p, rule, dom, node_limit=150000, keep=400, max_count=None, support
     sup = [0] * n
     sols = []
     asg = [0] * n
+    digs = [list(digits_of(m)) for m in dom]  # the domains do not change during the enumeration
     st = {"count": 0, "nodes": 0, "complete": True}
 
     def rec(i):
@@ -407,11 +421,12 @@ def enum_rule(p, rule, dom, node_limit=150000, keep=400, max_count=None, support
                 if len(sols) < keep:
                     sols.append(tuple(asg))
             return
-        for v in digits_of(dom[i]):
+        for v in digs[i]:
             st["nodes"] += 1
             ok = True
+            bv = 1 << (v - 1)
             for j, same, tab in conflicts[i]:
-                if (same and asg[j] == v) or (tab and tab[asg[j]] & bit(v)):
+                if (same and asg[j] == v) or (tab and tab[asg[j]] & bv):
                     ok = False
                     break
             if not ok:

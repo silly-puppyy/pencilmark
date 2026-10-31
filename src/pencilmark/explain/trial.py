@@ -12,7 +12,6 @@ from .grid import Rule, _rule_dom, enum_rule, mental_view, rules
 from .singles import _con_json, _rule_from_move
 
 # ---------------------------------------------------------------- trial ------
-_ENUM_CACHE = {}
 
 
 def _propagate(p, st, c0, v0, max_rounds=8, use_rules=True, out=None):
@@ -106,12 +105,7 @@ def _propagate(p, st, c0, v0, max_rounds=8, use_rules=True, out=None):
                 continue
             if any(d == 0 for d in dom):
                 continue
-            ck = (id(p), key, tuple(dom))
-            res = _ENUM_CACHE.get(ck)
-            if res is None:
-                if len(_ENUM_CACHE) > 50000:
-                    _ENUM_CACHE.clear()
-                res = _ENUM_CACHE[ck] = enum_rule(p, rule, dom, node_limit=20000)
+            res = enum_rule(p, rule, dom, node_limit=20000)  # memoised on the rule
             if not res["complete"]:
                 continue
             deps = sorted({i for i, ev in enumerate(events) if ev["cell"] in rule.cells and ev.get("digit")})
