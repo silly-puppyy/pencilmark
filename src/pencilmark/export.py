@@ -22,6 +22,7 @@ grade (format "sudoku-grade", format_version 1):
 
 from __future__ import annotations
 
+import functools
 import math
 import time
 from collections import Counter
@@ -404,6 +405,151 @@ def symmetry_of(p):
     return out
 
 
+class _CardContext:
+    """what the card's fields are built from: the stages' results (card route, technique-list route) and values several
+    fields share, computed on first use"""
+
+    def __init__(self, p, P, want, card, bp, alternatives, levels):
+        self.p, self.P, self.want, self.card, self.bp = p, P, want, card, bp
+        self.alternatives, self.levels = alternatives, levels
+        self.unknown = not bp["solved"]
+
+    @functools.cached_property
+    def time_units(self):
+        return time_units(self.card.get("effort_l1"), self.p.N - len(self.p.givens), geometry=region_geometry(self.p))
+
+    @functools.cached_property
+    def variant(self):
+        return _is_variant(self.p)
+
+    @functools.cached_property
+    def doc(self):
+        """(exported file, provenance) for the rule indices issues point at and for describe; (None, None) on failure"""
+        try:
+            from . import exchange as X
+
+            return X.write(self.p, provenance=True)
+        except Exception:
+            return None, None
+
+
+def _f_time(c):
+    tm = c.time_units  # minutes for today's median player (classic units x minutes_per_unit, data/time_model.json)
+    return {"time": round(tm * _time_model().get("minutes_per_unit", 1.0), 1) if tm is not None else None}
+
+
+def _f_time_stat(c, f):
+    """time_mean / time_pNN: spread over today's players around the median (data/time_model.json)"""
+    tm, lr = c.time_units, _time_stat(f, c.variant)
+    return (
+        round(tm * math.exp(lr) * _time_model().get("minutes_per_unit", 1.0), 1)
+        if tm is not None and lr is not None
+        else None
+    )
+
+
+def _f_time_dist(c):
+    sp, sm = _sigmas(c.variant)  # the distribution's parameters: log-normal around the median time
+    return {
+        "time_dist": None if c.time_units is None else {"type": "lognormal", "sigma_players": sp, "sigma_model": sm}
+    }
+
+
+def _f_contains(c):
+    from . import band_path as BP
+
+    bp = c.bp
+    names = {}
+    for st in bp["steps"]:
+        names.setdefault(st["code"], Counter())[st["name"]] += 1
+    uses = Counter(bp["profile"])  # folded: full houses count under the listed single
+    bandof = {st["code"]: st["band"] for st in bp["steps"]}
+    alts = bp.get("alternatives", {})
+    contains = []
+    for code, n in sorted(uses.items(), key=lambda x: (bandof.get(x[0], 0), BP._order(x[0]), x[0])):
+        e = {
+            "code": code,
+            "chip": "/".join([code] + alts.get(code, [])),
+            "name": names[code].most_common(1)[0][0],
+            "band": bandof.get(code, 0),
+        }
+        if not c.alternatives:
+            e["alternatives"] = None  # not searched (alternatives=False); absent = searched, none found
+        elif alts.get(code):
+            e["alternatives"] = alts[code]  # each of these alone also gets you through (not on code's subset chain)
+        if code not in SINGLE_CODES:
+            e["uses"] = n  # on the easiest route; singles' counts swing with the route, so omitted
+        contains.append(e)
+    out = {"contains": contains}
+    if c.unknown:
+        out["stopped_at_step"] = len(bp["steps"]) + 1
+    return out
+
+
+def _f_issues(c):
+    """issues, and the reject / warning flags derived from them (each only when asked for)"""
+    doc, prov = c.doc
+    issues = _issues(c.p, c.card, doc, prov or [])
+    out = {"issues": issues} if "issues" in c.want else {}
+    for f in ("reject", "warning"):
+        if f in c.want:
+            out[f] = any(i["severity"] == f for i in issues)
+    return out
+
+
+def _f_describe(c):
+    from .variants import describe as _describe
+
+    doc, _ = c.doc
+    return {"describe": _describe(doc) if doc is not None else None}
+
+
+def _f_se(c):
+    from . import band_path as BP
+    from . import se as SE
+
+    sb = BP.band_path(c.p, c.P)
+    return {"se": SE.ratings(sb["steps"], scale="classic") if sb["solved"] else None}
+
+
+def _f_steps(c):
+    from . import band_path as BP
+
+    p, bp, levels = c.p, c.bp, c.levels
+    cn = lambda x: f"r{p.coords[x][0] + 1}c{p.coords[x][1] + 1}"
+    expl = BP.explain_steps(p, c.P, bp["steps"]) if levels else [None] * len(bp["steps"])
+    rows = []
+    for i, st in enumerate(bp["steps"]):
+        r = {"n": i + 1, "code": st["code"], "name": st["name"], "band": st["band"]}
+        if st["place"]:
+            r["placement"] = f"{cn(st['place'][0])}={st['place'][1]}"
+        if st["elims"]:
+            r["eliminations"] = [f"{cn(x)}#{d}" for x, d in st["elims"]]
+        if levels and expl[i]:
+            r["explanation"] = {x: expl[i][x] for x in levels if expl[i].get(x)}
+        rows.append(r)
+    return {"steps": rows}
+
+
+# the card-field registry (GRADE.md 2): field -> builder, in the card's key order. "time_*" stands for time_mean and
+# every time_pNN asked for; "issues" also builds reject / warning. format, format_version, grader (always), elapsed
+# (rate) and completed (max_seconds) are set outside it.
+FIELDS = [
+    ("difficulty", lambda c: {"difficulty": c.card.get("score")}),
+    ("time", _f_time),
+    ("time_*", _f_time_stat),
+    ("time_dist", _f_time_dist),
+    ("band", lambda c: {"band": "Unknown" if c.unknown else c.bp["band"]}),
+    ("band_index", lambda c: {"band_index": None if c.unknown else c.bp["band_index"]}),
+    ("contains", _f_contains),
+    ("issues", _f_issues),
+    ("describe", _f_describe),
+    ("symmetry", lambda c: {"symmetry": symmetry_of(c.p)}),
+    ("se", _f_se),
+    ("steps", _f_steps),
+]
+
+
 def grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, explain=None, alternatives=True):
     """grade() under max_seconds, stage by stage: the technique list (contains) truncates at the limit as before; the difficulty
     route stops at its own limit (engine deadline) and the card is then band "Unknown" with difficulty / time null, the
@@ -493,102 +639,21 @@ def _grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expl
     finally:
         if own:
             CB._C.set_deadline(0.0)
-    unknown = not bp["solved"]
-    names = {}
-    for st in bp["steps"]:
-        names.setdefault(st["code"], Counter())[st["name"]] += 1
-    uses = Counter(bp["profile"])  # folded: full houses count under the listed single
-    bandof = {st["code"]: st["band"] for st in bp["steps"]}
-    alts = bp.get("alternatives", {})
-    contains = []
-    for c, n in sorted(uses.items(), key=lambda x: (bandof.get(x[0], 0), BP._order(x[0]), x[0])):
-        e = {
-            "code": c,
-            "chip": "/".join([c] + alts.get(c, [])),
-            "name": names[c].most_common(1)[0][0],
-            "band": bandof.get(c, 0),
-        }
-        if not alternatives:
-            e["alternatives"] = None  # not searched (alternatives=False); absent = searched, none found
-        elif alts.get(c):
-            e["alternatives"] = alts[c]  # each of these alone also gets you through (not on c's subset chain)
-        if c not in SINGLE_CODES:
-            e["uses"] = n  # on the easiest route; singles' counts swing with the route, so omitted
-        contains.append(e)
-    tm = time_units(card.get("effort_l1"), p.N - len(p.givens), geometry=region_geometry(p))
+    c = _CardContext(p, P, want, card, bp, alternatives, levels)
     g = {
         "format": "sudoku-grade",
         "format_version": FORMAT_VERSION,
         "grader": {"name": GRADER_NAME, "version": GRADER_VERSION},
     }
-    if "difficulty" in want:
-        g["difficulty"] = card.get("score")
-    if "time" in want:
-        # time in MINUTES for today's average player (classic units x minutes_per_unit, data/time_model.json)
-        g["time"] = round(tm * _time_model().get("minutes_per_unit", 1.0), 1) if tm is not None else None
-    variant = _is_variant(p)
-    for f in sorted(
-        (f for f in want if f.startswith("time_") and f != "time_dist"), key=lambda f: (f != "time_mean", len(f), f)
-    ):
-        lr = _time_stat(
-            f, variant
-        )  # time_mean / time_pNN: spread over today's players around the median (data/time_model.json)
-        g[f] = (
-            round(tm * math.exp(lr) * _time_model().get("minutes_per_unit", 1.0), 1)
-            if tm is not None and lr is not None
-            else None
-        )
-    if "time_dist" in want:  # the distribution's parameters: log-normal around the median time
-        sp, sm = _sigmas(variant)
-        g["time_dist"] = None if tm is None else {"type": "lognormal", "sigma_players": sp, "sigma_model": sm}
-    if "band" in want:
-        g["band"] = "Unknown" if unknown else bp["band"]
-    if "band_index" in want:
-        g["band_index"] = None if unknown else bp["band_index"]
-    if "contains" in want:
-        g["contains"] = contains
-        if unknown:
-            g["stopped_at_step"] = len(bp["steps"]) + 1
-    doc = prov = None
-    if want & {"issues", "reject", "warning", "describe"}:
-        try:
-            from . import exchange as X
-
-            doc, prov = X.write(p, provenance=True)
-        except Exception:
-            doc = prov = None
-    if want & {"issues", "reject", "warning"}:
-        issues = _issues(p, card, doc, prov or [])
-        if "issues" in want:
-            g["issues"] = issues
-        for f in ("reject", "warning"):
-            if f in want:
-                g[f] = any(i["severity"] == f for i in issues)
-    if "describe" in want:
-        from .variants import describe as _describe
-
-        g["describe"] = _describe(doc) if doc is not None else None
-    if "symmetry" in want:
-        g["symmetry"] = symmetry_of(p)
-    if "se" in want:
-        from . import se as SE
-
-        sb = BP.band_path(p, P)
-        g["se"] = SE.ratings(sb["steps"], scale="classic") if sb["solved"] else None
-    if "steps" in want:
-        cn = lambda c: f"r{p.coords[c][0] + 1}c{p.coords[c][1] + 1}"
-        expl = BP.explain_steps(p, P, bp["steps"]) if levels else [None] * len(bp["steps"])
-        rows = []
-        for i, st in enumerate(bp["steps"]):
-            r = {"n": i + 1, "code": st["code"], "name": st["name"], "band": st["band"]}
-            if st["place"]:
-                r["placement"] = f"{cn(st['place'][0])}={st['place'][1]}"
-            if st["elims"]:
-                r["eliminations"] = [f"{cn(c)}#{d}" for c, d in st["elims"]]
-            if levels and expl[i]:
-                r["explanation"] = {x: expl[i][x] for x in levels if expl[i].get(x)}
-            rows.append(r)
-        g["steps"] = rows
+    for name, build in FIELDS:  # registry order is the card's key order
+        if name == "time_*":
+            for f in sorted(
+                (f for f in want if f.startswith("time_") and f != "time_dist"),
+                key=lambda f: (f != "time_mean", len(f), f),
+            ):
+                g[f] = build(c, f)
+        elif name in want or (name == "issues" and want & {"reject", "warning"}):
+            g.update(build(c))
     if max_seconds is not None:  # with a limit only (always true without one): every stage finished within it
         g["completed"] = not (expired or bp_cut[0] or bool(bp.get("truncated")))
     return g, expired

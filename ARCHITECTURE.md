@@ -33,7 +33,8 @@ flowchart TD
    the interchangeable ones (the chips in `contains`).
 5. **Score.** `card_score.score_parts` prices every step and maps the average effort per cell to `difficulty`;
    `export.time_units` turns total effort and board size into `time` (`data/time_model.json`).
-6. **Assemble.** `export.grade` builds the card with only the requested fields; `explain.py` writes step explanations,
+6. **Assemble.** `export.grade` builds the card with only the requested fields, each from its builder in the
+   card-field registry (`export.FIELDS`, in the card's key order); `explain.py` writes step explanations,
    `publish_flags.py` the publishing checks, `se.py` the Sudoku Explainer-style rating.
 
 ## Layers

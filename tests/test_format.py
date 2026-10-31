@@ -808,3 +808,19 @@ def test_canonical_board_key_order():
     a = pencilmark.dumps(dict(d, board={"rows": 9, "cols": 9}), pretty=False)
     b = pencilmark.dumps(dict(d, board={"cols": 9, "rows": 9}), pretty=False)
     assert a == b and '"board":{"rows":9,"cols":9}' in a
+
+
+def test_card_field_registry_matches_grade_md():
+    """every default / optional key of GRADE.md section 1 is built by the card-field registry (export.FIELDS), is
+    accepted by card_fields(), and the registry builds nothing the page does not list"""
+    from pencilmark import export as E2
+
+    text = (ROOT / "docs" / "GRADE.md").read_text(encoding="utf-8")
+    keys = set()
+    for row in re.findall(r"^\| (`[^|]+`) \| (default|optional)", text, re.M):
+        keys |= set(re.findall(r"`(\w+)`", row[0]))
+    built = {n for n, _ in E2.FIELDS} | {"reject", "warning"}  # issues builds reject / warning
+    outside = {"elapsed", "time_mean", "time_pNN"}  # set by rate() / the time_* entry
+    assert keys - outside <= built, keys - outside - built
+    assert {n for n, _ in E2.FIELDS} - {"time_*"} <= keys, {n for n, _ in E2.FIELDS} - keys
+    E2.card_fields(sorted(keys - {"time_pNN"}) + ["time_p80"])  # every documented field is accepted
