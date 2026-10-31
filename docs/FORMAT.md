@@ -150,8 +150,8 @@ clues competing for one gap) is the renderer's business; the semantics never dep
 | `arrow` `bulb` (a pill reads as a number in `bulb` order) and each shaft in `lines` (away from the bulb) | `cell`, `contains`, `appears` cells, `count`, `distinct_count` without `side` |
 | outside clues (`sandwich`, `xsum`, `skyscraper`, `rossini`, `first_seen`, `sum` kinds `little_killer` / `frame`, `distinct_count` with `side`): from the cell next to the clue outwards | `equal_sum` segments (each a set; the segment list is unordered) |
 | `clone` / `isomorphic` regions: corresponding positions | `edge` pairs except `less`, `relation` pairs of symmetric operators |
-| `edge` kind `less` and `relation` pairs of `less` / `less_equal` / `any_of`: `[a, b]` in operator order | `corner` cells (written TL, TR, BL, BR = reading order) |
-| `vudoku` cells (vertex first), `box` / `row` / `column` `cells` | `area` cell lists, `except` pairs |
+| `edge` kind `less` and `relation` pairs of `less` / `less_equal` / `any_of`: `[a, b]` in operator order | `area` cell lists, `except` pairs |
+| `vudoku` cells (vertex first); `corner` cells TL, TR, BL, BR (reading order; any other order is refused) | |
 
 The order of the `rules` array carries **no meaning**. Writers SHOULD keep the order they were given (the
 fingerprint sorts, section 8.2).
@@ -288,8 +288,8 @@ Coordinates are cell units `[row, col]` with the origin at the top-left corner o
 
 - Top-level key order: `format`, `format_version`, `$schema`, `meta`, `board`, `digits`, `givens`, `solution`,
   `candidates`, `rules`, `decorations`, `style`. Inside `board`: `rows`, then `cols`.
-- Rule key order: `type`, `kind`, then the parameters (`op`, `any_of`, `color`, `letter`, `value`, `sum`, `split`,
-  `values`, `digits`, `groups`, `each`, `counts`, `arrow`, `size`, `repeat`, `box`, `where`, `within`, `closed`),
+- Rule key order: `type`, `kind`, `of`, then the parameters (`op`, `any_of`, `color`, `letter`, `value`, `sum`, `split`,
+  `values`, `digits`, `groups`, `each`, `counts`, `arrow`, `size`, `repeat`, `box`, `where`, `within`, `area`, `closed`),
   then `side`, then the cell keys (`origin`, `source`, `bulb`, `lines`, `cells`, `regions`, `segments`, `pairs`,
   `except`), then `id`, `label`, `style`.
 - Houses as described in 6.1. Rules in the order given (a grader's tie-breaks can depend on it); a `box_grid` expands
