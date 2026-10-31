@@ -169,3 +169,12 @@ def test_parameters_page_up_to_date():
         [sys.executable, str(ROOT / "tools/gen_parameters_md.py"), "--check"], capture_output=True, text=True
     )
     assert r.returncode == 0, r.stdout + r.stderr
+
+
+def test_line_kinds_table_matches():
+    """csrc/nary.hpp PM_LINE_KINDS (the C++ table) lists model.LINE_KINDS in the same order"""
+    from pencilmark import model as M
+
+    text = (ROOT / "csrc" / "nary.hpp").read_text(encoding="utf-8")
+    table = text[text.index("#define PM_LINE_KINDS(X)") : text.index("enum LineKind")]
+    assert tuple(re.findall(r'X\(LK_\w+, "(\w+)"\)', table)) == M.LINE_KINDS

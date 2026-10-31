@@ -180,12 +180,8 @@ static NSpec parse_constraint(const py::dict& d) {
         s.type = NT_LINE;
         s.a = cells("cells");
         if (d.contains("skip") && d["skip"].cast<bool>()) s.a.clear();  // carried by its n-ary part
-        static const char* kinds[] = {"thermo", "slow_thermo", "whisper", "dutch_whisper", "renban", "palindrome",
-                                      "entropic", "kropki_chain", "region_sum", "parity", "between", "modular",
-                                      "zipper"};
         std::string kind = d["kind"].cast<std::string>();
-        for (int i = 0; i < LK_N; ++i)
-            if (kind == kinds[i]) s.line_kind = i;
+        s.line_kind = line_kind_from_name(kind);
         if (s.line_kind < 0) throw std::invalid_argument("unknown line kind: " + kind);
     } else if (t == "between") {
         s.type = NT_BETWEEN;
@@ -232,12 +228,7 @@ static NSpec parse_constraint(const py::dict& d) {
         }
     }
     if (d.contains("line_kind") && !d["line_kind"].is_none() && s.line_kind < 0) {
-        static const char* kinds[] = {"thermo", "slow_thermo", "whisper", "dutch_whisper", "renban", "palindrome",
-                                      "entropic", "kropki_chain", "region_sum", "parity", "between", "modular",
-                                      "zipper"};
-        std::string kind = d["line_kind"].cast<std::string>();
-        for (int i = 0; i < LK_N; ++i)
-            if (kind == kinds[i]) s.line_kind = i;
+        s.line_kind = line_kind_from_name(d["line_kind"].cast<std::string>());
     }
     return s;
 }

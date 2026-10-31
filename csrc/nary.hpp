@@ -10,6 +10,7 @@
 // consistent assignments, the intersection of their digit sets ("must
 // contain") and whether that digit set is unique.
 #pragma once
+#include <string>
 #include "portable.hpp"
 #include <cstdint>
 #include <vector>
@@ -42,9 +43,32 @@ enum NType {
     // contains ("contains" rule): the digit of position 0 appears in at least one later position
     NT_CONTAINS = 16
 };
-// line kinds (grader.model.LINE_KINDS order)
-enum LineKind { LK_THERMO = 0, LK_SLOW_THERMO, LK_WHISPER, LK_DUTCH, LK_RENBAN, LK_PALINDROME, LK_ENTROPIC,
-                LK_KROPKI, LK_REGION_SUM, LK_PARITY, LK_BETWEEN, LK_MODULAR, LK_ZIPPER, LK_N };
+// engine line kinds, the one table: id and name. The ids are frozen (puzzle hashes, line move codes 4000 + 10 * kind and
+// explanation records use them): new kinds are appended only. pencilmark/model.py LINE_KINDS lists the same names in the
+// same order (tests/test_registry.py checks it).
+#define PM_LINE_KINDS(X)                                                                                              \
+    X(LK_THERMO, "thermo") X(LK_SLOW_THERMO, "slow_thermo") X(LK_WHISPER, "whisper") X(LK_DUTCH, "dutch_whisper")     \
+    X(LK_RENBAN, "renban") X(LK_PALINDROME, "palindrome") X(LK_ENTROPIC, "entropic") X(LK_KROPKI, "kropki_chain")     \
+    X(LK_REGION_SUM, "region_sum") X(LK_PARITY, "parity") X(LK_BETWEEN, "between") X(LK_MODULAR, "modular")           \
+    X(LK_ZIPPER, "zipper")
+enum LineKind {
+#define PM_LK_ENUM(id, name) id,
+    PM_LINE_KINDS(PM_LK_ENUM)
+#undef PM_LK_ENUM
+    LK_N
+};
+static_assert(LK_N <= 20, "line move codes 4000 + 10 * kind must stay below 4200 (pencilmark/cbackend.py)");
+// LineKind of a name, -1 for an unknown one
+inline int line_kind_from_name(const std::string& name) {
+    static const char* names[] = {
+#define PM_LK_NAME(id, nm) nm,
+        PM_LINE_KINDS(PM_LK_NAME)
+#undef PM_LK_NAME
+    };
+    for (int i = 0; i < LK_N; ++i)
+        if (name == names[i]) return i;
+    return -1;
+}
 inline bool nt_line(int t) { return t == NT_SANDWICH || t == NT_XSUM || t == NT_SKYLINE; }
 
 // input form (from Python dicts)
