@@ -78,3 +78,9 @@ def test_cli_reads_whole_json_file(tmp_path, variants):
     f.write_text(json.dumps(variants[0]["puzzle"], indent=1))  # pretty-printed: one puzzle over many lines
     card = json.loads(run(["rate", str(f), "--json", "--fields", "band"], "")[0])
     assert card["band"] == pencilmark.rate(variants[0]["puzzle"], fields=["band"])["band"]
+
+
+def test_cli_reads_ipuz(tmp_path):
+    f = tmp_path / "classic.ipuz"
+    f.write_text(json.dumps(pencilmark.to_ipuz(CLASSIC)))
+    assert run(["solve", str(f)], "") == ["".join(map(str, pencilmark.solve(CLASSIC)))]

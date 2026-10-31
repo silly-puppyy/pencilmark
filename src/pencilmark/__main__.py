@@ -38,9 +38,9 @@ def _params():
 
 
 def _whole_json(src):
-    """the puzzles of a .json file that holds ONE JSON value (a puzzle, or a list of puzzles), or None when the file is
+    """the puzzles of a .json / .ipuz file that holds ONE JSON value (a puzzle, or a list of puzzles), or None when the file is
     one puzzle per line"""
-    if src in (None, "-") or not src.endswith(".json"):
+    if src in (None, "-") or not src.endswith((".json", ".ipuz")):
         return None
     try:
         obj = json.loads(Path(src).read_text(encoding="utf-8"))
@@ -119,10 +119,14 @@ def _each(a, fn):
 
 
 def _to_puzzle_json(obj):
-    """accept puzzle JSON, the sudoku-puzzle exchange format, or a
+    """accept puzzle JSON, the sudoku-puzzle exchange format, an ipuz sudoku, or a
     sample-pack line {"puzzle": ..., "grade": ...}."""
     if "puzzle" in obj and isinstance(obj["puzzle"], dict):
         obj = obj["puzzle"]
+    if "ipuz.org" in str(obj.get("version", "")):  # an ipuz file (docs/INTEROP.md)
+        from .interop import from_ipuz
+
+        obj = from_ipuz(obj)
     if obj.get("format") == "sudoku-puzzle":
         from .export import import_puzzle
 
