@@ -24,6 +24,7 @@ from dataclasses import dataclass
 
 from . import puzzle_json as PJ
 from .exchange import cell_name
+from .rules.line import LINE
 
 
 # ---------------------------------------------------------------------------------------------------------- subgrid view
@@ -187,11 +188,6 @@ def _vals(rules, key):
     return sorted({r[key] for r in rules if key in r})
 
 
-def _whisper_name(rules, ctx):
-    v = _vals(rules, "value") or [5]
-    return {5: "German Whispers", 4: "Dutch Whispers"}.get(v[0], "Whispers") if len(v) == 1 else "Whispers"
-
-
 family(
     "Killer",
     _t("cage"),
@@ -252,45 +248,8 @@ family(
     "A clue outside the grid counts the different digits on the indicated diagonal.",
 )
 family("Arrow", _t("arrow"), "Digits along an arrow sum to the number in its circle.")
-family("Thermo", _t("line", "thermo"), "Digits strictly increase along a thermometer from the bulb.")
-family("Slow Thermo", _t("line", "slow_thermo"), "Digits increase or stay equal along a thermometer from the bulb.")
-family(
-    "Whispers",
-    _t("line", "whisper"),
-    lambda rs, c: (
-        f"Adjacent digits on a whisper line differ by at least {(_vals(rs, 'value') or [5])[0]}."
-        if len(_vals(rs, "value")) <= 1
-        else "Adjacent digits on a whisper line differ by at least the line's number."
-    ),
-)
-family("Renban", _t("line", "renban"), "A renban line holds a set of consecutive digits in any order, without repeats.")
-family("Region Sum", _t("line", "region_sum"), "A region sum line has the same sum in every box it passes through.")
-family("Palindrome", _t("line", "palindrome"), "A palindrome line reads the same from either end.")
-family(
-    "Entropic",
-    _t("line", "entropic"),
-    "Any three consecutive cells on an entropic line hold a low, a middle and a high digit.",
-)
-family(
-    "Modular",
-    _t("line", "modular"),
-    "Any three consecutive cells on a modular line hold different remainders modulo 3.",
-)
-family("Parity", _t("line", "parity"), "Adjacent digits on a parity line alternate between odd and even.")
-family("Zipper", _t("line", "zipper"), "Digits equally far from the centre of a zipper line sum to the same total.")
-family(
-    "Between Lines",
-    _t("line", "between"),
-    "Digits on a between line lie strictly between the digits in its end circles.",
-)
-family(
-    "Lockout",
-    _t("line", "lockout"),
-    "The ends of a lockout line differ by at least 4 and no digit on the line lies between them.",
-)
-family(
-    "Double Arrow", _t("line", "double_arrow"), "The two circled ends of a double arrow sum to the digits between them."
-)
+for _k in LINE.values():  # the line families, in the registry's order (rules/line.py)
+    family(_k.name, _t("line", _k.kind), (lambda f: lambda rs, c: f(rs))(_k.text) if callable(_k.text) else _k.text)
 family(
     "Kropki",
     lambda r: (r["type"] == "edge" and r["kind"] == "kropki") or (r["type"] == "negative" and r["of"] == "kropki"),
@@ -649,8 +608,8 @@ def describe(puzzle):
             if not explained[i] and v.match(r):
                 explained[i] = True
         name = v.name
-        if name == "Whispers":
-            name = _whisper_name(rs, ctx)
+        if v.kind == "family" and rs[0]["type"] == "line" and LINE[rs[0]["kind"]].name_fn:
+            name = LINE[rs[0]["kind"]].name_fn(rs)
         if name == "Kropki" and {r.get("color") for r in rs if r["type"] == "edge"} == {"white"}:
             name = "Consecutive"
         if name == "XV" and not any(r["type"] == "edge" for r in rs):
