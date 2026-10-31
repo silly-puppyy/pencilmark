@@ -93,6 +93,7 @@ enum Kind { K_HOUSE = 0, K_CAGE = 1, K_NEQ = 2, K_NONCONSEC = 3, K_DOMAIN = 4, K
             K_MENTAL = 8 }; ///< mental subset (pair / triple held in mind)
 
 struct Move;
+/// true where the move carries a structural meta that is used for pricing (not a synthetic export)
 inline bool priced_meta(const Move& m);
 struct Cover {
     int kind;
@@ -305,9 +306,12 @@ struct Params {
     double fc_depth = 1.0, fc_branch = 1.0;
     bool gurth = false;  ///< Gurth's symmetry theorem (coordinate symmetries: not transform-invariant)
     double fc_work = 400000;  ///< budget: branches x (cells + 8 x rules); above it a level is skipped
+    /// board-size factor ((D - 1) / 8)^alpha scaling the prices
     double size(int D) const { return py_pow((D - 1) / 8.0, alpha); }
+    /// price of a move: the technique's base cost with shape, size and covers (or the structural meta model)
     double difficulty(const Move& m, const Cover* covers, int D) const;
 };
+/// feature vector of a move's structural meta for the pricing model: logs of the counts, flags, log spread
 void meta_vector(const Move& m, double x[10]);
 
 struct StepRec {
@@ -342,6 +346,7 @@ struct Strategy {
     virtual void collect(Solver& s, MoveBuf& out) = 0;
 };
 using Tier = std::vector<std::shared_ptr<Strategy>>;
+/// the notes-mode strategies grouped into tiers, cheapest first
 std::vector<Tier> default_notes_tiers();
 
 /// the disabled techniques. While a strategy's moves are listed for the listing cache (state_moves), every flag the
@@ -349,7 +354,9 @@ std::vector<Tier> default_notes_tiers();
 struct Flags {
     std::vector<char> v;
     mutable std::vector<char>* rec = nullptr;
+    /// resets to n flags, all x
     void assign(size_t n, char x) { v.assign(n, x); }
+    /// number of flags
     size_t size() const { return v.size(); }
     char operator[](size_t i) const {
         if (rec) (*rec)[i] = 1;
@@ -358,6 +365,7 @@ struct Flags {
     void set(size_t i, char x) { v[i] = x; }
 };
 void listing_cache_enable(bool on);  ///< on by default; off: every listing is computed (tests compare the two)
+/// drops every cached listing and per-digit memo
 void listing_cache_clear();
 std::vector<pm_long> listing_cache_stats();  ///< hits, misses, generation turns: listing cache, then digit memo
 /// per-digit memo of single-digit techniques (listing_cache.cpp): tag = the technique and its settings, bits = the cells
@@ -393,6 +401,7 @@ public:
     /// the puzzle actually solved: p.implied (derived houses, leftovers) unless
     /// IMPLIED is disabled
     static const Puzzle& pick_puzzle(const Puzzle& pz, const SolveOptions& o);
+    /// solves from the givens, one human step at a time, recording the steps and alternatives in out
     void solve(const std::vector<std::pair<int, int>>& givens, SolveResult& out);
 
     // ---- state ----
@@ -413,23 +422,39 @@ public:
     // ---- techniques (each appends to out) ----
     void direct_moves(MoveBuf& out, bool use_locks, int mental = 0);  ///< mental: 0 off, 2 relations/lines, 3 + subsets
     bool direct_locks();  ///< fills lock tables; returns "locks" truthiness
+    /// rule-of-45 regions: the last cell of an innie / outie (no notes), or candidates the region sum rules out (notes)
     void innies(MoveBuf& out, bool notes);
+    /// naked and hidden singles over the notes; one move per placement
     void notes_singles(MoveBuf& out);
+    /// pointing and claiming: a digit confined to a line (or box) inside a house leaves the rest of that line (box)
     void locked(MoveBuf& out);
+    /// sum-cage combinations: candidates no combination of the cage allows are eliminated
     void cage_combo(MoveBuf& out);
+    /// arc consistency over relation pairs (kropki, difference ...): drops candidates without a partner
     void pairarc(MoveBuf& out);
+    /// a digit confined to cells of a house that all relate to one cell: it loses what the relation forbids
     void relation_pointing(MoveBuf& out);
+    /// naked and hidden subsets of size k (pairs, triples, quads) in houses; adds the eliminations
     void subsets(MoveBuf& out, int k);
+    /// basic fish of size k (2 X-Wing, 3 Swordfish) over houses; adds the eliminations
     void fish(MoveBuf& out, int k);
+    /// XY-Wing (XYZ-Wing when xyz): pivot with two wings; adds the digit eliminated from cells seeing the wings
     void xywing(MoveBuf& out, bool xyz);
+    /// simple colouring of one digit's conjugate-pair chains: colour wraps and traps; adds the eliminations
     void coloring(MoveBuf& out);
+    /// bivalue cell whose candidate breaks under basic propagation (trial and error); eliminates that candidate
     void trial(MoveBuf& out);
+    /// last resort: places the solution digit of the cell with fewest candidates, priced as the human cost of guessing
     bool guess(MoveBuf& out);
+    /// where guessing is off: refutes one wrong candidate by full search (recorded as Trial and error)
     bool exhaust(MoveBuf& out);
     /// n-ary constraints
     void nary_combination(MoveBuf& out, int part = 0);  ///< part 0: all but set equivalences, 1: only those, 2: all
+    /// n-ary combination locks: a digit in every consistent assignment, or forced into a rule by a house
     void combo_lock(MoveBuf& out);
+    /// no-notes read of a rule with one empty cell whose digit the arithmetic / set rule forces
     void nary_direct(MoveBuf& out);
+    /// consistency over rule-of-45 regions too big for the innie/outie sets, as derived sum constraints
     void innie_sum(MoveBuf& out);
     // ---- direct-mode mental layer (item 6) ----
     /// relation arc consistency over house-restricted digits, inequality bounds
@@ -440,6 +465,7 @@ public:
     std::vector<int16_t> rs_line;
     pm_long mental_version = -1;
     int mental_level = 0;
+    /// builds the no-notes mental view (digits each cell can hold, relation / line bounds, mental subsets) up to level
     bool compute_mental(int level);
     /// generalized fish (any complete groups as base/cover sets): size n,
     /// finless (Jellyfish; X-Wing/Swordfish stay with the reference techniques)
@@ -450,15 +476,20 @@ public:
     void aic(MoveBuf& out, int lo, int hi);
     /// uniqueness (only with opt.assume_unique)
     void unique_rect(MoveBuf& out);
+    /// BUG+1: one tri-value cell in an otherwise bivalue grid takes the digit that is odd in its houses
     void bug_plus1(MoveBuf& out);
+    /// two rules / houses taken together: digit combinations over their joint cells; adds the eliminations
     void rule_intersect(MoveBuf& out);
+    /// interval algebra over house totals, cages and segments in a band or stack; adds the eliminations
     void sum_algebra(MoveBuf& out);
+    /// a band's lines, boxes and rules taken together as a sub-puzzle; eliminations that hold in all its fillings
     void band_logic(MoveBuf& out);
     void describe(Move& m, const MoveBuf& b);  ///< structural descriptors (desc.cpp)
     std::vector<uint32_t> written_override;
     std::vector<uint32_t> cand_override;  ///< state_moves(cand=...): per cell, the candidates still open at this state  // state_moves(written=...): per cell, the candidates written down
     int desc_mode = -1;  ///< notation context of describe(): 0 no notes written, 1 notes, -1 unknown (state_moves: by technique)
     uint32_t written_marks(int c, int mode) const;  ///< candidates of c that are written down
+    /// refreshes the per-state statistics (candidate counts, bivalue cells ...) used by the move descriptors
     void desc_stats();
     pm_long ds_version = -1;
     bool ds_valid = false;
@@ -473,7 +504,9 @@ public:
     };
     std::vector<int> struct_cls;  ///< structural colouring (struct_colours): symbol per cell, empty = none
     bool struct_done = false;
+    /// structural colouring (symbol per cell, empty = none), computed once per solve
     const std::vector<int>& struct_colours();
+    /// every colour is one digit: digits no consistent permutation gives a colour leave its cells
     void colour_disambiguate(MoveBuf& out);
     std::vector<BandRegion> band_regions;
     bool band_built = false;
@@ -491,64 +524,105 @@ public:
     std::map<std::vector<uint32_t>, std::vector<std::array<pm_long, 3>>> band_cache_wide;
     std::vector<std::vector<std::vector<uint8_t>>> band_sols_wide;
     std::map<std::vector<uint32_t>, std::pair<std::vector<uint32_t>, pm_long>> ri_cache;  ///< exact: (pair, union state) -> elims, nodes
+    /// BUG+2: tri-value cells T1, T2 in an otherwise bivalue grid; eliminates what all surviving cases share
     void bug_plus2(MoveBuf& out, int T1, int T2, int G0);
+    /// extended unique rectangle (2 rows x 3 boxes, six cells): the sixth cell cannot take x, y or z
     void extended_ur(MoveBuf& out);
     /// almost locked sets over any AllDiff group
     void als_xz(MoveBuf& out);
+    /// ALS-XY-Wing: pivot ALS linked by restricted commons to two wing ALS; adds the common-digit eliminations
     void als_xywing(MoveBuf& out);
+    /// death blossom: a stem cell whose every candidate has an ALS petal; adds the digit all petals share
     void death_blossom(MoveBuf& out);
+    /// alternating inference chains through almost locked sets, up to hi links; adds eliminations and placements
     void als_aic(MoveBuf& out, int hi);
     /// bounded case split (human "what if"): returns rounds to contradiction, 0 = none
     void short_trial(MoveBuf& out);
+    /// bounded human case analysis (refutation, cell and house forcing within a few rule rounds)
     void human_case(MoveBuf& out);
+    /// cage combinations cap how many of a digit set the cage holds in a house; the rest lies outside it
     void combo_positions(MoveBuf& out);
+    /// cells that pairwise differ (knight's move, relations) treated as a virtual house: naked sets and singles
     void clique_house(MoveBuf& out);
+    /// renban-type lines meeting a house use disjoint digit sets there; digits no joint choice allows leave
     void line_sets(MoveBuf& out);
+    /// a line with two or more outside clues (sandwich, x-sum, skyscraper) enumerated as one unit
     void line_clues(MoveBuf& out);
+    /// integer combinations of sum facts down to 1-3 weighted cells, which are enumerated
     void weighted_sums(MoveBuf& out);
+    /// short chains (<= 5 links) on the no-notes mental view, paying off as a single
     void mental_chains(MoveBuf& out);
     int case_split(int c, int v, int max_rounds, int& placed, std::vector<uint8_t>* ov = nullptr,
                    std::vector<uint32_t>* oc = nullptr, std::vector<int>* log = nullptr);
+    /// basic propagation in place for up to max_rounds rounds; returns the round of the first contradiction (0 = none)
     int prop_rounds(int max_rounds, int& placed, std::vector<int>* log = nullptr);
     /// explanation records of the chosen move that need the solver state (singles' reasons,
     /// trial branches); appended to ex, returns the number of ints added
     int explain_chosen(const Move& m, const MoveBuf& b, std::vector<int>& ex);
+    /// both options of a two-way choice followed a few rounds; what both agree on holds (direct_view: placements only)
     void either_way(MoveBuf& out, bool direct_view);
+    /// arc consistency on digit classes (low / high, odd / even) along lines; removes whole classes
     void line_classes(MoveBuf& out);
+    /// a digit counted over k base units and k cover units: exactly k copies, so it leaves the covers' other cells
     void digit_count(MoveBuf& out);
+    /// two cells forced to hold the same unknown digit (abstract colouring): each keeps the other's candidates
     void equal_digits(MoveBuf& out);
+    /// local scan of a long line: consistency over each window of 3 consecutive cells
     void line_scan(MoveBuf& out);
+    /// 3D Medusa: colouring over strong links of several digits; wraps and traps give eliminations
     void medusa(MoveBuf& out);
+    /// multi-colouring: two single-digit colour clusters interacting; adds the eliminations
     void multi_colouring(MoveBuf& out);
+    /// cells that share an unknown digit (colour classes) combined with the rules; direct_view: on the mental view
     void colour_algebra(MoveBuf& out, bool direct_view = false);
+    /// cells carrying the same unknown digit label (a permutation of digits) restrict each other's candidates
     void label_shadow(MoveBuf& out);
+    /// number of rows of a table constraint consistent with the placed digits and candidates
     pm_long table_live(const NConstraint& k) const;
+    /// WXYZ / VWXYZ wings (bent sets): the digit Z leaves cells seeing every Z of the set
     void n_wing(MoveBuf& out);
+    /// Sue de Coq: a box-line intersection with a line set and a box set covering its digits exactly; adds eliminations
     void sue_de_coq(MoveBuf& out);
+    /// aligned pair exclusion: value pairs of two cells that would empty a common peer; adds the leftovers
     void aligned_pair(MoveBuf& out);
+    /// Fireworks: three digits confined to three cells (corner, one in its row, one in its column); others go
     void fireworks(MoveBuf& out);
+    /// remote pairs along a chute (band / stack) with the same bivalue pair; adds the eliminations
     void chute_remote_pairs(MoveBuf& out);
+    /// pattern overlay: per-digit templates over the rows; candidates in no template (or all) are eliminated (placed)
     void pattern_overlay(MoveBuf& out);
+    /// Gurth's symmetrical placement: a grid symmetry forces digits (uniqueness; opt-in by params)
     void gurth(MoveBuf& out);
+    /// min / max (triangular number) bounds of sums, cages and arrows; eliminates digits beyond the bounds
     void sum_bound(MoveBuf& out);
+    /// odd / even (and thirds) counting in houses and sum parity; eliminates digits of a full class
     void class_count(MoveBuf& out);
+    /// class colouring: low / high or odd / even links between cells, sides fixed by known cells or house counts
     void class_colour(MoveBuf& out);
+    /// facts read off the clues alone (relations on an empty grid; with line shape): fires once as one step
     void clue_facts(MoveBuf& out);
+    /// relation dominoes: a digit every allowed pair uses leaves common houses; two dominoes locking four digits
     void domino(MoveBuf& out);
     /// forcing chains (forcing.cpp)
     void forcing(MoveBuf& out, int level, bool nested = false);
+    /// Nishio: follows one digit from an assumed cell; a house left without a place refutes the assumption
     void nishio(MoveBuf& out);
+    /// human "what if": a two-way choice followed with light logic; what both cases agree on holds
     void what_if(MoveBuf& out, bool direct_view);
+    /// notes logic done in the head on the no-notes view (rule combinations, intersections, pairs): a single
     void mental_notes(MoveBuf& out);
     int fc_ceiling_now = -1, fc_kmax_now = -1, fc_tech_now = -1, fc_step_cap = 0, fc_view = -1;
     int fc_level_now = -1;  ///< forcing fallback: level allowed for this call (overrides params forcing_level)
     pm_long fc_steps_total = 0;  ///< branch propagation steps of forcing() calls (fallback work budget)
+    /// true while the forcing fallback has work budget left (boards up to 9x9)
     bool fallback_open() const;
+    /// last resort before a guess: band logic with a larger budget, then dynamic / nested forcing; true if moves found
     bool forcing_fallback(MoveBuf& fb);
     pm_long fc_abort_at = -1;    ///< forcing() gives up (fc_aborted) once fc_steps_total passes this (-1 = never)
     bool fc_aborted = false;
     pm_long fb_spent = 0;        ///< fallback work used in this solve
     double fb_secs = 0.0;     ///< fallback wall time used in this solve (safety only, checked between calls)
+    /// propagates the hypothetical state at level; returns 0 or 1 + the iteration of the first contradiction
     int fc_propagate(int level, int& steps, std::vector<int>* log = nullptr);
     int fc_branch(int c, int v, int level, int& steps, std::vector<uint8_t>* ov = nullptr,
                   std::vector<uint32_t>* oc = nullptr, std::vector<int>* log = nullptr);
@@ -575,15 +649,21 @@ public:
     /// invariant cell / candidate labels of the current state (colour refinement)
     std::vector<uint64_t> cell_label;
     pm_long label_version = -1;
+    /// refreshes the invariant cell labels (colour refinement) for the current state
     void compute_labels();
+    /// invariant label of candidate v at cell c, from the labels of the cells that share its houses
     uint64_t node_label(int c, int v);
+    /// keeps the cheapest move per placement and per (technique, elimination set)
     void canon_dedupe(MoveBuf& b);
 
+    /// places v at c, clearing it from the peers; returns the number of candidates erased
     int place(int c, int v);
+    /// true if every cell is filled legally and every rule holds
     bool grid_valid() const;
     /// every move available at the current state (direct and notes families; tiers ungated), priced;
     /// at most limit_per_tech per technique (0 = all)
     void state_moves(const std::vector<std::pair<int, int>>& givens, MoveBuf& b, int limit_per_tech);  ///< every cell filled consistently with every rule
+    /// resets the state to the givens (all candidates, then the givens placed)
     void init_state(const std::vector<std::pair<int, int>>& givens);
 
 private:
@@ -614,6 +694,7 @@ private:
     std::vector<std::unordered_map<uint32_t, uint32_t>> cs_cache;
     std::unordered_map<int, std::pair<std::vector<uint32_t>, std::vector<uint32_t>>> combo_cache;
     std::vector<Tier> tiers;
+    /// current domains of a constraint's variables: the placed digit, else the candidates
     void nary_dom(const NConstraint& k, uint32_t* dom) const;
     struct GacCache {
         bool valid = false;
@@ -640,6 +721,7 @@ private:
     int aic_depth = 0;
     MoveBuf aic_buf;
     std::vector<int> aic_len;
+    /// builds the alternating inference chains up to maxl links (with_als: through ALS), cached per state version
     void build_aic(int maxl, bool with_als = false);
     pm_long aicx_version = -1;
     int aicx_depth = 0;
@@ -655,35 +737,51 @@ private:
     std::vector<ALS> als;
     /// per ALS and digit: bitset of cells seeing every cell of the ALS holding that digit
     std::vector<uint64_t> als_seen;  ///< (als_index * 32 + d) * W
+    /// lists the almost locked sets (n cells of a group holding n+1 candidates), cached per state version
     void build_als();
     const uint64_t* als_seen_d(int a, int d) const { return &als_seen[((size_t)a * 32 + d) * p.W]; }
+    /// true if x is a restricted common candidate of ALS a and b (all its cells in one see all in the other)
     bool als_rcc(int a, int b, int x) const;
+    /// tags moves from index from on that rest on implied houses
     void tag_implied(MoveBuf& b, size_t from);
     /// provenance: step of the non-single move that eliminated (cell, digit), -1 none (reveal depth)
     std::vector<int> adv_src;
     SolveResult* stats_out = nullptr;
+    /// runs f, adding its time, calls and hits to the stats when they are recorded
     void timed(const char* name, MoveBuf& b, const std::function<void()>& f);
     int step_fails = 0;        ///< families searched and found empty before the step's first success
     uint32_t step_fmask = 0;   ///< ... as a bitmask of their positions in the search order
+    /// sets the cognitive loads of a move: what a person looks at and holds in mind to verify it
     void cog_loads(Move& m, const MoveBuf& b);
+    /// every technique family of a phase, direct (no notes) or notes tiers, into b
     void collect_all(MoveBuf& b, bool direct_phase);
 
+    /// lists the empty cells into empties
     void compute_empties();
+    /// for every empty cell, the digits ruled out by placed digits (houses, relations, cages) into ex
     void direct_excl();
+    /// digits still possible in a sum cage given its placed digits, cached on the placed mask
     uint32_t cagesum_direct(int gi);
+    /// what excludes digits from cell c without notes: placed digits by house, cage, relation
     void direct_sources(int c, std::vector<Src>& out);
     using CoverScore = std::function<double(double, const std::vector<Cover>&)>;
+    /// picks sources whose masks cover all but one digit; fills cov and base, false if none
     bool naked_cover(std::vector<Src>& srcs, double& base, std::vector<Cover>& cov, const CoverScore* score = nullptr);
+    /// cover sources (houses, cages, locks) that place digit v over the cells of a house, without notes
     void hidden_sources(const std::vector<int>& cells, int v, int house, bool use_locks, std::vector<HSrc>& out);
     bool hidden_cover(int n_items, const std::vector<HSrc>& srcs, std::vector<Cover>& cov,
                       const CoverScore* score = nullptr);
+    /// groups that contain every cell of poss, except discard
     void common_groups(const std::vector<int>& poss, int discard, std::vector<int>& out);
+    /// true if v at c breaks under basic propagation (state restored); log: events of the refutation
     bool contradicts(int c, int v, std::vector<int>* log = nullptr);
   public:
     /// generic refutation profile (refute.cpp): technique-free difficulty
     void refute_profile(const std::vector<std::pair<int, int>>& givens, const std::vector<int>& sol, int max_stuck,
                         std::vector<std::array<int, 5>>& out);
+    /// basic propagation to a fixpoint (singles, relations, rule consistency); false on contradiction
     bool basic_propagate(int& placed);
+    /// placements until a contradiction, -1 if none within cap
     int trial_depth(int c, int v, int cap = 1 << 30);
     int prop_cap = 1 << 30;      ///< basic_propagate stops (no contradiction) once it has made more placements than this
     const std::vector<uint32_t>* gac_ref = nullptr;  ///< a consistent state: rules none of whose cells differ from it are skipped
@@ -691,13 +789,17 @@ private:
     std::vector<std::vector<int>> k_nbr;            ///< 2 + triples (over all houses); houses sharing >= 2 cells
     std::vector<std::vector<char>> k_in;            ///< house membership per cell
     std::vector<char> k_ok;                         ///< houses the ladder may use (refK >= 10: standard geometry only)
+    /// precomputes the houses and their overlaps the knowledge ladder uses
     void k_prepare();
     int k_step();                                   ///< -1 contradiction, 0 nothing, 1 progress
     // finding-cost profile per singles-stuck point (scan space, productive K1 patterns, unlocking patterns,
     // fallback flag, placements released)
   private:
+    /// the TakeNotes step: writes every candidate of the empty cells
     void take_notes(SolveResult& out, int n_empty);
+    /// the Snyder marks step: writes the corner marks of digits confined to two cells of a box
     void take_snyder(SolveResult& out, int n_empty);
+    /// singles that the Snyder-marked view gives and the plain view does not (hidden pair, box-line X-Wing)
     void snyder_moves(MoveBuf& out);
     pm_long cand_total() const {  // candidates over the empty cells
         pm_long t = 0;
@@ -706,10 +808,12 @@ private:
         return t;
     }
     bool snyder_on = false;
+    /// drops the moves of disabled techniques from b
     void filter(MoveBuf& b);
     void combo_allowed(const std::vector<int>& cells, int total, bool distinct, const uint32_t* masks, uint32_t forbid,
                        uint32_t* allowed);
 
+    /// appends an empty move of the technique with its shape and extra, anchored at the buffer ends
     Move& new_move(MoveBuf& b, int tech, double shape, int extra);
 };
 

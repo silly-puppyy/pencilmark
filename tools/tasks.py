@@ -20,7 +20,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PY = sys.executable
 FIXTURES = ["test_line_matrix", "test_edge_matrix", "test_cell_matrix", "test_rule_matrix", "test_input_matrix"]
-GENERATORS = ["gen_api_md", "gen_techniques_md", "gen_parameters_md", "gen_swatches"]
+GENERATORS = ["gen_api_md", "gen_reference_md", "gen_techniques_md", "gen_parameters_md", "gen_swatches"]
 COPIES = [("README.md", "docs/index.md"), ("ARCHITECTURE.md", "docs/dev/ARCHITECTURE.md"),
           ("CONTRIBUTING.md", "docs/dev/CONTRIBUTING.md")]  # fmt: skip
 

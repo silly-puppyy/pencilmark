@@ -123,6 +123,7 @@ struct NConstraint {
     std::vector<const uint32_t*> rel;  ///< nv*nv: rel_ex(var i -> var j) or null
     std::vector<int> order;        ///< DFS order (vars)
     double shape = 1.0;
+    /// number of distinct cells (variables) of the constraint
     int nv() const { return (int)vars.size(); }
 };
 
@@ -143,6 +144,7 @@ struct GacOut {
 /// dom[i]: allowed digits of var i (placed vars: their single digit)
 void nary_gac(const NConstraint& k, const uint32_t* dom, const std::vector<GacReq>& req, pm_long budget, int D,
               GacOut& out);
+/// consistency of a constraint by enumeration (long sandwiches: small exact budget, then a relaxation)
 void nary_gac_brute(const NConstraint& k, const uint32_t* dom, pm_long budget, int D, GacOut& out);
 
 }  // namespace cs

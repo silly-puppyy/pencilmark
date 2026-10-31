@@ -29,10 +29,13 @@
 
 namespace cs {
 
+/// bit mask of digit d (digits count from 1)
 inline uint32_t bit(int d) { return 1u << (d - 1); }
+/// number of digits in a mask
 inline int popc(uint32_t m) { return __builtin_popcount(m); }
 inline int lowdigit(uint32_t m) { return __builtin_ctz(m) + 1; }
 
+/// spread of a cell set from its coordinates (gyration ratio; the "shape" of a pattern)
 double shape_ratio(const std::vector<std::pair<int, int>>& co);
 /// same quantity from exact integer moments: identical for translated / transposed
 /// copies of a cell set (canonical mode)
@@ -69,6 +72,7 @@ struct InnieSet {
 
 /// fixed-width cell bitset helpers (W 64-bit words per set)
 inline bool tbit(const uint64_t* b, int i) { return (b[i >> 6] >> (i & 63)) & 1; }
+/// sets cell i in a cell bitset
 inline void sbit(uint64_t* b, int i) { b[i >> 6] |= 1ULL << (i & 63); }
 
 inline uint64_t next_puzzle_uid() {          // identity for cross-call caches (copies keep it: same content)
@@ -114,6 +118,7 @@ struct Puzzle {
     std::vector<NConstraint> line_windows;  ///< 3-cell windows of longer pairwise lines (LineScan)
     static const size_t BIG_INNIE_MAX = 7;
 
+    /// builds the derived tables (counts, peers, bitsets, innies, implied houses) once the groups are filled in
     void finalize();
 
     // ---- derived structure (item 3d) ----
@@ -134,6 +139,7 @@ struct Puzzle {
     struct Rect {
         int c[4];  ///< A B / C D: A-B and C-D share groups, A-C and B-D share groups
     };
+    /// unique-rectangle candidates: four cells in two lines and two boxes, from the structure alone
     const std::vector<Rect>& rects() const;
 
     const uint64_t* peers(int c) const { return &peer_bits[(size_t)c * W]; }
@@ -154,16 +160,23 @@ private:
         std::vector<Rect> rects;
     };
     std::shared_ptr<RectCache> rect_cache;
+    /// builds `implied`: the puzzle with unions-of-lines houses and leftover constraints added
     void build_implied();
+    /// builds the rule-of-45 innie / outie regions from the houses and cages
     void build_innies();
+    /// builds the n-ary constraints from nary_specs
     void build_nary();
     void build_set_theory();  ///< house unions minus cages / little killers, arrow lines replaced by circles
+    /// n-ary constraint over the given cells (repeats share a variable); distinct: all its cells differ
     NConstraint make_nc(int type, const std::vector<int>& positions, bool distinct) const;
 };
 
 // ---- builders matching pencilmark/model.py ----
+/// rectangular-box sudoku of the given size with rows, columns and box_h x box_w boxes
 Puzzle make_standard(int size, int box_h, int box_w);
+/// adds the non-consecutive relation between orthogonal neighbours of a size x size grid
 void add_nonconsecutive(Puzzle& p, int size);
+/// adds sum cages, each (total, cells), as groups with a total
 void add_cages(Puzzle& p, const std::vector<std::pair<int, std::vector<int>>>& cages);
 /// RELATIONS table for a named kind (grader.model.RELATIONS); returns false if unknown
 bool relation_tables(const std::string& kind, const std::vector<int>& args, int D, std::vector<uint32_t>& fwd,

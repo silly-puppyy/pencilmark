@@ -28,7 +28,9 @@ static inline int pm_popcount32(unsigned int x) {
 static inline int pm_popcount64(unsigned long long x) {
     return pm_popcount32((unsigned int)x) + pm_popcount32((unsigned int)(x >> 32));
 }
+/// index of the lowest set bit of x (x != 0)
 static inline int pm_ctz32(unsigned int x) { unsigned long i; _BitScanForward(&i, x); return (int)i; }
+/// number of leading zero bits of x (x != 0)
 static inline int pm_clz32(unsigned int x) { unsigned long i; _BitScanReverse(&i, x); return 31 - (int)i; }
 static inline int pm_ctz64(unsigned long long x) {
 #if defined(_M_X64) || defined(_M_ARM64)

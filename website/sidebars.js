@@ -55,7 +55,16 @@ module.exports = {
     {type: 'category', label: 'Contributing', collapsed: true, link: {type: 'generated-index', slug: '/dev/'}, items: [
       {type: 'doc', id: 'dev/CONTRIBUTING', label: 'Contributing'},
       {type: 'doc', id: 'dev/ARCHITECTURE', label: 'Architecture'},
-      {type: 'link', label: 'C++ engine reference', href: 'https://silly-puppyy.github.io/pencilmark/cpp/index.html'},
+      {type: 'category', label: 'Reference', collapsed: true, link: {type: 'generated-index', slug: '/dev/reference/',
+        description: 'Every module, function and class, generated from the docstrings and the C++ header comments.'}, items: [
+        {type: 'doc', id: 'dev/reference/card', label: 'The card'},
+        {type: 'doc', id: 'dev/reference/formats', label: 'Formats'},
+        {type: 'doc', id: 'dev/reference/engine', label: 'The engine interface'},
+        {type: 'doc', id: 'dev/reference/explain', label: 'Explanations'},
+        {type: 'doc', id: 'dev/reference/generator', label: 'The generator'},
+        {type: 'doc', id: 'dev/reference/sources', label: 'Puzzle sources'},
+        {type: 'doc', id: 'dev/reference/cli', label: 'The command line'},
+      ]},
       {type: 'doc', id: 'dev/WRITING_STYLE', label: 'Writing style'},
       {type: 'doc', id: 'dev/CODE_STYLE', label: 'Code style'},
       {type: 'doc', id: 'dev/ADD_TECHNIQUE', label: 'Add a technique'},

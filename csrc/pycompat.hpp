@@ -109,9 +109,11 @@ public:
         if ((size_t)fill * 5 < m * 3) return;
         resize(used > 50000 ? used * 2 : used * 4);
     }
+    /// adds an integer key (the key is its own hash)
     void add(int64_t intkey) { add(intkey, intkey); }
 
     bool contains(int64_t key, int64_t hash) const { return lookup(key, hash) >= 0; }
+    /// true if the integer key is in the set (the key is its own hash)
     bool contains(int64_t intkey) const { return contains(intkey, intkey); }
 
     void discard(int64_t key, int64_t hash) {
@@ -121,6 +123,7 @@ public:
         t[k].hash = -1;
         --used;
     }
+    /// removes an integer key (the key is its own hash)
     void discard(int64_t intkey) { discard(intkey, intkey); }
 
     /// set_merge (s |= other, set(other), s.update(other))
