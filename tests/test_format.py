@@ -835,3 +835,17 @@ def test_check_registry_matches_quality_and_grade_md():
     text = (ROOT / "docs" / "GRADE.md").read_text(encoding="utf-8")
     table = set(re.findall(r"^\| `(\w+)` \| (?:reject|warning)", text, re.M))
     assert table == codes, table ^ codes
+
+
+def test_line_registry_matches_schema_palette_docs():
+    """rules/line.py is the one list of line kinds: the JSON Schema, the default colours and the rule page agree"""
+    from pencilmark.rules import LINE
+
+    schema = json.loads((ROOT / "docs" / "sudoku-puzzle.schema.json").read_text(encoding="utf-8"))
+    rl = schema["$defs"]["rule_line"]
+    assert set(rl["properties"]["kind"]["enum"]) == set(LINE)
+    assert {p for k in LINE.values() for p in k.params} <= set(rl["properties"])
+    palette = json.loads((ROOT / "docs" / "palette.json").read_text(encoding="utf-8"))["lines"]
+    assert set(LINE) <= set(palette), set(LINE) - set(palette)
+    page = (ROOT / "docs" / "rules" / "lines-and-arrows.mdx").read_text(encoding="utf-8")
+    assert all(f"| `{k}` |" in page for k in LINE), [k for k in LINE if f"| `{k}` |" not in page]

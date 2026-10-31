@@ -23,6 +23,7 @@ from collections import Counter
 
 from . import model as M
 from . import puzzle_json as PJ
+from .rules.line import LINE
 
 FORMAT = "sudoku-puzzle"
 FORMAT_VERSION = 1
@@ -562,21 +563,7 @@ RULE_KEYS = {
 }
 KINDS = {
     "region": {"diagonal", "window", "disjoint", "colour", "extra", "region"},
-    "line": {
-        "thermo",
-        "slow_thermo",
-        "whisper",
-        "renban",
-        "region_sum",
-        "palindrome",
-        "entropic",
-        "modular",
-        "parity",
-        "zipper",
-        "between",
-        "lockout",
-        "double_arrow",
-    },
+    "line": set(LINE),  # rules/line.py
     "edge": {"kropki", "xv", "difference", "sum", "product", "ratio", "less"},
     "corner": {"battenburg", "mathrax", "exclude"},
     "sum": {"little_killer", "frame", "group", "corner"},
@@ -584,7 +571,7 @@ KINDS = {
     "cell": {"odd", "even", "low", "high", "set", "exclude"},
     "count": {"circles"},
 }
-LINE_PARAMS = {"whisper": {"value"}, "modular": {"value"}, "lockout": {"value"}, "entropic": {"groups"}}
+LINE_PARAMS = {k: set(v.params) for k, v in LINE.items() if v.params}
 EDGE_PARAMS = {
     "kropki": {"color"},
     "xv": {"letter"},
@@ -841,7 +828,7 @@ def _validate_rule(r, B):
                 raise FormatError(f"line {kind} takes no {k!r}")
         if D != 9 and allowed and not (allowed <= set(r)):
             raise FormatError(f"line {kind} requires {sorted(allowed)} when digits != 9")
-        if r.get("closed") and kind not in ("whisper", "renban", "parity"):
+        if r.get("closed") and not LINE[kind].closable:
             raise FormatError(f"line {kind} cannot be closed")
         if "closed" in r and not isinstance(r["closed"], bool):
             raise FormatError("closed must be true / false")
