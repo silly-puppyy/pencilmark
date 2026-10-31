@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- A closed renban is written back closed (it was written open). Its `fingerprint` now covers `closed`, as the
+  canonical form does, so a closed renban's fingerprint differs from the same line open.
 - A line's `value` is checked: whisper and lockout take 1..D−1 (a difference between digits), modular a modulus of at
   least 2. A whisper of 5 on a 4x4 board was accepted and made the puzzle unsolvable.
 - Error messages for `cell` rules name the rule type (`cell low takes split ...`, was `digits low ...`).

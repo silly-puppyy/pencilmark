@@ -131,6 +131,8 @@ def line_to_engine(r, D, B, pairs_rule):
         "kind": k,
         "cells": list(cs) + ([cs[0]] if r.get("closed") and k != "renban" else []),
     }
+    if k == "renban" and r.get("closed"):  # a set either way; kept so the line is written (and drawn) closed
+        con["closed"] = True
     if k == "whisper" and "value" in r:
         con["k"] = r["value"]
     if k == "modular" and r.get("value", 3) != 3:
@@ -164,5 +166,7 @@ def line_from_engine(c, B, D):
     if len(cells) > 2 and cells[0] == cells[-1] and kind in ("whisper", "dutch_whisper", "parity"):
         r["closed"] = True
         cells = cells[:-1]
+    if kind == "renban" and c.get("closed"):
+        r["closed"] = True
     r["cells"] = [B.name(x) for x in cells]
     return [r]
