@@ -64,6 +64,19 @@ f-puzzles `?load=` links, Penpa links and bare SudokuPad payloads are decoded of
 robots.txt obeyed and a pause between requests to the same site.
 
 A rule pencilmark cannot map exactly is refused with the list of what it could not read; nothing is dropped silently.
+The error is `pencilmark.sources.UnsupportedPuzzle`, and its message names each element, for example "pink line" or
+"generic line (meaning in rules text)": a line whose meaning only the rules text gives.
+
+For those, `infer=True` lets the reader try the possible meanings of each unexplained element and keep the reading
+under which the puzzle has exactly one solution (and agrees with its embedded solution, when the link has one); the
+rules text breaks ties. It is slower, and opt-in because it is an inference, however well checked:
+
+```python
+from pencilmark import sources
+
+puzzle = sources.load("https://sudokupad.app/…", infer=True)   # a puzzle JSON dict
+card = pencilmark.rate(puzzle)
+```
 
 ## ipuz files
 
