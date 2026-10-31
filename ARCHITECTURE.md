@@ -109,7 +109,8 @@ Being fixed by the restructure (docs/dev/CODE_STYLE.md says how code should look
   explanation and, for extra move fields, `cbackend.XMETA_KEYS`. `tests/test_registry.py` fails until the registry
   and the engine enum agree.
 - A rule family is represented four times (public format, `puzzle_json`, `model.Puzzle`, the C++ spec).
-- `explain/` re-derives patterns the engine already found.
+- `explain/` takes each move's pattern from the engine's record, but most handlers still rebuild it to check it
+  and to word it.
 - Parameters are keyed by internal technique ids; `grader_model.py` loads them once, but they are not yet addressed
   by name.
 
@@ -117,7 +118,7 @@ Being fixed by the restructure (docs/dev/CODE_STYLE.md says how code should look
 
 ```
 python -m pytest -q -n auto tests             # about 10 seconds (30 s without -n)
-python tools/golden.py check                  # every output of 55 puzzles must be identical (about 5 minutes)
+python tools/golden.py check                  # every output of 55 puzzles must be identical (about a minute)
 ```
 
 A change that is meant to alter output rewrites the golden records (`tools/golden.py write`) in its own commit, with
