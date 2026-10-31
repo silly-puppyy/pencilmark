@@ -2,6 +2,7 @@
 // shipped parameters (data/card_score.json "map"). Drawn with Observable Plot in the site's colours; redrawn when the
 // colour mode changes. The page shows the same numbers in text, so the chart is optional (.pm-graphic).
 import React, {useEffect, useRef} from 'react';
+import {reserve} from './reserve';
 import {useColorMode} from '@docusaurus/theme-common';
 import * as Plot from '@observablehq/plot';
 
@@ -51,5 +52,6 @@ export default function DifficultyCurve() {
     ref.current.replaceChildren(chart);
     return () => chart.remove();
   }, [colorMode]);
-  return <figure className="pm-graphic pm-chart" ref={ref} aria-label="Difficulty against effort per empty cell" />;
+  return <figure className="pm-graphic pm-chart" ref={ref} aria-label="Difficulty against effort per empty cell"
+                 style={reserve(300)} />;
 }

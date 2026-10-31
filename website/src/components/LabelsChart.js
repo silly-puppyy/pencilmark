@@ -2,6 +2,7 @@
 // median difficulty, whiskers over the interquartile range where it was measured. A button switches to the table;
 // with graphics hidden (navbar switch) the table shows instead of the charts.
 import React, {useEffect, useRef, useState} from 'react';
+import {reserve} from './reserve';
 import {useColorMode} from '@docusaurus/theme-common';
 import * as Plot from '@observablehq/plot';
 
@@ -46,7 +47,7 @@ function SiteChart({site}) {
   return (
     <figure className="pm-chart" style={{margin: '0 0 1rem'}}>
       <figcaption style={{fontWeight: 600, marginBottom: 2}}>{site}{NOTES[site] ? ` (${NOTES[site]})` : ''}</figcaption>
-      <div ref={ref}/>
+      <div ref={ref} style={reserve(34 + 22 * LABELS.filter((d) => d.site === site).length)}/>
     </figure>
   );
 }

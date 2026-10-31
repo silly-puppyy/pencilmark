@@ -21,6 +21,11 @@ module.exports = async function createConfig() {
   onBrokenLinks: 'throw',
   markdown: {format: 'detect', mermaid: true, hooks: {onBrokenMarkdownLinks: 'throw'}},
   clientModules: [require.resolve('./src/clientModules/graphics.js')],
+  // the reader's graphics choice, set before the first paint (as the theme sets data-theme): set only by the client
+  // module above, graphics a reader turned off would flash in on every page load until the scripts ran
+  headTags: [{tagName: 'script', attributes: {}, innerHTML:
+    "try{document.documentElement.dataset.graphics=localStorage.getItem('pm-graphics')==='off'?'off':'on'}" +
+    "catch(e){document.documentElement.dataset.graphics='on'}"}],
   themes: [
     '@docusaurus/theme-mermaid',
     ['@easyops-cn/docusaurus-search-local', {hashed: true, docsDir: '../docs', docsRouteBasePath: '/', indexBlog: false, highlightSearchTermsOnTargetPage: true}],

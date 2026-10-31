@@ -3,6 +3,11 @@
 @import '@fontsource-variable/jetbrains-mono/index.css';
 @import 'katex/dist/katex.min.css';
 
+/* Arial shaped to Inter's metrics while Inter loads (font-display: swap), so the text does not reflow when it arrives
+   (the values next/font computes for Inter) */
+@font-face { font-family: 'Inter Fallback'; src: local('Arial'); size-adjust: 107.4%; ascent-override: 90.2%;
+  descent-override: 22.48%; line-gap-override: 0%; }
+
 :root {
   --ifm-color-primary: #7a5230;
   --ifm-color-primary-dark: #6e4a2b;
@@ -20,7 +25,7 @@
   --pm-surface: #f8f6f1;
   --pm-surface-2: #f0ebe1;
 
-  --ifm-font-family-base: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --ifm-font-family-base: 'Inter Variable', 'Inter Fallback', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --ifm-font-family-monospace: 'JetBrains Mono Variable', ui-monospace, 'SFMono-Regular', Menlo, monospace;
   --ifm-font-color-base: var(--pm-ink);
   --ifm-font-color-secondary: var(--pm-muted);

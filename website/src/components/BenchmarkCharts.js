@@ -1,6 +1,7 @@
 // Charts for docs/BENCHMARK.mdx. The numbers are the page's own tables (aggregates of the frozen benchmark); every chart
 // sits next to its table, so hiding graphics loses nothing. pencilmark in the site accent, other graders in grey.
 import React, {useEffect, useRef} from 'react';
+import {reserve} from './reserve';
 import {useColorMode} from '@docusaurus/theme-common';
 import * as Plot from '@observablehq/plot';
 
@@ -31,7 +32,7 @@ function colours() {
   };
 }
 
-function Chart({build, label}) {
+function Chart({build, label, height}) {
   const ref = useRef(null);
   const {colorMode} = useColorMode();
   useEffect(() => {
@@ -39,7 +40,7 @@ function Chart({build, label}) {
     ref.current.replaceChildren(chart);
     return () => chart.remove();
   }, [colorMode]);
-  return <figure className="pm-graphic pm-chart" ref={ref} aria-label={label} />;
+  return <figure className="pm-graphic pm-chart" ref={ref} aria-label={label} style={reserve(height)} />;
 }
 
 const base = (ink) => ({style: {background: 'transparent', color: ink, fontSize: '12px'}, width: 640});
@@ -47,7 +48,7 @@ const base = (ink) => ({style: {background: 'transparent', color: ink, fontSize:
 export function AccuracyChart() {
   // bullet chart: the light bar is the source's ceiling (the best any grader can reach), the dark bar pencilmark
   const rows = ACCURACY;
-  return <Chart label="pencilmark's rank correlation with human solve times per source, against each source's ceiling"
+  return <Chart label="pencilmark's rank correlation with human solve times per source, against each source's ceiling" height={310}
     build={({ink, accent, grey}) => Plot.plot({
       ...base(ink), height: 270, marginLeft: 120, marginRight: 150, marginBottom: 40,
       x: {domain: [0, 1], grid: true, labelOffset: 34, label: 'Spearman with human times (within groups) →'},
@@ -69,7 +70,7 @@ export function GradersChart() {
   const sets = ['fed-sudoku.eu classics', 'Wang 2024 classics', 'sudoku.today variants'];
   const order = ['pencilmark', 'Andrew Stuart', 'Sudoku Explainer', 'HoDoKu', 'Rangsk'];
   const fill = (accent, grey) => (d) => (d.grader === 'pencilmark' ? accent : grey);
-  return <Chart label="pencilmark against other graders on the same puzzles" build={({ink, accent, grey}) =>
+  return <Chart label="pencilmark against other graders on the same puzzles" height={430} build={({ink, accent, grey}) =>
     Plot.plot({
       ...base(ink), height: 430, marginLeft: 120, marginRight: 50, marginTop: 24, marginBottom: 40,
       x: {domain: [0, 0.8], grid: true, labelOffset: 34, label: 'Spearman with human times (within groups) →'},

@@ -1,4 +1,5 @@
-// Applies the reader's graphics choice before the page paints (stored by GraphicsToggle; default: shown).
+// The reader's graphics choice (stored by GraphicsToggle; default: shown). An inline script in the page head
+// (docusaurus.config.js headTags) applies it before the first paint; this keeps it applied after client navigation.
 import ExecutionEnvironment from '@docusaurus/ExecutionEnvironment';
 
 export const KEY = 'pm-graphics';
