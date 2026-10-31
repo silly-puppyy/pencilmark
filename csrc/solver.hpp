@@ -1,4 +1,5 @@
-// Two-phase logical solver, a faithful port of grader/solver.py.
+// Two-phase logical solver: technique ids, moves, pricing parameters and the Solver class (solver.cpp and the
+// technique files).
 #pragma once
 #include "portable.hpp"
 #include <array>
@@ -101,7 +102,7 @@ struct Cover {
 // name encodings (strings are built only for chosen moves, on the Python side)
 enum NameKind { NM_NONE = 0, NM_GROUP = 1, NM_LOCK = 2, NM_INNIE = 3, NM_OUTIE = 4, NM_NARY = 5 };
 // extended structural metadata (new techniques): xm[] slots, meaning per tech
-// documented in grader/cbackend.py (XMETA_KEYS); code = short pattern code
+// documented in pencilmark/cbackend.py (XMETA_KEYS); code = short pattern code
 enum { XM_N = 10 };
 
 // One move: the feature tuple (tech, base_shape, cover, extra, meta) plus
@@ -133,7 +134,7 @@ struct Move {
     int ex_off = 0, ex_n = 0;  // explanation records in MoveBuf::ex: [tag, len, data...]...
 };
 inline bool priced_meta(const Move& m) { return m.has_meta && !m.meta_synth; }  // the pricing view of has_meta
-// explanation record tags (decoded by grader/cbackend.py _explain; schema in README)
+// explanation record tags (decoded by pencilmark/cbackend.py _explain)
 enum {
     EX_BASE = 1,     // [group...]                 base units
     EX_COVER = 2,    // [group...]                 cover units

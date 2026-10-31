@@ -1,4 +1,4 @@
-// Constraint-agnostic puzzle model (mirror of grader/model.py).
+// Constraint-agnostic puzzle model: cells, houses, relations, n-ary constraints (built from pencilmark/model.py).
 //
 // Constraint kinds:
 //   AllDiff groups      -- complete (houses: exactly D cells, every digit once)
@@ -160,7 +160,7 @@ private:
     NConstraint make_nc(int type, const std::vector<int>& positions, bool distinct) const;
 };
 
-// ---- builders mirroring grader/model.py (used by native featurize) ----
+// ---- builders matching pencilmark/model.py ----
 Puzzle make_standard(int size, int box_h, int box_w);
 void add_nonconsecutive(Puzzle& p, int size);
 void add_cages(Puzzle& p, const std::vector<std::pair<int, std::vector<int>>>& cages);

@@ -484,7 +484,7 @@ static py::dict puzzle_info(const Puzzle& pz, const std::vector<int>& disabled) 
 }
 
 PYBIND11_MODULE(_csolver, m) {
-    m.doc() = "C++ port of grader.solver (see csolver/README.md)";
+    m.doc() = "pencilmark's C++ engine (see ARCHITECTURE.md)";
     py::class_<Puzzle, std::shared_ptr<Puzzle>>(m, "Puzzle")
         .def_readonly("N", &Puzzle::N)
         .def_readonly("D", &Puzzle::D)

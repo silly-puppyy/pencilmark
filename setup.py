@@ -13,7 +13,7 @@ import pybind11
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 
-SOURCES = ["model", "nary", "solver", "chains", "uniqueness", "als", "set_logic", "rich", "canon", "mental", "explain",
+SOURCES = ["model", "nary", "solver", "direct_view", "notes_view", "nary_moves", "brute_force", "chains", "uniqueness", "als", "set_logic", "rich", "canon", "mental", "explain",
            "forcing", "colour", "variant_logic", "sudokuwiki", "desc", "refute", "bindings"]          # order as in the reference build
 GCC_FLAGS = ["-O3", "-std=c++17", "-ffp-contract=off", "-fno-fast-math", "-Wall", "-Wno-unused-function", "-pthread"]
 MSVC_FLAGS = ["/O2", "/std:c++17", "/fp:precise", "/EHsc", "/bigobj"]   # also accepted by clang-cl

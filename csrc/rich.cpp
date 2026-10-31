@@ -1,5 +1,5 @@
 // Rich per-move / per-step metadata for meta-grader feature screens.
-// Columns 0-11 / steps 0-2 follow grader/features_rich.py (same definitions).
+// Columns 0-11 / steps 0-2: the rich step features (research definitions).
 #include <algorithm>
 #include "portable.hpp"
 #include <cmath>
@@ -10,7 +10,7 @@ namespace cs {
 
 const std::vector<std::string>& rich_names() {
     static const std::vector<std::string> n = {
-        // --- grader/features_rich.py RICH_NAMES ---
+        // --- RICH_NAMES ---
         "log_effect", "log_tcand", "log_house_empty", "log_dist_last", "log_age", "log_tech_used", "near_last",
         "extreme_digit", "log_combos", "unique_combo", "house_fill", "digit_count",
         // --- extensions ---

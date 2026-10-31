@@ -70,7 +70,9 @@ flowchart TB
 
 | File | Holds |
 |---|---|
-| `solver.hpp`, `solver.cpp` | technique ids, move records, pricing, the solve loop, basic techniques (singles, intersections, subsets, fish) |
+| `solver.hpp`, `solver.cpp` | technique ids, move records, pricing, strategies and tiers, the solve loop, fallbacks (`solver_util.hpp`: shared helpers) |
+| `direct_view.cpp`, `notes_view.cpp`, `nary_moves.cpp` | the no-notes view; techniques on written candidates (singles, intersections, subsets, fish, wings, colouring); moves of cages, lines and sums |
+| `brute_force.cpp` | exhaustive search (uniqueness, generator) |
 | `model.hpp`, `model.cpp`, `nary.hpp`, `nary.cpp` | puzzle structure in C++; multi-cell constraints (cages, lines) and their propagation |
 | `chains.cpp`, `colour.cpp`, `forcing.cpp` | X-chains and AICs, colouring and Medusa, forcing chains |
 | `uniqueness.cpp`, `als.cpp`, `set_logic.cpp` | uniqueness (UR / BUG) and implied houses; almost locked sets; set theory, digit counting, sum algebra, band logic (`move_util.hpp`: their shared helpers) |
