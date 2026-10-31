@@ -7048,7 +7048,97 @@ def _h_chute_rp(ctx):
     )
 
 
+def _changed_cells(ctx):
+    """the cells a move places or eliminates in, in grid order (when the engine names no pattern cells)"""
+    cells = {c for c, _ in ctx.elims} | ({ctx.place[0]} if ctx.place else set())
+    return sorted(cells, key=lambda c: ctx.nm.p.coords[c])
+
+
+def _h_clue_facts(ctx):
+    """ClueFacts / ClueShape: digits ruled out by the clues alone, before any digit of the grid is used (a thermometer
+    cell's range, no 5 on a German whisper, a dot pair's digits; the shape form adds partners on one rule in one house)."""
+    nm = ctx.nm
+    pc = (ctx.raw_engine or {}).get("pattern_cells") or _changed_cells(ctx)
+    head, goal = _x_head(ctx)
+    if ctx.tech == S.CLUE_SHAPE:
+        why = (
+            f"Read the rules on {nm.cells(pc)} with the houses they cross: cells of one rule that share a house must hold "
+            "different digits, and the rule leaves too few digits for that"
+        )
+        title = "the clues' shape"
+    else:
+        why = (
+            f"Look at the rules on {nm.cells(pc)} alone, before any digit is placed: where a cell sits on its rule limits "
+            "what it can hold (a thermometer cell needs room for the cells above and below it, a German whisper cell "
+            "cannot be 5, a dot pair only takes certain digits)"
+        )
+        title = "the clues alone"
+    J = _J(ctx, base_cells=pc)
+    return _result(ctx, J, f"{head}: {title}", f"{why}. So {goal}.", bool(pc), extra_cells=pc)
+
+
+def _h_class_colour(ctx):
+    """ClassColouring: rule links that always join a low and a high digit (or an odd and an even one) colour cells in
+    two classes; a known cell or a house's count of each class fixes the colours."""
+    nm = ctx.nm
+    xm = ctx.xm or {}
+    pc = (ctx.raw_engine or {}).get("pattern_cells") or _changed_cells(ctx)
+    D = nm.p.D
+    if xm.get("kind", 0) == 0:
+        a, b = (
+            f"low (1–{D // 2})",
+            f"high ({D - D // 2 + 1}–{D})",
+        )
+    else:
+        a, b = "odd", "even"
+    head, goal = _x_head(ctx)
+    base = (
+        f"The rules linking {nm.cells(pc)} always join a {a.split()[0]} digit to a {b.split()[0]} one (or always two of "
+        f"the same kind), so these cells split into two colours: one colour is {a}, the other {b}"
+    )
+    why = {
+        0: ", and a cell whose digit is already known says which colour is which",
+        1: ", and counting fixes which is which: a house holds only so many digits of each kind",
+        2: "; either way round, the coloured cells fill a house's share of one kind, so the house's other cells cannot "
+        "have it",
+    }.get(xm.get("why"), "")
+    J = _J(ctx, base_cells=pc)
+    return _result(
+        ctx,
+        J,
+        f"{head}: {a.split()[0]} / {b.split()[0]} colouring",
+        f"{base}{why}. So {goal}.",
+        bool(pc),
+        extra_cells=pc,
+    )
+
+
 _X_HANDLERS = {
+    "CLUE_FACTS": (
+        _h_clue_facts,
+        "clue_facts",
+        "intersections+combos",
+        ("Clue facts", "Some digits are ruled out by the clues alone, before any digit of the grid is used."),
+    ),
+    "CLUE_SHAPE": (
+        _h_clue_facts,
+        "clue_shape",
+        "intersections+combos",
+        (
+            "Clue shape",
+            "Cells of one rule that share a house need different digits; when the rule leaves too few, some go.",
+        ),
+    ),
+    "CLASS_COLOUR": (
+        _h_class_colour,
+        "class_colouring",
+        "chains",
+        (
+            "Low / high and odd / even colouring",
+            "Rules that always join a low and a high digit (or an odd and an even one) colour cells in two classes; a "
+            "known cell or a house's count fixes which colour is which.",
+        ),
+    ),
     "WEIGHTED_SUMS": (
         _h_weighted_sums,
         "weighted_sums",

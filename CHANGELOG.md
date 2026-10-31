@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Step explanations: Clue facts, Clue shape and low / high and odd / even colouring have their own explanations;
+  they read "ClueFacts (code 10102) pattern removes ...". Explanations of the band route now get the engine's pattern
+  cells, so "Two rules together" names its cells (it said "over their 0 open cells") and no-notes steps list the cells
+  they use (they said "(cells )"). Only explanation texts change (12 of 55 public and 101 of 227 private golden cards).
 - `issues`: steps that read a line or rule through the engine's rule reasoning are credited to that rule. They were
   credited to no rule family, so a thermometer, skyscraper or other line clue the solve used throughout could be
   reported as `barely_used` ("used in only 0 steps") and the card rejected. On the golden corpora 3 of 282 cards lose a
