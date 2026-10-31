@@ -36,3 +36,4 @@ jobs:
           python-version: ${{ matrix.python }}
       - run: python -m pip install ".[${{ matrix.extras }}]"
       - run: python -m pytest tests -q -n auto
+      - run: python -m pytest tests -q -n auto -m slow   # the doc examples run as written

@@ -85,7 +85,10 @@ import pencilmark
 puzzles = [line.strip() for line in open("puzzles.txt") if line.strip()]
 cards = pencilmark.rate_many(puzzles, jobs=4)       # input order kept
 for card in cards:
-    print(card["band"], card["difficulty"], card["time"])
+    if "error" in card:                             # not unique, no solution, unreadable
+        print("error:", card["error"])
+    else:
+        print(card["band"], card["difficulty"], card["time"])
 ```
 
 A puzzle that fails gives `{"error": "..."}` in its place instead of raising, so one bad puzzle does not stop the

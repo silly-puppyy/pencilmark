@@ -54,6 +54,8 @@ pencilmark = ["data/*.json", "data/*.csv"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["slow: slower checks (doc examples); run with -m slow"]
+addopts = "-m 'not slow'"
 
 [tool.ruff]
 line-length = 120

@@ -81,8 +81,8 @@ Each check can be adjusted with a **quality object** keyed by code. Every entry 
 have one) and / or `severity` (`"reject"`, `"warning"`, or `"off"` to turn the check off):
 
 ```python
-rate(puzzle, fields=["issues", "reject", "warning"],
-     quality={"trivial": {"limit": 0.5}, "trial": {"severity": "reject"}, "tedious": {"severity": "off"}})
+pencilmark.rate(puzzle, fields=["issues", "reject", "warning"],
+                quality={"trivial": {"limit": 0.5}, "trial": {"severity": "reject"}, "tedious": {"severity": "off"}})
 ```
 
 CLI: `--quality trivial.limit=0.5,trial.severity=reject,tedious.severity=off`. The generator spec's `quality`
