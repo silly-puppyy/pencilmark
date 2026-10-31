@@ -74,6 +74,22 @@ const GacOut& Solver::gac_cached(const NConstraint& k, const uint32_t* dom, int 
     return e.out;
 }
 
+// prop_rounds' consistency check (budget-limited, no requirement) through the same cross-call cache: key req_v = -1
+// (never a requirement) and the budget in the mask field, so these entries never meet gac_cached's
+void Solver::gac_prop(const NConstraint& k, const uint32_t* dom, pm_long budget, GacOut& out) {
+    XKey xk{p.uid, &k, -1, (uint64_t)budget, std::vector<uint32_t>(dom, dom + k.nv())};
+    auto it = g_xcache.find(xk);
+    if (it != g_xcache.end()) {
+        out = it->second;
+        return;
+    }
+    static const std::vector<GacReq> noreq;
+    out = GacOut();
+    nary_gac(k, dom, noreq, budget, p.D, out);
+    if (g_xcache.size() >= GAC_XCACHE_MAX) g_xcache.clear();
+    g_xcache.emplace(std::move(xk), out);
+}
+
 void Solver::nary_dom(const NConstraint& k, uint32_t* dom) const {
     for (int i = 0; i < k.nv(); ++i) {
         int c = k.vars[i];

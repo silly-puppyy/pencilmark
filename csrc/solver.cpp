@@ -1220,7 +1220,7 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
                             if (best < lb - 1e-9) continue;
                         }
                     }
-                    timed(s->name(), buf, [&] { s->collect(*this, buf); });
+                    timed(s->name(), buf, [&] { collect_strategy(*s, buf); });
                 }
                 filter(buf);
                 if (!buf.moves.empty()) break;

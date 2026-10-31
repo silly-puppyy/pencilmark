@@ -433,6 +433,7 @@ public:
     std::vector<char> skipped;  // opt.skip as flags
     bool lcache = false;  // state_moves: notes-tier strategies go through the listing cache
     uint64_t lcache_params = 0;  // hash of the params the listing was asked with (part of the cache key)
+    bool lcache_solve = false;  // the listing cache is used inside solve() (history-dependent strategies bypass it)
     void collect_strategy(Strategy& s, MoveBuf& b);  // s->collect, through the listing cache when lcache is set
     std::vector<uint8_t> vals;
     std::vector<uint32_t> cand, placed_g;
@@ -592,6 +593,7 @@ public:
     std::unordered_map<uint64_t, SplitMemo> split_memo;  // case_split results by exact state + assumption
     struct PropGac { bool valid = false; std::vector<uint32_t> dom; GacOut out; };
     std::unordered_map<const void*, PropGac> prop_gac;  // prop_rounds: last consistency result per rule
+    void gac_prop(const NConstraint& k, const uint32_t* dom, pm_long budget, GacOut& out);  // nary_moves.cpp
     std::vector<DcCache> dc_cache;  // DigitCount results per digit, keyed on the digit plane + base units
     // ---- canonical (symmetry-invariant) mode, on unless CANONICAL is disabled ----
     bool canon = true;

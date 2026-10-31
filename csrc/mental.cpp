@@ -285,7 +285,6 @@ int Solver::prop_rounds(int max_rounds, int& placed, std::vector<int>* log) {
     int result = 0;
     placed = 0;
     uint32_t dom[64];
-    static const std::vector<GacReq> noreq;
     for (int round = 1; round <= max_rounds && !result; ++round) {
         bool progress = false;
         // singles found on the round's snapshot, placed together (scan-order independent)
@@ -404,8 +403,7 @@ int Solver::prop_rounds(int max_rounds, int& placed, std::vector<int>* log) {
                 auto& lc = prop_gac[&k];
                 if (!(lc.valid && std::equal(dom, dom + k.nv(), lc.dom.begin()))) {
                     lc.dom.assign(dom, dom + k.nv());
-                    lc.out = GacOut();
-                    nary_gac(k, dom, noreq, 2000, p.D, lc.out);
+                    gac_prop(k, dom, 2000, lc.out);  // other assumptions, steps and calls meet the same domains
                     lc.valid = true;
                 }
                 const GacOut& o = lc.out;

@@ -307,11 +307,21 @@ static py::object feat_tuple(const Move& m, const std::vector<Cover>& covers, bo
     return py::make_tuple(m.tech, m.shape, cov, m.extra, meta);
 }
 
+// the listing cache's params key: every item, by value
+static uint64_t params_key(const py::dict& params) {
+    uint64_t h = 1469598103934665603ULL;
+    for (auto item : params)
+        h = (h ^ (uint64_t)py::hash(py::repr(item.first)) ^ ((uint64_t)py::hash(py::repr(item.second)) << 1)) *
+            1099511628211ULL;
+    return h;
+}
+
 static py::tuple py_solve(const Puzzle& p, const std::vector<std::pair<int, int>>& givens, const py::dict& params,
                           const std::vector<int>& disabled, const py::object& solution, bool allow_direct,
                           int max_steps, bool assume_unique, bool all_tiers, bool explain,
                           const py::object& colours, const py::object& cand) {
     Params P = params_from(params);
+    const uint64_t phash = params_key(params);
     SolveOptions o;
     if (!colours.is_none()) o.colours = colours.cast<std::vector<int>>();
     o.all_tiers = all_tiers;
@@ -328,6 +338,9 @@ static py::tuple py_solve(const Puzzle& p, const std::vector<std::pair<int, int>
         py::gil_scoped_release rel;
         Solver s(p, P, o);
         if ((int)cd.size() == p.N) s.cand_override = cd;
+        s.lcache = true;
+        s.lcache_solve = true;
+        s.lcache_params = phash;
         s.solve(givens, r);
     }
     py::list steps;
@@ -378,8 +391,7 @@ static py::list py_state_moves(const Puzzle& p, const std::vector<std::pair<int,
                                int limit_per_tech, const py::object& written, bool details, const py::object& cand,
                                const std::vector<int>& skip) {
     Params P = params_from(params);
-    uint64_t phash = 1469598103934665603ULL;  // the listing cache's params key: every item, by value
-    for (auto item : params) phash = (phash ^ (uint64_t)py::hash(py::repr(item.first)) ^ ((uint64_t)py::hash(py::repr(item.second)) << 1)) * 1099511628211ULL;
+    const uint64_t phash = params_key(params);
     SolveOptions o;
     o.disabled = disabled;
     o.skip = skip;

@@ -323,20 +323,28 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
             # nothing listed in any band -> one solver step from this state. The solver's stuck-fallback
             # tries forcing chains / dynamic / nested forcing / Nishio / pattern overlay (state_moves never lists them);
             # such a step is an Extreme move. A guess means really stuck -> Unknown.
-            st1, _ = CB.solve(q, P, cpuzzle=cp, cand=mask, max_steps=4, assume_unique=False)  # first steps may be notes
-            x = next((y for y in st1 if y.move.feat[0] not in notes), None)
-            # guessing off (default): the solver's last resort is a proof by full search (TRIAL), an Extreme step too
-            stop = (S.GUESS, S.TRIAL) if P.get("allow_guess", False) else (S.GUESS,)
-            if x is not None and x.move.feat[0] not in stop and (x.move.place or x.move.elim):
-                m = {
-                    "tech": x.move.feat[0],
-                    "name": S.TECH_NAMES.get(x.move.feat[0], "?"),
-                    "code": x.move.code,
-                    "place": tuple(x.move.place) if x.move.place else None,
-                    "elim": [tuple(e) for e in (x.move.elim or ())],
-                    "xmeta": getattr(x.move, "xmeta", None),
-                    "d": float(x.move.d) if x.move.d is not None else None,
-                }
+            # the same state in another contents() route takes the same step: one solver call per state
+            key1 = ("ff", tuple(vals), tuple(cand)) if _CACHE is not None else None
+            m = _CACHE.get(key1, False) if key1 is not None else False
+            if m is False:
+                st1, _ = CB.solve(q, P, cpuzzle=cp, cand=mask, max_steps=4, assume_unique=False)  # first: maybe notes
+                x = next((y for y in st1 if y.move.feat[0] not in notes), None)
+                # guessing off (default): the solver's last resort is a proof by full search (TRIAL), Extreme too
+                stop = (S.GUESS, S.TRIAL) if P.get("allow_guess", False) else (S.GUESS,)
+                m = None
+                if x is not None and x.move.feat[0] not in stop and (x.move.place or x.move.elim):
+                    m = {
+                        "tech": x.move.feat[0],
+                        "name": S.TECH_NAMES.get(x.move.feat[0], "?"),
+                        "code": x.move.code,
+                        "place": tuple(x.move.place) if x.move.place else None,
+                        "elim": [tuple(e) for e in (x.move.elim or ())],
+                        "xmeta": getattr(x.move, "xmeta", None),
+                        "d": float(x.move.d) if x.move.d is not None else None,
+                    }
+                if key1 is not None:
+                    _CACHE[key1] = m
+            if m is not None:
                 code, name, mb = classify(m, p)
                 # a forcing step is Extreme; any other human step the move listing missed keeps its own band
                 pick = ((mb, 1, 0, m["d"]), code, name, max(mb, 6) if m["tech"] in FORCING_TECHS else mb, m)
