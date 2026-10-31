@@ -832,16 +832,35 @@ void Solver::human_case(MoveBuf& out) {
     const int N = p.N, D = p.D, R = P.case_rounds;
     // one case: params case_light = 0 -> singles + pair relations + rule consistency for R rounds;
     // 1 -> also the light techniques (tiers up to intersections / pairs) inside the case, <= 10 x R steps
+    // the same assumption (c, v) is a refutation case, a cell option and up to three house options: every case
+    // starts from this same state with the same settings, so each is followed once (as forcing() does)
+    struct Case {
+        int r, placed;
+        std::vector<uint8_t> v;
+        std::vector<uint32_t> c;
+    };
+    std::unordered_map<uint32_t, Case> cases;
     auto run_case = [&](int c, int v, int& placed, std::vector<uint8_t>* ov, std::vector<uint32_t>* oc) -> int {
-        if (!P.case_light) return case_split(c, v, R, placed, ov, oc);
-        fc_ceiling_now = 2;
-        fc_step_cap = 10 * R;
-        int steps = 0;
-        const int r = fc_branch(c, v, 1, steps, ov, oc);
-        fc_ceiling_now = -1;
-        fc_step_cap = 0;
-        placed = steps;
-        return r;
+        auto it = cases.find((uint32_t)c * 32u + (uint32_t)v);
+        if (it == cases.end()) {
+            Case k;
+            if (!P.case_light) {
+                k.r = case_split(c, v, R, k.placed, &k.v, &k.c);
+            } else {
+                fc_ceiling_now = 2;
+                fc_step_cap = 10 * R;
+                int steps = 0;
+                k.r = fc_branch(c, v, 1, steps, &k.v, &k.c);
+                fc_ceiling_now = -1;
+                fc_step_cap = 0;
+                k.placed = steps;
+            }
+            it = cases.emplace((uint32_t)c * 32u + (uint32_t)v, std::move(k)).first;
+        }
+        placed = it->second.placed;
+        if (ov) *ov = it->second.v;
+        if (oc) *oc = it->second.c;
+        return it->second.r;
     };
     std::set<std::vector<uint32_t>> seen;
     auto meta_case = [&](Move& m, int cells, int branches, int digits, int rounds) {

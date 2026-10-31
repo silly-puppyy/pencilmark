@@ -319,7 +319,7 @@ static uint64_t params_key(const py::dict& params) {
 static py::tuple py_solve(const Puzzle& p, const std::vector<std::pair<int, int>>& givens, const py::dict& params,
                           const std::vector<int>& disabled, const py::object& solution, bool allow_direct,
                           int max_steps, bool assume_unique, bool all_tiers, bool explain,
-                          const py::object& colours, const py::object& cand) {
+                          const py::object& colours, const py::object& cand, bool stats) {
     Params P = params_from(params);
     const uint64_t phash = params_key(params);
     SolveOptions o;
@@ -330,6 +330,7 @@ static py::tuple py_solve(const Puzzle& p, const std::vector<std::pair<int, int>
     o.allow_direct = allow_direct;
     o.assume_unique = assume_unique;
     o.disabled = disabled;
+    o.stats = stats;
     if (!solution.is_none()) o.solution = solution.cast<std::vector<int>>();
     std::vector<uint32_t> cd;
     if (!cand.is_none()) cd = cand.cast<std::vector<uint32_t>>();
@@ -365,6 +366,11 @@ static py::tuple py_solve(const Puzzle& p, const std::vector<std::pair<int, int>
         steps.append(py::make_tuple(alts, st.chosen, place, el, py::make_tuple(st.move.nk, st.move.na, st.move.nb),
                                     st.move.d, st.mode, st.n_empty, st.erasures, st.notes_written, xm,
                                     st.move.code, pats, exs, st.n_cands));
+    }
+    if (stats) {  // per strategy / direct stage: (ms, calls, calls that found moves)
+        py::dict st;
+        for (auto& kv : r.stats) st[py::str(kv.first)] = py::make_tuple(kv.second.ms, kv.second.calls, kv.second.hits);
+        return py::make_tuple(steps, r.solved, st);
     }
     return py::make_tuple(steps, r.solved);
 }
@@ -510,7 +516,7 @@ PYBIND11_MODULE(_csolver, m) {
     m.def("solve", &py_solve, py::arg("puzzle"), py::arg("givens"), py::arg("params"), py::arg("disabled"),
           py::arg("solution"), py::arg("allow_direct"), py::arg("max_steps"), py::arg("assume_unique") = true,
           py::arg("all_tiers") = false, py::arg("explain") = false, py::arg("colours") = py::none(),
-          py::arg("cand") = py::none());
+          py::arg("cand") = py::none(), py::arg("stats") = false);
     m.def("brute_solve", &py_brute, py::arg("puzzle"), py::arg("givens"), py::arg("limit"), py::arg("node_limit"),
           py::arg("start") = py::none(), py::arg("with_status") = false);
     m.def("puzzle_info", &puzzle_info, py::arg("puzzle"), py::arg("disabled") = std::vector<int>());
