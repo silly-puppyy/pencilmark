@@ -509,14 +509,21 @@ def _h_digit_count(ctx):
         return nm.unit(g) if g_.complete else f"{nm.cage(g, cells=False)} (every combination needs a {v})"
 
     bases = [unit_txt(g) for g in bu] + [f"{r.label} (every filling needs a {v})" for r in extra]
-    short = f"{fmt_elims(nm, ctx.elims)}: counting the {v}s ({kw} must-have units vs {kw} houses)"
-    teach = (
-        f"Count {v}s. {_cap(_join(bases))} each must contain a {v}, and they don't overlap, so there are "
-        f"{kw} {v}{'s' if k > 1 else ''} somewhere in {nm.cells(U, 'or')}. All of those cells lie in "
-        f"{_join([nm.unit(g) for g in cu])}, which can hold only {kw} {v}{'s' if k > 1 else ''} between them. "
-        f"So the covers' {v}s are exactly the ones in the pattern, and {nm.cells(sorted(c for c, _ in ctx.elims))} "
-        f"can't be {v}. This is fish logic with cages or rules playing the part of rows."
-    )
+    units = "one must-have unit in one house" if k == 1 else f"{kw} must-have units vs {kw} houses"
+    short = f"{fmt_elims(nm, ctx.elims)}: counting the {v}s ({units})"
+    gone = nm.cells(sorted(c for c, _ in ctx.elims))
+    if k == 1:  # one must-have unit inside one house
+        teach = (
+            f"Count {v}s. {_cap(bases[0])} must contain a {v}, so a {v} lies in {nm.cells(U, 'or')}. Those cells all "
+            f"lie in {nm.unit(cu[0])}, which holds only one {v}: it is the one in the pattern, and {gone} can't be {v}."
+        )
+    else:
+        teach = (
+            f"Count {v}s. {_cap(_join(bases))} each must contain a {v}, and they don't overlap, so there are {kw} "
+            f"{v}s somewhere in {nm.cells(U, 'or')}. All of those cells lie in {_join([nm.unit(g) for g in cu])}, "
+            f"which can hold only {kw} {v}s between them. So the covers' {v}s are exactly the ones in the pattern, and "
+            f"{gone} can't be {v}. This is fish logic with cages or rules playing the part of rows."
+        )
     J = _J(
         ctx,
         digits=[v],

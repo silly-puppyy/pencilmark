@@ -58,7 +58,9 @@ def _h_forcing(ctx):
         cells.add(o["cell"])
     same_cell = len({o["cell"] for o in opts}) == 1
     same_digit = len({o["digit"] for o in opts}) == 1
-    if opts and same_cell:
+    if len(opts) == 1:  # one assumption tried and refuted (case analysis 5501), not a cell's only option
+        intro = f"suppose {nm.cell(opts[0]['cell'])} is {opts[0]['digit']}"
+    elif opts and same_cell:
         intro = f"{nm.cell(opts[0]['cell'])} can only be " + nm.digits([o["digit"] for o in opts], "or")
     elif opts and same_digit:
         intro = f"the digit {opts[0]['digit']} has {len(opts)} possible places in a house: " + nm.cells(
@@ -142,6 +144,11 @@ def _h_forcing(ctx):
             f"each:\n"
             + "\n".join("- " + _cap(x) + "." for x in parts)
             + f"\nEvery case that can happen gives the same result: {goal}."
+        )
+    elif len(opts) == 1:
+        teach = (
+            f"Case analysis ({_FC_LEVEL.get(level, '')}): {intro}. Following that case leads to a contradiction, so "
+            f"{goal}."
         )
     else:
         teach = f"Case analysis ({_FC_LEVEL.get(level, '')}): {intro}. Following each case shows that {goal}."
@@ -363,15 +370,27 @@ def _h_mental_notes(ctx):
     return _result(ctx, J, f"{head}: a single after notes logic in the head", teach, True, extra_cells=pc)
 
 
+def _label(ctx, name):
+    """an engine unit / rule name ("row3", "box19", "cage31", "equal_sum") as the explanations write it"""
+    gi = ctx.gi(name)
+    if gi is not None:
+        g = ctx.p.groups[gi]
+        return ctx.nm.cage(gi, cells=False) if g.total is not None and not g.complete else ctx.nm.unit(gi)
+    return f"the {str(name).replace('_', ' ')}"
+
+
+def _rule_label(r):
+    nm_ = r.get("name") or (f"{r.get('kind')} line" if r.get("type") == "line" else r.get("type"))
+    return f"the {str(nm_).replace('_', ' ')}"
+
+
 def _h_rule_intersect(ctx):
     eng = ctx.raw_engine
     head, goal = _x_head(ctx)
     pc = eng.get("pattern_cells") or []
     base = eng.get("base") or {}
-    names = [u["name"] for u in base.get("units") or [] if u and u.get("name")]
-    for r in base.get("rules") or []:
-        nm_ = r.get("name") or (f"{r.get('kind')} line" if r.get("type") == "line" else r.get("type"))
-        names.append(str(nm_))
+    names = [_label(ctx, u["name"]) for u in base.get("units") or [] if u and u.get("name")]
+    names += [_rule_label(r) for r in base.get("rules") or []]
     what = " and ".join(names) if names else "two rules"
     units = _x_units(ctx, [u["name"] for u in base.get("units") or [] if u])
     if ctx.code == "two houses with their dots":
@@ -398,9 +417,10 @@ def _h_sum_algebra(ctx):
     units = _x_units(ctx, hn)
     k = len(hn) or xm.get("houses", 1)
     tot = 45 * k if ctx.p.D == 9 else None
-    region = " and ".join(hn) if hn else "these houses"
+    region = " and ".join(_label(ctx, n) for n in hn) if hn else "these houses"
     why = (
-        f"{region} add up to {tot if tot else 'a known total'} together. The rules inside them (cages, line "
+        f"{_cap(region)} {'add' if len(hn) > 1 else 'adds'} up to {tot if tot else 'a known total'}"
+        f"{' together' if len(hn) > 1 else ''}. The rules inside (cages, line "
         f"segments, arrows) account for part of that total, and the other cells can only add up to what their "
         f"smallest / largest different digits allow. Comparing the two bounds pins down the sums"
         + (f" (after {xm.get('rounds')} rounds of bounds)" if (xm.get("rounds") or 0) > 1 else "")
@@ -444,10 +464,10 @@ def _band_equation(ctx, house_names, cage_names):
     if best is None:
         return None
     _, hs, inside, rest, tot = best
-    hn = " and ".join(hs)
-    cn = " + ".join(f"{n} ({g.total})" for n, g in inside)
+    hn = " and ".join(_label(ctx, h) for h in hs)
+    cn = " + ".join(f"{_label(ctx, n)} ({g.total})" for n, g in inside)
     return (
-        f"{hn} add up to {ht * len(hs)}; the cages inside, {cn}, take {sum(g.total for _, g in inside)}, so the "
+        f"{hn} {'add' if len(hs) > 1 else 'adds'} up to {ht * len(hs)}; the cages inside, {cn}, take {sum(g.total for _, g in inside)}, so the "
         f"other {len(rest)} cells add up to {tot}"
     )
 
@@ -459,12 +479,10 @@ def _h_band_logic(ctx):
     base, cover = eng.get("base") or {}, eng.get("cover") or {}
     hn = [u["name"] for u in base.get("units") or [] if u and u.get("name")]
     cn = [u["name"] for u in cover.get("units") or [] if u and u.get("name")]
-    rn = []
-    for r in base.get("rules") or []:
-        rn.append(str(r.get("name") or (f"{r.get('kind')} line" if r.get("type") == "line" else r.get("type"))))
+    rn = [_rule_label(r) for r in base.get("rules") or []]
     units = _x_units(ctx, hn + cn)
-    region = " and ".join(hn) if hn else "this band"
-    rules = cn + rn
+    region = " and ".join(_label(ctx, n) for n in hn) if hn else "this band"
+    rules = [_label(ctx, n) for n in cn] + rn
     what = (" with " + ", ".join(rules[:6]) + (" ..." if len(rules) > 6 else "")) if rules else ""
     eq = _band_equation(ctx, hn, cn)
     lv, cases = xm.get("level"), xm.get("cases")

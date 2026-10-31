@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Step explanations use the engine's own record of each move (units, cages, chains, the cases tried): digit counting,
+  killer cage combinations and others now show their reasoning instead of a general description (about 390 -> 56 such
+  steps in the test corpora); set-logic explanations name units as "row 4" or "the 25 cage", and a refuted case reads
+  "suppose r4c3 is 7 ...".
 - Numbered edge clues are checked: a `difference`, `sum`, `product` or `ratio` that no two different digits 1..D make
   (ratio 1, a sum of 40 on 4x4) is refused when the file is read; it used to fail only when the puzzle was written back.
 - The chip for facts read off the clues alone is named "Clue Facts" (was "Clue facts (no 5 on a whisper)", an example

@@ -253,6 +253,8 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
                         "ecode": m.get("code"),
                         "xmeta": m.get("xmeta"),
                         "pattern": m.get("pattern"),
+                        "ex": m.get("ex"),
+                        "nm": m.get("nm"),
                         "tech": m["tech"],
                         "place": m["place"],
                         "elims": list(m["elim"]),
@@ -362,6 +364,8 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
                 "ecode": m.get("code"),
                 "xmeta": m.get("xmeta"),
                 "pattern": m.get("pattern"),
+                "ex": m.get("ex"),  # the engine's explanation records (cbackend.explain_record)
+                "nm": m.get("nm"),
                 "tech": m["tech"],
                 "place": tuple(m["place"]) if m["place"] else None,
                 "elims": [tuple(e) for e in m["elim"]],
@@ -736,9 +740,26 @@ def explain_steps(p, P, steps):
                 place=tuple(st["place"]) if st["place"] else None,
                 elim=tuple(map(tuple, st["elims"])),
                 code=st.get("ecode"),
-                explain={"pattern_cells": list(st.get("pattern") or [])},  # the engine's pattern cells for this move
+                # the engine's justification of this very move (units, chains, ALS, ...), else its pattern cells
+                explain=CB.explain_record(
+                    p,
+                    {
+                        "tech": t,
+                        "code": st.get("ecode"),
+                        "d": st.get("d"),
+                        "place": st["place"],
+                        "elim": st["elims"],
+                        "xmeta": st.get("xmeta"),
+                        "pattern": st.get("pattern"),
+                        "ex": st.get("ex"),
+                        "nm": st.get("nm"),
+                    },
+                    getattr(p, "_bp_cpuzzle", None),
+                )
+                or {"pattern_cells": list(st.get("pattern") or [])},
                 xmeta=st.get("xmeta") or {},
-                name=st["technique"],
+                # the move's unit / cage / rule name, as solve() names it (the handlers find their rule by it)
+                name=CB._name(p, *st["nm"]) if st.get("nm") else st["technique"],
                 d=0.0,
                 family=0,
             )

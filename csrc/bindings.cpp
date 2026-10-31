@@ -435,7 +435,10 @@ static py::list py_state_moves(const Puzzle& p, const std::vector<std::pair<int,
         for (int i = 0; i < m.pat_n; ++i) pat.append(b.pats[m.pat_off + i]);
         py::object ft = feat_tuple(m, b.covers);
         py::object meta = ft.attr("__getitem__")(4);
-        out.append(py::make_tuple(m.tech, m.code, place, el, m.d, meta, xm, m.scan, pat));
+        py::list exs;  // the move's explanation records (decoded by cbackend._explain, as for solve(explain=True))
+        for (int i = 0; i < m.ex_n; ++i) exs.append(b.ex[m.ex_off + i]);
+        out.append(py::make_tuple(m.tech, m.code, place, el, m.d, meta, xm, m.scan, pat, exs,
+                                  py::make_tuple(m.nk, m.na, m.nb)));
     }
     return out;
 }

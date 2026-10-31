@@ -436,6 +436,31 @@ def solve(
     return steps, solved
 
 
+def explain_record(puzzle, move, cpuzzle=None):
+    """the engine's structured justification of one state_moves(details=True) move (as solve(explain=True) gives),
+    or None when the move carries no records"""
+    if move.get("ex") is None:
+        return None
+    from types import SimpleNamespace as NS
+
+    info = getattr(puzzle, "_pm_info", None)
+    if info is None:  # implied groups follow the base groups, so one listing of them names every move's units
+        info = _C.puzzle_info(cpuzzle if cpuzzle is not None else to_cpuzzle(puzzle), [])
+        try:
+            puzzle._pm_info = info
+        except Exception:
+            pass
+    m = NS(
+        feat=(move["tech"],),
+        code=move.get("code"),
+        d=move.get("d"),
+        place=move.get("place"),
+        elim=move.get("elim") or (),
+        xmeta=move.get("xmeta"),
+    )
+    return _explain(puzzle, m, move["nm"], move.get("pattern") or [], move["ex"], info)
+
+
 # ------------------------------------------------------------ explanations --
 _LINK = {
     0: "weak",
@@ -921,6 +946,8 @@ def state_moves(
             "elim": list(el),
             "d": d,
         }
+        if len(r) > 9:  # the engine's explanation records and naming triple (decode with explain_record)
+            m["ex"], m["nm"] = list(r[9]), tuple(r[10])
         if len(r) > 5:
             meta, xm, scan, pat = r[5:9]
             m["meta"] = meta
