@@ -88,13 +88,15 @@ CLI: `--quality trivial.limit=0.5,trial.severity=reject,tedious.severity=off`. T
 | Code | Default severity | Meaning | Limit (default) |
 |---|---|---|---|
 | `spike` | warning | A Medium or harder puzzle whose 3 hardest steps carry more than *limit* of its effort (effort per step as in `difficulty`). | share (0.6) |
-| `decorative` | reject | A rule that is neither needed for uniqueness nor used by any step. | – |
-| `barely_used` | reject when never used, else warning | A rule used in fewer than *limit* steps. | steps (3) |
-| `redundant` | warning | A rule the puzzle is unique without, although the solve uses it. | – |
+| `decorative` | reject | A rule family (for example all the thermometers, or all the white dots) that is neither needed for uniqueness nor used by any step. | – |
+| `barely_used` | reject when never used, else warning | A rule family used in fewer than *limit* steps. | steps (3) |
+| `redundant` | warning | A rule family the puzzle is unique without, although the solve uses it. | – |
 | `trivial` | reject | More than *limit* of the cells are given (0.6 = 60%). | share (0.6) |
 | `tedious` | warning | Very Easy or Easy, but over *limit* minutes of routine work. | minutes (60) |
 | `uniqueness` | warning | Needs a uniqueness-based technique (relies on assuming one solution). | – |
 | `trial` | warning | Needs trial and error or forcing chains. | – |
+
+The three rule checks look at whole families: one extra dot among needed dots is not reported.
 
 Example: `{"code": "barely_used", "severity": "reject", "text": "thermo lines (rules 3, 4, 5, 6): used in only 0 steps
 of the solve", "rules": [3, 4, 5, 6]}`.

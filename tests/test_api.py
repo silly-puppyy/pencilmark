@@ -278,7 +278,8 @@ def test_issue_rules_follow_the_input_file():
     )
     doc = pencilmark.to_export(s)
     doc["rules"] = [{"type": "line", "kind": "thermo", "cells": th, "id": "T1", "label": "t"}] + doc["rules"]
-    dec = [i for i in pencilmark.rate(doc, fields=["issues"])["issues"] if i["code"] == "decorative"]
+    # the thermo is not needed: "decorative" if no step uses it, "redundant" if some step does
+    dec = [i for i in pencilmark.rate(doc, fields=["issues"])["issues"] if i["code"] in ("decorative", "redundant")]
     assert dec and dec[0]["rules"] == [0] and dec[0]["ids"] == ["T1"], dec
     out = pencilmark.to_export(doc)["rules"]
     assert out[0]["type"] == "line" and out[0]["id"] == "T1" and out[0]["label"] == "t", out

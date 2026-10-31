@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- `issues`: steps that read a line or rule through the engine's rule reasoning are credited to that rule. They were
+  credited to no rule family, so a thermometer, skyscraper or other line clue the solve used throughout could be
+  reported as `barely_used` ("used in only 0 steps") and the card rejected. On the golden corpora 3 of 282 cards lose a
+  false reject and 13 change a usage count in an issue text; nothing else on the card changes.
 - An ipuz sudoku (a dict, or a `.ipuz` / `.json` file on the command line) is read like `from_ipuz`. It was taken
   for internal puzzle JSON with no grid and reported "not unique".
 - `rate`, `solve`, `describe`, `fingerprint`, `to_export`, `load` and every command-line command accept a puzzle link

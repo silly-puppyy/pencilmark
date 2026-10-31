@@ -106,8 +106,8 @@ def step_elements(p, step, gk=None):
             out.add("cage")
         elif k == "inequality bound":
             out.add("thermo / inequality")
-        elif k == "line / rule":
-            out.add("line / rule")
+        elif k == "line / rule":  # credited to the rule it names ("thermo line", "cage 3"), else to the generic label
+            out.add(r.get("constraint") or "line / rule")
     for node in e.get("chain") or []:
         vc = node.get("via_constraint")
         if vc:
