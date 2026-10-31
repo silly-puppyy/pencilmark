@@ -243,11 +243,11 @@ def test_schema_validates_pack():
 
 
 def test_format_md_examples():
-    """the complete example files in docs/FORMAT.md, the rule family pages and the tutorials are valid"""
+    """the complete example files in docs/FORMAT.md, the rule family pages and the guides are valid"""
     pages = [
         ROOT / "docs" / "FORMAT.md",
         *sorted((ROOT / "docs").glob("rules/*.mdx")),
-        *(ROOT / "docs").glob("tutorials/*"),
+        *(ROOT / "docs").glob("guides/*"),
     ]
     text = "\n".join(f.read_text(encoding="utf-8") for f in pages)
     n = 0

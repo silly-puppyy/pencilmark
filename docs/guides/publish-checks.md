@@ -13,7 +13,7 @@ $ pencilmark rate mini.json --json --fields band,issues,reject
 {"line": 1, "format": "sudoku-grade", "format_version": 1, "grader": {"name": "pencilmark", "version": "1.0.0"}, "band": "Medium", "issues": [{"code": "spike", "severity": "warning", "text": "98% of the effort is in the 3 hardest steps"}], "reject": false}
 ```
 
-This is the 6×6 puzzle from [Write a variant puzzle file](../tutorials/variant-file.md). Each issue has a `code`, a
+This is the 6×6 puzzle from [Write a variant puzzle file](variant-file.md). Each issue has a `code`, a
 `severity` and a sentence. `reject` is true when any issue has severity `reject`: a puzzle an
 editor would send back. A `warning` is worth a look but may be intended.
 

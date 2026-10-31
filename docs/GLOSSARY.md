@@ -37,7 +37,7 @@ show exactly which outputs it moves. For contributors.
 region.
 
 **Issues.** Publishing checks on the card: a rule nobody needs, too many givens, most of the effort in a few steps.
-See [Check a puzzle before publishing](howto/publish-checks.md).
+See [Check a puzzle before publishing](guides/publish-checks.md).
 
 **Layout.** The arrangement of the grids of a multi-grid puzzle (Samurai, Twodoku, ...). See [Variants](VARIANTS.mdx).
 

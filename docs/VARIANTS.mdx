@@ -1,16 +1,17 @@
 ---
-title: Variants
+title: Named variants
 description: The placement variants and multi-grid layouts pencilmark recognises by name, with a drawing of each.
 ---
 
 import Cards, {Card} from '@site/src/components/VariantCards';
 
-# Variants
+# Named variants
 
-pencilmark grades any puzzle written in the [puzzle format](FORMAT.md); a variant needs no name to be solved. The
-names on this page are what `describe()` and `meta.type` call a puzzle when its rules match a known pattern
-([Variant names](NAMING.md) gives the exact rules). Rule families such as killer cages, thermometers and Kropki dots
-have their own pages under [Rule families](/rule-families/).
+These are the names pencilmark gives a puzzle when its rules match a known pattern: `describe()` and `meta.type` use
+them ("Samurai Sudoku", "Argyle Sudoku"). They are a library feature, not part of the [puzzle format](FORMAT.md): a
+samurai file is five `box_grid` rules and an Argyle file a few `region` rules, so any reader that reads those reads the
+puzzle, and no reader needs to know the names. [Variant names](NAMING.md) gives the exact matching rules; rule
+families such as killer cages and thermometers have their own pages under [Rule families](/rule-families/).
 
 ## Placement variants
 

@@ -1,24 +1,25 @@
 module.exports = {
   docs: [
     {type: 'doc', id: 'index', label: 'Overview'},
+    {type: 'category', label: 'Guides', collapsed: false, link: {type: 'generated-index', slug: '/guides/',
+      description: 'Step by step, from grading a first puzzle to generating, importing and checking puzzles.'}, items: [
+      {type: 'doc', id: 'guides/first-puzzle', label: 'Grade your first puzzle'},
+      {type: 'doc', id: 'guides/variant-file', label: 'Write a variant puzzle file'},
+      {type: 'doc', id: 'guides/generate', label: 'Generate a puzzle'},
+      {type: 'doc', id: 'guides/batch', label: 'Grade many puzzles'},
+      {type: 'doc', id: 'guides/import', label: 'Import puzzles from other apps'},
+      {type: 'doc', id: 'guides/publish-checks', label: 'Check a puzzle before publishing'},
+      {type: 'doc', id: 'guides/draw', label: 'Draw a puzzle'},
+    ]},
     {type: 'doc', id: 'USAGE', label: 'Usage'},
-    {type: 'category', label: 'Tutorials', collapsed: false, items: [
-      {type: 'doc', id: 'tutorials/first-puzzle', label: 'Grade your first puzzle'},
-      {type: 'doc', id: 'tutorials/variant-file', label: 'Write a variant puzzle file'},
-      {type: 'doc', id: 'tutorials/generate', label: 'Generate a puzzle'},
+    {type: 'category', label: 'How the grades work', collapsed: false, items: [
+      {type: 'doc', id: 'PHILOSOPHY', label: 'Philosophy'},
+      {type: 'doc', id: 'MODEL', label: 'How a card is computed'},
+      {type: 'doc', id: 'BENCHMARK', label: 'Benchmark'},
+      {type: 'doc', id: 'TECHNIQUES', label: 'Techniques'},
     ]},
-    {type: 'category', label: 'How-to guides', collapsed: true, items: [
-      {type: 'doc', id: 'howto/batch', label: 'Grade many puzzles'},
-      {type: 'doc', id: 'howto/import', label: 'Import puzzles from other apps'},
-      {type: 'doc', id: 'howto/publish-checks', label: 'Check a puzzle before publishing'},
-      {type: 'doc', id: 'howto/draw', label: 'Draw a puzzle'},
-    ]},
-    {type: 'doc', id: 'PHILOSOPHY', label: 'Philosophy'},
-    {type: 'doc', id: 'MODEL', label: 'How a card is computed'},
-    {type: 'doc', id: 'BENCHMARK', label: 'Benchmark'},
-    {type: 'category', label: 'Formats', collapsed: false, items: [
+    {type: 'category', label: 'Formats', collapsed: true, items: [
       {type: 'doc', id: 'FORMAT', label: 'Puzzle format'},
-      {type: 'doc', id: 'VARIANTS', label: 'Variants'},
       {type: 'category', label: 'Rule families', collapsed: true, link: {type: 'generated-index', slug: '/rule-families/'}, items: [
         {type: 'doc', id: 'rules/houses-and-regions', label: 'Houses and regions'},
         {type: 'doc', id: 'rules/cages-and-sums', label: 'Cages and sums'},
@@ -37,13 +38,13 @@ module.exports = {
       {type: 'doc', id: 'INTEROP', label: 'Other formats'},
     ]},
     {type: 'category', label: 'Library', collapsed: false, items: [
-      {type: 'doc', id: 'STYLE', label: 'Drawing and style'},
-      {type: 'doc', id: 'TECHNIQUES', label: 'Techniques'},
-      {type: 'doc', id: 'NAMING', label: 'Variant names'},
-      {type: 'doc', id: 'ENGINE', label: 'Engine mapping'},
       {type: 'doc', id: 'api', label: 'Python API'},
-      {type: 'doc', id: 'GLOSSARY', label: 'Glossary'},
+      {type: 'doc', id: 'VARIANTS', label: 'Named variants'},
+      {type: 'doc', id: 'NAMING', label: 'Variant names: describe()'},
+      {type: 'doc', id: 'STYLE', label: 'Drawing and style'},
+      {type: 'doc', id: 'ENGINE', label: 'Engine mapping'},
     ]},
+    {type: 'doc', id: 'GLOSSARY', label: 'Glossary'},
     {type: 'category', label: 'Contributing', collapsed: true, link: {type: 'generated-index', slug: '/dev/'}, items: [
       {type: 'doc', id: 'dev/WRITING_STYLE', label: 'Writing style'},
       {type: 'doc', id: 'dev/CODE_STYLE', label: 'Code style'},

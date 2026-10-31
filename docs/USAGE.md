@@ -41,7 +41,7 @@ $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7..
 | `--computer` | allow computer-style search (forcing chains, trial) as well as human techniques |
 | `--allow-guessing` | guess where no technique applies (band Unknown), instead of proving by full search (Extreme) |
 | `--no-alternatives` | keep `contains` but skip the search for interchangeable techniques (faster) |
-| `--quality ...` | tune the publishing checks ([Check a puzzle before publishing](howto/publish-checks.md)) |
+| `--quality ...` | tune the publishing checks ([Check a puzzle before publishing](guides/publish-checks.md)) |
 
 | `--format` field | Meaning |
 |---|---|
