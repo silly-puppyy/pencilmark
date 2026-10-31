@@ -91,5 +91,7 @@ for card in cards:
         print(card["band"], card["difficulty"], card["time"])
 ```
 
+`rate_many` takes every option `rate` does; `alternatives=False` is the `--no-alternatives` of the command line.
+
 A puzzle that fails gives `{"error": "..."}` in its place instead of raising, so one bad puzzle does not stop the
 batch. `rate_many` takes the same `fields` and `max_seconds` options as `rate`.

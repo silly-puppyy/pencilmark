@@ -246,6 +246,11 @@ def test_mode_and_se_are_checked():
     assert pencilmark.rate(CLASSIC, se=True)["se"]["er"] > 0
 
 
+def test_rate_many_takes_rates_options():
+    """rate_many passes every rate option through (alternatives was missing: no fast batch mode from Python)"""
+    assert pencilmark.rate_many([CLASSIC], alternatives=False) == [pencilmark.rate(CLASSIC, alternatives=False)]
+
+
 def test_load_refuses_dicts_that_are_not_puzzles():
     """another app's dict, or a dict with no grid, size or rules, is refused instead of read as an empty 9x9 (8fbc403)"""
     for d in ({}, {"title": "x"}, {"foo": 1}, {"kind": ["http://ipuz.org/sudoku#1"], "puzzle": [[0] * 9] * 9}):

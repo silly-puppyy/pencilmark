@@ -236,7 +236,7 @@ def _mp_context():
 
 
 def _rate_job(args):
-    puzzle, steps, max_seconds, mode, se, fields, allow_guessing, explain, quality = args
+    puzzle, steps, max_seconds, mode, se, fields, allow_guessing, explain, quality, alternatives = args
     try:
         return rate(
             puzzle,
@@ -248,6 +248,7 @@ def _rate_job(args):
             allow_guessing=allow_guessing,
             explain=explain,
             quality=quality,
+            alternatives=alternatives,
         )
     except Exception as e:  # one bad puzzle must not sink the batch
         return {"error": f"{type(e).__name__}: {e}"}
@@ -264,6 +265,7 @@ def rate_many(
     allow_guessing=False,
     explain=None,
     quality=None,
+    alternatives=True,
 ):
     """Cards for many puzzles, in input order.
 
@@ -273,7 +275,7 @@ def rate_many(
         Puzzles in any form `rate` accepts.
     jobs : int
         Worker processes; 1 rates in this process.
-    steps, max_seconds, mode, se, fields, allow_guessing, explain, quality
+    steps, max_seconds, mode, se, fields, allow_guessing, explain, quality, alternatives
         As for `rate`.
 
     Returns
@@ -282,7 +284,7 @@ def rate_many(
         One card per puzzle. A puzzle that cannot be rated (not unique, no solution, unreadable) gives
         {"error": "..."} instead of raising.
     """
-    items = [(p, steps, max_seconds, mode, se, fields, allow_guessing, explain, quality) for p in puzzles]
+    items = [(p, steps, max_seconds, mode, se, fields, allow_guessing, explain, quality, alternatives) for p in puzzles]
     if jobs <= 1:
         return [_rate_job(it) for it in items]
     with _mp_context().Pool(jobs) as pool:

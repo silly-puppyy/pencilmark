@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- `rate_many` takes `alternatives` like `rate` (no fast batch mode from Python before).
 - The command line reports a missing file, a spec that is not JSON or cannot be met, and format errors in one line
   with exit status 1 (it printed a traceback).
 - `se` is null for anything but classic 9×9 sudoku. Variants got numbers on a scale defined only for classics, often
