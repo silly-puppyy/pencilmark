@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Error messages for `cell` rules name the rule type (`cell low takes split ...`, was `digits low ...`).
 - The technique list (`contains`) no longer loops forever on puzzles that need the forcing fallback, such as Easter
   Monster: a technique already removed could come back through the fallback, and was "removed" again on every pass.
   Easter Monster's default card now takes about 30 s.

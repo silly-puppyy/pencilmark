@@ -700,11 +700,11 @@ def _validate_rule(r, B):
         if t == "cell":
             if CELL[kind].param == "split":
                 if "split" not in r or "values" in r:
-                    raise FormatError(f"digits {kind} takes split (and no values)")
+                    raise FormatError(f"cell {kind} takes split (and no values)")
                 _int(r["split"], "split", 1)
             elif CELL[kind].param == "values":
                 if "values" not in r or "split" in r:
-                    raise FormatError(f"digits {kind} takes values")
+                    raise FormatError(f"cell {kind} takes values")
                 if (
                     not isinstance(r["values"], list)
                     or not r["values"]
@@ -712,7 +712,7 @@ def _validate_rule(r, B):
                 ):
                     raise FormatError(f"values must be digits 1..{D}")
             elif "split" in r or "values" in r:
-                raise FormatError(f"digits {kind} takes no split / values")
+                raise FormatError(f"cell {kind} takes no split / values")
         if t == "count":
             modes = [k for k in ("kind", "each", "counts") if k in r]
             if len(modes) != 1:
