@@ -35,8 +35,9 @@ def test_cli_json_equals_api(variants):
 def test_cli_default_format_and_solve():
     out = run(["rate", "-"], CLASSIC + "\n")
     assert out == ["Hard\t5.9\t10.7\tX-Wing"]
-    sol = run(["solve", "-"], CLASSIC + "\n" + "." * 81 + "\n")
+    sol = run(["solve", "-"], CLASSIC + "\n" + "." * 81 + "\n" + "123\n")  # a bad line is reported, not fatal
     assert sol[0] == "".join(map(str, pencilmark.solve(CLASSIC))) and sol[1] == "not unique"
+    assert sol[2] == "error: ValueError: the grid has 3 symbols; expected 81"
 
 
 def test_cli_parallel_same_output(variants):

@@ -7,7 +7,7 @@ pencilmark rate puzzles.txt              # one line per puzzle: band, difficulty
 pencilmark rate puzzles.txt --report     # readable summary
 pencilmark rate puzzles.txt --json       # full card (sudoku-grade); add --steps for the step-by-step solve
 pencilmark rate - --format '%b|%d|%m|%p|%c' < puzzles.txt
-pencilmark solve puzzles.txt             # the solution, or 'not unique' / 'no solution' / 'undecided'
+pencilmark solve puzzles.txt             # the solution, or 'not unique' / 'no solution' / 'undecided' / 'error: ...'
 pencilmark json puzzles.txt              # validate + normalise to canonical puzzle JSON
 pencilmark export puzzles.txt --pretty   # each puzzle as a sudoku-puzzle file (docs/FORMAT.md), canonical
 pencilmark fingerprint puzzles.txt       # content fingerprint "sha256:..." per puzzle

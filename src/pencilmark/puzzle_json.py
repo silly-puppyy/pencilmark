@@ -236,7 +236,8 @@ def from_json(obj) -> M.Puzzle:
                 if _val(ch):
                     p.givens[k] = _val(ch)
         else:
-            raise ValueError(f"numbers has {len(nums)} symbols; expected {width * height} or {len(coords)}")
+            want = " or ".join(str(n) for n in sorted({width * height, len(coords)}))  # whole board, or cells only
+            raise ValueError(f"the grid has {len(nums)} symbols; expected {want}")
     for cell, s in (d.get("candidates") or {}).items():
         m = 0
         for ch in s:

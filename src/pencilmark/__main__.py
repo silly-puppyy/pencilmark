@@ -238,8 +238,12 @@ def cmd_solve(a):
     from . import cpsat_verify as V
 
     for k, obj in _inputs(a.file):
-        p = PJ.from_json(obj)
-        p.finalize()
+        try:
+            p = PJ.from_json(obj)
+            p.finalize()
+        except Exception as e:  # an unreadable line is reported in place, like `rate` does
+            print(f"error: {type(e).__name__}: {e}", flush=True)
+            continue
         sols, decided = V.decide(p, limit=2)
         print(
             "not unique"
