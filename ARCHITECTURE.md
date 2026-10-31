@@ -59,7 +59,7 @@ flowchart TB
 | Public API | `api.py`, `__main__.py` (CLI) | entry points; nothing else imports them |
 | Formats | `exchange.py`, `puzzle_json.py`, `interop.py`, `spec_format.py`, `sources/` | reading and writing puzzles, specs and cards |
 | Model | `model.py` | the Puzzle: cells, houses, relations, constraints; compiled by `finalize()` |
-| Engine | `csrc/` via `cbackend.py` | every search: techniques, move listing, brute force, refutation |
+| Engine | `csrc/` via `cbackend.py` (`engine_records.py` decodes its move records) | every search: techniques, move listing, brute force, refutation |
 | Grader | `band_path.py`, `card_score.py`, `scoring.py`, `metrics.py`, `export.py`, `card.py`, `grader_model.py` | route, prices, difficulty, time, band, contents; `grader_model.py` holds every fitted parameter, loaded once |
 | Words | `explain/` (base, grid, catalog, singles, combos, notes, chains, trial, records, dispatch), `variants.py`, `usage.py` | explanations, variant names and rule text |
 | Generator | `gen/` | puzzles for a `sudoku-spec` request |
