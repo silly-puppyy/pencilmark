@@ -85,12 +85,11 @@ def load(puzzle):
     from . import puzzle_json as PJ
     from .__main__ import _link_puzzle, _to_puzzle_json
 
-    link = _link_puzzle(puzzle.strip()) if isinstance(puzzle, str) else None
     if isinstance(puzzle, Path) or (isinstance(puzzle, str) and puzzle.endswith(".json") and Path(puzzle).exists()):
         obj = json.loads(Path(puzzle).read_text(encoding="utf-8"))
-    elif isinstance(puzzle, str) and puzzle.lstrip().startswith("{"):
+    elif isinstance(puzzle, str) and puzzle.lstrip().startswith("{"):  # JSON text, before links: it may hold a URL
         obj = json.loads(puzzle)
-    elif link is not None:
+    elif isinstance(puzzle, str) and (link := _link_puzzle(puzzle.strip())) is not None:
         obj = link
     elif isinstance(puzzle, str):
         from .interop import _PACKED

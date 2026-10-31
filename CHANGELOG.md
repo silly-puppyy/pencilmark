@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `pencilmark.load` reads JSON text that holds a link (every ipuz text does, in its `version`; a sudoku-puzzle with
+  a source URL in `meta`). It tried the text as a puzzle link first and failed with "not a puzzle link".
 - Step explanations: when an explanation falls back to the technique's general description, it no longer repeats
   the name ("Cage combinations Cage combinations pattern removes ..." -> "Cage combinations removes ...").
 - Package data: `price_params.json` is folded into `card_score.json` (`price_weights`, the only two weight vectors
