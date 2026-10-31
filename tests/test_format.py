@@ -824,3 +824,14 @@ def test_card_field_registry_matches_grade_md():
     assert keys - outside <= built, keys - outside - built
     assert {n for n, _ in E2.FIELDS} - {"time_*"} <= keys, {n for n, _ in E2.FIELDS} - keys
     E2.card_fields(sorted(keys - {"time_pNN"}) + ["time_p80"])  # every documented field is accepted
+
+
+def test_check_registry_matches_quality_and_grade_md():
+    """every quality code has a check, and GRADE.md section 4 lists exactly these codes"""
+    from pencilmark import publish_flags as PF
+
+    codes = {k for _, ks in PF.CHECKS for k in ks} | set(PF.RULE_CODES)
+    assert codes == set(PF.QUALITY)
+    text = (ROOT / "docs" / "GRADE.md").read_text(encoding="utf-8")
+    table = set(re.findall(r"^\| `(\w+)` \| (?:reject|warning)", text, re.M))
+    assert table == codes, table ^ codes

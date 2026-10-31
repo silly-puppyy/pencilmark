@@ -101,31 +101,72 @@ def _top3_share(puzzle, steps):
     return sum(v[:3]) / sum(v) if v and sum(v) > 0 else 0.0
 
 
+class _Ctx:
+    """what the checks read: the puzzle, its steps (pencil-mark steps left out), band, required techniques, routine
+    work in minutes, and the quality object (limits and severities)"""
+
+    def __init__(self, puzzle, P, steps, tier, required, work_min, q):
+        self.puzzle, self.P, self.tier, self.work_min, self.q = puzzle, P, tier, work_min, q
+        self.moves = [st for st in steps if st.move.feat[0] not in S.NOTE_TECHS]
+        self.band_i = MT.BANDS.index(tier) if tier in MT.BANDS else -1
+        self.required = set(required or [])
+
+    def lim(self, k):
+        return self.q[k]["limit"]
+
+
+def _c_spike(c):
+    if c.band_i >= 2:
+        share = _top3_share(c.puzzle, c.moves)
+        if share > c.lim("spike"):
+            return [("spike", "note", f"{share:.0%} of the effort is in the 3 hardest steps")]
+    return []
+
+
+def _c_trivial(c):
+    given_share = len(c.puzzle.givens) / max(c.puzzle.N, 1)
+    return (
+        [("trivial", "reject", f"{given_share:.0%} of the cells are given")] if given_share > c.lim("trivial") else []
+    )
+
+
+def _c_tedious(c):
+    if c.band_i in (0, 1) and c.work_min is not None and c.work_min > c.lim("tedious"):
+        return [("tedious", "note", f"{c.tier} but about {c.work_min:.0f} min of routine work")]
+    return []
+
+
+def _c_uniqueness(c):
+    hit = c.required & UNIQUENESS
+    return (
+        [("uniqueness", "note", "relies on the uniqueness assumption (" + ", ".join(sorted(hit)) + ")")] if hit else []
+    )
+
+
+def _c_trial(c):
+    hit = c.required & TRIAL
+    return [("trial", "note", "needs trial / forcing chains (" + ", ".join(sorted(hit)) + ")")] if hit else []
+
+
+# the check registry (GRADE.md 4), in the order notes are reported: check -> the quality codes it can raise. The rule
+# checks (decorative, redundant, barely_used) share one pass over the rule families (_rule_notes) and come last.
+CHECKS = [
+    (_c_spike, ("spike",)),
+    (_c_trivial, ("trivial",)),
+    (_c_tedious, ("tedious",)),
+    (_c_uniqueness, ("uniqueness",)),
+    (_c_trial, ("trial",)),
+]
+RULE_CODES = ("decorative", "redundant", "barely_used")
+
+
 def notes(puzzle, P, steps, tier, required, work_min, check_rules=True):
+    """the publishing notes [(code, severity, text, ...)] of a graded puzzle, as the quality object asks"""
     q = quality_limits(P.get("quality"))
-    lim = lambda k: q[k]["limit"]
-    on = lambda k: q[k]["severity"] != "off"
-    out = []
-    note_techs = S.NOTE_TECHS
-    mv = [st for st in steps if st.move.feat[0] not in note_techs]
-    bi = MT.BANDS.index(tier) if tier in MT.BANDS else -1
-    if bi >= 2 and on("spike"):
-        share = _top3_share(puzzle, mv)
-        if share > lim("spike"):
-            out.append(("spike", "note", f"{share:.0%} of the effort is in the 3 hardest steps"))
-    given_share = len(puzzle.givens) / max(puzzle.N, 1)
-    if on("trivial") and given_share > lim("trivial"):
-        out.append(("trivial", "reject", f"{given_share:.0%} of the cells are given"))
-    if on("tedious") and bi in (0, 1) and work_min is not None and work_min > lim("tedious"):
-        out.append(("tedious", "note", f"{tier} but about {work_min:.0f} min of routine work"))
-    req = set(required or [])
-    if on("uniqueness") and req & UNIQUENESS:
-        out.append(
-            ("uniqueness", "note", "relies on the uniqueness assumption (" + ", ".join(sorted(req & UNIQUENESS)) + ")")
-        )
-    if on("trial") and req & TRIAL:
-        out.append(("trial", "note", "needs trial / forcing chains (" + ", ".join(sorted(req & TRIAL)) + ")"))
-    if check_rules and (on("decorative") or on("redundant") or on("barely_used")):
+    on = lambda codes: any(q[k]["severity"] != "off" for k in codes)
+    c = _Ctx(puzzle, P, steps, tier, required, work_min, q)
+    out = [n for check, codes in CHECKS if on(codes) for n in check(c)]
+    if check_rules and on(RULE_CODES):
         out += _rule_notes(puzzle, P, q)
     return _apply_severity(out, q)
 
