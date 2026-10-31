@@ -339,3 +339,7 @@ html[data-theme='dark'] {
   .markdown table th, .markdown table td { min-width: 7.5rem; }
   .markdown table td:has(> code:only-child), .markdown table th:first-child { min-width: 5rem; }
 }
+
+/* a table's Drawing column keeps its swatch at full size (the browser squeezed it below the image's width) */
+.markdown td:has(> .pm-swatch) { min-width: 9.5rem; }
+.pm-swatch img { max-width: none; }  /* the width Swatch.js sets is the scale; the column grows instead */

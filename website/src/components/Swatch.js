@@ -5,6 +5,11 @@ import React, {useEffect, useRef, useState} from 'react';
 import ThemedImage from '@theme/ThemedImage';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 
+// one scale for every picture (tools/gen_swatches.py records each width): a plain 3x3 swatch is 150 px wide, and a
+// picture with outside clues or a bigger board is wider, so a cell is the same size in all of them
+const WIDTHS = require('@site/static/img/swatches/swatches.json').widths || {};
+const PLAIN = 148;  // a 3x3 board at 40 px per cell with its 0.35-cell margin
+
 export default function Swatch({name}) {
   const [json, setJson] = useState(null);
   const [open, setOpen] = useState(false);
@@ -25,7 +30,8 @@ export default function Swatch({name}) {
     <span ref={ref} className="pm-graphic pm-swatch">
       <button type="button" className="clean-btn pm-swatch-btn" title="Show the rule's JSON" aria-expanded={open}
               onClick={() => setOpen(!open)}>
-        <ThemedImage alt={name.replace(/[-_]/g, ' ')} width={120} sources={{light, dark}}/>
+        <ThemedImage alt={name.replace(/[-_]/g, ' ')} width={Math.round(((WIDTHS[name] || PLAIN) * 150) / PLAIN)}
+                     sources={{light, dark}}/>
       </button>
       {open && <pre className="pm-swatch-json">{json === null ? '…' : json}</pre>}
     </span>

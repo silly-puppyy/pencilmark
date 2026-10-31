@@ -24,6 +24,7 @@ module.exports = {
       {type: 'doc', id: 'MODEL', label: 'How a card is computed'},
       {type: 'doc', id: 'BENCHMARK', label: 'Benchmark'},
       {type: 'doc', id: 'TECHNIQUES', label: 'Techniques'},
+      {type: 'doc', id: 'EXPERIMENTS', label: 'Experiment log'},
     ]},
     {type: 'category', label: 'Formats', collapsed: true, items: [
       {type: 'doc', id: 'FORMAT', label: 'Puzzle format'},

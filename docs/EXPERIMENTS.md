@@ -1,7 +1,6 @@
 ---
 title: Experiment log
 description: Every substantial experiment behind pencilmark, what we measured and whether it worked, including the ideas we dropped.
-draft: true
 ---
 
 # Experiment log

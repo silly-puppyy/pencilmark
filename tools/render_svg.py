@@ -138,9 +138,18 @@ def render(doc, dark=False, cell=48, annotate=False, labels=False, background=Tr
         )
 
     def circle_clue(x, y, s, r=0.15):
+        """a numbered clue on an edge or corner: a circle for one or two characters, a pill sized to longer text"""
+        n = len(str(s))
+        if n <= 2:
+            rr = max(r, 0.2 if n == 1 else 0.23)
+            return (
+                f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{rr * u:.1f}" fill="{T["clue_bg"]}" stroke="{T["given"]}" '
+                f'stroke-width="1"/>' + small_text(x, y, s, size=0.28 if n == 1 else 0.25)
+            )
+        w, h = (0.15 * n + 0.14) * u, 0.4 * u
         return (
-            f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r * u:.1f}" fill="{T["clue_bg"]}" stroke="{T["given"]}" stroke-width="1"/>'
-            + small_text(x, y, s, size=0.19)
+            f'<rect x="{x - w / 2:.1f}" y="{y - h / 2:.1f}" width="{w:.1f}" height="{h:.1f}" rx="{h / 2:.1f}" '
+            f'fill="{T["clue_bg"]}" stroke="{T["given"]}" stroke-width="1"/>' + small_text(x, y, s, size=0.24)
         )
 
     def polyline(cells, col, w, closed=False):
@@ -382,7 +391,7 @@ def render(doc, dark=False, cell=48, annotate=False, labels=False, background=Tr
             else:
                 v = r.get("sum", r.get("value"))
                 label = f"⟨{v}⟩" if t == "xsum" else str(v)
-                add("outside", small_text(x, y, label, size=0.36, weight=500))
+                add("outside", small_text(x, y, label, size=0.45, weight=500))
                 if t == "sum" and k == "little_killer" and len(r["cells"]) > 1:
                     (xa, ya), (xb, yb) = ctr(r["cells"][0]), ctr(r["cells"][1])
                     L = math.hypot(xb - xa, yb - ya)
