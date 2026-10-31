@@ -1,5 +1,6 @@
 # External links in the docs still answer: weekly and by hand (Actions tab -> links -> Run workflow). A dead link fails
-# the run; nothing is changed. claude.ai and Substack refuse CI robots, so they are skipped. Links inside the site are checked by the docs build (onBrokenLinks: throw).
+# the run; nothing is changed. claude.ai and Substack refuse CI robots, so they are skipped. Links inside the site are
+# checked by the docs build (onBrokenLinks: throw).
 name: links
 
 on:
@@ -16,8 +17,9 @@ jobs:
       - uses: lycheeverse/lychee-action@v2
         with:
           args: >-
-            --root-dir ${{ github.workspace }} --scheme https --scheme http --no-progress --max-concurrency 8 --accept 200,206,429
-            --max-retries 3 --timeout 30 --exclude '^https://claude\.ai' --exclude '\.substack\.com/' --exclude 'localhost' --exclude '…'
+            --root-dir ${{ github.workspace }} --scheme https --scheme http --no-progress
+            --max-concurrency 8 --max-retries 3 --timeout 30 --accept 200,206,429
+            --exclude '^https://claude\.ai' --exclude '\.substack\.com/' --exclude 'localhost' --exclude '…'
             --exclude-path docs/dev/reference --exclude-path website
             README.md CONTRIBUTING.md ARCHITECTURE.md CHANGELOG.md 'docs/**/*.md' 'docs/**/*.mdx'
           fail: true
