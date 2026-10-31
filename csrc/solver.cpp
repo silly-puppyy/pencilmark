@@ -182,7 +182,7 @@ std::shared_ptr<Strategy> S(const char* n, std::function<void(Solver&, MoveBuf&)
 
 // strategy -> the techniques it can emit (only strategies with an unambiguous output are listed): a strategy whose
 // techniques are ALL disabled is skipped instead of computed and filtered (band-limited queries, human-mode races)
-static bool strategy_off(const char* name, const std::vector<char>& disabled) {
+static bool strategy_off(const char* name, const Flags& disabled) {
     static const std::unordered_map<std::string, std::vector<int>> TECHS = {
         {"xwing", {XWING}}, {"swordfish", {SWORDFISH}}, {"jellyfish", {JELLYFISH}},
         {"finned2", {FINNED_FISH}}, {"finned3", {FINNED_FISH}}, {"finned4", {FINNED_FISH}},
@@ -293,7 +293,7 @@ Solver::Solver(const Puzzle& pz, const Params& prm, const SolveOptions& o)
     marked.assign(p.N, 0);
     for (int t : opt.disabled)
         if (t >= 0 && t < N_TECH) {
-            disabled[t] = 1;
+            disabled.set(t, 1);
             any_disabled = true;
         }
     ex.assign(p.N, 0);
@@ -763,7 +763,7 @@ void Solver::collect_all(MoveBuf& b, bool direct_phase) {
     for (auto& tier : tiers)
         for (auto& s : tier) {
             if (deadline_passed()) return;
-            if (!strategy_off(s->name(), disabled)) timed(s->name(), b, [&] { s->collect(*this, b); });
+            if (!strategy_off(s->name(), disabled)) timed(s->name(), b, [&] { collect_strategy(*s, b); });
         }
 }
 

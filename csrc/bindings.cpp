@@ -377,6 +377,8 @@ static py::list py_state_moves(const Puzzle& p, const std::vector<std::pair<int,
                                const std::vector<int>& disabled, const py::object& solution, bool assume_unique,
                                int limit_per_tech, const py::object& written, bool details, const py::object& cand) {
     Params P = params_from(params);
+    uint64_t phash = 1469598103934665603ULL;  // the listing cache's params key: every item, by value
+    for (auto item : params) phash = (phash ^ (uint64_t)py::hash(py::repr(item.first)) ^ ((uint64_t)py::hash(py::repr(item.second)) << 1)) * 1099511628211ULL;
     SolveOptions o;
     o.disabled = disabled;
     o.assume_unique = assume_unique;
@@ -390,6 +392,8 @@ static py::list py_state_moves(const Puzzle& p, const std::vector<std::pair<int,
         Solver s(p, P, o);
         if ((int)wr.size() == p.N) s.written_override = wr;
         if ((int)cd.size() == p.N) s.cand_override = cd;
+        s.lcache = true;
+        s.lcache_params = phash;
         s.state_moves(givens, b, limit_per_tech);
     }
     py::list out;
@@ -484,6 +488,9 @@ PYBIND11_MODULE(_csolver, m) {
     m.def("set_deadline", [](double seconds) { set_deadline(seconds); }, py::arg("seconds"),
           "wall-clock limit for the following solves in this thread (seconds; <= 0 switches it off)");
     m.def("deadline_hit", []() { return g_deadline_hit; }, "True once the deadline set by set_deadline has passed");
+    m.def("listing_cache", [](bool on) { listing_cache_enable(on); }, py::arg("on"),
+          "state_moves reuses each strategy's moves at a state it listed before (on by default; off: compute every "
+          "listing, for tests). Either way the cache is emptied.");
     m.def("solve", &py_solve, py::arg("puzzle"), py::arg("givens"), py::arg("params"), py::arg("disabled"),
           py::arg("solution"), py::arg("allow_direct"), py::arg("max_steps"), py::arg("assume_unique") = true,
           py::arg("all_tiers") = false, py::arg("explain") = false, py::arg("colours") = py::none(),

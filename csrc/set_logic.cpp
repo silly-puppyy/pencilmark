@@ -309,6 +309,12 @@ void Solver::rule_intersect(MoveBuf& out) {
         F.clear();
         for (int c : U)
             if (!vals[c]) F.push_back(c);
+        // fewest candidates first (the enumeration order, and the move's pattern order): sorted before the cache
+        // lookups, so a cached result gives the same pattern as a computed one
+        std::sort(F.begin(), F.end(), [&](int x, int y) {
+            const int px = popc(cand[x]), py = popc(cand[y]);
+            return px != py ? px < py : x < y;
+        });
         nodes = 0;
         aborted = false;
         std::vector<uint32_t> ckey(ids.begin(), ids.end());
@@ -334,10 +340,6 @@ void Solver::rule_intersect(MoveBuf& out) {
                 return xh->second.first;
             }
         }
-        std::sort(F.begin(), F.end(), [&](int x, int y) {
-            const int px = popc(cand[x]), py = popc(cand[y]);
-            return px != py ? px < py : x < y;
-        });
         const int nf = (int)F.size();
         for (int i = 0; i < nf; ++i) inU[F[i]] = i;
         std::vector<std::pair<int, uint32_t>> reqs;  // house group, digits it must hold among the free cells

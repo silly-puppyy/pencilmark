@@ -369,8 +369,20 @@ void Solver::pattern_overlay(MoveBuf& out) {
     if ((int)rows.size() != p.D || p.D * p.D != p.N || p.D > 16) return;
     const pm_long CAP = 50000;  // templates per digit (all-or-none: the template set is invariant)
     const int R = (int)rows.size();
+    // per-digit memo: the templates of v depend only on where v is placed or still a candidate
+    const uint64_t memo_tag = 0x50AAULL;
+    std::vector<uint64_t> vb(p.W);
     for (int v = 1; v <= p.D; ++v) {
         const uint32_t b = bit(v);
+        std::fill(vb.begin(), vb.end(), 0);
+        for (int c = 0; c < p.N; ++c)
+            if (vals[c] == v || (!vals[c] && (cand[c] & b))) sbit(vb.data(), c);
+        if (digit_memo_get(p, memo_tag, v, vb, out)) continue;
+        const size_t memo_n0 = out.moves.size();
+        struct Put {  // store this digit's moves on every way out of the loop body
+            Solver& s; uint64_t tag; int v; const std::vector<uint64_t>& vb; MoveBuf& out; size_t n0;
+            ~Put() { digit_memo_put(s.p, tag, v, vb, out, n0); }
+        } put{*this, memo_tag, v, vb, out, memo_n0};
         std::vector<std::vector<int>> opts(R);
         for (int r = 0; r < R; ++r)
             for (int c : p.groups[rows[r]].cells)

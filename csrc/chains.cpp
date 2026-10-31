@@ -41,8 +41,16 @@ void Solver::gfish(MoveBuf& out, int n, bool finless, bool finned) {
     auto line = [&](int h) { return p.group_line[p.houses[h]]; };
     pm_long gf_nodes = 0;        // max_seconds: the cover / base enumeration checks the deadline every 4096 nodes
     bool gf_stop = false;
+    // per-digit memo key: size, finless / finned, canonical mode (fish of one digit depend only on its candidates)
+    const uint64_t memo_tag = 0x6F15ULL * 1000 + (uint64_t)n * 8 + finless * 4 + finned * 2 + canon;
+    std::vector<uint64_t> vb(W);
     for (int v = 1; v <= p.D && !gf_stop; ++v) {
         const uint32_t b = bit(v);
+        std::fill(vb.begin(), vb.end(), 0);
+        for (int c = 0; c < p.N; ++c)
+            if (!vals[c] && (cand[c] & b)) sbit(vb.data(), c);
+        if (digit_memo_get(p, memo_tag, v, vb, out)) continue;
+        const size_t memo_n0 = out.moves.size();
         for (int h = 0; h < H; ++h) {
             uint64_t* ph = &pos[(size_t)h * W];
             std::fill(ph, ph + W, 0);
@@ -227,6 +235,7 @@ void Solver::gfish(MoveBuf& out, int n, bool finless, bool finned) {
             }
         };
         pick_base(0, 0);
+        if (!gf_stop) digit_memo_put(p, memo_tag, v, vb, out, memo_n0);
     }
 }
 
@@ -314,7 +323,6 @@ void Solver::build_aic(int maxl, bool with_als) {
     const int M = (int)node.size();
     const int WW = (M + 63) / 64;
     auto is_grp = [&](int i) { return node[i].first <= GRP0; };
-    auto is_als = [&](int i) { return node[i].first < 0 && node[i].first > GRP0; };
     auto gc = [&](int i) -> const std::vector<int>& { return gcells[GRP0 - node[i].first]; };
     auto ncell = [&](int i) {
         return node[i].first >= 0 ? node[i].first : is_grp(i) ? gc(i)[0] : als[-1 - node[i].first].list[0];

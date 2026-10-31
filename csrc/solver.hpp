@@ -357,6 +357,27 @@ struct Strategy {
 using Tier = std::vector<std::shared_ptr<Strategy>>;
 std::vector<Tier> default_notes_tiers();
 
+// the disabled techniques. While a strategy's moves are listed for the listing cache (state_moves), every flag the
+// strategy reads is recorded, so its cached moves are reused only where those flags are the same (listing_cache.cpp)
+struct Flags {
+    std::vector<char> v;
+    mutable std::vector<char>* rec = nullptr;
+    void assign(size_t n, char x) { v.assign(n, x); }
+    size_t size() const { return v.size(); }
+    char operator[](size_t i) const {
+        if (rec) (*rec)[i] = 1;
+        return v[i];
+    }
+    void set(size_t i, char x) { v[i] = x; }
+};
+void listing_cache_enable(bool on);  // on by default; off: every listing is computed (tests compare the two)
+void listing_cache_clear();
+// per-digit memo of single-digit techniques (listing_cache.cpp): tag = the technique and its settings, bits = the cells
+// where digit v is still a candidate; get appends the stored moves and returns true on a hit
+bool digit_memo_get(const Puzzle& p, uint64_t tag, int v, const std::vector<uint64_t>& bits, MoveBuf& out);
+void digit_memo_put(const Puzzle& p, uint64_t tag, int v, const std::vector<uint64_t>& bits, const MoveBuf& out,
+                    size_t n0);
+
 struct SolveOptions {
     int max_steps = 5000;
     bool allow_direct = true;
@@ -404,8 +425,11 @@ public:
     const Puzzle& p;
     const Params& P;
     SolveOptions opt;
-    std::vector<char> disabled;
+    Flags disabled;
     bool any_disabled = false;
+    bool lcache = false;  // state_moves: notes-tier strategies go through the listing cache
+    uint64_t lcache_params = 0;  // hash of the params the listing was asked with (part of the cache key)
+    void collect_strategy(Strategy& s, MoveBuf& b);  // s->collect, through the listing cache when lcache is set
     std::vector<uint8_t> vals;
     std::vector<uint32_t> cand, placed_g;
     std::vector<char> is_given;  // cell was a given (avoidable rectangles)
