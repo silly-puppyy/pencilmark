@@ -864,6 +864,7 @@ def state_moves(
     written=None,
     details=False,
     cand=None,
+    skip=(),
 ):
     """Every move available at ONE state (puzzle.givens = filled cells; puzzle.domains = the marks / allowed
     digits per cell), across all technique families (direct and notes; tiers not gated -- all_tiers is
@@ -878,7 +879,9 @@ def state_moves(
     count of patterns of the move's kind at this state, behind desc 'search') and pattern (cells).
     cand = per-cell candidate bitmask of a mid-solve state, applied after the givens: pass the ORIGINAL puzzle (and a
     cpuzzle built once from it) instead of rewriting puzzle.domains -- fast (no rebuild) and the puzzle's own domains
-    stay what pattern detection expects."""
+    stay what pattern detection expects.
+    skip = techniques whose notes-tier strategies are not run: unlike disabled, every other strategy sees the same
+    disabled flags, so the result is exactly the full listing's moves minus (some of) the skipped techniques'."""
     if not hasattr(puzzle, "groups_of"):
         puzzle.finalize()
     sc = Scorer(params)
@@ -895,12 +898,18 @@ def state_moves(
     ]
     if cand is not None:  # mid-solve candidates as a mask; cpuzzle keeps the puzzle's own domains (build it once)
         raw = _C.state_moves(
-            *args, None if written is None else [int(x) for x in written], bool(details), [int(x) for x in cand]
+            *args,
+            None if written is None else [int(x) for x in written],
+            bool(details),
+            [int(x) for x in cand],
+            skip=[int(t) for t in skip],
         )
     elif written is not None or details:
-        raw = _C.state_moves(*args, None if written is None else [int(x) for x in written], bool(details))
+        raw = _C.state_moves(
+            *args, None if written is None else [int(x) for x in written], bool(details), skip=[int(t) for t in skip]
+        )
     else:
-        raw = _C.state_moves(*args)
+        raw = _C.state_moves(*args, skip=[int(t) for t in skip])
     out = []
     for r in raw:
         t, code, pl, el, d = r[:5]

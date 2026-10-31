@@ -303,6 +303,28 @@ int Solver::prop_rounds(int max_rounds, int& placed, std::vector<int>* log) {
         }
         for (int hi : p.houses) {
             if (result) break;
+            if (!log) {  // one pass per house: digits seen once / at least twice (same singles, same verdict)
+                uint32_t once = 0, twice = 0;
+                for (int x : p.groups[hi].cells)
+                    if (!vals[x]) {
+                        twice |= once & cand[x];
+                        once |= cand[x];
+                    }
+                const uint32_t need = p.full & ~placed_g[hi];
+                if (need & ~once) {
+                    result = round;
+                    break;
+                }
+                for (uint32_t mm = need & once & ~twice; mm; mm &= mm - 1) {
+                    const uint32_t b = mm & (~mm + 1);
+                    for (int x : p.groups[hi].cells)
+                        if (!vals[x] && (cand[x] & b)) {
+                            todo.push_back({x, lowdigit(b)});
+                            break;
+                        }
+                }
+                continue;
+            }
             for (uint32_t mm = p.full & ~placed_g[hi]; mm && !result; mm &= mm - 1) {
                 uint32_t b = mm & (~mm + 1);
                 int n = 0, at = -1;

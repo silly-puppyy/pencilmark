@@ -23,6 +23,9 @@ from . import solver as S
 BANDS = E2.BANDS
 FORCING_FALLBACK = True  # when no listed move exists, take the solver's forcing step (Extreme)
 FISH_CAP = True  # up to Hard, list fish of size 2 only (X-Wing; Swordfish and larger are Very Hard; speed)
+# costly techniques late in their band's study order: a listing first runs without their strategies, and runs them only
+# when the best move found could still lose to one of theirs (see _late_bound; exact)
+LATE = ("CaseAnalysis", "WhatIf", "EitherWay")
 FORCING_TECHS = CB.computer_search()  # a forcing step taken as the fallback is Extreme
 
 # most specific shape of an X-Chain move: engine pattern code -> (code, display name, band) (data/patterns.csv)
@@ -271,27 +274,50 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
             # sizes 3-4 were 90% of a listing over 58 houses)
             capped = b <= 3 and FISH_CAP
             Pb = dict(P, fish_max_n=2) if capped else P
-            key = (tuple(vals), tuple(cand), frozenset(allowed), capped) if _CACHE is not None else None
-            mv = _CACHE.get(key) if key is not None else None
-            if mv is None:
-                mv = CB.state_moves(
-                    q, Pb, disabled=set(S.TECH_NAMES) - allowed, limit_per_tech=8, details=True, cpuzzle=cp, cand=mask
-                )
-                if key is not None:
-                    _CACHE[key] = mv
-            cands = []
-            for m in mv:
-                if m["tech"] not in allowed or not (m["place"] or m["elim"]):
-                    continue
-                code, name, mb = classify(m, p)
-                if code in ban_codes:
-                    continue
-                if mb <= b:
-                    hit = 0 if target is not None and m["place"] and m["place"][0] == target else 1
-                    key = (mb, hit, rng.random()) if rng is not None else (mb, hit, _order(code), m["d"])
-                    cands.append((key, code, name, mb, m))  # rng: any move of the lowest band (other solvers)
-            if cands:
-                pick = min(cands, key=lambda x: x[0])
+
+            def listing(skip=()):
+                key = (tuple(vals), tuple(cand), frozenset(allowed), capped, skip) if _CACHE is not None else None
+                mv = _CACHE.get(key) if key is not None else None
+                if mv is None:
+                    mv = CB.state_moves(
+                        q,
+                        Pb,
+                        disabled=set(S.TECH_NAMES) - allowed,
+                        limit_per_tech=8,
+                        details=True,
+                        cpuzzle=cp,
+                        cand=mask,
+                        skip=skip,
+                    )
+                    if key is not None:
+                        _CACHE[key] = mv
+                cands = []
+                for m in mv:
+                    if m["tech"] not in allowed or not (m["place"] or m["elim"]):
+                        continue
+                    code, name, mb = classify(m, p)
+                    if code in ban_codes:
+                        continue
+                    if mb <= b:
+                        hit = 0 if target is not None and m["place"] and m["place"][0] == target else 1
+                        key = (mb, hit, rng.random()) if rng is not None else (mb, hit, _order(code), m["d"])
+                        cands.append((key, code, name, mb, m))  # rng: any move of the lowest band (other solvers)
+                return min(cands, key=lambda x: x[0]) if cands else None
+
+            # staged: without the LATE strategies first. Their moves are at least _late_bound; an ELIMINATION that
+            # beats that stays the pick in the full listing (eliminations are deduplicated per technique, the per-
+            # technique limit counts per technique, and the other strategies see the same disabled flags). A
+            # placement may be deduplicated against a skipped technique's: then the full listing decides.
+            late = (
+                tuple(sorted(t for t in allowed if S.TECH_NAMES[t] in LATE)) if rng is None and target is None else ()
+            )
+            if late:
+                pick = listing(late)
+                if pick is not None and (pick[4]["place"] or (pick[0][0], pick[0][2]) >= _late_bound(late)):
+                    pick = None
+            if pick is None:
+                pick = listing()
+            if pick is not None:
                 break
         if pick is None and FORCING_FALLBACK and P.get("r6_extreme", True) and rng is None and max_band >= 6:
             # nothing listed in any band -> one solver step from this state. The solver's stuck-fallback
@@ -370,6 +396,15 @@ def _code_techs(P):
         code, b = E2.chip_of(t)
         if b is not None:
             out.setdefault(code, set()).add(t)
+    return out
+
+
+def _late_bound(techs):
+    """the smallest (band, study order) a move of these techniques can have (none is a split / shape-coded one)"""
+    out = (99, 99)
+    for t in techs:
+        code, band = E2.chip_of(t)
+        out = min(out, (band if band is not None else 9, _order(code)))
     return out
 
 

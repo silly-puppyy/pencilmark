@@ -375,12 +375,14 @@ static py::list py_refute_profile(const Puzzle& p, const std::vector<std::pair<i
 // every move available at one state (any technique family), priced: (tech, code, place, elims, d)
 static py::list py_state_moves(const Puzzle& p, const std::vector<std::pair<int, int>>& givens, const py::dict& params,
                                const std::vector<int>& disabled, const py::object& solution, bool assume_unique,
-                               int limit_per_tech, const py::object& written, bool details, const py::object& cand) {
+                               int limit_per_tech, const py::object& written, bool details, const py::object& cand,
+                               const std::vector<int>& skip) {
     Params P = params_from(params);
     uint64_t phash = 1469598103934665603ULL;  // the listing cache's params key: every item, by value
     for (auto item : params) phash = (phash ^ (uint64_t)py::hash(py::repr(item.first)) ^ ((uint64_t)py::hash(py::repr(item.second)) << 1)) * 1099511628211ULL;
     SolveOptions o;
     o.disabled = disabled;
+    o.skip = skip;
     o.assume_unique = assume_unique;
     if (!solution.is_none()) o.solution = solution.cast<std::vector<int>>();
     std::vector<uint32_t> wr, cd;
@@ -502,5 +504,6 @@ PYBIND11_MODULE(_csolver, m) {
           py::arg("max_stuck") = 400, py::arg("K") = 0);
     m.def("state_moves", &py_state_moves, py::arg("puzzle"), py::arg("givens"), py::arg("params"),
           py::arg("disabled"), py::arg("solution"), py::arg("assume_unique") = false, py::arg("limit_per_tech") = 0,
-          py::arg("written") = py::none(), py::arg("details") = false, py::arg("cand") = py::none());
+          py::arg("written") = py::none(), py::arg("details") = false, py::arg("cand") = py::none(),
+          py::arg("skip") = std::vector<int>());
 }

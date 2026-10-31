@@ -193,12 +193,21 @@ static bool strategy_off(const char* name, const Flags& disabled) {
         {"ur", {UNIQUE_RECT}}, {"xur", {UNIQUE_RECT}}, {"bug", {BUG_PLUS1}}, {"gurth", {GURTH}},
         {"pairs", {NPAIR, HPAIR}}, {"triples", {NTRIPLE, HTRIPLE}}, {"quads", {NQUAD, HQUAD}},
         {"digitcount", {DIGIT_COUNT}}, {"equaldigits", {EQUAL_DIGITS}}, {"colouralgebra", {COLOUR_ALGEBRA}}, {"classcolour", {CLASS_COLOUR}}, {"cluefacts", {CLUE_FACTS, CLUE_SHAPE}},
-        {"ruleintersect", {RULE_INTERSECT}}, {"shorttrial", {SHORT_TRIAL}}};
+        {"ruleintersect", {RULE_INTERSECT}}, {"shorttrial", {SHORT_TRIAL}}, {"humancase", {HUMAN_CASE}},
+        {"whatif", {WHAT_IF}}, {"eitherway", {EITHER_WAY}}};
     auto it = TECHS.find(name);
     if (it == TECHS.end()) return false;
     for (int t : it->second)
         if (t < (int)disabled.size() && !disabled[t]) return false;
     return true;
+}
+
+// a strategy left out by opt.skip: every technique it can emit is skipped (the same table as strategy_off)
+static bool strategy_skipped(const char* name, const std::vector<char>& skipped) {
+    if (skipped.empty()) return false;
+    Flags f;
+    f.v = skipped;
+    return strategy_off(name, f);
 }
 
 // NOTES_TIERS
@@ -295,6 +304,11 @@ Solver::Solver(const Puzzle& pz, const Params& prm, const SolveOptions& o)
         if (t >= 0 && t < N_TECH) {
             disabled.set(t, 1);
             any_disabled = true;
+        }
+    for (int t : opt.skip)
+        if (t >= 0 && t < N_TECH) {
+            if (skipped.empty()) skipped.assign(N_TECH, 0);
+            skipped[t] = 1;
         }
     ex.assign(p.N, 0);
     ex2.assign(p.N, 0);
@@ -763,7 +777,8 @@ void Solver::collect_all(MoveBuf& b, bool direct_phase) {
     for (auto& tier : tiers)
         for (auto& s : tier) {
             if (deadline_passed()) return;
-            if (!strategy_off(s->name(), disabled)) timed(s->name(), b, [&] { collect_strategy(*s, b); });
+            if (!strategy_off(s->name(), disabled) && !strategy_skipped(s->name(), skipped))
+                timed(s->name(), b, [&] { collect_strategy(*s, b); });
         }
 }
 

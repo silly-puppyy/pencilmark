@@ -382,6 +382,9 @@ struct SolveOptions {
     int max_steps = 5000;
     bool allow_direct = true;
     std::vector<int> disabled;
+    // techniques whose strategies are not run in the notes tiers (state_moves(skip=...)): unlike disabled, the flags
+    // every other strategy reads stay as they are, so the moves listed are exactly the full listing's minus theirs
+    std::vector<int> skip;
     std::vector<int> solution;  // empty = brute force for Guess
     bool assume_unique = true;  // allow uniqueness techniques (UR, BUG+1)
     bool rich = false;          // emit rich per-move / per-step features (featurize)
@@ -427,6 +430,7 @@ public:
     SolveOptions opt;
     Flags disabled;
     bool any_disabled = false;
+    std::vector<char> skipped;  // opt.skip as flags
     bool lcache = false;  // state_moves: notes-tier strategies go through the listing cache
     uint64_t lcache_params = 0;  // hash of the params the listing was asked with (part of the cache key)
     void collect_strategy(Strategy& s, MoveBuf& b);  // s->collect, through the listing cache when lcache is set
