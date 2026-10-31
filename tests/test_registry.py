@@ -129,3 +129,16 @@ def test_se_rates_the_codes_se_knows():
     assert [c for c in se_names.split() if c not in SE.CLASSIC] == []
     singles = [{"code": "HSI", "place": (0, 1)}, {"code": "FHS", "place": (1, 2)}]
     assert SE.ratings(singles) == {"er": 1.2, "ep": 1.2, "ed": 1.2, "scale": "classic"}
+
+
+def test_generator_bands_match_the_route():
+    """the generator plans with the same band per code as the route grades (FRK / FSW / FJF / XCL were off by one)"""
+    from pencilmark import registry
+    from pencilmark.gen import api as G
+
+    known = G._known_codes()
+    assert {
+        c: k.shape_band
+        for c, k in registry.codes().items()
+        if k.shape_band is not None and known.get(c) != k.shape_band
+    } == {}

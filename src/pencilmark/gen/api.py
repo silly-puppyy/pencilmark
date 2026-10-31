@@ -106,8 +106,11 @@ def _known_codes():
             out.setdefault(code, b)
     for code, _name, b in BP._X_CHAIN.values():
         out.setdefault(code, b)
-    for code in ("FRK", "FSW", "FJF", "PHI", "PHV"):  # Hard shape codes of the split techniques
-        out.setdefault(code, 3)
+    from .. import registry
+
+    for code, c in registry.codes().items():  # a step named by its shape has the shape's band (a long X-Chain is
+        if c.shape_band is not None:  # Very Hard although X-Chain is Hard); the route grades it so
+            out[code] = c.shape_band
     return out
 
 
