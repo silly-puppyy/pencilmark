@@ -26,7 +26,7 @@ before the last step.
 
    ```
    pip install -e .
-   python -m pytest -q tests
+   python -m pytest -q -n auto tests
    python tools/golden.py check
    ```
 

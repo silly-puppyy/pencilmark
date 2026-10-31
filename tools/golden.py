@@ -1,8 +1,11 @@
 """Golden corpus: every output pencilmark produces for a fixed set of puzzles, so that a restructure can prove it
 changed nothing.
 
-  python tools/golden.py write [--corpus tests/golden] [-j 8]   record expected.jsonl from inputs.jsonl
-  python tools/golden.py check [--corpus tests/golden] [-j 8]   compare; exit 1 and print the differences
+  python tools/golden.py write [--corpus tests/golden] [-j N]   record expected.jsonl from inputs.jsonl
+  python tools/golden.py check [--corpus tests/golden] [-j N]   compare; exit 1 and print the differences
+
+-j defaults to the number of CPUs. The slowest records of the last run (timings kept in ~/.cache/pencilmark-golden)
+start first.
 
 inputs.jsonl: one {"name": ..., "puzzle": <anything rate() accepts>, "fields": [...] (optional)} per line.
 For each puzzle the record holds the full card (every field except elapsed and the grader's version, with steps at
@@ -13,7 +16,9 @@ error a puzzle raises.
 import argparse
 import hashlib
 import json
+import os
 import sys
+import time
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
@@ -85,10 +90,35 @@ def _record(pencilmark, cbackend, item):
     return out
 
 
+def _timed(item, reserved_ok):
+    t = time.perf_counter()
+    return record(item, reserved_ok), time.perf_counter() - t
+
+
+def _timings_file(corpus):
+    """seconds per record from the last run, kept outside the repository (it differs per machine)"""
+    key = hashlib.sha256(str(corpus.resolve()).encode()).hexdigest()[:12]
+    return Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "pencilmark-golden" / f"{key}.json"
+
+
 def run(corpus, jobs, reserved_ok=False):
+    """records in input order; the slowest records of the last run start first, so the run ends with short ones"""
     items = [json.loads(line) for line in (corpus / "inputs.jsonl").read_text(encoding="utf-8").splitlines() if line]
+    tf = _timings_file(corpus)
+    try:
+        last = json.loads(tf.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        last = {}
+    order = sorted(range(len(items)), key=lambda i: -last.get(items[i]["name"], 0.0))
     with ProcessPoolExecutor(jobs) as ex:
-        return list(ex.map(record, items, [reserved_ok] * len(items)))
+        futs = {i: ex.submit(_timed, items[i], reserved_ok) for i in order}
+        done = {i: f.result() for i, f in futs.items()}
+    try:
+        tf.parent.mkdir(parents=True, exist_ok=True)
+        tf.write_text(json.dumps({items[i]["name"]: round(t, 2) for i, (_, t) in done.items()}), encoding="utf-8")
+    except OSError:
+        pass
+    return [done[i][0] for i in range(len(items))]
 
 
 def diff(a, b, path=""):
@@ -108,7 +138,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("action", choices=["write", "check"])
     ap.add_argument("--corpus", type=Path, default=Path(__file__).resolve().parents[1] / "tests/golden")
-    ap.add_argument("-j", "--jobs", type=int, default=8)
+    ap.add_argument("-j", "--jobs", type=int, default=os.cpu_count() or 8)
     ap.add_argument(
         "--reserved-ok", action="store_true", help="accept reserved format parts (digit tables), as the benchmark does"
     )

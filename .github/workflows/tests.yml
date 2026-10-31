@@ -35,4 +35,4 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - run: python -m pip install ".[${{ matrix.extras }}]"
-      - run: python -m pytest tests -q
+      - run: python -m pytest tests -q -n auto

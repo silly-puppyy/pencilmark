@@ -73,7 +73,7 @@ Being fixed by the restructure (docs/dev/CODE_STYLE.md says how code should look
 ## Changing things safely
 
 ```
-python -m pytest -q tests                     # about 2 minutes
+python -m pytest -q -n auto tests             # about 10 seconds (30 s without -n)
 python tools/golden.py check                  # every output of 55 puzzles must be identical (about 5 minutes)
 ```
 

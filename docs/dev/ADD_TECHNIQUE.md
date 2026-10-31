@@ -58,7 +58,7 @@ fails until the handler exists. Follow the [writing style](WRITING_STYLE.md): re
 ## 5. Check and record
 
 ```
-python -m pytest -q tests                   # the quick suite
+python -m pytest -q -n auto tests           # the quick suite, about 10 s
 python tools/golden.py check                # which cards changed, and how
 ```
 
