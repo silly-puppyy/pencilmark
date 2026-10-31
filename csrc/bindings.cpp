@@ -74,14 +74,6 @@ static Params params_from(const py::dict& P) {
     auto getd = [&](const char* k, double& dst) {
         if (P.contains(k) && !P[k].is_none()) dst = P[k].cast<double>();
     };
-    getd("t0", pr.t0);
-    getd("t_mark", pr.t_mark);
-    getd("beta", pr.beta);
-    getd("c", pr.c_time);
-    getd("t_place", pr.t_place);
-    getd("t_erase", pr.t_erase);
-    getd("tau", pr.tau);
-    getd("ref_steps", pr.ref_steps);
     if (P.contains("meta_max_tech") && !P["meta_max_tech"].is_none()) pr.meta_max_tech = P["meta_max_tech"].cast<int>();
     if (P.contains("meta_exclude") && !P["meta_exclude"].is_none())
         for (int t : P["meta_exclude"].cast<std::vector<int>>())
@@ -102,10 +94,6 @@ static Params params_from(const py::dict& P) {
     if (P.contains("route") && !P["route"].is_none()) pr.sets_first = P["route"].cast<std::string>() == "sets_first";
     if (P.contains("ri_budget") && !P["ri_budget"].is_none()) pr.ri_budget = P["ri_budget"].cast<pm_long>();
     if (P.contains("band_budget") && !P["band_budget"].is_none()) pr.band_budget = P["band_budget"].cast<pm_long>();
-    if (P.contains("guess_time_unit") && !P["guess_time_unit"].is_none())
-        pr.guess_time_median = P["guess_time_unit"].cast<std::string>() == "median";
-    if (P.contains("guess_time_linear") && !P["guess_time_linear"].is_none())
-        pr.guess_time_linear = P["guess_time_linear"].cast<double>();
     getd("trial_k", pr.trial_k);
     if (P.contains("guess_deep") && !P["guess_deep"].is_none()) pr.guess_deep = P["guess_deep"].cast<int>();
     if (P.contains("meta_theta_arith_cells") && !P["meta_theta_arith_cells"].is_none())

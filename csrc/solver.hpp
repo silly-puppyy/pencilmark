@@ -128,7 +128,7 @@ struct Move {
     int code = 0;
     pm_long tab_live = 0;  // table-backed move: live tuples of the justifying table (case-analysis burden)
     int pat_off = 0, pat_n = 0;  // pattern cells (cells justifying the move) in MoveBuf::pats
-    // cognitive loads (human mode / rich features), see Solver::cog_loads; LOAD_N entries
+    // cognitive loads (human mode), see Solver::cog_loads; LOAD_N entries
     float load[8] = {0, 0, 0, 0, 0, 0, 0, 0};
     bool has_load = false;
     int ex_off = 0, ex_n = 0;  // explanation records in MoveBuf::ex: [tag, len, data...]...
@@ -229,7 +229,7 @@ inline void copy_extras(const MoveBuf& from, const Move& a, MoveBuf& to, Move& m
     m.ex_off = (int)to.ex.size();
     to.ex.insert(to.ex.end(), from.ex.begin() + a.ex_off, from.ex.begin() + a.ex_off + a.ex_n);
 }
-// record the cells that justify a move (rich features)
+// record the cells that justify a move (explanations, highlights)
 inline void set_pattern(MoveBuf& b, Move& m, const std::vector<int>& cells) {
     m.pat_off = (int)b.pats.size();
     b.pats.insert(b.pats.end(), cells.begin(), cells.end());
@@ -268,9 +268,7 @@ struct Params {
     bool sets_first = false;  // params route = "sets_first": chains / ALS tiers after the set-arithmetic tiers
     pm_long band_budget = 400000;  // BandLogic node budget per state (0 = off)
     double band_k = 0.25;       // BandLogic: d *= 1 + band_k * log(cases) (refutation case count / search nodes)
-    pm_long ri_budget = 1500000;  // RuleIntersection node budget per state (0 = off; featurize / rollouts may lower)  // table moves: d *= 1 + k_tab * log(live tuples)
-    double guess_time_linear = 0.0;
-    bool guess_time_median = false;  // params "guess_time_unit": "median" (default mean)  // != 0: Guess / Trial time = expected work x easy-step time
+    pm_long ri_budget = 1500000;  // RuleIntersection node budget per state (0 = off)  // table moves: d *= 1 + k_tab * log(live tuples)
     int guess_deep = 5;  // meta interaction: arith x log(cells) (params "meta_theta_arith_cells")
     int meta_max_tech = 68;  // meta-theta applies to technique codes below this (params "meta_max_tech")
     bool meta_excl[N_TECH] = {false};  // ... and not to these codes (params "meta_exclude": B pricing)
@@ -279,8 +277,6 @@ struct Params {
     // human mode (params["human_mode"]): every family competes in the race (no tier
     // gating within the direct / notes phase); difficulty *= exp(sum_j k_j * max(0, load_j - budget_j))
     bool human = false;
-    // time model (grader.scoring.predict_time / grade) for rollout summaries
-    double t0 = 0, t_mark = 0, beta = 1, c_time = 0, t_place = 0, t_erase = 0, tau = 0.15, ref_steps = 55;
     double cap_pow = 0.0;  // > 0: beyond the cap d = cap + (d - cap)^cap_pow (steeper than log1p; 1 = uncapped)
     double cap_tau = 1.0;  // soft guess cap: d > cap -> cap + tau * log1p((d - cap) / tau); 0 = hard cap
     double hbudget[8] = {27, 1.95, 2, 4, 0, 9, 7, 0};
@@ -328,18 +324,8 @@ struct SolveResult {
     std::vector<uint32_t> elims;
     bool solved = false;
     std::vector<int> pats, ex;  // pattern cells / explanation records of the chosen moves
-    std::vector<float> m_rich;  // one row per alt (rich_names())
-    std::vector<float> s_rich;  // one row per step (step_names())
     struct Stat { double ms = 0; pm_long calls = 0, hits = 0; };
     std::map<std::string, Stat> stats;  // SolveOptions::stats: per strategy / direct stage
-    // rollout summary (SolveOptions::rollout)
-    double r_time = 0.0, r_difficulty = 0.0, r_maxd = 0.0;
-    double r_gwork = 0.0, r_gfallback = 0.0, r_easy_sum = 0.0;  // guess_time_linear: work units, easy steps
-    pm_long r_easy_n = 0;
-    std::vector<double> r_easy;  // easy-step times (median unit)
-    std::vector<double> r_ds;
-    int r_hardest = -1, r_steps = 0;
-    bool r_notes = false;
 };
 
 class Solver;
@@ -388,7 +374,6 @@ struct SolveOptions {
     std::vector<int> skip;
     std::vector<int> solution;  // empty = brute force for Guess
     bool assume_unique = true;  // allow uniqueness techniques (UR, BUG+1)
-    bool rich = false;          // emit rich per-move / per-step features (featurize)
     bool all_tiers = false;     // emit the moves of every technique family at each state (audit)
     int all_tiers_cap = 40;     // ... at most this many per technique (cheapest first; 0 = all)
     bool explain = false;       // add state-dependent explanation records to the chosen moves
@@ -399,23 +384,7 @@ struct SolveOptions {
     // human colouring (cell -> colour id, -1 none): a colour = "same digit" hypothesis seeding ColourAlgebra;
     // with a solution it is used only where consistent with it, otherwise it is soft (moves flagged)
     std::vector<int> colours;
-    // stochastic rollout (distribution grading): sample the move instead of taking the cheapest,
-    // P(m) ∝ exp((-d(m) + attract[tech] + eta log(1+effect) + focus . g) / temperature)
-    bool rollout = false;
-    double temperature = 1.0;
-    uint64_t seed = 1;
-    bool focus = true;
-    bool all_families = false;  // race over every family of the phase (slow) vs the solver's tier gating
-    std::vector<double> attract;  // per technique code (N_TECH), default 0
-    double eta = 0.0;
-    double gfocus[4] = {0, 0, 0, 0};  // log_dist_last, same_digit_last, same_box_last, near_last
-    // rich features: context of the move before the first step (e.g. the human's
-    // previous placement when states come from solve traces); -1 = none
-    int seed_cell = -1, seed_digit = 0, seed_run = 1;
 };
-// rich feature names (column order of SolveResult::m_rich / s_rich)
-const std::vector<std::string>& rich_names();
-const std::vector<std::string>& step_names();
 
 class Solver {
 public:
@@ -689,27 +658,14 @@ private:
     const uint64_t* als_seen_d(int a, int d) const { return &als_seen[((size_t)a * 32 + d) * p.W]; }
     bool als_rcc(int a, int b, int x) const;
     void tag_implied(MoveBuf& b, size_t from);
-    // rich features
-    int rich_last = -1, rich_step_idx = 0;
-    int rich_last_digit = 0, rich_digit_run = 0;  // previous placement's digit, run of equal digits
-    int rich_tech_used[N_TECH] = {0};
     // provenance: step of the non-single move that eliminated (cell, digit), -1 none (reveal depth)
     std::vector<int> adv_src;
-    int roll_pick(const MoveBuf& b);  // sampled move index (rollouts)
     SolveResult* stats_out = nullptr;
     void timed(const char* name, MoveBuf& b, const std::function<void()>& f);
-    uint64_t rng_state = 0;
-    int roll_last = -1, roll_last_digit = 0;
     int step_fails = 0;        // families searched and found empty before the step's first success
     uint32_t step_fmask = 0;   // ... as a bitmask of their positions in the search order
-    std::unordered_map<uint64_t, int> rich_first;
-    void rich_rows(const MoveBuf& buf, SolveResult& out, bool notes_event);
-    void rich_after(const Move& chosen, bool notes_event);
     void cog_loads(Move& m, const MoveBuf& b);
     void collect_all(MoveBuf& b, bool direct_phase);
-    std::vector<std::vector<int>> rich_pats;  // pattern cells per move of the current step
-    std::vector<int> rich_prev;               // pattern cells of the previous chosen move
-    int rich_best = -1;
 
     void compute_empties();
     void direct_excl();
@@ -738,11 +694,6 @@ private:
     int k_step();                                   // -1 contradiction, 0 nothing, 1 progress
     // finding-cost profile per singles-stuck point (scan space, productive K1 patterns, unlocking patterns,
     // fallback flag, placements released)
-    void finding_profile(const std::vector<std::pair<int, int>>& givens, const std::vector<int>& sol, int max_stuck,
-                         std::vector<std::array<int, 5>>& out);
-    bool k_has_single();
-    void k_patterns(std::vector<std::vector<std::pair<int, uint32_t>>>& pats, int& checks);
-    void cell_features(const std::vector<std::pair<int, int>>& givens, std::vector<std::array<double, 8>>& out);
   private:
     void take_notes(SolveResult& out, int n_empty);
     void take_snyder(SolveResult& out, int n_empty);

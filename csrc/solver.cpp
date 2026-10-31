@@ -342,47 +342,6 @@ Solver::Solver(const Puzzle& pz, const Params& prm, const SolveOptions& o)
     canon = !disabled[CANONICAL];
 }
 
-int Solver::roll_pick(const MoveBuf& b) {
-    const int n = (int)b.moves.size();
-    if (n <= 1) return 0;
-    if (!rng_state) rng_state = opt.seed * 0x9E3779B97F4A7C15ULL + 0x632BE59BD9B4E019ULL;
-    std::vector<double> lg(n);
-    double mx = -1e300;
-    const double T = std::max(opt.temperature, 1e-6);
-    for (int i = 0; i < n; ++i) {
-        const Move& m = b.moves[i];
-        double u = -m.d;
-        if (m.tech < (int)opt.attract.size()) u += opt.attract[m.tech];
-        u += opt.eta * std::log(1.0 + m.el_n + (m.pc >= 0));
-        const int tgt = m.pc >= 0 ? m.pc : (m.el_n ? (int)(b.elims[m.el_off] / 32) : -1);
-        if (opt.focus && tgt >= 0 && roll_last >= 0) {
-            const int dr = std::abs(p.coords[tgt].first - p.coords[roll_last].first);
-            const int dc = std::abs(p.coords[tgt].second - p.coords[roll_last].second);
-            bool near = false, same_box = false;
-            for (int gi : p.groups_of[tgt]) {
-                if (!p.groups[gi].complete || !tbit(p.gbits(gi), roll_last)) continue;
-                near = true;
-                if (p.group_cat[gi] == GC_BOX || p.group_cat[gi] == GC_IRREGULAR) same_box = true;
-            }
-            u += opt.gfocus[0] * std::log(1.0 + std::max(dr, dc)) + opt.gfocus[1] * (m.pv && m.pv == roll_last_digit) +
-                 opt.gfocus[2] * same_box + opt.gfocus[3] * near;
-        }
-        lg[i] = u / T;
-        mx = std::max(mx, lg[i]);
-    }
-    double z = 0;
-    for (double& x : lg) z += (x = std::exp(x - mx));
-    // xorshift64*
-    rng_state ^= rng_state >> 12;
-    rng_state ^= rng_state << 25;
-    rng_state ^= rng_state >> 27;
-    const double r = (double)((rng_state * 0x2545F4914F6CDD1DULL) >> 11) / 9007199254740992.0 * z;
-    double acc = 0;
-    for (int i = 0; i < n; ++i)
-        if ((acc += lg[i]) >= r) return i;
-    return n - 1;
-}
-
 void Solver::init_state(const std::vector<std::pair<int, int>>& givens) {
     ++version;
     adv_src.assign((size_t)p.N * 32, -1);
@@ -839,23 +798,6 @@ void Solver::filter(MoveBuf& b) {
 }
 
 void Solver::take_notes(SolveResult& out, int n_empty) {
-    if (opt.rollout) {
-        int w = 0;
-        for (int c = 0; c < p.N; ++c)
-            if (!vals[c]) w += popc(cand[c]);
-        out.r_time += P.notes_lazy ? 0.0 : P.t_mark * w;  // lazy: marks are paid per step, where used
-        out.r_ds.push_back(P.B[TAKE_NOTES]);
-        out.r_notes = true;
-        if (out.r_hardest < 0 || std::min(P.B[TAKE_NOTES], P.B[GUESS]) > out.r_maxd) {
-            out.r_maxd = std::min(P.B[TAKE_NOTES], P.B[GUESS]);
-            out.r_hardest = TAKE_NOTES;
-        }
-    }
-    if (opt.rich) {
-        static const MoveBuf none;
-        rich_rows(none, out, true);
-        rich_after(Move(), true);
-    }
     int written = 0;
     for (int c = 0; c < p.N; ++c)
         if (!vals[c]) written += popc(cand[c]);
@@ -893,15 +835,6 @@ void Solver::take_snyder(SolveResult& out, int n_empty) {
             }
             if (!placed && n >= 2 && n <= P.snyder_max) written += n;  // 3-position marks: params snyder_max = 3
         }
-    }
-    if (opt.rollout) {
-        out.r_time += P.t_mark * written;
-        out.r_ds.push_back(P.B[SNYDER_MARKS]);
-    }
-    if (opt.rich) {
-        static const MoveBuf none;
-        rich_rows(none, out, true);
-        rich_after(Move(), true);
     }
     StepRec st;
     st.move.tech = SNYDER_MARKS;
@@ -1108,12 +1041,6 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
     if ((int)cand_override.size() == p.N)  // solve on from a mid-solve state (same mask as state_moves(cand=))
         for (int c = 0; c < p.N; ++c)
             if (!vals[c]) cand[c] &= cand_override[c];
-    if (opt.seed_cell >= 0 && opt.seed_cell < p.N) {  // context of the move before step 1
-        rich_last = opt.seed_cell;
-        rich_last_digit = opt.seed_digit;
-        rich_digit_run = std::max(1, opt.seed_run);
-        rich_prev = {opt.seed_cell};
-    }
     MoveBuf buf;
     int mode = opt.allow_direct ? 0 : 1;
     if (mode == 1) {
@@ -1127,7 +1054,7 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
         const int n_empty = (int)empties.size();
         buf.clear();
         std::vector<int> entered;  // search order: stages tried this step (search-policy cost)
-        if (P.human || (opt.rollout && opt.all_families)) {  // every family of the phase competes in the race
+        if (P.human) {  // every family of the phase competes in the race
             collect_all(buf, mode == 0);
             filter(buf);
             if (buf.moves.empty() && mode == 0) {
@@ -1219,7 +1146,7 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
                 entered.push_back(8 + (int)ti);
                 for (auto& s : tier) {
                     if (strategy_off(s->name(), disabled)) continue;
-                    if (opt.prune_tiers && !opt.rollout && !buf.moves.empty()) {
+                    if (opt.prune_tiers && !buf.moves.empty()) {
                         // lower bound of what the strategy can price at (B-priced case splits only)
                         const char* nm = s->name();
                         double lb = -1;
@@ -1291,7 +1218,7 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
             }
         }
         int best = 0;
-        const bool loads = P.human || opt.rich || opt.all_tiers;
+        const bool loads = P.human || opt.all_tiers;
         for (size_t i = 0; i < buf.moves.size(); ++i) {
             Move& m = buf.moves[i];
             if (loads) cog_loads(m, buf);
@@ -1395,7 +1322,7 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
             if (!n) return false;
             r = sr / n; c = sc / n; return true;
         };
-        if (P.locality > 0 && loc_r >= 0 && !(opt.rollout && opt.temperature > 1e-9)) {
+        if (P.locality > 0 && loc_r >= 0) {
             double bestv = 0; int bi = -1;
             for (size_t i = 0; i < buf.moves.size(); ++i) {
                 double r, c, f = 1.0;
@@ -1405,7 +1332,6 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
             }
             if (bi >= 0) best = bi;
         }
-        if (opt.rollout && opt.temperature > 1e-9) best = roll_pick(buf);  // T = 0: the deterministic path
         { double r, c; if (mpos(buf.moves[best], r, c)) { loc_r = r; loc_c = c; } }
         if (opt.all_tiers) {  // audit: append every other family's moves (not chosen)
             const size_t n0 = buf.moves.size();
@@ -1480,11 +1406,6 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
             out.alts.push_back(a);
         }
         const Move& bm = buf.moves[best];
-        if (opt.rich) {
-            rich_best = best;
-            rich_rows(buf, out, false);
-            rich_after(bm, false);
-        }
         st.move = out.alts[st.alt_off + best];
         st.move.pat_off = (int)out.pats.size();
         st.move.pat_n = bm.pat_n;
@@ -1496,36 +1417,6 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
         st.move.el_off = (int)out.elims.size();
         st.move.el_n = bm.el_n;
         for (int i = 0; i < bm.el_n; ++i) out.elims.push_back(buf.elims[bm.el_off + i]);
-        if (opt.rollout) {  // time model + difficulty inputs (grader.scoring.predict_time / grade)
-            const bool guessy = bm.tech == GUESS || bm.tech == TRIAL || bm.tech == SHORT_TRIAL;
-            double den = 0;  // work_time's step time here: alternatives priced at most d_ref (Hidden Single)
-            for (const Move& m : buf.moves) den += std::exp(-P.beta * std::min(m.d, P.B[2]));
-            const double easy = P.c_time * n_empty / std::max(den, 1e-300);
-            if (P.guess_time_linear != 0.0 && guessy && priced_meta(bm)) {  // linear in the expected work: work
-                // units x the path's mean easy-step time (added when the path ends)
-                const double w = bm.tech == GUESS ? std::max(bm.meta[0] / 10.0, 1.0) : (double)std::max(bm.meta[0], 1);
-                out.r_gwork += w;
-                out.r_gfallback += easy * w;
-            } else {
-                double denom = 0;
-                for (const Move& m : buf.moves) denom += std::exp(-P.beta * m.d);
-                out.r_time += P.c_time * n_empty / std::max(denom, 1e-300);
-                if (!guessy) {
-                    out.r_easy_sum += easy, ++out.r_easy_n;
-                    if (P.guess_time_median) out.r_easy.push_back(easy);
-                }
-            }
-            if (bm.pc >= 0) out.r_time += P.t_place;
-            out.r_ds.push_back(bm.d);
-            if (out.r_hardest < 0 || std::min(bm.d, P.B[GUESS]) > out.r_maxd) {
-                out.r_maxd = std::min(bm.d, P.B[GUESS]);
-                out.r_hardest = bm.tech;
-            }
-            if (bm.pc >= 0) {
-                roll_last = bm.pc;
-                roll_last_digit = bm.pv;
-            }
-        }
         int lazy_written = 0;
         if (P.notes_lazy && mode == 1) {  // write the candidates of the cells this step uses (once per cell)
             auto mark = [&](int c) {
@@ -1537,7 +1428,6 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
             for (int i = 0; i < bm.el_n; ++i) mark((int)(buf.elims[bm.el_off + i] / 32));
             mark(bm.pc);
             st.notes_written = lazy_written;
-            if (opt.rollout) out.r_time += P.t_mark * lazy_written;
         }
         pm_long lazy_before = 0;
         auto marked_sum = [&]() {  // candidates written in the placed cell's peers / relation partners
@@ -1560,35 +1450,12 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
             cand[e / 32] &= ~bit((int)(e % 32));
         }
         st.erasures = mode == 1 ? erasures : 0;
-        if (opt.rollout) out.r_time += P.t_erase * st.erasures;
         out.steps.push_back(st);
     }
     bool solved = true;
     for (int c = 0; c < p.N; ++c)
         if (!vals[c]) solved = false;
     out.solved = solved && grid_valid();  // a filled grid must satisfy every rule
-    if (opt.rollout) {  // grade(): soft bottleneck over the step difficulties
-        out.r_time += P.t0;
-        if (out.r_gwork > 0) {
-            if (!out.r_easy_n) {
-                out.r_time += out.r_gfallback;
-            } else if (P.guess_time_median && !out.r_easy.empty()) {
-                std::vector<double> e = out.r_easy;
-                std::sort(e.begin(), e.end());
-                const size_t h = e.size() / 2;
-                out.r_time += out.r_gwork * (e.size() % 2 ? e[h] : 0.5 * (e[h - 1] + e[h]));
-            } else {
-                out.r_time += out.r_gwork * out.r_easy_sum / out.r_easy_n;
-            }
-        }
-        out.r_steps = (int)out.r_ds.size();
-        if (!out.r_ds.empty()) {
-            double dmax = *std::max_element(out.r_ds.begin(), out.r_ds.end()), w = 0;
-            for (double d : out.r_ds) w += std::exp((d - dmax) / P.tau);
-            const double dens = w * P.ref_steps / std::max<size_t>(out.r_ds.size(), 1);
-            out.r_difficulty = dmax + P.tau * std::log(std::max(dens, 1.0));
-        }
-    }
 }
 
 bool Solver::grid_valid() const {
