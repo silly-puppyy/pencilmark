@@ -442,10 +442,10 @@ def edge_relation(rule, D):
 
 
 _MATHRAX_OK = {
-    "+": lambda v: (lambda x, y: x + y == v),
-    "-": lambda v: (lambda x, y: abs(x - y) == v),
-    "/": lambda v: (lambda x, y: max(x, y) == v * min(x, y)),
-    "x": lambda v: (lambda x, y: x * y == v),
+    "+": lambda v: lambda x, y: x + y == v,
+    "-": lambda v: lambda x, y: abs(x - y) == v,
+    "/": lambda v: lambda x, y: max(x, y) == v * min(x, y),
+    "x": lambda v: lambda x, y: x * y == v,
 }
 _NUMBERED_OK = {
     "difference": lambda r: _MATHRAX_OK["-"](r["value"]),

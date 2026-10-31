@@ -100,7 +100,7 @@ def _top3_share(puzzle, steps):
     return sum(v[:3]) / sum(v) if v and sum(v) > 0 else 0.0
 
 
-def notes(puzzle, P, steps, tier, forced, required, work_min, check_rules=True):
+def notes(puzzle, P, steps, tier, required, work_min, check_rules=True):
     q = quality_limits(P.get("quality"))
     lim = lambda k: q[k]["limit"]
     on = lambda k: q[k]["severity"] != "off"

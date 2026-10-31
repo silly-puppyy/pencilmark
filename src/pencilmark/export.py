@@ -341,12 +341,7 @@ def _issues(p, card, doc, prov):
     """card notes -> issues [{"code", "severity": "reject" | "warning", "text", "rules"?}] (GRADE.md 4). Rule notes
     point at the exported file's rule indices (doc = exchange.write(p) as to_export writes it)."""
     out = []
-    raw = card.get("_notes_raw")
-    if raw is None:  # cards made without the raw notes: parse the flags
-        raw = [
-            ("note", "reject" if f.startswith("would not") else "note", f.split(": ", 1)[-1])
-            for f in card.get("flags") or []
-        ]
+    raw = card.get("notes") or []
     cls_map = None
     for n in raw:
         code, sev, text = n[0], n[1], n[2]
@@ -494,13 +489,7 @@ def _grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expl
         def make_card(route):
             req_b = list(dict.fromkeys(st["technique"] for st in route["steps"] if st["band"] > 0))
             try:
-                return K.grade_card(
-                    p,
-                    P,
-                    specific=False,
-                    check_rules=checks,  # specific names are not used by this card
-                    band=(route["band"] if route["solved"] else "Unknown", req_b),
-                )
+                return K.grade_card(p, P, (route["band"] if route["solved"] else "Unknown", req_b), check_rules=checks)
             except Exception:
                 if not hit():
                     raise
@@ -543,7 +532,6 @@ def _grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expl
         if c not in SINGLE_CODES:
             e["uses"] = n  # on the easiest route; singles' counts swing with the route, so omitted
         contains.append(e)
-    tg = card.get("time_grade")
     tm = time_units(
         card.get("effort_l1"), p.N - len(p.givens), difficulty=card.get("score"), geometry=region_geometry(p)
     )
@@ -556,11 +544,7 @@ def _grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expl
         g["difficulty"] = card.get("score")
     if "time" in want:
         # time in MINUTES for today's average player (classic units x minutes_per_unit, data/time_model.json)
-        g["time"] = (
-            round(tm * _TIME.get("minutes_per_unit", 1.0), 1)
-            if tm is not None
-            else (round(2 ** (tg - 5), 2) if tg is not None else None)
-        )
+        g["time"] = round(tm * _TIME.get("minutes_per_unit", 1.0), 1) if tm is not None else None
     variant = _is_variant(p)
     for f in sorted(
         (f for f in want if f.startswith("time_") and f != "time_dist"), key=lambda f: (f != "time_mean", len(f), f)

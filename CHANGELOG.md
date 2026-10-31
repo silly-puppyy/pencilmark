@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- When the difficulty route cannot grade a puzzle, `difficulty` and `time` are null. `time` fell back to an older
+  formula that skipped the minutes conversion (about 0.35 for a typical puzzle), and `difficulty` to a retired
+  calibration.
 - `dumps` (canonical form) writes `board` as `rows`, then `cols`, whatever order the input used; the canonical text
   of one puzzle could differ by that order.
 - `pencilmark.count_solutions(puzzle, limit=1000)` and `pencilmark count FILE`: how many solutions a puzzle has (`>=N`

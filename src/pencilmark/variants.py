@@ -195,9 +195,11 @@ def _whisper_name(rules, ctx):
 family(
     "Killer",
     _t("cage"),
-    lambda rs, c: "Digits in a cage sum to its small clue and don't repeat within the cage."
-    if all("sum" in r for r in rs)
-    else "Digits don't repeat within a cage; a small clue gives the cage's sum.",
+    lambda rs, c: (
+        "Digits in a cage sum to its small clue and don't repeat within the cage."
+        if all("sum" in r for r in rs)
+        else "Digits don't repeat within a cage; a small clue gives the cage's sum."
+    ),
 )
 family(
     "Little Killer",
@@ -217,8 +219,9 @@ family(
 family(
     "Sandwich",
     _t("sandwich"),
-    lambda rs,
-    c: f"Clues outside the grid give the sum of the digits between the 1 and the {c['D']} in that row or column.",
+    lambda rs, c: (
+        f"Clues outside the grid give the sum of the digits between the 1 and the {c['D']} in that row or column."
+    ),
 )
 family(
     "X-Sums",
@@ -233,11 +236,13 @@ family(
 family(
     "Rossini",
     lambda r: r["type"] == "rossini" or (r["type"] == "negative" and r["of"] == "rossini"),
-    lambda rs, c: "An arrow outside the grid means the first three digits from that side increase in its direction"
-    + (
-        "; where there is no arrow they neither increase nor decrease."
-        if any(r["type"] == "negative" for r in rs)
-        else "."
+    lambda rs, c: (
+        "An arrow outside the grid means the first three digits from that side increase in its direction"
+        + (
+            "; where there is no arrow they neither increase nor decrease."
+            if any(r["type"] == "negative" for r in rs)
+            else "."
+        )
     ),
 )
 family("123", _t("first_seen"), "A clue outside the grid is the first of the digits 1, 2, 3 met from that side.")
@@ -252,9 +257,11 @@ family("Slow Thermo", _t("line", "slow_thermo"), "Digits increase or stay equal 
 family(
     "Whispers",
     _t("line", "whisper"),
-    lambda rs, c: f"Adjacent digits on a whisper line differ by at least {(_vals(rs, 'value') or [5])[0]}."
-    if len(_vals(rs, "value")) <= 1
-    else "Adjacent digits on a whisper line differ by at least the line's number.",
+    lambda rs, c: (
+        f"Adjacent digits on a whisper line differ by at least {(_vals(rs, 'value') or [5])[0]}."
+        if len(_vals(rs, "value")) <= 1
+        else "Adjacent digits on a whisper line differ by at least the line's number."
+    ),
 )
 family("Renban", _t("line", "renban"), "A renban line holds a set of consecutive digits in any order, without repeats.")
 family("Region Sum", _t("line", "region_sum"), "A region sum line has the same sum in every box it passes through.")
@@ -296,8 +303,9 @@ family(
 )
 family(
     "Difference",
-    lambda r: (r["type"] == "edge" and r["kind"] == "difference")
-    or (r["type"] == "negative" and r["of"] == "difference"),
+    lambda r: (
+        (r["type"] == "edge" and r["kind"] == "difference") or (r["type"] == "negative" and r["of"] == "difference")
+    ),
     "Digits separated by a numbered circle differ by that number.",
 )
 family(
@@ -318,10 +326,13 @@ family(
 family("Greater-Than", _t("edge", "less"), "An inequality sign points to the smaller of the two digits it separates.")
 family(
     "Battenburg",
-    lambda r: (r["type"] == "corner" and r["kind"] == "battenburg")
-    or (r["type"] == "negative" and r["of"] == "battenburg"),
-    lambda rs, c: "A battenburg mark means the four cells around it form an odd / even checkerboard"
-    + ("; no other 2×2 area does." if any(r["type"] == "negative" for r in rs) else "."),
+    lambda r: (
+        (r["type"] == "corner" and r["kind"] == "battenburg") or (r["type"] == "negative" and r["of"] == "battenburg")
+    ),
+    lambda rs, c: (
+        "A battenburg mark means the four cells around it form an odd / even checkerboard"
+        + ("; no other 2×2 area does." if any(r["type"] == "negative" for r in rs) else ".")
+    ),
 )
 family(
     "Mathrax",
@@ -339,14 +350,18 @@ family("Clone", _t("clone"), "Shaded shapes of the same colour hold the same dig
 family("Twin", _t("isomorphic"), "The two grids are the same solution with the digits relabelled.")
 family(
     "Odd-Even",
-    lambda r: (r["type"] == "cell" and r["kind"] in ("odd", "even"))
-    or (r["type"] == "negative" and r["of"] == "cell" and r.get("kind") in ("odd", "even")),
+    lambda r: (
+        (r["type"] == "cell" and r["kind"] in ("odd", "even"))
+        or (r["type"] == "negative" and r["of"] == "cell" and r.get("kind") in ("odd", "even"))
+    ),
     lambda rs, c: _odd_even_text(rs),
 )
 family(
     "Low-High",
-    lambda r: (r["type"] == "cell" and r["kind"] in ("low", "high"))
-    or (r["type"] == "negative" and r["of"] == "cell" and r.get("kind") in ("low", "high")),
+    lambda r: (
+        (r["type"] == "cell" and r["kind"] in ("low", "high"))
+        or (r["type"] == "negative" and r["of"] == "cell" and r.get("kind") in ("low", "high"))
+    ),
     lambda rs, c: _low_high_text(rs, c),
 )
 family("Digit Class", _t("cell", "set"), "A cell marked with small digits contains one of them.")

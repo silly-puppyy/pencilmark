@@ -178,7 +178,8 @@ def test_max_seconds_unknown_when_time_runs_out():
     t = time.time()
     card = pencilmark.rate(EASTER_MONSTER, max_seconds=5)
     assert time.time() - t < 8, time.time() - t
-    assert card["band"] == "Unknown" and card["difficulty"] is None and card["completed"] is False, card
+    assert card["band"] == "Unknown" and card["difficulty"] is None and card["time"] is None, card
+    assert card["completed"] is False, card
 
 
 def test_max_seconds_bounds_the_call():
