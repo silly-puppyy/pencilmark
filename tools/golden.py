@@ -5,8 +5,8 @@ changed nothing.
   python tools/golden.py check [--corpus tests/golden] [-j 8]   compare; exit 1 and print the differences
 
 inputs.jsonl: one {"name": ..., "puzzle": <anything rate() accepts>, "fields": [...] (optional)} per line.
-For each puzzle the record holds the full card (every field except elapsed, with steps at all three explanation
-levels), describe(), the canonical export and the engine's structural input (the arguments of the C++ puzzle), or the
+For each puzzle the record holds the full card (every field except elapsed and the grader's version, with steps at
+all three explanation levels), describe(), the canonical export and the engine's structural input (the arguments of the C++ puzzle), or the
 error a puzzle raises.
 """
 
@@ -69,6 +69,7 @@ def _record(pencilmark, cbackend, item):
         out["card"] = pencilmark.rate(puzzle, fields=fields, explain="steps" in fields or None, max_seconds=_LIMIT)
         if out["card"].get("completed") is False:
             raise LimitReached(f"{name}: stopped at the {_LIMIT} s limit; give it fewer fields")
+        out["card"].get("grader", {}).pop("version", None)  # a release changes it; the corpus records behaviour
         if "steps" in fields:
             out["notation"] = [
                 s.get("explanation", {}).get("notation")

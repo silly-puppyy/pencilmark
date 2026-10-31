@@ -454,7 +454,7 @@ def test_card_fields():
     """field mask = top-level keys, explanation levels, the issues / reject shape (GRADE.md)"""
     c = pencilmark.rate(CLASSIC)
     assert list(c) == ["format", "format_version", "grader", "difficulty", "time", "band", "contains"], list(c)
-    assert c["grader"] == {"name": "pencilmark", "version": "1.0.0"} and "reject" not in c
+    assert c["grader"] == {"name": "pencilmark", "version": pencilmark.__version__} and "reject" not in c
     m = pencilmark.rate(CLASSIC, fields=["difficulty", "time_p80", "steps", "symmetry", "se"], explain="short")
     assert set(m) == {"format", "format_version", "grader", "difficulty", "time_p80", "steps", "symmetry", "se"}
     assert m["difficulty"] == c["difficulty"] and set(m["steps"][0]["explanation"]) == {"short"}
