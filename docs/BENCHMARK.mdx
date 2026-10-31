@@ -122,3 +122,19 @@ the puzzles kept. Where a tool cannot express a request, its own output is filte
 
 pencilmark is 100 to 1000 times slower, lands on the requested band more often (the others' "Hard" is often an easier
 band on pencilmark's scale) and is the only one that generates killers. Speed and the hardest band are known issues.
+
+## Run it on your own data
+
+The frozen set stays private (its puzzles and times come from the sources above), but the measurement is public:
+`tools/benchmark.py` grades puzzles that carry a human target and prints the accuracy table above for them. Run on
+the frozen set's grades it reproduces every number on this page.
+
+```
+python tools/benchmark.py grade puzzles.jsonl -o grades.jsonl --jobs 8
+python tools/benchmark.py report grades.jsonl
+```
+
+One JSON object per line: `puzzle` (anything `pencilmark.load` reads), `source`, `group` (puzzles that are comparable:
+correlations are computed within each group and averaged), `target` (the human measure, higher = harder) and,
+optionally, `target_kind` (`"minutes"`, `"log minutes"`, `"seconds"` or `"log seconds"` add the time error) and `key`.
+Grading resumes where it stopped.
