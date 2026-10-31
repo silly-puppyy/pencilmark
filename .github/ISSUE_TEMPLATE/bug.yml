@@ -1,0 +1,25 @@
+name: Bug report
+description: A wrong card, a crash, a puzzle file that is read wrongly
+labels: [bug]
+body:
+  - type: textarea
+    id: puzzle
+    attributes:
+      label: Puzzle
+      description: The puzzle as you passed it (81-character string, sudoku-puzzle JSON, or a SudokuPad / f-puzzles link).
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what you expected
+      description: The call or command, its output (the card or the traceback), and what you expected instead.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `python -c "import pencilmark; print(pencilmark.__version__)"`, and your operating system.
+    validations:
+      required: true

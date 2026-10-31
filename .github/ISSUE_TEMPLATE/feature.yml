@@ -1,0 +1,16 @@
+name: Feature request
+description: A rule family, technique, input format or card field pencilmark should support
+labels: [enhancement]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What you would like
+      description: The rule, technique or format, with a link to where it is described or an example puzzle.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: What you would use it for.
