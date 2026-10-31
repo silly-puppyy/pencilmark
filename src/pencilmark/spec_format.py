@@ -32,6 +32,7 @@ GEN_KINDS = {
     "parity": ("cell", "parity"),
 }
 RULE_KIND = {v: k for k, v in GEN_KINDS.items()}
+RULE_KIND.update({("cell", "odd"): "odd", ("cell", "even"): "even"})  # one parity: its own element class
 GEN_SYM = {
     ("rot180", None): "rot180",
     ("rot90", None): "rot90",
@@ -339,6 +340,8 @@ def spec_from_gen(spec):
             r["kind"] = k
         if sel is not None and base in ("kropki", "xv"):
             r["color" if base == "kropki" else "letter"] = sel
+        if sel is not None and base == "parity":  # odd / even cells: the template names the parity
+            r["kind"] = "odd" if sel else "even"
         r["count"] = count
         return r
 

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Generator specs accept the `odd` and `even` cell templates SPEC.md documents (only an undocumented `parity` worked);
+  `parity` (odd or even cells, either kind) is now documented too.
 - `se`: a technique Sudoku Explainer has no value for takes the value of the technique it is a special case of
   (Simple Colouring and Multi-Colouring rate as X-Chain, 6.6, instead of the 7.0 fallback). The DiufSudoku scale is
   gone from the code and data as well (the card field went in 1.0.0); `se.scale` is always `"classic"`.

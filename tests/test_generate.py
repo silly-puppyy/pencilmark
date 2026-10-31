@@ -174,3 +174,23 @@ def test_spec_examples():
     for f in sorted((docs / "examples" / "specs" / "reserved").glob("*.json")):
         with pytest.raises((pencilmark.NotSupportedError, pencilmark.FormatError)):
             SF.spec_to_gen(json.loads(f.read_text(encoding="utf-8")))
+
+
+def test_parity_templates():
+    """SPEC.md 2: odd, even and parity cell templates are accepted and written back as given"""
+    from pencilmark import spec_format as SF
+
+    for kind in ("odd", "even", "parity"):
+        spec = {
+            "format": "sudoku-spec",
+            "format_version": 1,
+            "board": {"rows": 9, "cols": 9},
+            "digits": 9,
+            "rules": [
+                {"type": "box_grid", "origin": "r1c1", "box": [3, 3]},
+                {"type": "cell", "kind": kind, "count": 6},
+            ],
+        }
+        SF.validate_spec(spec)
+        back = SF.spec_from_gen(SF.spec_to_gen(spec))
+        assert [r for r in back["rules"] if r["type"] == "cell"] == [{"type": "cell", "kind": kind, "count": 6}]

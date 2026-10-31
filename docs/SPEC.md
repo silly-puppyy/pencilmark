@@ -43,7 +43,7 @@ A rule with `count` and no cells is a **template**: the generator places rules o
 | `{"type": "arrow"}` | |
 | `{"type": "edge", "kind": "kropki"}` | `"color": "white" \| "black"` for one colour |
 | `{"type": "edge", "kind": "xv"}` | `"letter": "X" \| "V"` for one letter |
-| `{"type": "cell", "kind": "odd" \| "even"}` | |
+| `{"type": "cell", "kind": "odd" \| "even" \| "parity"}` | `"parity"`: odd or even cells, either kind |
 
 One template per variety, each with its own `count`:
 
