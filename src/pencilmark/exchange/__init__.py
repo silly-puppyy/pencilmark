@@ -30,7 +30,6 @@ from .board import (  # noqa: F401
     battenburg_table,
     grid_area,
     grid_units,
-    lockout_table,
     product_pairs,
     read_houses,
     subgrid_units,

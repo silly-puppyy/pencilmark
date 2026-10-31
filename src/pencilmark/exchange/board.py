@@ -235,18 +235,6 @@ def battenburg_table(D, marked):
     ]
 
 
-def lockout_table(D, k):
-    """allowed (x, y, z) triples: |x - y| >= k and z outside the range between x and y"""
-    return [
-        (x, y, z)
-        for x in range(1, D + 1)
-        for y in range(1, D + 1)
-        if abs(x - y) >= k
-        for z in range(1, D + 1)
-        if z < min(x, y) or z > max(x, y)
-    ]
-
-
 def vudoku_table(D):
     """allowed (x, y, z) triples: x is y + z or |y - z|"""
     return [(x, y, z) for y in range(1, D + 1) for z in range(1, D + 1) for x in {y + z, abs(y - z)} if 1 <= x <= D]

@@ -51,7 +51,7 @@ enum NType {
     X(LK_THERMO, "thermo") X(LK_SLOW_THERMO, "slow_thermo") X(LK_WHISPER, "whisper") X(LK_DUTCH, "dutch_whisper")     \
     X(LK_RENBAN, "renban") X(LK_PALINDROME, "palindrome") X(LK_ENTROPIC, "entropic") X(LK_KROPKI, "kropki_chain")     \
     X(LK_REGION_SUM, "region_sum") X(LK_PARITY, "parity") X(LK_BETWEEN, "between") X(LK_MODULAR, "modular")           \
-    X(LK_ZIPPER, "zipper")
+    X(LK_ZIPPER, "zipper") X(LK_LOCKOUT, "lockout")
 enum LineKind {
 #define PM_LK_ENUM(id, name) id,
     PM_LINE_KINDS(PM_LK_ENUM)

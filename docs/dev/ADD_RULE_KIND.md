@@ -28,15 +28,17 @@ rule's values, and `generated` once the generator can place it. The dataclass's 
 The engine knows no public kinds: the reader translates each rule. Choose the cheapest of three routes.
 
 1. **Existing engine rules only.** If the kind can be written with rules the engine already has, translate it in
-   `line_to_engine` (and back in `line_from_engine`) in `rules/line.py`, as `double_arrow` becomes an equal sum and
-   `lockout` a pair rule plus digit tables. Nothing else changes in the engine.
+   `line_to_engine` (and back in `line_from_engine`) in `rules/line.py`, as `double_arrow` becomes an equal sum.
+   Nothing else changes in the engine. The writer then sees only the engine rules, so the kind may come back under
+   another name with the same meaning (a four-cell double arrow is written as a zipper).
 2. **A new engine line kind built from existing constraints.** Most lines are this. Append the name to
    `PM_LINE_KINDS` in `csrc/nary.hpp` (the ids are frozen: append, never insert) and to `LINE_KINDS` in
    `src/pencilmark/model.py`, in the same order (`tests/test_registry.py` checks it). Then compile it in
    `Puzzle.finalize` in `model.py`: into pair relations from `RELATIONS` (thermo steps are `lt`, palindrome mirrors
    `eq`, and a nabner line would be `notdiff` 1 and `neqval` on every pair of its cells; list the kind in
    `PAIRWISE_LINE_KINDS` too), or into an n-ary constraint the engine already solves (`set`,
-   `between`, `equal_sum` or `table`) carrying `"line_kind": kind`, as renban, between and zipper do. Rebuild the
+   `between`, `equal_sum` or `table`) carrying `"line_kind": kind`, as renban, between, zipper and lockout do. The
+   writer drops what the line compiled to and writes the line back. Rebuild the
    engine (`pip install -e .`) after the C++ change.
 3. **A new kind of constraint.** Only when no combination of the above can say the rule: a new `NT_` type in
    `csrc/nary.hpp`, its enumeration in `csrc/nary.cpp`, and techniques that use it ([Add a technique](ADD_TECHNIQUE.md)).

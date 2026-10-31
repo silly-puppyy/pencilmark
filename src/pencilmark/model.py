@@ -111,6 +111,7 @@ LINE_KINDS = (
     "between",
     "modular",
     "zipper",
+    "lockout",
 )
 PAIRWISE_LINE_KINDS = {
     "thermo",
@@ -222,6 +223,21 @@ class Puzzle:
                 self.constraints.append({"type": "set", "cells": ids, "kind": "consecutive", "line_kind": kind})
             elif kind == "between":
                 self.constraints.append({"type": "between", "cells": ids, "line_kind": kind})
+            elif kind == "lockout":  # the ends differ by at least k; every middle digit lies outside their range
+                k = con.get("k", 4)
+                a, b = ids[0], ids[-1]
+                R.append(("diffge", a, b, k))
+                rng = range(1, self.D + 1)
+                tab = [
+                    (x, y, z)
+                    for x in rng
+                    for y in rng
+                    if abs(x - y) >= k
+                    for z in rng
+                    if z < min(x, y) or z > max(x, y)
+                ]
+                for c in ids[1:-1]:
+                    self.constraints.append({"type": "table", "cells": [a, b, c], "allowed": tab, "line_kind": kind})
             elif kind == "zipper":
                 n = len(ids)
                 segs = [[ids[k], ids[n - 1 - k]] for k in range(n // 2)]

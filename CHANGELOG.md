@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Lockout lines can be written back: `to_export`, `fingerprint` and the canonical text failed on any puzzle with one
+  (NotSupportedError). The lockout is now an engine line kind compiled to the same relation and digit tables. Its
+  rule text states its own value (it always said 4).
 - Explanations name Turbot Fish and Remote Pair as the techniques are named elsewhere (they read "Turbot fish",
   "Remote pair").
 - `load({})` (or a dict holding only a title) raised nothing and read an empty 9×9 board; it is now refused like any

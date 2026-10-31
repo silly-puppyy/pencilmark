@@ -16,6 +16,15 @@ def _whisper_text(rules):
     return "Adjacent digits on a whisper line differ by at least the line's number."
 
 
+def _lockout_text(rules):
+    v = _values(rules, "value")
+    if len(v) <= 1:
+        return (
+            f"The ends of a lockout line differ by at least {(v or [4])[0]} and no digit on the line lies between them."
+        )
+    return "The ends of a lockout line differ by at least the line's number and no digit on the line lies between them."
+
+
 def _whisper_name(rules):
     v = _values(rules, "value") or [5]
     return {5: "German Whispers", 4: "Dutch Whispers"}.get(v[0], "Whispers") if len(v) == 1 else "Whispers"
@@ -94,7 +103,7 @@ LINE = {
         LineKind(
             "lockout",
             "Lockout",
-            "The ends of a lockout line differ by at least 4 and no digit on the line lies between them.",
+            _lockout_text,
             ("value",),
             width=0.05,
             ends="diamonds",
@@ -112,20 +121,13 @@ LINE = {
 
 def line_to_engine(r, D, B, pairs_rule):
     """a public line rule -> the engine's rules (exchange's reader): a line constraint, or for double_arrow an equal
-    sum, for lockout a pair rule and digit tables"""
-    from ..exchange import NotSupportedError, lockout_table
+    sum"""
+    from ..exchange import NotSupportedError
 
     k = r["kind"]
     cs = r["cells"]
     if k == "double_arrow":
         return [{"type": "equal_sum", "segments": [[cs[0], cs[-1]], cs[1:-1]]}]
-    if k == "lockout":
-        kk = r.get("value", 4)
-        a, b = B.idx(cs[0]), B.idx(cs[-1])
-        out = [pairs_rule("diffge", (kk,), [(a, b)])]
-        tab = [list(x) for x in lockout_table(D, kk)]
-        out += [{"type": "table", "cells": [cs[0], cs[-1], c], "allowed": tab} for c in cs[1:-1]]
-        return out
     con = {
         "type": "line",
         "kind": k,
@@ -133,7 +135,7 @@ def line_to_engine(r, D, B, pairs_rule):
     }
     if k == "renban" and r.get("closed"):  # a set either way; kept so the line is written (and drawn) closed
         con["closed"] = True
-    if k == "whisper" and "value" in r:
+    if k in ("whisper", "lockout") and "value" in r:
         con["k"] = r["value"]
     if k == "modular" and r.get("value", 3) != 3:
         raise NotSupportedError("modular lines with a modulus other than 3 are not supported by the engine")
@@ -158,6 +160,8 @@ def line_from_engine(c, B, D):
     if kind in ("whisper", "dutch_whisper"):
         if "k" in c or kind == "dutch_whisper" or D != 9:
             r["value"] = c.get("k", 5 if kind == "whisper" else 4)
+    if kind == "lockout" and ("k" in c or D != 9):
+        r["value"] = c.get("k", 4)
     if kind == "modular" and D != 9:
         r["value"] = 3
     if kind == "entropic" and D != 9:
