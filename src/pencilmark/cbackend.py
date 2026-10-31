@@ -6,9 +6,7 @@ Drop-in fast paths with behavioural parity to the Python reference:
     steps, solved = CB.solve(puzzle, params)            # ~ Solver(puzzle, Scorer(params)).solve()
     sols = CB.brute_solve(puzzle, limit=2)               # ~ pencilmark.solver.brute_solve
 
-Steps are real pencilmark.solver.Step / Move objects, so pencilmark.scoring.grade(),
-predict_time() and quality_metrics() work unchanged. Build first with
-csolver/build.sh.
+Steps are real pencilmark.solver.Step / Move objects, so pencilmark.scoring.grade() works unchanged.
 """
 
 from __future__ import annotations

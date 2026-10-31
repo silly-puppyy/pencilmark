@@ -36,7 +36,7 @@ def steps(p):
 
 
 def _record(p, st):
-    out, cells_, xs_ = [], [], []
+    out, cells_ = [], []
     for s in st:
         t = s.move.feat[0]
         nm = "notes" if t in S.NOTE_TECHS else S.TECH_NAMES[t]
@@ -50,25 +50,9 @@ def _record(p, st):
             d /= SC.size(p.D) / SC.size(9)  # beyond 9x9 bigger grids add time, not per-step difficulty
         out.append((nm, max(d, 1e-3), F / max(len(s.alts), 1)))
         cells_.append(([s.move.place[0]] if s.move.place else []) + [c for c, _ in (s.move.elim or ())])
-        xs_.append(_xvec(s.move.feat[-1]))
-    global _LAST_CELLS, _LAST_X
+    global _LAST_CELLS
     _LAST_CELLS = cells_
-    _LAST_X = xs_
     return out
-
-
-_LAST_X = None
-
-
-def _xvec(meta):
-    """the 21 numbers a step's price is linear in (18 = meta_vector + 8 descriptors, + 3 depth interactions); None without meta"""
-    if meta is None or len(meta) < 18:
-        return None
-    from .scoring import meta_vector
-
-    x = list(meta_vector(meta, desc=False)) + [float(t) for t in meta[10:18]]
-    br, dp = x[10], x[11]
-    return x + [dp * x[1], dp * x[4], dp * br]
 
 
 _PP = {}
@@ -97,30 +81,6 @@ def _price_params(name):
     if name not in _PP:
         _PP[name] = complete_params(_data.load_params(name))
     return _PP[name]
-
-
-_TIME_W = None
-_SC9_V = None
-
-
-def _SC9():
-    global _SC9_V
-    if _SC9_V is None:
-        _SC9_V = SC.size(9)
-    return _SC9_V
-
-
-def _time_weights():
-    """Time and difficulty use separate price weights on the same route. Difficulty = the card-fit weights (installed
-    params); time = data/time_model.json "price_weights" (the refit's time-trained weights). None -> time uses the card prices."""
-    global _TIME_W
-    if _TIME_W is None:
-        try:
-            tm = _data.load_json("time_model.json")
-            _TIME_W = tm.get("price_weights") or False
-        except Exception:
-            _TIME_W = False
-    return _TIME_W or None
 
 
 def _cage_enum(p):
@@ -252,25 +212,4 @@ def score_parts(p, cfg):
                 1e-9,
             )
         )
-    tw = _time_weights()
-    if (
-        tw and _LAST_X is not None and len(_LAST_X) == len(pth)
-    ):  # time effort: same route, time price weights (log-price delta)
-        P_ = P
-        wc = list(P_.get("meta_theta_full") or [])[:18] + list(P_.get("meta_theta_interact") or [0.0, 0.0, 0.0])[:3]
-        dw = [a_ - b_ for a_, b_ in zip(tw, wc)]
-        vt = 0.0
-        for (nm, d, f, e), x in zip(pth, _LAST_X):
-            ld = min(
-                math.log(d) + (sum(a_ * b_ for a_, b_ in zip(dw, x)) if x is not None else 0.0),
-                6.907755278982137 + math.log(_SC9()),
-            )  # the engine's log-price cap (log 1000) on the time price too
-            vt += math.exp(cfg["beta"] * ld + cfg["delta"].get(nm, 0.0) + w * e) * f
-        return score, math.log(max(vt, 1e-9))
     return score, math.log(max(sum(v), 1e-9))
-
-
-def score_puzzle(p, cfg):
-    """Card score from data/card_score.json (version 3) for one puzzle; None if the engine must guess."""
-    r = score_parts(p, cfg)
-    return None if r is None else r[0]
