@@ -118,3 +118,14 @@ def test_usage_code_table_matches():
         band = c.shape_band if c.shape_band is not None else tech[code]
         want[code] = (R.BANDS[band], ", ".join(sorted(BP.SUPERSETS.get(code, ()))))
     assert doc == want
+
+
+def test_se_rates_the_codes_se_knows():
+    """a code Sudoku Explainer rates gets its rating, not the 7.0 of 'SE has no such technique' (se.CLASSIC was once
+    keyed by codes no route step carries, so every card's ER was 7.0)"""
+    from pencilmark import se as SE
+
+    se_names = "FHS HSI NSI PPR NPR HPR NTR HTR NQD HQD XWG SWF JLF YWG XYZ URC BUG SKY KTE TUR ERE XCL FXW FCH FNT"
+    assert [c for c in se_names.split() if c not in SE.CLASSIC] == []
+    singles = [{"code": "HSI", "place": (0, 1)}, {"code": "FHS", "place": (1, 2)}]
+    assert SE.ratings(singles) == {"er": 1.2, "ep": 1.2, "ed": 1.2, "scale": "classic"}

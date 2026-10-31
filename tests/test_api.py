@@ -25,6 +25,11 @@ def test_classic_card():
     assert chips == ["NSI", "NPR/HPR", "XWG/KTE/SCL/MCH"]
 
 
+def test_classic_se_rating():
+    se = pencilmark.rate(CLASSIC, fields=["se"])["se"]
+    assert se["ed"] == 1.2 and se["er"] < 7.0, se  # 7.0 = a step SE has no rating for, which a classic never needs
+
+
 def test_deterministic_and_input_forms(tmp_path):
     a = pencilmark.rate(CLASSIC)
     assert pencilmark.rate(CLASSIC) == a

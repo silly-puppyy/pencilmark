@@ -1,5 +1,5 @@
 code,name,shape_band,order,subset_of,se_classic,se_diuf,note
-FHS,Full House,,1,NSI HSI,-,,
+FHS,Full House,,1,NSI HSI,1.2,,
 HSI,Hidden Single,,2,,1.2,,
 LSI,Line / dot read without notes,,4,,-,,
 CSI,Last cell of a cage / line,,5,,-,,
@@ -51,18 +51,18 @@ MCH,Short chain in the head,,15,,-,,
 PHI,Phistomefel Ring,Hard,16.5,LOL,-,,"a law-of-leftovers instance, but Hard"
 PHV,Phistomefel Variant,Hard,16.6,LOL,-,,"a law-of-leftovers instance, but Hard"
 SWF,Swordfish,Very Hard,1,,3.8,,
-FXW,Finned X-Wing,Very Hard,1.3,XCL,-,,a finned fish is a grouped X-Chain
-FSW,Finned Swordfish,Very Hard,1.5,,-,,beside its relatives (Swordfish)
-YWG,Y-Wing,,2,XYC,-,,a Y-Wing is a 3-cell XY-Chain
+FXW,Finned X-Wing,Very Hard,1.3,XCL,6.6,,a finned fish is a grouped X-Chain
+FSW,Finned Swordfish,Very Hard,1.5,,6.6,,beside its relatives (Swordfish)
+YWG,Y-Wing,,2,XYC,4.2,,a Y-Wing is a 3-cell XY-Chain
 ERE,Empty Rectangle,Very Hard,2.5,TUR,6.5,,"a 3-link single-digit chain (Turbot Fish); studied after Swordfish, with the wings"
 XYZ,XYZ-Wing,,3,ALS,4.4,,an XYZ-Wing is an ALS-XZ case
 RMP,Remote Pairs,,4,XYC,6.6,,remote pairs are an XY-Chain on one pair
-URC,Unique Rectangle,,5,,-,,
+URC,Unique Rectangle,,5,,4.5,,
 BUG,BUG,,6,,5.6,,
-JLF,Jellyfish,,9,,-,,
-FJF,Finned Jellyfish,Very Hard,9.5,,-,,beside its relatives (Jellyfish)
+JLF,Jellyfish,,9,,5.2,,
+FJF,Finned Jellyfish,Very Hard,9.5,,6.6,,beside its relatives (Jellyfish)
 WXZ,WXYZ-Wing,,10,ALS,-,,a WXYZ-Wing is an ALS-XZ case
-XCL,X-Chain,Very Hard,10.8,AIC,-,,
+XCL,X-Chain,Very Hard,10.8,AIC,6.6,,
 FRK,Franken Fish,Very Hard,12.5,,-,,late in its band for its obscurity
 CRP,Chute Remote Pairs,,14,,-,,
 SAL,Sum algebra (house totals),,16,,-,,
@@ -91,7 +91,7 @@ MCL,Multi-Colouring,,12,XCL,-,,colour traps and wraps are X-Chains
 STR,Short trial,,12,,-,,
 3DM,3D Medusa,,13,,-,,
 FCH,Forcing Chains,,0,,7.5,,
-FNT,Forcing Nets,,0,,-,,
+FNT,Forcing Nets,,0,,8.5,,
 NFC,Nested Forcing Chains,,0,,-,,
 NIS,Nishio,,0,,-,,
 POM,Pattern Overlay,,0,,-,,

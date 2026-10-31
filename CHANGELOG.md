@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- `se` (Sudoku Explainer-style rating): every card's ER was 7.0. The rating table was keyed by codes the route never
+  gives its steps (XYW, UR1, JFH, XCH, FSH, NET instead of YWG, URC, JLF, XCL, FXW / FSW / FJF, FNT) and lacked the
+  full house, so a full house, Y-Wing, Unique Rectangle, Jellyfish, X-Chain, finned fish or forcing net counted as
+  "SE has no such technique" (7.0). They now get SE's values (full house as a hidden single, 1.2). Only `se` changes.
 - `data/technique_bands.csv` is replaced by the technique registry: `data/techniques.csv` (one row per engine
   technique), `data/codes.csv` (one row per chip code) and `data/patterns.csv` (engine pattern codes), described in
   `pencilmark/registry.py`. Every module reads its technique tables from there. The old file gave X-Chain as Very Hard
