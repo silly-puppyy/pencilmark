@@ -523,8 +523,10 @@ def _contents(p, P, alternatives, deadline=None, base=None):
         bandof = {st["code"]: st["band"] for st in bp["steps"]}
         changed = False
         for code, _ in sorted(bp["profile"].items(), key=lambda x: (-bandof[x[0]], -_order(x[0]), x[1])):
-            if code == "FHS" or code in failed or code not in bp["profile"]:
-                continue  # full houses fold in at the end, never removed
+            if code == "FHS" or code in failed or code in ban or code not in bp["profile"]:
+                # full houses fold in at the end, never removed; a banned code still on the route came from the
+                # forcing fallback (it takes no bans): testing it again gives the same route, and passes forever
+                continue
             if late():
                 truncated = True
                 break
