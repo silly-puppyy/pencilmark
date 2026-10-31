@@ -3,6 +3,7 @@ need not be built).
   python tools/gen_api_md.py"""
 
 import ast
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -34,6 +35,14 @@ def signature(node):
     return f"{node.name}(\n    " + ",\n    ".join(a.strip() for a in seg.split(", ")) + ",\n)"
 
 
+PAGE_TITLES = {"FORMAT": "Puzzle format", "GRADE": "Grade card", "SPEC": "Generator spec", "INTEROP": "Other formats"}
+
+
+def _links(text):
+    """'docs/FORMAT.md' in a docstring -> a link to that page"""
+    return re.sub(r"docs/([A-Z]+)\.md", lambda m: f"[{PAGE_TITLES.get(m.group(1), m.group(1))}]({m.group(1)}.md)", text)
+
+
 def main():
     src = (ROOT / "src/pencilmark/api.py").read_text(encoding="utf-8")
     tree = ast.parse(src)
@@ -55,7 +64,7 @@ def main():
             L += [f"## `{name}`", "", f"```python\n{signature(n)}\n```", ""]
         if doc:  # docstring lines are hard-wrapped: join them into flowing paragraphs
             paras = [" ".join(x.split()) for x in doc.split("\n\n")]
-            L += [p.replace("*", "\\*") + "\n" for p in paras if p]
+            L += [_links(p.replace("*", "\\*")) + "\n" for p in paras if p]
     (ROOT / "docs/api.md").write_text("\n".join(L), encoding="utf-8")
 
 

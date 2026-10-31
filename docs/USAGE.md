@@ -9,7 +9,7 @@ pencilmark rate puzzles.txt --json       # full card (sudoku-grade); add --steps
 pencilmark rate - --format '%b|%d|%m|%p|%c' < puzzles.txt
 pencilmark solve puzzles.txt             # the solution, or 'not unique' / 'no solution' / 'undecided'
 pencilmark json puzzles.txt              # validate + normalise to canonical puzzle JSON
-pencilmark export puzzles.txt --pretty   # each puzzle as a sudoku-puzzle file (docs/FORMAT.md), canonical
+pencilmark export puzzles.txt --pretty   # each puzzle as a sudoku-puzzle file, canonical
 pencilmark fingerprint puzzles.txt       # content fingerprint "sha256:..." per puzzle
 pencilmark describe puzzles.txt          # variant name and rules, e.g. {"type": "Killer Sudoku", "rules": {...}}
 ```
@@ -19,9 +19,9 @@ the band column) and the next input goes on.
 
 **Input:** one puzzle per line. Each line can be any of these:
 - a classic string, with `.` or `0` for blanks, or a [sudokuwiki.org](https://www.sudokuwiki.org/) packed string (`S9B…`, `J9B…`, `L9B…`, …;
-  see docs/INTEROP.md);
+  see [Other formats](INTEROP.md));
 - a JSON object in the `pencilmark.puzzle_json` format (variants, multi-grids, rules);
-- a `sudoku-puzzle` object: the exchange format, format_version 1 (docs/FORMAT.md);
+- a `sudoku-puzzle` object: the exchange format, format_version 1 ([Puzzle format](FORMAT.md));
 - a sample-pack line `{"puzzle": ..., "grade": ...}`;
 - a path to a `.json` file.
 
@@ -62,7 +62,7 @@ import pencilmark
 card  = pencilmark.rate("....4.8.3.6...8..2...")    # classic string, puzzle JSON (dict or str), sudoku-puzzle dict,
                                                     #   a sample-pack line {"puzzle": ...}, or a path to a .json file
 card["difficulty"], card["time"], card["band"], card["contains"]
-card  = pencilmark.rate(puzzle, steps=True, max_seconds=60, mode="human")   # mode="computer" allows chains / trial
+card  = pencilmark.rate(puzzle, steps=True, max_seconds=60, mode="computer")  # default mode="human"; "computer" also allows chains / trial
 cards = pencilmark.rate_many(puzzles, jobs=4)       # input order kept; a failing puzzle gives {"error": ...}
 card  = pencilmark.rate(puzzle, se=True)            # + card["se"] = {"er", "ep", "ed", "scale"}: Sudoku Explainer-style
                                                     #   ratings from our route
@@ -75,7 +75,7 @@ text  = pencilmark.dumps(exp)                       # canonical text (one grid r
 fp    = pencilmark.fingerprint(puzzle)              # "sha256:..." of rules + grid + givens (no meta / style / solution)
 pencilmark.validate(exp)                            # strict reading checks; raises pencilmark.FormatError
 pencilmark.describe(puzzle)                         # {"type": "Killer Sudoku", "rules": {"Sudoku": "...", "Killer": "..."}}
-pencilmark.to_ipuz(puzzle)                          # optional other formats (docs/INTEROP.md): ipuz 2 export,
+pencilmark.to_ipuz(puzzle)                          # optional other formats: ipuz 2 export,
 pencilmark.from_string("S9B...")                    #   plain / sudokuwiki.org strings -> sudoku-puzzle dict
 pencilmark.to_string(puzzle, "sudokuwiki")          #   ... and back ("plain" for classic strings)
 p     = pencilmark.load(puzzle)                     # the engine's Puzzle object
@@ -94,7 +94,7 @@ r = pencilmark.generate({"format": "sudoku-spec", "format_version": 1,
 r["puzzle"], r["card"], r["info"]       # sudoku-puzzle (with solution), sudoku-grade card, run details
 ```
 
-The request is a `sudoku-spec` (docs/SPEC.md): board, rule templates with counts, givens count, symmetry, targets on
+The request is a `sudoku-spec` ([Generator spec](SPEC.md)): board, rule templates with counts, givens count, symmetry, targets on
 the card (`band`, `difficulty`, `contains`, `elements`), `limits` and `fields`. Parts reserved for later versions are
 refused with a message naming them, never ignored. Example requests: `docs/examples/specs/`.
 
@@ -131,7 +131,7 @@ $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7..
   always); `rate(puzzle, fields=[...])` / `pencilmark rate --fields ...` takes key names and adds `issues` / `reject`,
   `band_index`, `time_mean` / `time_pNN`, `steps`, `se`, `describe`, `symmetry`. `explain="notation"` / `"short"` / `"teach"` (CLI `--explain`) adds step
   explanations; `pencilmark rate --report -v` lists the steps in solvers' notation (`-vv` plain sentences, `-vvv` short
-  lessons). Every key is listed in docs/GRADE.md.
+  lessons). Every key is listed in [Grade card](GRADE.md).
 
 ## Other sites' labels on this scale
 Median difficulty, interquartile range in brackets. Each site rates for its own audience and neighbouring levels

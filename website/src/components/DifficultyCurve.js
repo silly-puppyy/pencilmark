@@ -1,4 +1,4 @@
-// Chart of the difficulty map (src/pencilmark/card_score.py): difficulty against effort per empty cell, from the
+// Chart of the difficulty map (src/pencilmark/card_score.py): difficulty against effort per empty cell (linear axis), from the
 // shipped parameters (data/card_score.json "map"). Drawn with Observable Plot in the site's colours; redrawn when the
 // colour mode changes. The page shows the same numbers in text, so the chart is optional (.pm-graphic).
 import React, {useEffect, useRef} from 'react';
@@ -31,20 +31,21 @@ export default function DifficultyCurve() {
     const css = getComputedStyle(document.documentElement);
     const ink = css.getPropertyValue('--ifm-font-color-base').trim() || 'currentColor';
     const accent = css.getPropertyValue('--ifm-color-primary').trim();
-    // x: effort per empty cell relative to the point where difficulty is 2 (log scale, base 10)
+    // x: effort per empty cell, as a multiple of the effort at difficulty 2 (linear, so the curve shows its real shape);
+    // up to difficulty 8, where one point already costs 2.6 times the effort
     const pts = [];
-    for (let r = R2 - 8; r <= R2 + 14; r += 0.05) {
-      pts.push({x: ((r - R2) * Math.log10(5)) / 2, y: difficulty(r)});
+    for (let r = R2 - 8; difficulty(r) <= 8; r += 0.01) {
+      pts.push({x: 5 ** ((r - R2) / 2), y: difficulty(r)});
     }
     const chart = Plot.plot({
       width: 640, height: 300, marginLeft: 44, marginBottom: 40,
       style: {background: 'transparent', color: ink, fontSize: '12px'},
-      x: {label: 'effort per empty cell, ×10ⁿ relative to difficulty 2 →', grid: true},
-      y: {label: '↑ difficulty', domain: [0, 18], grid: true},
+      x: {label: 'effort per empty cell (1 = the effort of a difficulty 2 puzzle) →', grid: true},
+      y: {label: '↑ difficulty', domain: [0, 8], grid: true},
       marks: [
         Plot.ruleY([2], {stroke: ink, strokeOpacity: 0.35, strokeDasharray: '4 3'}),
         Plot.line(pts, {x: 'x', y: 'y', stroke: accent, strokeWidth: 2.5}),
-        Plot.tip(pts, Plot.pointerX({x: 'x', y: 'y', title: (d) => `difficulty ${d.y.toFixed(2)}\neffort ×${(10 ** d.x).toPrecision(2)}`})),
+        Plot.tip(pts, Plot.pointerX({x: 'x', y: 'y', title: (d) => `difficulty ${d.y.toFixed(2)}\neffort ×${d.x.toPrecision(2)}`})),
       ],
     });
     ref.current.replaceChildren(chart);

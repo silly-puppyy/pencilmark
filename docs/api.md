@@ -19,7 +19,7 @@ rate(
 )
 ```
 
-the "sudoku-grade" card of one puzzle (docs/GRADE.md) with the requested top-level fields only. Default fields: difficulty, time, band, contains (format, format_version, grader always). Optional: band_index, issues, reject, warning (publishing checks), time_mean / time_pNN (any percentile 1-99, e.g. time_p80), time_dist, elapsed (wall seconds of the call), se, steps, describe, symmetry. explain="short" / "teach" / True (both) adds explanations to the steps. steps=True is shorthand for the steps field with both explanation levels; se=True for se. Raises NotUnique / NoSolution / Undecided for a puzzle without exactly one solution. allow_guessing=True: guess where no technique applies (band "Unknown") instead of proving by full search (Trial and error, Extreme). quality: the issue checks, e.g. {"trivial": {"limit": 0.5}, "trial": {"severity": "off"}} (docs/GRADE.md 4). alternatives=False skips the search for interchangeable techniques (each chip in contains lists one code); band, difficulty and time are the same either way, and the card comes much faster.
+the "sudoku-grade" card of one puzzle ([Grade card](GRADE.md)) with the requested top-level fields only. Default fields: difficulty, time, band, contains (format, format_version, grader always). Optional: band_index, issues, reject, warning (publishing checks), time_mean / time_pNN (any percentile 1-99, e.g. time_p80), time_dist, elapsed (wall seconds of the call), se, steps, describe, symmetry. explain="short" / "teach" / True (both) adds explanations to the steps. steps=True is shorthand for the steps field with both explanation levels; se=True for se. Raises NotUnique / NoSolution / Undecided for a puzzle without exactly one solution. allow_guessing=True: guess where no technique applies (band "Unknown") instead of proving by full search (Trial and error, Extreme). quality: the issue checks, e.g. {"trivial": {"limit": 0.5}, "trial": {"severity": "off"}} ([Grade card](GRADE.md) 4). alternatives=False skips the search for interchangeable techniques (each chip in contains lists one code); band, difficulty and time are the same either way, and the card comes much faster.
 
 ## `rate_many`
 
@@ -54,7 +54,7 @@ the unique solution as a list of digits (cell order of the puzzle); NotUnique / 
 generate(spec)
 ```
 
-one puzzle for a "sudoku-spec" request (docs/SPEC.md: dict, JSON text or path) -> {"puzzle": sudoku-puzzle, "card": sudoku-grade card, "info": {...}}; GenerationFailed when no puzzle met it in time; see pencilmark.gen.generate
+one puzzle for a "sudoku-spec" request ([Generator spec](SPEC.md): dict, JSON text or path) -> {"puzzle": sudoku-puzzle, "card": sudoku-grade card, "info": {...}}; GenerationFailed when no puzzle met it in time; see pencilmark.gen.generate
 
 ## `load`
 
@@ -70,7 +70,7 @@ any accepted input -> a finalized engine Puzzle.
 to_export(puzzle, meta=None, with_solution=True, describe=True, **meta_kw)
 ```
 
-the "sudoku-puzzle" exchange dict (format_version 1, docs/FORMAT.md): canonical, houses and rules with "r1c1" cells. Metadata goes in its own optional "meta" object: pass a dict (meta={"title": ..., "author": ..., "date": ...}) and / or keywords (title=..., author=..., source=..., id=..., url=..., date=..., rules_text=...); metadata already in a JSON input is kept. describe=True fills an EMPTY meta.type / meta.rules_text from describe(); it never overwrites them.
+the "sudoku-puzzle" exchange dict (format_version 1, [Puzzle format](FORMAT.md)): canonical, houses and rules with "r1c1" cells. Metadata goes in its own optional "meta" object: pass a dict (meta={"title": ..., "author": ..., "date": ...}) and / or keywords (title=..., author=..., source=..., id=..., url=..., date=..., rules_text=...); metadata already in a JSON input is kept. describe=True fills an EMPTY meta.type / meta.rules_text from describe(); it never overwrites them.
 
 ## `dumps`
 
@@ -94,7 +94,7 @@ content fingerprint "sha256:<hex>" of the canonical form (rules, grid, givens, c
 validate(doc)
 ```
 
-strict reading checks of a format_version 1 dict (docs/FORMAT.md section 4); raises FormatError
+strict reading checks of a format_version 1 dict ([Puzzle format](FORMAT.md) section 4); raises FormatError
 
 ## `describe`
 
@@ -110,7 +110,7 @@ describe(puzzle)
 from_string(s, symbols=None)
 ```
 
-text -> sudoku-puzzle dict: plain classic strings (with or without a trailing comment), text grids with separators, pencil-mark grids, 729-character candidate strings, HoDoKu library lines, sudokuwiki.org packed strings (docs/INTEROP.md)
+text -> sudoku-puzzle dict: plain classic strings (with or without a trailing comment), text grids with separators, pencil-mark grids, 729-character candidate strings, HoDoKu library lines, sudokuwiki.org packed strings ([Other formats](INTEROP.md))
 
 ## `to_string`
 
@@ -118,7 +118,7 @@ text -> sudoku-puzzle dict: plain classic strings (with or without a trailing co
 to_string(puzzle, form='plain')
 ```
 
-any accepted puzzle -> text: form "plain" (81 characters), "grid" (rows with separators) or "sudokuwiki" (packed string); NotSupportedError when the form cannot carry the puzzle (docs/INTEROP.md)
+any accepted puzzle -> text: form "plain" (81 characters), "grid" (rows with separators) or "sudokuwiki" (packed string); NotSupportedError when the form cannot carry the puzzle ([Other formats](INTEROP.md))
 
 ## `from_ipuz`
 
@@ -126,7 +126,7 @@ any accepted puzzle -> text: form "plain" (81 characters), "grid" (rows with sep
 from_ipuz(ipuz)
 ```
 
-ipuz sudoku (dict or JSON text) -> sudoku-puzzle dict (docs/INTEROP.md)
+ipuz sudoku (dict or JSON text) -> sudoku-puzzle dict ([Other formats](INTEROP.md))
 
 ## `to_ipuz`
 
@@ -134,7 +134,7 @@ ipuz sudoku (dict or JSON text) -> sudoku-puzzle dict (docs/INTEROP.md)
 to_ipuz(puzzle)
 ```
 
-any accepted puzzle -> ipuz 2 dict, for the subset ipuz expresses (classic, Latin square, diagonal, windoku, jigsaw, killer); NotSupportedError otherwise (docs/INTEROP.md)
+any accepted puzzle -> ipuz 2 dict, for the subset ipuz expresses (classic, Latin square, diagonal, windoku, jigsaw, killer); NotSupportedError otherwise ([Other formats](INTEROP.md))
 
 ## `NotUnique`
 

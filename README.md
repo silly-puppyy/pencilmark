@@ -38,7 +38,7 @@ card["band"], card["difficulty"], card["time"]          # ('Hard', 5.9, 10.7)
 card  = pencilmark.rate(puzzle, steps=True)             # add the step-by-step solve with explanations
 cards = pencilmark.rate_many(puzzles, jobs=4)           # several puzzles in parallel, input order kept
 sol   = pencilmark.solve(puzzle)                        # list of digits; raises NotUnique / NoSolution
-exp   = pencilmark.to_export(puzzle, title="My puzzle") # "sudoku-puzzle" exchange format (docs/FORMAT.md)
+exp   = pencilmark.to_export(puzzle, title="My puzzle") # the "sudoku-puzzle" exchange format
 ```
 
 A puzzle can be a classic string (`.` or `0` for blanks), a `sudoku-puzzle` dict, a puzzle JSON dict or string, or a
@@ -166,7 +166,7 @@ the `PENCILMARK_UA` environment variable.
 
 - Bands and difficulty measure different things. The band is the hardest technique a puzzle needs; difficulty is how
   hard it is overall. A puzzle that needs one X-Wing (Hard) is often easier than a long Medium one, and solvers agree
-  (docs/PHILOSOPHY.md). This is by design, not an error.
+  ([philosophy](https://silly-puppyy.github.io/pencilmark/PHILOSOPHY)). This is by design, not an error.
 - Difficulty and time are models fitted to human solving data. Differences under one point of difficulty are not
   meaningful, and a single solve can vary a lot from the predicted time.
 - Bands depend on the technique catalogue; a puzzle that needs a technique the engine does not have is solved with

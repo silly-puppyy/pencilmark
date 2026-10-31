@@ -136,8 +136,3 @@ not unique
 
 Without it the puzzle has more than one solution, so pencilmark will not grade it. The
 [generator](../USAGE.md#generator) can find a set of clues like this one for you.
-
-## Next
-
-- [Puzzle format](../FORMAT.md): metadata, colours and every rule family.
-- [Examples](../rules/examples.mdx): complete files for killer, jigsaw, samurai and more.

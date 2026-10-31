@@ -85,9 +85,3 @@ not unique
 ```
 
 From Python, `pencilmark.solve` raises `pencilmark.NotUnique` or `pencilmark.NoSolution` instead.
-
-## Next
-
-- [How a card is computed](../MODEL.mdx): where the three numbers come from.
-- [Puzzle format](../FORMAT.md): write variant puzzles (killer cages, thermometers, multi-grid boards) as JSON.
-- [Usage](../USAGE.md): every command, option and card field.
