@@ -7,6 +7,21 @@ with each step.
 
 ## What happens in `pencilmark.rate(puzzle)`
 
+```mermaid
+flowchart TD
+  IN[input: string, file,<br/>link, JSON] --> LOAD[api.load<br/>exchange / interop / sources]
+  LOAD --> UNI[cpsat_verify.decide<br/>one solution?]
+  UNI --> BP[band_path<br/>route, band, contains]
+  UNI --> CS[card_score<br/>difficulty]
+  CS --> TM[export.time_units<br/>time]
+  BP --> CARD[export.grade<br/>the card]
+  CS --> CARD
+  TM --> CARD
+  BP -. moves .-> ENG[(C++ engine<br/>csrc/)]
+  CS -. solve .-> ENG
+  UNI -. search .-> ENG
+```
+
 1. **Read.** `api.load` turns any accepted input (string, JSON, file, link) into a `model.Puzzle`. The public format is
    read by `exchange.py` (`sudoku-puzzle`, docs/FORMAT.md), text forms by `interop.py`, links by `sources/`.
 2. **Check uniqueness.** `cpsat_verify.decide` runs the C++ search (`cbackend.brute_solve`), with OR-Tools as an optional
@@ -22,6 +37,21 @@ with each step.
    `publish_flags.py` the publishing checks, `se.py` the Sudoku Explainer-style rating.
 
 ## Layers
+
+```mermaid
+flowchart TB
+  API[Public API: api.py, CLI] --> FMT[Formats: exchange, puzzle_json, interop, sources]
+  API --> GR[Grader: band_path, card_score, scoring, export]
+  API --> GEN[Generator: gen/]
+  API --> WORDS[Words: explain, variants]
+  FMT --> MODEL[Model: model.Puzzle]
+  GR --> MODEL
+  GEN --> GR
+  WORDS --> REG
+  GR --> REG[Registry: techniques, codes, patterns]
+  MODEL --> ENG[(Engine: csrc/ via cbackend)]
+  GR --> ENG
+```
 
 | Layer | Where | Owns |
 |---|---|---|
