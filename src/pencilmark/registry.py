@@ -43,7 +43,7 @@ data/patterns.csv, one row per pattern code the engine puts on a move (Move.code
   technique     the engine technique whose steps this code renames (blank: the code does not rename the step)
   code          the chip code of a step with this pattern
   step_name     the step's name on the route
-  explain_name  the pattern's name in explanations (explain.py; blank = the technique's)
+  explain_name  the pattern's name in explanations (the explain package; blank = the technique's)
   catalog_key   the explanation catalogue entry for this pattern (explain.CATALOG)
 """
 

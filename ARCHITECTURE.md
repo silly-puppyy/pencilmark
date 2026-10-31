@@ -34,7 +34,7 @@ flowchart TD
 5. **Score.** `card_score.score_parts` prices every step and maps the average effort per cell to `difficulty`;
    `export.time_units` turns total effort and board size into `time` (`data/time_model.json`).
 6. **Assemble.** `export.grade` builds the card with only the requested fields, each from its builder in the
-   card-field registry (`export.FIELDS`, in the card's key order); `explain.py` writes step explanations,
+   card-field registry (`export.FIELDS`, in the card's key order); `explain/` writes step explanations,
    `publish_flags.py` the publishing checks, `se.py` the Sudoku Explainer-style rating.
 
 ## Layers
@@ -61,7 +61,7 @@ flowchart TB
 | Model | `model.py` | the Puzzle: cells, houses, relations, constraints; compiled by `finalize()` |
 | Engine | `csrc/` via `cbackend.py` | every search: techniques, move listing, brute force, refutation |
 | Grader | `band_path.py`, `card_score.py`, `scoring.py`, `metrics.py`, `export.py`, `card.py`, `grader_model.py` | route, prices, difficulty, time, band, contents; `grader_model.py` holds every fitted parameter, loaded once |
-| Words | `explain.py`, `variants.py`, `usage.py` | explanations, variant names and rule text |
+| Words | `explain/` (base, grid, catalog, singles, combos, notes, chains, trial, records, dispatch), `variants.py`, `usage.py` | explanations, variant names and rule text |
 | Generator | `gen/` | puzzles for a `sudoku-spec` request |
 | Registry | `registry.py` over `data/techniques.csv`, `codes.csv`, `patterns.csv` | every fact about a technique, chip code and engine pattern code (name, band, order, family, flags, SE rating) |
 | Data | `data/*.json`, `data/*.csv` | fitted parameters and tables |
@@ -97,7 +97,7 @@ Being fixed by the restructure (docs/dev/CODE_STYLE.md says how code should look
   explanation and, for extra move fields, `cbackend.XMETA_KEYS`. `tests/test_registry.py` fails until the registry
   and the engine enum agree.
 - A rule family is represented four times (public format, `puzzle_json`, `model.Puzzle`, the C++ spec).
-- `explain.py` re-derives patterns the engine already found.
+- `explain/` re-derives patterns the engine already found.
 - Parameters are keyed by internal technique ids; `grader_model.py` loads them once, but they are not yet addressed
   by name.
 
