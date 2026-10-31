@@ -26,15 +26,12 @@ import math
 import time
 from collections import Counter
 
-from . import _data
+from . import __version__, _data
 from . import metrics as MT
 from . import registry as R
 from . import solver as S
 
-GRADER_NAME, GRADER_VERSION = (
-    "pencilmark",
-    "1.0.0",
-)  # on every card: a grade is only meaningful with the engine that made it
+GRADER_NAME, GRADER_VERSION = "pencilmark", __version__  # on every card: a grade is only meaningful with its engine
 FORMAT_VERSION = 1  # of both formats; bumped only on a breaking change (additive fields don't bump it)
 BANDS = R.BANDS
 SITES = {
