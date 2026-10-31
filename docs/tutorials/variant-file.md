@@ -135,4 +135,4 @@ not unique
 ```
 
 Without it the puzzle has more than one solution, so pencilmark will not grade it. The
-[generator](../USAGE.md#generator) can find a set of clues like this one for you.
+[generator](generate.md) can find a set of clues like this one for you.

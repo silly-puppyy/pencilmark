@@ -1,137 +1,134 @@
-# pencilmark usage
+# Usage
+
+pencilmark grades, solves, checks, converts and generates sudoku puzzles, from the command line or from Python. Every
+command and function accepts the same inputs: a classic string, a puzzle file in the [puzzle format](FORMAT.md), a
+site link or another app's format ([Other formats](INTEROP.md)).
 
 ## Command line
 
-```
-pencilmark rate puzzles.txt              # one line per puzzle: band, difficulty, minutes, hardest technique
-pencilmark rate puzzles.txt --report     # readable summary
-pencilmark rate puzzles.txt --json       # full card (sudoku-grade); add --steps for the step-by-step solve
-pencilmark rate - --format '%b|%d|%m|%p|%c' < puzzles.txt
-pencilmark solve puzzles.txt             # the solution, or 'not unique' / 'no solution' / 'undecided'
-pencilmark json puzzles.txt              # validate + normalise to canonical puzzle JSON
-pencilmark export puzzles.txt --pretty   # each puzzle as a sudoku-puzzle file, canonical
-pencilmark fingerprint puzzles.txt       # content fingerprint "sha256:..." per puzzle
-pencilmark describe puzzles.txt          # variant name and rules, e.g. {"type": "Killer Sudoku", "rules": {...}}
-```
-
-`python -m pencilmark ...` does the same. An input that cannot be read prints `error<TAB>line<TAB>message` (in `rate`, in
-the band column) and the next input goes on.
-
-**Input:** one puzzle per line. Each line can be any of these:
-- a classic string, with `.` or `0` for blanks, or a [sudokuwiki.org](https://www.sudokuwiki.org/) packed string (`S9B…`, `J9B…`, `L9B…`, …;
-  see [Other formats](INTEROP.md));
-- a JSON object in the `pencilmark.puzzle_json` format (variants, multi-grids, rules);
-- a `sudoku-puzzle` object: the exchange format, format_version 1 ([Puzzle format](FORMAT.md));
-- a sample-pack line `{"puzzle": ..., "grade": ...}`;
-- a path to a `.json` file.
-
-A FILE ending in `.json` that holds one JSON value (a puzzle file, pretty-printed or not, or a list of puzzles) is read
-whole: `pencilmark rate puzzle.json`.
-
-Metadata (title, author, source, date, ...) lives in an optional `"meta"` object in both JSON formats. It is never
-used for solving or rating; `pencilmark json` and `to_export` keep it.
-
-In the exchange format, whole-board pair rules are `neighbours` rules (`{"type": "neighbours", "kind": "antiknight"}`,
-or an operator with `where` and `except`), and "all clues shown" is a `negative` rule (`{"type": "negative", "of": "xv"}`);
-see the [rule family pages](FORMAT.md#6-rule-families).
-
-**Format fields:**
-
-| Field | Meaning |
+| Command | Prints, per puzzle |
 |---|---|
-| `%d` | difficulty |
-| `%m` | minutes |
-| `%p` | 80th-percentile minutes |
-| `%b` | band |
-| `%h` | hardest technique met |
-| `%c` | contents chips, band > 0, with uses |
-| `%n` | issue codes |
-| `%s` | status |
-| `%u` | unique? |
-| `%i` | line number |
+| `pencilmark rate FILE` | band, difficulty, minutes and the hardest technique |
+| `pencilmark solve FILE` | the solution, or `not unique` / `no solution` / `undecided` |
+| `pencilmark count FILE` | the number of solutions (`>=1000` when it stops counting; `--limit N` to change) |
+| `pencilmark describe FILE` | the variant's name and its rules in words |
+| `pencilmark export FILE` | the puzzle as a canonical `sudoku-puzzle` file (`--pretty` for one rule per line) |
+| `pencilmark json FILE` | the puzzle in pencilmark's internal JSON |
+| `pencilmark fingerprint FILE` | a content fingerprint, `sha256:...` |
+| `pencilmark generate SPEC` | a new puzzle for a [generator spec](SPEC.md) |
 
-Other options: `-j N` rates N puzzles in parallel (output stays in input order); `--max-seconds N` caps the contents
-search; `--computer` allows computer search (forcing chains, trial); `--allow-guessing` guesses where no technique applies
-(band Unknown) instead of proving by full search (Trial and error, Extreme).
+`FILE` holds one puzzle per line (a classic string, a JSON object, a link, or the path of a `.json` file); `-` reads
+standard input. A `.json` or `.ipuz` file that holds one puzzle, or a list of puzzles, is read whole. A line that cannot
+be read prints `error`, its line number and the message, and the next line goes on. `python -m pencilmark` works the
+same way.
 
-## Python
-
-```python
-import pencilmark
-
-card  = pencilmark.rate("....4.8.3.6...8..2...")    # classic string, puzzle JSON (dict or str), sudoku-puzzle dict,
-                                                    #   a sample-pack line {"puzzle": ...}, or a path to a .json file
-card["difficulty"], card["time"], card["band"], card["contains"]
-card  = pencilmark.rate(puzzle, steps=True, max_seconds=60, mode="computer")  # default mode="human"; "computer" also allows chains / trial
-cards = pencilmark.rate_many(puzzles, jobs=4)       # input order kept; a failing puzzle gives {"error": ...}
-card  = pencilmark.rate(puzzle, se=True)            # + card["se"] = {"er", "ep", "ed", "scale"}: Sudoku Explainer-style
-                                                    #   ratings from our route
-sol   = pencilmark.solve(puzzle)                    # digits; raises NotUnique / NoSolution (Undecided if the search
-                                                    #   hits its limit and OR-Tools is not installed)
-exp   = pencilmark.to_export(puzzle, title="Escargot", author="Arto Inkala", source="example.org", id="42")
-                                                    # metadata goes under exp["meta"]; meta={...} takes a dict of any keys;
-                                                    #   an empty meta.type / rules_text is filled from describe()
-text  = pencilmark.dumps(exp)                       # canonical text (one grid row per line, one rule per line)
-fp    = pencilmark.fingerprint(puzzle)              # "sha256:..." of rules + grid + givens (no meta / style / solution)
-pencilmark.validate(exp)                            # strict reading checks; raises pencilmark.FormatError
-pencilmark.describe(puzzle)                         # {"type": "Killer Sudoku", "rules": {"Sudoku": "...", "Killer": "..."}}
-pencilmark.to_ipuz(puzzle)                          # optional other formats: ipuz 2 export,
-pencilmark.from_string("S9B...")                    #   plain / sudokuwiki.org strings -> sudoku-puzzle dict
-pencilmark.to_string(puzzle, "sudokuwiki")          #   ... and back ("plain" for classic strings)
-p     = pencilmark.load(puzzle)                     # the engine's Puzzle object
-```
-`rate` returns the same card as `pencilmark rate --json`.
-
-## Generator
-
-```python
-import pencilmark
-r = pencilmark.generate({"format": "sudoku-spec", "format_version": 1,
-                         "board": {"rows": 9, "cols": 9}, "digits": 9,
-                         "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]},
-                                   {"type": "cage", "count": "auto"}],
-                         "where": {"band": "Hard"}, "limits": {"time": 300, "seed": 1}})
-r["puzzle"], r["card"], r["info"]       # sudoku-puzzle (with solution), sudoku-grade card, run details
-```
-
-The request is a `sudoku-spec` ([Generator spec](SPEC.md)): board, rule templates with counts, givens count, symmetry, targets on
-the card (`band`, `difficulty`, `contains`, `elements`), `limits` and `fields`. Parts reserved for later versions are
-refused with a message naming them, never ignored. Example requests: `docs/examples/specs/`.
-
-## Example
 ```
 $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9.......' | pencilmark rate - --report
 #1  Hard  -  difficulty 5.9  -  time 10.7 min
    contains: Naked Pair (or Hidden Pair), X-Wing (or 2-String Kite / Simple Colouring / Short chain in the head)
 ```
 
+### Options of `rate`
+
+| Option | Effect |
+|---|---|
+| `--report` | readable text; `-v` adds the steps in solvers' notation, `-vv` plain sentences, `-vvv` short lessons |
+| `--json` | the full card as one JSON line; `--steps` adds the steps, `--explain notation,short,teach` their explanations |
+| `--fields difficulty,band,...` | only these card fields ([Grade card](GRADE.md) lists them) |
+| `--format '%b\|%d\|%m'` | your own columns (below) |
+| `-j N` | grade N puzzles at a time; the output keeps the input order |
+| `--max-seconds N` | stop each puzzle after N seconds (the card says `completed: false`) |
+| `--computer` | allow computer-style search (forcing chains, trial) as well as human techniques |
+| `--allow-guessing` | guess where no technique applies (band Unknown), instead of proving by full search (Extreme) |
+| `--no-alternatives` | keep `contains` but skip the search for interchangeable techniques (faster) |
+| `--quality ...` | tune the publishing checks ([Check a puzzle before publishing](howto/publish-checks.md)) |
+
+| `--format` field | Meaning |
+|---|---|
+| `%b` `%d` `%m` | band, difficulty, minutes |
+| `%p` | minutes within which 80% of players finish |
+| `%h` | hardest technique met |
+| `%c` | technique chips beyond singles, with uses |
+| `%n` | issue codes |
+| `%s` `%u` `%i` | status, unique?, line number |
+
+### Options of `generate`
+
+`--seed N` and `--time S` override the spec's `limits`. The puzzle is printed as a `sudoku-puzzle` file and its band,
+difficulty and time go to standard error; `--result` prints `{"puzzle", "card", "info"}` as one JSON line instead.
+
+## Python
+
+### Grade
+
+```python
+import pencilmark
+
+card = pencilmark.rate("....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9.......")
+card["band"], card["difficulty"], card["time"], card["contains"]
+```
+
+`rate` takes the same options as the command line: `fields=[...]`, `max_seconds=60`, `explain="short"`,
+`mode="computer"` (the default is `"human"`), `allow_guessing=True`, `se=True` for a Sudoku Explainer-style rating,
+`quality={...}`. `rate_many(puzzles, jobs=4)` grades a list in parallel and keeps its order; a puzzle that fails gives
+`{"error": ...}` in its place.
+
+### Solve and count
+
+```python
+solution = pencilmark.solve(puzzle)
+n = pencilmark.count_solutions(puzzle)
+```
+
+`solve` returns the unique solution as a list of digits, or raises `NotUnique` or `NoSolution`.
+`count_solutions` returns `{"count": 1, "exact": true}` for a proper puzzle. `count_solutions(puzzle, limit=1000)` counts up to `limit`; `exact` is
+false when it stopped there. Both use the engine's exhaustive search; when that search hits its node limit,
+[OR-Tools](https://developers.google.com/optimization) [CP-SAT](https://developers.google.com/optimization/cp/cp_solver)
+takes over if installed (`pip install "pencilmark[verify]"`), otherwise `solve` raises `Undecided`.
+
+### Convert and check
+
+```python
+exp = pencilmark.to_export(puzzle, title="Escargot", author="Arto Inkala")
+text = pencilmark.dumps(exp)
+pencilmark.validate(exp)
+```
+
+`to_export` gives the `sudoku-puzzle` dict, with its solution and with `meta.type` and `meta.rules_text` filled in from
+`describe` when they are empty; `dumps` writes it in the canonical layout, one rule per line; `validate` raises
+`FormatError` with the exact problem. `describe(puzzle)` names the variant and its rules, `fingerprint(puzzle)` gives
+a fingerprint of the rules and grid (not the metadata), and `load(puzzle)` the engine's own object.
+`from_string`, `to_string`, `from_ipuz` and `to_ipuz` convert to and from [other formats](INTEROP.md).
+
+### Generate
+
+```python
+result = pencilmark.generate(spec)
+result["puzzle"], result["card"], result["info"]
+```
+
+`spec` is a [generator spec](SPEC.md) (a dict, JSON text or a path). The result is a `sudoku-puzzle` with its solution,
+its grade card and how the run went; `GenerationFailed` says why when no puzzle met the spec in time. Example specs are
+in `docs/examples/specs/`.
+
+[Python API](api.md) lists every function and argument.
+
 ## The card
-- **difficulty** is how hard the puzzle *feels* to a human, independent of its size (exact definitions of all three
-  numbers: [PHILOSOPHY.md](PHILOSOPHY.md)). The scale is continuous and positive (a nearly finished grid is about 0.2), with no ceiling.
-  - A typical newspaper medium is about 5; [fed-sudoku](https://www.fed-sudoku.eu/) "hard" is about 6.5.
-  - It measures effort and is independent of the band: variants often sit above the classic range for their band, because the same techniques are harder to find there (clues to read, sums to track).
-- **time** is the predicted median time in minutes over the people who solve puzzles like it.
-  - The median 9x9 classic takes about 12 min.
-  - On request, `time_mean` or any percentile `time_pNN` (for example `time_p80`: 80% of players finish within it; `time_p20`: the fastest fifth) over today's players.
-  - Typical error: about 20-26%.
-- **band** is fixed by the techniques required on the easiest route (Very Easy ... Extreme).
-  - Guessing is off by default: where no technique applies, the engine proves an elimination by full search (Trial and error, Extreme).
-  - `allow_guessing=True` (CLI `--allow-guessing`) guesses there instead; the band is then **Unknown**.
-- Speed: only requested fields are computed. Without `contains` (and `issues`), the card skips the search for the shortest
-  technique list entirely, about 3x faster for the same band, difficulty and time: `fields=["difficulty", "time", "band"]`.
-  `alternatives=False` (CLI `--no-alternatives`) keeps `contains` but skips the search for interchangeable techniques
-  (one code per chip, about 1.2x faster). The generator screens candidates this way and makes the result's card in full.
-- **contains** lists what a solver meets going easy to hard.
-  - A chip like `XWG/KTE/SCL` means each of those alone also works at that point.
-  - Singles are listed without counts.
-- **issues** (on request, `fields=[..., "issues", "reject"]`) are publishing checks (`spike`, `decorative`, `barely_used`, `redundant`, `trivial`, `tedious`,
-  `uniqueness`, `trial`), severity `reject` or `warning`; rule problems name the offending rules by index in the exported
-  puzzle (`"rules": [3, 4]`). **reject** is `true` when any issue is a reject.
-- Fields: `difficulty`, `time`, `band`, `contains` by default (`grader`, `format`, `format_version`
-  always); `rate(puzzle, fields=[...])` / `pencilmark rate --fields ...` takes key names and adds `issues` / `reject`,
-  `band_index`, `time_mean` / `time_pNN`, `steps`, `se`, `describe`, `symmetry`. `explain="notation"` / `"short"` / `"teach"` (CLI `--explain`) adds step
-  explanations; `pencilmark rate --report -v` lists the steps in solvers' notation (`-vv` plain sentences, `-vvv` short
-  lessons). Every key is listed in [Grade card](GRADE.md).
+
+- **band**: what you need to know, from Very Easy to Extreme: the hardest technique on the easiest route. Guessing is
+  off by default: where no technique applies, the engine proves an elimination by full search (Trial and error,
+  Extreme).
+- **difficulty**: how hard the steps are to find, independent of the puzzle's size, from 0 with no ceiling. A typical
+  newspaper medium is about 5, [fed-sudoku](https://www.fed-sudoku.eu/) "hard" about 6.5. Variants often sit above
+  classics of the same band, because the same techniques are harder to spot among clues and sums.
+- **time**: the predicted median solve time in minutes; the median classic takes about 12. Typical error 20-26%.
+  `time_pNN` and `time_mean` spread it over the players.
+- **contains**: the techniques beyond singles, easiest first. A chip like `XWG/KTE/SCL` means any one of them works at
+  that point; [Techniques](TECHNIQUES.md) lists every code.
+
+Only the requested fields are computed. `contains` is the slow part: without it (`fields=["difficulty", "time",
+"band"]`) a card takes about a third of the time, with the same band, difficulty and time. [Philosophy](PHILOSOPHY.md)
+says what the numbers mean, [How a card is computed](MODEL.mdx) how they are computed.
 
 ## Other sites' labels on this scale
 Median difficulty, interquartile range in brackets. Each site rates for its own audience and neighbouring levels
@@ -153,122 +150,6 @@ overlap a lot, so treat this as a rough conversion.
 
 
 ## Speed
-- Classics take 0.04-0.2 s.
-- Typical variants take about 0.5-1.5 s.
-- A few very hard killers (huge cage algebra) can take 15-30 min while the contents list is minimised.
-- `--max-seconds N` (Python: `max_seconds=N`) caps the whole call. The card then says `completed: false`; if the limit
-  passed while the contents list was being minimised, the grade stands but the list may not be minimal or may miss joint chips. Without the cap the result is deterministic.
 
-## Uniqueness
-Puzzles are checked with the engine's exhaustive search. If that search hits its node limit, [OR-Tools](https://developers.google.com/optimization) [CP-SAT](https://developers.google.com/optimization/cp/cp_solver) is used
-when installed (`pip install "pencilmark[verify]"`); otherwise the puzzle counts as undecided.
-
-## Technique codes (the contents chips)
-Each chip is a 3-letter code named by the most specific shape found, e.g. SKY, not X-Chain. Read a chip with its subset table:
-- If you know a technique listed under "special case of", you can do the chip. For example, an X-Wing (XWG) is a special case of a Skyscraper (SKY).
-- A joint chip like `SKY/KTE` means that *either* technique gets you through at that point. Joint chips are only listed for different
-  families in the same band.
-
-Machine-readable version: `pencilmark/data/codes.csv` (one row per code: name, band of a shape, study order, special
-case of, Sudoku Explainer rating) and `pencilmark/data/techniques.csv` (one row per engine technique: code, band,
-family), installed with the package; `pencilmark/registry.py` describes every column.
-
-| Code | Technique | Band | Special case of |
-|---|---|---|---|
-| FHS | Full House | Very Easy | HSI, NSI |
-| HSI | Hidden Single | Very Easy |  |
-| NSI | Naked Single | Easy |  |
-| LSI | Line / dot read without notes | Very Easy |  |
-| CSI | Last cell of a cage / line (variant) | Very Easy |  |
-| CFX | Clue facts (no 5 on a whisper) (variant) | Very Easy |  |
-| PPR | Pointing / Box-Line Reduction | Easy |  |
-| SNY | Snyder notation (box pairs) | Easy |  |
-| NPR | Naked Pair | Medium |  |
-| HPR | Hidden Pair | Medium |  |
-| MSI | Pair / triple in the head | Easy | NPR, NTR |
-| CGC | Killer cage combinations (variant) | Easy |  |
-| SUM | Sum clue combinations (variant) | Easy |  |
-| ARW | Arrow sums (variant) | Easy |  |
-| RNB | Renban runs (variant) | Easy |  |
-| IOU | Innies & outies (rule of 45) (variant) | Easy |  |
-| PWC | Pair rules (dots, whispers, anti-knight...) (variant) | Easy |  |
-| TBL | Allowed combinations of a rule (variant) | Easy |  |
-| LNR | Line ranges (thermo / whisper bounds) (variant) | Easy |  |
-| LNS | Local line scan (variant) | Easy |  |
-| LNC | Line classes (low/high, odd/even) (variant) | Easy |  |
-| SWC | Sandwich sums (variant) | Easy |  |
-| XSC | X-Sums | Easy |  |
-| SKC | Skyscraper clues (variant) | Easy |  |
-| CNT | Counting clues | Easy |  |
-| NTR | Naked Triple | Medium |  |
-| HTR | Hidden Triple | Medium |  |
-| CSH | Clue shape (a whisper 4 between two 9s) (variant) | Easy |  |
-| XWG | X-Wing | Hard | AAC, AIC, FRK, FXW, SKY, SWF, TUR, XCL |
-| SKY | Skyscraper | Hard | AAC, AIC, TUR, XCL |
-| KTE | 2-String Kite | Hard | AAC, AIC, TUR, XCL |
-| TUR | Turbot Fish | Hard | AAC, AIC, XCL |
-| ERE | Empty Rectangle | Very Hard | AAC, AIC, TUR, XCL |
-| SCL | Simple Colouring | Hard | AAC, AIC, XCL |
-| FXW | Finned X-Wing | Very Hard | AAC, AIC, XCL |
-| EQD | Equal cells (same digit) | Medium |  |
-| DGC | Digit counting (variant) | Medium |  |
-| LOL | Set theory (law of leftovers) | Medium |  |
-| IOV | Innies & outies as a virtual cage | Medium |  |
-| IOM | Innies & outies over several houses | Medium |  |
-| EQS | Equal sums (zipper / region-sum lines) (variant) | Medium |  |
-| CBL | Must-contain digits (cage / line) (variant) | Medium |  |
-| XCL | X-Chain | Very Hard | AAC, AIC |
-| RUL | Two rules together | Medium |  |
-| IMH | Hidden regions (implied houses) | Medium |  |
-| DOM | Domino pairs (dots / XV) (variant) | Medium |  |
-| CLC | Odd/even & high/low counting (variant) | Medium |  |
-| CCL | High/low & odd/even colouring (variant) | Medium |  |
-| SBD | Min/max sum bounds (variant) | Medium |  |
-| SWF | Swordfish | Very Hard |  |
-| FSW | Finned Swordfish | Very Hard |  |
-| YWG | Y-Wing | Very Hard | AAC, AIC, XYC |
-| XYZ | XYZ-Wing | Very Hard | AAC, ALS |
-| RMP | Remote Pairs | Very Hard | AAC, AIC, XYC |
-| URC | Unique Rectangle | Very Hard |  |
-| BUG | BUG | Very Hard |  |
-| NQD | Naked Quad | Medium |  |
-| HQD | Hidden Quad | Medium |  |
-| JLF | Jellyfish | Very Hard |  |
-| FJF | Finned Jellyfish | Very Hard |  |
-| WXZ | WXYZ-Wing | Very Hard | AAC, ALS |
-| XYC | XY-Chain | Expert | AAC, AIC |
-| MCL | Multi-Colouring | Expert | AAC, AIC, XCL |
-| FRK | Franken / Mutant fish | Very Hard |  |
-| 3DM | 3D Medusa | Expert |  |
-| CRP | Chute Remote Pairs | Very Hard |  |
-| MCH | Short chain in the head | Hard |  |
-| SAL | Sum algebra (house totals) (variant) | Very Hard |  |
-| PHI | Phistomefel ring | Hard | LOL |
-| PHV | Phistomefel variant | Hard | LOL |
-| WEI | Weighted sums | Very Hard |  |
-| BAN | Band set theory with cages (variant) | Very Hard |  |
-| FIR | Fireworks | Very Hard |  |
-| GSY | Gurth's Symmetry | Very Hard |  |
-| CAL | Equal-digit colouring | Very Hard |  |
-| CPS | Cage combination positions (variant) | Very Hard |  |
-| CLI | Clique house (all-different cells) | Very Hard |  |
-| RNS | Renban sets in a house (variant) | Very Hard |  |
-| OCL | Outside clues together | Very Hard |  |
-| AIC | Alternating Inference Chain | Expert | AAC |
-| NLP | Nice Loop | Expert | AAC, AIC |
-| ALS | ALS-XZ (almost locked sets) | Expert | AAC |
-| AXY | ALS-XY-Wing | Expert | AAC, DEB |
-| SDC | Sue de Coq | Expert |  |
-| APE | Aligned Pair Exclusion | Expert |  |
-| CAS | Case analysis | Expert |  |
-| AAC | ALS chain | Expert |  |
-| DEB | Death Blossom | Expert |  |
-| EWY | Either way (case split) | Expert |  |
-| WIF | What if… | Expert |  |
-| STR | Short trial | Expert |  |
-| FCH | Forcing Chains | Extreme |  |
-| FNT | Forcing Nets | Extreme |  |
-| NFC | Nested Forcing Chains | Extreme |  |
-| NIS | Nishio | Extreme |  |
-| POM | Pattern Overlay | Extreme |  |
-| TRL | Trial and error | Extreme |  |
+Classics take 0.04-0.2 s and typical variants 0.5-1.5 s. A few very hard killers can take 15-30 minutes while the
+technique list is made minimal; `max_seconds` caps any call. Without the cap the result is the same on every machine.
