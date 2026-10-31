@@ -82,6 +82,9 @@ This asks for a 6×6 with exactly two thermometers, one to three Kropki dots and
 The puzzle in [Write a variant puzzle file](variant-file.mdx) came from a request like this one. `pencilmark.dumps`
 writes the puzzle in the format's canonical layout, one rule per line.
 
+[Generator examples](generator-examples.mdx) has one request for every feature (each template, count form, target,
+symmetry and board size), with the puzzle each produced.
+
 ## 4. When the generator cannot do it
 
 A request the generator cannot meet in time raises `pencilmark.GenerationFailed` with the reason; it never returns a
