@@ -508,7 +508,7 @@ CATALOG["pattern_overlay"][3].append(SW + "Pattern_Overlay")
 CATALOG["chute_remote_pairs"][3].append(SW + "Chute_Remote_Pairs")
 CATALOG["gurth"][3].append(SW + "Gurths_Theorem")
 CATALOG["multi_colouring"][1]["sudokuwiki"] = ["Multi-Colouring"]
-CATALOG["multi_colouring"][3].append(SW + "Multi_Colouring")
+CATALOG["multi_colouring"][3].append(SW + "Multi_Colouring_Strategy")
 
 HANDLERS[S.REMOTE_PAIRS] = _h_chain
 HANDLERS[S.EMPTY_RECT] = _h_empty_rect

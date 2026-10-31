@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Two dead technique links fixed: Multi-Colouring's SudokuWiki page (in its explanation) and Simple Colouring's
+  KrazyDad page (techniques page).
 - Generator specs accept the `odd` and `even` cell templates SPEC.md documents (only an undocumented `parity` worked);
   `parity` (odd or even cells, either kind) is now documented too.
 - `se`: a technique Sudoku Explainer has no value for takes the value of the technique it is a special case of
