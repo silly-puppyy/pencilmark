@@ -1,10 +1,10 @@
 cpp_code,engine_code,technique,code,step_name,explain_name,catalog_key
 1,SKY,X-Chain,SKY,Skyscraper,Skyscraper,skyscraper
 2,2SK,X-Chain,KTE,2-String Kite,2-String Kite,two_string_kite
-3,TUR,X-Chain,TUR,Turbot Fish,Turbot fish,turbot_fish
+3,TUR,X-Chain,TUR,Turbot Fish,Turbot Fish,turbot_fish
 4,XCH,X-Chain,XCL,X-Chain,X-Chain,x_chain
 5,XYC,,,,XY-Chain,xy_chain
-6,RMP,,,,Remote pair,remote_pair
+6,RMP,,,,Remote Pair,remote_pair
 7,WWG,,,,W-Wing,w_wing
 8,AIC,,,,AIC,aic
 9,DNL,,,,discontinuous nice loop,nice_loop

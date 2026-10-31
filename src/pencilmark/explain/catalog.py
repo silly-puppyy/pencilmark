@@ -668,7 +668,7 @@ def technique_info(key):
 
 # ----------------------------------------------------------- named sub-patterns --
 def chain_shape(p, st, path, place=False):
-    """Name the shape of a chain: Skyscraper, 2-String Kite, Turbot fish, Remote pair, W-Wing,
+    """Name the shape of a chain: Skyscraper, 2-String Kite, Turbot Fish, Remote Pair, W-Wing,
     X-Chain / XY-Chain / AIC. -> catalog key."""
     if any(n[0][0] == "als" for n in path):
         return "als_chain"
@@ -765,8 +765,8 @@ SHAPE_NOTES = {
     "line, so one of the two 'roof' cells must be the digit.",
     "two_string_kite": "This shape is a 2-String Kite: a strong link in a row and one in a column, tied together "
     "inside a box -- one of the two free ends must be the digit.",
-    "turbot_fish": "This shape is a Turbot fish: a four-cell single-digit chain (strong-weak-strong).",
-    "remote_pair": "This shape is a Remote pair: a chain of cells all holding the same two candidates, which "
+    "turbot_fish": "This shape is a Turbot Fish: a four-cell single-digit chain (strong-weak-strong).",
+    "remote_pair": "This shape is a Remote Pair: a chain of cells all holding the same two candidates, which "
     "alternate along the chain.",
     "w_wing": "This shape is a W-Wing: two identical two-candidate cells joined by a strong link on one of their "
     "digits, so one of them must be the other digit.",
