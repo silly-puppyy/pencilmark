@@ -17,6 +17,13 @@ FAVICONS = {
     "sudokuwiki": "https://www.sudokuwiki.org/favicon.ico",
     "sudokusnake": "https://www.sudokusnake.com/favicon.ico",
     "wikipedia": "https://en.wikipedia.org/favicon.ico",
+    "sudokucom": "https://sudoku.com/apple-touch-icon-57x57.png",
+    "sudokucoach": "https://sudoku.coach/img/favicons/favicon-32x32.png",
+    "krazydad": "https://files.krazydad.com/favicon-32x32.png",
+    "sudokuvariants": "https://sudokuvariants.com/favicon.png",
+    "artisanalsudoku": "https://substackcdn.com/image/fetch/$s_!-ZRo!,f_auto,q_auto:good,fl_progressive:steep/"
+    "https%3A%2F%2Fbucketeer-e05bbc84-baa3-437e-9518-adb32be77984.s3.amazonaws.com%2Fpublic%2Fimages%2F"
+    "5db097c2-4913-46cb-8612-1148c6cb8a65%2Ffavicon-32x32.png",
 }
 HODOKU_HEAD = "https://hodoku.sourceforge.net/img/head.png"
 HODOKU_SYLLABLES = [(329, 435), (436, 547), (548, 654)]  # x ranges of "Ho", "Do", "Ku" in head.png (980 x 110)
@@ -31,7 +38,10 @@ def favicon(data):
     im = Image.open(io.BytesIO(data))
     if im.info.get("sizes"):
         im.size = max(im.info["sizes"])  # an .ico holds several sizes: take the largest
-    return im.convert("RGBA")
+    im = im.convert("RGBA")
+    white = Image.new("RGBA", im.size, (255, 255, 255, 255))  # on white: dark-mode pages keep transparent icons legible
+    white.alpha_composite(im)
+    return white
 
 
 def hodoku(data):
@@ -45,8 +55,8 @@ def hodoku(data):
     side = max(w, h)
     square = Image.new("RGBA", (side, side), (255, 255, 255, 255))
     y = (side - h) // 2
-    for p in parts:
-        square.paste(p, ((side - p.width) // 2, y))
+    for p in parts:  # composited onto the white square (the logo's own background is transparent)
+        square.alpha_composite(p, ((side - p.width) // 2, y))
         y += p.height
     return square
 

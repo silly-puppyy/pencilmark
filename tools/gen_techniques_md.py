@@ -3,6 +3,7 @@ data/codes.csv) and the explanation catalogue's links (explain.CATALOG). Reads t
 be built.
   python tools/gen_techniques_md.py [--check]      --check: exit 1 if docs/TECHNIQUES.md is out of date"""
 
+import csv
 import sys
 from pathlib import Path
 from urllib.parse import urlparse
@@ -25,9 +26,13 @@ FAMILY_TITLES = {
 SITES = {
     "www.sudokuwiki.org": ("sudokuwiki.org", "sudokuwiki.png"),
     "hodoku.sourceforge.net": ("HoDoKu", "hodoku.png"),
+    "sudoku.coach": ("sudoku.coach", "sudokucoach.png"),
+    "sudoku.com": ("sudoku.com", "sudokucom.png"),
     "www.sudokusnake.com": ("Sudoku Snake", "sudokusnake.png"),
+    "krazydad.com": ("KrazyDad", "krazydad.png"),
     "en.wikipedia.org": ("Wikipedia", "wikipedia.png"),
 }
+LINKS = ROOT / "docs" / "technique_links.csv"  # more explainer pages per code, beside the explanation catalogue's
 
 
 # fish shapes the engine names by size and kind, not by a pattern code: they take the family of a related code
@@ -57,10 +62,12 @@ def _site_rank(url):
 
 
 def link(url):
+    """a site icon (or a text badge) linking out, marked as external"""
     title, icon = SITES.get(urlparse(url).netloc, (urlparse(url).netloc, None))
     if icon:
-        return f'<a href="{url}" title="{title}"><img src="/pencilmark/img/sites/{icon}" alt="{title}" class="pm-site"/></a>'
-    return f'<a href="{url}" title="{title}" class="pm-site-text">{title}</a>'
+        img = f'<img src="/pencilmark/img/sites/{icon}" alt="{title}" class="pm-site"/>'
+        return f'<a href="{url}" title="{title}" class="pm-site-link">{img}</a>'
+    return f'<a href="{url}" title="{title}" class="pm-site-link pm-site-text">{title}</a>'
 
 
 def page():
@@ -75,20 +82,23 @@ def page():
             tech_of[pt.code] = by_name[pt.technique]
     for code, like in SHAPE_OF.items():
         tech_of.setdefault(code, tech_of[like])
+    extra = {}
+    for r in csv.DictReader(LINKS.open(encoding="utf-8")):
+        extra.setdefault(r["code"], []).append(r["url"])
     rows = {f: [] for f in FAMILY_TITLES}
     for code, c in codes.items():
         t = tech_of.get(code)
         if t is None:
             continue
         band = c.shape_band if c.shape_band is not None else t.band
-        urls = E.CATALOG[c.explain][3] if c.explain else []
+        urls = list(dict.fromkeys((E.CATALOG[c.explain][3] if c.explain else []) + extra.get(code, [])))
         name = c.name + (" *(variant)*" if t.gate else "")
         sub = ", ".join(f"`{s}`" for s in immediate(code, codes))
         rows[t.family].append(
             (
                 band,
                 c.order,
-                f"| `{code}` | {name} | {R.BANDS[band]} | {sub} | {' '.join(map(link, sorted(urls, key=_site_rank)))} |",
+                f"| `{code}` | {name} | {R.BANDS[band].replace(' ', '&nbsp;')} | {sub} | {' '.join(map(link, sorted(urls, key=_site_rank)))} |",
             )
         )
     L = [
@@ -105,7 +115,7 @@ def page():
         "X-Wing is a special case of a Skyscraper, so if you know Skyscrapers you can solve an X-Wing step. Each family is",
         "sorted by band. The links go to explanations on other sites.",
         "",
-        "This page is generated from `pencilmark/data/codes.csv` and `techniques.csv` (`tools/gen_techniques_md.py`).",
+        "This page is generated from `pencilmark/data/codes.csv`, `techniques.csv` and `docs/technique_links.csv`\n(`tools/gen_techniques_md.py`).",
         "",
     ]
     for fam, title in FAMILY_TITLES.items():

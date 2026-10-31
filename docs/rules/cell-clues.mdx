@@ -2,6 +2,8 @@
 title: Cell clues
 ---
 
+import SiteLink from '@site/src/components/SiteLink';
+
 import Swatch from '@site/src/components/Swatch';
 
 # Cell clues
@@ -20,7 +22,7 @@ This page covers clues on single cells: odd, even, low, high, set and exclude (6
 
 | `kind` | Fields | Each listed cell holds | Drawing |
 |---|---|---|---|
-| `odd` / `even` | – | an odd / even digit | <Swatch name="cell-odd" /> <Swatch name="cell-even" /> |
+| `odd` / `even` | – | an odd / even digit <SiteLink href="https://sudokuvariants.com/help/variants/even-odd"/> | <Swatch name="cell-odd" /> <Swatch name="cell-even" /> |
 | `low` / `high` | `split` (REQUIRED) | 1..split / split+1..D |  |
 | `set` | `values` | one of `values` |  |
 | `exclude` | `values` | none of `values` |  |

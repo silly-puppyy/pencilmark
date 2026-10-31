@@ -2,6 +2,8 @@
 title: Lines and arrows
 ---
 
+import SiteLink from '@site/src/components/SiteLink';
+
 import Swatch from '@site/src/components/Swatch';
 
 # Lines and arrows
@@ -23,17 +25,17 @@ first. `closed` is allowed only for `whisper`, `renban` and `parity`.
 
 | `kind` | Parameters | Meaning | Drawing |
 |---|---|---|---|
-| `thermo` | – | Strictly increasing from `cells[0]` (the bulb). Branching thermos are separate rules sharing `cells[0]`. | <Swatch name="line-thermo" /> |
+| `thermo` | – | Strictly increasing from `cells[0]` (the bulb). Branching thermos are separate rules sharing `cells[0]`. <SiteLink href="https://sudokuvariants.com/help/variants/thermo"/> | <Swatch name="line-thermo" /> |
 | `slow_thermo` | – | Non-decreasing from `cells[0]`. | <Swatch name="line-slow_thermo" /> |
-| `whisper` | `value` k: REQUIRED when D ≠ 9; default 5 | Adjacent cells on the line differ by at least k (German whisper = 5, Dutch = 4). | <Swatch name="line-whisper" /> |
-| `renban` | – | The cells hold a set of consecutive digits, no repeats, any order. | <Swatch name="line-renban" /> |
+| `whisper` | `value` k: REQUIRED when D ≠ 9; default 5 | Adjacent cells on the line differ by at least k (German whisper = 5, Dutch = 4). <SiteLink href="https://sudokuvariants.com/help/variants/german-whisper"/> | <Swatch name="line-whisper" /> |
+| `renban` | – | The cells hold a set of consecutive digits, no repeats, any order. <SiteLink href="https://sudokuvariants.com/help/variants/renban"/> | <Swatch name="line-renban" /> |
 | `region_sum` | – | Split the line into segments wherever it passes from one box to another; every segment has the same sum. | <Swatch name="line-region_sum" /> |
-| `palindrome` | – | Reads the same from both ends. | <Swatch name="line-palindrome" /> |
+| `palindrome` | – | Reads the same from both ends. <SiteLink href="https://sudokuvariants.com/help/variants/palindrome"/> | <Swatch name="line-palindrome" /> |
 | `entropic` | `groups`: REQUIRED when D ≠ 9; default `[[1,2,3],[4,5,6],[7,8,9]]` | Every run of 3 consecutive cells holds one digit from each group. | <Swatch name="line-entropic" /> |
 | `modular` | `value` m: REQUIRED when D ≠ 9; default 3 | Every run of m consecutive cells holds one digit of each residue class mod m. | <Swatch name="line-modular" /> |
 | `parity` | – | Adjacent cells on the line differ in parity (alternate odd / even). | <Swatch name="line-parity" /> |
-| `zipper` | – | Cells equally far from the centre of the line sum to the same total (the centre digit, for an odd length). | <Swatch name="line-zipper" /> |
-| `between` | – | Digits strictly between those of the two ends `cells[0]` and `cells[-1]`, ends in either order. | <Swatch name="line-between" /> |
+| `zipper` | – | Cells equally far from the centre of the line sum to the same total (the centre digit, for an odd length). <SiteLink href="https://sudokuvariants.com/help/variants/zipper"/> | <Swatch name="line-zipper" /> |
+| `between` | – | Digits strictly between those of the two ends `cells[0]` and `cells[-1]`, ends in either order. <SiteLink href="https://sudokuvariants.com/help/variants/between-line"/> | <Swatch name="line-between" /> |
 | `lockout` | `value` k: REQUIRED when D ≠ 9; default 4 | The ends differ by at least k; every other digit lies outside the closed range of the ends. | <Swatch name="line-lockout" /> |
 | `double_arrow` | – | The two ends sum to the total of the cells between them. | <Swatch name="line-double_arrow" /> |
 
@@ -42,6 +44,8 @@ first. `closed` is allowed only for `whisper`, `renban` and `parity`.
 Repeats: allowed on every line (subject to houses), except `renban`.
 
 ## 6.5 `arrow`
+
+Explained elsewhere: Arrow sudoku <SiteLink href="https://sudokuvariants.com/help/variants/arrow"/>.
 
 ```json
 {"type": "arrow", "bulb": ["r2c2"], "lines": [["r3c3", "r4c4", "r5c5"]]}

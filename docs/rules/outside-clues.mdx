@@ -2,6 +2,8 @@
 title: Outside clues
 ---
 
+import SiteLink from '@site/src/components/SiteLink';
+
 import Swatch from '@site/src/components/Swatch';
 
 # Outside clues
@@ -16,7 +18,7 @@ All take `side` and ordered `cells` starting next to the clue (3.2).
 
 | `type` | Fields | Meaning | Drawing |
 |---|---|---|---|
-| `sandwich` | `sum` | The digits strictly between the 1 and the D in `cells` sum to `sum` (0 when they are adjacent). | <Swatch name="sandwich" /> |
+| `sandwich` | `sum` | The digits strictly between the 1 and the D in `cells` sum to `sum` (0 when they are adjacent). <SiteLink href="https://sudokuvariants.com/help/variants/sandwich"/> | <Swatch name="sandwich" /> |
 | `xsum` | `sum` | X = the digit in `cells[0]`; the first X cells sum to `sum`. | <Swatch name="xsum" /> |
 | `skyscraper` | `value` | Reading `cells` in order, exactly `value` cells are higher than every earlier cell. | <Swatch name="skyscraper" /> |
 | `rossini` | `arrow`: `"in"` \| `"out"` | The first 3 cells are monotone: increasing inwards for `in` (the arrow points into the grid, towards the highest digit), decreasing inwards for `out`. `cells` lists those 3 cells. |  |

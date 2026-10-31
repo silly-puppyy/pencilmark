@@ -2,6 +2,8 @@
 title: Other rules
 ---
 
+import SiteLink from '@site/src/components/SiteLink';
+
 import Swatch from '@site/src/components/Swatch';
 
 # Other rules
@@ -27,14 +29,14 @@ This page covers the remaining rule families (6.13), vendor rules (6.15), what i
 
 | `type` | Meaning | Drawing |
 |---|---|---|
-| `contains` | Every listed digit (a multiset) appears among `cells` at least as often as it is listed. On a 2×2 block it is the quadruple clue. | <Swatch name="contains-quadruple" /> |
+| `contains` | Every listed digit (a multiset) appears among `cells` at least as often as it is listed. On a 2×2 block it is the quadruple clue. <SiteLink href="https://sudokuvariants.com/help/variants/quadruple"/> | <Swatch name="contains-quadruple" /> |
 | `appears` | The digit in `source` appears in at least one of `cells` (e.g. an in-cell arrow whose digit occurs again along its ray). |  |
 | `clone` | ≥ 2 equal-sized ordered `regions`; corresponding cells hold equal digits. |  |
 | `isomorphic` | 2 ordered `regions` (twins): one fixed relabelling of the digits maps every cell of the first region to the corresponding cell of the second. |  |
 | `count` | `each` k: every digit appears exactly k times among `cells` (Double Sudoku rows). Or `counts` `[[digit, times], …]`: those digits appear exactly that often. Kind `circles`: a digit that appears among the cells appears exactly as many times as its own value. Cells under `count` MUST NOT also be in a house. |  |
 | `distinct_count` | Exactly `value` different digits among `cells`. With `side` it is an outside clue (ordered cells). |  |
 | `global_entropy` | Every 2×2 window of existing cells holds a low, a middle and a high digit (thirds of 1..D; D divisible by 3). |  |
-| `equal_sum` | Every segment (a cell set) has the same sum. For lines, use the `line` kinds `zipper`, `region_sum`, `double_arrow`. |  |
+| `equal_sum` | Every segment (a cell set) has the same sum. For lines, use the `line` kinds `zipper`, `region_sum`, `double_arrow`. <SiteLink href="https://sudokuvariants.com/help/variants/equal-sum"/> |  |
 | `vudoku` | `cells` = [vertex, arm, arm]: the vertex digit is the sum or the difference of the two arm digits. |  |
 
 </div>
