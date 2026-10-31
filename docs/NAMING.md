@@ -1,6 +1,6 @@
-# Variant names: `describe()`
+# Variant names
 
-How pencilmark names a variant and writes its rules from the rules alone. This is library behaviour, not part of
+How `describe()` names a variant and writes its rules from the rules alone. This is library behaviour, not part of
 any format: the names appear only in `meta.type` and in `describe()` output.
 
 `describe(puzzle)` names the variant and lists its rules **from the rules alone**, as an ordered map from a short name

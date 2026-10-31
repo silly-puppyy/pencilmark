@@ -1,3 +1,5 @@
+import LabelsChart from '@site/src/components/LabelsChart';
+
 # Usage
 
 pencilmark grades, solves, checks, converts and generates sudoku puzzles, from the command line or from Python. Every
@@ -131,23 +133,12 @@ Only the requested fields are computed. `contains` is the slow part: without it 
 says what the numbers mean, [How a card is computed](MODEL.mdx) how they are computed.
 
 ## Other sites' labels on this scale
-Median difficulty, interquartile range in brackets. Each site rates for its own audience and neighbouring levels
-overlap a lot, so treat this as a rough conversion.
 
-| Source label | Our difficulty | Notes |
-|---|---|---|
-| fed-sudoku easy | 3.9 (3.4–4.3) | |
-| fed-sudoku medium | 5.1 (4.6–5.9) | |
-| fed-sudoku hard | 6.5 (6.2–7.0) | |
-| [sudoku.coach](https://sudoku.coach/) level 0 / 1 / 2 | 0.6 / 1.7 / 2.8 | classics |
-| sudoku.coach level 3 / 4 / 5 | 3.7 / 5.2 / 5.8 | |
-| sudoku.coach level 6 / 7 / 8 | 6.1 / 6.7 / 7.3 | |
-| sudoku.coach level 9 / 10 / 11 | 8.7 / 11.5 / 11.9 | |
-| [Logic Masters](https://logic-masters.de/) 1 star | 8.8 (6.3–10.1) | variants; LMD's "easy" is already hard |
-| Logic Masters 2 stars | 11.1 (10.1–12.6) | |
-| Logic Masters 3 stars | 13.0 (11.5–13.7) | |
-| Logic Masters 4–5 stars | 13.8 (12.6–14.9) | n 56; stars 4 and 5 overlap |
+Where each site's difficulty labels fall on pencilmark's scale: the bar is the median difficulty of the site's puzzles
+with that label, the line the middle half where it was measured. Each site rates for its own audience and neighbouring
+labels overlap a lot, so treat this as a rough conversion.
 
+<LabelsChart />
 
 ## Speed
 

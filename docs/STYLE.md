@@ -2,7 +2,7 @@
 
 How pencilmark draws puzzles, and the conventions most sudoku software shares. **None of this is part of a format**: a
 `sudoku-puzzle` file says what each rule means, and a renderer may draw it any way that shows that meaning. The
-per-puzzle `style` and `decorations` keys ([STYLE.md](FORMAT.md#7-cosmetic-layers-style-and-decorations))
+per-puzzle `style` and `decorations` keys ([Puzzle format, section 7](FORMAT.md#7-cosmetic-layers-style-and-decorations))
 carry a setter's own choices.
 
 The line colours below are the community defaults, as measured on 6,217 published puzzles drawn in

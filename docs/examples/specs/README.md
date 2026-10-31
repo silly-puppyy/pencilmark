@@ -1,6 +1,6 @@
-# Example generator specs (`sudoku-spec`)
+# Example generator specs
 
-Requests in the spec language of [SPEC.md](../../SPEC.md); each runs with `pencilmark.generate(spec)`. Whether a run
+Requests in the [generator spec](../../SPEC.md) language; each runs with `pencilmark.generate(spec)`. Whether a run
 finds a puzzle within its time limit is not promised (the 16x16 cage count, for one, needs a long
 [CP-SAT](https://developers.google.com/optimization/cp/cp_solver) search).
 

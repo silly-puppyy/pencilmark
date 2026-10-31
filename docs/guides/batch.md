@@ -42,7 +42,7 @@ $ pencilmark rate puzzles.txt -j 4 --format '%i,%b,%d,%m,%c'
 4,Expert,6.9,13.7,NSI PPRx2 HPR/NQDx2 KTE/SKY/MCH AIC/ALS/WIF
 ```
 
-[Usage](../USAGE.md#command-line) lists every `%` field.
+[Usage](../USAGE.mdx#command-line) lists every `%` field.
 
 ## Keep the full cards
 

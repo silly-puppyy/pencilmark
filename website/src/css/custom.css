@@ -206,3 +206,8 @@ a.pm-site-text { font-size: 0.7rem; border: 1px solid var(--ifm-color-emphasis-4
 .docusaurus-mermaid-container marker path, .docusaurus-mermaid-container .arrowheadPath { fill: var(--pm-muted) !important;
   stroke: var(--pm-muted) !important; }
 .docusaurus-mermaid-container .cluster rect { fill: var(--pm-surface) !important; stroke: var(--pm-line) !important; }
+
+/* chart + table pairs (LabelsChart.js): the table is hidden behind the charts, and shown when graphics are off */
+.pm-alt-table { display: none; }
+.pm-alt-hidden { display: none; }
+html[data-graphics='off'] .pm-alt-table { display: block; }

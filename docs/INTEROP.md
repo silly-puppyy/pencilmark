@@ -1,6 +1,6 @@
 # Other formats
 
-The `sudoku-puzzle` format ([FORMAT.md](FORMAT.md)) is all a tool needs. pencilmark can also read and write a few
+The `sudoku-puzzle` format ([Puzzle format](FORMAT.md)) is all a tool needs. pencilmark can also read and write a few
 other formats for convenience. None of them is part of the format or required by it.
 
 | Function | Reads | Writes |

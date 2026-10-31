@@ -55,7 +55,7 @@ pencilmark rate puzzles.txt --json        # full card per line (python -m pencil
 pencilmark solve puzzles.txt              # the solution, or 'not unique' / 'no solution'
 ```
 
-More in [docs/USAGE.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/USAGE.md).
+More in [Usage](https://silly-puppyy.github.io/pencilmark/USAGE).
 
 ## The card
 

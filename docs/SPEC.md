@@ -1,9 +1,9 @@
-# Generator spec: `sudoku-spec`, format_version 1
+# Generator spec
 
-A request to a puzzle generator. It reuses the vocabulary of the puzzle format ([FORMAT.md](FORMAT.md)) and the keys
-of the grade card ([GRADE.md](GRADE.md)). Version 1 contains exactly what pencilmark's generator runs
+The `sudoku-spec` format, version 1: a request to a puzzle generator. It reuses the vocabulary of the
+[puzzle format](FORMAT.md) and the keys of the [grade card](GRADE.md). Version 1 contains exactly what pencilmark's generator runs
 (`pencilmark.generate(spec)`); the parts planned for later versions are listed in section 7 and refused today. Example
-specs: [examples/specs](examples/specs/README.md).
+specs: [Example generator specs](examples/specs/README.md).
 
 A request **is a puzzle file with blanks**: the same envelope and rule vocabulary, its own `format` (no puzzle reader
 mistakes it for a puzzle), plus blocks that say what the result must satisfy and how long to try.
@@ -66,7 +66,7 @@ One template per variety, each with its own `count`:
 
 ## 4. Targets: `where`
 
-Conditions on the result's card, using the card's keys ([GRADE.md](GRADE.md)):
+Conditions on the result's card, using the card's keys ([Grade card](GRADE.md)):
 
 | Key | Value |
 |---|---|
@@ -79,7 +79,7 @@ Conditions on the result's card, using the card's keys ([GRADE.md](GRADE.md)):
 
 - `limits`: `time` (seconds for the whole run, default 120), `seed` (reproducible runs, default 1). The run returns one
   puzzle or fails with the reason after `time`.
-- `fields`: which card fields to return with the result ([GRADE.md](GRADE.md)); default fields without it.
+- `fields`: which card fields to return with the result ([Grade card](GRADE.md)); default fields without it.
 - `meta`: free information as in the puzzle format. pencilmark reads its own knobs from
   `meta["io.github.silly-puppyy.pencilmark"]`: `{"solver": "logic" | "cpsat", "grade_seconds": s}`.
 

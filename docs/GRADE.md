@@ -1,6 +1,7 @@
-# Grade card: `sudoku-grade`, format_version 1
+# Grade card
 
-What a grader reports about one puzzle. The card is separate from the puzzle format ([FORMAT.md](FORMAT.md)): it
+The `sudoku-grade` format, version 1: what a grader reports about one puzzle. The card is separate from the
+[puzzle format](FORMAT.md): it
 refers to a puzzle but does not contain it. The key words MUST, MUST NOT, SHOULD and MAY are used as in
 [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
 
@@ -26,7 +27,7 @@ A card exists only for a puzzle with exactly one solution. For any other puzzle,
 |---|---|---|---|
 | `format`, `format_version` | always | `"sudoku-grade"`, `1` | |
 | `grader` | always | `{"name", "version"}` | The engine that made the card. A card is only meaningful with that engine and version. |
-| `difficulty` | default | number or null | How hard the puzzle feels; continuous and positive (a nearly finished grid is about 0.2), no ceiling. Hardness, not amount: independent of board size and length, which belong to `time`. Independent of `band`: variants often sit above the classic range for their band. Null when the band is `Unknown`. Exact definition: [PHILOSOPHY.md](PHILOSOPHY.md). |
+| `difficulty` | default | number or null | How hard the puzzle feels; continuous and positive (a nearly finished grid is about 0.2), no ceiling. Hardness, not amount: independent of board size and length, which belong to `time`. Independent of `band`: variants often sit above the classic range for their band. Null when the band is `Unknown`. Exact definition: [Philosophy](PHILOSOPHY.md). |
 | `time` | default | number or null | Predicted median solving time in minutes over the people who solve puzzles like this one, without long breaks. Null when the band is `Unknown`. |
 | `time_mean`, `time_pNN` | optional | number or null | Spread of solve times over today's players: the mean, or the NN-th percentile (`time_p80` = 80% of players finish within it; NN from 1 to 99). Solves without long pauses; a log-normal fitted on two sources' per-player times. |
 | `time_dist` | optional | object or null | The time distribution's parameters: `{"type": "lognormal", "sigma_players": …, "sigma_model": …}`, around the median `time`. `sigma_players` is the spread of log solve time over today's players (0.79 for classics and multi-grid layouts, 0.62 for puzzles with any other rule; measured on grandgames and sudoku.coach), which `time_mean` and `time_pNN` use; `sigma_model` is the typical error of the predicted median itself (0.33 / 0.48). |
@@ -41,7 +42,7 @@ A card exists only for a puzzle with exactly one solution. For any other puzzle,
 | `warning` | optional | boolean | True when any issue has severity `warning`. |
 | `se` | optional | `{"er", "ep", "ed", "scale"}` or null | Sudoku Explainer-style ratings of the route on the classic SE scale (`scale` is `"classic"`). Meaningful for classic sudoku only. |
 | `steps` | optional | list | The step-by-step route (section 5). |
-| `describe` | optional | object | The `describe()` output ([NAMING.md](NAMING.md)). |
+| `describe` | optional | object | The `describe()` output ([Variant names](NAMING.md)). |
 | `symmetry` | optional | list | Symmetries of the givens pattern, entries as in the generator spec (`{"kind", "axis"?, "of": "givens"}`). |
 
 Numbers are rounded as emitted: `difficulty`, `time`, `time_mean` and `time_pNN` to 1 decimal, the sigmas of
@@ -61,7 +62,7 @@ Each entry is one technique on the route:
 
 | Key | Meaning |
 |---|---|
-| `code` | Three-letter technique code (USAGE.md lists them). |
+| `code` | Three-letter technique code ([Techniques](TECHNIQUES.md) lists them). |
 | `chip` | `code` plus its alternatives, `/`-separated: any one of them gets the solver through at that point. |
 | `name` | Technique name. |
 | `band` | The technique's band index. |
@@ -85,7 +86,7 @@ rate(puzzle, fields=["issues", "reject", "warning"],
 ```
 
 CLI: `--quality trivial.limit=0.5,trial.severity=reject,tedious.severity=off`. The generator spec's `quality`
-([SPEC.md](SPEC.md)) is the same object.
+([Generator spec](SPEC.md)) is the same object.
 
 | Code | Severity when asked for | Meaning | Limit (default) |
 |---|---|---|---|

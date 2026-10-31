@@ -40,7 +40,7 @@ module.exports = {
     {type: 'category', label: 'Library', collapsed: false, items: [
       {type: 'doc', id: 'api', label: 'Python API'},
       {type: 'doc', id: 'VARIANTS', label: 'Named variants'},
-      {type: 'doc', id: 'NAMING', label: 'Variant names: describe()'},
+      {type: 'doc', id: 'NAMING', label: 'Variant names'},
       {type: 'doc', id: 'STYLE', label: 'Drawing and style'},
       {type: 'doc', id: 'ENGINE', label: 'Engine mapping'},
     ]},
