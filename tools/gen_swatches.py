@@ -11,12 +11,15 @@ each grid and let overlapping tints blend, so the shared boxes show. The docs bu
 not committed. swatches.json lists the names, so a page can check that a swatch exists.
 """
 
+import functools
 import json
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import render_svg  # noqa: E402
+
+RENDER = functools.partial(render_svg.render, background=False)  # transparent around the board: tables show through
 
 from pencilmark import exchange, puzzle_json, variants  # noqa: E402
 
@@ -159,7 +162,7 @@ def drawings():
     """name -> fn(dark) -> svg text, for every picture this script makes"""
     out = {}
     for name, (rules, givens) in SWATCHES.items():
-        out[name] = lambda dark, name=name, rules=rules, givens=givens: render_svg.render(
+        out[name] = lambda dark, name=name, rules=rules, givens=givens: RENDER(
             doc_for(name, rules, givens), dark=dark, cell=40
         )
     for v in PLACEMENT:
@@ -169,11 +172,11 @@ def drawings():
             givens=[0] * 81,
             rules=[BOXES] + variants.preset_rules(v),
         )
-        out["variant-" + v.lower().replace(" ", "-")] = lambda dark, doc=doc: render_svg.render(doc, dark=dark, cell=24)
+        out["variant-" + v.lower().replace(" ", "-")] = lambda dark, doc=doc: RENDER(doc, dark=dark, cell=24)
     for f in EXAMPLES:  # example puzzles: plain, and annotated with row / column numbers for the board + JSON view
         doc = json.loads(f.read_text(encoding="utf-8"))
-        out["example-" + f.stem] = lambda dark, doc=doc: render_svg.render(doc, dark=dark, cell=40)
-        out["example-" + f.stem + "-board"] = lambda dark, doc=doc: render_svg.render(
+        out["example-" + f.stem] = lambda dark, doc=doc: RENDER(doc, dark=dark, cell=40)
+        out["example-" + f.stem + "-board"] = lambda dark, doc=doc: RENDER(
             doc, dark=dark, cell=44, annotate=True, labels=True
         )
     for key in variants.LAYOUT_NAMES:

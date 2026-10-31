@@ -11,7 +11,7 @@ The line colours below are the community defaults, as measured on 6,217 publishe
 
 A renderer needs nothing beyond the rules. Sizes are in cell units (1 = a cell's side); colours are defaults that
 `style` may override, and the [Palette](PALETTE.md) page shows every one in both themes. Grid lines 0.031, box borders
-and frame 0.055. Draw order, bottom to top: cell shading, lines, cage outlines, grid lines and box borders, edge /
+and frame 0.07 (0.09 in the dark theme, where light lines on dark read thinner). Draw order, bottom to top: cell shading, lines, cage outlines, grid lines and box borders, edge /
 corner clues, digits, outside clues.
 
 | Rule | Default drawing |

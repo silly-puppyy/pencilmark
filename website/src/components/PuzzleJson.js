@@ -1,10 +1,13 @@
-// A puzzle drawn next to its JSON (docs/examples/<name>.json, drawn by tools/gen_swatches.py with row / column numbers).
+// A puzzle drawn above its JSON (docs/examples/<name>.json, drawn by tools/gen_swatches.py with row / column numbers); the
+// JSON is highlighted in the site's code theme.
 // Hover a rule's line in the JSON and its drawing stands out on the board; hover a drawn rule and its line lights up.
 // Every element the renderer draws for rules[i] carries data-rule="i", and the canonical JSON has one rule per line in
 // the same order, so the two map by index.
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {useColorMode} from '@docusaurus/theme-common';
 import useBaseUrl from '@docusaurus/useBaseUrl';
+import {Highlight} from 'prism-react-renderer';
+import {tomorrowVars} from '@site/src/prism-tomorrow';
 
 // line number -> rule index, for the canonical pretty text (one rule per line after "rules": [)
 function ruleLines(text) {
@@ -30,7 +33,6 @@ export default function PuzzleJson({name, caption}) {
       .then(([light, dark, json]) => { setSvg({light, dark}); setText(json); })
       .catch(() => {});
   }, [base]);
-  const lines = useMemo(() => text.split('\n'), [text]);
   const map = useMemo(() => ruleLines(text), [text]);
   const onBoard = (e) => {
     const el = e.target.closest && e.target.closest('[data-rule]');
@@ -43,13 +45,19 @@ export default function PuzzleJson({name, caption}) {
       <style>{css}</style>
       <div className="pm-graphic pm-puzzle-json-board" onMouseMove={onBoard} onMouseLeave={() => setActive(null)}
            dangerouslySetInnerHTML={{__html: colorMode === 'dark' ? svg.dark : svg.light}}/>
-      <pre className="pm-puzzle-json-text">
-        {lines.map((line, i) => (
-          <span key={i} className={map[i] !== undefined && map[i] === active ? 'pm-pj-line pm-pj-on' : 'pm-pj-line'}
-                onMouseEnter={() => setActive(map[i] !== undefined ? map[i] : null)}
-                onMouseLeave={() => setActive(null)}>{line + '\n'}</span>
-        ))}
-      </pre>
+      <Highlight code={text.replace(/\n$/, '')} language="json" theme={tomorrowVars}>
+        {({tokens, getTokenProps}) => (
+          <pre className="pm-puzzle-json-text">
+            {tokens.map((line, i) => (
+              <span key={i} className={map[i] !== undefined && map[i] === active ? 'pm-pj-line pm-pj-on' : 'pm-pj-line'}
+                    onMouseEnter={() => setActive(map[i] !== undefined ? map[i] : null)}
+                    onMouseLeave={() => setActive(null)}>
+                {line.map((token, k) => <span key={k} {...getTokenProps({token})}/>)}{'\n'}
+              </span>
+            ))}
+          </pre>
+        )}
+      </Highlight>
       {caption && <figcaption>{caption}</figcaption>}
     </figure>
   );

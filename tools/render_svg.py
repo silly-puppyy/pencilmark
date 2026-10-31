@@ -31,7 +31,7 @@ def esc(s):
     return str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-def render(doc, dark=False, cell=48, annotate=False, labels=False):
+def render(doc, dark=False, cell=48, annotate=False, labels=False, background=True):
     """svg text. annotate: every element drawn for rules[i] carries data-rule="i" (pages link it to the JSON);
     labels: row numbers on the left and column numbers on top, outside the board and its outside clues."""
     T = THEMES[bool(dark)]
@@ -103,7 +103,7 @@ def render(doc, dark=False, cell=48, annotate=False, labels=False):
             add(
                 "grid",
                 f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{col}" stroke-width="{w}" '
-                f'stroke-linecap="square" shape-rendering="crispEdges"/>',
+                f'stroke-linecap="square"/>',  # no crispEdges: scaled down, it dropped whole grid lines
             )
 
     def outline(cells, inset, dash, col, width):
@@ -443,7 +443,8 @@ def render(doc, dark=False, cell=48, annotate=False, labels=False):
     body = "".join("".join(layers[k]) for k in ("shade", "lines", "cages", "grid", "clues", "digits", "outside"))
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{W:.0f}" height="{H:.0f}" viewBox="0 0 {W:.1f} {H:.1f}">'
-        f'<rect width="{W:.1f}" height="{H:.1f}" fill="{T["page"]}"/>{body}</svg>'
+        + (f'<rect width="{W:.1f}" height="{H:.1f}" fill="{T["page"]}"/>' if background else "")
+        + f"{body}</svg>"
     )
 
 

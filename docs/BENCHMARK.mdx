@@ -15,7 +15,7 @@ graders, on a frozen held-out set. Only aggregate numbers are published; no puzz
 
 ## Method
 
-- **Frozen set.** 15% of every source, chosen by a hash of the puzzle (its solution where known), fixed on 2026-10-25.
+- **Frozen set.** 15% of every source, chosen by a hash of the puzzle (its solution where known), fixed before the 1.0 release and used only to measure releases.
   Every fit and design decision since then used the other 85% only.
 - **Targets.** Real human data from each source (below). Where a source gives per-player times, the target is the
   puzzle's effect after correcting for each player's skill.
@@ -108,8 +108,8 @@ needs, the number its overall difficulty ([Philosophy](PHILOSOPHY.md)); the sudo
 
 ## Generator
 
-Five requests, 10 puzzles per tool, one process at a time (measured 2026-10-29 on the 1.0.0rc1 engine, before the
-seven-band names; requests are described by what they ask for). Seconds per kept puzzle = all attempts' time divided by
+Five requests, 10 puzzles per tool, one process at a time (measured on the 1.0 release candidate, before the seven-band
+names; requests are described by what they ask for). Seconds per kept puzzle = all attempts' time divided by
 the puzzles kept. Where a tool cannot express a request, its own output is filtered and the rejected puzzles' time counts.
 
 | Request | pencilmark | HoDoKu 2.2.0 | Sudoku Explainer |

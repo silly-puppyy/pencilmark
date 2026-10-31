@@ -125,7 +125,7 @@ changing a shipped value is a deliberate commit with a golden rewrite.
 | `route.meta_exclude` |  | ″ |
 | `route.meta_theta_arith_cells` | 0 | ″ |
 | `route.meta_theta_full` | list of 18 | Structural step-price weights (18 features), fitted on human solve times. |
-| `route.meta_theta_interact` | 0.02882, 0.2858, 0.1108 | Depth interaction weights of the step price (D6, 2026-10). |
+| `route.meta_theta_interact` | 0.02882, 0.2858, 0.1108 | Depth interaction weights of the step price (D6). |
 | `route.dc_lines` | 1 | Engine parameters (data/params.json): the step-price model and the scan / note costs, fitted on human solve times; they also price the time effort and the band route's tie-breaks. |
 | `route.locality` | 0.4 | ″ |
 | `route.case_rounds` | 3 | ″ |
@@ -135,20 +135,20 @@ changing a shipped value is a deliberate commit with a golden rewrite.
 
 | Name | Value | Source |
 |---|---|---|
-| `price.meta_theta_full` | list of 18 | Card-fit structural weights: refitted so difficulty ranks puzzles like human times across sources (installed 2026-10-19; data/card_score.json price_weights). |
-| `price.meta_theta_interact` | 0.3114, 0.2262, -0.1723 | Card-fit depth interactions (2026-10-19, with the weights above). |
+| `price.meta_theta_full` | list of 18 | Card-fit structural weights: refitted so difficulty ranks puzzles like human times across sources (data/card_score.json price_weights). |
+| `price.meta_theta_interact` | 0.3114, 0.2262, -0.1723 | Card-fit depth interactions (fitted with the weights above). |
 
 ## Card score (score)
 
 | Name | Value | Source |
 |---|---|---|
 | `score.version` | 3 | Version of the configuration format. |
-| `score.beta` | 4.583 | Exponent of a step's price in its value (card fit, 2026-10-19). |
-| `score.enum_w` | 0.1 | Weight of the cage-enumeration term (2026-10-17; validated on two sources). |
+| `score.beta` | 4.583 | Exponent of a step's price in its value (card fit). |
+| `score.enum_w` | 0.1 | Weight of the cage-enumeration term (validated on two sources). |
 | `score.stat` | per_cell | How step values combine: the average per empty cell. |
 | `score.beta_time` | 3.807 | The same exponent for the time effort (time fit). |
-| `score.refute_w` | 2 | Weight of the technique-free search effort (2026-10-20). |
-| `score.map.form` | A * w * softplus((r - r0) / w) | The smooth difficulty map (2026-10-22): softplus slope A, knee r0 and width w; below 2 the square-root rule of 2026-10-30. |
+| `score.refute_w` | 2 | Weight of the technique-free search effort. |
+| `score.map.form` | A * w * softplus((r - r0) / w) | The smooth difficulty map: softplus slope A, knee r0 and width w; below 2 a gentler square-root rule. |
 | `score.map.A` | 0.8258 | ″ |
 | `score.map.r0` | 2.117 | ″ |
 | `score.map.w` | 0.3 | ″ |
@@ -163,11 +163,11 @@ changing a shipped value is a deliberate commit with a golden rewrite.
 | `time.k_geometry.blob_cells` | 0.385 | Scanning cost of irregular regions (jigsaw pieces, extra regions per cell). |
 | `time.k_geometry.extra_area_pc` | 1.108 | ″ |
 | `time.t0` | 0.0408 | Time model (data/time_model.json), fitted on era-adjusted per-player solve times. |
-| `time.compress.k` | 0.15 | Long predictions grow more slowly (monotone compression, 2026-10-24). |
+| `time.compress.k` | 0.15 | Long predictions grow more slowly (monotone compression). |
 | `time.compress.c` | 0.4 | ″ |
 | `time.minutes_per_unit` | 11.8 | The median time of a classic 9x9, in minutes (one time unit). |
 | `time.spread_note` | solve times of one puzzle across today's players: log-nor... | Time model (data/time_model.json), fitted on era-adjusted per-player solve times. |
-| `time.size_curve.q` | 0.2148 | Very large boards are slower per cell (hinge above about 92 empty cells, 2026-10-25, three sources). |
+| `time.size_curve.q` | 0.2148 | Very large boards are slower per cell (hinge above about 92 empty cells, measured on three sources). |
 | `time.size_curve.c` | 4.52 | ″ |
 | `time.size_curve_note` | log t += q * max(0, ln(empty) - c)^2 after everything els... | ″ |
 | `time.spread_sigma_classic` | 0.79 | Spread of players around the median (log-normal sigma), for time_pNN. |

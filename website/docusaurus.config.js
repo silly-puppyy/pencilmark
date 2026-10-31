@@ -1,5 +1,5 @@
 // Docusaurus site for pencilmark. Pages live in ../docs (readable on GitHub too); plain .md is parsed as Markdown, not MDX.
-const {tomorrow, tomorrowNight} = require('./src/prism-tomorrow');
+const {tomorrowVars} = require('./src/prism-tomorrow');
 
 const GH = 'https://github.com/silly-puppyy/pencilmark';
 
@@ -45,7 +45,6 @@ module.exports = async function createConfig() {
           if (generated.includes(docPath) || docPath.startsWith('dev/reference/')) return undefined;
           return `${GH}/edit/main/${copies[docPath] || 'docs/' + docPath}`;
         },
-        showLastUpdateTime: true,
         exclude: ['**/*.json'],
         remarkPlugins: [remarkMath],
         rehypePlugins: [rehypeKatex, apiReference, proseTables, inlineJson],
@@ -64,9 +63,11 @@ module.exports = async function createConfig() {
         {to: '/FORMAT/', label: 'Puzzle format', position: 'left'},
         {to: '/GRADE/', label: 'Grade card', position: 'left'},
         {to: '/api/', label: 'Python API', position: 'left'},
-        {type: 'custom-graphicsToggle', position: 'right'},
-        {href: 'https://pypi.org/project/pencilmark/', label: 'PyPI', position: 'right'},
-        {href: GH, label: 'GitHub', position: 'right'},
+        {href: 'https://pypi.org/project/pencilmark/', position: 'right', className: 'pm-nav-icon pm-nav-pypi',
+         'aria-label': 'pencilmark on PyPI', title: 'PyPI'},
+        {href: GH, position: 'right', className: 'pm-nav-icon pm-nav-github', 'aria-label': 'GitHub repository',
+         title: 'GitHub'},
+        {type: 'custom-graphicsToggle', position: 'right'},  // last: right before the theme switch
       ],
     },
     footer: {
@@ -81,7 +82,7 @@ module.exports = async function createConfig() {
       ],
       copyright: 'MIT licensed',
     },
-    prism: {theme: tomorrow, darkTheme: tomorrowNight, additionalLanguages: ['json', 'python', 'bash']},
+    prism: {theme: tomorrowVars, darkTheme: tomorrowVars, additionalLanguages: ['json', 'python', 'bash']},
     tableOfContents: {minHeadingLevel: 2, maxHeadingLevel: 3},
     mermaid: {theme: {light: 'neutral', dark: 'dark'}, options: {securityLevel: 'loose'}},  // loose: diagram boxes can link to sections
   },
