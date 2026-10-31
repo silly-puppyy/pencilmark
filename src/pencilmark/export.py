@@ -404,8 +404,9 @@ class _CardContext:
     """what the card's fields are built from: the stages' results (card route, technique-list route) and values several
     fields share, computed on first use"""
 
-    def __init__(self, p, P, want, card, bp, alternatives, levels):
+    def __init__(self, p, P, want, card, bp, alternatives, levels, base=None):
         self.p, self.P, self.want, self.card, self.bp = p, P, want, card, bp
+        self.base = base  # the first band route (band_path(p, P)), which the technique list shrinks
         self.alternatives, self.levels = alternatives, levels
         self.unknown = not bp["solved"]
 
@@ -503,7 +504,7 @@ def _f_se(c):
     from . import band_path as BP
     from . import se as SE
 
-    sb = BP.band_path(c.p, c.P)
+    sb = c.base if c.base is not None else BP.band_path(c.p, c.P)  # the card's first route: not computed again
     return {"se": SE.ratings(sb["steps"], scale="classic") if sb["solved"] else None}
 
 
@@ -634,7 +635,7 @@ def _grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expl
     finally:
         if own:
             CB._C.set_deadline(0.0)
-    c = _CardContext(p, P, want, card, bp, alternatives, levels)
+    c = _CardContext(p, P, want, card, bp, alternatives, levels, base=base)
     g = {
         "format": "sudoku-grade",
         "format_version": FORMAT_VERSION,
