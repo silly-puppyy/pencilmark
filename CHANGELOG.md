@@ -2,8 +2,10 @@
 
 ## Unreleased
 
-- `pencilmark solve` reports an unreadable line as `error: ...` and goes on to the next line, as `rate` does; it
-  stopped with a traceback. A grid with the wrong number of symbols says "the grid has 3 symbols; expected 81" (it
+- Command line: an input that cannot be read (bad JSON, a format error) is reported on its line as
+  `error<TAB>line<TAB>message` and the next input goes on, in every command; `rate`, `solve`, `json`, `fingerprint` and
+  `describe` stopped with a traceback. A FILE ending in `.json` that holds one JSON value (a pretty-printed puzzle file,
+  or a list of puzzles) is read whole; it was read line by line and failed. A grid with the wrong number of symbols says "the grid has 3 symbols; expected 81" (it
   said "numbers has 3 symbols; expected 81 or 81").
 - `se` (Sudoku Explainer-style rating): every card's ER was 7.0. The rating table was keyed by codes the route never
   gives its steps (XYW, UR1, JFH, XCH, FSH, NET instead of YWG, URC, JLF, XCL, FXW / FSW / FJF, FNT) and lacked the

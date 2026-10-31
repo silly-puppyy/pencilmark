@@ -35,9 +35,10 @@ def test_cli_json_equals_api(variants):
 def test_cli_default_format_and_solve():
     out = run(["rate", "-"], CLASSIC + "\n")
     assert out == ["Hard\t5.9\t10.7\tX-Wing"]
-    sol = run(["solve", "-"], CLASSIC + "\n" + "." * 81 + "\n" + "123\n")  # a bad line is reported, not fatal
+    sol = run(["solve", "-"], CLASSIC + "\n" + "." * 81 + "\n" + "123\n{bad\n")  # bad lines are reported, not fatal
     assert sol[0] == "".join(map(str, pencilmark.solve(CLASSIC))) and sol[1] == "not unique"
-    assert sol[2] == "error: ValueError: the grid has 3 symbols; expected 81"
+    assert sol[2] == "error\t3\tValueError: the grid has 3 symbols; expected 81"
+    assert sol[3].startswith("error\t4\tJSONDecodeError")
 
 
 def test_cli_parallel_same_output(variants):
@@ -70,3 +71,10 @@ def test_cli_parallel_spawn():
         timeout=120,
     )
     assert r.returncode == 0 and r.stdout.splitlines() == ["Hard\t5.9\t10.7\tX-Wing"] * 2, r.stderr[-2000:]
+
+
+def test_cli_reads_whole_json_file(tmp_path, variants):
+    f = tmp_path / "puzzle.json"
+    f.write_text(json.dumps(variants[0]["puzzle"], indent=1))  # pretty-printed: one puzzle over many lines
+    card = json.loads(run(["rate", str(f), "--json", "--fields", "band"], "")[0])
+    assert card["band"] == pencilmark.rate(variants[0]["puzzle"], fields=["band"])["band"]

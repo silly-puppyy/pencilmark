@@ -2,7 +2,8 @@
 
   python -m pencilmark rate [FILE|-] [--format FMT] [--json] [--steps]
       One puzzle per line: a classic string ('.'/'0' blanks; 16 / 36 / 81 / 256 / 625 symbols), a JSON object in the
-      pencilmark.puzzle_json format or the sudoku-puzzle exchange format (pencilmark.export), or a path to a .json file. Prints one
+      pencilmark.puzzle_json format or the sudoku-puzzle exchange format (pencilmark.export), or a path to a .json file. A
+      FILE ending in .json that holds one JSON value (a puzzle, or a list of puzzles) is read whole. Prints one
       result line per puzzle. Card "sudoku-grade": FMT fields %d difficulty (continuous, above 0, no ceiling; ~5 = typical medium),
       %m time in minutes for today's average player, %p 80th-percentile minutes, %b band, %h hardest technique met,
       %c contents chips (band > 0, with uses), %n issue codes, %s status ("ok" or the error), %u unique?, %i line number.
@@ -36,21 +37,65 @@ def _params():
     return complete_params(_data.load_params("params.json"))
 
 
+def _whole_json(src):
+    """the puzzles of a .json file that holds ONE JSON value (a puzzle, or a list of puzzles), or None when the file is
+    one puzzle per line"""
+    if src in (None, "-") or not src.endswith(".json"):
+        return None
+    try:
+        obj = json.loads(Path(src).read_text(encoding="utf-8"))
+    except ValueError:
+        return None
+    return obj if isinstance(obj, list) else [obj]
+
+
 def _inputs(src):
+    """(number, puzzle JSON) per input; an input that cannot be read gives (number, the exception), so the command
+    reports it in place and goes on"""
+    whole = _whole_json(src)
+    if whole is not None:
+        for k, obj in enumerate(whole, 1):
+            yield k, _read(lambda: _to_puzzle_json(obj))
+        return
     fh = sys.stdin if src in (None, "-") else open(src, encoding="utf-8")
     for k, line in enumerate(fh, 1):
         line = line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if line.startswith("{"):
-            yield k, _to_puzzle_json(json.loads(line))
-        elif line.endswith(".json") and Path(line).exists():
-            yield k, _to_puzzle_json(json.load(open(line, encoding="utf-8")))
-        else:
-            tok = line.split()[0]
-            from .interop import _PACKED, from_string
+        if line and not line.startswith("#"):
+            yield k, _read(lambda: _line_puzzle(line))
 
-            yield k, (_to_puzzle_json(from_string(tok)) if _PACKED.fullmatch(tok) else {"numbers": tok})
+
+def _read(fn):
+    try:
+        return fn()
+    except Exception as e:
+        return e
+
+
+def _line_puzzle(line):
+    if line.startswith("{"):
+        return _to_puzzle_json(json.loads(line))
+    if line.endswith(".json") and Path(line).exists():
+        return _to_puzzle_json(json.load(open(line, encoding="utf-8")))
+    tok = line.split()[0]
+    from .interop import _PACKED, from_string
+
+    return _to_puzzle_json(from_string(tok)) if _PACKED.fullmatch(tok) else {"numbers": tok}
+
+
+def _ok(obj):
+    """the puzzle JSON of an input, raising the error of one that could not be read"""
+    if isinstance(obj, Exception):
+        raise obj
+    return obj
+
+
+def _each(a, fn):
+    """fn(k, puzzle JSON) for every input; a failing input prints "error<TAB>k<TAB>message" and the rest go on"""
+    for k, obj in _inputs(a.file):
+        try:
+            fn(k, _ok(obj))
+        except Exception as e:
+            print(f"error\t{k}\t{type(e).__name__}: {e}", flush=True)
 
 
 def _to_puzzle_json(obj):
@@ -171,7 +216,7 @@ def _rate_one(args):
     )
     fmt = a.format or "%b\\t%d\\t%m\\t%h"
     try:
-        p = PJ.from_json(obj)
+        p = PJ.from_json(_ok(obj))
         p.finalize()
         sols, decided = V.decide(p, limit=2)
         if len(sols) != 1 or not decided:
@@ -237,13 +282,9 @@ def cmd_rate(a):
 def cmd_solve(a):
     from . import cpsat_verify as V
 
-    for k, obj in _inputs(a.file):
-        try:
-            p = PJ.from_json(obj)
-            p.finalize()
-        except Exception as e:  # an unreadable line is reported in place, like `rate` does
-            print(f"error: {type(e).__name__}: {e}", flush=True)
-            continue
+    def one(k, obj):
+        p = PJ.from_json(obj)
+        p.finalize()
         sols, decided = V.decide(p, limit=2)
         print(
             "not unique"
@@ -256,39 +297,45 @@ def cmd_solve(a):
             flush=True,
         )
 
+    _each(a, one)
+
 
 def cmd_json(a):
-    for k, obj in _inputs(a.file):
-        from .export import read_meta
+    from .export import read_meta
 
+    def one(k, obj):
         d = PJ.to_json(PJ.from_json(obj), meta=read_meta(obj))
         d["hash"] = PJ.canonical_hash(d)
         print(json.dumps(d, separators=(",", ":")), flush=True)
+
+    _each(a, one)
 
 
 def cmd_export(a):
     from .api import dumps, to_export
 
-    for k, obj in _inputs(a.file):
-        try:
-            d = to_export(obj, with_solution=not a.no_solution)
-            print(dumps(d, pretty=a.pretty), end="" if a.pretty else "\n", flush=True)
-        except Exception as e:
-            print(f"error\t{k}\t{type(e).__name__}: {e}", flush=True)
+    def one(k, obj):
+        d = to_export(obj, with_solution=not a.no_solution)
+        print(dumps(d, pretty=a.pretty), end="" if a.pretty else "\n", flush=True)
+
+    _each(a, one)
 
 
 def cmd_fingerprint(a):
     from .api import fingerprint
 
-    for k, obj in _inputs(a.file):
-        print(fingerprint(obj), flush=True)
+    _each(a, lambda k, obj: print(fingerprint(obj), flush=True))
 
 
 def cmd_describe(a):
     from .api import describe, to_export
 
-    for k, obj in _inputs(a.file):
-        print(json.dumps(describe(to_export(obj, with_solution=False, describe=False)), ensure_ascii=False), flush=True)
+    _each(
+        a,
+        lambda k, obj: print(
+            json.dumps(describe(to_export(obj, with_solution=False, describe=False)), ensure_ascii=False), flush=True
+        ),
+    )
 
 
 def main(argv=None):

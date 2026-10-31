@@ -7,14 +7,15 @@ pencilmark rate puzzles.txt              # one line per puzzle: band, difficulty
 pencilmark rate puzzles.txt --report     # readable summary
 pencilmark rate puzzles.txt --json       # full card (sudoku-grade); add --steps for the step-by-step solve
 pencilmark rate - --format '%b|%d|%m|%p|%c' < puzzles.txt
-pencilmark solve puzzles.txt             # the solution, or 'not unique' / 'no solution' / 'undecided' / 'error: ...'
+pencilmark solve puzzles.txt             # the solution, or 'not unique' / 'no solution' / 'undecided'
 pencilmark json puzzles.txt              # validate + normalise to canonical puzzle JSON
 pencilmark export puzzles.txt --pretty   # each puzzle as a sudoku-puzzle file (docs/FORMAT.md), canonical
 pencilmark fingerprint puzzles.txt       # content fingerprint "sha256:..." per puzzle
 pencilmark describe puzzles.txt          # variant name and rules, e.g. {"type": "Killer Sudoku", "rules": {...}}
 ```
 
-`python -m pencilmark ...` does the same.
+`python -m pencilmark ...` does the same. An input that cannot be read prints `error<TAB>line<TAB>message` (in `rate`, in
+the band column) and the next input goes on.
 
 **Input:** one puzzle per line. Each line can be any of these:
 - a classic string, with `.` or `0` for blanks, or a [sudokuwiki.org](https://www.sudokuwiki.org/) packed string (`S9B…`, `J9B…`, `L9B…`, …;
@@ -23,6 +24,9 @@ pencilmark describe puzzles.txt          # variant name and rules, e.g. {"type":
 - a `sudoku-puzzle` object: the exchange format, format_version 1 (docs/FORMAT.md);
 - a sample-pack line `{"puzzle": ..., "grade": ...}`;
 - a path to a `.json` file.
+
+A FILE ending in `.json` that holds one JSON value (a puzzle file, pretty-printed or not, or a list of puzzles) is read
+whole: `pencilmark rate puzzle.json`.
 
 Metadata (title, author, source, date, ...) lives in an optional `"meta"` object in both JSON formats. It is never
 used for solving or rating; `pencilmark json` and `to_export` keep it.
