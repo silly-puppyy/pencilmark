@@ -36,8 +36,8 @@ ROLES = {  # theme colour -> where it is used
     "clue_bg": "behind small clues (circles, corner sum boxes)",
     "odd": "odd-cell circles",
     "even": "even-cell squares",
-    "low": "cells marked low (not drawn by render_svg)",
-    "high": "cells marked high (not drawn by render_svg)",
+    "low": "diamonds in cells marked low",
+    "high": "diamonds in cells marked high",
     "text": "running text beside a board (not drawn by render_svg)",
 }
 
