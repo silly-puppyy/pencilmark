@@ -83,3 +83,12 @@ def test_fpuzzles_killer_cage():
 
 def test_user_agent_contact():
     assert "347531506+silly-puppyy@users.noreply.github.com" in sources.USER_AGENT
+
+
+def test_links_accepted_everywhere():
+    """rate / solve and the command line take a link directly (same result as sources.load first)"""
+    url = fpuzzles_url(fpuzzles_json(CLASSIC))
+    assert pencilmark.solve(url) == pencilmark.solve(CLASSIC)
+    assert pencilmark.rate(url, fields=["band"])["band"] == pencilmark.rate(CLASSIC, fields=["band"])["band"]
+    with pytest.raises(ValueError, match="not a puzzle link"):
+        pencilmark.solve("https://example.com/puzzle")

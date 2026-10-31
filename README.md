@@ -153,10 +153,11 @@ are not generated.
 ## Puzzle sources
 
 ```python
-from pencilmark import sources
-pj = sources.load("https://sudokupad.app/...")      # SudokuPad, f-puzzles, penpa-edit, Logic Masters, short links
-card = pencilmark.rate(pj)
+card = pencilmark.rate("https://sudokupad.app/...")  # SudokuPad, f-puzzles, penpa-edit, Logic Masters, short links
+exp = pencilmark.to_export("https://sudokupad.app/...")  # the same puzzle as a sudoku-puzzle file
 ```
+
+The command line takes links too: `pencilmark rate links.txt`, one link per line.
 
 Loaders that fetch pages identify themselves, obey robots.txt and pause between requests. Override the user agent with
 the `PENCILMARK_UA` environment variable.

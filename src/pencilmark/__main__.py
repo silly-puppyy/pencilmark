@@ -71,12 +71,32 @@ def _read(fn):
         return e
 
 
+_LINK_PREFIXES = ("lmd:", "sudokupad:", "penpa:", "scl", "ctc", "fpuzzles", "fpuz")  # pencilmark.sources forms
+
+
+def _link_puzzle(s):
+    """puzzle JSON for a site link or payload (pencilmark.sources: SudokuPad, f-puzzles, Penpa, Logic Masters, short
+    links; some fetch one page), or None when s is not one"""
+    if "://" not in s and not s.lower().startswith(_LINK_PREFIXES):
+        return None
+    from . import sources
+
+    if sources.detect(s):
+        return sources.load(s)
+    if "://" in s:
+        raise ValueError(f"not a puzzle link pencilmark reads (SudokuPad, f-puzzles, Penpa, Logic Masters): {s[:80]}")
+    return None
+
+
 def _line_puzzle(line):
     if line.startswith("{"):
         return _to_puzzle_json(json.loads(line))
     if line.endswith(".json") and Path(line).exists():
         return _to_puzzle_json(json.load(open(line, encoding="utf-8")))
     tok = line.split()[0]
+    link = _link_puzzle(tok)
+    if link is not None:
+        return link
     from .interop import _PACKED, from_string
 
     return _to_puzzle_json(from_string(tok)) if _PACKED.fullmatch(tok) else {"numbers": tok}

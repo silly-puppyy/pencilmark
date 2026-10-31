@@ -12,8 +12,9 @@ other formats for convenience. None of them is part of the format or required by
 | `from_ipuz(ipuz)` / `to_ipuz(puzzle)` | [ipuz](http://www.ipuz.org/) 1 and 2 sudoku | [ipuz](http://www.ipuz.org/) 2 |
 | `pencilmark.sources.load(url)` | [f-puzzles](https://www.f-puzzles.com/), [SudokuPad](https://sudokupad.app/) (SCL / fpuz / ctc), [Penpa](https://swaroopg92.github.io/penpa-edit/)+, [Logic Masters](https://logic-masters.de/) links | – |
 
-`from_string` and the site loaders return a `sudoku-puzzle` dict; every entry point (`rate`, `solve`, `load`, the
-command line) also accepts these strings directly.
+`from_string` returns a `sudoku-puzzle` dict. `sources.load` returns pencilmark's internal puzzle JSON; `to_export`
+turns it into a `sudoku-puzzle` file. Every entry point (`rate`, `solve`, `load`, `describe`, the command line) also
+accepts these strings and links directly.
 
 ## Plain classic string
 

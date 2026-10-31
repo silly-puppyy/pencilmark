@@ -80,12 +80,15 @@ def _params(mode):
 def load(puzzle):
     """any accepted input -> a finalized engine Puzzle."""
     from . import puzzle_json as PJ
-    from .__main__ import _to_puzzle_json
+    from .__main__ import _link_puzzle, _to_puzzle_json
 
+    link = _link_puzzle(puzzle.strip()) if isinstance(puzzle, str) else None
     if isinstance(puzzle, Path) or (isinstance(puzzle, str) and puzzle.endswith(".json") and Path(puzzle).exists()):
         obj = json.loads(Path(puzzle).read_text(encoding="utf-8"))
     elif isinstance(puzzle, str) and puzzle.lstrip().startswith("{"):
         obj = json.loads(puzzle)
+    elif link is not None:
+        obj = link
     elif isinstance(puzzle, str):
         from .interop import _PACKED
 
