@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `se`: a technique Sudoku Explainer has no value for takes the value of the technique it is a special case of
+  (Simple Colouring and Multi-Colouring rate as X-Chain, 6.6, instead of the 7.0 fallback).
 - Step explanations use the engine's own record of each move (units, cages, chains, the cases tried): digit counting,
   killer cage combinations and others now show their reasoning instead of a general description (about 390 -> 56 such
   steps in the test corpora); set-logic explanations name units as "row 4" or "the 25 cage", and a refuted case reads

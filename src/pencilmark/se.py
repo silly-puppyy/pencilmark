@@ -10,17 +10,34 @@ Values per technique from Sudoku Explainer's table:
 The card uses the classic scale. Measured on the 747 classics of the frozen benchmark against the DiufSudoku fork's own
 rating (2026-10-31): ER within 0.3 for 81%, median gap 0.1; the largest gaps are routes that use a naked single where SE
 finds a hidden one (1.2-1.3 against 2.3).
-Approximate by construction: our route is not SE's route, and techniques SE has no
-value for (variant logic) fall back to 7.0. Classic sudoku only is meaningful.
+Approximate by construction: our route is not SE's route. A technique SE has no value for takes the value of the
+technique it is a special case of (codes.csv subset_of); with none (variant logic), it falls back to 7.0. Classic sudoku
+only is meaningful.
 """
 
 from __future__ import annotations
 
 from . import registry as R
 
-# chip code -> rating (data/codes.csv se_classic / se_diuf); codes SE has no value for are left out (rated 7.0)
-CLASSIC = {c: v.se_classic for c, v in R.codes().items() if v.se_classic is not None}
-DIUF = {c: v.se_classic if v.se_diuf is None else v.se_diuf for c, v in R.codes().items() if v.se_classic is not None}
+
+def _value(code, field, seen=()):
+    """SE's value for a code, else the value of the nearest technique it is a special case of (codes.csv subset_of:
+    Simple Colouring is a case of X-Chain, which SE finds it as); None when no generalisation has one either"""
+    c = R.codes()[code]
+    v = getattr(c, field) if field == "se_classic" else (c.se_diuf if c.se_diuf is not None else c.se_classic)
+    if v is not None:
+        return v
+    for s in c.subset_of or ():
+        if s in R.codes() and s not in seen:
+            v = _value(s, field, seen + (code,))
+            if v is not None:
+                return v
+    return None
+
+
+# chip code -> rating (data/codes.csv se_classic / se_diuf); codes with no value, own or inherited, are left out (7.0)
+CLASSIC = {c: v for c in R.codes() if (v := _value(c, "se_classic")) is not None}
+DIUF = {c: v for c in R.codes() if (v := _value(c, "se_diuf")) is not None}
 SCALES = {"classic": CLASSIC, "diuf": DIUF}
 
 
