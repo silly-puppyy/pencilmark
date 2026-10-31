@@ -3,6 +3,8 @@ docs/research/rule_families_plan.md). Readers, writers, words, drawing and the g
 of their own lists; the C++ engine keeps its own table (csrc/nary.hpp), checked against the engine kinds in model.py.
 
 line   the line kinds (rules/line.py)
+edge   the edge kinds (rules/edge.py)
 """
 
+from .edge import EDGE  # noqa: F401
 from .line import LINE  # noqa: F401

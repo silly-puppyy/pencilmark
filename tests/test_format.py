@@ -849,3 +849,22 @@ def test_line_registry_matches_schema_palette_docs():
     assert set(LINE) <= set(palette), set(LINE) - set(palette)
     page = (ROOT / "docs" / "rules" / "lines-and-arrows.mdx").read_text(encoding="utf-8")
     assert all(f"| `{k}` |" in page for k in LINE), [k for k in LINE if f"| `{k}` |" not in page]
+
+
+def test_edge_registry_matches_schema_docs():
+    """rules/edge.py is the one list of edge kinds: the JSON Schema and the rule page agree"""
+    from pencilmark.rules import EDGE
+
+    schema = json.loads((ROOT / "docs" / "sudoku-puzzle.schema.json").read_text(encoding="utf-8"))
+    re_ = schema["$defs"]["rule_edge"]["properties"]
+    assert set(re_["kind"]["enum"]) == set(EDGE)
+    for k in EDGE.values():
+        if k.param:
+            assert k.param in re_, k.kind
+        if k.choices:
+            assert set(re_[k.param]["enum"]) == set(k.choices), k.kind
+    neg = schema["$defs"]["rule_negative"]["properties"]["of"]["enum"]
+    assert {k for k, v in EDGE.items() if v.negative} <= set(neg)
+    assert not {k for k, v in EDGE.items() if not v.negative} & set(neg)
+    page = (ROOT / "docs" / "rules" / "edges-and-corners.mdx").read_text(encoding="utf-8")
+    assert all(f"| `{k}` |" in page for k in EDGE), [k for k in EDGE if f"| `{k}` |" not in page]

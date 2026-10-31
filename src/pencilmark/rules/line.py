@@ -145,7 +145,7 @@ def line_to_engine(r, D, B, pairs_rule):
 
 def line_from_engine(c, B, D):
     """an engine line constraint -> public rules (exchange's writer); a kropki chain becomes its kropki edges"""
-    from ..exchange import edge_rule
+    from .edge import edge_rule
 
     kind = c["kind"]
     cells = list(c["cells"])

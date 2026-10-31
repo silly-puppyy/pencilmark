@@ -11,11 +11,11 @@ from pathlib import Path
 
 try:  # an installed pencilmark (with its engine) if there is one, else the source tree
     from pencilmark import exchange as X
-    from pencilmark.rules import LINE
+    from pencilmark.rules import EDGE, LINE
 except ImportError:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
     from pencilmark import exchange as X  # noqa: E402
-    from pencilmark.rules import LINE  # noqa: E402
+    from pencilmark.rules import EDGE, LINE  # noqa: E402
 
 # board style, in cell units unless noted (docs/STYLE.md; values in docs/palette.json)
 _PAL = json.loads((Path(__file__).resolve().parents[1] / "docs/palette.json").read_text(encoding="utf-8"))
@@ -269,24 +269,25 @@ def render(doc, dark=False, cell=48, annotate=False, labels=False):
         elif t == "edge":
             (x0, y0), (x1, y1) = ctr(r["cells"][0]), ctr(r["cells"][1])
             x, y = (x0 + x1) / 2, (y0 + y1) / 2
-            if k == "kropki":
+            mk = EDGE[k].marker
+            if mk == "dot":
                 black = r["color"] == "black"
                 add(
                     "clues",
                     f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{0.125 * u:.1f}" fill="{"#000000" if black else "#ffffff"}" '
                     f'stroke="{T["ink"] if black and dark else "#000000"}" stroke-width="1.2"/>',
                 )
-            elif k in ("xv", "less"):
+            elif mk in ("letter", "chevron"):
                 c = 0.15 * u  # one square chip on the edge midpoint, same for vertical and horizontal edges
                 add(
                     "clues",
                     f'<rect x="{x - c:.1f}" y="{y - c:.1f}" width="{2 * c:.1f}" height="{2 * c:.1f}" rx="{0.03 * u:.1f}" fill="{T["clue_bg"]}"/>',
                 )
-                if k == "xv":  # cap height ~0.7 em: shift the baseline so the letter's box is centred
+                if mk == "letter":  # cap height ~0.7 em: shift the baseline so the letter's box is centred
                     add(
                         "clues",
                         f'<text x="{x:.1f}" y="{y + 0.35 * 0.3 * u:.1f}" font-size="{0.3 * u:.1f}" text-anchor="middle" '
-                        f'font-family="Inter,Helvetica,Arial,sans-serif" font-weight="650" fill="{T["given"]}">{r["letter"]}</text>',
+                        f'font-family="Inter,Helvetica,Arial,sans-serif" font-weight="650" fill="{T["given"]}">{r[EDGE[k].param]}</text>',
                     )
                 else:  # chevron pointing at cells[0], symmetric about the midpoint
                     ux, uy = (x0 - x1), (y0 - y1)
@@ -302,9 +303,7 @@ def render(doc, dark=False, cell=48, annotate=False, labels=False):
                         f'stroke="{T["given"]}" stroke-width="{0.035 * u:.1f}" stroke-linecap="round" stroke-linejoin="round"/>',
                     )
             else:
-                v = r.get("value", r.get("sum"))
-                s = f"{v}:1" if k == "ratio" else (f"×{v}" if k == "product" else str(v))
-                add("clues", circle_clue(x, y, s))
+                add("clues", circle_clue(x, y, EDGE[k].label(r)))
         elif t in ("corner", "contains") or (t == "sum" and k == "corner"):
             pts = [ctr(x) for x in r["cells"]]
             x, y = sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts)

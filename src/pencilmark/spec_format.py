@@ -17,6 +17,7 @@ import hashlib
 
 from . import puzzle_json as PJ
 from .exchange import FormatError, NotSupportedError, jcs
+from .rules.edge import EDGE
 from .rules.line import LINE
 
 FORMAT = "sudoku-spec"
@@ -27,8 +28,7 @@ GEN_KINDS = {
     "cage": ("cage", None),
     **{k: ("line", k) for k, lk in LINE.items() if lk.generated},  # rules/line.py
     "arrow": ("arrow", None),
-    "kropki": ("edge", "kropki"),
-    "xv": ("edge", "xv"),
+    **{k: ("edge", k) for k, ek in EDGE.items() if ek.generated},  # rules/edge.py
     "parity": ("cell", "parity"),
 }
 RULE_KIND = {v: k for k, v in GEN_KINDS.items()}

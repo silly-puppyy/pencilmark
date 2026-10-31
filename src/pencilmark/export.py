@@ -31,6 +31,7 @@ from . import __version__
 from . import metrics as MT
 from . import registry as R
 from . import solver as S
+from .rules.edge import EDGE
 
 GRADER_NAME, GRADER_VERSION = "pencilmark", __version__  # on every card: a grade is only meaningful with its engine
 FORMAT_VERSION = 1  # of both formats; bumped only on a breaking change (additive fields don't bump it)
@@ -270,13 +271,7 @@ def explain_levels(explain):
 
 RULE_NOUN = {
     ("line", None): "line",
-    ("edge", "kropki"): "kropki dot",
-    ("edge", "xv"): "X / V clue",
-    ("edge", "less"): "inequality sign",
-    ("edge", "difference"): "difference clue",
-    ("edge", "sum"): "sum clue",
-    ("edge", "product"): "product clue",
-    ("edge", "ratio"): "ratio clue",
+    **{("edge", k): v.noun for k, v in EDGE.items()},  # rules/edge.py
     ("region", "diagonal"): "diagonal",
     ("region", "window"): "window",
     ("region", "disjoint"): "disjoint group",

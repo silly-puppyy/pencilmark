@@ -23,6 +23,7 @@ from collections import Counter
 
 from . import model as M
 from . import puzzle_json as PJ
+from .rules.edge import EDGE, NEG_SELECTOR, edge_family, edge_relation, edge_rule, negative_relation
 from .rules.line import LINE, line_from_engine, line_to_engine
 
 FORMAT = "sudoku-puzzle"
@@ -422,26 +423,6 @@ def _bat(D):
     return _CACHE[("bat", D)]
 
 
-# edge kinds -> engine relation of one pair
-def edge_relation(rule, D):
-    k = rule["kind"]
-    if k == "kropki":
-        return ("diff", 1) if rule["color"] == "white" else ("ratio", 2)
-    if k == "xv":
-        return ("sum", 10) if rule["letter"] == "X" else ("sum", 5)
-    if k == "difference":
-        return ("diff", rule["value"])
-    if k == "sum":
-        return ("sum", rule["sum"])
-    if k == "ratio":
-        return ("ratio", rule["value"])
-    if k == "product":
-        return ("allowed", product_pairs(D, rule["value"]))
-    if k == "less":
-        return ("lt",)
-    raise FormatError(f"unknown edge kind {k!r}")
-
-
 _MATHRAX_OK = {
     "+": lambda v: lambda x, y: x + y == v,
     "-": lambda v: lambda x, y: abs(x - y) == v,
@@ -453,76 +434,6 @@ _NUMBERED_OK = {
     "sum": lambda r: _MATHRAX_OK["+"](r["sum"]),
     "ratio": lambda r: _MATHRAX_OK["/"](r["value"]),
     "product": lambda r: _MATHRAX_OK["x"](r["value"]),
-}
-
-
-def edge_family(kind, args, D):
-    """(family, value) a pair relation is written as when it is an edge clue, or None"""
-    if kind == "diff" and args == (1,):
-        return ("kropki", "white")
-    if kind == "ratio" and args == (2,):
-        return ("kropki", "black")
-    if kind == "anyof" and set(args) == {("diff", 1), ("ratio", 2)}:
-        return None
-    if kind == "sum" and args in ((10,), (5,)):
-        return ("xv", "X" if args == (10,) else "V")
-    if kind == "diff" and len(args) == 1:
-        return ("difference", args[0])
-    if kind == "sum" and len(args) == 1:
-        return ("sum", args[0])
-    if kind == "ratio" and len(args) == 1:
-        return ("ratio", args[0])
-    if kind == "lt" and not args:
-        return ("less", None)
-    if kind == "allowed" and len(args) == 1:
-        A = {tuple(x) for x in args[0]}
-        for p in range(1, D * D + 1):
-            if A == {tuple(x) for x in product_pairs(D, p)}:
-                return ("product", p)
-    return None
-
-
-def edge_rule(family, value, a, b, B):
-    r = {"type": "edge", "kind": family}
-    if family == "kropki":
-        r["color"] = value
-    elif family == "xv":
-        r["letter"] = value
-    elif family == "sum":
-        r["sum"] = value
-    elif family in ("difference", "ratio", "product"):
-        r["value"] = value
-    r["cells"] = [B.name(a), B.name(b)]
-    return r
-
-
-# negative families: which engine relation an uncovered pair gets
-def negative_relation(of, sel, D):
-    """-> list of (kind, args) for an uncovered pair, in expansion order"""
-    if of == "kropki":
-        cols = [sel] if sel else ["white", "black"]
-        return [("nonconsec", ()) if c == "white" else ("notratio", (2,)) for c in cols]
-    if of == "xv":
-        lets = [sel] if sel else ["X", "V"]
-        return [("notsum", (10,)) if l == "X" else ("notsum", (5,)) for l in lets]
-    if of == "difference":
-        return [("notdiff", (sel,))]
-    if of == "sum":
-        return [("notsum", (sel,))]
-    if of == "ratio":
-        return [("notratio", (sel,))]
-    if of == "product":
-        return [("allowed", ([[u, v] for u in range(1, D + 1) for v in range(1, D + 1) if u * v != sel],))]
-    raise FormatError(f"negative of {of!r} has no pair relation")
-
-
-NEG_SELECTOR = {
-    "kropki": "color",
-    "xv": "letter",
-    "difference": "value",
-    "sum": "sum",
-    "ratio": "value",
-    "product": "value",
 }
 
 
@@ -564,7 +475,7 @@ RULE_KEYS = {
 KINDS = {
     "region": {"diagonal", "window", "disjoint", "colour", "extra", "region"},
     "line": set(LINE),  # rules/line.py
-    "edge": {"kropki", "xv", "difference", "sum", "product", "ratio", "less"},
+    "edge": set(EDGE),  # rules/edge.py
     "corner": {"battenburg", "mathrax", "exclude"},
     "sum": {"little_killer", "frame", "group", "corner"},
     "neighbours": {"antiknight", "antiking", "nonconsecutive"},
@@ -572,16 +483,8 @@ KINDS = {
     "count": {"circles"},
 }
 LINE_PARAMS = {k: set(v.params) for k, v in LINE.items() if v.params}
-EDGE_PARAMS = {
-    "kropki": {"color"},
-    "xv": {"letter"},
-    "difference": {"value"},
-    "sum": {"sum"},
-    "product": {"value"},
-    "ratio": {"value"},
-    "less": set(),
-}
-NEG_OF = {"kropki", "xv", "difference", "sum", "ratio", "product", "rossini", "battenburg", "cell"}
+EDGE_PARAMS = {k: {v.param} if v.param else set() for k, v in EDGE.items()}
+NEG_OF = set(NEG_SELECTOR) | {"rossini", "battenburg", "cell"}
 TOP_KEYS = {
     "format",
     "format_version",
@@ -845,12 +748,11 @@ def _validate_rule(r, B):
         if not B.adjacent(*cs):
             raise FormatError("edge cells must be orthogonally adjacent")
         need = EDGE_PARAMS[kind]
-        if set(r) & {"color", "letter", "value", "sum"} != need:
+        if set(r) & {v.param for v in EDGE.values()} != need:
             raise FormatError(f"edge {kind} takes exactly {sorted(need) or 'no parameters'}")
-        if kind == "kropki" and r["color"] not in ("white", "black"):
-            raise FormatError("color must be white or black")
-        if kind == "xv" and r["letter"] not in ("X", "V"):
-            raise FormatError("letter must be X or V")
+        ek = EDGE[kind]
+        if ek.choices and r[ek.param] not in ek.choices:
+            raise FormatError(f"{ek.param} must be {' or '.join(ek.choices)}")
     elif t == "corner":
         cs = _cells(B, r["cells"], n=4)
         if not B.is_block(cs):

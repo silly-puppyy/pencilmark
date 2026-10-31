@@ -24,6 +24,7 @@ from dataclasses import dataclass
 
 from . import puzzle_json as PJ
 from .exchange import cell_name
+from .rules.edge import EDGE
 from .rules.line import LINE
 
 
@@ -250,39 +251,14 @@ family(
 family("Arrow", _t("arrow"), "Digits along an arrow sum to the number in its circle.")
 for _k in LINE.values():  # the line families, in the registry's order (rules/line.py)
     family(_k.name, _t("line", _k.kind), (lambda f: lambda rs, c: f(rs))(_k.text) if callable(_k.text) else _k.text)
-family(
-    "Kropki",
-    lambda r: (r["type"] == "edge" and r["kind"] == "kropki") or (r["type"] == "negative" and r["of"] == "kropki"),
-    lambda rs, c: _kropki_text(rs),
-)
-family(
-    "XV",
-    lambda r: (r["type"] == "edge" and r["kind"] == "xv") or (r["type"] == "negative" and r["of"] == "xv"),
-    lambda rs, c: _xv_text(rs),
-)
-family(
-    "Difference",
-    lambda r: (
-        (r["type"] == "edge" and r["kind"] == "difference") or (r["type"] == "negative" and r["of"] == "difference")
-    ),
-    "Digits separated by a numbered circle differ by that number.",
-)
-family(
-    "Sum Pairs",
-    lambda r: (r["type"] == "edge" and r["kind"] == "sum") or (r["type"] == "negative" and r["of"] == "sum"),
-    "Digits separated by a numbered circle sum to that number.",
-)
-family(
-    "Product",
-    lambda r: (r["type"] == "edge" and r["kind"] == "product") or (r["type"] == "negative" and r["of"] == "product"),
-    "Digits separated by a numbered circle multiply to that number.",
-)
-family(
-    "Ratio",
-    lambda r: (r["type"] == "edge" and r["kind"] == "ratio") or (r["type"] == "negative" and r["of"] == "ratio"),
-    "Of two digits separated by a ratio clue k:1, one is k times the other.",
-)
-family("Greater-Than", _t("edge", "less"), "An inequality sign points to the smaller of the two digits it separates.")
+for _k in EDGE.values():  # the edge families (rules/edge.py)
+    family(
+        _k.name,
+        (lambda k: lambda r: (r["type"] == "edge" and r["kind"] == k) or (r["type"] == "negative" and r["of"] == k))(
+            _k.kind
+        ),
+        (lambda f: lambda rs, c: f(rs))(_k.text) if callable(_k.text) else _k.text,
+    )
 family(
     "Battenburg",
     lambda r: (
@@ -381,50 +357,6 @@ GENERIC_REGION = {
     "extra": ("Extra Regions", "Digits don't repeat in a shaded region."),
     "region": ("Extra Regions", "Digits don't repeat in a shaded region."),
 }
-
-
-def _kropki_text(rs):
-    cols = {r["color"] for r in rs if r["type"] == "edge"}
-    parts = []
-    if "white" in cols or not cols:
-        parts.append("digits separated by a white dot are consecutive")
-    if "black" in cols or not cols:
-        parts.append("digits separated by a black dot are in a 1:2 ratio")
-    s = "; ".join(parts)
-    s = s[0].upper() + s[1:] + "."
-    neg = [r for r in rs if r["type"] == "negative"]
-    if neg:
-        covered = {r.get("color") for r in neg}
-        s += (
-            " All dots are given."
-            if None in covered or covered == {"white", "black"}
-            else f" All {'/'.join(sorted(covered))} dots are given."
-        )
-    return s
-
-
-def _xv_text(rs):
-    lets = {r["letter"] for r in rs if r["type"] == "edge"}
-    neg = [r for r in rs if r["type"] == "negative"]
-    if not lets:
-        covered = {r.get("letter") for r in neg}
-        sums = "10 or 5" if None in covered or covered == {"X", "V"} else ("10" if "X" in covered else "5")
-        return f"No two orthogonally adjacent digits sum to {sums}."
-    parts = []
-    if "X" in lets:
-        parts.append("digits separated by an X sum to 10")
-    if "V" in lets:
-        parts.append("digits separated by a V sum to 5")
-    s = "; ".join(parts)
-    s = s[0].upper() + s[1:] + "."
-    if neg:
-        covered = {r.get("letter") for r in neg}
-        s += (
-            " All X's and V's are given."
-            if None in covered or covered == {"X", "V"}
-            else f" All {list(covered)[0]}'s are given."
-        )
-    return s
 
 
 def _odd_even_text(rs):
@@ -608,14 +540,10 @@ def describe(puzzle):
             if not explained[i] and v.match(r):
                 explained[i] = True
         name = v.name
-        if v.kind == "family" and rs[0]["type"] == "line" and LINE[rs[0]["kind"]].name_fn:
-            name = LINE[rs[0]["kind"]].name_fn(rs)
-        if name == "Kropki" and {r.get("color") for r in rs if r["type"] == "edge"} == {"white"}:
-            name = "Consecutive"
-        if name == "XV" and not any(r["type"] == "edge" for r in rs):
-            name = "Non-XV"
-        if name == "Kropki" and not any(r["type"] == "edge" for r in rs):
-            name = "Non-Kropki"
+        fam = LINE if rs[0]["type"] == "line" else EDGE if rs[0]["type"] in ("edge", "negative") else {}
+        k = rs[0].get("kind") if rs[0]["type"] != "negative" else rs[0]["of"]
+        if v.kind == "family" and k in fam and fam[k].name_fn:
+            name = fam[k].name_fn(rs)
         txt = v.text(rs, ctx) if callable(v.text) else v.text
         if len(grids) > 1:
             areas = [set(g.cells_set()) for g in grids]
