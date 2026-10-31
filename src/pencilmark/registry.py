@@ -14,18 +14,16 @@ data/techniques.csv, one row per engine technique (solver.TECH_NAMES):
                   for steps that have no band (notes, guess, pseudo)
   split           1: the band depends on the shape found (X-Wing vs Franken X-Wing, Skyscraper vs long X-Chain), so the
                   route names the step by its shape (codes.csv shape_band)
-  family          the pricing family (FAMILIES): the engine's structural groups for features and the
-                  family-ordered required-technique search; blank for the roles other than logic
-  simplicity      textbook order inside the family for the required-technique search (pattern size: Y-Wing before
-                  WXYZ-Wing); blank = after every ranked technique
+  family          the pricing family (FAMILIES): the engine's structural groups for features; blank for the roles
+                  other than logic
+  simplicity      textbook order inside the family (pattern size: Y-Wing before WXYZ-Wing); not read by the
+                  grader since the family-ordered search was removed (to be dropped with the other dead data)
   gate            any: switched on only for puzzles with some variant rule; sum: only with a sum rule; blank: always
   direct          1: a move made without pencil marks (also csrc/solver.hpp is_direct)
   mental          1: worked out in the head on the no-notes view (a subset, short chain or case split without notes):
                   priced at least as its written form (params mental_floor), left out of the card score's first solve
   price_fallback  blank: the technique has its own fitted price B. Otherwise it has none: it is always priced by the
                   structural meta model and borrows this technique's B when params carry no meta model
-Row order matters in one place: inside a family, metrics.required_techniques tries techniques with equal simplicity and
-fitted level in file order.
 
 data/codes.csv, one row per chip code a route step can carry:
   code        three-letter chip code, Andrew Stuart's (sudokuwiki.org) where he has the strategy

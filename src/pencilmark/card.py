@@ -85,17 +85,12 @@ def specific_names(puzzle, steps):
     return out
 
 
-def grade_card(puzzle, P, specific=True, check_rules=True, band=None):
-    g = MT.grade_puzzle_checked(
-        puzzle, P, tier_by_family=band is None
-    )  # band given -> no second deletion test in report()
-    if g["status"] not in ("ok",) and not g.get("report"):
+def grade_card(puzzle, P, band, specific=True, check_rules=True):
+    g = MT.grade_puzzle_checked(puzzle, P)
+    if "steps" not in g:  # no solution / several
         return {"status": g["status"]}
     steps = g["steps"]
-    if band is not None:  # band + techniques from the band path (the user-facing notion) -- skips the
-        tier, req = band  # strict-required deletion test (~45% of grading time on variants)
-    else:
-        tier, req = MT.band_label(puzzle, P)  # user's six bands (Very Easy .. Extreme) from required techniques
+    tier, req = band  # band + techniques from the band path (export passes them)
     req = [S.TECH_NAMES.get(t, str(t)) if isinstance(t, int) else t for t in (req or [])]
     forced = forced_counts(steps)
     notes = S.NOTE_TECHS
@@ -129,11 +124,10 @@ def grade_card(puzzle, P, specific=True, check_rules=True, band=None):
             for c in chips:
                 if c["code"] == code and names_:
                     c["specific"] = [k for k, _ in names_.most_common()]
-    lvl = g["report"]["level"]
     gi = [i for i, st in enumerate(steps) if st.move.feat[0] == S.GUESS]
     # the band path is the user-facing solve: when it finished without guessing, a guess in this route (its forcing budget
     # ran out) does not make the card Unknown -- band and score stay consistent
-    if gi and (band is None or band[0] == "Unknown"):  # a guess is not a grade: report where logic ran out
+    if gi and band[0] == "Unknown":  # a guess is not a grade: report where logic ran out
         pre = steps[: gi[0]]
         band = max((MT.band_of(st.move.feat[0]) for st in pre if st.move.feat[0] not in S.NOTE_TECHS), default=0)
         human = (P or {}).get("search") == "human"
@@ -199,7 +193,6 @@ def grade_card(puzzle, P, specific=True, check_rules=True, band=None):
         "effort_l1": round(effort_, 3) if effort_ is not None else None,
         "score_fit": MT.score_fit(MT.BANDS.index(tier), sc_) if (sc_ is not None and tier in MT.BANDS) else "",
         "flags": flags,
-        "difficulty": round(lvl, 1),
         "tediousness_min": round(g["grade"]["work_time"] / 60, 1),
         "think_min": round(g["grade"]["think_time"] / 60, 1),
         "chips": chips,
