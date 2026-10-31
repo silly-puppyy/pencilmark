@@ -29,6 +29,7 @@ import json
 import sys
 from pathlib import Path
 
+from . import inputs
 from . import puzzle_json as PJ
 
 
@@ -58,7 +59,7 @@ def _inputs(src):
     whole = _whole_json(src)
     if whole is not None:
         for k, obj in enumerate(whole, 1):
-            yield k, _read(lambda: _to_puzzle_json(obj))
+            yield k, _read(lambda: inputs.to_puzzle_json(obj))
         return
     fh = sys.stdin if src in (None, "-") else open(src, encoding="utf-8")
     for k, line in enumerate(fh, 1):
@@ -74,35 +75,8 @@ def _read(fn):
         return e
 
 
-_LINK_PREFIXES = ("lmd:", "sudokupad:", "penpa:", "scl", "ctc", "fpuzzles", "fpuz")  # pencilmark.sources forms
-
-
-def _link_puzzle(s):
-    """puzzle JSON for a site link or payload (pencilmark.sources: SudokuPad, f-puzzles, Penpa, Logic Masters, short
-    links; some fetch one page), or None when s is not one"""
-    if "://" not in s and not s.lower().startswith(_LINK_PREFIXES):
-        return None
-    from . import sources
-
-    if sources.detect(s):
-        return sources.load(s)
-    if "://" in s:
-        raise ValueError(f"not a puzzle link pencilmark reads (SudokuPad, f-puzzles, Penpa, Logic Masters): {s[:80]}")
-    return None
-
-
 def _line_puzzle(line):
-    if line.startswith("{"):
-        return _to_puzzle_json(json.loads(line))
-    if line.endswith(".json") and Path(line).exists():
-        return _to_puzzle_json(json.load(open(line, encoding="utf-8")))
-    tok = line.split()[0]
-    link = _link_puzzle(tok)
-    if link is not None:
-        return link
-    from .interop import _PACKED, from_string
-
-    return _to_puzzle_json(from_string(tok)) if _PACKED.fullmatch(tok) else {"numbers": tok}
+    return inputs.to_puzzle_json(inputs.read(line))
 
 
 def _ok(obj):
@@ -119,22 +93,6 @@ def _each(a, fn):
             fn(k, _ok(obj))
         except Exception as e:
             print(f"error\t{k}\t{type(e).__name__}: {e}", flush=True)
-
-
-def _to_puzzle_json(obj):
-    """accept puzzle JSON, the sudoku-puzzle exchange format, an ipuz sudoku, or a
-    sample-pack line {"puzzle": ..., "grade": ...}."""
-    if "puzzle" in obj and isinstance(obj["puzzle"], dict):
-        obj = obj["puzzle"]
-    if "ipuz.org" in str(obj.get("version", "")):  # an ipuz file (docs/INTEROP.md)
-        from .interop import from_ipuz
-
-        obj = from_ipuz(obj)
-    if obj.get("format") == "sudoku-puzzle":
-        from .export import import_puzzle
-
-        return import_puzzle(obj)
-    return obj
 
 
 def _fmt2(fmt, g, k, unique):

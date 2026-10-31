@@ -21,7 +21,7 @@ from pencilmark import interop as I  # noqa: E402
 from pencilmark import puzzle_json as PJ  # noqa: E402
 from pencilmark import spec_format as SF  # noqa: E402
 from pencilmark import variants as VR  # noqa: E402
-from pencilmark.__main__ import _to_puzzle_json  # noqa: E402
+from pencilmark.inputs import to_puzzle_json  # noqa: E402
 
 FIXTURES = ROOT / "tests" / "fixtures" / "variants.json"
 SCHEMA = ROOT / "docs" / "sudoku-puzzle.schema.json"
@@ -71,7 +71,7 @@ def pack():
 
 
 def engine(entry):
-    p = PJ.from_json(_to_puzzle_json(entry))
+    p = PJ.from_json(to_puzzle_json(entry))
     p.finalize()
     return p
 

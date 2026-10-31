@@ -19,9 +19,6 @@ then says band "Unknown".
 
 from __future__ import annotations
 
-import json
-from pathlib import Path
-
 __all__ = [
     "rate",
     "rate_many",
@@ -82,36 +79,15 @@ def _params(mode):
 
 def load(puzzle):
     """any accepted input -> a finalized engine Puzzle."""
+    from . import inputs
     from . import puzzle_json as PJ
-    from .__main__ import _link_puzzle, _to_puzzle_json
 
-    if isinstance(puzzle, Path) or (isinstance(puzzle, str) and puzzle.endswith(".json") and Path(puzzle).exists()):
-        obj = json.loads(Path(puzzle).read_text(encoding="utf-8"))
-    elif isinstance(puzzle, str) and puzzle.lstrip().startswith("{"):  # JSON text, before links: it may hold a URL
-        obj = json.loads(puzzle)
-    elif isinstance(puzzle, str) and (link := _link_puzzle(puzzle.strip())) is not None:
-        obj = link
-    elif isinstance(puzzle, str):
-        from .interop import _PACKED
-
-        tok = puzzle.split()[0] if puzzle.split() else ""
-        obj = None
-        if len(puzzle.split()) > 1:  # text grid, pencil-mark grid, or a string with a trailing comment
-            try:
-                obj = _from_string_doc(puzzle)
-            except ValueError:
-                obj = None
-        if obj is None:
-            obj = _from_string_doc(tok) if _PACKED.fullmatch(tok) else {"numbers": tok}
-    elif isinstance(puzzle, dict):
-        obj = puzzle
-    elif hasattr(puzzle, "groups") and hasattr(puzzle, "coords"):  # already an engine Puzzle
+    if hasattr(puzzle, "groups") and hasattr(puzzle, "coords"):  # already an engine Puzzle
         if not hasattr(puzzle, "groups_of"):
             puzzle.finalize()
         return puzzle
-    else:
-        raise TypeError(f"unsupported puzzle input: {type(puzzle).__name__}")
-    p = PJ.from_json(_to_puzzle_json(obj))
+    obj = inputs.read(puzzle)
+    p = PJ.from_json(inputs.to_puzzle_json(obj))
     p.finalize()
     src = obj.get("puzzle") if isinstance(obj.get("puzzle"), dict) else obj
     if src.get("format") == "sudoku-puzzle" and isinstance(src.get("rules"), list):
@@ -283,11 +259,11 @@ def to_export(puzzle, meta=None, with_solution=True, describe=True, **meta_kw):
     Metadata goes in its own optional "meta" object: pass a dict (meta={"title": ..., "author": ..., "date": ...}) and / or
     keywords (title=..., author=..., source=..., id=..., url=..., date=..., rules_text=...); metadata already in a JSON input is
     kept. describe=True fills an EMPTY meta.type / meta.rules_text from describe(); it never overwrites them."""
-    from .__main__ import _link_puzzle
+    from . import inputs
     from .export import export_puzzle, read_meta
 
-    if isinstance(puzzle, str):  # a link: load it once, keeping the title / source it carries
-        puzzle = _link_puzzle(puzzle.strip()) or puzzle
+    if isinstance(puzzle, str):  # read once, keeping the title / source a link or JSON text carries
+        puzzle = inputs.read(puzzle)
     p = load(puzzle)
     sol = None
     if with_solution:
@@ -317,12 +293,6 @@ def to_export(puzzle, meta=None, with_solution=True, describe=True, **meta_kw):
 
         doc = canonical(doc)
     return doc
-
-
-def _from_string_doc(s):
-    from .interop import from_string as fs
-
-    return fs(s)
 
 
 def dumps(doc, pretty=True):
