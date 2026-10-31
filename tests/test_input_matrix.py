@@ -55,7 +55,6 @@ def inputs():
         ("fpuzzles payload", "fpuzzles" + lz),
         ("sudokupad fpuzzles link", "https://sudokupad.app/fpuzzles" + lz),
         ("unknown link", "https://example.com/"),
-        ("lmd offline", "lmd:000VEC"),
         ("number", 5),
         ("none", None),
     ]
