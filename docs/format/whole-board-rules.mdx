@@ -1,0 +1,72 @@
+---
+title: Whole-board rules
+---
+
+# Whole-board rules
+
+This page covers rules over neighbouring pairs (6.10), explicit pairs (6.11) and negative constraints (6.14).
+
+## 6.10 `neighbours`
+
+A rule over neighbouring pairs of the whole board.
+
+```json
+{"type": "neighbours", "kind": "antiknight"}
+{"type": "neighbours", "kind": "antiknight", "within": "box"}
+{"type": "neighbours", "kind": "antiknight", "area": "r1c1"}
+{"type": "neighbours", "op": "not_sum", "sum": 10, "where": "orthogonal", "except": [["r1c1", "r1c2"]]}
+```
+
+| Field | Meaning |
+|---|---|
+| `kind` | A named shortcut for one exact `op` + `where`: `antiknight` = `different` on `knight` pairs, `antiking` = `different` on `diagonal` pairs (orthogonal neighbours already share a row or column), `nonconsecutive` = `not_consecutive` on `orthogonal` pairs. Writers SHOULD use the kind when one matches. Or omit `kind` and give `op` (+ parameters) and `where`. |
+| `op` (+ its parameter) | A symmetric pair operator (5.1). |
+| `where` | `orthogonal` \| `diagonal` \| `king` \| `knight`. |
+| `within` | Optional scope: `"box"` (only pairs inside one box) or `"region"` (only pairs inside one `region` rule). |
+| `area` | Optional scope (5): only pairs with both cells in the area, e.g. one grid of a samurai. |
+| `except` | Optional list of exempt pairs. |
+
+Pairs are formed among existing cells of the board, unless a scope narrows them.
+
+## 6.11 `relation`
+
+Explicit pairs under one pair operator (5.1), for clues that are not edge clues (cells not adjacent, an operator no
+edge kind has, or a pair rule a site defines):
+
+```json
+{"type": "relation", "op": "different", "pairs": [["r1c1", "r3c3"], ["r1c1", "r4c4"]]}
+```
+
+## 6.14 `negative`
+
+States exactly which clues are "all shown".
+
+```json
+{"type": "negative", "of": "kropki"}
+{"type": "negative", "of": "kropki", "color": "white"}
+{"type": "negative", "of": "xv", "letter": "X"}
+{"type": "negative", "of": "difference", "value": 5}
+{"type": "negative", "of": "rossini"}
+{"type": "negative", "of": "battenburg"}
+{"type": "negative", "of": "cell", "kind": "high", "split": 5}
+```
+
+| `of` | Selector | Positions | An uncovered position … |
+|---|---|---|---|
+| `kropki` | `color` (omitted = both) | orthogonal pairs | is not consecutive (white covered) and not in a 1:2 ratio (black covered) |
+| `xv` | `letter` (omitted = both) | orthogonal pairs | does not sum to 10 (X covered) / 5 (V covered) |
+| `difference` / `ratio` / `product` | `value` (REQUIRED) | orthogonal pairs | does not satisfy that clue |
+| `sum` | `sum` (REQUIRED) | orthogonal pairs | does not sum to `sum` |
+| `rossini` | – | the first 3 cells inwards from each end of every full row and column house | is not monotone |
+| `battenburg` | – | every 2×2 block whose cells share a `grid` / `box_grid` area (or of the whole board without one) | is not a parity checkerboard |
+| `cell` | `kind` `odd` / `even` / `low` / `high` (+ `split` for low / high) | every cell | does not satisfy that clue (so it is even / odd / high / low) |
+
+- **A negative covers exactly what its selector names.** With a selector it covers a single value:
+  `{"of": "xv", "letter": "X"}` says only "pairs without a clue do not sum to 10"; V clues may be partial.
+- **Exemption**: a position carrying **any** rule of the same family (any kropki dot of either colour; any X or V;
+  any edge clue of that kind; any rossini arrow; any battenburg mark; any `cell` rule of that kind) is exempt.
+- **Adjacency is only within one grid**: two cells form a pair only if some `grid` / `box_grid` area contains both (on a
+  board without one, all orthogonally adjacent existing cells).
+- Optional `area` (5): only positions whose cells are all in the area are covered.
+- With no clue of the family in the file at all, the negative still applies (e.g. "no two adjacent digits sum to 10
+  or 5").

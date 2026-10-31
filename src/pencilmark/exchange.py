@@ -314,7 +314,7 @@ def grid_area(B, r0, c0):
 
 def read_houses(rules, B):
     """the house groups a rule list states, in engine order -> (houses [(kind, cells, extra)], areas [cell sets])
-    (FORMAT.md 6.1): grid / box_grid / box / row / column rules in file order, a house equal to an earlier one skipped;
+    (docs/format/houses-and-regions.mdx, 6.1): grid / box_grid / box / row / column rules in file order, a house equal to an earlier one skipped;
     areas = the grid / box_grid areas."""
     out, seen, areas = [], set(), []
 
@@ -723,7 +723,7 @@ def area_cells(B, a):
     return _cells(B, a, "area")
 
 
-# Reserved for a planned custom rule type (FORMAT.md 6.17): explicit digit tables. Tables make files huge and no renderer
+# Reserved for a planned custom rule type (docs/format/other.mdx, 6.17): explicit digit tables. Tables make files huge and no renderer
 # can draw them, so format_version 1 readers refuse them and the writer never produces them. The engine still builds
 # tables internally (edge clues, lockout, entropy, ...); _reserved_ok() lets internal tooling read old files that hold them.
 RESERVED_MSG = (
@@ -1017,7 +1017,7 @@ def to_internal(doc):
     if doc.get("solution"):
         out["solution"] = "".join("#" if v is None else sym(v) for v in doc["solution"])
     rules = resolve_areas(B, doc["rules"])
-    # houses (FORMAT.md 6.1; a house equal to an earlier one is the same house)
+    # houses (docs/format/houses-and-regions.mdx 6.1; a house equal to an earlier one is the same house)
     houses, areas = read_houses(rules, B)
     regions = [dict({"kind": k, "cells": [B.name(c) for c in cells]}, **kw) for k, cells, kw in houses]
     boxes = [set(cells) for k, cells, kw in houses if k == "box"]
@@ -1477,7 +1477,7 @@ class _Writer:
         return None
 
     def write_groups(self):
-        """engine groups -> house / region / cage rules (FORMAT.md 6.1): every D x D area whose rows and columns are all
+        """engine groups -> house / region / cage rules (docs/format/houses-and-regions.mdx, 6.1): every D x D area whose rows and columns are all
         houses is a box_grid (its boxes a regular tiling) or a grid, placed where its first own house was; the remaining
         rows / columns / boxes are explicit rules; regions and cages keep their place."""
         B, D = self.B, self.D

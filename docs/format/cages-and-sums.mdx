@@ -1,0 +1,25 @@
+---
+title: Cages and sums
+---
+
+# Cages and sums
+
+This page covers rules that fix the sum of a set of cells: cages (6.3) and sum rules (6.8).
+
+## 6.3 `cage`
+
+```json
+{"type": "cage", "sum": 15, "cells": ["r1c1", "r1c2", "r2c1"]}
+```
+
+- Digits in a cage never repeat. `sum` is optional (a cage without a sum is a no-repeat set with a cage outline).
+- A sum over cells where repeats are allowed is a `sum` rule (6.8), not a cage.
+
+## 6.8 `sum`
+
+| `kind` | Fields | Meaning |
+|---|---|---|
+| `little_killer` | `side`, `cells` (the diagonal, ordered from the clue), `sum` | The cells sum to `sum`. Repeats allowed. The diagonal is exactly the listed cells. |
+| `frame` | `side`, `cells` (ordered from the clue), `sum` | The cells (usually the first 3 of a row or column) sum to `sum`. |
+| `group` | `cells`, `sum` | Any cell set sums to `sum`; repeats allowed. |
+| `corner` | `cells` (a 2×2 block), `sum` | The 4 cells around a corner sum to `sum`; repeats allowed. |

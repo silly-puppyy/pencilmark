@@ -7,6 +7,18 @@ module.exports = {
     {type: 'doc', id: 'BENCHMARK', label: 'Benchmark'},
     {type: 'category', label: 'Formats', collapsed: false, items: [
       {type: 'doc', id: 'FORMAT', label: 'Puzzle format'},
+      {type: 'category', label: 'Rule families', collapsed: true, link: {type: 'generated-index', slug: '/rule-families/'}, items: [
+        {type: 'doc', id: 'format/houses-and-regions', label: 'Houses and regions'},
+        {type: 'doc', id: 'format/cages-and-sums', label: 'Cages and sums'},
+        {type: 'doc', id: 'format/lines-and-arrows', label: 'Lines and arrows'},
+        {type: 'doc', id: 'format/edges-and-corners', label: 'Edges and corners'},
+        {type: 'doc', id: 'format/outside-clues', label: 'Outside clues'},
+        {type: 'doc', id: 'format/whole-board-rules', label: 'Whole-board rules'},
+        {type: 'doc', id: 'format/cell-clues', label: 'Cell clues'},
+        {type: 'doc', id: 'format/other', label: 'Other rules'},
+        {type: 'doc', id: 'format/examples', label: 'Examples'},
+        {type: 'doc', id: 'format/quick-reference', label: 'Quick reference'},
+      ]},
       {type: 'doc', id: 'GRADE', label: 'Grade card'},
       {type: 'doc', id: 'SPEC', label: 'Generator spec'},
       {type: 'doc', id: 'examples/specs/README', label: 'Example generator specs'},

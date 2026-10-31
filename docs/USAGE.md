@@ -29,7 +29,7 @@ used for solving or rating; `pencilmark json` and `to_export` keep it.
 
 In the exchange format, whole-board pair rules are `neighbours` rules (`{"type": "neighbours", "kind": "antiknight"}`,
 or an operator with `where` and `except`), and "all clues shown" is a `negative` rule (`{"type": "negative", "of": "xv"}`);
-see docs/FORMAT.md section 6.
+see the [rule family pages](FORMAT.md#6-rule-families).
 
 **Format fields:**
 

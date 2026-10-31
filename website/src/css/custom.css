@@ -128,3 +128,7 @@ html[data-theme='dark'] .inline-json .token.punctuation, html[data-theme='dark']
 .pm-graphics-toggle { display: flex; align-items: center; width: 2rem; height: 2rem; border-radius: 50%; color: var(--ifm-navbar-link-color); }
 .pm-graphics-toggle:hover { background: var(--ifm-color-emphasis-200); }
 html[data-graphics='off'] .pm-graphic { display: none !important; }
+
+/* "Drawing" column of the rule-family tables (src/components/Swatch.js): gone with the graphics */
+html[data-graphics='off'] .pm-kinds th:last-child, html[data-graphics='off'] .pm-kinds td:last-child { display: none; }
+.pm-kinds th:last-child, .pm-kinds td:last-child { min-width: 5rem; }

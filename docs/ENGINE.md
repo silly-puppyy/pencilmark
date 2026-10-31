@@ -56,11 +56,11 @@ the same file and the same card whatever its source.
 
 Mechanics without a named rule (same-parity lines, maximin, minimax, ten-eleven and similar) can be graded when a loader
 builds them as engine tables, but cannot be written in format_version 1: `table` and the `allowed` operator are reserved
-for the planned custom rule type (FORMAT.md 6.17), and `to_export` refuses such puzzles.
+for the planned custom rule type ([docs/format/other.mdx](format/other.mdx), 6.17), and `to_export` refuses such puzzles.
 
 ## Adding a rule
 
-1. Add the rule family or kind to [FORMAT.md](FORMAT.md) section 6 (meaning) and section 7 (default drawing), and to
+1. Add the rule family or kind to the [rule family pages](FORMAT.md#6-rule-families) (meaning) and section 7 (default drawing), and to
    `docs/sudoku-puzzle.schema.json`.
 2. Read and write it in `src/pencilmark/exchange.py` (strict checks, engine expansion, canonical key order).
 3. If the engine needs a new constraint, add it in `csrc/` (all solving logic lives in C++).

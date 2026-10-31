@@ -1,0 +1,53 @@
+---
+title: Lines and arrows
+---
+
+import Swatch from '@site/src/components/Swatch';
+
+# Lines and arrows
+
+This page covers rules drawn along a path of cells: lines (6.4) and arrows (6.5).
+
+## 6.4 `line`
+
+```json
+{"type": "line", "kind": "thermo", "cells": ["r5c3", "r4c3", "r3c3", "r3c4"]}
+{"type": "line", "kind": "whisper", "value": 5, "cells": ["r7c7", "r7c8", "r8c8"]}
+{"type": "line", "kind": "renban", "closed": true, "cells": ["r2c2", "r2c3", "r3c3", "r3c2"]}
+```
+
+Common fields: `cells` (ordered, at least 2) and `closed` (default `false`): a loop, the last cell connects back to the
+first. `closed` is allowed only for `whisper`, `renban` and `parity`.
+
+<div className="pm-kinds">
+
+| `kind` | Parameters | Meaning | Drawing |
+|---|---|---|---|
+| `thermo` | – | Strictly increasing from `cells[0]` (the bulb). Branching thermos are separate rules sharing `cells[0]`. | <Swatch name="line-thermo" json={`{"type": "line", "kind": "thermo", "cells": ["r3c1", "r2c2", "r1c3"]}`} /> |
+| `slow_thermo` | – | Non-decreasing from `cells[0]`. | <Swatch name="line-slow_thermo" json={`{"type": "line", "kind": "slow_thermo", "cells": ["r3c1", "r2c2", "r1c3"]}`} /> |
+| `whisper` | `value` k: REQUIRED when D ≠ 9; default 5 | Adjacent cells on the line differ by at least k (German whisper = 5, Dutch = 4). | <Swatch name="line-whisper" json={`{"type": "line", "kind": "whisper", "cells": ["r1c1", "r2c2", "r3c3"]}`} /> |
+| `renban` | – | The cells hold a set of consecutive digits, no repeats, any order. | <Swatch name="line-renban" json={`{"type": "line", "kind": "renban", "cells": ["r1c1", "r1c2", "r1c3"]}`} /> |
+| `region_sum` | – | Split the line into segments wherever it passes from one box to another; every segment has the same sum. | <Swatch name="line-region_sum" json={`{"type": "line", "kind": "region_sum", "cells": ["r1c1", "r2c1", "r2c2", "r2c3"]}`} /> |
+| `palindrome` | – | Reads the same from both ends. | <Swatch name="line-palindrome" json={`{"type": "line", "kind": "palindrome", "cells": ["r1c1", "r2c2", "r3c3"]}`} /> |
+| `entropic` | `groups`: REQUIRED when D ≠ 9; default `[[1,2,3],[4,5,6],[7,8,9]]` | Every run of 3 consecutive cells holds one digit from each group. | <Swatch name="line-entropic" json={`{"type": "line", "kind": "entropic", "cells": ["r1c1", "r1c2", "r1c3", "r2c3"]}`} /> |
+| `modular` | `value` m: REQUIRED when D ≠ 9; default 3 | Every run of m consecutive cells holds one digit of each residue class mod m. | <Swatch name="line-modular" json={`{"type": "line", "kind": "modular", "cells": ["r1c1", "r1c2", "r1c3", "r2c3"]}`} /> |
+| `parity` | – | Adjacent cells on the line differ in parity (alternate odd / even). | <Swatch name="line-parity" json={`{"type": "line", "kind": "parity", "cells": ["r1c1", "r1c2", "r1c3"]}`} /> |
+| `zipper` | – | Cells equally far from the centre of the line sum to the same total (the centre digit, for an odd length). | <Swatch name="line-zipper" json={`{"type": "line", "kind": "zipper", "cells": ["r1c1", "r1c2", "r1c3"]}`} /> |
+| `between` | – | Digits strictly between those of the two ends `cells[0]` and `cells[-1]`, ends in either order. | <Swatch name="line-between" json={`{"type": "line", "kind": "between", "cells": ["r1c1", "r2c2", "r3c3"]}`} /> |
+| `lockout` | `value` k: REQUIRED when D ≠ 9; default 4 | The ends differ by at least k; every other digit lies outside the closed range of the ends. | <Swatch name="line-lockout" json={`{"type": "line", "kind": "lockout", "cells": ["r1c1", "r2c2", "r3c3"]}`} /> |
+| `double_arrow` | – | The two ends sum to the total of the cells between them. | <Swatch name="line-double_arrow" json={`{"type": "line", "kind": "double_arrow", "cells": ["r1c1", "r2c2", "r3c3"]}`} /> |
+
+</div>
+
+Repeats: allowed on every line (subject to houses), except `renban`.
+
+## 6.5 `arrow`
+
+```json
+{"type": "arrow", "bulb": ["r2c2"], "lines": [["r3c3", "r4c4", "r5c5"]]}
+{"type": "arrow", "bulb": ["r1c1", "r1c2"], "lines": [["r2c3", "r3c3"], ["r2c1", "r3c1", "r4c1"]]}
+```
+
+- `bulb`: 1 or more orthogonally connected cells, read as one number in `bulb` order (a pill `[a, b]` is 10·a + b).
+- `lines`: 1 or more shafts, each ordered away from the bulb; the first cell of each shaft touches a bulb cell.
+- Each shaft's digits sum to the bulb number. Repeats allowed.

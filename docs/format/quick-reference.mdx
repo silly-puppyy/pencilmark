@@ -1,0 +1,28 @@
+---
+title: Quick reference
+---
+
+# Quick reference
+
+This page lists every rule `type` and `kind` with a one-line meaning and a link to the page that defines it.
+
+| Type / kind | Meaning | Page |
+|---|---|---|
+| `grid, box_grid, box, row, column` | A house: a set of cells with no repeated digit | [Houses and regions](houses-and-regions.mdx#61-houses-grid-box_grid-box-row-column) |
+| `region` | A no-repeat cell set (diagonal, window, disjoint, colour, extra) | [Houses and regions](houses-and-regions.mdx#62-region) |
+| `cage` | A no-repeat cell set, optionally with a sum | [Cages and sums](cages-and-sums.mdx#63-cage) |
+| `sum: little_killer, frame, group, corner` | A sum over cells where repeats are allowed | [Cages and sums](cages-and-sums.mdx#68-sum) |
+| `line: thermo, slow_thermo` | Increasing (strictly or not) from the bulb | [Lines and arrows](lines-and-arrows.mdx#64-line) |
+| `line: whisper, renban, parity` | Adjacent-cell conditions: difference, consecutive set, alternating parity | [Lines and arrows](lines-and-arrows.mdx#64-line) |
+| `line: region_sum, palindrome, entropic, modular, zipper, between, lockout, double_arrow` | Other line conditions | [Lines and arrows](lines-and-arrows.mdx#64-line) |
+| `arrow` | Shafts sum to the number in the bulb | [Lines and arrows](lines-and-arrows.mdx#65-arrow) |
+| `edge: kropki, xv, difference, sum, product, ratio, less` | A clue on two adjacent cells | [Edges and corners](edges-and-corners.mdx#66-edge) |
+| `corner: battenburg, mathrax, exclude` | A clue on a 2×2 block | [Edges and corners](edges-and-corners.mdx#67-corner) |
+| `sandwich, xsum, skyscraper, rossini, first_seen` | A clue outside the grid about a row or column | [Outside clues](outside-clues.mdx#69-outside-clues-sandwich-xsum-skyscraper-rossini-first_seen) |
+| `neighbours` | A pair rule over neighbouring cells of the whole board (antiknight, antiking, nonconsecutive, ...) | [Whole board rules](whole-board-rules.mdx#610-neighbours) |
+| `relation` | Explicit pairs under one pair operator | [Whole board rules](whole-board-rules.mdx#611-relation) |
+| `negative` | All clues of a family are shown; uncovered positions break the clue | [Whole board rules](whole-board-rules.mdx#614-negative) |
+| `cell: odd, even, low, high, set, exclude` | A clue on single cells | [Cell clues](cell-clues.mdx#612-cell-cell-clues) |
+| `contains, appears, clone, isomorphic, count, distinct_count, global_entropy, equal_sum, vudoku` | Other families | [Other](other.mdx#613-other-families) |
+| `vendor rules (com.example:name)` | Must-understand extension rules | [Other](other.mdx#615-vendor-rules) |
+| `custom, table, allowed` | Reserved and refused in format_version 1 | [Other](other.mdx#617-reserved) |

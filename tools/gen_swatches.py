@@ -1,6 +1,6 @@
 """Draw a small 3x3 example of every rule kind for the docs (light and dark), with tools/render_svg.py.
 
-  python tools/gen_swatches.py [out_dir]      default: docs/img/swatches
+  python tools/gen_swatches.py [out_dir]      default: website/static/img/swatches
 
 Each swatch is a 3x3 board holding one rule (and a few digits where they show the meaning). The docs build runs this
 script; the images are not committed. swatches.json lists the names, so a page can check that a swatch exists.
@@ -112,7 +112,7 @@ def doc_for(rules, givens):
 
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
-    out = Path(argv[0]) if argv else Path(__file__).resolve().parents[1] / "docs/img/swatches"
+    out = Path(argv[0]) if argv else Path(__file__).resolve().parents[1] / "website/static/img/swatches"
     out.mkdir(parents=True, exist_ok=True)
     done, failed = [], {}
     for name, (rules, givens) in SWATCHES.items():

@@ -1,0 +1,27 @@
+---
+title: Outside clues
+---
+
+import Swatch from '@site/src/components/Swatch';
+
+# Outside clues
+
+This page covers the clues written outside the grid: sandwich, xsum, skyscraper, rossini and first_seen (6.9).
+
+## 6.9 Outside clues: `sandwich`, `xsum`, `skyscraper`, `rossini`, `first_seen`
+
+All take `side` and ordered `cells` starting next to the clue (3.2).
+
+<div className="pm-kinds">
+
+| `type` | Fields | Meaning | Drawing |
+|---|---|---|---|
+| `sandwich` | `sum` | The digits strictly between the 1 and the D in `cells` sum to `sum` (0 when they are adjacent). | <Swatch name="sandwich" json={`{"type": "sandwich", "side": "left", "sum": 7, "cells": ["r2c1", "r2c2", "r2c3"]}`} /> |
+| `xsum` | `sum` | X = the digit in `cells[0]`; the first X cells sum to `sum`. | <Swatch name="xsum" json={`{"type": "xsum", "side": "top", "sum": 9, "cells": ["r1c2", "r2c2", "r3c2"]}`} /> |
+| `skyscraper` | `value` | Reading `cells` in order, exactly `value` cells are higher than every earlier cell. | <Swatch name="skyscraper" json={`{"type": "skyscraper", "side": "top", "value": 2, "cells": ["r1c2", "r2c2", "r3c2"]}`} /> |
+| `rossini` | `arrow`: `"in"` \| `"out"` | The first 3 cells are monotone: increasing inwards for `in` (the arrow points into the grid, towards the highest digit), decreasing inwards for `out`. `cells` lists those 3 cells. |  |
+| `first_seen` | `value`, `digits` (list) | Reading `cells` in order, the first digit that is in `digits` is `value` (e.g. the "123" clue). |  |
+
+</div>
+
+"Every arrow is shown" for rossini is a `negative` rule (6.14).

@@ -1,0 +1,60 @@
+---
+title: Other rules
+---
+
+import Swatch from '@site/src/components/Swatch';
+
+# Other rules
+
+This page covers the remaining rule families (6.13), vendor rules (6.15), what is not a rule (6.16) and reserved names (6.17).
+
+## 6.13 Other families
+
+```json
+{"type": "contains", "digits": [1, 9], "cells": ["r1c1", "r1c2", "r2c1", "r2c2"]}
+{"type": "appears", "source": "r5c5", "cells": ["r5c6", "r5c7", "r5c8", "r5c9"]}
+{"type": "clone", "regions": [["r1c1", "r1c2"], ["r9c8", "r9c9"]]}
+{"type": "isomorphic", "regions": [["r1c1", "…81 cells…"], ["r1c11", "…81 cells…"]]}
+{"type": "count", "each": 2, "cells": ["r1c1", "…"]}
+{"type": "count", "kind": "circles", "cells": ["r1c1", "r4c7"]}
+{"type": "distinct_count", "value": 2, "side": "top", "cells": ["r1c2", "r2c3", "r3c4"]}
+{"type": "global_entropy"}
+{"type": "equal_sum", "segments": [["r1c1", "r1c2"], ["r2c3"]]}
+{"type": "vudoku", "cells": ["r2c2", "r3c1", "r3c3"]}
+```
+
+<div className="pm-kinds">
+
+| `type` | Meaning | Drawing |
+|---|---|---|
+| `contains` | Every listed digit (a multiset) appears among `cells` at least as often as it is listed. On a 2×2 block it is the quadruple clue. | <Swatch name="contains-quadruple" json={`{"type": "contains", "digits": [1, 2, 5], "cells": ["r1c1", "r1c2", "r2c1", "r2c2"]}`} /> |
+| `appears` | The digit in `source` appears in at least one of `cells` (e.g. an in-cell arrow whose digit occurs again along its ray). |  |
+| `clone` | ≥ 2 equal-sized ordered `regions`; corresponding cells hold equal digits. |  |
+| `isomorphic` | 2 ordered `regions` (twins): one fixed relabelling of the digits maps every cell of the first region to the corresponding cell of the second. |  |
+| `count` | `each` k: every digit appears exactly k times among `cells` (Double Sudoku rows). Or `counts` `[[digit, times], …]`: those digits appear exactly that often. Kind `circles`: a digit that appears among the cells appears exactly as many times as its own value. Cells under `count` MUST NOT also be in a house. |  |
+| `distinct_count` | Exactly `value` different digits among `cells`. With `side` it is an outside clue (ordered cells). |  |
+| `global_entropy` | Every 2×2 window of existing cells holds a low, a middle and a high digit (thirds of 1..D; D divisible by 3). |  |
+| `equal_sum` | Every segment (a cell set) has the same sum. For lines, use the `line` kinds `zipper`, `region_sum`, `double_arrow`. |  |
+| `vudoku` | `cells` = [vertex, arm, arm]: the vertex digit is the sum or the difference of the two arm digits. |  |
+
+</div>
+
+## 6.15 Vendor rules
+
+`{"type": "com.example:my_rule", …}`: must-understand like every other rule; a reader that does not implement it
+refuses the file.
+
+## 6.16 What is not a rule
+
+Variant names (Argyle, Windoku, …) are not rules: they are `meta.type` only. Colours, fonts and artwork are `style`
+and `decorations` only.
+
+## 6.17 Reserved
+
+- `"type": "custom"`: reserved for a future rule language (rules defined in the file itself); every format_version 1
+  reader refuses it with a message saying so. Until then, a mechanic without a rule family cannot be written in the
+  format.
+- `"type": "table"` and the operator `allowed` (explicit lists of allowed digit tuples): reserved and refused. Such
+  lists make files large and cannot be drawn; the custom rule type is meant to replace them.
+- `digits` as an object (`{"values": [0, …, 8], "symbols": {…}}`, with an `empty` sentinel) for digit sets other
+  than 1..D, and digit-selection puzzles: reserved; refused in format_version 1.

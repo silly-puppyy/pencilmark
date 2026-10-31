@@ -1,0 +1,56 @@
+---
+title: Houses and regions
+---
+
+# Houses and regions
+
+This page covers the rules that say where digits may not repeat: houses (6.1) and regions (6.2).
+
+## 6.1 Houses: `grid`, `box_grid`, `box`, `row`, `column`
+
+```json
+{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}
+{"type": "grid", "origin": "r1c1"}
+{"type": "box", "cells": ["r1c1", "r1c2", "r1c3", "r2c1", "r2c2", "r2c3", "r3c1", "r3c2", "r4c1"]}
+{"type": "row", "cells": ["r1c1", "r1c2", "…"]}
+```
+
+A house holds no repeated digit; a house of exactly D cells holds every digit once. Houses come only from these rules:
+nothing is implied, so a board without house rules has no houses.
+
+- **`grid`**: a sudoku grid, the D × D area whose top-left cell is `origin`. It gives the area's D rows (top to bottom)
+  and D columns (left to right). Every cell of the area MUST exist.
+- **`box_grid`**: a `grid` whose boxes are a regular tiling. `box` = [box height, box width], with box height × box
+  width = D (a 6×6 is `box` [2, 3] or [3, 2]). It gives the grid's rows, columns, then its D boxes (reading order of
+  their top-left cells). A classic is one `box_grid`; a samurai is five; a super samurai is one per grid.
+- **`box`**: one box with explicit `cells`, any shape. A jigsaw is a `grid` plus one `box` per piece.
+- **`row`** / **`column`**: explicit houses for rows and columns that are not those of a D × D area (staircase,
+  toroidal, sujiken).
+- A house with the same cell set as an earlier house is the same house (overlapping grids share boxes and lines).
+- Boxes, from any of these rules, are what a renderer draws with thick lines. The `grid` / `box_grid` areas also limit
+  negative constraints and battenburg windows to one grid (6.14).
+
+| Board | Houses |
+|---|---|
+| classic, 6×6, 16×16 | one `box_grid` |
+| jigsaw | one `grid` + D `box` rules |
+| Latin square | one `grid` |
+| samurai, twodoku, butterfly, … | one `box_grid` per grid |
+| samurai with a jigsaw corner | four `box_grid` + one `grid` + D `box` rules |
+| toroidal, staircase | `row` / `column` / `box` rules |
+
+Canonical writers emit a `box_grid` for every D × D area whose rows, columns and regular boxes are houses, a `grid`
+where the area's boxes are irregular or absent, and `box` / `row` / `column` rules for the remaining houses.
+
+## 6.2 `region`
+
+```json
+{"type": "region", "kind": "diagonal", "cells": ["r1c1", "r2c2", "r3c3", "r4c4", "r5c5", "r6c6", "r7c7", "r8c8", "r9c9"]}
+```
+
+- No digit repeats among the cells. Fewer than D cells is allowed; "contains every digit" follows only when the region
+  has exactly D cells.
+- `kind`: `diagonal` | `window` | `disjoint` | `colour` | `extra` | `region`. To a solver all kinds mean the same; the
+  kind is a drawing and grouping hint: `diagonal` (a straight diagonal: X-sudoku, argyle lines; cells listed from
+  the top), `window` (windoku windows), `disjoint` (same position in every box), `colour` (colour groups), `extra`
+  (shaded extra regions: asterisk, centre dot, …), `region` (anything else).
