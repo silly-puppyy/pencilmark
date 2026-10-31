@@ -123,13 +123,50 @@ def _find_innie(ctx, cells_needed, kind=None, max_cells=4):
     return out
 
 
+def _innie_from_engine(ctx):
+    """the engine's own region when no cage-only rule-of-45 set explains the move (arrows, little killers): its house,
+    the rules inside it and the leftover cells (pattern cells)"""
+    nm, eng, xm = ctx.nm, ctx.raw_engine, ctx.xm or {}
+    units = [u for u in (eng.get("base") or {}).get("units") or [] if u and u.get("name")]
+    rest = [c for c in eng.get("pattern_cells") or [] if isinstance(c, int)]
+    if len(units) != 1 or not rest or ctx.gi(units[0]["name"]) is None:
+        return None
+    gi = ctx.gi(units[0]["name"])
+    k = xm.get("n_cages") or 0
+    rules_txt = "the rule inside it" if k == 1 else f"the {k} rules inside it" if k else "the rules inside it"
+    combos = xm.get("combos")
+    house = nm.unit(gi)
+    verb = "accounts" if k == 1 else "account"
+    left = (
+        f": only {combos} combination{'' if combos == 1 else 's'} of digits {'remains' if combos == 1 else 'remain'}"
+        if combos
+        else ""
+    )
+    teach = (
+        f"{_cap(house)} adds up to {ctx.p.D * (ctx.p.D + 1) // 2}, and {rules_txt} (cages, arrows, little killers) "
+        f"{verb} for part of that total, so the cells left over, {nm.cells(rest)}, add up to the rest{left}. "
+        f"Remove {_elim_list(nm, ctx.elims)}. Solve such a leftover sum like a cage."
+    )
+    if ctx.place:
+        c, v = ctx.place
+        teach = (
+            f"{_cap(house)} adds up to {ctx.p.D * (ctx.p.D + 1) // 2}; {rules_txt} {verb} for part of it, so the cells "
+            f"left over, {nm.cells(rest)}, add up to the rest, which forces {nm.cell(c)} to be {v}."
+        )
+        short = f"{nm.cell(c)} = {v}: rule of 45 in {house}"
+    else:
+        short = f"{fmt_elims(nm, ctx.elims)}: rule of 45 in {house}"
+    J = _J(ctx, digits=_elim_digits(ctx), base_units=[gi], base_cells=rest)
+    return _result(ctx, J, short, teach, True, extra_cells=rest)
+
+
 def _h_innie(ctx):
     _nm, _p, _st = ctx.nm, ctx.p, ctx.st
     kind = "outie" if (ctx.m.name or "").startswith("outie") or ctx.xm.get("outie") else "innie"
     need = [ctx.place[0]] if ctx.place else sorted({c for c, _ in ctx.elims})
     cands = _find_innie(ctx, need, kind, max_cells=4 if ctx.tech != S.INNIE_X else 9)
     if not cands:
-        return _generic(ctx)
+        return _innie_from_engine(ctx) or _generic(ctx)
     first = None
     for s in cands[:12]:
         r = _innie_render(ctx, s, kind)
