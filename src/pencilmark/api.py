@@ -78,7 +78,27 @@ def _params(mode):
 
 
 def load(puzzle):
-    """any accepted input -> a finalized engine Puzzle."""
+    """Any accepted input -> a finalized engine Puzzle.
+
+    Parameters
+    ----------
+    puzzle : str, dict, Path or Puzzle
+        A classic string (81 characters, with or without a trailing comment), a text or pencil-mark grid, a sudokuwiki
+        packed string, a sudoku-puzzle dict or JSON text, an ipuz file, a .json path, a SudokuPad / f-puzzles / Penpa /
+        Logic Masters link, or an engine Puzzle (returned as it is).
+
+    Returns
+    -------
+    Puzzle
+        The engine's puzzle.
+
+    Raises
+    ------
+    FormatError
+        A sudoku-puzzle document that breaks the format.
+    TypeError
+        An input of no known form.
+    """
     from . import inputs
     from . import puzzle_json as PJ
 
@@ -107,17 +127,52 @@ def rate(
     quality=None,
     alternatives=True,
 ):
-    """the "sudoku-grade" card of one puzzle (docs/GRADE.md) with the requested top-level fields only. Default fields:
-    difficulty, time, band, contains (format, format_version, grader always). Optional: band_index, issues, reject, warning
-    (publishing checks), time_mean / time_pNN (any percentile 1-99, e.g. time_p80), time_dist, elapsed (wall seconds of the call), se, steps, describe, symmetry. explain="short" /
-    "teach" / True (both) adds explanations to the steps. steps=True is shorthand for the steps field with both explanation
-    levels; se=True for se.
-    Raises NotUnique / NoSolution / Undecided for a puzzle without exactly one solution. allow_guessing=True: guess
-    where no technique applies (band "Unknown") instead of proving by full search (Trial and error, Extreme).
-    quality: the issue checks, e.g. {"trivial": {"limit": 0.5}, "trial": {"severity": "off"}} (docs/GRADE.md 4). alternatives=False skips
-    the search for interchangeable techniques (each chip in contains lists one code); band, difficulty and time are the
-    same either way, and the card comes much faster. steps walk the shortest technique list's route when the card asks for
-    contains (or issues / reject / warning), else the full first route (docs/GRADE.md 5)."""
+    """The "sudoku-grade" card of one puzzle (docs/GRADE.md), with only the fields you ask for.
+
+    Parameters
+    ----------
+    puzzle : str, dict, Path or Puzzle
+        Anything `load` accepts: an 81-character string, a sudoku-puzzle dict or JSON text, a .json file, an ipuz file, a
+        SudokuPad / f-puzzles / Penpa / Logic Masters link.
+    steps : bool
+        Shorthand for the `steps` field with every explanation level.
+    max_seconds : float, optional
+        One wall-clock limit for the whole call. When it passes, the card says band "Unknown", difficulty and time are
+        null and `completed` is false.
+    mode : str
+        "human" (default): human techniques only, a proof by full search where they stop; "computer": also forcing chains
+        and nets, Nishio and trial.
+    se : bool
+        Shorthand for the `se` field (Sudoku Explainer-style ratings; classic sudoku only).
+    fields : list of str, optional
+        The top-level fields to return. Default: difficulty, time, band, contains. Optional: band_index, issues, reject,
+        warning (publishing checks), time_mean, time_pNN (any percentile 1-99, e.g. time_p80), time_dist, elapsed (wall
+        seconds of the call), se, steps, describe, symmetry. format, format_version and grader are always present.
+    allow_guessing : bool
+        Guess where no technique applies (band "Unknown") instead of proving by full search (Trial and error, Extreme).
+    explain : str, list of str or bool, optional
+        Explanation levels for the steps: "notation", "short", "teach", or True for all of them.
+    quality : dict, optional
+        Settings of the issue checks, e.g. {"trivial": {"limit": 0.5}, "trial": {"severity": "off"}} (docs/GRADE.md 4).
+    alternatives : bool
+        False skips the search for interchangeable techniques (each chip in contains lists one code). Band, difficulty
+        and time are the same either way, and the card comes much faster.
+
+    Returns
+    -------
+    dict
+        The card. Its steps walk the shortest technique list's route when the card asks for contains (or issues, reject
+        or warning), else the full first route (docs/GRADE.md 5).
+
+    Raises
+    ------
+    NotUnique
+        The puzzle has more than one solution.
+    NoSolution
+        The puzzle has no solution.
+    Undecided
+        The uniqueness search hit its limit without OR-Tools installed, or max_seconds passed first.
+    """
     from . import cpsat_verify as V
     from .export import card_fields, grade
     from .publish_flags import quality_limits
@@ -207,8 +262,23 @@ def rate_many(
     explain=None,
     quality=None,
 ):
-    """cards for many puzzles, in input order; jobs > 1 uses worker processes. A puzzle that cannot be rated (not unique,
-    no solution, unreadable) gives {"error": "..."}."""
+    """Cards for many puzzles, in input order.
+
+    Parameters
+    ----------
+    puzzles : iterable
+        Puzzles in any form `rate` accepts.
+    jobs : int
+        Worker processes; 1 rates in this process.
+    steps, max_seconds, mode, se, fields, allow_guessing, explain, quality
+        As for `rate`.
+
+    Returns
+    -------
+    list of dict
+        One card per puzzle. A puzzle that cannot be rated (not unique, no solution, unreadable) gives
+        {"error": "..."} instead of raising.
+    """
     items = [(p, steps, max_seconds, mode, se, fields, allow_guessing, explain, quality) for p in puzzles]
     if jobs <= 1:
         return [_rate_job(it) for it in items]
@@ -221,9 +291,31 @@ class Undecided(RuntimeError):
 
 
 def solve(puzzle, info=False):
-    """the unique solution as a list of digits (cell order of the puzzle); NotUnique / NoSolution otherwise.
-    Uses the engine's exhaustive C++ search; CP-SAT (optional OR-Tools) only if that search hits its node limit.
-    info=True: {"solution": [...], "seconds": wall-clock seconds of the search} instead of the bare list."""
+    """The unique solution of a puzzle.
+
+    Uses the engine's exhaustive C++ search; CP-SAT (OR-Tools, optional) only when that search hits its node limit.
+
+    Parameters
+    ----------
+    puzzle : str, dict, Path or Puzzle
+        Anything `load` accepts.
+    info : bool
+        Return {"solution": [...], "seconds": wall-clock seconds of the search} instead of the bare list.
+
+    Returns
+    -------
+    list of int
+        The digits in the puzzle's cell order.
+
+    Raises
+    ------
+    NotUnique
+        More than one solution.
+    NoSolution
+        No solution.
+    Undecided
+        The search hit its node limit and OR-Tools is not installed.
+    """
     import time
 
     from . import cpsat_verify as V
@@ -245,8 +337,21 @@ def solve(puzzle, info=False):
 
 
 def count_solutions(puzzle, limit=1000):
-    """how many solutions a puzzle has, counting up to `limit` -> {"count": n, "exact": bool}. exact False: there are at
-    least n (the count reached `limit`, or the search hit its node limit without OR-Tools installed)."""
+    """How many solutions a puzzle has, counting up to a limit.
+
+    Parameters
+    ----------
+    puzzle : str, dict, Path or Puzzle
+        Anything `load` accepts.
+    limit : int
+        Stop counting here.
+
+    Returns
+    -------
+    dict
+        {"count": n, "exact": bool}. exact is false when there are at least n: the count reached `limit`, or the search
+        hit its node limit without OR-Tools installed.
+    """
     from . import cpsat_verify as V
 
     if limit < 1:
@@ -256,10 +361,28 @@ def count_solutions(puzzle, limit=1000):
 
 
 def to_export(puzzle, meta=None, with_solution=True, describe=True, **meta_kw):
-    """the "sudoku-puzzle" exchange dict (format_version 1, docs/FORMAT.md): canonical, houses and rules with "r1c1" cells.
-    Metadata goes in its own optional "meta" object: pass a dict (meta={"title": ..., "author": ..., "date": ...}) and / or
-    keywords (title=..., author=..., source=..., id=..., url=..., date=..., rules_text=...); metadata already in a JSON input is
-    kept. describe=True fills an EMPTY meta.type / meta.rules_text from describe(); it never overwrites them."""
+    """The "sudoku-puzzle" exchange dict of a puzzle (format_version 1, docs/FORMAT.md).
+
+    Canonical: houses and rules with "r1c1" cells, keys in a fixed order. Metadata already in a JSON input is kept.
+
+    Parameters
+    ----------
+    puzzle : str, dict, Path or Puzzle
+        Anything `load` accepts.
+    meta : dict, optional
+        Metadata for the "meta" object, e.g. {"title": ..., "author": ..., "date": ...}.
+    with_solution : bool
+        Include the solution.
+    describe : bool
+        Fill an empty meta.type / meta.rules_text from `describe`; never overwrites them.
+    **meta_kw
+        Metadata as keywords: title, author, source, id, url, date, rules_text.
+
+    Returns
+    -------
+    dict
+        The sudoku-puzzle document.
+    """
     from . import inputs
     from .export import export_puzzle, read_meta
 
@@ -297,21 +420,64 @@ def to_export(puzzle, meta=None, with_solution=True, describe=True, **meta_kw):
 
 
 def dumps(doc, pretty=True):
-    """canonical JSON text of a sudoku-puzzle dict (fixed key order; pretty: one grid row per line, one rule per line)"""
+    """Canonical JSON text of a sudoku-puzzle dict: fixed key order; pretty: one grid row per line, one rule per line.
+
+    Parameters
+    ----------
+    doc : dict
+        A sudoku-puzzle document.
+    pretty : bool
+        Readable layout (True) or one line (False).
+
+    Returns
+    -------
+    str
+        The text.
+    """
     from .exchange import dumps as d
 
     return d(doc, pretty=pretty)
 
 
 def fingerprint(puzzle):
-    """content fingerprint "sha256:<hex>" of the canonical form (rules, grid, givens, candidates; no meta / style / solution)"""
+    """Content fingerprint of a puzzle: "sha256:<hex>" of its canonical form.
+
+    Covers the rules, grid, givens and candidates; not meta, style or the solution. Two files of the same puzzle get the
+    same fingerprint.
+
+    Parameters
+    ----------
+    puzzle : str, dict, Path or Puzzle
+        Anything `load` accepts.
+
+    Returns
+    -------
+    str
+        "sha256:" followed by 64 hex digits.
+    """
     from .exchange import fingerprint_of_doc
 
     return fingerprint_of_doc(to_export(puzzle, with_solution=False, describe=False))
 
 
 def validate(doc):
-    """strict reading checks of a format_version 1 dict (docs/FORMAT.md section 4); raises FormatError"""
+    """Strict reading checks of a format_version 1 dict (docs/FORMAT.md section 4).
+
+    Parameters
+    ----------
+    doc : dict
+        A sudoku-puzzle document.
+
+    Returns
+    -------
+    bool
+        True.
+
+    Raises
+    ------
+    FormatError
+        The document breaks the format; the message names the rule and the problem.
+    """
     from .exchange import validate as v
 
     v(doc)
@@ -319,7 +485,18 @@ def validate(doc):
 
 
 def describe(puzzle):
-    """{"type": variant name, "rules": {short name: one-sentence rule, ...}} from the rules alone (pencilmark/variants.py)"""
+    """The variant name and its rules in words, from the rules alone (pencilmark/variants.py).
+
+    Parameters
+    ----------
+    puzzle : str, dict, Path or Puzzle
+        Anything `load` accepts.
+
+    Returns
+    -------
+    dict
+        {"type": variant name, "rules": {short name: one-sentence rule, ...}}.
+    """
     from .variants import describe as d
 
     return d(puzzle)
@@ -332,41 +509,114 @@ def rules_text(described):
 
 
 def to_ipuz(puzzle):
-    """any accepted puzzle -> ipuz 2 dict, for the subset ipuz expresses (classic, Latin square, diagonal, windoku, jigsaw,
-    killer); NotSupportedError otherwise (docs/INTEROP.md)"""
+    """A puzzle as an ipuz 2 dict (docs/INTEROP.md).
+
+    ipuz expresses classic, Latin square, diagonal, windoku, jigsaw and killer sudoku.
+
+    Parameters
+    ----------
+    puzzle : str, dict, Path or Puzzle
+        Anything `load` accepts.
+
+    Returns
+    -------
+    dict
+        The ipuz document.
+
+    Raises
+    ------
+    NotSupportedError
+        The puzzle uses rules ipuz cannot express.
+    """
     from .interop import to_ipuz as t
 
     return t(puzzle)
 
 
 def from_ipuz(ipuz):
-    """ipuz sudoku (dict or JSON text) -> sudoku-puzzle dict (docs/INTEROP.md)"""
+    """An ipuz sudoku -> sudoku-puzzle dict (docs/INTEROP.md).
+
+    Parameters
+    ----------
+    ipuz : dict or str
+        The ipuz document, or its JSON text.
+
+    Returns
+    -------
+    dict
+        The sudoku-puzzle document.
+    """
     from .interop import from_ipuz as f
 
     return f(ipuz)
 
 
 def from_string(s, symbols=None):
-    """text -> sudoku-puzzle dict: plain classic strings (with or without a trailing comment), text grids with separators,
-    pencil-mark grids, 729-character candidate strings, HoDoKu library lines, sudokuwiki.org packed strings
-    (docs/INTEROP.md)"""
+    """A puzzle as text -> sudoku-puzzle dict (docs/INTEROP.md).
+
+    Reads plain classic strings (with or without a trailing comment), text grids with separators, pencil-mark grids,
+    729-character candidate strings, HoDoKu library lines and sudokuwiki.org packed strings.
+
+    Parameters
+    ----------
+    s : str
+        The text.
+    symbols : str, optional
+        For a plain string, the symbol of each digit in order (e.g. "ABCDEFGHI" reads A as 1); default 1-9, then A-Z.
+
+    Returns
+    -------
+    dict
+        The sudoku-puzzle document.
+    """
     from .interop import from_string as f
 
     return f(s, symbols=symbols)
 
 
 def to_string(puzzle, form="plain"):
-    """any accepted puzzle -> text: form "plain" (81 characters), "grid" (rows with separators) or "sudokuwiki" (packed
-    string); NotSupportedError when the form cannot carry the puzzle (docs/INTEROP.md)"""
+    """A puzzle as text (docs/INTEROP.md).
+
+    Parameters
+    ----------
+    puzzle : str, dict, Path or Puzzle
+        Anything `load` accepts.
+    form : str
+        "plain" (81 characters), "grid" (rows with separators) or "sudokuwiki" (packed string).
+
+    Returns
+    -------
+    str
+        The text.
+
+    Raises
+    ------
+    NotSupportedError
+        The form cannot carry the puzzle (e.g. a variant in "plain").
+    """
     from .interop import to_string as t
 
     return t(puzzle, form)
 
 
 def generate(spec):
-    """one puzzle for a "sudoku-spec" request (docs/SPEC.md: dict, JSON text or path) -> {"puzzle": sudoku-puzzle,
-    "card": sudoku-grade card, "info": {...}}; GenerationFailed when no puzzle met it in time; see
-    pencilmark.gen.generate"""
+    """One puzzle for a "sudoku-spec" request (docs/SPEC.md).
+
+    Parameters
+    ----------
+    spec : dict, str or Path
+        The request: a dict, JSON text or a path to a .json file.
+
+    Returns
+    -------
+    dict
+        {"puzzle": sudoku-puzzle dict, "card": its sudoku-grade card, "info": {...}}.
+
+    Raises
+    ------
+    GenerationFailed
+        No puzzle met the request in the time it allows.
+    """
     from .gen.api import generate as g
 
     return g(spec)

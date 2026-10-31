@@ -44,6 +44,59 @@ def _links(text):
     return re.sub(r"docs/([A-Z]+)\.md", lambda m: f"[{PAGE_TITLES.get(m.group(1), m.group(1))}]({m.group(1)}.md)", text)
 
 
+SECTIONS = ("Parameters", "Returns", "Raises", "Examples", "Notes")
+
+
+def _flow(text):
+    """hard-wrapped docstring lines -> one flowing paragraph (markdown-escaped, docs links)"""
+    return _links(" ".join(text.split()).replace("*", "\\*"))
+
+
+def _render(doc):
+    """a numpydoc docstring -> markdown: the summary paragraphs, then each section (Parameters / Raises as lists)"""
+    lines = doc.split("\n")
+    parts, cur, name = [], [], None
+    for i, line in enumerate(lines):
+        if line.strip() in SECTIONS and i + 1 < len(lines) and set(lines[i + 1].strip()) == {"-"}:
+            parts.append((name, cur))
+            name, cur = line.strip(), []
+            continue
+        if name and set(line.strip()) == {"-"} and cur == []:
+            continue
+        cur.append(line)
+    parts.append((name, cur))
+    out = []
+    for name, body in parts:
+        text = "\n".join(body).strip("\n")
+        if not text:
+            continue
+        if name is None:
+            out += [_flow(p) + "\n" for p in text.split("\n\n") if p.strip()]
+            continue
+        out.append(f"**{name}**\n")
+        if name == "Examples":
+            out.append(
+                "```python\n" + "\n".join(x[4:] if x.startswith("    ") else x for x in body).strip() + "\n```\n"
+            )
+            continue
+        items, item = [], None  # "name : type" lines start an item; indented lines describe it
+        for line in body:
+            if line and not line.startswith(" "):
+                item = [line.strip(), []]
+                items.append(item)
+            elif item is not None and line.strip():
+                item[1].append(line.strip())
+        if not items:
+            out.append(_flow(text) + "\n")
+            continue
+        for head, desc in items:
+            nm, _, typ = head.partition(" : ")
+            label = f"`{nm}`" + (f" ({typ})" if typ else "")
+            out.append(f"- {label}: {_flow(' '.join(desc))}" if desc else f"- {label}")
+        out.append("")
+    return out
+
+
 def main():
     src = (ROOT / "src/pencilmark/api.py").read_text(encoding="utf-8")
     tree = ast.parse(src)
@@ -63,9 +116,8 @@ def main():
             L += [f"## `{name}`", "", f"```python\nclass {name}({bases})\n```", ""]
         else:
             L += [f"## `{name}`", "", f"```python\n{signature(n)}\n```", ""]
-        if doc:  # docstring lines are hard-wrapped: join them into flowing paragraphs
-            paras = [" ".join(x.split()) for x in doc.split("\n\n")]
-            L += [_links(p.replace("*", "\\*")) + "\n" for p in paras if p]
+        if doc:
+            L += _render(doc)
     (ROOT / "docs/api.md").write_text("\n".join(L), encoding="utf-8")
 
 
