@@ -178,7 +178,7 @@ the `PENCILMARK_UA` environment variable.
 
 On a frozen held-out set of 7,623 puzzles with real human solve data from seven sources, pencilmark's difficulty ranks
 puzzles by human solve time at Spearman 0.61 to 0.80 within each group, closer than four established graders on the same
-classics. Details: [docs/BENCHMARK.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/BENCHMARK.md).
+classics. Details: [docs/BENCHMARK.mdx](https://github.com/silly-puppyy/pencilmark/blob/main/docs/BENCHMARK.mdx).
 
 ## Known issues
 
