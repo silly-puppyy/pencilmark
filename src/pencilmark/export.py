@@ -239,7 +239,7 @@ def _sigmas(variant):
     """(sigma_players, sigma_model) of the log-normal time distribution (data/time_model.json)"""
     tm = _time_model()
     k = "variant" if variant else "classic"
-    return tm.get(f"spread_sigma_{k}", tm.get("spread_sigma", 0.73)), tm.get(f"model_sigma_{k}")
+    return tm.get(f"spread_sigma_{k}"), tm.get(f"model_sigma_{k}")
 
 
 def _time_stat(field, variant=False):

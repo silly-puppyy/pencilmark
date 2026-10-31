@@ -181,7 +181,7 @@ def score_parts(p, cfg):
         if pth_d:
             pth = pth_d
     v = sorted(
-        (math.exp(cfg["beta"] * math.log(d) + cfg["delta"].get(nm, 0.0) + w * e) * f for nm, d, f, e in pth),
+        (math.exp(cfg["beta"] * math.log(d) + cfg.get("delta", {}).get(nm, 0.0) + w * e) * f for nm, d, f, e in pth),
         reverse=True,
     )
     if cfg.get("stat") == "per_cell":  # average effort to discover one cell = step sum / empty cells
@@ -193,20 +193,21 @@ def score_parts(p, cfg):
     else:  # mean of the hardest quarter of steps
         top = v[: max(1, len(v) // 4)]
         r = 2 * math.log(max(sum(top) / len(top), 1e-9)) / math.log(5)
-    if cfg.get("map"):  # one continuous formula, no ceiling: A * w * softplus((r - r0) / w) from score 2 up;
-        mp = cfg["map"]  # below 2, 2 * exp(A * (r - r2) / 2) (same value and slope at 2, about the square root
-        score = _softplus_map(mp, r)  # of effort, never negative; human times keep rising there, 2026-10-30)
-        if score < 2.0:
-            score = 2.0 * math.exp(mp["A"] * (r - _r_at(mp, 2.0)) / 2.0)
-    else:
-        score = (
-            cfg["a"] + cfg["b"] * r + cfg.get("c", 0.0) * r * r
-        )  # map refitted on fed + sudokuwiki-rated hard puzzles
+    # one continuous formula, no ceiling: A * w * softplus((r - r0) / w) from score 2 up; below 2,
+    # 2 * exp(A * (r - r2) / 2) (same value and slope at 2, about the square root of effort, never negative; human times
+    # keep rising there, 2026-10-30)
+    mp = cfg["map"]
+    score = _softplus_map(mp, r)
+    if score < 2.0:
+        score = 2.0 * math.exp(mp["A"] * (r - _r_at(mp, 2.0)) / 2.0)
     if cfg.get("price_params"):  # time effort from the production route
         return score, math.log(
             max(
                 sum(
-                    math.exp(cfg.get("beta_time", cfg["beta"]) * math.log(d) + cfg["delta"].get(nm, 0.0) + w * e) * f
+                    math.exp(
+                        cfg.get("beta_time", cfg["beta"]) * math.log(d) + cfg.get("delta", {}).get(nm, 0.0) + w * e
+                    )
+                    * f
                     for nm, d, f, e in pth_time
                 ),
                 1e-9,

@@ -1,18 +1,6 @@
 {
  "version": 3,
  "beta": 4.583363490170559,
- "delta": {},
- "a": -3.0906227715570402,
- "b": 1.211884362424338,
- "c": -0.024120012368288125,
- "disabled": [
-  "MentalChain(direct)",
-  "MentalSingle(direct)",
-  "MentalNotesSingle",
-  "WhatIf",
-  "EitherWay",
-  "ShortTrial"
- ],
  "enum_w": 0.1,
  "stat": "per_cell",
  "price_params": "price_params.json",

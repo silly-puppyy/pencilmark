@@ -12,7 +12,6 @@
   "c": 0.4
  },
  "minutes_per_unit": 11.8,
- "spread_sigma": 0.73,
  "spread_note": "solve times of one puzzle across today's players: log-normal around the median (shape checked on sudoku.coach and grandgames: symmetric in log time, near-normal tails). sigma_players 0.79 for classics and multi-grid layouts, 0.62 for puzzles with any rule beyond rows / columns / boxes (two sources agree: grandgames 0.78 / 0.60, sudoku.coach 0.82 / 0.64; fed classics 0.74); no audience-free dependence on puzzle length (opposite signs across sources). sigma_model = typical error of the predicted median (classics 0.32-0.36 on three sources, variants 0.46-0.50). spread_sigma (0.73) kept for older readers. (2026-10-29)",
  "size_curve": {
   "q": 0.2148,
