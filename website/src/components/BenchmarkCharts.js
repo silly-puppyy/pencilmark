@@ -4,23 +4,23 @@ import React, {useEffect, useRef} from 'react';
 import {useColorMode} from '@docusaurus/theme-common';
 import * as Plot from '@observablehq/plot';
 
-const ACCURACY = [  // within-group Spearman of difficulty; ceiling = best any grader can reach (where measured)
-  {source: 'sudoku.coach', rho: 0.799, ceiling: 0.98},
-  {source: 'grandgames.net', rho: 0.752, ceiling: 0.97},
-  {source: 'logic-masters.de', rho: 0.721, ceiling: null},
-  {source: 'fed-sudoku.eu', rho: 0.67, ceiling: 0.99},
-  {source: 'Wang 2024', rho: 0.663, ceiling: null},
-  {source: 'sudoku.today', rho: 0.608, ceiling: 0.75},
+const ACCURACY = [  // within-group Spearman of difficulty against human times. With a ceiling: the noise-ceiling table's
+  // values (the puzzles where players could be split) and its share, the per-group mean of pencilmark / ceiling
+  {source: 'sudoku.coach', rho: 0.765, ceiling: 0.98, share: 0.78},
+  {source: 'grandgames.net', rho: 0.755, ceiling: 0.97, share: 0.78},
+  {source: 'logic-masters.de', rho: 0.721, ceiling: null, share: null},
+  {source: 'fed-sudoku.eu', rho: 0.66, ceiling: 0.99, share: 0.67},
+  {source: 'Wang 2024', rho: 0.663, ceiling: null, share: null},
+  {source: 'sudoku.today', rho: 0.597, ceiling: 0.75, share: 0.87},
 ];
 
-const GRADERS = [  // same puzzles, within-group Spearman
+const GRADERS = [  // same puzzles, within-group Spearman (the page's comparison table)
   ...[['pencilmark', 0.67], ['Andrew Stuart', 0.594], ['Rangsk', 0.357], ['HoDoKu', 0.326], ['Sudoku Explainer', 0.291]]
     .map(([grader, rho]) => ({set: 'fed-sudoku.eu classics', grader, rho})),
   ...[['pencilmark', 0.663], ['Andrew Stuart', 0.498], ['Rangsk', 0.347], ['HoDoKu', 0.403], ['Sudoku Explainer', 0.475]]
     .map(([grader, rho]) => ({set: 'Wang 2024 classics', grader, rho})),
+  ...[['pencilmark', 0.699], ['Rangsk', 0.676]].map(([grader, rho]) => ({set: 'sudoku.today variants', grader, rho})),
 ];
-
-const COVERAGE = [[10, 93.9], [30, 96.4], [60, 97.4], [120, 98.2], [300, 98.8]].map(([s, pct]) => ({s, pct}));
 
 function colours() {
   const css = getComputedStyle(document.documentElement);
@@ -45,44 +45,43 @@ function Chart({build, label}) {
 const base = (ink) => ({style: {background: 'transparent', color: ink, fontSize: '12px'}, width: 640});
 
 export function AccuracyChart() {
-  return <Chart label="Within-group rank correlation of difficulty with human solve times, per source" build={({ink, accent}) =>
-    Plot.plot({
-      ...base(ink), height: 240, marginLeft: 120, marginBottom: 40,
-      x: {domain: [0, 1], labelOffset: 36, label: 'Spearman with human times (within groups) →', grid: true},
-      y: {label: null, domain: ACCURACY.map((d) => d.source)},
+  // bullet chart: the light bar is the source's ceiling (the best any grader can reach), the dark bar pencilmark
+  const rows = ACCURACY;
+  return <Chart label="pencilmark's rank correlation with human solve times per source, against each source's ceiling"
+    build={({ink, accent, grey}) => Plot.plot({
+      ...base(ink), height: 270, marginLeft: 120, marginRight: 150, marginBottom: 40,
+      x: {domain: [0, 1], grid: true, labelOffset: 34, label: 'Spearman with human times (within groups) →'},
+      y: {label: null, domain: rows.map((d) => d.source), padding: 0.25},
       marks: [
-        Plot.barX(ACCURACY, {x: 'rho', y: 'source', fill: accent, tip: true}),
-        Plot.tickX(ACCURACY.filter((d) => d.ceiling), {x: 'ceiling', y: 'source', stroke: ink, strokeWidth: 2}),
-        Plot.text(ACCURACY, {x: 'rho', y: 'source', text: (d) => d.rho.toFixed(2), dx: -16, fill: 'white'}),
+        Plot.barX(rows.filter((d) => d.ceiling), {x: 'ceiling', y: 'source', fill: grey, fillOpacity: 0.28, rx: 3,
+                                                  title: (d) => `ceiling ${d.ceiling}`}),
+        Plot.barX(rows, {x: 'rho', y: 'source', fill: accent, insetTop: 5, insetBottom: 5, rx: 2,
+                         title: (d) => `${d.source}: ${d.rho}` + (d.ceiling ? ` of a possible ${d.ceiling}` : '')}),
+        Plot.text(rows, {x: 1, y: 'source', dx: 8, textAnchor: 'start', fill: ink,
+                         text: (d) => (d.share ? `${d.rho.toFixed(2)} · ${Math.round(100 * d.share)}% of ceiling` : `${d.rho.toFixed(2)} · no ceiling`)}),
       ],
-      caption: 'Bars: pencilmark. Black ticks: noise ceiling, the best any grader can reach on that source.',
+      caption: 'Narrow bar: pencilmark. Wide pale bar: the ceiling, the best any grader can reach on that source, where players can be split in two; the share is averaged over groups.',
     })} />;
 }
 
 export function GradersChart() {
-  return <Chart label="pencilmark against other graders on the same classics" build={({ink, accent, grey}) =>
+  // lollipops, one row per grader inside each puzzle set; pencilmark in the accent; every value written beside its dot
+  const sets = ['fed-sudoku.eu classics', 'Wang 2024 classics', 'sudoku.today variants'];
+  const order = ['pencilmark', 'Andrew Stuart', 'Sudoku Explainer', 'HoDoKu', 'Rangsk'];
+  const fill = (accent, grey) => (d) => (d.grader === 'pencilmark' ? accent : grey);
+  return <Chart label="pencilmark against other graders on the same puzzles" build={({ink, accent, grey}) =>
     Plot.plot({
-      ...base(ink), height: 260, marginLeft: 120, marginRight: 150,
-      fy: {label: null}, y: {label: null, domain: ['pencilmark', 'Andrew Stuart', 'Sudoku Explainer', 'HoDoKu', 'Rangsk']},
-      x: {domain: [0, 0.8], label: 'Spearman with human times (within groups) →', grid: true},
+      ...base(ink), height: 430, marginLeft: 120, marginRight: 50, marginTop: 24, marginBottom: 40,
+      x: {domain: [0, 0.8], grid: true, labelOffset: 34, label: 'Spearman with human times (within groups) →'},
+      fy: {domain: sets, label: null, padding: 0.22, axis: null},
+      y: {domain: order, label: null},
       marks: [
-        Plot.ruleY(GRADERS, {y: 'grader', fy: 'set', x1: 0, x2: 'rho', stroke: grey, strokeOpacity: 0.5}),
-        Plot.dot(GRADERS, {x: 'rho', y: 'grader', fy: 'set', r: 5, tip: true,
-                           fill: (d) => (d.grader === 'pencilmark' ? accent : grey)}),
-      ],
-    })} />;
-}
-
-export function CoverageChart() {
-  return <Chart label="Share of puzzles graded within a time limit" build={({ink, accent}) =>
-    Plot.plot({
-      ...base(ink), height: 220,
-      x: {type: 'log', label: 'time limit (s, log scale) →', ticks: [10, 30, 60, 120, 300]},
-      y: {domain: [90, 100], label: '↑ graded within the limit (%)', grid: true},
-      marks: [
-        Plot.line(COVERAGE, {x: 's', y: 'pct', stroke: accent, strokeWidth: 2.5}),
-        Plot.dot(COVERAGE, {x: 's', y: 'pct', fill: accent, r: 4, tip: true}),
-        Plot.text(COVERAGE, {x: 's', y: 'pct', text: (d) => `${d.pct}%`, dy: -12, fill: ink}),
+        Plot.text(sets, {fy: (d) => d, text: (d) => d, frameAnchor: 'top-right', dy: -12, fontWeight: 650, fill: ink}),
+        Plot.ruleY(GRADERS, {fy: 'set', y: 'grader', x1: 0, x2: 'rho', stroke: fill(accent, grey), strokeOpacity: 0.6}),
+        Plot.dot(GRADERS, {fy: 'set', y: 'grader', x: 'rho', r: 5, fill: fill(accent, grey), stroke: 'none', tip: true,
+                           title: (d) => `${d.grader}, ${d.set}: ${d.rho}`}),
+        Plot.text(GRADERS, {fy: 'set', y: 'grader', x: 'rho', text: (d) => d.rho.toFixed(2), dx: 9, textAnchor: 'start',
+                            fill: ink, fontWeight: (d) => (d.grader === 'pencilmark' ? 650 : 400)}),
       ],
     })} />;
 }

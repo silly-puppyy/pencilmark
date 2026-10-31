@@ -211,3 +211,8 @@ a.pm-site-text { font-size: 0.7rem; border: 1px solid var(--ifm-color-emphasis-4
 .pm-alt-table { display: none; }
 .pm-alt-hidden { display: none; }
 html[data-graphics='off'] .pm-alt-table { display: block; }
+
+/* charts take the column's full width (the browser's default figure margins shrank them); captions read as notes */
+figure.pm-chart { margin: 0.5rem 0 1.5rem; }
+figure.pm-chart figure { margin: 0; }
+.pm-chart figcaption { font-size: 0.85rem; color: var(--pm-muted); line-height: 1.5; }
