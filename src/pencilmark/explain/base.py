@@ -622,6 +622,8 @@ def _result(ctx, J, short, teach, verified, lines=(), chain=None, extra_cells=()
         for end in (lk["a"], lk["b"]):
             if isinstance(end[0], int):
                 cells.add(end[0])
+            elif end[0] == "grp":  # a grouped chain node: its cells
+                cells |= set(end[1])
     for a in J.get("als") or ():
         cells |= set(a["cells"])
     units = [

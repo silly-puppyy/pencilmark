@@ -198,6 +198,21 @@ def _chain_text(nm, p, path, als_cells=None):
         if src == "equal" and n0[0] != "als" and n1[0] != "als":
             out.append(f"so {nm.cell(n1[0])} is {n1[1]} as well ({rel_label(p, n0[0], n1[0]) or 'equal cells'})")
             continue
+        if n0[0] == "grp" or n1[0] == "grp":
+            d1 = n1[-1]
+            g = nm.cells(list((n1 if n1[0] == "grp" else n0)[1]))
+            where = (
+                f" (the only other places for {d1} in {nm.unit(unit)})" if src == "bilocal" and unit is not None else ""
+            )
+            if n1[0] == "grp" and strong:
+                out.append(f"so the {d1} must be in one of {g}{where}")
+            elif n1[0] == "grp":
+                out.append(f"so none of {g} is {d1}")
+            elif strong:
+                out.append(f"so {nm.cell(n1[0])} is {d1}{where.replace('places', 'place')}")
+            else:
+                out.append(f"and {nm.cell(n1[0])} sees every one of {g}, so it isn't {d1}")
+            continue
         if n0[0] == "als" or n1[0] == "als":
             cells = (als_cells or {}).get((n1 if n1[0] == "als" else n0)[1])
             nm_set = f"the almost locked set {nm.cells(cells)}" if cells else "an almost locked set"
@@ -264,6 +279,15 @@ def _chain_links(path):
         }
         for i in range(1, len(path))
     ]
+
+
+def _node_cells(n, alsc=None):
+    """the cells of a chain node: (cell, digit), ('grp', cells, digit) or ('als', id, digit)"""
+    if n[0] == "grp":
+        return list(n[1])
+    if n[0] == "als":
+        return list((alsc or {}).get(n[1]) or [])
+    return [n[0]]
 
 
 def _chains_for(p, st, elims, kind):
@@ -349,7 +373,7 @@ def _h_chain(ctx):
             ctx,
             digits=sorted({n[0][-1] for n in path}),
             links=links,
-            base_cells=[n[0][0] for n in path if isinstance(n[0][0], int)],
+            base_cells=[c for n in path for c in _node_cells(n[0], alsc)],
             pattern="Discontinuous nice loop",
             pattern_type="strong-strong at the start: placement",
         )
@@ -386,7 +410,7 @@ def _h_chain(ctx):
             f"end is true: {both}. {_chain_conclusion(nm, p, path, done)}"
         )
         links += _chain_links(path)
-        cells += [n[0][0] for n in path]
+        cells += [c for n in path for c in _node_cells(n[0], alsc)]
         lines += _chain_lines(p, path)
     (sc, sd), (ec, ed) = chains[0][0][0][0], chains[0][0][-1][0]
     key = chain_shape(p, st, chains[0][0])
@@ -445,7 +469,12 @@ def _engine_path(ctx, trim=True):
         return None
     path = []
     for i, n in enumerate(nodes):
-        node = (n["cell"], n["digit"]) if n.get("cell") is not None else ("als", n.get("als"), n["digit"])
+        if n.get("cell") is not None:
+            node = (n["cell"], n["digit"])
+        elif n.get("group"):  # grouped node: the digit in one of 2-3 cells of a box-line segment
+            node = ("grp", tuple(n["group"]), n["digit"])
+        else:
+            node = ("als", n.get("als"), n["digit"])
         if i == 0:
             path.append((node, None, None))
             continue
@@ -458,7 +487,7 @@ def _engine_path(ctx, trim=True):
         path = [(path[1][0], None, None)] + path[2:]
     while trim and len(path) > 2 and path[-1][1] == "weak":
         path = path[:-1]
-    if len(path) < 2 or path[0][0][0] == "als" or path[-1][0][0] == "als":
+    if len(path) < 2 or path[0][0][0] in ("als", "grp") or path[-1][0][0] in ("als", "grp"):
         return None
     ctx.used_engine = True
     return path
@@ -469,7 +498,7 @@ def _path_valid(p, st, path):
     for i in range(1, len(path)):
         a, b = path[i - 1][0], path[i][0]
         src = path[i][1]
-        if a[0] == "als" or b[0] == "als" or src == "equal":
+        if a[0] in ("als", "grp") or b[0] in ("als", "grp") or src == "equal":
             continue
         if src == "weak":
             if not _weak(p, st, a, b):
@@ -504,6 +533,8 @@ def _als_cells(ctx, als_id):
 
 def _chain_vis(nm, links):
     def nd(n):
+        if n[0] == "grp":
+            return nm.cells(list(n[1]))
         return nm.cell(n[0]) if isinstance(n[0], int) else f"ALS#{n[1]}"
 
     return [[nd(l["a"]), l["a"][-1], nd(l["b"]), l["b"][-1], "strong" if l["strong"] else "weak"] for l in links]
@@ -961,7 +992,7 @@ def _mental_chain_single(ctx, ps, path):
         + f", and anything clashing with both is impossible -- in particular "
         f"{fmt_elims(nm, rel[:6]) if rel else 'the candidates in the way'}. Now {how}."
     )
-    J = _J(ctx, digits=[v], links=links, base_cells=[n[0][0] for n in path if isinstance(n[0][0], int)])
+    J = _J(ctx, digits=[v], links=links, base_cells=[c for n in path for c in _node_cells(n[0], alsc)])
     return _result(
         ctx,
         J,
@@ -1005,7 +1036,7 @@ def _h_mental_chain(ctx):
             f"{nm.cell(c)} is not {v}: {', '.join(steps)}. The chain comes back and forces {nm.cell(c)} to be "
             f"{v} after all, so it is {v}."
         )
-        J = _J(ctx, digits=[v], links=links, base_cells=[n[0][0] for n in path])
+        J = _J(ctx, digits=[v], links=links, base_cells=[c for n in path for c in _node_cells(n[0])])
         chain = [
             [nm.cell(l["a"][0]), l["a"][1], nm.cell(l["b"][0]), l["b"][1], "strong" if l["strong"] else "weak"]
             for l in links
@@ -1026,7 +1057,7 @@ def _h_mental_chain(ctx):
                 f"{d} goes because either {nm.cell(sc)} is {sd} or {nm.cell(ec)} is {ed} "
                 f"(if {nm.cell(sc)} isn't {sd}: {', '.join(_chain_text(nm, p, pth))}), and both clash with it"
             )
-            cells += [n[0][0] for n in pth]
+            cells += [c for n in pth for c in _node_cells(n[0])]
             links += [
                 {
                     "a": pth[i - 1][0],

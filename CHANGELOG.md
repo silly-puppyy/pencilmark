@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Explanations of chains through a group of cells (grouped AIC, Grouped X-Chain, Empty Rectangle) name the group:
+  they described it as "an almost locked set", which the step does not contain (43 steps in the golden corpora).
 - Region-sum lines split only at box borders. An extra region overlapping a box split a line inside that box,
   adding a sum equality the rule does not state.
 - The generator's renban lines are lines: a cell next to the line's first cell was added at its end, so some
