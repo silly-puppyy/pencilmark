@@ -1,5 +1,9 @@
 """Generator tests: pencilmark.generate takes a sudoku-spec request (docs/SPEC.md). Each case runs in a few seconds."""
 
+import json
+import os
+import subprocess
+import sys
 import time
 
 import pytest
@@ -70,9 +74,28 @@ def test_kropki_6x6_min():
 
 
 def test_deterministic():
-    a = pencilmark.generate(spec(6, seed=7, time_limit=30))
-    b = pencilmark.generate(spec(6, seed=7, time_limit=30))
-    assert a["puzzle"] == b["puzzle"]
+    """same spec + seed -> same puzzle, also across processes with different string hashing (a variant spec: element
+    candidates are sets, and their order once depended on PYTHONHASHSEED)"""
+    doc = spec(
+        6,
+        rules=[{"type": "line", "kind": "thermo", "count": 2}, {"type": "edge", "kind": "kropki", "count": [1, 3]}],
+        givens={"count": [4, 8]},
+        where={"band": "Medium"},
+        seed=3,
+        time_limit=60,
+    )
+    code = "import json, sys, pencilmark; print(json.dumps(pencilmark.generate(json.loads(sys.argv[1]))['puzzle']))"
+    out = [
+        subprocess.run(
+            [sys.executable, "-c", code, json.dumps(doc)],
+            capture_output=True,
+            text=True,
+            timeout=150,
+            env={**os.environ, "PYTHONHASHSEED": h},
+        ).stdout
+        for h in ("1", "2")
+    ]
+    assert out[0] and out[0] == out[1]
 
 
 def test_only_specs():

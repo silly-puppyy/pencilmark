@@ -111,7 +111,7 @@ def grow(b, kind, sol, start, taken, rng, n=40):
                 out.add(("kropki", pair, "black"))
             if kind == "xv" and a_ + b_ in (5, 10):
                 out.add(("xv", pair, "X" if a_ + b_ == 10 else "V"))
-        return sorted(out, key=lambda e: (rng.random(),))
+        return sorted(_stable(out), key=lambda e: (rng.random(),))
     for _ in range(n * 4):
         if len(out) >= n:
             break
@@ -186,7 +186,12 @@ def grow(b, kind, sol, start, taken, rng, n=40):
             return (ncomb(b.n, len(e[1]), e[2]), len(e[1]))
         return (-len(e[1]),)
 
-    return sorted(out, key=lambda e: (info(e), rng.random()))
+    return sorted(_stable(out), key=lambda e: (info(e), rng.random()))
+
+
+def _stable(out):
+    """a set of elements in a fixed order, so the random keys drawn for them do not depend on string hashing"""
+    return sorted(out, key=lambda e: (e[0], e[1], str(e[2])))
 
 
 def satisfies(b, g, givens, els):

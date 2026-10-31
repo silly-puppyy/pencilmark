@@ -473,6 +473,9 @@ def _generate(spec, log=None):
             if log:
                 log(f"attempt {stats['attempts']}: {why} ({card.get('band')} {card.get('difficulty')})")
             continue
+        if (s.max_givens is not None and len(givens) > s.max_givens) or len(givens) < (s.min_givens or 0):
+            reject("givens outside the spec (late stage)")  # every stage keeps the bounds; this is the last word
+            continue
         verified = _verify(d, sol)
         if verified is False:
             reject("not unique (CP-SAT)")

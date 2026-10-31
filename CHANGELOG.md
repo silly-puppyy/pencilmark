@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Generator: the same spec and seed now give the same puzzle in every process. With variant templates the order of
+  candidate elements depended on Python's string hashing, so a seed gave a different puzzle from run to run (classics
+  were not affected). Variant puzzles for a given seed differ from 1.0.0. A last check also refuses a result whose
+  givens fall outside the spec's count.
 - `pencilmark.GenerationFailed` is exported, so a failed `generate` can be caught without importing
   `pencilmark.gen`.
 - Command line: an input that cannot be read (bad JSON, a format error) is reported on its line as

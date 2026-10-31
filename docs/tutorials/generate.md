@@ -54,7 +54,7 @@ The run took under a second. The result has three parts:
 - `r["info"]`: how the run went, for example `{'givens': 28, 'attempts': 9, 'rejected': {'band too low (logic pre-check)': 8}, ...}`.
   The generator tried nine puzzles; eight were too easy.
 
-Change `seed` for a different puzzle. With the same seed and request, a classic comes out the same every time.
+Change `seed` for a different puzzle. With the same seed and request, the result is the same every time.
 
 ## 3. A variant
 
@@ -81,11 +81,6 @@ print(pencilmark.dumps(r["puzzle"]))
 This asks for a 6×6 with exactly two thermometers, one to three Kropki dots and four to eight givens, graded Medium.
 The puzzle in [Write a variant puzzle file](variant-file.md) came from a request like this one. `pencilmark.dumps`
 writes the puzzle in the format's canonical layout, one rule per line.
-
-:::note Known issue
-With variant rules, the same seed can give a different puzzle on another run, because parts of the search are limited
-by time. It is being fixed; until then, save the puzzle you want to keep.
-:::
 
 ## 4. When the generator cannot do it
 
