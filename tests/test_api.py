@@ -68,10 +68,8 @@ def test_solve():
 EASTER_MONSTER = "1.......2.9.4...5...6...7...5.9.3.......7.......85..4.7.....6...3...9.8...2.....1"
 
 
-def test_no_guessing_by_default():
-    # guessing is off by default: where no technique applies the engine proves by full search (Extreme), never Unknown
-    card = pencilmark.rate(EASTER_MONSTER, fields=["band", "band_index", "difficulty"])  # ~40 s: no technique list
-    assert card["band"] == "Extreme" and card["band_index"] == 6 and card["difficulty"] is not None
+# no guessing by default (Easter Monster -> Extreme, never Unknown): the golden corpus records that card
+# (tests-easter-monster), so the 40 s run lives in the gate, not here
 
 
 def test_unknown_band_when_guessing():

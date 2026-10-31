@@ -63,12 +63,13 @@ def test_classic_6x6_symmetric():
 
 
 def test_classic_9x9_difficulty_range():
-    r = run(spec(9, where={"difficulty": [2, 4]}, seed=1))
+    r = run(spec(9, where={"difficulty": [2, 4]}, seed=2))  # seed 2: 2 s (seed 1 took 28 s)
     assert 2 <= r["card"]["difficulty"] <= 4
 
 
-def test_kropki_6x6_min():
-    r = run(spec(6, rules=[{"type": "edge", "kind": "kropki", "count": "min"}], seed=1))
+def test_kropki_min():
+    # 4x4: the same minimal-dots search in 0.2 s (6x6 took 11-25 s, mostly the uniqueness proofs)
+    r = run(spec(4, rules=[{"type": "edge", "kind": "kropki", "count": "min"}], seed=1))
     rules = r["puzzle"]["rules"]
     assert any(x["type"] == "edge" and x["kind"] == "kropki" for x in rules) and set(r["puzzle"]["givens"]) == {0}
 
