@@ -1,6 +1,7 @@
-// File-local helpers shared by the solver's source files (solver.cpp, direct_view.cpp, notes_view.cpp,
-// nary_moves.cpp): k-combinations, innie / outie region records, move descriptors, eliminations. Internal linkage: each
-// file that includes this header gets its own copy.
+/// @file
+/// File-local helpers shared by the solver's source files (solver.cpp, direct_view.cpp, notes_view.cpp,
+/// nary_moves.cpp): k-combinations, innie / outie region records, move descriptors, eliminations. Internal linkage: each
+/// file that includes this header gets its own copy.
 #pragma once
 #include <cstdint>
 #include <vector>
@@ -9,7 +10,7 @@
 
 namespace cs {
 namespace {
-// k-combinations of [0,n) in itertools.combinations order; f(idx) -> stop?
+/// k-combinations of [0,n) in itertools.combinations order; f(idx) -> stop?
 template <class F>
 bool for_combos(int n, int k, F&& f) {
     if (k < 0 || k > n) return false;
@@ -30,7 +31,7 @@ bool for_combos(int n, int k, F&& f) {
         for (int j = i + 1; j < k; ++j) idx[j] = idx[j - 1] + 1;
     }
 }
-// region record of an innie / outie set: total, outie, house union, cages, cells
+/// region record of an innie / outie set: total, outie, house union, cages, cells
 void region_expl(MoveBuf& out, Move& m, const InnieSet& s) {
     // named: "the secret" (one house: its digits sum to D(D+1)/2), rule of 45 (a house union)
     if (!m.code && (m.tech == INNIE_D || m.tech == INNIE_N || m.tech == INNIE_X))

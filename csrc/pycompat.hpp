@@ -1,12 +1,13 @@
-// Bit-exact emulation of the bits of CPython 3.14 the reference solver's
-// behaviour depends on:
-//   * set iteration order (setobject.c: linear probing + perturbation,
-//     resize policy, merge / intersection construction order),
-//   * tuple hashing (xxHash-style tuplehash, used for set-of-tuples order),
-//   * builtin sum() over floats (Neumaier compensated summation, 3.12+),
-//   * float ** float special cases.
-// Only what the solver needs: keys are non-negative ints (hash == value) or
-// interned tuple ids carrying a precomputed hash.
+/// @file
+/// Bit-exact emulation of the bits of CPython 3.14 the reference solver's
+/// behaviour depends on:
+///   * set iteration order (setobject.c: linear probing + perturbation,
+///     resize policy, merge / intersection construction order),
+///   * tuple hashing (xxHash-style tuplehash, used for set-of-tuples order),
+///   * builtin sum() over floats (Neumaier compensated summation, 3.12+),
+///   * float ** float special cases.
+/// Only what the solver needs: keys are non-negative ints (hash == value) or
+/// interned tuple ids carrying a precomputed hash.
 #pragma once
 #include "portable.hpp"
 #include <cmath>
@@ -15,7 +16,7 @@
 
 namespace cs {
 
-// builtin sum() over floats (CPython >= 3.12)
+/// builtin sum() over floats (CPython >= 3.12)
 struct CompSum {
     double hi = 0.0, lo = 0.0;
     inline void add(double x) {
@@ -32,14 +33,14 @@ struct CompSum {
     }
 };
 
-// float.__pow__ for the cases the solver hits (positive finite bases)
+/// float.__pow__ for the cases the solver hits (positive finite bases)
 inline double py_pow(double iv, double iw) {
     if (iw == 0.0) return 1.0;
     if (iv == 1.0) return 1.0;
     return std::pow(iv, iw);
 }
 
-// tuplehash() for a tuple of small non-negative ints
+/// tuplehash() for a tuple of small non-negative ints
 inline int64_t py_tuple_hash(const int* items, int len) {
     const uint64_t P1 = 11400714785074694791ULL, P2 = 14029467366897019727ULL, P5 = 2870177450012600261ULL;
     uint64_t acc = P5;
@@ -54,13 +55,13 @@ inline int64_t py_tuple_hash(const int* items, int len) {
     return (int64_t)acc;
 }
 
-// CPython set emulator. Keys must be unique per value (ints, or interned ids).
+/// CPython set emulator. Keys must be unique per value (ints, or interned ids).
 class PySet {
 public:
     struct E {
         int64_t key;
         int64_t hash;
-        uint8_t st;  // 0 empty, 1 active, 2 dummy
+        uint8_t st;  ///< 0 empty, 1 active, 2 dummy
     };
     std::vector<E> t;
     size_t mask = 7;
@@ -122,7 +123,7 @@ public:
     }
     void discard(int64_t intkey) { discard(intkey, intkey); }
 
-    // set_merge (s |= other, set(other), s.update(other))
+    /// set_merge (s |= other, set(other), s.update(other))
     void merge(const PySet& o) {
         if (&o == this || o.used == 0) return;
         if ((size_t)(fill + o.used) * 5 >= mask * 3) resize((used + o.used) * 2);
@@ -145,7 +146,7 @@ public:
         }
     }
 
-    // set_intersection(a, b): new set
+    /// set_intersection(a, b): new set
     static PySet intersection(const PySet& a, const PySet& b) {
         PySet r;
         if (&a == &b) {

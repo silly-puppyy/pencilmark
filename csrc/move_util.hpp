@@ -1,6 +1,7 @@
-// File-local helpers shared by uniqueness.cpp, als.cpp and set_logic.cpp (split from extra.cpp): move descriptors,
-// eliminations, and a set that keeps an elimination list from being reported twice. Internal linkage: each file
-// that includes this header gets its own copy.
+/// @file
+/// File-local helpers shared by uniqueness.cpp, als.cpp and set_logic.cpp (split from extra.cpp): move descriptors,
+/// eliminations, and a set that keeps an elimination list from being reported twice. Internal linkage: each file
+/// that includes this header gets its own copy.
 #pragma once
 #include <algorithm>
 #include <set>

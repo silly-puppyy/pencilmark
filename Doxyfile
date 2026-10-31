@@ -1,0 +1,28 @@
+# The C++ engine reference (csrc/), built into the docs site by the docs workflow:
+#   doxygen        (from the repository root; writes website/static/cpp/, served at /pencilmark/cpp/)
+PROJECT_NAME           = "pencilmark engine"
+PROJECT_BRIEF          = "The C++ engine behind pencilmark: techniques, move listing, the exhaustive search"
+INPUT                  = csrc
+FILE_PATTERNS          = *.hpp *.cpp
+RECURSIVE              = NO
+OUTPUT_DIRECTORY       = website/static/cpp
+HTML_OUTPUT            = .
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+EXTRACT_ANON_NSPACES   = YES
+JAVADOC_AUTOBRIEF      = YES
+MARKDOWN_SUPPORT       = YES
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = NO
+REFERENCED_BY_RELATION = YES
+REFERENCES_RELATION    = YES
+HTML_COLORSTYLE        = TOGGLE
+GENERATE_TREEVIEW      = YES
+SEARCHENGINE           = YES
+HAVE_DOT               = NO
+QUIET                  = YES
+WARN_IF_UNDOCUMENTED   = NO
+WARN_LOGFILE           = doxygen-warnings.log

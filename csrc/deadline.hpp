@@ -3,9 +3,9 @@
 
 namespace cs {
 
-// Wall-clock deadline for one rate() call (max_seconds), per thread. The solve loop, the technique searches, the rule
-// enumeration, the refute search and the exact search check it and stop when it passes; the caller reads g_deadline_hit to
-// report band "Unknown" (GRADE.md). Off unless set_deadline(seconds > 0).
+/// Wall-clock deadline for one rate() call (max_seconds), per thread. The solve loop, the technique searches, the rule
+/// enumeration, the refute search and the exact search check it and stop when it passes; the caller reads g_deadline_hit to
+/// report band "Unknown" (GRADE.md). Off unless set_deadline(seconds > 0).
 inline thread_local std::chrono::steady_clock::time_point g_deadline{};
 inline thread_local bool g_deadline_on = false;
 inline thread_local bool g_deadline_hit = false;

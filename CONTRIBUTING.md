@@ -29,7 +29,9 @@ python -m pytest -q -n auto tests             # the quick suite: about 10 second
 | `docs/`, `website/` | the documentation site (Docusaurus) |
 
 [Architecture](https://silly-puppyy.github.io/pencilmark/dev/ARCHITECTURE) explains how a card is computed
-and which file holds each part of the engine.
+and which file holds each part of the engine; the [C++ engine reference](https://silly-puppyy.github.io/pencilmark/cpp/index.html)
+(Doxygen, from the comments in `csrc/`) lists every class and function. In the headers, `///` above a declaration and
+`///<` after a member are what it shows.
 
 ## Prove a change
 

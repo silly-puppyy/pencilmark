@@ -58,6 +58,10 @@ def docs(build=True):
     for g in GENERATORS:
         if run(PY, f"tools/{g}.py"):
             return 1
+    if shutil.which("doxygen"):  # the C++ engine reference (Doxyfile -> website/static/cpp/)
+        run("doxygen")
+    else:
+        print("doxygen not found: the site is built without the C++ engine reference")
     for src, dst in COPIES:
         shutil.copyfile(ROOT / src, ROOT / dst)
     try:

@@ -1,7 +1,8 @@
-// Portability shims. With GCC / Clang on Linux and macOS nothing changes: the compiler builtins are used directly and
-// pm_long is plain `long` (64-bit there), so those builds compile to the same code as the reference build.
-//  - Windows (MSVC and clang-cl): `long` is 32-bit, so pm_long is `long long` (the engine assumes a 64-bit long).
-//  - MSVC proper: no __builtin_popcount / ctz / clz; mapped to portable code and _BitScan* intrinsics.
+/// @file
+/// Portability shims. With GCC / Clang on Linux and macOS nothing changes: the compiler builtins are used directly and
+/// pm_long is plain `long` (64-bit there), so those builds compile to the same code as the reference build.
+///  - Windows (MSVC and clang-cl): `long` is 32-bit, so pm_long is `long long` (the engine assumes a 64-bit long).
+///  - MSVC proper: no __builtin_popcount / ctz / clz; mapped to portable code and _BitScan* intrinsics.
 #pragma once
 #include <climits>
 #include <cstdint>
