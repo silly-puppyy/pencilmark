@@ -157,3 +157,15 @@ def test_code_explain_entries_exist():
 
     bad = {c.code: c.explain for c in R.codes().values() if c.explain and c.explain not in EX.CATALOG}
     assert not bad, bad
+
+
+@pytest.mark.skipif(not (ROOT / "tools").is_dir(), reason="needs the source tree")
+def test_parameters_page_up_to_date():
+    """docs/dev/PARAMETERS.md lists the shipped grader model; a parameter change must regenerate it"""
+    import subprocess
+    import sys
+
+    r = subprocess.run(
+        [sys.executable, str(ROOT / "tools/gen_parameters_md.py"), "--check"], capture_output=True, text=True
+    )
+    assert r.returncode == 0, r.stdout + r.stderr

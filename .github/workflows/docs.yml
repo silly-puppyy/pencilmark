@@ -29,7 +29,7 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: website/package-lock.json
-      - run: python3 tools/gen_api_md.py && python3 tools/gen_techniques_md.py && python3 tools/gen_swatches.py && cp README.md docs/index.md && cp ARCHITECTURE.md docs/dev/ARCHITECTURE.md
+      - run: python3 tools/gen_api_md.py && python3 tools/gen_techniques_md.py && python3 tools/gen_parameters_md.py && python3 tools/gen_swatches.py && cp README.md docs/index.md && cp ARCHITECTURE.md docs/dev/ARCHITECTURE.md
       - run: npm ci
         working-directory: website
       - run: npm run build

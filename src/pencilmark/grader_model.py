@@ -45,6 +45,8 @@ class GraderModel:
         out = {}
         for k in _SETS:
             for key, v in getattr(self, k).items():
+                if k == "score" and key == "price_weights":  # built into price at load: named there, not here
+                    continue
                 if key == "B":
                     for t, b in v.items():
                         out[f"{k}.price.{S.TECH_NAMES.get(t, t)}"] = b
