@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The chip for facts read off the clues alone is named "Clue Facts" (was "Clue facts (no 5 on a whisper)", an example
+  that also showed on puzzles without whispers).
 - A closed renban is written back closed (it was written open). Its `fingerprint` now covers `closed`, as the
   canonical form does, so a closed renban's fingerprint differs from the same line open.
 - A line's `value` is checked: whisper and lockout take 1..D−1 (a difference between digits), modular a modulus of at

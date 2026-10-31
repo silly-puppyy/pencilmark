@@ -6,7 +6,7 @@ id,const,name,role,code,display,band,split,family,gate,direct,mental,price_fallb
 12,HIDDEN_N,HiddenSingle(notes),logic,HSI,,Very Easy,0,singles,,0,0,
 37,NARY_D,ConstraintSingle(direct),logic,CSI,,Very Easy,0,singles,any,1,0,
 58,LINE_D,LineSingle(direct),logic,LSI,,Very Easy,0,singles,any,1,0,
-101,CLUE_FACTS,ClueFacts,logic,CFX,Clue facts (no 5 on a whisper),Very Easy,0,intersections+combos,any,0,0,
+101,CLUE_FACTS,ClueFacts,logic,CFX,,Very Easy,0,intersections+combos,any,0,0,
 102,CLUE_SHAPE,ClueShape,logic,CSH,Clue shape (a whisper 4 between two 9s),Easy,0,intersections+combos,any,0,0,
 3,NAKED_DL,NakedSingle+Pointing(direct),logic,PPR,Pointing Pair (in the head),Easy,0,intersections+combos,,1,0,
 4,HIDDEN_DL,HiddenSingle+Pointing(direct),logic,PPR,Pointing Pair (in the head),Easy,0,intersections+combos,,1,0,
