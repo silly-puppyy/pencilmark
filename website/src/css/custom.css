@@ -234,18 +234,114 @@ figure.pm-chart figure { margin: 0; }
 .pm-pj-on { background: var(--docusaurus-highlighted-code-line-bg); outline: 1px solid var(--ifm-color-primary-lightest); }
 .pm-puzzle-json figcaption { flex-basis: 100%; font-size: 0.85rem; color: var(--pm-muted); }
 
-/* sidebar icons for the rule family pages (static/img/icons): line art masked in the text colour, so both themes follow */
-.pm-ico > .menu__link { display: flex; align-items: center; }
-.pm-ico > .menu__link::before { content: ''; flex: 0 0 18px; width: 18px; height: 18px; margin-right: 9px;
-  background-color: currentColor; -webkit-mask: center / contain no-repeat; mask: center / contain no-repeat; opacity: 0.8; }
-.pm-ico-board > .menu__link::before { -webkit-mask-image: url('/img/icons/board.svg'); mask-image: url('/img/icons/board.svg'); }
-.pm-ico-cages > .menu__link::before { -webkit-mask-image: url('/img/icons/cages.svg'); mask-image: url('/img/icons/cages.svg'); }
-.pm-ico-cells > .menu__link::before { -webkit-mask-image: url('/img/icons/cells.svg'); mask-image: url('/img/icons/cells.svg'); }
-.pm-ico-edges > .menu__link::before { -webkit-mask-image: url('/img/icons/edges.svg'); mask-image: url('/img/icons/edges.svg'); }
-.pm-ico-houses > .menu__link::before { -webkit-mask-image: url('/img/icons/houses.svg'); mask-image: url('/img/icons/houses.svg'); }
-.pm-ico-lines > .menu__link::before { -webkit-mask-image: url('/img/icons/lines.svg'); mask-image: url('/img/icons/lines.svg'); }
-.pm-ico-other > .menu__link::before { -webkit-mask-image: url('/img/icons/other.svg'); mask-image: url('/img/icons/other.svg'); }
-.pm-ico-outside > .menu__link::before { -webkit-mask-image: url('/img/icons/outside.svg'); mask-image: url('/img/icons/outside.svg'); }
+/* page and section icons (static/img/icons, one per sidebar item with a pm-ico-<name> class): line art masked in the text
+   colour, so both themes follow. Shown before the sidebar link (pages and categories) and as the card icon on the
+   section pages (src/theme/DocCard). */
+.pm-ico > .menu__link, .pm-ico > .menu__list-item-collapsible > .menu__link { display: flex; align-items: center; }
+.pm-ico > .menu__link::before, .pm-ico > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon {
+  content: ''; flex: 0 0 18px; width: 18px; height: 18px; margin-right: 9px; background-color: currentColor;
+  -webkit-mask: center / contain no-repeat; mask: center / contain no-repeat; opacity: 0.8; }
+.pm-card-icon { display: inline-block; width: 1.6em; height: 1.6em; margin-right: 0.5rem; vertical-align: -0.35em; opacity: 0.9; }
+.pm-ico-add-rule-kind > .menu__link::before, .pm-ico-add-rule-kind > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-add-rule-kind {
+  -webkit-mask-image: url('/img/icons/add-rule-kind.svg'); mask-image: url('/img/icons/add-rule-kind.svg'); }
+.pm-ico-add-technique > .menu__link::before, .pm-ico-add-technique > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-add-technique {
+  -webkit-mask-image: url('/img/icons/add-technique.svg'); mask-image: url('/img/icons/add-technique.svg'); }
+.pm-ico-architecture > .menu__link::before, .pm-ico-architecture > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-architecture {
+  -webkit-mask-image: url('/img/icons/architecture.svg'); mask-image: url('/img/icons/architecture.svg'); }
+.pm-ico-batch > .menu__link::before, .pm-ico-batch > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-batch {
+  -webkit-mask-image: url('/img/icons/batch.svg'); mask-image: url('/img/icons/batch.svg'); }
+.pm-ico-benchmark > .menu__link::before, .pm-ico-benchmark > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-benchmark {
+  -webkit-mask-image: url('/img/icons/benchmark.svg'); mask-image: url('/img/icons/benchmark.svg'); }
+.pm-ico-board > .menu__link::before, .pm-ico-board > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-board {
+  -webkit-mask-image: url('/img/icons/board.svg'); mask-image: url('/img/icons/board.svg'); }
+.pm-ico-cages > .menu__link::before, .pm-ico-cages > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-cages {
+  -webkit-mask-image: url('/img/icons/cages.svg'); mask-image: url('/img/icons/cages.svg'); }
+.pm-ico-cells > .menu__link::before, .pm-ico-cells > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-cells {
+  -webkit-mask-image: url('/img/icons/cells.svg'); mask-image: url('/img/icons/cells.svg'); }
+.pm-ico-code-reference > .menu__link::before, .pm-ico-code-reference > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-code-reference {
+  -webkit-mask-image: url('/img/icons/code-reference.svg'); mask-image: url('/img/icons/code-reference.svg'); }
+.pm-ico-code-style > .menu__link::before, .pm-ico-code-style > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-code-style {
+  -webkit-mask-image: url('/img/icons/code-style.svg'); mask-image: url('/img/icons/code-style.svg'); }
+.pm-ico-contributing > .menu__link::before, .pm-ico-contributing > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-contributing {
+  -webkit-mask-image: url('/img/icons/contributing.svg'); mask-image: url('/img/icons/contributing.svg'); }
+.pm-ico-dev > .menu__link::before, .pm-ico-dev > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-dev {
+  -webkit-mask-image: url('/img/icons/dev.svg'); mask-image: url('/img/icons/dev.svg'); }
+.pm-ico-draw > .menu__link::before, .pm-ico-draw > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-draw {
+  -webkit-mask-image: url('/img/icons/draw.svg'); mask-image: url('/img/icons/draw.svg'); }
+.pm-ico-drawing-style > .menu__link::before, .pm-ico-drawing-style > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-drawing-style {
+  -webkit-mask-image: url('/img/icons/drawing-style.svg'); mask-image: url('/img/icons/drawing-style.svg'); }
+.pm-ico-edges > .menu__link::before, .pm-ico-edges > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-edges {
+  -webkit-mask-image: url('/img/icons/edges.svg'); mask-image: url('/img/icons/edges.svg'); }
+.pm-ico-engine-mapping > .menu__link::before, .pm-ico-engine-mapping > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-engine-mapping {
+  -webkit-mask-image: url('/img/icons/engine-mapping.svg'); mask-image: url('/img/icons/engine-mapping.svg'); }
+.pm-ico-environment > .menu__link::before, .pm-ico-environment > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-environment {
+  -webkit-mask-image: url('/img/icons/environment.svg'); mask-image: url('/img/icons/environment.svg'); }
+.pm-ico-experiments > .menu__link::before, .pm-ico-experiments > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-experiments {
+  -webkit-mask-image: url('/img/icons/experiments.svg'); mask-image: url('/img/icons/experiments.svg'); }
+.pm-ico-first-puzzle > .menu__link::before, .pm-ico-first-puzzle > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-first-puzzle {
+  -webkit-mask-image: url('/img/icons/first-puzzle.svg'); mask-image: url('/img/icons/first-puzzle.svg'); }
+.pm-ico-formats > .menu__link::before, .pm-ico-formats > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-formats {
+  -webkit-mask-image: url('/img/icons/formats.svg'); mask-image: url('/img/icons/formats.svg'); }
+.pm-ico-generate > .menu__link::before, .pm-ico-generate > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-generate {
+  -webkit-mask-image: url('/img/icons/generate.svg'); mask-image: url('/img/icons/generate.svg'); }
+.pm-ico-generator-spec > .menu__link::before, .pm-ico-generator-spec > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-generator-spec {
+  -webkit-mask-image: url('/img/icons/generator-spec.svg'); mask-image: url('/img/icons/generator-spec.svg'); }
+.pm-ico-glossary > .menu__link::before, .pm-ico-glossary > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-glossary {
+  -webkit-mask-image: url('/img/icons/glossary.svg'); mask-image: url('/img/icons/glossary.svg'); }
+.pm-ico-grade-card > .menu__link::before, .pm-ico-grade-card > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-grade-card {
+  -webkit-mask-image: url('/img/icons/grade-card.svg'); mask-image: url('/img/icons/grade-card.svg'); }
+.pm-ico-grades > .menu__link::before, .pm-ico-grades > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-grades {
+  -webkit-mask-image: url('/img/icons/grades.svg'); mask-image: url('/img/icons/grades.svg'); }
+.pm-ico-guides > .menu__link::before, .pm-ico-guides > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-guides {
+  -webkit-mask-image: url('/img/icons/guides.svg'); mask-image: url('/img/icons/guides.svg'); }
+.pm-ico-houses > .menu__link::before, .pm-ico-houses > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-houses {
+  -webkit-mask-image: url('/img/icons/houses.svg'); mask-image: url('/img/icons/houses.svg'); }
+.pm-ico-import > .menu__link::before, .pm-ico-import > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-import {
+  -webkit-mask-image: url('/img/icons/import.svg'); mask-image: url('/img/icons/import.svg'); }
+.pm-ico-library > .menu__link::before, .pm-ico-library > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-library {
+  -webkit-mask-image: url('/img/icons/library.svg'); mask-image: url('/img/icons/library.svg'); }
+.pm-ico-lines > .menu__link::before, .pm-ico-lines > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-lines {
+  -webkit-mask-image: url('/img/icons/lines.svg'); mask-image: url('/img/icons/lines.svg'); }
+.pm-ico-model > .menu__link::before, .pm-ico-model > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-model {
+  -webkit-mask-image: url('/img/icons/model.svg'); mask-image: url('/img/icons/model.svg'); }
+.pm-ico-other > .menu__link::before, .pm-ico-other > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-other {
+  -webkit-mask-image: url('/img/icons/other.svg'); mask-image: url('/img/icons/other.svg'); }
+.pm-ico-other-formats > .menu__link::before, .pm-ico-other-formats > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-other-formats {
+  -webkit-mask-image: url('/img/icons/other-formats.svg'); mask-image: url('/img/icons/other-formats.svg'); }
+.pm-ico-outside > .menu__link::before, .pm-ico-outside > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-outside {
+  -webkit-mask-image: url('/img/icons/outside.svg'); mask-image: url('/img/icons/outside.svg'); }
+.pm-ico-palette > .menu__link::before, .pm-ico-palette > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-palette {
+  -webkit-mask-image: url('/img/icons/palette.svg'); mask-image: url('/img/icons/palette.svg'); }
+.pm-ico-parameters > .menu__link::before, .pm-ico-parameters > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-parameters {
+  -webkit-mask-image: url('/img/icons/parameters.svg'); mask-image: url('/img/icons/parameters.svg'); }
+.pm-ico-philosophy > .menu__link::before, .pm-ico-philosophy > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-philosophy {
+  -webkit-mask-image: url('/img/icons/philosophy.svg'); mask-image: url('/img/icons/philosophy.svg'); }
+.pm-ico-publish-checks > .menu__link::before, .pm-ico-publish-checks > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-publish-checks {
+  -webkit-mask-image: url('/img/icons/publish-checks.svg'); mask-image: url('/img/icons/publish-checks.svg'); }
+.pm-ico-puzzle-format > .menu__link::before, .pm-ico-puzzle-format > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-puzzle-format {
+  -webkit-mask-image: url('/img/icons/puzzle-format.svg'); mask-image: url('/img/icons/puzzle-format.svg'); }
+.pm-ico-python-api > .menu__link::before, .pm-ico-python-api > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-python-api {
+  -webkit-mask-image: url('/img/icons/python-api.svg'); mask-image: url('/img/icons/python-api.svg'); }
+.pm-ico-release > .menu__link::before, .pm-ico-release > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-release {
+  -webkit-mask-image: url('/img/icons/release.svg'); mask-image: url('/img/icons/release.svg'); }
+.pm-ico-rules > .menu__link::before, .pm-ico-rules > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-rules {
+  -webkit-mask-image: url('/img/icons/rules.svg'); mask-image: url('/img/icons/rules.svg'); }
+.pm-ico-spec-examples > .menu__link::before, .pm-ico-spec-examples > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-spec-examples {
+  -webkit-mask-image: url('/img/icons/spec-examples.svg'); mask-image: url('/img/icons/spec-examples.svg'); }
+.pm-ico-start > .menu__link::before, .pm-ico-start > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-start {
+  -webkit-mask-image: url('/img/icons/start.svg'); mask-image: url('/img/icons/start.svg'); }
+.pm-ico-techniques > .menu__link::before, .pm-ico-techniques > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-techniques {
+  -webkit-mask-image: url('/img/icons/techniques.svg'); mask-image: url('/img/icons/techniques.svg'); }
+.pm-ico-usage > .menu__link::before, .pm-ico-usage > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-usage {
+  -webkit-mask-image: url('/img/icons/usage.svg'); mask-image: url('/img/icons/usage.svg'); }
+.pm-ico-variant-catalogue > .menu__link::before, .pm-ico-variant-catalogue > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-variant-catalogue {
+  -webkit-mask-image: url('/img/icons/variant-catalogue.svg'); mask-image: url('/img/icons/variant-catalogue.svg'); }
+.pm-ico-variant-file > .menu__link::before, .pm-ico-variant-file > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-variant-file {
+  -webkit-mask-image: url('/img/icons/variant-file.svg'); mask-image: url('/img/icons/variant-file.svg'); }
+.pm-ico-variant-naming > .menu__link::before, .pm-ico-variant-naming > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-variant-naming {
+  -webkit-mask-image: url('/img/icons/variant-naming.svg'); mask-image: url('/img/icons/variant-naming.svg'); }
+.pm-ico-writing-style > .menu__link::before, .pm-ico-writing-style > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-writing-style {
+  -webkit-mask-image: url('/img/icons/writing-style.svg'); mask-image: url('/img/icons/writing-style.svg'); }
 
 /* reference pages: Sphinx autodoc's shape, as numpy and pandas show it (tools/apidoc.py writes plain Markdown,
    src/plugins/api-reference.mjs adds these classes). An entry's heading is its signature in a box with a source link;
@@ -343,3 +439,6 @@ html[data-theme='dark'] {
 /* a table's Drawing column keeps its swatch at full size (the browser squeezed it below the image's width) */
 .markdown td:has(> .pm-swatch) { min-width: 9.5rem; }
 .pm-swatch img { max-width: none; }  /* the width Swatch.js sets is the scale; the column grows instead */
+
+/* section card pages: titles and descriptions wrap instead of ending in an ellipsis */
+.theme-doc-card-container h2, .theme-doc-card-container p { white-space: normal; overflow: visible; text-overflow: clip; }
