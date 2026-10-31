@@ -893,3 +893,12 @@ def test_cell_registry_matches_schema_docs():
     assert set(neg) == {k for k, v in CELL.items() if v.negative}
     page = (ROOT / "docs" / "rules" / "cell-clues.mdx").read_text(encoding="utf-8")
     assert all(f"`{k}`" in page for k in CELL), [k for k in CELL if f"`{k}`" not in page]
+
+
+def test_region_sum_breaks_only_at_boxes():
+    """an extra region overlapping a box does not split a region-sum line inside that box (it used to: the cell -> box
+    map took the extra region for cells in both, imposing a sum equality the rule does not state)"""
+    d = pencilmark.to_export(CLASSIC)
+    d["rules"].append({"type": "region", "kind": "extra", "cells": [f"r{r}c{c}" for r in (2, 3, 4) for c in (2, 3, 4)]})
+    d["rules"].append({"type": "line", "kind": "region_sum", "cells": ["r1c1", "r2c2", "r3c3"]})
+    assert not [c for c in pencilmark.load(d).constraints if c.get("line_kind") == "region_sum"]

@@ -245,13 +245,9 @@ class Puzzle:
                     segs.append([ids[n // 2]])
                 self.constraints.append({"type": "equal_sum", "segments": segs, "line_kind": kind})
             elif kind == "region_sum":
-                # segments break only at box / region borders (not diagonals, windows, size-D cages)
-                box = {
-                    c: gi
-                    for gi, g in enumerate(self.groups)
-                    if g.complete and g.kind in ("box", "region", "jigsaw")
-                    for c in g.cells
-                }
+                # segments break only at box borders (jigsaw pieces are boxes); extra regions, windows, diagonals and
+                # cages do not split a line (an extra region overlapping a box used to split it inside the box)
+                box = {c: gi for gi, g in enumerate(self.groups) if g.complete and g.kind == "box" for c in g.cells}
                 segs, cur = [], [ids[0]]
                 for c in ids[1:]:
                     if box.get(c) == box.get(cur[-1]):

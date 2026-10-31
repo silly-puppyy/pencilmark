@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Region-sum lines split only at box borders. An extra region overlapping a box split a line inside that box,
+  adding a sum equality the rule does not state.
 - The generator's renban lines are lines: a cell next to the line's first cell was added at its end, so some
   generated renbans had cells that do not touch and the returned file failed to read. `generate` now validates what it
   returns.
