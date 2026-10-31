@@ -18,11 +18,11 @@ will shorten this list.
    its kind of logic ([Architecture](https://github.com/silly-puppyy/pencilmark/blob/main/ARCHITECTURE.md) lists them).
    For each move it finds, as the techniques already in that file do:
    - `new_move(out, YOUR_TECH, 1.0, n_cells)`, then one call of the file's elimination helper (`add_el` in
-     `human.cpp`, `add_elim` in `extra.cpp` and `solver.cpp`) per elimination, or a placement;
+     `variant_logic.cpp`, `add_elim` in `move_util.hpp` and `solver.cpp`) per elimination, or a placement;
    - `set_pattern(out, m, cells)` with the cells that make the pattern: explanations and the cells an app highlights
      come from it;
    - the move's descriptors in `m.meta` (cells, houses, digits, links, hidden, arith, relation, notes; see `struct Move`
-     in `solver.hpp`, and the `meta8` helper in `human.cpp`): the pricing reads them;
+     in `solver.hpp`, and the `meta8` helper in `variant_logic.cpp`): the pricing reads them;
    - optionally `m.code` (a pattern code, see step 2.4) and `m.xm` (up to 10 extra numbers for the explanation).
 3. **The tier.** Register it in `default_notes_tiers()` in `csrc/solver.cpp` with a short strategy name, in the tier
    of techniques of similar difficulty, and add the name to the `strategy_off` table so a band-limited search can skip

@@ -73,9 +73,9 @@ flowchart TB
 | `solver.hpp`, `solver.cpp` | technique ids, move records, pricing, the solve loop, basic techniques (singles, intersections, subsets, fish) |
 | `model.hpp`, `model.cpp`, `nary.hpp`, `nary.cpp` | puzzle structure in C++; multi-cell constraints (cages, lines) and their propagation |
 | `chains.cpp`, `colour.cpp`, `forcing.cpp` | X-chains and AICs, colouring and Medusa, forcing chains |
-| `extra.cpp` | uniqueness (UR / BUG), almost locked sets, set-theory and digit-count logic |
+| `uniqueness.cpp`, `als.cpp`, `set_logic.cpp` | uniqueness (UR / BUG) and implied houses; almost locked sets; set theory, digit counting, sum algebra, band logic (`move_util.hpp`: their shared helpers) |
 | `sudokuwiki.cpp` | named patterns from Andrew Stuart's list (wings, Sue de Coq, fireworks, ...) |
-| `human.cpp`, `mental.cpp` | variant techniques; the no-notes layer (what a solver sees without pencil marks) |
+| `variant_logic.cpp`, `mental.cpp` | variant techniques; the no-notes layer (what a solver sees without pencil marks) |
 | `refute.cpp`, `desc.cpp`, `explain.cpp`, `canon.cpp`, `rich.cpp` | search-effort profile, move descriptors, explanation records, symmetry helpers, cognitive load |
 | `bindings.cpp` | the pybind11 module `pencilmark._csolver` |
 
