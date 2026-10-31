@@ -7,7 +7,9 @@ Values per technique from Sudoku Explainer's table:
                              pointing 2.6, naked pair 3.0, X-Wing 3.2, hidden pair 3.4, naked triple 3.6, swordfish 3.8, ...
   scale="diuf":              the DiufSudoku fork's table: singles 1.2 / 1.3, pointing 2.5, naked pair 3.0, hidden pair 3.1,
                              naked triple 3.2, hidden triple 3.3.
-On classics, with the diuf scale, ER came within 0.3 of Sudoku Explainer's own rating for 96% of 3,200 tested puzzles.
+The card uses the classic scale. Measured on the 747 classics of the frozen benchmark against the DiufSudoku fork's own
+rating (2026-10-31): ER within 0.3 for 81%, median gap 0.1; the largest gaps are routes that use a naked single where SE
+finds a hidden one (1.2-1.3 against 2.3).
 Approximate by construction: our route is not SE's route, and techniques SE has no
 value for (variant logic) fall back to 7.0. Classic sudoku only is meaningful.
 """
