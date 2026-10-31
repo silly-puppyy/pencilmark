@@ -67,7 +67,7 @@ module.exports = async function createConfig() {
     },
     prism: {theme: tomorrow, darkTheme: tomorrowNight, additionalLanguages: ['json', 'python', 'bash']},
     tableOfContents: {minHeadingLevel: 2, maxHeadingLevel: 3},
-    mermaid: {theme: {light: 'neutral', dark: 'dark'}},
+    mermaid: {theme: {light: 'neutral', dark: 'dark'}, options: {securityLevel: 'loose'}},  // loose: diagram boxes can link to sections
   },
 };
 };
