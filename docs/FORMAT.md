@@ -287,7 +287,7 @@ Coordinates are cell units `[row, col]` with the origin at the top-left corner o
 ### 8.1 Canonical writer (`pencilmark.dumps`)
 
 - Top-level key order: `format`, `format_version`, `$schema`, `meta`, `board`, `digits`, `givens`, `solution`,
-  `candidates`, `rules`, `decorations`, `style`.
+  `candidates`, `rules`, `decorations`, `style`. Inside `board`: `rows`, then `cols`.
 - Rule key order: `type`, `kind`, then the parameters (`op`, `any_of`, `color`, `letter`, `value`, `sum`, `split`,
   `values`, `digits`, `groups`, `each`, `counts`, `arrow`, `size`, `repeat`, `box`, `where`, `within`, `closed`),
   then `side`, then the cell keys (`origin`, `source`, `bulb`, `lines`, `cells`, `regions`, `segments`, `pairs`,
@@ -299,6 +299,34 @@ Coordinates are cell units `[row, col]` with the origin at the top-left corner o
   9×9; they are written when D ≠ 9).
 - Pretty form: `givens` and `solution` one grid row per line; one rule per line; LF line endings; UTF-8; no trailing
   spaces. Compact form: no whitespace.
+
+```python
+import pencilmark
+
+messy = {"rules": [{"cells": ["r1c2", "r1c1"], "sum": 3, "type": "cage"},
+                   {"box": [2, 2], "type": "box_grid", "origin": "r1c1"}],
+         "digits": 4, "board": {"cols": 4, "rows": 4}, "format_version": 1, "format": "sudoku-puzzle",
+         "givens": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4]}
+print(pencilmark.dumps(messy))
+```
+
+```json
+{"format": "sudoku-puzzle",
+ "format_version": 1,
+ "board": {"rows": 4, "cols": 4},
+ "digits": 4,
+ "givens": [
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 4],
+ "rules": [
+  {"type": "cage", "sum": 3, "cells": ["r1c2", "r1c1"]},
+  {"type": "box_grid", "box": [2, 2], "origin": "r1c1"}]}
+```
+
+The keys are reordered and the grid laid out row by row; the rules and the cage's cells keep their order.
+`dumps(doc, pretty=False)` gives the compact form, on one line.
 
 ### 8.2 Fingerprint
 
@@ -315,6 +343,12 @@ Coordinates are cell units `[row, col]` with the origin at the top-left corner o
    segments) in reading order.
 5. Sort `rules` by their compact canonical JSON text.
 6. Serialise with RFC 8785 (JSON Canonicalization Scheme) and hash with SHA-256.
+
+```python
+same = dict(messy, rules=[{"type": "box_grid", "origin": "r1c1", "box": [2, 2]},
+                          {"type": "cage", "sum": 3, "cells": ["r1c1", "r1c2"]}])
+pencilmark.fingerprint(messy) == pencilmark.fingerprint(same)    # True: rule order and cell order do not matter
+```
 
 `solution`, `meta`, `style` and `decorations` never affect it, and neither does the order of rules or of the
 engine's houses, so the same puzzle from two importers gets the same fingerprint. It is not symmetry-invariant: a

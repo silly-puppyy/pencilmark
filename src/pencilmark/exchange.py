@@ -2353,6 +2353,8 @@ def _order(d, order):
 def canonical(doc):
     """key order of FORMAT.md 8.1 (content unchanged)"""
     out = _order(doc, KEY_ORDER)
+    if isinstance(out.get("board"), dict):
+        out["board"] = _order(out["board"], ["rows", "cols"])
     if "rules" in out:
         out["rules"] = [_order(r, RULE_ORDER) for r in out["rules"]]
     if "candidates" in out:

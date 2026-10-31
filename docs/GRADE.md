@@ -70,6 +70,8 @@ Each entry is one technique on the route:
 
 ## 4. `issues`
 
+The checks run only when the card is asked for `issues` (or `reject`); a default card does not run them.
+
 `{"code", "severity", "text", "rules"?, "ids"?}`. `severity` is `"reject"` (would not be published) or `"warning"`.
 `rules`, when present, lists the offending rules as indices into the `rules` array of the puzzle file that was graded
 (0-based; for other inputs, of the puzzle as `to_export` writes it); `ids` lists those rules' `id`s where they have one.
@@ -85,7 +87,7 @@ rate(puzzle, fields=["issues", "reject", "warning"],
 CLI: `--quality trivial.limit=0.5,trial.severity=reject,tedious.severity=off`. The generator spec's `quality`
 ([SPEC.md](SPEC.md)) is the same object.
 
-| Code | Default severity | Meaning | Limit (default) |
+| Code | Severity when asked for | Meaning | Limit (default) |
 |---|---|---|---|
 | `spike` | warning | A Medium or harder puzzle whose 3 hardest steps carry more than *limit* of its effort (effort per step as in `difficulty`). | share (0.6) |
 | `decorative` | reject | A rule family (for example all the thermometers, or all the white dots) that is neither needed for uniqueness nor used by any step. | – |

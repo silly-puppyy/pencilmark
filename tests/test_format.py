@@ -795,3 +795,11 @@ def test_tables_reserved():
         bad = copy.deepcopy(d)
         bad["rules"].append(rule)
         _refuses(bad, "reserved")
+
+
+def test_canonical_board_key_order():
+    """the canonical text does not depend on how board was written (FORMAT.md 8.1)"""
+    d = _classic_doc()
+    a = pencilmark.dumps(dict(d, board={"rows": 9, "cols": 9}), pretty=False)
+    b = pencilmark.dumps(dict(d, board={"cols": 9, "rows": 9}), pretty=False)
+    assert a == b and '"board":{"rows":9,"cols":9}' in a
