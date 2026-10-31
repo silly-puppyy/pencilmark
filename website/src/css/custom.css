@@ -140,3 +140,9 @@ html[data-graphics='off'] .pm-kinds th:last-child, html[data-graphics='off'] .pm
 .pm-card-img img { max-height: 100%; max-width: 100%; }
 .pm-card-title { font-weight: 600; }
 .pm-card-text { font-size: 0.85rem; color: var(--ifm-color-emphasis-700); }
+
+/* explainer-site links on docs/TECHNIQUES.md: favicon, or a text badge for a site without one */
+img.pm-site { height: 22px; width: 22px; vertical-align: middle; margin: 2px 6px 2px 0; border-radius: 3px; }
+table:has(img.pm-site) { display: table; width: 100%; }
+table:has(img.pm-site) td:nth-child(3), table:has(img.pm-site) td:last-child { white-space: nowrap; }
+a.pm-site-text { font-size: 0.7rem; border: 1px solid var(--ifm-color-emphasis-400); border-radius: 4px; padding: 0 4px; margin-right: 6px; color: var(--ifm-color-emphasis-800); text-decoration: none; }

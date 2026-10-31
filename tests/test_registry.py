@@ -98,26 +98,19 @@ def test_patterns_point_at_split_techniques():
     assert {c for c, _, _ in BP._X_CHAIN.values()} <= set(C)
 
 
-USAGE = Path(__file__).resolve().parents[1] / "docs" / "USAGE.md"
+ROOT = Path(__file__).resolve().parents[1]
 
 
-@pytest.mark.skipif(not USAGE.is_file(), reason="needs the source tree (docs/USAGE.md)")
-def test_usage_code_table_matches():
-    """docs/USAGE.md's code table: every code, with its band and what it is a special case of"""
-    tech = {}
-    for t in T:
-        if t.code and t.band is not None:
-            tech.setdefault(t.code, t.band)
-    doc = {}
-    for line in USAGE.read_text(encoding="utf-8").splitlines():
-        f = [x.strip() for x in line.strip().strip("|").split("|")]
-        if len(f) == 4 and re.fullmatch(r"[A-Z0-9]{3}", f[0]):
-            doc[f[0]] = (f[2], f[3])
-    want = {}
-    for code, c in C.items():
-        band = c.shape_band if c.shape_band is not None else tech[code]
-        want[code] = (R.BANDS[band], ", ".join(sorted(BP.SUPERSETS.get(code, ()))))
-    assert doc == want
+@pytest.mark.skipif(not (ROOT / "tools").is_dir(), reason="needs the source tree")
+def test_techniques_page_up_to_date():
+    """docs/TECHNIQUES.md is generated from the registry; a registry change must regenerate it"""
+    import subprocess
+    import sys
+
+    r = subprocess.run(
+        [sys.executable, str(ROOT / "tools/gen_techniques_md.py"), "--check"], capture_output=True, text=True
+    )
+    assert r.returncode == 0, r.stdout + r.stderr
 
 
 def test_se_rates_the_codes_se_knows():
@@ -157,3 +150,10 @@ def test_golden_explanations_have_no_raw_codes():
     """no explanation in the golden records falls back to an engine code"""
     text = (Path(__file__).parent / "golden" / "expected.jsonl").read_text(encoding="utf-8")
     assert "(code " not in text
+
+
+def test_code_explain_entries_exist():
+    from pencilmark import explain as EX
+
+    bad = {c.code: c.explain for c in R.codes().values() if c.explain and c.explain not in EX.CATALOG}
+    assert not bad, bad

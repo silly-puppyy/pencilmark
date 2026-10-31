@@ -38,6 +38,7 @@ module.exports = {
     ]},
     {type: 'category', label: 'Library', collapsed: false, items: [
       {type: 'doc', id: 'STYLE', label: 'Drawing and style'},
+      {type: 'doc', id: 'TECHNIQUES', label: 'Techniques'},
       {type: 'doc', id: 'NAMING', label: 'Variant names'},
       {type: 'doc', id: 'ENGINE', label: 'Engine mapping'},
       {type: 'doc', id: 'api', label: 'Python API'},
