@@ -81,9 +81,8 @@ bool Solver::compute_mental(int level) {
             if (!o.any && o.complete) continue;  // inconsistent view: leave it to the notes phase
             // a whole-rule reading without notes is human only while the rule has few consistent fillings;
             // above T = 50 (or unknown) it is left to the notes phase (combination moves priced by size).
-            // CSOLVER_MENTAL_LINE_MAX=0: off.
-            static const pm_long mental_line_max = getenv("CSOLVER_MENTAL_LINE_MAX") ? atol(getenv("CSOLVER_MENTAL_LINE_MAX")) : 50;
-            if (mental_line_max > 0 && (!o.complete || o.count > mental_line_max)) continue;
+            const pm_long mental_line_max = 50;
+            if (!o.complete || o.count > mental_line_max) continue;
             for (int i = 0; i < k.nv(); ++i)
                 if (!vals[k.vars[i]]) keep_line[k.vars[i]] &= o.sup[i];
         }

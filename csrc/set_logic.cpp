@@ -284,8 +284,7 @@ void Solver::rule_intersect(MoveBuf& out) {
     if (!any_rule && !any_rel) return;
     pm_long budget = P.ri_budget;
     if (budget <= 0) return;
-    const pm_long set_cap = std::getenv("RI_SETCAP") ? std::atol(std::getenv("RI_SETCAP")) : 50000;
-    if (std::getenv("RI_BUDGET")) budget = std::atol(std::getenv("RI_BUDGET"));
+    const pm_long set_cap = 50000;
     std::vector<int> inU(N, -1);
     std::set<std::vector<uint32_t>> seen_el;
     const int nu = (int)units.size();
@@ -921,8 +920,7 @@ static bool band_cheap(const NConstraint& k) {
 static thread_local double band_t_sac = 0, band_t_level = 0;
 void Solver::band_logic(MoveBuf& out) {
     if (disabled[BAND_LOGIC] || P.band_budget <= 0) return;
-    static const bool force_wide = std::getenv("BAND_FORCE_WIDE") != nullptr;  // soundness fuzz: wide regions everywhere
-    const bool escalated = band_budget_now > 0 || force_wide;  // forcing fallback: one larger search at a step that would guess
+    const bool escalated = band_budget_now > 0;  // forcing fallback: one larger search at a step that would guess
     const pm_long BB = band_budget_now > 0 ? band_budget_now : P.band_budget;
     const int N = p.N, D = p.D;
     if (D > 16) return;  // 25x25: sub-puzzle searches cost minutes and did not unstick (test_25)
@@ -933,7 +931,7 @@ void Solver::band_logic(MoveBuf& out) {
     const int G0 = p.base_G >= 0 ? p.base_G : p.G;
     // escalation (fallback before guessing): wide regions -- the same house sets with every cheap rule that meets
     // them taken whole (no stick-out limit; params band_wide_cells caps the region), searched only there
-    const bool wide = escalated && (band_wide_now || force_wide) && P.band_wide_cells > 0;
+    const bool wide = escalated && band_wide_now && P.band_wide_cells > 0;
     std::vector<BandRegion>& regs = wide ? band_regions_wide : band_regions;
     auto& bcache = wide ? band_cache_wide : band_cache;
     auto& bsols = wide ? band_sols_wide : band_sols;
@@ -1039,9 +1037,7 @@ void Solver::band_logic(MoveBuf& out) {
                 for (int c : p.groups[x].cells) in[c] = 1;
             // rules: cells inside, or at most 3 outside (those cells join the region)
             std::vector<char> in0 = in;
-            static const int small_out = std::getenv("BAND_SMALL_OUT") ? std::atoi(std::getenv("BAND_SMALL_OUT")) : 3;  // dev64's 6: slower, no gain
-            static const size_t small_units = std::getenv("BAND_SMALL_UNITS") ? std::atoi(std::getenv("BAND_SMALL_UNITS")) : 2;
-            const int max_out = wide ? 1 << 20 : R.lines.size() + R.boxes.size() <= small_units ? small_out : 3;
+            const int max_out = wide ? 1 << 20 : 3;
             bool beyond = false;  // wide: some rule sticks out further than a regular region allows
             auto take = [&](const std::vector<int>& cs, int id) {
                 int out_n = 0;
@@ -1294,7 +1290,7 @@ void Solver::band_logic(MoveBuf& out) {
     pm_long budget = BB;
     // per-solve cap: fruitless calls count in full, calls that find moves count prod_w of their work (they pay
     // off, but a puzzle that keeps reaching this tier must stay bounded)
-    static const double prod_w = std::getenv("BAND_PROD_W") ? std::atof(std::getenv("BAND_PROD_W")) : 0.0;
+    const double prod_w = 0.0;
     struct Spent {
         pm_long& total; const pm_long& bud; pm_long start; MoveBuf& out; size_t n0; double w; pm_long& all;
         ~Spent() {
@@ -1420,9 +1416,7 @@ void Solver::band_logic(MoveBuf& out) {
                         const int v = lowdigit(m);
                         const uint32_t e = (uint32_t)c * 32 + v;
                         pm_long level = 2, cases = std::max(pm_long(2), refute_nodes.count(e) ? refute_nodes[e] : pm_long(2));
-                        static const bool nolevel = std::getenv("BAND_NOLEVEL") != nullptr;
-                        if (nolevel) {
-                        } else if (refuted0({{c, v}})) {
+                        if (refuted0({{c, v}})) {
                             level = 0, cases = 1;
                         } else {
                             pm_long best = 0;
@@ -1504,70 +1498,7 @@ void Solver::band_logic(MoveBuf& out) {
         }
         return any;
     };
-    // phase 1: refutations by propagation alone (the derived house sums, cage combinations, singles of the
-    // sub-puzzle: "the maths", no cases), all regions smallest first; a size class with such moves ends it
-    static const bool phase1 = std::getenv("BAND_PHASE1") != nullptr;  // enables the phase-1 pass
-    if (phase1) {
-        size_t a_class = 0;
-        bool a_any = false;
-        if (bsols.size() < regs.size()) bsols.resize(regs.size());
-        for (size_t ri = 0; ri < regs.size(); ++ri) {
-            const BandRegion& R = regs[ri];
-            if (a_class && R.lines.size() + R.boxes.size() > a_class) break;
-            std::vector<uint32_t> key{(uint32_t)ri, 0xFFFFFFFEu};
-            for (int c : R.cells) key.push_back(vals[c] ? (0x80000000u | (uint32_t)vals[c]) : cand[c]);
-            std::vector<std::array<pm_long, 3>> els;
-            auto hit = bcache.find(key);
-            if (hit != bcache.end()) {
-                els = hit->second;
-            } else {
-                const int n = (int)R.cells.size();
-                std::vector<uint8_t> sv(n);
-                std::vector<uint32_t> sc(n);
-                for (int i = 0; i < n; ++i) sv[i] = vals[R.cells[i]], sc[i] = vals[R.cells[i]] ? 0 : cand[R.cells[i]];
-                std::vector<uint32_t> sup(n, 0);
-                for (const auto& sl : bsols[ri]) {  // digits of a known filling cannot be refuted
-                    bool ok = true;
-                    for (int i = 0; i < n && ok; ++i) ok = sv[i] ? sv[i] == sl[i] : (sc[i] & bit(sl[i])) != 0;
-                    if (ok)
-                        for (int i = 0; i < n; ++i) sup[i] |= bit(sl[i]);
-                }
-                bool dead = false;
-                for (int i = 0; i < n && !dead; ++i) {
-                    if (sv[i]) continue;
-                    uint32_t lost = 0;
-                    for (uint32_t m = sc[i] & ~sup[i]; m; m &= m - 1) {
-                        const int v = lowdigit(m);
-                        std::vector<uint8_t> v2 = sv;
-                        std::vector<uint32_t> c2 = sc;
-                        c2[i] = bit(v);
-                        bool complete = true;
-                        pm_long cost = 0;
-                        ++n_calls;
-                        auto sols = brute_solve(*R.sub, {}, 1, 1, &v2, &c2, &complete, &cost, true);
-                        budget -= cost;
-                        if (sols.empty() && complete) {
-                            lost |= bit(v);
-                            els.push_back({(pm_long)R.cells[i] * 32 + v, 0, 1});
-                        } else if (!sols.empty() && bsols[ri].size() < 256) {
-                            std::vector<uint8_t> sl(n);
-                            for (int k = 0; k < n; ++k) sl[k] = (uint8_t)sols[0][k];
-                            for (int k = 0; k < n; ++k) sup[k] |= bit(sl[k]);
-                            bsols[ri].push_back(std::move(sl));
-                        }
-                    }
-                    dead = lost == sc[i];  // inconsistent state: leave it
-                }
-                if (dead) els.clear();
-                std::sort(els.begin(), els.end());
-                if (bcache.size() < 20000) bcache[key] = els;
-            }
-            ++n_regions;
-            if (!els.empty() && emit_region(ri, els)) a_class = R.lines.size() + R.boxes.size(), a_any = true;
-        }
-        if (a_any) return;
-    }
-    // phase 2: singleton consistency by bounded search (levels 1 / 2)
+    // singleton consistency by bounded search (levels 1 / 2)
     for (size_t ri = 0; ri < regs.size(); ++ri) {
         const BandRegion& R = regs[ri];
         if (found_class && R.lines.size() + R.boxes.size() > found_class) break;

@@ -222,9 +222,9 @@ void Puzzle::build_implied() {
                 if (group_line[gi] != orient) rem.push_back(std::vector<uint64_t>(gbits(gi), gbits(gi) + W));
             for (auto& h : prev) rem.push_back(h);
             const int L = (int)lines.size();
-            // at most 3 lines combined (CSOLVER_IMPLIED_KMAX overrides). Overlap boards (duodoku)
+            // at most 3 lines combined. Overlap boards (duodoku)
             // gave 1,102 derived houses scanned by every technique at every step (card score 18 s -> 0.4 s with 3).
-            static const int kmax = getenv("CSOLVER_IMPLIED_KMAX") ? atoi(getenv("CSOLVER_IMPLIED_KMAX")) : 3;
+            const int kmax = 3;
             for (int k = 2; k <= std::min(kmax, L); ++k) {
                 std::vector<int> idx(k);
                 std::function<void(int, int)> pick = [&](int st, int dep) {
@@ -843,8 +843,7 @@ void Puzzle::build_nary() {
     // (CSOLVER_OVERLAP_DIFF=0 disables): overlapping sum clues -- two sums sharing >= 2 cells, each with a
     // small own part: sum(own part of A) - sum(own part of B) = total A - total B, as a derived rule over the own parts (<= 4
     // cells). Killer cages (groups) never trigger it.
-    static const bool overlap_diff = !(getenv("CSOLVER_OVERLAP_DIFF") && getenv("CSOLVER_OVERLAP_DIFF")[0] == '0');
-    if (overlap_diff) {
+    {
         std::vector<NConstraint> derived;
         const size_t n0 = nary.size();
         for (size_t x = 0; x < n0; ++x)

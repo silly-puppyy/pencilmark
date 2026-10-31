@@ -235,11 +235,6 @@ void Solver::class_count(MoveBuf& out) {
     // arithmetic rules only: tables / digit sets are digit-relabelling equivariant, parity / size classes
     // mean nothing for them (and would make the grade depend on the digit names)
     for (const NConstraint& k : p.nary) value_rules |= k.type != NT_SAMESET && k.type != NT_TABLE && k.type != NT_DIGITSET;
-    // CSOLVER_TABLE_CLASSES=1: tables written from digit VALUES (sum < 10, product 8, parity checkerboards)
-    // are not relabelling-equivariant; humans count parity / size classes on them (battenburg, makodoku, answer-8)
-    static const bool table_classes = getenv("CSOLVER_TABLE_CLASSES") && getenv("CSOLVER_TABLE_CLASSES")[0] == '1';
-    if (table_classes)
-        for (const NConstraint& k : p.nary) value_rules |= k.type == NT_TABLE;
     if (!value_rules) return;
     // (a) a house holds exactly popc(X) digits of class X
     for (int hi : p.houses) {
@@ -378,25 +373,6 @@ void Solver::domino(MoveBuf& out) {
             doms.push_back(d);
         }
     }
-    // CSOLVER_TABLE_DOMINO=1: 2-cell table rules are dominoes too (quotient / product / answer-8 clues are
-    // written as tables; humans read them as digit pairs: "a quotient >= 5 contains a 1"). Allowed pairs = the table rows.
-    static const bool table_domino = getenv("CSOLVER_TABLE_DOMINO") && getenv("CSOLVER_TABLE_DOMINO")[0] == '1';
-    if (table_domino)
-        for (const NConstraint& k : p.nary) {
-            if (k.type != NT_TABLE || k.nv() != 2 || k.arity != 2) continue;
-            const int a = k.vars[k.pvar[0]], b = k.vars[k.pvar[1]];
-            if (vals[a] || vals[b]) continue;
-            const bool same = tbit(p.peers(a), b);
-            Dom d{a, b, p.full, 0, {}};
-            for (size_t r = 0; r + 1 < k.rows.size(); r += 2) {
-                const int x = k.rows[r], y = k.rows[r + 1];
-                if (x < 1 || y < 1 || x > p.D || y > p.D || !(cand[a] & bit(x)) || !(cand[b] & bit(y)) || (same && x == y)) continue;
-                d.pairs.push_back({x, y});
-                d.must &= bit(x) | bit(y);
-                d.digits |= bit(x) | bit(y);
-            }
-            if (!d.pairs.empty()) doms.push_back(d);
-        }
     std::vector<int> gs;
     auto common_houses = [&](const std::vector<int>& cells, std::vector<int>& outg) {
         outg.clear();

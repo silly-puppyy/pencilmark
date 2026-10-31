@@ -367,7 +367,7 @@ def rules(p):
     return out
 
 
-_MENTAL_LINE_MAX = int(__import__("os").environ.get("CSOLVER_MENTAL_LINE_MAX", "50"))
+_MENTAL_LINE_MAX = 50  # the engine's cap on fillings a rule may have to be read in the head (mental.cpp)
 
 
 def enum_rule(p, rule, dom, node_limit=150000, keep=400, max_count=None, support=True):

@@ -11,7 +11,6 @@ Steps are real pencilmark.solver.Step / Move objects, so pencilmark.scoring.grad
 
 from __future__ import annotations
 
-import os
 from collections import defaultdict
 
 from . import _csolver as _C  # noqa: E402  (the compiled C++ engine, sources in csrc/)
@@ -382,9 +381,7 @@ def solve(
     cp = cpuzzle if cpuzzle is not None else to_cpuzzle(puzzle)
     sol = [int(x) for x in solution] if solution is not None else None
     cp_p = no_guess_params(sc.p, params, disabled)
-    disabled = [
-        int(t) for t in _extra_disabled(set(disabled) | search_disabled(params))
-    ]  # env override, e.g. "58,59,60"
+    disabled = [int(t) for t in set(disabled) | search_disabled(params)]  # env override, e.g. "58,59,60"
     args = [
         cp,
         list(puzzle.givens.items()),
@@ -916,7 +913,7 @@ def state_moves(
         cp,
         list(puzzle.givens.items()),
         sc.p,
-        [int(t) for t in _extra_disabled(disabled)],
+        [int(t) for t in disabled],
         sol,
         bool(assume_unique),
         int(limit_per_tech),
@@ -1012,10 +1009,3 @@ def no_guess_params(sc_p, params, disabled=()):
     if p.get("search") == "human" and not p.get("allow_guess", False) and S.TRIAL not in set(disabled):
         return dict(sc_p, exhaust_fallback=1)
     return sc_p
-
-
-def _extra_disabled(disabled):
-    """CSOLVER_EXTRA_DISABLED="62,63" adds techniques to every disabled set"""
-    if os.environ.get("CSOLVER_EXTRA_DISABLED"):
-        return set(disabled) | {int(x) for x in os.environ["CSOLVER_EXTRA_DISABLED"].split(",") if x}
-    return disabled
