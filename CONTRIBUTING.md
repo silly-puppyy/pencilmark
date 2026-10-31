@@ -35,6 +35,7 @@ and which file holds each part of the engine.
 
 ```
 python -m pytest -q -n auto tests             # about 10 seconds
+python -m pytest -q -n auto -m slow tests     # every Python example in the docs runs as written (about 20 s)
 python tools/golden.py check                  # every output of 55 puzzles identical (about a minute)
 ```
 
