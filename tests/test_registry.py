@@ -142,3 +142,18 @@ def test_generator_bands_match_the_route():
         for c, k in registry.codes().items()
         if k.shape_band is not None and known.get(c) != k.shape_band
     } == {}
+
+
+def test_every_move_technique_has_an_explanation():
+    """a technique that can be a step explains itself (three had none and printed "ClueFacts (code 10102) ...")"""
+    from pencilmark import explain as EX
+
+    switches = {S.IMPLIED}  # role logic, but a switch for implied houses: never a move
+    missing = [t.name for t in T if t.role == "logic" and t.id not in switches and t.id not in EX.HANDLERS]
+    assert not missing, missing
+
+
+def test_golden_explanations_have_no_raw_codes():
+    """no explanation in the golden records falls back to an engine code"""
+    text = (Path(__file__).parent / "golden" / "expected.jsonl").read_text(encoding="utf-8")
+    assert "(code " not in text
