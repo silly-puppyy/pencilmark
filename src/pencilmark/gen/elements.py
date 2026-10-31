@@ -243,7 +243,6 @@ def to_json(b, givens, els, sol=None, title=None):
     """puzzle JSON (pencilmark/puzzle_json format) for givens {cell: digit} and elements."""
     rc = b.rc
     d = {
-        "v": 1,
         "digits": b.n,
         "box": f"{b.bh}x{b.bw}",
         "numbers": "".join(PJ._sym(givens[i]) if i in givens else "." for i in range(b.N)),

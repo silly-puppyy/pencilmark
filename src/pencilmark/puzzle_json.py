@@ -148,8 +148,15 @@ def _layout_regions(origins, D=9, bh=3, bw=3):
 
 
 # ---------------------------------------------------------------- decode
+KEYS = {"digits", "shape", "box", "layout", "numbers", "solution", "regions", "rules", "candidates", "meta", "title"}
+KEYS |= {"hash", "v"}  # written by `pencilmark json` / by older files; ignored
+
+
 def from_json(obj) -> M.Puzzle:
     d = json.loads(obj) if isinstance(obj, str) else dict(obj)
+    unknown = sorted(set(d) - KEYS)
+    if unknown:  # an unrecognised dict (another app's format) must not be read as an empty grid
+        raise ValueError(f"not a puzzle pencilmark reads: unknown keys {unknown}")
     nums = re.sub(r"\s+", "", d.get("numbers", "") or "")
     layout = d.get("layout")
     if layout:

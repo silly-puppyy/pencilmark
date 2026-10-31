@@ -12,6 +12,8 @@
   false reject and 13 change a usage count in an issue text; nothing else on the card changes.
 - An ipuz sudoku (a dict, or a `.ipuz` / `.json` file on the command line) is read like `from_ipuz`. It was taken
   for internal puzzle JSON with no grid and reported "not unique".
+  Any other dict with keys pencilmark does not know is refused ("not a puzzle pencilmark reads: unknown keys [...]")
+  instead of being read as an empty grid.
 - `rate`, `solve`, `describe`, `fingerprint`, `to_export`, `load` and every command-line command accept a puzzle link
   or payload directly (SudokuPad, f-puzzles, Penpa, Logic Masters, short links: what `pencilmark.sources.load`
   reads). A link was read as a grid of digits and failed with "the grid has 490 symbols". An unrecognised link says so.
