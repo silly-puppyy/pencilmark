@@ -372,6 +372,7 @@ struct Flags {
 };
 void listing_cache_enable(bool on);  // on by default; off: every listing is computed (tests compare the two)
 void listing_cache_clear();
+std::vector<pm_long> listing_cache_stats();  // hits, misses, generation turns: listing cache, then digit memo
 // per-digit memo of single-digit techniques (listing_cache.cpp): tag = the technique and its settings, bits = the cells
 // where digit v is still a candidate; get appends the stored moves and returns true on a hit
 bool digit_memo_get(const Puzzle& p, uint64_t tag, int v, const std::vector<uint64_t>& bits, MoveBuf& out);

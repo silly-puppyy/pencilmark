@@ -505,6 +505,8 @@ PYBIND11_MODULE(_csolver, m) {
     m.def("listing_cache", [](bool on) { listing_cache_enable(on); }, py::arg("on"),
           "state_moves reuses each strategy's moves at a state it listed before (on by default; off: compute every "
           "listing, for tests). Either way the cache is emptied.");
+    m.def("listing_cache_stats", []() { return listing_cache_stats(); },
+          "[hits, misses, generation turns] of the listing cache, then of the per-digit memo (this thread)");
     m.def("solve", &py_solve, py::arg("puzzle"), py::arg("givens"), py::arg("params"), py::arg("disabled"),
           py::arg("solution"), py::arg("allow_direct"), py::arg("max_steps"), py::arg("assume_unique") = true,
           py::arg("all_tiers") = false, py::arg("explain") = false, py::arg("colours") = py::none(),
