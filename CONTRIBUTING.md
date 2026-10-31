@@ -39,6 +39,9 @@ python -m pytest -q -n auto -m slow tests     # every Python example in the docs
 python tools/golden.py check                  # every output of 55 puzzles identical (about a minute)
 ```
 
+`python tools/tasks.py check` runs all three; `python tools/tasks.py` lists the other jobs (lint, docs, serve, fixtures,
+release).
+
 The golden check compares each puzzle's full card (with steps at every explanation level), its description, its
 export and the engine's input against `tests/golden/expected.jsonl`, and prints every difference.
 

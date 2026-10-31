@@ -22,17 +22,11 @@ before the last step.
 1. The version goes in two places: `pyproject.toml` (`version`) and `src/pencilmark/__init__.py` (`__version__`).
    Cards read it from `__version__`; the golden records leave it out, so they do not change.
 2. In `CHANGELOG.md`, rename "## Unreleased" to "## 1.1.0 (date)" and start a new empty "## Unreleased" above it.
-3. Run the full checks on a fresh install:
-
-   ```
-   pip install -e .
-   python -m pytest -q -n auto tests
-   python tools/golden.py check
-   ```
-
-4. Build the docs (`npm run build` in `website/`, after `tools/gen_api_md.py` and `tools/gen_swatches.py`) and fix any
-   broken link.
-5. Commit and push to main.
+3. Commit, then on a fresh install (`pip install -e .`) run `python tools/tasks.py release 1.1.0`. It checks that both
+   version numbers say 1.1.0, that the CHANGELOG has its section and an empty "Unreleased", and that nothing is
+   uncommitted; then it runs the quick suite, the doc examples, the golden check and the docs build (which fails on a
+   broken link). It changes nothing; fix what it reports and run it again.
+4. Push to main.
 
 ## 3. Test on every platform
 
