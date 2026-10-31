@@ -2,14 +2,21 @@ module.exports = {
   docs: [
     {type: 'doc', id: 'index', label: 'Overview'},
     {type: 'category', label: 'Guides', collapsed: false, link: {type: 'generated-index', slug: '/guides/',
-      description: 'Step by step, from grading a first puzzle to generating, importing and checking puzzles.'}, items: [
-      {type: 'doc', id: 'guides/first-puzzle', label: 'Grade your first puzzle'},
-      {type: 'doc', id: 'guides/variant-file', label: 'Write a variant puzzle file'},
-      {type: 'doc', id: 'guides/generate', label: 'Generate a puzzle'},
-      {type: 'doc', id: 'guides/batch', label: 'Grade many puzzles'},
-      {type: 'doc', id: 'guides/import', label: 'Import puzzles from other apps'},
-      {type: 'doc', id: 'guides/publish-checks', label: 'Check a puzzle before publishing'},
-      {type: 'doc', id: 'guides/draw', label: 'Draw a puzzle'},
+      description: 'Step by step: grading puzzles, making them (files, generator, imports, drawings), and working on pencilmark itself.'}, items: [
+      {type: 'category', label: 'Grading', collapsed: false, items: [
+        {type: 'doc', id: 'guides/first-puzzle', label: 'Grade your first puzzle'},
+        {type: 'doc', id: 'guides/batch', label: 'Grade many puzzles'},
+        {type: 'doc', id: 'guides/publish-checks', label: 'Check a puzzle before publishing'},
+      ]},
+      {type: 'category', label: 'Making puzzles', collapsed: false, items: [
+        {type: 'doc', id: 'guides/variant-file', label: 'Write a variant puzzle file'},
+        {type: 'doc', id: 'guides/generate', label: 'Generate a puzzle'},
+        {type: 'doc', id: 'guides/import', label: 'Import puzzles from other apps'},
+        {type: 'doc', id: 'guides/draw', label: 'Draw a puzzle'},
+      ]},
+      {type: 'category', label: 'Developing', collapsed: false, items: [
+        {type: 'doc', id: 'guides/dev-environment', label: 'Set up a development environment'},
+      ]},
     ]},
     {type: 'doc', id: 'USAGE', label: 'Usage'},
     {type: 'category', label: 'How the grades work', collapsed: false, items: [
