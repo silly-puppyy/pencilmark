@@ -10,6 +10,7 @@ module.exports = {
     {type: 'category', label: 'How-to guides', collapsed: true, items: [
       {type: 'doc', id: 'howto/batch', label: 'Grade many puzzles'},
       {type: 'doc', id: 'howto/import', label: 'Import puzzles from other apps'},
+      {type: 'doc', id: 'howto/publish-checks', label: 'Check a puzzle before publishing'},
     ]},
     {type: 'doc', id: 'PHILOSOPHY', label: 'Philosophy'},
     {type: 'doc', id: 'MODEL', label: 'How a card is computed'},
