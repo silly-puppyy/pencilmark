@@ -7,7 +7,7 @@
   Easter Monster's default card now takes about 30 s.
 - Faster grading, same cards: the engine caches what each technique finds at a position across a card's many
   routes, single-digit techniques per digit, and the costliest late techniques are listed only when they could still
-  win (a 16x16 classic card: about 300 s -> 45 s).
+  win, and case analysis follows each assumption once (a 16x16 classic card: about 300 s -> 23 s).
 - `pencilmark.load` reads JSON text that holds a link (every ipuz text does, in its `version`; a sudoku-puzzle with
   a source URL in `meta`). It tried the text as a puzzle link first and failed with "not a puzzle link".
 - `pencilmark.to_export("puzzle.json")` keeps the file's `meta` (title, source, ...), as it already did for a dict

@@ -79,12 +79,22 @@ flowchart TB
 | `sudokuwiki.cpp` | named patterns from Andrew Stuart's list (wings, Sue de Coq, fireworks, ...) |
 | `variant_logic.cpp`, `mental.cpp` | variant techniques; the no-notes layer (what a solver sees without pencil marks) |
 | `refute.cpp`, `desc.cpp`, `explain.cpp`, `canon.cpp`, `rich.cpp` | search-effort profile, move descriptors, explanation records, symmetry helpers, cognitive load |
+| `listing_cache.cpp` | the listing caches (below) |
 | `bindings.cpp` | the pybind11 module `pencilmark._csolver` |
+
+A card lists the same positions many times: band by band at each step, again in every banned-technique route of the
+technique list, and again in the card's solves. `listing_cache.cpp` keeps, per thread, what each strategy found at an
+exact position. The disabled-technique flags a strategy reads are recorded as it reads them (`Flags`), so a stored
+result is reused only where those flags match. Single-digit techniques (fish, pattern overlay) also memoise per digit,
+on that digit's candidates. Both caches keep two generations within a fixed budget. `_csolver.listing_cache(False)`
+turns them off; `tests/test_listing_cache.py` checks that the move lists stay the same. `band_path` also lists the
+costliest late techniques (`LATE`) only when they could still give the move it picks (`state_moves(skip=...)`).
 
 ## Invariants
 
 - **Deterministic.** The same puzzle gives the same card on every machine and in every process. Anything ordered by a
-  Python set or by time is a bug. `tools/golden.py check` proves it for 55 puzzles.
+  Python set or by time is a bug, and so is a result that depends on what a cache already holds. `tools/golden.py check`
+  proves it for 55 puzzles.
 - **Solver logic in C++.** Python names, prices and explains moves; it does not search the grid.
 - **Formats are strict.** Unknown keys and reserved parts are refused with a message; format changes bump
   `format_version`.
