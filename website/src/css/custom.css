@@ -241,3 +241,46 @@ figure.pm-chart figure { margin: 0; }
 .pm-ico-lines > .menu__link::before { -webkit-mask-image: url('/img/icons/lines.svg'); mask-image: url('/img/icons/lines.svg'); }
 .pm-ico-other > .menu__link::before { -webkit-mask-image: url('/img/icons/other.svg'); mask-image: url('/img/icons/other.svg'); }
 .pm-ico-outside > .menu__link::before { -webkit-mask-image: url('/img/icons/outside.svg'); mask-image: url('/img/icons/outside.svg'); }
+
+/* reference pages: Sphinx autodoc's shape, as numpy and pandas show it (tools/apidoc.py writes plain Markdown,
+   src/plugins/api-reference.mjs adds these classes). An entry's heading is its signature in a box with a source link;
+   Parameters / Returns / Raises are a field list; a summary table opens each module or class; methods are indented. */
+.markdown h3.api-entry, .markdown h4.api-entry {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2rem 0.75rem; margin: 2.25rem 0 0.9rem;
+  padding: 0.5rem 0.8rem; background: var(--pm-surface); border: 1px solid var(--pm-line);
+  border-left: 3px solid var(--ifm-color-primary); border-radius: 0 6px 6px 0;
+  font-family: var(--ifm-font-family-monospace); font-size: 0.92rem; font-weight: 400; line-height: 1.55; }
+.markdown h4.api-entry { font-size: 0.86rem; margin-top: 1.75rem; border-left-width: 2px; }
+.api-sig { flex: 1 1 24rem; min-width: 0; overflow-wrap: anywhere; }
+.api-sig strong { font-weight: 700; color: var(--pm-ink); }
+.api-kw { color: var(--ifm-color-primary); }
+.api-args { color: var(--pm-muted); }
+.api-src { font-family: var(--ifm-font-family-base); font-size: 0.78rem; white-space: nowrap; }
+.markdown .api-entry .hash-link { padding-left: 0; }
+.markdown p.api-file { font-family: var(--ifm-font-family-monospace); font-size: 0.8rem; margin-top: -0.5rem; }
+.markdown p.api-file a { color: var(--pm-muted); }
+.api-members { margin-left: 0.6rem; padding-left: 1.1rem; border-left: 1px solid var(--pm-line); }
+
+.api-fields { display: grid; grid-template-columns: max-content 1fr; gap: 0.6rem 1.25rem; margin: 0.25rem 0 1.25rem; }
+.api-fields dt { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--pm-muted); padding-top: 0.3rem; margin: 0; }
+.api-fields dd { margin: 0; min-width: 0; }
+.api-fields ul { list-style: none; padding: 0; margin: 0; }
+.api-fields li { margin: 0 0 0.45rem; }
+.api-fields li:last-child { margin-bottom: 0; }
+.api-fields li > code:first-child { font-weight: 600; background: none; border: 0; padding: 0; }
+.api-fields li > em { color: var(--pm-muted); }
+@media (max-width: 640px) {
+  .api-fields { grid-template-columns: 1fr; gap: 0.25rem; }
+  .api-fields dd { margin-bottom: 0.6rem; }
+}
+
+table.api-summary { display: table; width: 100%; font-size: 0.88rem; margin: 0.5rem 0 1.5rem; }
+table.api-summary tr, table.api-summary td { border: 0; background: none; }
+table.api-summary tr { border-bottom: 1px solid var(--pm-line); }
+table.api-summary td { padding: 0.35rem 0.6rem; vertical-align: baseline; }
+table.api-summary td:first-child { white-space: nowrap; width: 1%; padding-left: 0; }
+table.api-summary td:first-child code { background: none; border: 0; padding: 0; font-weight: 600; }
+.api-chip { display: inline-block; min-width: 3.2rem; margin-right: 0.5rem; font-family: var(--ifm-font-family-monospace);
+  font-size: 0.7rem; color: var(--pm-muted); }
+@media (max-width: 640px) { table.api-summary td:first-child { white-space: normal; } }

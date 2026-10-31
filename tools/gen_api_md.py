@@ -1,123 +1,55 @@
 """Write docs/api.md from the docstrings of pencilmark's public API (read from the source with ast, so the C++ engine
-need not be built).
+need not be built), grouped by purpose; tools/apidoc.py renders the entries.
   python tools/gen_api_md.py"""
 
 import ast
-import re
 from pathlib import Path
 
+import apidoc
+
 ROOT = Path(__file__).resolve().parents[1]
-NAMES = [
-    "rate",
-    "rate_many",
-    "solve",
-    "count_solutions",
-    "generate",
-    "load",
-    "to_export",
-    "dumps",
-    "fingerprint",
-    "validate",
-    "describe",
-    "from_string",
-    "to_string",
-    "from_ipuz",
-    "to_ipuz",
-    "NotUnique",
-    "NoSolution",
-    "Undecided",
-]
-
-
-def signature(node):
-    seg = ast.unparse(node.args)
-    if len(node.name) + len(seg) <= 80:
-        return f"{node.name}({seg})"
-    return f"{node.name}(\n    " + ",\n    ".join(a.strip() for a in seg.split(", ")) + ",\n)"
-
-
-PAGE_TITLES = {"FORMAT": "Puzzle format", "GRADE": "Grade card", "SPEC": "Generator spec", "INTEROP": "Other formats"}
-
-
-def _links(text):
-    """'docs/FORMAT.md' in a docstring -> a link to that page"""
-    return re.sub(r"docs/([A-Z]+)\.md", lambda m: f"[{PAGE_TITLES.get(m.group(1), m.group(1))}]({m.group(1)}.md)", text)
-
-
-SECTIONS = ("Parameters", "Returns", "Raises", "Examples", "Notes")
-
-
-def _flow(text):
-    """hard-wrapped docstring lines -> one flowing paragraph (markdown-escaped, docs links)"""
-    return _links(" ".join(text.split()).replace("*", "\\*"))
-
-
-def _render(doc):
-    """a numpydoc docstring -> markdown: the summary paragraphs, then each section (Parameters / Raises as lists)"""
-    lines = doc.split("\n")
-    parts, cur, name = [], [], None
-    for i, line in enumerate(lines):
-        if line.strip() in SECTIONS and i + 1 < len(lines) and set(lines[i + 1].strip()) == {"-"}:
-            parts.append((name, cur))
-            name, cur = line.strip(), []
-            continue
-        if name and set(line.strip()) == {"-"} and cur == []:
-            continue
-        cur.append(line)
-    parts.append((name, cur))
-    out = []
-    for name, body in parts:
-        text = "\n".join(body).strip("\n")
-        if not text:
-            continue
-        if name is None:
-            out += [_flow(p) + "\n" for p in text.split("\n\n") if p.strip()]
-            continue
-        out.append(f"**{name}**\n")
-        if name == "Examples":
-            out.append(
-                "```python\n" + "\n".join(x[4:] if x.startswith("    ") else x for x in body).strip() + "\n```\n"
-            )
-            continue
-        items, item = [], None  # "name : type" lines start an item; indented lines describe it
-        for line in body:
-            if line and not line.startswith(" "):
-                item = [line.strip(), []]
-                items.append(item)
-            elif item is not None and line.strip():
-                item[1].append(line.strip())
-        if not items:
-            out.append(_flow(text) + "\n")
-            continue
-        for head, desc in items:
-            nm, _, typ = head.partition(" : ")
-            label = f"`{nm}`" + (f" ({typ})" if typ else "")
-            out.append(f"- {label}: {_flow(' '.join(desc))}" if desc else f"- {label}")
-        out.append("")
-    return out
+GROUPS = {  # section -> public names, in reading order
+    "Grading": ["rate", "rate_many", "describe"],
+    "Solving": ["solve", "count_solutions"],
+    "Generating": ["generate"],
+    "Reading and writing": ["load", "validate", "fingerprint", "to_export", "dumps", "from_string", "to_string",
+                            "from_ipuz", "to_ipuz"],
+    "Errors": ["NotUnique", "NoSolution", "Undecided"],
+}  # fmt: skip
+PATH = "src/pencilmark/api.py"
 
 
 def main():
-    src = (ROOT / "src/pencilmark/api.py").read_text(encoding="utf-8")
-    tree = ast.parse(src)
+    tree = ast.parse((ROOT / PATH).read_text(encoding="utf-8"))
     defs = {n.name: n for n in tree.body if isinstance(n, (ast.FunctionDef, ast.ClassDef))}
     L = [
+        "---",
+        "title: Python API",
+        "toc_max_heading_level: 2",
+        "---",
+        "",
         "# Python API",
         "",
         "Everything below is importable from `pencilmark` directly (`pencilmark.rate`, `pencilmark.to_export`, …). "
         "This page is generated from the docstrings (`tools/gen_api_md.py`).",
         "",
     ]
-    for name in NAMES:
-        n = defs[name]
-        doc = ast.get_docstring(n) or ""
-        if isinstance(n, ast.ClassDef):
-            bases = ", ".join(ast.unparse(b) for b in n.bases)
-            L += [f"## `{name}`", "", f"```python\nclass {name}({bases})\n```", ""]
-        else:
-            L += [f"## `{name}`", "", f"```python\n{signature(n)}\n```", ""]
-        if doc:
-            L += _render(doc)
+    L += apidoc.table(
+        [(name, "class" if isinstance(defs[name], ast.ClassDef) else "def", name,
+          apidoc.summary(ast.get_docstring(defs[name]) or "")) for names in GROUPS.values() for name in names], ""
+    )  # fmt: skip
+    for group, names in GROUPS.items():
+        L += [f"## {group}", ""]
+        for name in names:
+            n = defs[name]
+            src = apidoc.source(PATH, n.lineno)
+            if isinstance(n, ast.ClassDef):
+                bases = ", ".join(ast.unparse(b) for b in n.bases)
+                L.append(apidoc.heading(3, name, "class", name, f"({bases})" if bases else "", src=src))
+            else:
+                ret = ast.unparse(n.returns) if n.returns else ""
+                L.append(apidoc.heading(3, name, "def", name, f"({ast.unparse(n.args)})", ret=ret, src=src))
+            L += apidoc.docstring(ast.get_docstring(n) or "", "")
     (ROOT / "docs/api.md").write_text("\n".join(L), encoding="utf-8")
 
 

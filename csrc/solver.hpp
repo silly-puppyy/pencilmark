@@ -118,8 +118,10 @@ struct Move {
     int meta[8] = {0, 0, 0, 0, 0, 0, 0, 0};  ///< cells groups digits links hidden arith relation notes
     double spread = 1.0;
     bool meta_synth = false;  ///< meta[] filled by describe() for export only (the technique is priced by B)
-    bool has_desc = false;  ///< structural descriptors (desc.cpp): log branches, log depth, search, uniqueness,
-    double desc[8] = {0, 0, 0, 0, 0, 0, 0, 0};  ///< counting, contradiction, held, coverage -- exported, not priced
+    bool has_desc = false;  ///< desc[] is filled
+    /// structural descriptors (desc.cpp): log branches, log depth, search, uniqueness, counting, contradiction, held,
+    /// coverage -- exported, not priced
+    double desc[8] = {0, 0, 0, 0, 0, 0, 0, 0};
     double scan = 0.0;  ///< desc.cpp: patterns of this kind a human scans at the state (raw count behind desc[2])
     double enumv = 0.0;  ///< log1p(max consistent assignments of the SUM rule instances the move touches)
     int pc = -1, pv = 0;  ///< placement

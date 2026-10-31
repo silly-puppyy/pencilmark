@@ -6,7 +6,7 @@ python tools/tasks.py golden      every output of the golden corpus identical (a
 python tools/tasks.py check       all three: what a change must pass
 python tools/tasks.py lint        ruff check and ruff format --check
 python tools/tasks.py fixtures    rewrite the snapshot fixtures (only when a change is meant to alter them)
-python tools/tasks.py docs        generate the API / techniques / parameters pages and swatches, build the site
+python tools/tasks.py docs        generate the API, reference, techniques and parameters pages and swatches, build the site
 python tools/tasks.py serve       build, then serve the site on http://localhost:3000/pencilmark/
 python tools/tasks.py release VERSION   check that main is ready to release VERSION (docs/dev/RELEASE.md)
 """
@@ -20,7 +20,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PY = sys.executable
 FIXTURES = ["test_line_matrix", "test_edge_matrix", "test_cell_matrix", "test_rule_matrix", "test_input_matrix"]
-GENERATORS = ["gen_api_md", "gen_reference_md", "gen_techniques_md", "gen_parameters_md", "gen_swatches"]
+GENERATORS = ["gen_api_md", "gen_reference_md", "gen_cpp_reference", "gen_techniques_md", "gen_parameters_md",
+              "gen_swatches"]  # fmt: skip
 COPIES = [("README.md", "docs/index.md"), ("ARCHITECTURE.md", "docs/dev/ARCHITECTURE.md"),
           ("CONTRIBUTING.md", "docs/dev/CONTRIBUTING.md")]  # fmt: skip
 
@@ -58,10 +59,6 @@ def docs(build=True):
     for g in GENERATORS:
         if run(PY, f"tools/{g}.py"):
             return 1
-    if shutil.which("doxygen"):  # the C++ engine reference (Doxyfile -> website/static/cpp/)
-        run("doxygen")
-    else:
-        print("doxygen not found: the site is built without the C++ engine reference")
     for src, dst in COPIES:
         shutil.copyfile(ROOT / src, ROOT / dst)
     try:
