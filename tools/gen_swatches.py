@@ -77,6 +77,8 @@ SWATCHES = {
     "edge-xv-v": chain({"type": "edge", "kind": "xv", "letter": "V"}, [2, 3, 2]),
     "edge-difference": chain({"type": "edge", "kind": "difference", "value": 3}, [1, 4, 7]),
     "edge-sum": chain({"type": "edge", "kind": "sum", "sum": 12}, [5, 7, 5]),
+    "edge-product": chain({"type": "edge", "kind": "product", "value": 12}, [3, 4, 3]),
+    "edge-ratio": chain({"type": "edge", "kind": "ratio", "value": 2}, [2, 4, 8]),
     "edge-less": chain({"type": "edge", "kind": "less"}, [1, 2, 3]),
     # 6.7 corner
     "corner-battenburg": (
