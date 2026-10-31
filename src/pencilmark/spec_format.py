@@ -17,6 +17,7 @@ import hashlib
 
 from . import puzzle_json as PJ
 from .exchange import FormatError, NotSupportedError, jcs
+from .rules.line import LINE
 
 FORMAT = "sudoku-spec"
 FORMAT_VERSION = 1
@@ -24,10 +25,7 @@ NS = "io.github.silly-puppyy.pencilmark"
 # generator element kind <-> template (type, kind)
 GEN_KINDS = {
     "cage": ("cage", None),
-    "thermo": ("line", "thermo"),
-    "whisper": ("line", "whisper"),
-    "renban": ("line", "renban"),
-    "between": ("line", "between"),
+    **{k: ("line", k) for k, lk in LINE.items() if lk.generated},  # rules/line.py
     "arrow": ("arrow", None),
     "kropki": ("edge", "kropki"),
     "xv": ("edge", "xv"),

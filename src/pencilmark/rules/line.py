@@ -31,6 +31,7 @@ class LineKind:
     name_fn: object = None  # fn(rules) -> the name for these rules, when it depends on them
     width: object = "line"  # drawn line width: a docs/palette.json size name, or cell units
     ends: str = ""  # end markers: "bulb" (filled, cells[0]), "hollow bulb", "circles", "diamonds", "centre dot"
+    generated: bool = False  # the generator can place it (a sudoku-spec template; pencilmark/gen/elements.py)
 
 
 LINE = {
@@ -42,6 +43,7 @@ LINE = {
             "Digits strictly increase along a thermometer from the bulb.",
             width="thermo",
             ends="bulb",
+            generated=True,
         ),
         LineKind(
             "slow_thermo",
@@ -50,12 +52,15 @@ LINE = {
             width="thermo",
             ends="hollow bulb",
         ),
-        LineKind("whisper", "Whispers", _whisper_text, ("value",), closable=True, name_fn=_whisper_name),
+        LineKind(
+            "whisper", "Whispers", _whisper_text, ("value",), closable=True, name_fn=_whisper_name, generated=True
+        ),
         LineKind(
             "renban",
             "Renban",
             "A renban line holds a set of consecutive digits in any order, without repeats.",
             closable=True,
+            generated=True,
         ),
         LineKind("region_sum", "Region Sum", "A region sum line has the same sum in every box it passes through."),
         LineKind("palindrome", "Palindrome", "A palindrome line reads the same from either end."),
@@ -84,6 +89,7 @@ LINE = {
             "Digits on a between line lie strictly between the digits in its end circles.",
             width=0.1,
             ends="circles",
+            generated=True,
         ),
         LineKind(
             "lockout",
