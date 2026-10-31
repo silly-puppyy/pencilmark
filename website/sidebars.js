@@ -7,6 +7,9 @@ module.exports = {
       {type: 'doc', id: 'tutorials/variant-file', label: 'Write a variant puzzle file'},
       {type: 'doc', id: 'tutorials/generate', label: 'Generate a puzzle'},
     ]},
+    {type: 'category', label: 'How-to guides', collapsed: true, items: [
+      {type: 'doc', id: 'howto/batch', label: 'Grade many puzzles'},
+    ]},
     {type: 'doc', id: 'PHILOSOPHY', label: 'Philosophy'},
     {type: 'doc', id: 'MODEL', label: 'How a card is computed'},
     {type: 'doc', id: 'BENCHMARK', label: 'Benchmark'},

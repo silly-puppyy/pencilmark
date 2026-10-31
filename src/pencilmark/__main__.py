@@ -422,7 +422,13 @@ def main(argv=None):
     ds.add_argument("file", nargs="?")
     ds.set_defaults(fn=cmd_describe)
     a = ap.parse_args(argv)
-    a.fn(a)
+    try:
+        a.fn(a)
+    except BrokenPipeError:  # the reader stopped early (`| head`): end quietly, as other command-line tools do
+        import os
+
+        os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
+        sys.exit(1)
 
 
 if __name__ == "__main__":
