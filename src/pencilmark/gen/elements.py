@@ -165,7 +165,7 @@ def grow(b, kind, sol, start, taken, rng, n=40):
                         if abs(sol[j] - sol[e_]) >= whisper_gap(b.n):
                             opts.append((j, 1 if e_ == path[-1] else 0))
                         continue
-                    opts.append((j, 1))
+                    opts.append((j, 1 if e_ == path[-1] else 0))  # grow at the end it touches (a renban is a line)
             if not opts:
                 break
             j, back = rng.choice(opts)

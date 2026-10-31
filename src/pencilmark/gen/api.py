@@ -311,6 +311,9 @@ def generate(spec, log=None):
     meta = {k: v for k, v in (doc.get("meta") or {}).items() if k != SF.NS}
     meta["generated_from"] = SF.spec_fingerprint(doc)
     puzzle = to_export(r["puzzle"], meta=meta)
+    from ..exchange import validate
+
+    validate(puzzle)  # what the generator returns is a valid file: a bad element fails here, not in the user's reader
     card = r["card"]
     if doc.get("fields") is not None:  # the requested card fields (docs/SPEC.md 5)
         from ..api import rate

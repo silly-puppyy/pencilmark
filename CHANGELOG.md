@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- The generator's renban lines are lines: a cell next to the line's first cell was added at its end, so some
+  generated renbans had cells that do not touch and the returned file failed to read. `generate` now validates what it
+  returns.
 - `rate_many` takes `alternatives` like `rate` (no fast batch mode from Python before).
 - The command line reports a missing file, a spec that is not JSON or cannot be met, and format errors in one line
   with exit status 1 (it printed a traceback).
