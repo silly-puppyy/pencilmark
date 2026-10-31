@@ -45,6 +45,7 @@ module.exports = {
     {type: 'category', label: 'Contributing', collapsed: true, link: {type: 'generated-index', slug: '/dev/'}, items: [
       {type: 'doc', id: 'dev/WRITING_STYLE', label: 'Writing style'},
       {type: 'doc', id: 'dev/CODE_STYLE', label: 'Code style'},
+      {type: 'doc', id: 'dev/ADD_TECHNIQUE', label: 'Add a technique'},
     ]},
   ],
 };
