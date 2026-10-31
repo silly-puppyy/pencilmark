@@ -911,3 +911,13 @@ def test_lockout_puzzle_grades():
     d["rules"].append({"type": "line", "kind": "lockout", "cells": ["r2c7", "r2c8", "r2c9"]})  # 9 . 4 in the solution
     card = pencilmark.rate(d)
     assert card["band"] and card["difficulty"] is not None
+
+
+def test_entropic_groups_with_an_empty_third_round_trip():
+    """sudoku.coach's fixed thirds on a 4x4 ({1,2,3}, {4}, {}) read and write back: the reader compared the sorted groups
+    with the engine's unsorted ones, so an empty group (sorted first) never matched"""
+    d = {"format": "sudoku-puzzle", "format_version": 1, "board": {"rows": 4, "cols": 4}, "digits": 4, "givens": [0] * 16,
+         "rules": [{"type": "box_grid", "origin": "r1c1", "box": [2, 2]},
+                   {"type": "line", "kind": "entropic", "groups": [[1, 2, 3], [4], []], "cells": ["r1c1", "r1c2"]}]}  # fmt: skip
+    doc = pencilmark.to_export(d)
+    assert doc["rules"][1]["groups"] == [[1, 2, 3], [4], []] and pencilmark.to_export(doc) == doc

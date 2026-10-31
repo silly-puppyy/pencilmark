@@ -320,8 +320,9 @@ def _validate_rule(r, B):
         if "groups" in r:  # entropic: low / middle / high
             g = r["groups"]
             flat = [v for x in g for v in x] if isinstance(g, list) and all(isinstance(x, list) for x in g) else None
-            if flat is None or len(g) != 3 or not all(g) or sorted(flat) != list(range(1, D + 1)):
-                raise FormatError(f"groups must be three non-empty groups that split the digits 1..{D}")
+            # an empty group is allowed: sudoku.coach's fixed thirds {1-3} {4-6} {7-9} on a 4x4 leave {} for high
+            if flat is None or len(g) != 3 or sorted(flat) != list(range(1, D + 1)):
+                raise FormatError(f"groups must be three groups that split the digits 1..{D}")
         if r.get("closed") and not LINE[kind].closable:
             raise FormatError(f"line {kind} cannot be closed")
         if "closed" in r and not isinstance(r["closed"], bool):

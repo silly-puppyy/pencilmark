@@ -142,7 +142,7 @@ def line_to_engine(r, D, B, pairs_rule):
     if k == "entropic" and "groups" in r:
         third = lambda v: (v - 1) * 3 // D if D % 3 == 0 else (v - 1) // 3
         want = [[v for v in range(1, D + 1) if third(v) == g] for g in range(3)]
-        if sorted(sorted(x) for x in r["groups"]) != want:
+        if sorted(sorted(x) for x in r["groups"]) != sorted(want):
             raise NotSupportedError(f"entropic groups {r['groups']} are not supported (engine: {want})")
     return [con]
 

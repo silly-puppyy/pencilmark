@@ -17,8 +17,9 @@
 - An unknown `mode` (for example `"Computer"`) is an error; it used to grade silently in human mode.
 - Lockout lines imported from SudokuPad or f-puzzles are written back too (the readers built digit tables directly,
   so `to_export` and `fingerprint` failed on those puzzles).
-- Stricter reading: a mathrax clue no two digits can make (`+` 30) and entropic `groups` that are not three non-empty
-  groups splitting 1..D are format errors (they passed and failed later with an engine message).
+- Stricter reading: a mathrax clue no two digits can make (`+` 30) and entropic `groups` that are not three groups
+  splitting 1..D are format errors (they passed and failed later with an engine message). One group may be empty:
+  sudoku.coach's fixed thirds on a 4×4 ({1,2,3}, {4}, {}) now read and write back (they never matched before).
 - Lockout lines can be written back: `to_export`, `fingerprint` and the canonical text failed on any puzzle with one
   (NotSupportedError). The lockout is now an engine line kind compiled to the same relation and digit tables. Its
   rule text states its own value (it always said 4).
