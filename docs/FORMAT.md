@@ -82,7 +82,7 @@ are optional for readers: cosmetic layers may be ignored, and only a writer that
 | `$schema` | no | URL of the JSON Schema. Ignored by readers. |
 | `meta` | no | Information *about* the puzzle (2.1). Never changes how it is solved or graded. |
 | `board` | yes | `{"rows": R, "cols": C}`: the bounding rectangle of the board. No other keys. |
-| `digits` | yes | Integer D ≥ 1: cells hold the digits 1..D. (Other digit sets and display symbols are reserved for a later version; see [6.17](format/other.mdx)). |
+| `digits` | yes | Integer D ≥ 1: cells hold the digits 1..D. (Other digit sets and display symbols are reserved for a later version; see [6.17](rules/other.mdx)). |
 | `givens` | yes | Flat list of R×C entries in reading order (row by row). `0` = empty cell, `null` = no cell at that position (the gaps of multi-grid boards), otherwise the given digit as a number (so 10..D work). This is the **only** representation: no text rows, no digit strings, no per-cell objects. |
 | `solution` | no | Same shape as `givens`, every existing cell filled, `null` exactly where `givens` has `null`. |
 | `candidates` | no | Given pencil marks (Sukaku): `{"r1c1": [1, 3, 7], …}`, ascending integer lists. **Semantic**: each listed cell's digit is one of its list; unlisted cells are unrestricted. Graphical cell clues (odd, even, …) are `cell` rules, never candidates. |
@@ -178,7 +178,7 @@ these holds:
 3. A rule `type` it does not know, or a `kind` it does not know for a known type.
 4. A vendor rule type (`"com.example:foo"`: reverse-DNS namespace, colon, name) it does not implement. Core type names
    never contain a colon.
-5. `"type": "custom"` (reserved, [6.17](format/other.mdx)).
+5. `"type": "custom"` (reserved, [6.17](rules/other.mdx)).
 6. A structural check fails: `len(givens) != R*C`; `solution` or `candidates` disagree in shape; a cell name refers to
    a missing cell; an edge pair is not orthogonally adjacent; a corner set is not a 2×2 block; an outside clue's
    cells are not collinear and contiguous, or the position next to `cells[0]` on `side` is a cell; an arrow shaft
@@ -249,15 +249,15 @@ else in the format (`value` for a number, `sum` for a sum):
 
 Each rule family has its own page; the quick reference lists every `type` and `kind` with a link.
 
-- [Houses and regions](format/houses-and-regions.mdx): 6.1 houses, 6.2 `region`
-- [Cages and sums](format/cages-and-sums.mdx): 6.3 `cage`, 6.8 `sum`
-- [Lines and arrows](format/lines-and-arrows.mdx): 6.4 `line`, 6.5 `arrow`
-- [Edges and corners](format/edges-and-corners.mdx): 6.6 `edge`, 6.7 `corner`
-- [Outside clues](format/outside-clues.mdx): 6.9 `sandwich`, `xsum`, `skyscraper`, `rossini`, `first_seen`
-- [Whole-board rules](format/whole-board-rules.mdx): 6.10 `neighbours`, 6.11 `relation`, 6.14 `negative`
-- [Cell clues](format/cell-clues.mdx): 6.12 `cell`
-- [Other rules](format/other.mdx): 6.13 other families, 6.15 vendor rules, 6.16 what is not a rule, 6.17 reserved
-- [Quick reference](format/quick-reference.mdx): every `type` and `kind` on one page
+- [Houses and regions](rules/houses-and-regions.mdx): 6.1 houses, 6.2 `region`
+- [Cages and sums](rules/cages-and-sums.mdx): 6.3 `cage`, 6.8 `sum`
+- [Lines and arrows](rules/lines-and-arrows.mdx): 6.4 `line`, 6.5 `arrow`
+- [Edges and corners](rules/edges-and-corners.mdx): 6.6 `edge`, 6.7 `corner`
+- [Outside clues](rules/outside-clues.mdx): 6.9 `sandwich`, `xsum`, `skyscraper`, `rossini`, `first_seen`
+- [Whole-board rules](rules/whole-board-rules.mdx): 6.10 `neighbours`, 6.11 `relation`, 6.14 `negative`
+- [Cell clues](rules/cell-clues.mdx): 6.12 `cell`
+- [Other rules](rules/other.mdx): 6.13 other families, 6.15 vendor rules, 6.16 what is not a rule, 6.17 reserved
+- [Quick reference](rules/quick-reference.mdx): every `type` and `kind` on one page
 
 "Repeats" in the family tables says whether digits may repeat among a rule's cells **because of that rule**; houses still apply.
 
@@ -330,4 +330,4 @@ decompressed text is a normal `sudoku-puzzle` file.
 
 ## 9. Examples
 
-Complete example files are on the [examples page](format/examples.mdx).
+Complete example files are on the [examples page](rules/examples.mdx).

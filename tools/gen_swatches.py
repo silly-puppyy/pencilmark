@@ -98,12 +98,22 @@ SWATCHES = {
 }
 
 
-def doc_for(rules, givens):
-    flat = [v for row in (givens or [[0] * 3] * 3) for v in row]
+SMALL = ("edge-", "corner-", "contains-")  # two-cell and corner clues read better on a 2x2 board (markers 1.5x larger)
+
+
+def doc_for(name, rules, givens):
+    n = 3
+    if name.startswith(SMALL):  # move a clue drawn on row 2 up to row 1, keep the first two rows and columns
+        rows = [r[:2] for r in (givens or [[0] * 3] * 3)]
+        if all(c.startswith("r2") for rule in rules for c in rule["cells"]):
+            rules = [dict(rule, cells=[c.replace("r2", "r1", 1) for c in rule["cells"]]) for rule in rules]
+            rows = rows[1:]
+        n, givens = 2, rows[:2]
+    flat = [v for row in (givens or [[0] * n] * n) for v in row]
     return {
         "format": "sudoku-puzzle",
         "format_version": 1,
-        "board": {"rows": 3, "cols": 3},
+        "board": {"rows": n, "cols": n},
         "digits": 9,
         "givens": flat,
         "rules": rules,
@@ -119,7 +129,7 @@ def main(argv=None):
         try:
             for dark, suffix in ((False, ""), (True, "-dark")):
                 (out / f"{name}{suffix}.svg").write_text(
-                    render_svg.render(doc_for(rules, givens), dark=dark, cell=40), encoding="utf-8"
+                    render_svg.render(doc_for(name, rules, givens), dark=dark, cell=40), encoding="utf-8"
                 )
             done.append(name)
         except Exception as e:  # a swatch the renderer cannot draw is reported, not fatal

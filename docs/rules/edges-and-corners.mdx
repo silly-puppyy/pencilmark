@@ -16,13 +16,13 @@ Exactly 2 orthogonally adjacent cells.
 
 | `kind` | Fields | Meaning | Drawing |
 |---|---|---|---|
-| `kropki` | `color`: `"white"` \| `"black"` | White: \|a − b\| = 1. Black: one digit is double the other. A 1–2 pair may carry either colour. | <Swatch name="edge-kropki-white" json={`{"type": "edge", "kind": "kropki", "color": "white", "cells": ["r2c1", "r2c2"]}`} /> <Swatch name="edge-kropki-black" json={`{"type": "edge", "kind": "kropki", "color": "black", "cells": ["r2c1", "r2c2"]}`} /> |
-| `xv` | `letter`: `"X"` \| `"V"` | X: a + b = 10. V: a + b = 5. | <Swatch name="edge-xv-x" json={`{"type": "edge", "kind": "xv", "letter": "X", "cells": ["r2c1", "r2c2"]}`} /> <Swatch name="edge-xv-v" json={`{"type": "edge", "kind": "xv", "letter": "V", "cells": ["r2c1", "r2c2"]}`} /> |
-| `difference` | `value` k | \|a − b\| = k. | <Swatch name="edge-difference" json={`{"type": "edge", "kind": "difference", "value": 3, "cells": ["r2c1", "r2c2"]}`} /> |
-| `sum` | `sum` s | a + b = s. | <Swatch name="edge-sum" json={`{"type": "edge", "kind": "sum", "sum": 12, "cells": ["r2c1", "r2c2"]}`} /> |
+| `kropki` | `color`: `"white"` \| `"black"` | White: \|a − b\| = 1. Black: one digit is double the other. A 1–2 pair may carry either colour. | <Swatch name="edge-kropki-white" json={`{"type": "edge", "kind": "kropki", "color": "white", "cells": ["r1c1", "r1c2"]}`} /> <Swatch name="edge-kropki-black" json={`{"type": "edge", "kind": "kropki", "color": "black", "cells": ["r1c1", "r1c2"]}`} /> |
+| `xv` | `letter`: `"X"` \| `"V"` | X: a + b = 10. V: a + b = 5. | <Swatch name="edge-xv-x" json={`{"type": "edge", "kind": "xv", "letter": "X", "cells": ["r1c1", "r1c2"]}`} /> <Swatch name="edge-xv-v" json={`{"type": "edge", "kind": "xv", "letter": "V", "cells": ["r1c1", "r1c2"]}`} /> |
+| `difference` | `value` k | \|a − b\| = k. | <Swatch name="edge-difference" json={`{"type": "edge", "kind": "difference", "value": 3, "cells": ["r1c1", "r1c2"]}`} /> |
+| `sum` | `sum` s | a + b = s. | <Swatch name="edge-sum" json={`{"type": "edge", "kind": "sum", "sum": 12, "cells": ["r1c1", "r1c2"]}`} /> |
 | `product` | `value` p | a · b = p. |  |
 | `ratio` | `value` k | one digit is k times the other. |  |
-| `less` | – | `cells[0] < cells[1]`; the order matters. | <Swatch name="edge-less" json={`{"type": "edge", "kind": "less", "cells": ["r2c1", "r2c2"]}`} /> |
+| `less` | – | `cells[0] < cells[1]`; the order matters. | <Swatch name="edge-less" json={`{"type": "edge", "kind": "less", "cells": ["r1c1", "r1c2"]}`} /> |
 
 </div>
 
