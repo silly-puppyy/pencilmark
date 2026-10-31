@@ -21,19 +21,23 @@ class Board:
         self.C = max(c for _, c in self.coords) + 1
 
     def name(self, i):
+        """cell index i -> its name (r1c1)"""
         return cell_name(*self.coords[i])
 
     def idx(self, name):
+        """cell name -> index; FormatError if it is not a cell of the board"""
         rc = parse_cell(name)
         if rc not in self.cid:
             raise FormatError(f"cell {name} does not exist (null in givens or outside the grid)")
         return self.cid[rc]
 
     def adjacent(self, a, b):
+        """True if cells a and b share an edge"""
         (r1, c1), (r2, c2) = self.coords[a], self.coords[b]
         return abs(r1 - r2) + abs(c1 - c2) == 1
 
     def touching(self, a, b):
+        """True if cells a and b touch by an edge or a corner"""
         (r1, c1), (r2, c2) = self.coords[a], self.coords[b]
         return max(abs(r1 - r2), abs(c1 - c2)) == 1
 
@@ -60,6 +64,7 @@ class Board:
         return out
 
     def is_block(self, cells):
+        """True if the four cells are a 2x2 block written TL, TR, BL, BR"""
         if len(cells) != 4:
             return False
         (r, c) = self.coords[cells[0]]
@@ -91,6 +96,7 @@ class Board:
         return None
 
     def outside_ok(self, side, cells, diagonal_ok=True):
+        """True if check_outside accepts cells on that side"""
         try:
             self.check_outside(side, cells, diagonal_ok)
             return True
@@ -98,6 +104,8 @@ class Board:
             return False
 
     def check_outside(self, side, cells, diagonal_ok=True, what="outside clue"):
+        """raise FormatError unless cells start just outside the grid on side and run away from it
+        (diagonally too when diagonal_ok)"""
         r, c = self.coords[cells[0]]
         sr, sc = SIDES[side]
         if (r + sr, c + sc) in self.cid:
@@ -141,6 +149,7 @@ def subgrid_units(grid, n, box):
 
 
 def window(B, r0, c0, n):
+    """indices of the n x n cells with top-left corner (r0, c0); None if one is missing"""
     out = []
     for r in range(r0, r0 + n):
         for c in range(c0, c0 + n):
@@ -173,6 +182,7 @@ def grid_units(B, r0, c0, box=None):
 
 
 def grid_area(B, r0, c0):
+    """set of the cell indices in the D x D square with top-left corner (r0, c0)"""
     return {B.cid[(r, c)] for r in range(r0, r0 + B.D) for c in range(c0, c0 + B.D)}
 
 
@@ -217,6 +227,7 @@ def _cb(t):
 
 
 def battenburg_table(D, marked):
+    """allowed 2x2 digit tuples (TL, TR, BL, BR) of a battenburg window, marked or unmarked"""
     return [
         list(t)
         for t in itertools.product(range(1, D + 1), repeat=4)
@@ -225,6 +236,7 @@ def battenburg_table(D, marked):
 
 
 def lockout_table(D, k):
+    """allowed (x, y, z) triples: |x - y| >= k and z outside the range between x and y"""
     return [
         (x, y, z)
         for x in range(1, D + 1)
@@ -236,10 +248,12 @@ def lockout_table(D, k):
 
 
 def vudoku_table(D):
+    """allowed (x, y, z) triples: x is y + z or |y - z|"""
     return [(x, y, z) for y in range(1, D + 1) for z in range(1, D + 1) for x in {y + z, abs(y - z)} if 1 <= x <= D]
 
 
 def product_pairs(D, p):
+    """digit pairs [u, v] in 1..D with u * v == p"""
     return [[u, v] for u in range(1, D + 1) for v in range(1, D + 1) if u * v == p]
 
 

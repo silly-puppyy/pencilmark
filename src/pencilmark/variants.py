@@ -41,23 +41,29 @@ class Grid:
         self._cells = cells  # explicit cell names in the subgrid's reading order (cells-form subgrid)
 
     def cell(self, r, c):
+        """name of the cell at local (r, c)"""
         if self._cells is not None:
             return self._cells[r * self.n + c]
         return cell_name(self.r0 + r, self.c0 + c)
 
     def block(self, r, c, h, w):
+        """names of the h x w cells with top-left corner (r, c), row by row"""
         return [self.cell(r + a, c + b) for a in range(h) for b in range(w)]
 
     def cells_set(self):
+        """names of all n x n cells, row by row"""
         return self.block(0, 0, self.n, self.n)
 
     def diagonal(self):
+        """names of the cells on the main diagonal"""
         return [self.cell(i, i) for i in range(self.n)]
 
     def antidiagonal(self):
+        """names of the cells on the diagonal from top right to bottom left"""
         return [self.cell(i, self.n - 1 - i) for i in range(self.n)]
 
     def boxes(self):
+        """top-left (r, c) of every box; empty for a jigsaw or Latin square"""
         if not self.box:
             return []
         return [(br, bc) for br in range(0, self.n, self.bh) for bc in range(0, self.n, self.bw)]
@@ -75,11 +81,14 @@ class Grid:
         return [(r, c) for r, c in out if r + self.bh <= self.n - 1 and c + self.bw <= self.n - 1]
 
     def line(self, r, c, dr, dc, length):
+        """names of length cells from (r, c) stepping (dr, dc)"""
         return [self.cell(r + k * dr, c + k * dc) for k in range(length)]
 
 
 @dataclass
 class Variant:
+    """a registered variant: name, aliases and rule text, with a placement function or a family matcher"""
+
     name: str
     fn: object
     text: object
@@ -93,6 +102,8 @@ REGISTRY: list[Variant] = []
 
 
 def variant(name, aliases=(), text=""):
+    """decorator: register fn as the placement variant name"""
+
     def deco(fn):
         REGISTRY.append(Variant(name, fn, text, tuple(aliases), "placement", order=len(REGISTRY)))
         return fn
@@ -101,21 +112,25 @@ def variant(name, aliases=(), text=""):
 
 
 def family(name, match, text, aliases=()):
+    """register a family variant (no placement function) with its matcher, rule text and aliases"""
     REGISTRY.append(Variant(name, None, text, tuple(aliases), "family", match, order=len(REGISTRY)))
 
 
 def region(cells, kind="extra"):
+    """region rule dict of the given kind over cells"""
     return {"type": "region", "kind": kind, "cells": cells}
 
 
 # --------------------------------------------------------------------------------------------------- placement variants
 @variant("X", aliases=["Diagonal Sudoku", "Sudoku X"], text="Digits don't repeat on either of the two main diagonals.")
 def x_sudoku(g):
+    """the two main diagonals as diagonal regions"""
     return [region(g.diagonal(), "diagonal"), region(g.antidiagonal(), "diagonal")]
 
 
 @variant("Windoku", aliases=["Hyper", "NRC"], text="Digits don't repeat in any of the shaded {bh}×{bw} windows.")
 def windoku(g):
+    """the windoku windows as window regions; None without boxes"""
     starts = g.window_starts()
     if not starts:
         return None
@@ -124,6 +139,7 @@ def windoku(g):
 
 @variant("Argyle", text="Digits don't repeat on any of the eight marked diagonals.")
 def argyle(g):
+    """the eight argyle diagonals as regions; 9x9 only, else None"""
     if g.n != 9:
         return None
     return [
@@ -140,6 +156,7 @@ def argyle(g):
 
 @variant("Asterisk", text="Digits don't repeat in the nine shaded cells forming an asterisk.")
 def asterisk(g):
+    """the nine asterisk cells as one region; 9x9 only, else None"""
     if g.n != 9:
         return None
     return [region([g.cell(r, c) for r, c in ((1, 4), (2, 2), (2, 6), (4, 1), (4, 4), (4, 7), (6, 2), (6, 6), (7, 4))])]
@@ -147,6 +164,7 @@ def asterisk(g):
 
 @variant("Centre-dot", aliases=["Center dot"], text="Digits don't repeat among the centre cells of the boxes.")
 def centre_dot(g):
+    """the centre cell of every box as one region; None unless the boxes have odd sides"""
     if not g.box or g.bh % 2 == 0 or g.bw % 2 == 0:
         return None
     return [region([g.cell(br + g.bh // 2, bc + g.bw // 2) for br, bc in g.boxes()])]
@@ -154,6 +172,7 @@ def centre_dot(g):
 
 @variant("Girandola", text="Digits don't repeat in the nine shaded cells of the girandola pattern.")
 def girandola(g):
+    """the nine girandola cells as one region; 9x9 only, else None"""
     if g.n != 9:
         return None
     return [region([g.cell(r, c) for r, c in ((0, 0), (0, 8), (1, 4), (4, 1), (4, 4), (4, 7), (7, 4), (8, 0), (8, 8))])]
@@ -165,6 +184,7 @@ def girandola(g):
     text="Cells in the same position in each {bh}×{bw} box contain different digits.",
 )
 def disjoint(g):
+    """one region per position inside a box (the cells at that position in every box); None without boxes"""
     if not g.box:
         return None
     return [
@@ -404,6 +424,7 @@ def layout_name(subgrids, extra=0):
 
 
 def size_word(D):
+    """title word for a grid size: Tiny (4), Mini (6), nothing (9), else DxD"""
     return {4: "Tiny", 6: "Mini", 9: ""}.get(D, f"{D}x{D}")
 
 

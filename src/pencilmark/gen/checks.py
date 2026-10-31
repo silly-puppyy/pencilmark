@@ -48,6 +48,7 @@ def logic_techs(P):
 
 
 def band_techs(P, cap):
+    """logic techniques of band cap or lower"""
     return {t for t in logic_techs(P) if E2.tech_band(t) <= cap}
 
 
@@ -79,6 +80,7 @@ class Checker:
         return p.N - len(p.givens) - placed
 
     def ok(self, givens, els):
+        """True if the capped solve places every empty cell"""
         return self.left(givens, els) == 0
 
 
@@ -90,6 +92,8 @@ class Oracle:
         self.pool, self.calls, self.hits = [], 0, 0
 
     def unique(self, givens, els):
+        """True if CP-SAT proves the candidate (givens, els) has one solution;
+        a cached alternative or a timeout is not unique"""
         for alt in self.pool:
             if satisfies(self.b, alt, givens, els):
                 self.hits += 1

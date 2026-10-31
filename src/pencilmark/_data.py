@@ -12,14 +12,17 @@ def path(name):
 
 
 def exists(name):
+    """True if pencilmark/data has a file called name"""
     return path(name).is_file()
 
 
 def read_text(name):
+    """UTF-8 text of a file in pencilmark/data"""
     return path(name).read_text(encoding="utf-8")
 
 
 def load_json(name):
+    """parsed JSON of a file in pencilmark/data"""
     return json.loads(read_text(name))
 
 

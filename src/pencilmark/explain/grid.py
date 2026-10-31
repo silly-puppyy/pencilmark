@@ -95,6 +95,7 @@ class State:
 
     @classmethod
     def initial(cls, p):
+        """State of puzzle p with its givens placed"""
         st = cls(p)
         for c, v in p.givens.items():
             st.place(c, v)
@@ -102,12 +103,14 @@ class State:
         return st
 
     def copy(self):
+        """independent copy of this state"""
         s = State(self.p, self.vals, self.cand, self.mode)
         s.idx, s.lost = self.idx, dict(self.lost)
         s.givens = getattr(self, "givens", set())
         return s
 
     def placed_g(self, gi):
+        """mask of the digits placed in group gi"""
         m = 0
         for c in self.p.groups[gi].cells:
             if self.vals[c]:
@@ -115,6 +118,7 @@ class State:
         return m
 
     def place(self, c, v, tag=None):
+        """put digit v in cell c and remove its candidates from the peers and related cells (tag is kept in lost)"""
         p = self.p
         self.vals[c] = v
         self.cand[c] = 0
@@ -133,6 +137,7 @@ class State:
                 self.cand[q] &= ~nb
 
     def apply(self, step):
+        """apply a step's placement and eliminations (recorded in lost), update the mode, advance idx"""
         m = step.move
         tag = (self.idx, m.feat[0])
         if m.feat[0] == S.TAKE_NOTES:
@@ -191,6 +196,7 @@ class Rule:
         self.con, self.total, self.segs, self.line_kind, self.distinct = con or {}, total, segs, line_kind, distinct
 
     def check(self, a):
+        """True if the digits a, one per cell of the rule, satisfy it"""
         k, con = self.kind, self.con
         if k in ("sum", "cage", "little_killer", "innie"):
             return sum(a) == self.total
@@ -612,6 +618,7 @@ def _cage_direct(p, st, gi):
 
 
 def direct_excl(p, st, c):
+    """mask of the digits excluded at cell c by the placed digits alone"""
     m = 0
     for _, mm, _ in direct_sources(p, st, c):
         m |= mm

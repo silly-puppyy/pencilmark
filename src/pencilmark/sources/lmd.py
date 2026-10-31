@@ -102,6 +102,7 @@ def parse_puzzle(pid, h):
 
 
 def parse_solvers(h):
+    """solver-list page HTML -> [(name, time)]"""
     return [
         (_html.unescape(n).strip(), t.strip())
         for n, t in re.findall(
@@ -111,6 +112,7 @@ def parse_solvers(h):
 
 
 def parse_listing(h):
+    """search listing page HTML -> (rows, last_page); last_page is None without paging links"""
     rows = [
         {
             "rank": int(rank),
@@ -136,6 +138,7 @@ def listing(page=0, sort="oft", http=None):
 
 
 def fetch_page(lmd_id, http=None):
+    """HTML of a puzzle page; SourceError for an id that is not an LMD puzzle id"""
     if not ID_RE.match(str(lmd_id)):
         raise SourceError(f"not an LMD puzzle id: {lmd_id!r}")
     return (http or HTTP).get_text(f"{BASE}/Raetsel/zeigen.php?id={lmd_id}&chlang=en")
@@ -152,6 +155,7 @@ def puzzle(lmd_id, solvers=False, http=None):
 
 
 def lmd_id_of(url):
+    """the 6-character puzzle id in a logic-masters.de puzzle or solver-list URL, else None"""
     m = re.search(
         r"logic-masters\.de/Raetselportal/Raetsel/(?:zeigen|loeserliste)\.php\?(?:[^#]*&)?id=([0-9A-Za-z]{6})", url
     )

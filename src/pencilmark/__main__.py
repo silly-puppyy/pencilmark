@@ -241,6 +241,7 @@ def _rate_one(args):
 
 
 def cmd_rate(a):
+    """`rate` command: print one grading line per input puzzle (a worker pool when --jobs > 1)"""
     try:
         _quality_arg(a.quality)
     except ValueError as e:
@@ -265,6 +266,7 @@ def cmd_rate(a):
 
 
 def cmd_solve(a):
+    """`solve` command: print each input puzzle's solution, or not unique / undecided / no solution"""
     from . import cpsat_verify as V
 
     def one(k, obj):
@@ -286,6 +288,7 @@ def cmd_solve(a):
 
 
 def cmd_count(a):
+    """`count` command: print each input puzzle's number of solutions (>=N when cut off at --limit)"""
     from .api import count_solutions
 
     def one(k, obj):
@@ -296,6 +299,7 @@ def cmd_count(a):
 
 
 def cmd_generate(a):
+    """`generate` command: generate a puzzle from a spec (file or stdin); --result prints the whole result"""
     from .api import dumps, generate
 
     spec = json.load(sys.stdin) if a.spec in (None, "-") else json.loads(Path(a.spec).read_text(encoding="utf-8"))
@@ -316,6 +320,7 @@ def cmd_generate(a):
 
 
 def cmd_json(a):
+    """`json` command: print each input puzzle as one line of puzzle JSON with its hash"""
     from .export import read_meta
 
     def one(k, obj):
@@ -327,6 +332,7 @@ def cmd_json(a):
 
 
 def cmd_export(a):
+    """`export` command: print each input puzzle in the sudoku-puzzle format (--no-solution drops the solution)"""
     from .api import dumps, to_export
 
     def one(k, obj):
@@ -337,12 +343,14 @@ def cmd_export(a):
 
 
 def cmd_fingerprint(a):
+    """`fingerprint` command: print the fingerprint of each input puzzle"""
     from .api import fingerprint
 
     _each(a, lambda k, obj: print(fingerprint(obj), flush=True))
 
 
 def cmd_describe(a):
+    """`describe` command: print the description of each input puzzle as one line of JSON"""
     from .api import describe, to_export
 
     _each(
@@ -354,6 +362,7 @@ def cmd_describe(a):
 
 
 def main(argv=None):
+    """command-line entry point: parse argv, set UTF-8 on stdin and stdout, run the chosen command"""
     for f in (sys.stdin, sys.stdout):  # UTF-8 on every platform (Windows pipes default to the ANSI code page)
         try:
             f.reconfigure(encoding="utf-8")

@@ -89,6 +89,7 @@ class _ReadCtx:
         ]
 
     def share_house(self, a, b):
+        """True if cells a and b lie in one house"""
         return any(a in h and b in h for h in self.houses)
 
     def pair_table(self, a, b, ok):
@@ -100,9 +101,11 @@ class _ReadCtx:
         return {"type": "table", "cells": [self.B.name(a), self.B.name(b)], "allowed": allowed}
 
     def n(self, cells):
+        """cell indices -> their names"""
         return [self.B.name(c) for c in cells]
 
     def pairs_rule(self, kind, args, prs):
+        """pairs rule dict (relation kind, its params, cell names) for the cell index pairs prs"""
         return {
             "type": "pairs",
             "rel": kind,
@@ -111,16 +114,19 @@ class _ReadCtx:
         }
 
     def ortho_pairs(self, cells=None):
+        """orthogonal pairs (of cells, or the whole board), kept within one subgrid when there are subgrids"""
         prs = self.B.pairs(ORTHO, cells)
         if self.subgrids:
             prs = [(a, b) for a, b in prs if self.sub_of.get(a, set()) & self.sub_of.get(b, set())]
         return prs
 
     def negative_pairs(self, of, sel_cells=None):
+        """orthogonal pairs (of sel_cells, or the whole board) that have no edge clue of kind of"""
         exempt = self.family.get(of, set())
         return [(a, b) for a, b in self.ortho_pairs(sel_cells) if frozenset((a, b)) not in exempt]
 
     def rule(self, i, r, done):
+        """engine rules for file rule r at index i; rules consumed with it are added to done"""
         B, D, t = self.B, self.D, r["type"]
         idx = lambda xs: [B.idx(c) for c in xs]
         if t in ("grid", "box_grid", "box", "row", "column", "region", "cage"):
@@ -257,6 +263,7 @@ class _ReadCtx:
         raise FormatError(f"unknown rule type {t!r}")
 
     def neighbours(self, r):
+        """engine rules for a neighbours rule: a whole-board kind, or the scoped cell pairs"""
         B = self.B
         k = r.get("kind")
         scoped = "within" in r or "cells" in r or "except" in r
@@ -290,6 +297,8 @@ class _ReadCtx:
         return [self.pairs_rule(kind, args, prs)] if prs else []
 
     def rossini(self, i, done):
+        """engine rossini rule from all the rossini rules and their negative (plain D x D board only);
+        marks them done"""
         B = self.B
         arrows, all_given = [], False
         for j, x in enumerate(self.rules):
@@ -307,6 +316,8 @@ class _ReadCtx:
         return [{"type": "rossini", "arrows": arrows, "all_given": all_given}]
 
     def battenburg(self, i, done):
+        """engine table rules for the battenburg corners (every window when a negative is present);
+        marks them done"""
         B, D = self.B, self.D
         marked, neg, scope = [], False, None
         for j, x in enumerate(self.rules):
@@ -331,6 +342,8 @@ class _ReadCtx:
         return out
 
     def lowhigh(self, i, r, done):
+        """engine rule for a low / high cell rule: digit_class for marked cells only, lowhigh with a negative;
+        marks the rules it consumes done"""
         B, D = self.B, self.D
         split = r["split"]
         hi_rules = [

@@ -157,6 +157,7 @@ HUMAN_K = [0.02, 0.15, 0.3, 0.08, 0.7, 0.05, 0.1, 0.0]
 
 
 def copy_params(p):
+    """copy of the params dict with its dict and list values copied one level deep"""
     return {k: (dict(v) if isinstance(v, dict) else list(v) if isinstance(v, list) else v) for k, v in p.items()}
 
 
@@ -247,14 +248,18 @@ def meta_priced(meta):
 
 
 class Scorer:
+    """prices a move from its features under a params dict (structural pricing when meta_theta is set)"""
+
     def __init__(self, params=None):
         self.p = complete_params(params or DEFAULT_PARAMS)
         self.meta = self.p.get("meta_theta")  # if set: strategies graded by structure, not per-technique
 
     def size(self, D):
+        """board-size factor ((D - 1) / 8) ** alpha, 1 for 9 digits"""
         return ((D - 1) / 8.0) ** self.p["alpha"]
 
     def difficulty(self, feat, D):
+        """price of one move from feat = (tech, base_shape, cover, extra[, meta[, load]]) on a D-digit board"""
         tech, base_shape, cover, extra = feat[:4]
         P = self.p
         g = P["gamma"]

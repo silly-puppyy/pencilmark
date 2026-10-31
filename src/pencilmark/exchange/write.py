@@ -127,6 +127,7 @@ class _Writer:
         return out
 
     def straight(self, cells):
+        """'row' or 'col' if cells are consecutive along one row or column, else None"""
         co = [self.B.coords[c] for c in cells]
         if all(r == co[0][0] for r, _ in co) and [c for _, c in co] == list(range(co[0][1], co[0][1] + len(co))):
             return "row"
@@ -209,6 +210,7 @@ class _Writer:
         return rules
 
     def group_rule(self, kind, cells, total):
+        """sudoku-puzzle rule dict for an engine group of this kind, cells and total"""
         B = self.B
         names = [B.name(c) for c in cells]
         if kind == "cage":
@@ -226,6 +228,7 @@ class _Writer:
         return {"type": "region", "kind": "disjoint" if self.is_disjoint(cells) else "extra", "cells": names}
 
     def is_disjoint(self, cells):
+        """True if cells are the same position in each box (a disjoint-groups region)"""
         D = self.D
         if D not in PJ.BOXES or len(cells) != D or not (self.B.R == self.B.C == D):
             return False
@@ -235,6 +238,7 @@ class _Writer:
 
     # ---------------------------------------------------------------- run
     def run(self, meta, solution):
+        """engine puzzle -> sudoku-puzzle dict (givens, solution, meta, candidates, rules); sets self.prov"""
         p, B, D = self.p, self.B, self.D
         R, C = B.R, B.C
         flat = {i: rc[0] * C + rc[1] for i, rc in enumerate(B.coords)}
@@ -269,6 +273,8 @@ class _Writer:
         return d
 
     def cell_clues(self):
+        """-> (candidates, [(rule, provenance)]): the cell clues as rules; candidates only where no clue explains
+        the domain"""
         p, B, D = self.p, self.B, self.D
         n = len(B.coords)
         implied = [(1 << D) - 1] * len(p.domains)
@@ -284,6 +290,7 @@ class _Writer:
         return cands, out
 
     def clue_rule(self, r):
+        """sudoku-puzzle rules for one engine cell clue (parity, digit_class, exclude, lowhigh)"""
         B, D = self.B, self.D
         nm = lambda xs: [B.name(x) if isinstance(x, int) else x.lower() for x in xs]
         t = r["type"]
@@ -317,6 +324,7 @@ class _Writer:
 
     # ---------------------------------------------------------------- relations / constraints
     def write_rules(self):
+        """[(rule, provenance)] for the relations, constraints and named rules, in engine order"""
         p = self.p
         rels = list(p.relations)
         cons = list(p.constraints)
@@ -424,6 +432,7 @@ class _Writer:
         return out
 
     def named_cons_count(self, rule):
+        """number of engine constraints the named rule compiled to"""
         t = rule.get("type")
         D, B = self.D, self.B
         if t == "global_entropy":
@@ -440,6 +449,7 @@ class _Writer:
         return 0
 
     def named_rule(self, rule):
+        """sudoku-puzzle rules for a named engine rule (global entropy, quadruple, vudoku, ...)"""
         B, D = self.B, self.D
         t = rule["type"]
         nm = lambda xs: [B.name(x) if isinstance(x, int) else x.lower() for x in xs]
@@ -574,6 +584,7 @@ class _Writer:
         return items
 
     def ortho_in_subgrids(self):
+        """orthogonal cell pairs, kept within one subgrid when there are subgrids"""
         prs = self.B.pairs(ORTHO)
         if self.subgrids:
             sub_of = {}
@@ -666,6 +677,7 @@ class _Writer:
 
     # ------------------------------------------------ constraints
     def constraint_items(self, cons, drop):
+        """items {pos, rules, con} for the live constraints, with table blocks and arrow lines merged"""
         B = self.B
         items = []
         live = [i for i in range(len(cons)) if not drop[i] and not cons[i].get("_named")]
@@ -705,6 +717,7 @@ class _Writer:
         return items
 
     def con_cells(self, c):
+        """cell indices a constraint refers to"""
         out = list(c.get("cells") or []) + list(c.get("circle") or []) + list(c.get("line") or [])
         for k in ("segments", "regions", "houses"):
             for s in c.get(k) or []:
@@ -782,9 +795,12 @@ class _Writer:
         return None
 
     def mathrax_clue(self, c):
+        """(op, value) when a 2-cell table is exactly one numbered pair clue, else None"""
         return _pair_clue(self.D, c["allowed"])
 
     def quadruple_need(self, A, n):
+        """digits every tuple of the table A holds when A is exactly that 'contains' rule over n cells,
+        else None"""
         D = self.D
         if not A or len(A) == D**n:
             return None
@@ -799,6 +815,7 @@ class _Writer:
         return None
 
     def constraint_rule(self, c):
+        """sudoku-puzzle rules for one engine constraint"""
         B, D = self.B, self.D
         t = c.get("type")
         nm = lambda xs: [B.name(x) for x in xs]
@@ -883,10 +900,13 @@ class _Writer:
         raise NotSupportedError(f"engine constraint {t!r} has no format_version 1 rule")
 
     def common_group(self, cells):
+        """True if cells all lie in one group"""
         s = set(cells)
         return any(s <= set(g.cells) for g in self.p.groups)
 
     def equal_sum_rule(self, c):
+        """sudoku-puzzle rule for an equal_sum constraint: a zipper, double arrow or region-sum line when it is one,
+        else equal_sum"""
         B = self.B
         segs = [list(s) for s in c["segments"]]
         flat = [x for s in segs for x in s]

@@ -153,6 +153,7 @@ KEYS |= {"hash", "v"}  # written by `pencilmark json` / by older files; ignored
 
 
 def from_json(obj) -> M.Puzzle:
+    """puzzle JSON (dict or str) -> Puzzle, not finalized; ValueError for unknown keys or an unknown layout"""
     d = json.loads(obj) if isinstance(obj, str) else dict(obj)
     unknown = sorted(set(d) - KEYS)
     if unknown:  # an unrecognised dict (another app's format) must not be read as an empty grid
@@ -432,6 +433,7 @@ def entropy_table(D):
 
 
 def quadruple_table(D, n, need):
+    """every n-digit tuple over 1..D that holds each digit of need at least as often as need does"""
     import itertools
 
     return [
@@ -493,6 +495,7 @@ def _compiled_extras(p):
 
 
 def to_json(p: M.Puzzle, solution=None, meta=None) -> dict:
+    """Puzzle -> puzzle JSON dict; solution and meta are written when given"""
     D, coords = p.D, list(p.coords)
     cname = lambda i: f"r{coords[i][0] + 1}c{coords[i][1] + 1}"
     width = max(c for _, c in coords) + 1

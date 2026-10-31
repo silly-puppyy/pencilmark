@@ -20,10 +20,12 @@ from dataclasses import dataclass, field
 
 
 def bit(d: int) -> int:
+    """digit d (1-based) -> its one-bit candidate mask"""
     return 1 << (d - 1)
 
 
 def popcount(m: int) -> int:
+    """number of candidates in the mask m"""
     return m.bit_count()
 
 
@@ -52,6 +54,8 @@ def shape_ratio(coords) -> float:
 
 @dataclass
 class Group:
+    """cells whose digits never repeat (house, region, diagonal, window, cage) with its kind, cage total and shape"""
+
     name: str
     cells: tuple
     kind: str  # 'row' 'col' 'box' 'region' 'diag' 'window' 'cage' ...
@@ -123,6 +127,9 @@ PAIRWISE_LINE_KINDS = {
 
 @dataclass
 class Puzzle:
+    """engine puzzle: D digits, cell coordinates, groups, pair relations, n-ary constraints, domains and givens;
+    call finalize() before solving"""
+
     D: int
     coords: list
     groups: list = field(default_factory=list)
@@ -258,6 +265,7 @@ class Puzzle:
                         self.relations.append(("eq", a, b))
 
     def finalize(self):
+        """compile lines and clones, then build the derived tables (houses, peers, pair-relation exclusions) -> self"""
         self._compile_clones()
         self._compile_lines()
         for g in self.groups:
@@ -314,6 +322,7 @@ class Puzzle:
 
     @property
     def n_empty(self):
+        """number of cells without a given"""
         return self.N - len(self.givens)
 
 
@@ -342,6 +351,7 @@ def standard(size: int, box_h: int, box_w: int, grid: str = "", name="") -> Puzz
 
 
 def parse_grid(grid: str, size: int) -> dict:
+    """grid text (one character per cell or space-separated tokens; . 0 - empty, A = 10) -> {cell index: digit}"""
     toks = grid.split() if " " in grid.strip() else list(grid.strip())
     out = {}
     for i, t in enumerate(toks[: size * size]):
@@ -354,12 +364,14 @@ def parse_grid(grid: str, size: int) -> dict:
 
 
 def add_diagonals(p: Puzzle, size: int) -> Puzzle:
+    """add the two main diagonals of a size x size grid as groups -> p"""
     p.groups.append(Group("d1", tuple(i * size + i for i in range(size)), "diag", True))
     p.groups.append(Group("d2", tuple(i * size + (size - 1 - i) for i in range(size)), "diag", True))
     return p
 
 
 def add_windoku(p: Puzzle) -> Puzzle:
+    """add the four windoku windows of a 9x9 grid as groups -> p"""
     for wr in (1, 5):
         for wc in (1, 5):
             cells = tuple((wr + i) * 9 + (wc + j) for i in range(3) for j in range(3))
@@ -385,6 +397,7 @@ def jigsaw(size: int, regions: str, grid: str = "", name="") -> Puzzle:
 
 
 def add_nonconsecutive(p: Puzzle, size: int) -> Puzzle:
+    """add a nonconsec relation between every orthogonally adjacent pair of a size x size grid -> p"""
     for r in range(size):
         for c in range(size):
             i = r * size + c
@@ -396,6 +409,7 @@ def add_nonconsecutive(p: Puzzle, size: int) -> Puzzle:
 
 
 def add_antiknight(p: Puzzle, size: int) -> Puzzle:
+    """add a neq relation between every pair of cells a knight's move apart in a size x size grid -> p"""
     for r in range(size):
         for c in range(size):
             for dr, dc in ((1, 2), (2, 1), (2, -1), (1, -2)):

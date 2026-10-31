@@ -287,6 +287,8 @@ def _subj(nm, cs):
 
 # -------------------------------------------------------------------- naming --
 class Namer:
+    """names cells, digits and groups in step text (r1c1, row 3, box 2, ...)"""
+
     def __init__(self, p):
         self.p = p
         self.box_no, self.reg_no = {}, {}
@@ -301,13 +303,16 @@ class Namer:
         self.gidx = {g.name: gi for gi, g in enumerate(p.groups)}
 
     def cell(self, c):
+        """cell index -> r1c1 (1-based)"""
         r, cc = self.p.coords[c]
         return f"r{r + 1}c{cc + 1}"
 
     def sort(self, cs):
+        """unique cells in board order"""
         return sorted(set(cs), key=lambda c: self.p.coords[c])
 
     def cells(self, cs, conj="and"):
+        """cell names in board order, joined with conj"""
         return _join([self.cell(c) for c in self.sort(cs)], conj)
 
     def span(self, cs):
@@ -317,13 +322,16 @@ class Namer:
 
     @staticmethod
     def digits(ds, conj="or"):
+        """unique digits sorted, joined with conj"""
         return _join(sorted(set(ds)), conj)
 
     @staticmethod
     def cset(mask):
+        """candidate mask -> {1,2,3}"""
         return "{" + ",".join(str(d) for d in digits_of(mask)) + "}"
 
     def unit(self, gi, the=False):
+        """phrase naming group gi (row 3, box 2, the main diagonal, a cage, ...)"""
         p = self.p
         if gi is None or gi < 0 or gi >= len(p.groups):
             return "an implied house"
@@ -357,6 +365,7 @@ class Namer:
         return f"group {g.name}"
 
     def cage(self, gi, cells=True):
+        """phrase naming cage gi (the 12 cage), with its cells when cells is True"""
         g = self.p.groups[gi]
         head = f"the {g.total} cage" if g.total is not None else "the cage"
         if cells:
@@ -536,6 +545,8 @@ def _adapt_engine(nm, raw):
 
 
 class Ctx:
+    """what the explainers need about one step: its move, technique, engine explanation, namer and phrasing key"""
+
     def __init__(self, step, p, st):
         self.step, self.p, self.st = step, p, st
         self.m = step.move
@@ -551,9 +562,11 @@ class Ctx:
         self.key = (self.place, tuple(self.elims), self.tech)
 
     def pick(self, options, salt=""):
+        """one of options, always the same for the same move and salt"""
         return _pick(options, self.key, salt)
 
     def gi(self, name):
+        """index of the group called name, or None"""
         return self.nm.gidx.get(name)
 
 
