@@ -7,7 +7,7 @@ description: Ask the generator for a classic or a variant puzzle with a given ba
 
 pencilmark's generator makes puzzles to order: you say what the board holds and what the grade card must show, and it
 returns a unique puzzle that meets the request. In this tutorial you generate a Hard classic that needs an X-Wing, then
-a small variant. It assumes you have done [Write a variant puzzle file](variant-file.md). The generator is used from
+a small variant. It assumes you have done [Write a variant puzzle file](variant-file.mdx). The generator is used from
 Python.
 
 ## 1. A request
@@ -79,7 +79,7 @@ print(pencilmark.dumps(r["puzzle"]))
 ```
 
 This asks for a 6×6 with exactly two thermometers, one to three Kropki dots and four to eight givens, graded Medium.
-The puzzle in [Write a variant puzzle file](variant-file.md) came from a request like this one. `pencilmark.dumps`
+The puzzle in [Write a variant puzzle file](variant-file.mdx) came from a request like this one. `pencilmark.dumps`
 writes the puzzle in the format's canonical layout, one rule per line.
 
 ## 4. When the generator cannot do it

@@ -3,6 +3,8 @@ title: Write a variant puzzle file
 description: Write a 6×6 thermo and Kropki puzzle in the sudoku-puzzle format, check it and grade it.
 ---
 
+import PuzzleJson from '@site/src/components/PuzzleJson';
+
 # Write a variant puzzle file
 
 A variant puzzle does not fit in one line of digits, so pencilmark reads it as a JSON file in the
@@ -66,25 +68,8 @@ Add the variant rules after the `box_grid`:
 [Lines and arrows](../rules/lines-and-arrows.mdx) and [Edges and corners](../rules/edges-and-corners.mdx) list every
 option of these rules. The complete file is now:
 
-```json
-{"format": "sudoku-puzzle", "format_version": 1,
- "board": {"rows": 6, "cols": 6},
- "digits": 6,
- "givens": [
-    0, 0, 0, 0, 0, 0,
-    0, 1, 0, 0, 0, 0,
-    0, 0, 0, 0, 3, 0,
-    0, 2, 0, 0, 0, 0,
-    0, 0, 0, 5, 0, 0,
-    0, 0, 0, 0, 0, 0],
- "rules": [
-  {"type": "box_grid", "origin": "r1c1", "box": [2, 3]},
-  {"type": "line", "kind": "thermo", "cells": ["r4c4", "r3c4", "r2c4", "r2c3"]},
-  {"type": "line", "kind": "thermo", "cells": ["r6c3", "r5c3", "r4c3", "r3c3", "r3c2"]},
-  {"type": "edge", "kind": "kropki", "color": "white", "cells": ["r1c3", "r1c4"]},
-  {"type": "edge", "kind": "kropki", "color": "white", "cells": ["r1c5", "r1c6"]},
-  {"type": "edge", "kind": "kropki", "color": "black", "cells": ["r5c5", "r6c5"]}]}
-```
+<PuzzleJson name="mini-thermo-kropki"
+  caption="The finished file next to its drawing. Hover a rule in the JSON to find it on the board, or a line or dot on the board to find its rule." />
 
 ## 4. Check it
 

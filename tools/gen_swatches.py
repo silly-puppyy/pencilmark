@@ -18,7 +18,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import render_svg  # noqa: E402
 
-from pencilmark import puzzle_json, variants  # noqa: E402
+from pencilmark import exchange, puzzle_json, variants  # noqa: E402
 
 _ = 0
 # every line runs along the same 7 cells, a U from the top-left corner, so the pictures read alike
@@ -150,6 +150,9 @@ def layout_svg(origins, dark=False, cell=7, n=9):
     return "".join(out)
 
 
+EXAMPLES = sorted((Path(__file__).resolve().parents[1] / "docs" / "examples").glob("*.json"))
+
+
 def drawings():
     """name -> fn(dark) -> svg text, for every picture this script makes"""
     out = {}
@@ -165,9 +168,12 @@ def drawings():
             rules=[BOXES] + variants.preset_rules(v),
         )
         out["variant-" + v.lower().replace(" ", "-")] = lambda dark, doc=doc: render_svg.render(doc, dark=dark, cell=24)
-    for f in sorted((Path(__file__).resolve().parents[1] / "docs" / "examples").glob("*.json")):  # example puzzles
+    for f in EXAMPLES:  # example puzzles: plain, and annotated with row / column numbers for the board + JSON view
         doc = json.loads(f.read_text(encoding="utf-8"))
         out["example-" + f.stem] = lambda dark, doc=doc: render_svg.render(doc, dark=dark, cell=40)
+        out["example-" + f.stem + "-board"] = lambda dark, doc=doc: render_svg.render(
+            doc, dark=dark, cell=44, annotate=True, labels=True
+        )
     for key in variants.LAYOUT_NAMES:
         origins = [tuple(o) for o in puzzle_json._layouts()[key]]
         out["layout-" + key] = lambda dark, origins=origins: layout_svg(origins, dark)
@@ -198,6 +204,10 @@ def main(argv=None):
             done.append(name)
         except Exception as e:  # a swatch the renderer cannot draw is reported, not fatal
             failed[name] = f"{type(e).__name__}: {e}"
+    for f in EXAMPLES:  # the canonical text next to the board (PuzzleJson.js): its rules line up with data-rule
+        (out / f"example-{f.stem}.json").write_text(
+            exchange.dumps(json.loads(f.read_text(encoding="utf-8"))), encoding="utf-8"
+        )
     for name, (rules, _givens) in SWATCHES.items():  # the rules each picture draws, shown on click (Swatch.js)
         (out / f"{name}.json").write_text("\n".join(json.dumps(r) for r in rules), encoding="utf-8")
     (out / "swatches.json").write_text(json.dumps({"swatches": done, "failed": failed}, indent=1), encoding="utf-8")

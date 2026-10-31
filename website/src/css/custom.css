@@ -216,3 +216,14 @@ html[data-graphics='off'] .pm-alt-table { display: block; }
 figure.pm-chart { margin: 0.5rem 0 1.5rem; }
 figure.pm-chart figure { margin: 0; }
 .pm-chart figcaption { font-size: 0.85rem; color: var(--pm-muted); line-height: 1.5; }
+
+/* board + JSON (PuzzleJson.js): side by side on wide screens, stacked on narrow ones */
+.pm-puzzle-json { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-start; margin: 1rem 0 1.5rem; }
+.pm-puzzle-json-board { flex: 0 0 auto; width: min(270px, 100%); }
+.pm-puzzle-json-board svg { width: 100%; height: auto; display: block; }
+.pm-puzzle-json-board [data-rule] { cursor: pointer; transition: opacity 0.12s; }
+.pm-puzzle-json-text { flex: 1 1 15rem; min-width: 0; margin: 0; font-size: 0.72rem; line-height: 1.55; overflow-x: auto;
+  border: 1px solid var(--pm-line); }
+.pm-pj-line { display: block; padding: 0 0.3rem 0 1.6rem; text-indent: -1.3rem; border-radius: 3px; white-space: pre-wrap; }
+.pm-pj-on { background: var(--docusaurus-highlighted-code-line-bg); outline: 1px solid var(--ifm-color-primary-lightest); }
+.pm-puzzle-json figcaption { flex-basis: 100%; font-size: 0.85rem; color: var(--pm-muted); }

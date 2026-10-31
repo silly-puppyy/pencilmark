@@ -5,6 +5,7 @@ the docs; not part of the package).
 
 import json
 import math
+import re
 import sys
 from pathlib import Path
 
@@ -28,7 +29,9 @@ def esc(s):
     return str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-def render(doc, dark=False, cell=48):
+def render(doc, dark=False, cell=48, annotate=False, labels=False):
+    """svg text. annotate: every element drawn for rules[i] carries data-rule="i" (pages link it to the JSON);
+    labels: row numbers on the left and column numbers on top, outside the board and its outside clues."""
     T = THEMES[bool(dark)]
     S = STYLE
     u = float(cell)
@@ -42,6 +45,8 @@ def render(doc, dark=False, cell=48):
         for r in rules
     )
     m = u if has_out else 0.35 * u
+    lab = 0.55 * u if labels else 0.0  # a band for the row / column numbers
+    m += lab
     W, H = C * u + 2 * m, R * u + 2 * m
     rc = lambda name: X.parse_cell(name)
     cx = lambda c: m + (c + 0.5) * u
@@ -49,7 +54,12 @@ def render(doc, dark=False, cell=48):
     ctr = lambda name: (cx(rc(name)[1]), cy(rc(name)[0]))
     exists = {(r, c) for r, c in B.coords}
     layers = {k: [] for k in ("shade", "lines", "cages", "grid", "clues", "digits", "outside")}
-    add = lambda k, s: layers[k].append(s)
+    cur = [None]  # the rule being drawn (annotate)
+
+    def add(k, s):
+        if annotate and cur[0] is not None:
+            s = re.sub(r"<(\w+)", lambda mt: f'<{mt.group(1)} data-rule="{cur[0]}"', s)
+        layers[k].append(s)
 
     # ---- board, houses
     for r, c in B.coords:
@@ -104,7 +114,7 @@ def render(doc, dark=False, cell=48):
                     continue
                 x0, y0, x1, y1 = m + c * u, m + r * u, m + (c + 1) * u, m + (r + 1) * u
                 i = inset * u
-                ext = lambda a, b: (i if (r + a, c + b) not in st else -i)
+                ext = lambda a, b: i if (r + a, c + b) not in st else -i
                 if dr == -1:
                     seg = (x0 + ext(0, -1), y0 + i, x1 - ext(0, 1), y0 + i)
                 elif dr == 1:
@@ -139,7 +149,8 @@ def render(doc, dark=False, cell=48):
         )
 
     colour_i = 0
-    for r in rules:
+    for ri, r in enumerate(rules):
+        cur[0] = ri
         t, k = r["type"], r.get("kind")
         if t == "region":
             if k == "diagonal":
@@ -404,6 +415,13 @@ def render(doc, dark=False, cell=48):
                     )
         elif t == "vudoku":
             add("lines", polyline([r["cells"][1], r["cells"][0], r["cells"][2]], "#aaaaaa", 0.04))
+
+    cur[0] = None
+    if labels:  # r1.. down the left, c1.. along the top, in the muted text colour
+        for r in range(R):
+            add("outside", small_text(lab * 0.55, cy(r), f"r{r + 1}", size=0.26, col=T["cand"], weight=400))
+        for c in range(C):
+            add("outside", small_text(cx(c), lab * 0.55, f"c{c + 1}", size=0.26, col=T["cand"], weight=400))
 
     # ---- digits and candidates (halo in the board colour)
     halo = (S["halo_dark"] if dark else S["halo_light"]) * u
