@@ -756,22 +756,39 @@ void Solver::timed(const char* name, MoveBuf& b, const std::function<void()>& f)
 // every technique family of a phase: direct (no notes) or notes tiers
 void Solver::collect_all(MoveBuf& b, bool direct_phase) {
     if (direct_phase) {
-        timed("d:singles", b, [&] { direct_moves(b, false); });
+        // in state_moves each direct block goes through the listing cache like a strategy: each recomputes what it
+        // reads (direct_excl, the mental view by version; the lock tables are read only inside "d:locks"). Inside a
+        // solve they run as they are.
+        struct Block : Strategy {
+            const char* n;
+            std::function<void()> f;
+            Block(const char* name, std::function<void()> fn) : n(name), f(std::move(fn)) {}
+            const char* name() const override { return n; }
+            void collect(Solver&, MoveBuf&) override { f(); }
+        };
+        auto run = [&](const char* name, std::function<void()> f) {
+            timed(name, b, [&] {
+                if (lcache_solve) return f();
+                Block blk(name, std::move(f));
+                collect_strategy(blk, b);
+            });
+        };
+        run("d:singles", [&] { direct_moves(b, false); });
         if (p.has_cages || !p.nary.empty()) {
-            timed("d:innies", b, [&] { innies(b, false); });
-            timed("d:nary", b, [&] { nary_direct(b); });
+            run("d:innies", [&] { innies(b, false); });
+            run("d:nary", [&] { nary_direct(b); });
         }
         if ((!p.relations.empty() || !p.nary.empty()) && !disabled[LINE_D])
-            timed("d:line", b, [&] { direct_moves(b, false, 2); });
-        timed("d:locks", b, [&] {
+            run("d:line", [&] { direct_moves(b, false, 2); });
+        run("d:locks", [&] {
             if (direct_locks()) direct_moves(b, true);
         });
-        if (!disabled[MENTAL_D]) timed("d:mental", b, [&] { direct_moves(b, false, 3); });
-        if (!disabled[MENTAL_CHAIN]) timed("d:mentalchain", b, [&] { mental_chains(b); });
-        if (!disabled[EITHER_WAY]) timed("d:eitherway", b, [&] { either_way(b, true); });
-        if (!disabled[MENTAL_NOTES]) timed("d:mentalnotes", b, [&] { mental_notes(b); });
-        if (!disabled[COLOUR_ALGEBRA]) timed("d:colour", b, [&] { colour_algebra(b, true); });
-        if (!disabled[WHAT_IF]) timed("d:whatif", b, [&] { what_if(b, true); });
+        if (!disabled[MENTAL_D]) run("d:mental", [&] { direct_moves(b, false, 3); });
+        if (!disabled[MENTAL_CHAIN]) run("d:mentalchain", [&] { mental_chains(b); });
+        if (!disabled[EITHER_WAY]) run("d:eitherway", [&] { either_way(b, true); });
+        if (!disabled[MENTAL_NOTES]) run("d:mentalnotes", [&] { mental_notes(b); });
+        if (!disabled[COLOUR_ALGEBRA]) run("d:colour", [&] { colour_algebra(b, true); });
+        if (!disabled[WHAT_IF]) run("d:whatif", [&] { what_if(b, true); });
         return;
     }
     for (auto& tier : tiers)
