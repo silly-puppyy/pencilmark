@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `dumps` (canonical form) writes `board` as `rows`, then `cols`, whatever order the input used; the canonical text
+  of one puzzle could differ by that order.
 - `pencilmark.count_solutions(puzzle, limit=1000)` and `pencilmark count FILE`: how many solutions a puzzle has (`>=N`
   when counting stops at the limit).
 - `pencilmark generate SPEC`: the generator on the command line (`--seed`, `--time`, `--result`).
