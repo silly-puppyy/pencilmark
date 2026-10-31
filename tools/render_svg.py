@@ -11,9 +11,11 @@ from pathlib import Path
 
 try:  # an installed pencilmark (with its engine) if there is one, else the source tree
     from pencilmark import exchange as X
+    from pencilmark.rules import LINE
 except ImportError:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
     from pencilmark import exchange as X  # noqa: E402
+    from pencilmark.rules import LINE  # noqa: E402
 
 # board style, in cell units unless noted (docs/STYLE.md; values in docs/palette.json)
 _PAL = json.loads((Path(__file__).resolve().parents[1] / "docs/palette.json").read_text(encoding="utf-8"))
@@ -192,31 +194,28 @@ def render(doc, dark=False, cell=48, annotate=False, labels=False):
                     "cages",
                     small_text(m + cc * u + 0.09 * u, m + rr * u + 0.17 * u, r["sum"], size=0.22, anchor="start"),
                 )
-        elif t == "line":
+        elif t == "line":  # width and end markers from the line registry (pencilmark/rules/line.py)
+            lk = LINE[k]
             col = DUTCH if (k == "whisper" and r.get("value", 5) == 4) else LINE_COLOURS.get(k, "#aaaaaa")
-            w = (
-                S["thermo"]
-                if k in ("thermo", "slow_thermo")
-                else (0.1 if k == "between" else 0.05 if k in ("lockout", "double_arrow") else S["line"])
+            add(
+                "lines",
+                polyline(
+                    r["cells"], col, S[lk.width] if isinstance(lk.width, str) else lk.width, r.get("closed", False)
+                ),
             )
-            add("lines", polyline(r["cells"], col, w, r.get("closed", False)))
-            if k == "thermo":
+            if lk.ends in ("bulb", "hollow bulb"):
                 x, y = ctr(r["cells"][0])
-                add("lines", f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{S["bulb"] * u:.1f}" fill="{col}"/>')
-            if k == "slow_thermo":
-                x, y = ctr(r["cells"][0])
-                add(
-                    "lines",
-                    f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{S["bulb"] * u:.1f}" fill="{T["board"]}" stroke="{col}" stroke-width="{0.12 * u:.1f}"/>',
-                )
-            if k in ("between", "double_arrow"):
+                fill = col if lk.ends == "bulb" else T["board"]
+                ring = "" if lk.ends == "bulb" else f' stroke="{col}" stroke-width="{0.12 * u:.1f}"'
+                add("lines", f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{S["bulb"] * u:.1f}" fill="{fill}"{ring}/>')
+            if lk.ends == "circles":
                 for e in (r["cells"][0], r["cells"][-1]):
                     x, y = ctr(e)
                     add(
                         "lines",
                         f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{0.375 * u:.1f}" fill="{T["board"]}" stroke="{col}" stroke-width="{0.05 * u:.1f}"/>',
                     )
-            if k == "lockout":
+            if lk.ends == "diamonds":
                 for e in (r["cells"][0], r["cells"][-1]):
                     x, y = ctr(e)
                     d = 0.4 * u
@@ -224,7 +223,7 @@ def render(doc, dark=False, cell=48, annotate=False, labels=False):
                         "lines",
                         f'<polygon points="{x},{y - d} {x + d},{y} {x},{y + d} {x - d},{y}" fill="{T["board"]}" stroke="{col}" stroke-width="{0.05 * u:.1f}"/>',
                     )
-            if k == "zipper":  # small dot at the line's centre (a cell, or between the two middle cells)
+            if lk.ends == "centre dot":  # at the line's centre (a cell, or between the two middle cells)
                 n = len(r["cells"])
                 (xa, ya), (xb, yb) = ctr(r["cells"][(n - 1) // 2]), ctr(r["cells"][n // 2])
                 add(

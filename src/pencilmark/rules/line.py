@@ -29,13 +29,27 @@ class LineKind:
     params: tuple = ()  # optional keys on 9 x 9, required otherwise
     closable: bool = False  # "closed": true allowed (the last cell connects back to the first)
     name_fn: object = None  # fn(rules) -> the name for these rules, when it depends on them
+    width: object = "line"  # drawn line width: a docs/palette.json size name, or cell units
+    ends: str = ""  # end markers: "bulb" (filled, cells[0]), "hollow bulb", "circles", "diamonds", "centre dot"
 
 
 LINE = {
     k.kind: k
     for k in (
-        LineKind("thermo", "Thermo", "Digits strictly increase along a thermometer from the bulb."),
-        LineKind("slow_thermo", "Slow Thermo", "Digits increase or stay equal along a thermometer from the bulb."),
+        LineKind(
+            "thermo",
+            "Thermo",
+            "Digits strictly increase along a thermometer from the bulb.",
+            width="thermo",
+            ends="bulb",
+        ),
+        LineKind(
+            "slow_thermo",
+            "Slow Thermo",
+            "Digits increase or stay equal along a thermometer from the bulb.",
+            width="thermo",
+            ends="hollow bulb",
+        ),
         LineKind("whisper", "Whispers", _whisper_text, ("value",), closable=True, name_fn=_whisper_name),
         LineKind(
             "renban",
@@ -58,18 +72,33 @@ LINE = {
             ("value",),
         ),
         LineKind("parity", "Parity", "Adjacent digits on a parity line alternate between odd and even.", closable=True),
-        LineKind("zipper", "Zipper", "Digits equally far from the centre of a zipper line sum to the same total."),
         LineKind(
-            "between", "Between Lines", "Digits on a between line lie strictly between the digits in its end circles."
+            "zipper",
+            "Zipper",
+            "Digits equally far from the centre of a zipper line sum to the same total.",
+            ends="centre dot",
+        ),
+        LineKind(
+            "between",
+            "Between Lines",
+            "Digits on a between line lie strictly between the digits in its end circles.",
+            width=0.1,
+            ends="circles",
         ),
         LineKind(
             "lockout",
             "Lockout",
             "The ends of a lockout line differ by at least 4 and no digit on the line lies between them.",
             ("value",),
+            width=0.05,
+            ends="diamonds",
         ),
         LineKind(
-            "double_arrow", "Double Arrow", "The two circled ends of a double arrow sum to the digits between them."
+            "double_arrow",
+            "Double Arrow",
+            "The two circled ends of a double arrow sum to the digits between them.",
+            width=0.05,
+            ends="circles",
         ),
     )
 }
