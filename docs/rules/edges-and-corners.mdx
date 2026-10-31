@@ -26,6 +26,9 @@ Exactly 2 orthogonally adjacent cells.
 | `ratio` | `value` k | one digit is k times the other. | <Swatch name="edge-ratio" /> |
 | `less` | – | `cells[0] < cells[1]`; the order matters. <SiteLink href="https://sudokuvariants.com/help/variants/greater-than"/> | <Swatch name="edge-less" /> |
 
+A numbered clue (`difference`, `sum`, `product`, `ratio`) must fit some pair of different digits 1..D: the two cells
+share a row or column. A value no pair makes is refused.
+
 </div>
 
 `kropki` white and `difference` 1 mean the same to a solver but draw differently; both exist on purpose (likewise

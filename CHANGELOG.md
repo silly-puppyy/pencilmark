@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Numbered edge clues are checked: a `difference`, `sum`, `product` or `ratio` that no two different digits 1..D make
+  (ratio 1, a sum of 40 on 4x4) is refused when the file is read; it used to fail only when the puzzle was written back.
 - The chip for facts read off the clues alone is named "Clue Facts" (was "Clue facts (no 5 on a whisper)", an example
   that also showed on puzzles without whispers).
 - A closed renban is written back closed (it was written open). Its `fingerprint` now covers `closed`, as the

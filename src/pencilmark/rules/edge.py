@@ -142,6 +142,19 @@ EDGE = {
     )
 }
 NEG_SELECTOR = {k: v.param for k, v in EDGE.items() if v.negative}
+# the pair a numbered clue allows; orthogonal neighbours share a row or column, so their digits differ
+_PAIR_OK = {
+    "difference": lambda a, b, v: abs(a - b) == v,
+    "sum": lambda a, b, v: a + b == v,
+    "product": lambda a, b, v: a * b == v,
+    "ratio": lambda a, b, v: max(a, b) == v * min(a, b),
+}
+
+
+def edge_value_ok(kind, value, D):
+    """a numbered edge clue (difference / sum / product / ratio) some pair of different digits 1..D satisfies"""
+    ok = _PAIR_OK.get(kind)
+    return ok is None or any(ok(a, b, value) for a in range(1, D + 1) for b in range(a + 1, D + 1))
 
 
 # edge kinds -> engine relation of one pair

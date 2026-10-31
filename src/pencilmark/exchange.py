@@ -24,7 +24,7 @@ from collections import Counter
 from . import model as M
 from . import puzzle_json as PJ
 from .rules.cell import CELL
-from .rules.edge import EDGE, NEG_SELECTOR, edge_family, edge_relation, edge_rule, negative_relation
+from .rules.edge import EDGE, NEG_SELECTOR, edge_family, edge_relation, edge_rule, edge_value_ok, negative_relation
 from .rules.line import LINE, line_from_engine, line_to_engine
 
 FORMAT = "sudoku-puzzle"
@@ -758,6 +758,10 @@ def _validate_rule(r, B):
         ek = EDGE[kind]
         if ek.choices and r[ek.param] not in ek.choices:
             raise FormatError(f"{ek.param} must be {' or '.join(ek.choices)}")
+        if ek.param in ("value", "sum"):
+            _int(r[ek.param], ek.param, 0)
+            if not edge_value_ok(kind, r[ek.param], D):
+                raise FormatError(f"no two different digits 1..{D} make edge {kind} {r[ek.param]}")
     elif t == "corner":
         cs = _cells(B, r["cells"], n=4)
         if not B.is_block(cs):
