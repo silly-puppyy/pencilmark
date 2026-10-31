@@ -78,6 +78,7 @@ module.exports = {
       {type: 'doc', id: 'dev/WRITING_STYLE', label: 'Writing style'},
       {type: 'doc', id: 'dev/CODE_STYLE', label: 'Code style'},
       {type: 'doc', id: 'dev/ADD_TECHNIQUE', label: 'Add a technique'},
+      {type: 'doc', id: 'dev/ADD_RULE_KIND', label: 'Add a rule kind'},
       {type: 'doc', id: 'dev/PARAMETERS', label: 'Grader parameters'},
       {type: 'doc', id: 'dev/RELEASE', label: 'Release a version'},
     ]},

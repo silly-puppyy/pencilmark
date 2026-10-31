@@ -61,4 +61,5 @@ Code follows the [code style](https://silly-puppyy.github.io/pencilmark/dev/CODE
 push, and `pre-commit install` runs them before each commit); text follows the
 [writing style](https://silly-puppyy.github.io/pencilmark/dev/WRITING_STYLE): result first, plain words, British
 spelling. [Add a technique](https://silly-puppyy.github.io/pencilmark/dev/ADD_TECHNIQUE) lists every place a new solving
-technique touches.
+technique touches, and [Add a rule kind](https://silly-puppyy.github.io/pencilmark/dev/ADD_RULE_KIND) every place a new
+line, edge or cell kind touches.
