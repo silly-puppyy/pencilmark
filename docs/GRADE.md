@@ -106,6 +106,11 @@ of the solve", "rules": [3, 4, 5, 6]}`.
 
 ## 5. `steps`
 
+Which route the steps walk depends on whether the card asks for the techniques. When it asks for `contains` (or for
+`issues`, `reject` or `warning`, which read the technique list), the steps walk the route of the shortest technique list,
+so they use exactly the techniques `contains` lists. Without them, the steps walk the full first route: easy to hard,
+the simplest technique first, as the band is found. Band, difficulty and time are the same either way.
+
 Each step: `n` (from 1), `code`, `name`, `band` (the same keys as in `contains`), then `placement` (`"r2c8=3"`) and / or `eliminations`
 (`["r4c5#7", …]`: candidate 7 removed from r4c5), and, when requested, `explanation` with the requested levels:
 

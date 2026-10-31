@@ -116,7 +116,8 @@ def rate(
     where no technique applies (band "Unknown") instead of proving by full search (Trial and error, Extreme).
     quality: the issue checks, e.g. {"trivial": {"limit": 0.5}, "trial": {"severity": "off"}} (docs/GRADE.md 4). alternatives=False skips
     the search for interchangeable techniques (each chip in contains lists one code); band, difficulty and time are the
-    same either way, and the card comes much faster."""
+    same either way, and the card comes much faster. steps walk the shortest technique list's route when the card asks for
+    contains (or issues / reject / warning), else the full first route (docs/GRADE.md 5)."""
     from . import cpsat_verify as V
     from .export import card_fields, grade
     from .publish_flags import quality_limits
