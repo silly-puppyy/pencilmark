@@ -23,7 +23,7 @@ from collections import Counter
 
 from . import model as M
 from . import puzzle_json as PJ
-from .rules.line import LINE
+from .rules.line import LINE, line_from_engine, line_to_engine
 
 FORMAT = "sudoku-puzzle"
 FORMAT_VERSION = 1
@@ -1092,33 +1092,8 @@ class _ReadCtx:
         idx = lambda xs: [B.idx(c) for c in xs]
         if t in ("grid", "box_grid", "box", "row", "column", "region", "cage"):
             return []
-        if t == "line":
-            k = r["kind"]
-            cs = r["cells"]
-            if k == "double_arrow":
-                return [{"type": "equal_sum", "segments": [[cs[0], cs[-1]], cs[1:-1]]}]
-            if k == "lockout":
-                kk = r.get("value", 4)
-                a, b = idx([cs[0], cs[-1]])
-                out = [self.pairs_rule("diffge", (kk,), [(a, b)])]
-                tab = [list(x) for x in lockout_table(D, kk)]
-                out += [{"type": "table", "cells": [cs[0], cs[-1], c], "allowed": tab} for c in cs[1:-1]]
-                return out
-            con = {
-                "type": "line",
-                "kind": k,
-                "cells": list(cs) + ([cs[0]] if r.get("closed") and k != "renban" else []),
-            }
-            if k == "whisper" and "value" in r:
-                con["k"] = r["value"]
-            if k == "modular" and r.get("value", 3) != 3:
-                raise NotSupportedError("modular lines with a modulus other than 3 are not supported by the engine")
-            if k == "entropic" and "groups" in r:
-                third = lambda v: (v - 1) * 3 // D if D % 3 == 0 else (v - 1) // 3
-                want = [[v for v in range(1, D + 1) if third(v) == g] for g in range(3)]
-                if sorted(sorted(x) for x in r["groups"]) != want:
-                    raise NotSupportedError(f"entropic groups {r['groups']} are not supported (engine: {want})")
-            return [con]
+        if t == "line":  # rules/line.py
+            return line_to_engine(r, D, B, self.pairs_rule)
         if t == "arrow":
             return [{"type": "arrow", "circle": list(r["bulb"]), "line": list(sh)} for sh in r["lines"]]
         if t == "edge":
@@ -2131,26 +2106,8 @@ class _Writer:
         B, D = self.B, self.D
         t = c.get("type")
         nm = lambda xs: [B.name(x) for x in xs]
-        if t == "line":
-            kind = c["kind"]
-            cells = list(c["cells"])
-            if kind == "kropki_chain":  # normalisation 4: kropki edges
-                dots = c.get("dots") or ["white"] * (len(cells) - 1)
-                return [edge_rule("kropki", d_, a, b, B) for (a, b), d_ in zip(zip(cells, cells[1:]), dots)]
-            r = {"type": "line", "kind": "whisper" if kind == "dutch_whisper" else kind}
-            if kind in ("whisper", "dutch_whisper"):
-                if "k" in c or kind == "dutch_whisper" or D != 9:
-                    r["value"] = c.get("k", 5 if kind == "whisper" else 4)
-            if kind == "modular" and D != 9:
-                r["value"] = 3
-            if kind == "entropic" and D != 9:
-                third = lambda v: (v - 1) * 3 // D if D % 3 == 0 else (v - 1) // 3
-                r["groups"] = [[v for v in range(1, D + 1) if third(v) == g] for g in range(3)]
-            if len(cells) > 2 and cells[0] == cells[-1] and kind in ("whisper", "dutch_whisper", "parity"):
-                r["closed"] = True
-                cells = cells[:-1]
-            r["cells"] = nm(cells)
-            return [r]
+        if t == "line":  # rules/line.py
+            return line_from_engine(c, B, D)
         if t == "sum":
             cells = list(c["cells"])
             common = self.common_group(cells)
