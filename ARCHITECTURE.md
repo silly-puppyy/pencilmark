@@ -23,7 +23,7 @@ flowchart TD
 ```
 
 1. **Read.** `api.load` turns any accepted input (string, JSON, file, link) into a `model.Puzzle`. The public format is
-   read by `exchange.py` (`sudoku-puzzle`, docs/FORMAT.md), text forms by `interop.py`, links by `sources/`.
+   read by `exchange/` (`sudoku-puzzle`, docs/FORMAT.md), text forms by `interop.py`, links by `sources/`.
 2. **Check uniqueness.** `cpsat_verify.decide` runs the C++ search (`cbackend.brute_solve`), with OR-Tools as an optional
    fallback; it raises `NotUnique` / `NoSolution` / `Undecided`.
 3. **Find the human route.** `band_path.band_path` solves band by band: at each position it asks the engine for every
@@ -57,7 +57,7 @@ flowchart TB
 | Layer | Where | Owns |
 |---|---|---|
 | Public API | `api.py`, `__main__.py` (CLI) | entry points; nothing else imports them |
-| Formats | `exchange.py`, `puzzle_json.py`, `interop.py`, `spec_format.py`, `sources/` | reading and writing puzzles, specs and cards |
+| Formats | `exchange/` (common, board, validate, read, write, canonical), `rules/`, `puzzle_json.py`, `interop.py`, `spec_format.py`, `sources/` | reading and writing puzzles, specs and cards |
 | Model | `model.py` | the Puzzle: cells, houses, relations, constraints; compiled by `finalize()` |
 | Engine | `csrc/` via `cbackend.py` (`engine_records.py` decodes its move records) | every search: techniques, move listing, brute force, refutation |
 | Grader | `band_path.py`, `card_score.py`, `scoring.py`, `metrics.py`, `export.py`, `card.py`, `grader_model.py` | route, prices, difficulty, time, band, contents; `grader_model.py` holds every fitted parameter, loaded once |

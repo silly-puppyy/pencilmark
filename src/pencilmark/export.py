@@ -1,6 +1,6 @@
 """Human-oriented exchange formats: one for the puzzle, one for its grade.
 
-puzzle (format "sudoku-puzzle", format_version 1): specified in docs/FORMAT.md, implemented in pencilmark/exchange.py (strict
+puzzle (format "sudoku-puzzle", format_version 1): specified in docs/FORMAT.md, implemented in pencilmark/exchange/ (strict
   reader, order-preserving writer, canonical text, fingerprint), schema docs/sudoku-puzzle.schema.json. In short: "board",
   "digits", flat "givens" (0 empty, null no cell), optional "solution" / "candidates", and "rules" holding every constraint,
   houses included ({"type": "box_grid", "origin": "r1c1", "box": [3, 3]} for a classic, {"type": "grid", ...} plus "box"
@@ -123,7 +123,7 @@ def read_meta(d):
 
 
 def export_puzzle(p, meta=None, solution=None, source=None, title=None, rules_text=None):
-    """engine Puzzle -> "sudoku-puzzle" dict (format_version 1, docs/FORMAT.md; pencilmark/exchange.py). meta: free-form metadata
+    """engine Puzzle -> "sudoku-puzzle" dict (format_version 1, docs/FORMAT.md; pencilmark/exchange/). meta: free-form metadata
     dict; source / title / rules_text keywords are merged into meta."""
     from . import exchange as X
 
@@ -133,7 +133,7 @@ def export_puzzle(p, meta=None, solution=None, source=None, title=None, rules_te
 
 def import_puzzle(d):
     """sudoku-puzzle (format_version 1, docs/FORMAT.md) -> puzzle JSON (pencilmark.puzzle_json), read strictly by
-    pencilmark/exchange.py."""
+    pencilmark/exchange/."""
     from . import exchange as X
 
     return X.to_internal(d)

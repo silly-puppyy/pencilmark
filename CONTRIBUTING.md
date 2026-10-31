@@ -19,7 +19,7 @@ python -m pytest -q -n auto tests             # the quick suite: about 10 second
 |---|---|
 | `src/pencilmark/api.py` | the public functions (`rate`, `load`, `solve`, `generate`, ...) |
 | `src/pencilmark/export.py`, `band_path.py`, `card.py` | the card: its fields, the band route and technique list, difficulty and time |
-| `src/pencilmark/exchange.py`, `rules/` | the puzzle format: reading, checking, writing; one module per rule family |
+| `src/pencilmark/exchange/`, `rules/` | the puzzle format: reading, checking, writing; one module per rule family |
 | `src/pencilmark/explain/` | step explanations |
 | `src/pencilmark/data/` | techniques, codes and fitted parameters (CSV / JSON); every fitted number lives here |
 | `csrc/` | the C++ engine: techniques, move listing, the exhaustive search |

@@ -62,7 +62,7 @@ for the planned custom rule type ([docs/rules/other.mdx](rules/other.mdx), 6.17)
 
 1. Add the rule family or kind to the [rule family pages](FORMAT.md#6-rule-families) (meaning) and section 7 (default drawing), and to
    `docs/sudoku-puzzle.schema.json`.
-2. Read and write it in `src/pencilmark/exchange.py` (strict checks, engine expansion, canonical key order).
+2. Read and write it in `src/pencilmark/exchange/` (validate.py: strict checks; read.py: engine expansion; write.py; canonical.py: key order).
 3. If the engine needs a new constraint, add it in `csrc/` (all solving logic lives in C++).
 4. Name it in `src/pencilmark/variants.py` so `describe()` explains it.
 5. Add a round-trip case to `tests/test_format.py`.
