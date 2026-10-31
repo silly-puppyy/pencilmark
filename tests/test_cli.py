@@ -103,3 +103,14 @@ def test_cli_generate():
     }
     out = json.loads(run(["generate", "-", "--seed", "1", "--result"], json.dumps(spec))[0])
     assert out["puzzle"]["format"] == "sudoku-puzzle" and out["info"]["seed"] == 1
+
+
+def test_cli_errors_are_one_line(tmp_path):
+    """a missing file, a spec that is not JSON: an error line and exit status 1, never a traceback"""
+    bad = tmp_path / "spec.json"
+    bad.write_text('{"format": "sudoku-spec"', encoding="utf-8")
+    for args in (["rate", str(tmp_path / "missing.txt")], ["fingerprint", str(tmp_path / "missing.txt")],
+                 ["generate", str(bad)]):  # fmt: skip
+        r = subprocess.run([sys.executable, "-m", "pencilmark", *args], capture_output=True, text=True)
+        assert r.returncode == 1 and "Traceback" not in r.stderr, (args, r.stderr)
+        assert r.stderr.startswith(f"pencilmark {args[0]}: "), r.stderr

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The command line reports a missing file, a spec that is not JSON or cannot be met, and format errors in one line
+  with exit status 1 (it printed a traceback).
 - `se` is null for anything but classic 9×9 sudoku. Variants got numbers on a scale defined only for classics, often
   the 7.0 fallback.
 - An unknown `mode` (for example `"Computer"`) is an error; it used to grade silently in human mode.
