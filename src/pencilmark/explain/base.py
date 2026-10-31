@@ -637,9 +637,9 @@ def _generic(ctx):
     if ctx.place:
         c, v = ctx.place
         short = f"{nm.cell(c)} = {v}: {name}"
-        teach = f"{_an(name)} {name} pattern forces {nm.cell(c)} to be {v}. {lesson}"
+        teach = f"{name} forces {nm.cell(c)} to be {v}. {lesson}"
     else:
         short = f"{fmt_elims(nm, ctx.elims)}: {name}"
-        teach = f"{_an(name)} {name} pattern removes {_elim_list(nm, ctx.elims)}. {lesson}"
+        teach = f"{name} removes {_elim_list(nm, ctx.elims)}. {lesson}"
     J = _J(ctx, digits=sorted({d for _, d in ctx.elims}) or ([ctx.place[1]] if ctx.place else []))
     return _result(ctx, J, short, teach, False)

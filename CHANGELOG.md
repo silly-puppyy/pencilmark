@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Step explanations: when an explanation falls back to the technique's general description, it no longer repeats
+  the name ("Cage combinations Cage combinations pattern removes ..." -> "Cage combinations removes ...").
 - Package data: `price_params.json` is folded into `card_score.json` (`price_weights`, the only two weight vectors
   that differed from `params.json`); `tiers.json` and `card_calibration.json` are gone, with the legacy code that read
   them. All fitted parameters load once through one internal grader model. Cards are unchanged.
