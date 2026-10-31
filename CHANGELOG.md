@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `load({})` (or a dict holding only a title) raised nothing and read an empty 9×9 board; it is now refused like any
+  dict that is not a puzzle.
 - Two dead technique links fixed: Multi-Colouring's SudokuWiki page (in its explanation) and Simple Colouring's
   KrazyDad page (techniques page).
 - Generator specs accept the `odd` and `even` cell templates SPEC.md documents (only an undocumented `parity` worked);

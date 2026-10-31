@@ -235,6 +235,13 @@ def test_text_grids_and_pencilmarks():
     }
 
 
+def test_load_refuses_dicts_that_are_not_puzzles():
+    """another app's dict, or a dict with no grid, size or rules, is refused instead of read as an empty 9x9 (8fbc403)"""
+    for d in ({}, {"title": "x"}, {"foo": 1}, {"kind": ["http://ipuz.org/sudoku#1"], "puzzle": [[0] * 9] * 9}):
+        with pytest.raises(ValueError, match="not a puzzle"):
+            pencilmark.load(d)
+
+
 def test_ipuz_round_trip():
     """INTEROP.md: from_ipuz reads what to_ipuz writes, with and without the embedded puzzle; candidates are refused"""
     import copy

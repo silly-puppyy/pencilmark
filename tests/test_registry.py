@@ -147,9 +147,10 @@ def test_every_move_technique_has_an_explanation():
 
 
 def test_golden_explanations_have_no_raw_codes():
-    """no explanation in the golden records falls back to an engine code"""
+    """no explanation in the golden records falls back to an engine code, or lost its pattern cells (5dbd865)"""
     text = (Path(__file__).parent / "golden" / "expected.jsonl").read_text(encoding="utf-8")
     assert "(code " not in text
+    assert "over their 0 open cells" not in text and "(cells )" not in text
 
 
 def test_code_explain_entries_exist():

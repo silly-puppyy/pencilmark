@@ -158,6 +158,8 @@ def from_json(obj) -> M.Puzzle:
     unknown = sorted(set(d) - KEYS)
     if unknown:  # an unrecognised dict (another app's format) must not be read as an empty grid
         raise ValueError(f"not a puzzle pencilmark reads: unknown keys {unknown}")
+    if not set(d) & {"numbers", "digits", "shape", "layout", "regions", "rules", "solution"}:  # {} or only a title
+        raise ValueError("not a puzzle: no grid, size or rules")
     nums = re.sub(r"\s+", "", d.get("numbers", "") or "")
     layout = d.get("layout")
     if layout:
