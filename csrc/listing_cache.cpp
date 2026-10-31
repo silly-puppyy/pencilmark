@@ -8,7 +8,7 @@
 // A strategy's moves depend on the state, the puzzle, the params and the disabled flags it reads. The flags are
 // recorded as the strategy reads them (Flags::rec), so an entry is reused only where every flag it read has the same
 // value: the replayed moves are exactly what the strategy would find (no hand-kept list of which flags matter).
-// Not cached: the direct phase, a listing cut short by the deadline, band logic inside a solve. The ALS strategies stop at a total move count
+// Not cached: a listing cut short by the deadline. The ALS strategies stop at a total move count
 // (als.cpp: 4000), which depends on the moves listed before them: their entries are reused only where that cap cannot
 // be reached, or with the same number of moves before them.
 // Thread-local (featurize threads), bounded (Gen2: two generations, the older dropped).
@@ -30,6 +30,10 @@ struct LEntry {
     std::vector<uint8_t> vals;
     std::vector<uint32_t> cand, written;
     std::vector<int> solution, colours;
+    // band logic: the per-solve state its output depends on (its two early-return caps, the escalation pass) and
+    // what one call spends of the budget, replayed on a hit
+    int band_state;
+    pm_long band_now, d_spent, d_total;
     std::vector<std::pair<int, char>> reads;  // (technique, its disabled flag) for every flag the strategy read
     size_t n0, k;                             // moves in the buffer before the strategy; moves it added
     MoveBuf moves;
@@ -169,12 +173,17 @@ void digit_memo_put(const Puzzle& p, uint64_t tag, int v, const std::vector<uint
 
 void Solver::collect_strategy(Strategy& s, MoveBuf& b) {
     const std::string name = s.name();
-    // band logic spends a per-solve search budget (band_spent / band_total / band_budget_now): within a solve its moves
-    // depend on the steps before, so it is cached only in state_moves (a fresh Solver per call)
-    if (!lcache || !g_lcache_on || (lcache_solve && name == "bandlogic")) {
+    if (!lcache || !g_lcache_on) {
         s.collect(*this, b);
         return;
     }
+    // band logic depends on the solve so far only through its caps on spent / total search nodes and the escalation
+    // pass (set_logic.cpp); its budget per call is its own
+    const bool band = name == "bandlogic";
+    const int bstate = band ? (band_spent > 8 * P.band_budget) | (band_total > 32 * P.band_budget) << 1 |
+                                  (int)band_wide_now << 2
+                            : 0;
+    const pm_long bnow = band ? band_budget_now : 0;
     uint64_t h = std::hash<std::string>()(name) ^ (p.uid * 0x9E3779B97F4A7C15ULL) ^ lcache_params;
     h = mix(mix(mix(h, vals), cand), written_override);
     const size_t n0 = b.moves.size();
@@ -183,7 +192,8 @@ void Solver::collect_strategy(Strategy& s, MoveBuf& b) {
         [&](const LEntry& e) {
             if (e.pz != &p || e.uid != p.uid || e.params != lcache_params || e.canon != canon ||
                 e.assume_unique != opt.assume_unique || e.strat != name || e.vals != vals || e.cand != cand ||
-                e.written != written_override || e.solution != opt.solution || e.colours != opt.colours)
+                e.written != written_override || e.solution != opt.solution || e.colours != opt.colours ||
+                e.band_state != bstate || e.band_now != bnow)
                 return false;
             for (const auto& r : e.reads)
                 if (disabled.v[r.first] != r.second) return false;
@@ -192,15 +202,18 @@ void Solver::collect_strategy(Strategy& s, MoveBuf& b) {
         lweight);
     if (hit) {
         append_moves(b, hit->moves);
+        band_spent += hit->d_spent;
+        band_total += hit->d_total;
         return;
     }
+    const pm_long spent0 = band_spent, total0 = band_total;
     std::vector<char> rec(disabled.size(), 0);
     disabled.rec = &rec;
     s.collect(*this, b);
     disabled.rec = nullptr;
     if (deadline_passed() || b.moves.size() < n0) return;  // cut short, or it removed moves listed before it
     LEntry e{&p, p.uid, lcache_params, canon, opt.assume_unique, name, vals, cand, written_override, opt.solution,
-             opt.colours, {}, n0, b.moves.size() - n0, {}};
+             opt.colours, bstate, bnow, band_spent - spent0, band_total - total0, {}, n0, b.moves.size() - n0, {}};
     for (size_t t = 0; t < rec.size(); ++t)
         if (rec[t]) e.reads.emplace_back((int)t, disabled.v[t]);
     copy_slice(b, n0, e.moves);

@@ -434,7 +434,7 @@ public:
     std::vector<char> skipped;  // opt.skip as flags
     bool lcache = false;  // state_moves: notes-tier strategies go through the listing cache
     uint64_t lcache_params = 0;  // hash of the params the listing was asked with (part of the cache key)
-    bool lcache_solve = false;  // the listing cache is used inside solve() (history-dependent strategies bypass it)
+    bool lcache_solve = false;  // the listing cache is used inside solve() (the direct blocks bypass it there)
     void collect_strategy(Strategy& s, MoveBuf& b);  // s->collect, through the listing cache when lcache is set
     std::vector<uint8_t> vals;
     std::vector<uint32_t> cand, placed_g;
