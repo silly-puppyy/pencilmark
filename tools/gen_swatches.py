@@ -4,7 +4,9 @@ layout.
 
   python tools/gen_swatches.py [out_dir]      default: website/static/img/swatches
 
-Each rule swatch is a 3x3 board holding one rule (and a few digits where they show the meaning). Layout outlines tint
+Each rule swatch is a 3x3 board holding one rule (and digits that satisfy it, where they show the meaning); every line
+follows the same 7-cell path and edge clues are chained along the bottom row. <name>.json holds the rules drawn, for
+the page's JSON panel. Layout outlines tint
 each grid and let overlapping tints blend, so the shared boxes show. The docs build runs this script; the images are
 not committed. swatches.json lists the names, so a page can check that a swatch exists.
 """
@@ -19,79 +21,75 @@ import render_svg  # noqa: E402
 from pencilmark import puzzle_json, variants  # noqa: E402
 
 _ = 0
-# name -> (rules, givens row by row). Cells r1c1..r3c3; outside clues use a side.
+# every line runs along the same 7 cells, a U from the top-left corner, so the pictures read alike
+PATH = ["r1c1", "r2c1", "r3c1", "r3c2", "r3c3", "r2c3", "r1c3"]
+ROW3 = ["r3c1", "r3c2", "r3c3"]  # edge clues are chained along the bottom row
+
+
+def along(cells, digits):
+    """a 3x3 givens grid with digits on cells (None: left empty)"""
+    g = [[0] * 3 for _row in range(3)]
+    for c, d in zip(cells, digits):
+        if d:
+            g[int(c[1]) - 1][int(c[3]) - 1] = d
+    return g
+
+
+def line(kind, digits=None, **kw):
+    return [dict({"type": "line", "kind": kind}, **kw, cells=PATH)], along(PATH, digits) if digits else None
+
+
+def chain(rule, digits=None):
+    """an edge clue on each neighbouring pair of the bottom row"""
+    return [dict(rule, cells=[a, b]) for a, b in zip(ROW3, ROW3[1:])], along(ROW3, digits) if digits else None
+
+
+# name -> (rules, givens row by row), on a 3x3 board; digits are shown where they make the meaning clear
 SWATCHES = {
     # 6.2 region
     "region-diagonal": ([{"type": "region", "kind": "diagonal", "cells": ["r1c1", "r2c2", "r3c3"]}], None),
     "region-extra": ([{"type": "region", "kind": "extra", "cells": ["r1c2", "r2c2", "r2c3"]}], None),
     # 6.3 cage
-    "cage": ([{"type": "cage", "sum": 15, "cells": ["r1c1", "r1c2", "r2c1"]}], None),
-    # 6.4 line
-    "line-thermo": ([{"type": "line", "kind": "thermo", "cells": ["r3c1", "r2c2", "r1c3"]}], None),
-    "line-slow_thermo": ([{"type": "line", "kind": "slow_thermo", "cells": ["r3c1", "r2c2", "r1c3"]}], None),
-    "line-whisper": (
-        [{"type": "line", "kind": "whisper", "cells": ["r1c1", "r2c2", "r3c3"]}],
-        [[1, _, _], [_, 7, _], [_, _, 2]],
-    ),
-    "line-renban": (
-        [{"type": "line", "kind": "renban", "cells": ["r1c1", "r1c2", "r1c3"]}],
-        [[4, 6, 5], [_, _, _], [_, _, _]],
-    ),
-    "line-region_sum": ([{"type": "line", "kind": "region_sum", "cells": ["r1c1", "r2c1", "r2c2", "r2c3"]}], None),
-    "line-palindrome": (
-        [{"type": "line", "kind": "palindrome", "cells": ["r1c1", "r2c2", "r3c3"]}],
-        [[3, _, _], [_, _, _], [_, _, 3]],
-    ),
-    "line-entropic": ([{"type": "line", "kind": "entropic", "cells": ["r1c1", "r1c2", "r1c3", "r2c3"]}], None),
-    "line-modular": ([{"type": "line", "kind": "modular", "cells": ["r1c1", "r1c2", "r1c3", "r2c3"]}], None),
-    "line-parity": (
-        [{"type": "line", "kind": "parity", "cells": ["r1c1", "r1c2", "r1c3"]}],
-        [[2, 7, 4], [_, _, _], [_, _, _]],
-    ),
-    "line-zipper": (
-        [{"type": "line", "kind": "zipper", "cells": ["r1c1", "r1c2", "r1c3"]}],
-        [[3, 8, 5], [_, _, _], [_, _, _]],
-    ),
-    "line-between": (
-        [{"type": "line", "kind": "between", "cells": ["r1c1", "r2c2", "r3c3"]}],
-        [[2, 5, _], [_, _, _], [_, _, 8]],
-    ),
-    "line-lockout": (
-        [{"type": "line", "kind": "lockout", "cells": ["r1c1", "r2c2", "r3c3"]}],
-        [[2, _, _], [_, 9, _], [_, _, 7]],
-    ),
-    "line-double_arrow": ([{"type": "line", "kind": "double_arrow", "cells": ["r1c1", "r2c2", "r3c3"]}], None),
+    "cage": ([{"type": "cage", "sum": 15, "cells": ["r1c1", "r1c2", "r2c1", "r2c2"]}], None),
+    # 6.4 line: the same path; digits that satisfy the rule
+    "line-thermo": line("thermo", [1, 2, 4, 5, 7, 8, 9]),
+    "line-slow_thermo": line("slow_thermo", [1, 2, 2, 5, 7, 7, 9]),
+    "line-whisper": line("whisper", [1, 7, 2, 8, 3, 9, 4]),
+    "line-renban": line("renban", [4, 6, 5, 3, 7, 2, 8]),
+    "line-region_sum": line("region_sum"),
+    "line-palindrome": line("palindrome", [3, 5, 8, 1, 8, 5, 3]),
+    "line-entropic": line("entropic", [1, 5, 9, 2, 4, 7, 3]),
+    "line-modular": line("modular", [1, 2, 3, 4, 5, 6, 7]),
+    "line-parity": line("parity", [2, 7, 4, 1, 6, 3, 8]),
+    "line-zipper": line("zipper", [1, 2, 3, 9, 6, 7, 8]),
+    "line-between": line("between", [1, 3, 5, 4, 6, 7, 9]),
+    "line-lockout": line("lockout", [2, None, None, 9, None, None, 7]),
+    "line-double_arrow": line("double_arrow", [8, 1, 2, 3, 4, 7, 9]),
     # 6.5 arrow
-    "arrow": ([{"type": "arrow", "bulb": ["r1c1"], "lines": [["r2c2", "r3c3"]]}], [[9, _, _], [_, 4, _], [_, _, 5]]),
-    # 6.6 edge
-    "edge-kropki-white": (
-        [{"type": "edge", "kind": "kropki", "color": "white", "cells": ["r2c1", "r2c2"]}],
-        [[_, _, _], [4, 5, _], [_, _, _]],
+    "arrow": (
+        [{"type": "arrow", "bulb": ["r1c1"], "lines": [["r2c1", "r3c1", "r3c2"]]}],
+        along(["r1c1", "r2c1", "r3c1", "r3c2"], [9, 2, 3, 4]),
     ),
-    "edge-kropki-black": (
-        [{"type": "edge", "kind": "kropki", "color": "black", "cells": ["r2c1", "r2c2"]}],
-        [[_, _, _], [3, 6, _], [_, _, _]],
-    ),
-    "edge-xv-x": (
-        [{"type": "edge", "kind": "xv", "letter": "X", "cells": ["r2c1", "r2c2"]}],
-        [[_, _, _], [3, 7, _], [_, _, _]],
-    ),
-    "edge-xv-v": (
-        [{"type": "edge", "kind": "xv", "letter": "V", "cells": ["r2c1", "r2c2"]}],
-        [[_, _, _], [1, 4, _], [_, _, _]],
-    ),
-    "edge-difference": ([{"type": "edge", "kind": "difference", "value": 3, "cells": ["r2c1", "r2c2"]}], None),
-    "edge-sum": ([{"type": "edge", "kind": "sum", "sum": 12, "cells": ["r2c1", "r2c2"]}], None),
-    "edge-less": ([{"type": "edge", "kind": "less", "cells": ["r2c1", "r2c2"]}], None),
+    # 6.6 edge: chains along the bottom row
+    "edge-kropki-white": chain({"type": "edge", "kind": "kropki", "color": "white"}, [4, 5, 6]),
+    "edge-kropki-black": chain({"type": "edge", "kind": "kropki", "color": "black"}, [2, 4, 8]),
+    "edge-xv-x": chain({"type": "edge", "kind": "xv", "letter": "X"}, [3, 7, 3]),
+    "edge-xv-v": chain({"type": "edge", "kind": "xv", "letter": "V"}, [2, 3, 2]),
+    "edge-difference": chain({"type": "edge", "kind": "difference", "value": 3}, [1, 4, 7]),
+    "edge-sum": chain({"type": "edge", "kind": "sum", "sum": 12}, [5, 7, 5]),
+    "edge-less": chain({"type": "edge", "kind": "less"}, [1, 2, 3]),
     # 6.7 corner
-    "corner-battenburg": ([{"type": "corner", "kind": "battenburg", "cells": ["r1c1", "r1c2", "r2c1", "r2c2"]}], None),
+    "corner-battenburg": (
+        [{"type": "corner", "kind": "battenburg", "cells": ["r1c1", "r1c2", "r2c1", "r2c2"]}],
+        [[1, 2, _], [4, 3, _], [_, _, _]],
+    ),
     "corner-exclude": (
         [{"type": "corner", "kind": "exclude", "value": 5, "cells": ["r1c1", "r1c2", "r2c1", "r2c2"]}],
         None,
     ),
     "contains-quadruple": (
         [{"type": "contains", "digits": [1, 2, 5], "cells": ["r1c1", "r1c2", "r2c1", "r2c2"]}],
-        None,
+        [[1, _, _], [5, 2, _], [_, _, _]],
     ),
     # 6.9 outside clues
     "sandwich": ([{"type": "sandwich", "side": "left", "sum": 7, "cells": ["r2c1", "r2c2", "r2c3"]}], None),
@@ -176,22 +174,12 @@ def drawings():
     return out
 
 
-SMALL = ("edge-", "corner-", "contains-")  # two-cell and corner clues read better on a 2x2 board (markers 1.5x larger)
-
-
 def doc_for(name, rules, givens):
-    n = 3
-    if name.startswith(SMALL):  # move a clue drawn on row 2 up to row 1, keep the first two rows and columns
-        rows = [r[:2] for r in (givens or [[0] * 3] * 3)]
-        if all(c.startswith("r2") for rule in rules for c in rule["cells"]):
-            rules = [dict(rule, cells=[c.replace("r2", "r1", 1) for c in rule["cells"]]) for rule in rules]
-            rows = rows[1:]
-        n, givens = 2, rows[:2]
-    flat = [v for row in (givens or [[0] * n] * n) for v in row]
+    flat = [v for row in (givens or [[0] * 3] * 3) for v in row]
     return {
         "format": "sudoku-puzzle",
         "format_version": 1,
-        "board": {"rows": n, "cols": n},
+        "board": {"rows": 3, "cols": 3},
         "digits": 9,
         "givens": flat,
         "rules": rules,
@@ -210,6 +198,8 @@ def main(argv=None):
             done.append(name)
         except Exception as e:  # a swatch the renderer cannot draw is reported, not fatal
             failed[name] = f"{type(e).__name__}: {e}"
+    for name, (rules, _givens) in SWATCHES.items():  # the rules each picture draws, shown on click (Swatch.js)
+        (out / f"{name}.json").write_text("\n".join(json.dumps(r) for r in rules), encoding="utf-8")
     (out / "swatches.json").write_text(json.dumps({"swatches": done, "failed": failed}, indent=1), encoding="utf-8")
     print(f"{len(done)} swatches in {out}" + (f"; failed: {failed}" if failed else ""))
     return 0

@@ -166,7 +166,7 @@ def render(doc, dark=False, cell=48):
                     rr, cc = rc(x)
                     add(
                         "shade",
-                        f'<rect x="{m + cc * u}" y="{m + rr * u}" width="{u}" height="{u}" fill="{col}" opacity="{0.55 if dark else 1}"/>',
+                        f'<rect x="{m + cc * u}" y="{m + rr * u}" width="{u}" height="{u}" fill="{col}" opacity="{0.72 if dark else 1}"/>',
                     )
         elif t == "cage" or (t == "sum" and k == "group"):
             add("cages", outline(r["cells"], 0.08, "4 3" if t == "cage" else "1.5 3", T["given"], 1.2))
@@ -400,7 +400,7 @@ def render(doc, dark=False, cell=48):
                     rr, cc = rc(x)
                     add(
                         "shade",
-                        f'<rect x="{m + cc * u}" y="{m + rr * u}" width="{u}" height="{u}" fill="{col}" opacity="{0.55 if dark else 1}"/>',
+                        f'<rect x="{m + cc * u}" y="{m + rr * u}" width="{u}" height="{u}" fill="{col}" opacity="{0.72 if dark else 1}"/>',
                     )
         elif t == "vudoku":
             add("lines", polyline([r["cells"][1], r["cells"][0], r["cells"][2]], "#aaaaaa", 0.04))

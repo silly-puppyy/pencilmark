@@ -131,7 +131,7 @@ html[data-graphics='off'] .pm-graphic { display: none !important; }
 
 /* "Drawing" column of the rule-family tables (src/components/Swatch.js): gone with the graphics */
 html[data-graphics='off'] .pm-kinds th:last-child, html[data-graphics='off'] .pm-kinds td:last-child { display: none; }
-.pm-kinds th:last-child, .pm-kinds td:last-child { min-width: 5rem; }
+.pm-kinds th:last-child, .pm-kinds td:last-child { min-width: 8rem; }
 
 /* variant cards (docs/VARIANTS.mdx) */
 .pm-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
@@ -146,3 +146,11 @@ img.pm-site { height: 22px; width: 22px; vertical-align: middle; margin: 2px 6px
 table:has(img.pm-site) { display: table; width: 100%; }
 table:has(img.pm-site) td:nth-child(3), table:has(img.pm-site) td:last-child { white-space: nowrap; }
 a.pm-site-text { font-size: 0.7rem; border: 1px solid var(--ifm-color-emphasis-400); border-radius: 4px; padding: 0 4px; margin-right: 6px; color: var(--ifm-color-emphasis-800); text-decoration: none; }
+
+/* rule swatches (Swatch.js): the JSON floats over the page, so opening it does not resize the table */
+.pm-swatch { position: relative; display: inline-block; vertical-align: top; }
+.pm-swatch-btn { padding: 0; cursor: pointer; display: block; }
+.pm-swatch-json { position: absolute; right: 0; top: calc(100% + 4px); z-index: 20; margin: 0; width: max-content;
+  max-width: min(32rem, 80vw); font-size: 0.72rem; white-space: pre-wrap; word-break: break-word;
+  background: var(--ifm-background-surface-color); border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 6px; box-shadow: 0 6px 18px rgb(0 0 0 / 0.18); padding: 0.6rem 0.75rem; }

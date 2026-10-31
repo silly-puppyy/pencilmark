@@ -16,9 +16,9 @@ All take `side` and ordered `cells` starting next to the clue (3.2).
 
 | `type` | Fields | Meaning | Drawing |
 |---|---|---|---|
-| `sandwich` | `sum` | The digits strictly between the 1 and the D in `cells` sum to `sum` (0 when they are adjacent). | <Swatch name="sandwich" json={`{"type": "sandwich", "side": "left", "sum": 7, "cells": ["r2c1", "r2c2", "r2c3"]}`} /> |
-| `xsum` | `sum` | X = the digit in `cells[0]`; the first X cells sum to `sum`. | <Swatch name="xsum" json={`{"type": "xsum", "side": "top", "sum": 9, "cells": ["r1c2", "r2c2", "r3c2"]}`} /> |
-| `skyscraper` | `value` | Reading `cells` in order, exactly `value` cells are higher than every earlier cell. | <Swatch name="skyscraper" json={`{"type": "skyscraper", "side": "top", "value": 2, "cells": ["r1c2", "r2c2", "r3c2"]}`} /> |
+| `sandwich` | `sum` | The digits strictly between the 1 and the D in `cells` sum to `sum` (0 when they are adjacent). | <Swatch name="sandwich" /> |
+| `xsum` | `sum` | X = the digit in `cells[0]`; the first X cells sum to `sum`. | <Swatch name="xsum" /> |
+| `skyscraper` | `value` | Reading `cells` in order, exactly `value` cells are higher than every earlier cell. | <Swatch name="skyscraper" /> |
 | `rossini` | `arrow`: `"in"` \| `"out"` | The first 3 cells are monotone: increasing inwards for `in` (the arrow points into the grid, towards the highest digit), decreasing inwards for `out`. `cells` lists those 3 cells. |  |
 | `first_seen` | `value`, `digits` (list) | Reading `cells` in order, the first digit that is in `digits` is `value` (e.g. the "123" clue). |  |
 
