@@ -732,6 +732,10 @@ def _validate_rule(r, B):
                 raise FormatError(f"line {kind} takes no {k!r}")
         if D != 9 and allowed and not (allowed <= set(r)):
             raise FormatError(f"line {kind} requires {sorted(allowed)} when digits != 9")
+        if "value" in r:  # whisper / lockout: a difference between digits; modular: the modulus
+            _int(r["value"], "value", 2 if kind == "modular" else 1)
+            if kind != "modular" and r["value"] > D - 1:
+                raise FormatError(f"line {kind} value must be at most {D - 1} (a difference between digits 1..{D})")
         if r.get("closed") and not LINE[kind].closable:
             raise FormatError(f"line {kind} cannot be closed")
         if "closed" in r and not isinstance(r["closed"], bool):

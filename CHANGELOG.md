@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- A line's `value` is checked: whisper and lockout take 1..D−1 (a difference between digits), modular a modulus of at
+  least 2. A whisper of 5 on a 4x4 board was accepted and made the puzzle unsolvable.
 - Error messages for `cell` rules name the rule type (`cell low takes split ...`, was `digits low ...`).
 - The technique list (`contains`) no longer loops forever on puzzles that need the forcing fallback, such as Easter
   Monster: a technique already removed could come back through the fallback, and was "removed" again on every pass.
