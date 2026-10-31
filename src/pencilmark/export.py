@@ -505,7 +505,7 @@ def _f_se(c):
     from . import se as SE
 
     sb = c.base if c.base is not None else BP.band_path(c.p, c.P)  # the card's first route: not computed again
-    return {"se": SE.ratings(sb["steps"], scale="classic") if sb["solved"] else None}
+    return {"se": SE.ratings(sb["steps"]) if sb["solved"] else None}
 
 
 def _f_steps(c):

@@ -184,10 +184,7 @@
        "type": "number"
       },
       "scale": {
-       "enum": [
-        "classic",
-        "diuf"
-       ]
+       "const": "classic"
       }
      }
     }

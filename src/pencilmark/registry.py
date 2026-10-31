@@ -32,7 +32,6 @@ data/codes.csv, one row per chip code a route step can carry:
   subset_of   the codes this one is always a special case of (every X-Wing is a Skyscraper), space-separated
   se_classic  Sudoku Explainer rating (Juillerat's table, the one expert solvers quote); "-": SE has no such
               technique (se.py rates it 7.0)
-  se_diuf     the DiufSudoku fork's rating where it differs from se_classic; blank = the same
   explain     the explanation catalogue entry that teaches it (explain.CATALOG: names, aliases, links to explainer
               sites); blank when there is none
   note        why: the reason for a subset_of entry or an order (free text, not read by the code)
@@ -92,7 +91,6 @@ class Code:
     order: float
     subset_of: tuple[str, ...]
     se_classic: float | None
-    se_diuf: float | None
     explain: str
 
 
@@ -175,7 +173,6 @@ def codes() -> dict[str, Code]:
             order=float(r["order"]),
             subset_of=tuple(r["subset_of"].split()),
             se_classic=None if se == "-" else float(se),
-            se_diuf=float(r["se_diuf"]) if r["se_diuf"] else None,
             explain=r["explain"],
         )
     return out
