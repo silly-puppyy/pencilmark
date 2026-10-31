@@ -1,3 +1,7 @@
+---
+description: "Example requests in the generator spec language, from a killer with whispers to a 16x16 killer."
+---
+
 # Example generator specs
 
 Requests in the [generator spec](../../formats/generator-spec.md) language; each runs with `pencilmark.generate(spec)`. Whether a run

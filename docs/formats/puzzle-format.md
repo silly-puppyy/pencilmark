@@ -1,3 +1,7 @@
+---
+description: "The sudoku-puzzle format: one JSON file for a classic or variant sudoku, read strictly and written canonically."
+---
+
 # Puzzle format
 
 The `sudoku-puzzle` format, version 1: the transport format for sudoku puzzles, classic and variant. It says what a file means, not how to

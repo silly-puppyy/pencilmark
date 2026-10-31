@@ -25,6 +25,7 @@ def main():
     L = [
         "---",
         "title: Python API",
+        'description: "Every public function of the pencilmark package: rate, solve, generate, load, the format helpers, the errors."',
         "toc_max_heading_level: 2",
         "---",
         "",

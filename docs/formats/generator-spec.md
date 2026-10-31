@@ -1,3 +1,7 @@
+---
+description: "The sudoku-spec format: a request to the puzzle generator (board, rules, givens, symmetry, targets)."
+---
+
 # Generator spec
 
 The `sudoku-spec` format, version 1: a request to a puzzle generator. It reuses the vocabulary of the

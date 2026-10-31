@@ -6,13 +6,13 @@ python tools/tasks.py golden      every output of the golden corpus identical (a
 python tools/tasks.py check       all three: what a change must pass
 python tools/tasks.py lint        ruff check, ruff format --check and codespell
 python tools/tasks.py fixtures    rewrite the snapshot fixtures (only when a change is meant to alter them)
-python tools/tasks.py docs        generate the API, reference, techniques and parameters pages and swatches, build the site
+python tools/tasks.py prepare     generate the pages, swatches and copies the site reads (the docs workflow runs it)
+python tools/tasks.py docs        prepare, then build the site
 python tools/tasks.py serve       build, then serve the site on http://localhost:3000/pencilmark/
 python tools/tasks.py release VERSION   check that main is ready to release VERSION (docs/dev/release.md)
 """
 
 import re
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -22,8 +22,9 @@ PY = sys.executable
 FIXTURES = ["test_line_matrix", "test_edge_matrix", "test_cell_matrix", "test_rule_matrix", "test_input_matrix"]
 GENERATORS = ["gen_api_md", "gen_reference_md", "gen_cpp_reference", "gen_techniques_md", "gen_parameters_md",
               "gen_palette_md", "gen_swatches"]  # fmt: skip
-COPIES = [("README.md", "docs/index.md"), ("ARCHITECTURE.md", "docs/dev/architecture.md"),
-          ("CONTRIBUTING.md", "docs/dev/contributing.md")]  # fmt: skip
+COPIES = [("README.md", "docs/index.md", None),
+          ("ARCHITECTURE.md", "docs/dev/architecture.md", "How a card is computed in the code, and which file holds each part."),
+          ("CONTRIBUTING.md", "docs/dev/contributing.md", "How to set up, prove a change, and the style pencilmark's code and docs follow.")]  # fmt: skip
 
 
 def run(*cmd, cwd=ROOT):
@@ -56,12 +57,21 @@ def fixtures():
     return max(run(PY, f"tests/{t}.py", "--write") for t in FIXTURES)
 
 
-def docs(build=True):
+def prepare():
+    """the generated pages, the swatches and the copies of the root documents: everything the site build reads"""
     for g in GENERATORS:
         if run(PY, f"tools/{g}.py"):
             return 1
-    for src, dst in COPIES:
-        shutil.copyfile(ROOT / src, ROOT / dst)
+    for src, dst, description in COPIES:  # the copies get a description for search results (the sources have none)
+        text = (ROOT / src).read_text(encoding="utf-8")
+        head = f'---\ndescription: "{description}"\n---\n\n' if description else ""
+        (ROOT / dst).write_text(head + text, encoding="utf-8")
+    return 0
+
+
+def docs(build=True):
+    if prepare():
+        return 1
     try:
         return run("npm", "run", "build", cwd=ROOT / "website") if build else 0
     finally:
@@ -96,7 +106,7 @@ def release(version):
 
 
 TASKS = {"test": test, "slow": slow, "golden": golden, "check": check, "lint": lint, "fixtures": fixtures,
-         "docs": docs, "serve": serve}  # fmt: skip
+         "docs": docs, "serve": serve, "prepare": prepare}  # fmt: skip
 
 
 def main(argv):

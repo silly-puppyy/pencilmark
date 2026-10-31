@@ -1,3 +1,7 @@
+---
+description: "Rules for pencilmark's Python and C++ code, each with its source."
+---
+
 # Code style
 
 Rules for pencilmark's Python and C++. Each names its source. Docs have their own page: [writing style](writing-style.md).

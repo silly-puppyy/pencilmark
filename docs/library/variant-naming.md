@@ -1,3 +1,7 @@
+---
+description: "How describe() names a variant and writes its rules in words, from the rules alone."
+---
+
 # Variant names
 
 How `describe()` names a variant and writes its rules from the rules alone. This is library behaviour, not part of

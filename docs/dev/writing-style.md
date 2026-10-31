@@ -1,3 +1,7 @@
+---
+description: "How pencilmark's docs and messages are written: result first, plain words, British spelling."
+---
+
 # Writing style
 
 Rules for pencilmark's documentation. Each names its source. Code has its own page: [code style](code-style.md).

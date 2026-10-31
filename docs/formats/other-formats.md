@@ -1,3 +1,7 @@
+---
+description: "Reading and writing other sudoku formats: plain strings, text grids, sudokuwiki.org strings and ipuz."
+---
+
 # Other formats
 
 The `sudoku-puzzle` format ([Puzzle format](puzzle-format.md)) is all a tool needs. pencilmark can also read and write a few

@@ -1,3 +1,7 @@
+---
+description: "What pencilmark's numbers mean: band, difficulty and time, and the rules its formats follow."
+---
+
 # Philosophy
 
 What pencilmark is for, what its numbers mean, and the rules its formats follow. The specifications

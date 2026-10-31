@@ -1,3 +1,7 @@
+---
+description: "How pencilmark draws puzzles, and the drawing conventions most sudoku software shares."
+---
+
 # Drawing and style
 
 How pencilmark draws puzzles, and the conventions most sudoku software shares. **None of this is part of a format**: a

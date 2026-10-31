@@ -1,3 +1,7 @@
+---
+description: "The sudoku-grade format: every field of a grade card (difficulty, time, band, techniques, steps, issues)."
+---
+
 # Grade card
 
 The `sudoku-grade` format, version 1: what a grader reports about one puzzle. The card is separate from the

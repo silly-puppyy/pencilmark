@@ -54,6 +54,10 @@ module.exports = async function createConfig() {
     }],
   ],
   themeConfig: {
+    // link previews and search: the social card (static/img/social-card.png) and page keywords
+    image: 'img/social-card.png',
+    metadata: [{name: 'keywords', content: 'sudoku, sudoku difficulty, sudoku grader, variant sudoku, killer sudoku, ' +
+      'sudoku solver, sudoku generator, solve time, python'}],
     colorMode: {respectPrefersColorScheme: true},
     navbar: {
       title: 'pencilmark',
