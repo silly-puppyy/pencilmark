@@ -4,7 +4,9 @@ repos:
     rev: v0.17.3
     hooks:
       - id: ruff-check
+        files: ^(src|tests|tools)/
       - id: ruff-format
+        files: ^(src|tests|tools)/   # as CI; the hand-aligned examples in the docs stay as written
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.3
     hooks:
