@@ -284,3 +284,12 @@ table.api-summary td:first-child code { background: none; border: 0; padding: 0;
 .api-chip { display: inline-block; min-width: 3.2rem; margin-right: 0.5rem; font-family: var(--ifm-font-family-monospace);
   font-size: 0.7rem; color: var(--pm-muted); }
 @media (max-width: 640px) { table.api-summary td:first-child { white-space: normal; } }
+
+/* tables whose last column is prose (src/plugins/prose-tables.mjs): on a wide screen the table fills the column and the
+   prose column takes most of it; on a narrow one the table scrolls sideways as any other */
+@media (min-width: 997px) {
+  .markdown table.pm-prose-table { display: table; width: 100%; }
+  .markdown table.pm-prose-table td, .markdown table.pm-prose-table th { width: 1%; vertical-align: top; }
+  .markdown table.pm-prose-table td:last-child, .markdown table.pm-prose-table th:last-child { width: 100%; }
+  .markdown table.pm-prose-table .pm-short { white-space: nowrap; }
+}

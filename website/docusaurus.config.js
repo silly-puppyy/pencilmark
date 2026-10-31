@@ -8,6 +8,7 @@ module.exports = async function createConfig() {
   const rehypeKatex = (await import('rehype-katex')).default;
   const inlineJson = (await import('./src/plugins/inline-json.mjs')).default;
   const apiReference = (await import('./src/plugins/api-reference.mjs')).default;
+  const proseTables = (await import('./src/plugins/prose-tables.mjs')).default;
   return {
   title: 'pencilmark',
   tagline: 'Human-like difficulty grader, solver and generator for classic and variant sudoku',
@@ -33,7 +34,7 @@ module.exports = async function createConfig() {
         editUrl: `${GH}/edit/main/`,
         exclude: ['**/*.json'],
         remarkPlugins: [remarkMath],
-        rehypePlugins: [rehypeKatex, apiReference, inlineJson],
+        rehypePlugins: [rehypeKatex, apiReference, proseTables, inlineJson],
       },
       blog: false,
       theme: {customCss: require.resolve('./src/css/custom.css')},
