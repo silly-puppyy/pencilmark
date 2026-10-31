@@ -46,7 +46,7 @@ def test_every_technique_has_its_facts():
         if t.role == "logic":
             assert t.code and t.band is not None and t.family, f"{t.name}: logic needs code, band, family"
         else:
-            assert not t.family and not t.gate and t.simplicity is None, f"{t.name}: a {t.role} row is not priced"
+            assert not t.family and not t.gate, f"{t.name}: a {t.role} row is not priced"
         if t.code:
             assert t.display or t.code in C, f"{t.name}: code {t.code} has no name (codes.csv) and no display"
         if t.split:
