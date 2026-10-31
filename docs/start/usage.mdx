@@ -129,8 +129,9 @@ in `docs/examples/specs/`.
   classics of the same band, because the same techniques are harder to spot among clues and sums.
 - **time**: the predicted median solve time in minutes; the median classic takes about 12. Typical error 20-26%.
   `time_pNN` and `time_mean` spread it over the players.
-- **contains**: the techniques beyond singles, easiest first. A chip like `XWG/KTE/SCL` means any one of them works at
-  that point; [Techniques](../grades/techniques.md) lists every code.
+- **contains**: the techniques the puzzle needs, easiest first, singles included (a full house counts as a hidden
+  single). A chip like `XWG/KTE/SCL` means any one of them works at that point; [Techniques](../grades/techniques.md)
+  lists every code.
 
 Only the requested fields are computed. `contains` is the slow part: without it (`fields=["difficulty", "time",
 "band"]`) a card takes about a third of the time, with the same band, difficulty and time. [Philosophy](../grades/philosophy.md)

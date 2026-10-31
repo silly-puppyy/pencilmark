@@ -73,6 +73,10 @@ Each entry is one technique on the route:
 | `uses` | Times used on the route; omitted for singles (full house, hidden and naked singles, a rule's last cell), whose count depends on the route. |
 | `alternatives` | Other codes that also work there; omitted when there are none; `null` when the producer did not search (pencilmark: `alternatives=False`, CLI `--no-alternatives`; band, difficulty and time are the same). |
 
+A full house (`FHS`) is always both a naked and a hidden single, so it is listed under the hidden single (or the naked
+single when there is no hidden one) rather than as a chip of its own; `FHS` appears only when no other single is on the
+route. Its steps keep the code `FHS`.
+
 ## 4. `issues`
 
 The checks run only when the card is asked for `issues` (or `reject`); a default card does not run them.
