@@ -12,6 +12,7 @@ from .. import band_path as BP
 from .. import export as E2
 from .. import puzzle_json as PJ
 from .. import solver as S
+from ..api import GenerationFailed
 from . import elements as EL
 from . import search as SR
 from .board import BOXES, Board, grid_log2
@@ -19,14 +20,6 @@ from .checks import Checker, band_techs, code_techs, params
 
 BANDS = list(E2.BANDS)  # "Very Easy" .. "Extreme"
 CLASSIC_MIN_GIVENS = {4: 4, 6: 8, 9: 17}  # known minimum clue counts for a unique classic
-
-
-class GenerationFailed(RuntimeError):
-    """no puzzle met the spec within the time limit (or the spec is infeasible); str(e) says why."""
-
-    def __init__(self, reason, stats=None):
-        super().__init__(reason)
-        self.reason, self.stats = reason, stats or {}
 
 
 @dataclass

@@ -9,6 +9,7 @@ __version__ = "1.0.0"
 
 from .api import (
     FormatError,
+    GenerationFailed,
     NoSolution,
     NotSupportedError,
     NotUnique,

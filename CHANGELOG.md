@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `pencilmark.GenerationFailed` is exported, so a failed `generate` can be caught without importing
+  `pencilmark.gen`.
 - Command line: an input that cannot be read (bad JSON, a format error) is reported on its line as
   `error<TAB>line<TAB>message` and the next input goes on, in every command; `rate`, `solve`, `json`, `fingerprint` and
   `describe` stopped with a traceback. A FILE ending in `.json` that holds one JSON value (a pretty-printed puzzle file,

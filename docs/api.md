@@ -54,7 +54,7 @@ the unique solution as a list of digits (cell order of the puzzle); NotUnique / 
 generate(spec)
 ```
 
-one puzzle for a "sudoku-spec" request (docs/SPEC.md: dict, JSON text or path) -> {"puzzle": sudoku-puzzle, "card": sudoku-grade card, "info": {...}}; see pencilmark.gen.generate
+one puzzle for a "sudoku-spec" request (docs/SPEC.md: dict, JSON text or path) -> {"puzzle": sudoku-puzzle, "card": sudoku-grade card, "info": {...}}; GenerationFailed when no puzzle met it in time; see pencilmark.gen.generate
 
 ## `load`
 

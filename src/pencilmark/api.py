@@ -41,6 +41,7 @@ __all__ = [
     "from_string",
     "to_string",
     "generate",
+    "GenerationFailed",
     "FormatError",
     "NotSupportedError",
 ]
@@ -54,6 +55,14 @@ class NotUnique(ValueError):
 
 class NoSolution(ValueError):
     """the puzzle has no solution"""
+
+
+class GenerationFailed(RuntimeError):
+    """no puzzle met the spec within the time limit (or the spec is infeasible); str(e) says why."""
+
+    def __init__(self, reason, stats=None):
+        super().__init__(reason)
+        self.reason, self.stats = reason, stats or {}
 
 
 _PARAMS = None
@@ -366,7 +375,8 @@ def to_string(puzzle, form="plain"):
 
 def generate(spec):
     """one puzzle for a "sudoku-spec" request (docs/SPEC.md: dict, JSON text or path) -> {"puzzle": sudoku-puzzle,
-    "card": sudoku-grade card, "info": {...}}; see pencilmark.gen.generate"""
+    "card": sudoku-grade card, "info": {...}}; GenerationFailed when no puzzle met it in time; see
+    pencilmark.gen.generate"""
     from .gen.api import generate as g
 
     return g(spec)
