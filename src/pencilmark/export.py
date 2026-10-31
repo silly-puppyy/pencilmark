@@ -503,7 +503,10 @@ def _f_describe(c):
 def _f_se(c):
     from . import band_path as BP
     from . import se as SE
+    from .interop import is_classic9
 
+    if not is_classic9(c.p):  # SE's scale is defined on classic sudoku only (GRADE.md): null elsewhere
+        return {"se": None}
     sb = c.base if c.base is not None else BP.band_path(c.p, c.P)  # the card's first route: not computed again
     return {"se": SE.ratings(sb["steps"]) if sb["solved"] else None}
 

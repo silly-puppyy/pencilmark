@@ -70,6 +70,9 @@ def _params(mode):
     global _PARAMS
     from . import grader_model as GM
 
+    if mode not in ("human", "computer"):
+        raise ValueError(f"unknown mode {mode!r}; known: 'human', 'computer'")
+
     if _PARAMS[0] is not GM.default():  # the shipped model, or the one grader_model.use() put in place
         from .__main__ import _params as load_params
 

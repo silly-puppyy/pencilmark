@@ -40,7 +40,7 @@ A card exists only for a puzzle with exactly one solution. For any other puzzle,
 | `issues` | optional | list | Publishing checks (section 4). |
 | `reject` | optional | boolean | True when any issue has severity `reject`. |
 | `warning` | optional | boolean | True when any issue has severity `warning`. |
-| `se` | optional | `{"er", "ep", "ed", "scale"}` or null | Sudoku Explainer-style ratings of the route on the classic SE scale (`scale` is `"classic"`). Meaningful for classic sudoku only. |
+| `se` | optional | `{"er", "ep", "ed", "scale"}` or null | Sudoku Explainer-style ratings of the route on the classic SE scale (`scale` is `"classic"`). Null for anything but classic 9×9 sudoku (standard rows, columns and boxes, no other rule), where SE's scale is not defined. |
 | `steps` | optional | list | The step-by-step route (section 5). |
 | `describe` | optional | object | The `describe()` output ([Variant names](NAMING.md)). |
 | `symmetry` | optional | list | Symmetries of the givens pattern, entries as in the generator spec (`{"kind", "axis"?, "of": "givens"}`). |

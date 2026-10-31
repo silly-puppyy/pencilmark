@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- `se` is null for anything but classic 9×9 sudoku. Variants got numbers on a scale defined only for classics, often
+  the 7.0 fallback.
+- An unknown `mode` (for example `"Computer"`) is an error; it used to grade silently in human mode.
 - Lockout lines imported from SudokuPad or f-puzzles are written back too (the readers built digit tables directly,
   so `to_export` and `fingerprint` failed on those puzzles).
 - Stricter reading: a mathrax clue no two digits can make (`+` 30) and entropic `groups` that are not three non-empty

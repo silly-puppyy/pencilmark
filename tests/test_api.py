@@ -1,12 +1,14 @@
 """Public API smoke tests and reference cards."""
 
 import json
+from pathlib import Path
 
 import pytest
 from conftest import CLASSIC
 
 import pencilmark
 
+ROOT = Path(__file__).resolve().parents[1]
 CLASSIC_SOLUTION = None
 
 
@@ -233,6 +235,15 @@ def test_text_grids_and_pencilmarks():
         "r1c2": [1, 2, 3, 6, 7, 8, 9],
         "r1c3": [1, 2, 3, 5, 6, 7, 8, 9],
     }
+
+
+def test_mode_and_se_are_checked():
+    """an unknown mode is an error, not human mode in disguise; se is null outside classic sudoku (GRADE.md)"""
+    with pytest.raises(ValueError, match="unknown mode"):
+        pencilmark.rate(CLASSIC, mode="Computer")
+    killer = json.loads((ROOT / "docs" / "examples" / "killer-4x4.json").read_text(encoding="utf-8"))
+    assert pencilmark.rate(killer, se=True)["se"] is None
+    assert pencilmark.rate(CLASSIC, se=True)["se"]["er"] > 0
 
 
 def test_load_refuses_dicts_that_are_not_puzzles():

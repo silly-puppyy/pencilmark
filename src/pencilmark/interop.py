@@ -337,6 +337,12 @@ def to_string(puzzle, form="plain"):
     raise ValueError(f"unknown string form {form!r} (plain / grid / sudokuwiki)")
 
 
+def is_classic9(p):
+    """a classic 9 x 9 sudoku: standard rows, columns and boxes, nothing else (what Sudoku Explainer rates)"""
+    kind, _ = analyse(p)
+    return kind == "classic" or (kind is None and p.D == 9 and _plain_ok(p))
+
+
 def _plain_ok(p):
     D = p.D
     if D not in PJ.BOXES or len(p.coords) != D * D or p.relations or p.constraints:
