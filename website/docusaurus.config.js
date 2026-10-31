@@ -31,7 +31,16 @@ module.exports = async function createConfig() {
         path: '../docs',
         routeBasePath: '/',
         sidebarPath: require.resolve('./sidebars.js'),
-        editUrl: `${GH}/edit/main/`,
+        // "Edit this page": copies point to their source at the repository root; generated pages (tools/gen_*.py) have
+        // no link, since an edit there is overwritten
+        editUrl: ({docPath}) => {
+          const copies = {'index.md': 'README.md', 'dev/ARCHITECTURE.md': 'ARCHITECTURE.md',
+                          'dev/CONTRIBUTING.md': 'CONTRIBUTING.md'};
+          const generated = ['api.md', 'TECHNIQUES.md', 'PALETTE.md', 'dev/PARAMETERS.md'];
+          if (generated.includes(docPath) || docPath.startsWith('dev/reference/')) return undefined;
+          return `${GH}/edit/main/${copies[docPath] || 'docs/' + docPath}`;
+        },
+        showLastUpdateTime: true,
         exclude: ['**/*.json'],
         remarkPlugins: [remarkMath],
         rehypePlugins: [rehypeKatex, apiReference, proseTables, inlineJson],
