@@ -63,3 +63,8 @@ push, and `pre-commit install` runs them before each commit); text follows the
 spelling. [Add a technique](https://silly-puppyy.github.io/pencilmark/dev/ADD_TECHNIQUE) lists every place a new solving
 technique touches, and [Add a rule kind](https://silly-puppyy.github.io/pencilmark/dev/ADD_RULE_KIND) every place a new
 line, edge or cell kind touches.
+
+## Conduct and security
+
+Everyone taking part follows the [code of conduct](https://github.com/silly-puppyy/pencilmark/blob/main/CODE_OF_CONDUCT.md). Report a security problem privately, as
+[SECURITY.md](https://github.com/silly-puppyy/pencilmark/blob/main/SECURITY.md) says, not in a public issue.
