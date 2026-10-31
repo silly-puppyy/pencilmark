@@ -11,7 +11,7 @@ dots, check it and grade it. It assumes you have done [Grade your first puzzle](
 
 ## 1. The board and the givens
 
-Start a file called `mini.json`:
+Start a file called `mini.json` (the finished file is also in the repository as `docs/examples/mini-thermo-kropki.json`):
 
 ```json
 {"format": "sudoku-puzzle", "format_version": 1,

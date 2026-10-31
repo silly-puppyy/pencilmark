@@ -1,5 +1,6 @@
 """Draw the docs' small pictures (light and dark): a 3x3 example of every rule kind, a 9x9 board of every placement
-variant (both with tools/render_svg.py), and an outline of every named multi-grid layout.
+variant and of every puzzle in docs/examples (with tools/render_svg.py), and an outline of every named multi-grid
+layout.
 
   python tools/gen_swatches.py [out_dir]      default: website/static/img/swatches
 
@@ -166,6 +167,9 @@ def drawings():
             rules=[BOXES] + variants.preset_rules(v),
         )
         out["variant-" + v.lower().replace(" ", "-")] = lambda dark, doc=doc: render_svg.render(doc, dark=dark, cell=24)
+    for f in sorted((Path(__file__).resolve().parents[1] / "docs" / "examples").glob("*.json")):  # example puzzles
+        doc = json.loads(f.read_text(encoding="utf-8"))
+        out["example-" + f.stem] = lambda dark, doc=doc: render_svg.render(doc, dark=dark, cell=40)
     for key in variants.LAYOUT_NAMES:
         origins = [tuple(o) for o in puzzle_json._layouts()[key]]
         out["layout-" + key] = lambda dark, origins=origins: layout_svg(origins, dark)

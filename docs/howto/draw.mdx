@@ -1,0 +1,39 @@
+---
+title: Draw a puzzle
+description: Draw a puzzle file as an SVG picture in the default style, light or dark.
+---
+
+import ThemedImage from '@theme/ThemedImage';
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
+# Draw a puzzle
+
+The repository has a reference renderer, `tools/render_svg.py`, that draws a `sudoku-puzzle` file as SVG in the
+default style of [Drawing and style](../STYLE.md). It is not part of the installed package; run it from a clone.
+
+```
+python tools/render_svg.py docs/examples/mini-thermo-kropki.json mini.svg
+python tools/render_svg.py docs/examples/mini-thermo-kropki.json mini-dark.svg --dark
+```
+
+<div className="pm-graphic" style={{maxWidth: '16rem', margin: '0 0 1rem'}}>
+  <ThemedImage alt="The 6×6 thermo and Kropki puzzle"
+    sources={{light: useBaseUrl('/img/swatches/example-mini-thermo-kropki.svg'),
+              dark: useBaseUrl('/img/swatches/example-mini-thermo-kropki-dark.svg')}}/>
+</div>
+
+This is the puzzle from [Write a variant puzzle file](../tutorials/variant-file.md). `--cell N` sets the size of a
+cell in pixels (48 by default).
+
+From Python, with the `tools` folder on the path:
+
+```python
+import json, render_svg
+
+doc = json.load(open("docs/examples/mini-thermo-kropki.json"))
+svg = render_svg.render(doc, dark=False, cell=48)
+```
+
+The small drawings on the [rule pages](/rule-families/) come from this renderer. It always uses the default style, with
+line colours most puzzle setters use; [Drawing and style](../STYLE.md) lists every size and colour, and
+`docs/palette.json` holds them in one file for other renderers.
