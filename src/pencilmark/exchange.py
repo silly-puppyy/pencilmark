@@ -2158,7 +2158,8 @@ class _Writer:
         if t == "table":
             if not _RESERVED_OK[0]:
                 raise NotSupportedError(
-                    "a digit table with no rule family; tables " + RESERVED_MSG.split(": ", 1)[1].split(";")[0]
+                    "a digit table with no rule family (digit tables are replaced by a custom rule type planned for a "
+                    "later version of the format)"
                 )
             return [{"type": "table", "cells": nm(c["cells"]), "allowed": [list(x) for x in c["allowed"]]}]
         if t == "count":
