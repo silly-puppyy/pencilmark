@@ -81,13 +81,3 @@ def band_of(tech):
 
 
 # card score (sudokuwiki-like, one scale for every variant and size). Bands are purely move-based; the
-# score is ONE global monotone curve over the uncapped difficulty grade G (logarithmic, like Andrew Stuart's),
-# aligned so a typical puzzle of each band falls inside that band's range (Andrew Stuart's classic-sudoku ranges:
-# Very Easy < 3, Easy 3-4, Medium 4-5, Hard 5-7, Very Hard 7-9, Extreme 9+) -- but NOT clipped to it:
-# a score outside its band's range is information (promotion / demotion: 'Hard, 4.6' = a light Hard).
-# Anchors from the reference corpus (data/card_calibration.json, sorted G per band): score 0 at the
-# easiest reference puzzle (a 4x4), each boundary score at the geometric mean of the neighbouring bands'
-# median G, isotonic; above the Very Hard / Extreme boundary +1 per doubling of G (open-ended).
-# calibration file (card_calibration.json) is keyed by: they fix the score curve, so difficulty did not move when the bands
-# became seven (2026-10-30)
-# readability ranges of the seven bands (score_fit notes): where a typical classic of each band lies (frozen benchmark)

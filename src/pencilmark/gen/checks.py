@@ -15,7 +15,7 @@ from .. import cbackend as CB
 from .. import export as E2
 from .. import puzzle_json as PJ
 from .. import solver as S
-from ..scoring import complete_params
+from ..scoring import complete_params, copy_params
 from .elements import satisfies, to_json
 
 _PARAMS = None
@@ -32,7 +32,9 @@ def params(path=None):
             complete_params(_data._int_keys(json.loads(Path(path).read_text(encoding="utf-8")))), search="human"
         )
     if _PARAMS is None:
-        _PARAMS = dict(complete_params(_data.load_params("params.json")), search="human")
+        from .. import grader_model as GM
+
+        _PARAMS = dict(copy_params(GM.default().route), search="human")
     return _PARAMS
 
 

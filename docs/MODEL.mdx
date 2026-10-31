@@ -105,7 +105,7 @@ $$
 $$
 
 - $\theta$ (18 weights) and $\lambda$ (3) are fitted so that the difficulty of section 9 ranks puzzles like human solve
-  times (`data/price_params.json`, `meta_theta_full`, `meta_theta_interact`). The largest weights are on the digits a
+  times (`data/card_score.json`, `price_weights`; every other price parameter is shared with `data/params.json`). The largest weights are on the digits a
   move involves, written notes, the houses it uses and its spread: a move over many digits and houses, which needs
   candidates written down and spans the grid, is hard to see.
 - $\ln d$ is capped at $\ln 1000$, and no step costs more than a guess would: above that price it grows only
@@ -175,7 +175,7 @@ classics than for variants).
 |---|---|---|
 | route, band, contains | `band_path.py` | `data/techniques.csv`, `data/codes.csv` |
 | step features | `csrc/desc.cpp`, `csrc/human.cpp` | – |
-| step price | `scoring.py` | `data/price_params.json` (difficulty), `data/params.json` (time) |
+| step price | `scoring.py`, `grader_model.py` | `data/params.json`; for difficulty with `data/card_score.json` `price_weights` |
 | step value, difficulty | `card_score.py` | `data/card_score.json` |
 | search effort | `csrc/refute.cpp` | `data/card_score.json` (`refute_w`) |
 | time | `export.time_units` | `data/time_model.json` |

@@ -1,26 +1,21 @@
 """Card difficulty score: step value = d^beta x F / avail x exp(delta_tech) on the written human route;
 difficulty = mapped log of the average step effort per empty cell (+ a technique-free search-effort term).
-Configuration: data/card_score.json; price weights: data/params.json (route) and data/price_params.json (difficulty).
+Parameters: the grader model (grader_model.py): price (difficulty), route (time effort, search effort), score.
 """
 
 import math
 
-from . import _data
 from . import cbackend as CB
+from . import grader_model as GM
 from . import solver as S
-from .scoring import MENTAL, complete_params
+from .scoring import MENTAL
 from .scoring import Scorer as _Scorer
-
-P = complete_params(_data.load_params("params.json"))
-SC = _Scorer(P)
 
 dis = set(MENTAL)  # the first solve leaves out the moves worked out in the head
 
 
-_LAST_CELLS = []
-
-
-def steps(p):
+def steps(p, P):
+    """the written route under params P -> ([(technique name, price, F)], cells each step touches)"""
     from .band_path import variant_gate
 
     gate = variant_gate(p)  # variant techniques only for puzzles with the matching rules (as the card's bands)
@@ -31,11 +26,14 @@ def steps(p):
             # guessing off: where it would guess, prove by full search (Trial and error, priced as that guess)
             st, ok = CB.solve(p, dict(P, exhaust_fallback=1), disabled=gate | {S.GUESS})
             if not ok:
-                return []  # beyond engine: no score
+                return [], []  # beyond engine: no score
     return _record(p, st)
 
 
 def _record(p, st):
+    sc = _Scorer(
+        GM.default().route
+    )  # grid-size factor of the shipped engine params (the same alpha in both price sets)
     out, cells_ = [], []
     for s in st:
         t = s.move.feat[0]
@@ -47,15 +45,12 @@ def _record(p, st):
         F = C / 727 * 20 if p.N * p.D <= 729 else C / (p.N * p.D) * 20 * 729 / 727
         d = float(s.move.d)
         if p.D > 9:  # the engine price carries a grid-size factor ((D-1)/8)^alpha that d^beta would amplify:
-            d /= SC.size(p.D) / SC.size(9)  # beyond 9x9 bigger grids add time, not per-step difficulty
+            d /= sc.size(p.D) / sc.size(9)  # beyond 9x9 bigger grids add time, not per-step difficulty
         out.append((nm, max(d, 1e-3), F / max(len(s.alts), 1)))
         cells_.append(([s.move.place[0]] if s.move.place else []) + [c for c, _ in (s.move.elim or ())])
-    global _LAST_CELLS
-    _LAST_CELLS = cells_
-    return out
+    return out, cells_
 
 
-_PP = {}
 _LAST_REFUTE = None
 
 
@@ -71,16 +66,12 @@ def refute_lr_cell(p):
     if not bs:
         _LAST_REFUTE = None
         return 0.0
-    pr = _CB._C.refute_profile(_CB.to_cpuzzle(p), list(p.givens.items()), SC.p, [int(x) for x in bs[0]], 400)
+    pr = _CB._C.refute_profile(
+        _CB.to_cpuzzle(p), list(p.givens.items()), GM.default().route, [int(x) for x in bs[0]], 400
+    )
     _LAST_REFUTE = [tuple(x) for x in pr]
     s = sum((math.log(C / R) if R else math.log(max(C, 1)) + 2) for C, R, d, dp, rel in pr)
     return math.log1p(s / max(p.N - len(p.givens), 1))
-
-
-def _price_params(name):
-    if name not in _PP:
-        _PP[name] = complete_params(_data.load_params(name))
-    return _PP[name]
 
 
 def _cage_enum(p):
@@ -132,14 +123,18 @@ def _pair_enum(p):
     return out
 
 
-def steps_enum(p):
-    """steps(p) plus, per step, the enumeration size of the cages its cells touch (0 without cages)."""
-    pth = steps(p)
+def steps_enum(p, P):
+    """steps(p, P) plus, per step, the enumeration size of the cages its cells touch (0 without cages)."""
+    pth, cells = steps(p, P)
     if not pth or not getattr(p, "has_cages", False):
         return [(nm, d, f, 0.0) for nm, d, f in pth]
     cage_of = _cage_enum(p)
-    cells = _LAST_CELLS
     return [(nm, d, f, max((cage_of.get(c, 0.0) for c in cs), default=0.0)) for (nm, d, f), cs in zip(pth, cells)]
+
+
+def _route(p, P, w):
+    """the written route under P with the enumeration term (or 0 when its weight is 0)"""
+    return steps_enum(p, P) if w else [(nm, d, f, 0.0) for nm, d, f in steps(p, P)[0]]
 
 
 def _softplus_map(mp, r):
@@ -162,24 +157,17 @@ def _r_at(mp, score):
     return _R_AT[key]
 
 
-def score_parts(p, cfg):
-    """(card score, L1 = log of the step-value sum) for one puzzle; None if the engine must guess. L1 is the effort
-    the time model reads (data/time_model.json)."""
+def score_parts(p, model=None):
+    """(card score, L1 = log of the step-value sum) for one puzzle; None if the engine must guess. The score is priced
+    with the model's difficulty prices, L1 (the effort the time model reads) with its route prices; both on the
+    written route each price set produces."""
+    model = model or GM.default()
+    cfg = model.score
     w = cfg.get("enum_w", 0.0)
-    pth = steps_enum(p) if w else [(nm, d, f, 0.0) for nm, d, f in steps(p)]
-    if not pth:
+    pth_time = _route(p, model.route, w)
+    if not pth_time:
         return None
-    pth_time = pth
-    if cfg.get("price_params"):  # difficulty from the card-fit price weights on THEIR route; time (L1) from the
-        global P
-        P_old = P  # production route above (time / bands / everything else unchanged)
-        P = _price_params(cfg["price_params"])
-        try:
-            pth_d = steps_enum(p) if w else [(nm, d, f, 0.0) for nm, d, f in steps(p)]
-        finally:
-            P = P_old
-        if pth_d:
-            pth = pth_d
+    pth = _route(p, model.price, w) or pth_time
     v = sorted(
         (math.exp(cfg["beta"] * math.log(d) + cfg.get("delta", {}).get(nm, 0.0) + w * e) * f for nm, d, f, e in pth),
         reverse=True,
@@ -200,17 +188,13 @@ def score_parts(p, cfg):
     score = _softplus_map(mp, r)
     if score < 2.0:
         score = 2.0 * math.exp(mp["A"] * (r - _r_at(mp, 2.0)) / 2.0)
-    if cfg.get("price_params"):  # time effort from the production route
-        return score, math.log(
-            max(
-                sum(
-                    math.exp(
-                        cfg.get("beta_time", cfg["beta"]) * math.log(d) + cfg.get("delta", {}).get(nm, 0.0) + w * e
-                    )
-                    * f
-                    for nm, d, f, e in pth_time
-                ),
-                1e-9,
-            )
+    return score, math.log(
+        max(
+            sum(
+                math.exp(cfg.get("beta_time", cfg["beta"]) * math.log(d) + cfg.get("delta", {}).get(nm, 0.0) + w * e)
+                * f
+                for nm, d, f, e in pth_time
+            ),
+            1e-9,
         )
-    return score, math.log(max(sum(v), 1e-9))
+    )

@@ -26,7 +26,7 @@ import math
 import time
 from collections import Counter
 
-from . import __version__, _data
+from . import __version__
 from . import metrics as MT
 from . import registry as R
 from . import solver as S
@@ -137,9 +137,6 @@ def import_puzzle(d):
     return X.to_internal(d)
 
 
-_TIME = None
-
-
 def region_geometry(p):
     """type-free region geometry the time model reads : blob_cells = share of cells in 2-D complete
     groups that are not rectangles (jigsaw regions; diagonals are lines, excluded); extra_area_pc = 2-D complete groups per cell beyond
@@ -166,39 +163,25 @@ def region_geometry(p):
     return {"blob_cells": len(blob) / p.N, "extra_area_pc": sum(max(v - 1, 0) for v in area.values()) / p.N}
 
 
-def time_units(effort_l1, empty_cells, difficulty=None, geometry=None):
-    """expected solving time in standard-classic units (1.0 = a median classic) from data/time_model.json:
-    exp(const + k_effort * L1 + k_empty * ln(empty cells)), L1 = log of the priced step sum (card "effort_l1"); fitted on
-    era-adjusted per-player times. Files with k_difficulty instead of k_effort use the card difficulty.
-    None without the file or the inputs."""
-    _time_model()
+def time_units(effort_l1, empty_cells, geometry=None):
+    """expected solving time in standard-classic units (1.0 = a median classic) from the grader model's time model
+    (data/time_model.json): exp(const + k_effort * L1 + k_empty * ln(empty cells) + geometry) + t0, L1 = log of the priced
+    step sum (card "effort_l1"); fitted on era-adjusted per-player times. None without the inputs."""
     import math
 
-    if not _TIME or not empty_cells:
+    T = _time_model()
+    if not T or not empty_cells or effort_l1 is None:
         return None
-    if "k_effort" in _TIME:
-        if effort_l1 is None:
-            return None
-        geo = sum(w * (geometry or {}).get(k, 0.0) for k, w in _TIME.get("k_geometry", {}).items())  # scanning cost
-        t = math.exp(
-            _TIME["const"] + _TIME["k_effort"] * effort_l1 + _TIME["k_empty"] * math.log(empty_cells) + geo
-        ) + _TIME.get("t0", 0.0)  # t0: per-puzzle start-up overhead
-        sat = _TIME.get("saturation")  # effort grows less per point above difficulty s0 (off:
-        if sat and difficulty is not None:  # reversed within-type order where most puzzles score > s0; key disabled)
-            t *= math.exp(sat["g"] * max(0.0, difficulty - sat["s0"]))
-        cmp_ = _TIME.get("compress")  # long predicted times grow more slowly (order-preserving)
-        if cmp_ and t > 0:
-            lt = math.log(t)
-            t = math.exp(lt - cmp_["k"] * max(0.0, lt - cmp_["c"]))
-        szc = _TIME.get("size_curve")  # very large boards are slower per cell than the power law
-        if szc and t > 0:  # (3 sources); 0 below ~92 empty cells
-            t *= math.exp(szc["q"] * max(0.0, math.log(empty_cells) - szc["c"]) ** 2)
-        return round(t, 2)
-    if difficulty is None:
-        return None
-    return round(
-        math.exp(_TIME["const"] + _TIME["k_difficulty"] * difficulty + _TIME["k_empty"] * math.log(empty_cells)), 2
-    )
+    geo = sum(w * (geometry or {}).get(k, 0.0) for k, w in T.get("k_geometry", {}).items())  # scanning cost
+    t = math.exp(T["const"] + T["k_effort"] * effort_l1 + T["k_empty"] * math.log(empty_cells) + geo) + T.get("t0", 0.0)
+    cmp_ = T.get("compress")  # long predicted times grow more slowly (order-preserving)
+    if cmp_ and t > 0:
+        lt = math.log(t)
+        t = math.exp(lt - cmp_["k"] * max(0.0, lt - cmp_["c"]))
+    szc = T.get("size_curve")  # very large boards are slower per cell than the power law
+    if szc and t > 0:  # (3 sources); 0 below ~92 empty cells
+        t *= math.exp(szc["q"] * max(0.0, math.log(empty_cells) - szc["c"]) ** 2)
+    return round(t, 2)
 
 
 ALWAYS = ("format", "format_version", "grader")
@@ -220,10 +203,10 @@ EXPLAIN_LEVELS = ("notation", "short", "teach")  # terse to verbose: solvers' no
 
 
 def _time_model():
-    global _TIME
-    if _TIME is None:
-        _TIME = _data.load_json("time_model.json") if _data.exists("time_model.json") else {}
-    return _TIME
+    """the grader model's time model (data/time_model.json)"""
+    from . import grader_model as GM
+
+    return GM.default().time
 
 
 def _is_variant(p):
@@ -532,9 +515,7 @@ def _grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expl
         if c not in SINGLE_CODES:
             e["uses"] = n  # on the easiest route; singles' counts swing with the route, so omitted
         contains.append(e)
-    tm = time_units(
-        card.get("effort_l1"), p.N - len(p.givens), difficulty=card.get("score"), geometry=region_geometry(p)
-    )
+    tm = time_units(card.get("effort_l1"), p.N - len(p.givens), geometry=region_geometry(p))
     g = {
         "format": "sudoku-grade",
         "format_version": FORMAT_VERSION,
@@ -544,7 +525,7 @@ def _grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expl
         g["difficulty"] = card.get("score")
     if "time" in want:
         # time in MINUTES for today's average player (classic units x minutes_per_unit, data/time_model.json)
-        g["time"] = round(tm * _TIME.get("minutes_per_unit", 1.0), 1) if tm is not None else None
+        g["time"] = round(tm * _time_model().get("minutes_per_unit", 1.0), 1) if tm is not None else None
     variant = _is_variant(p)
     for f in sorted(
         (f for f in want if f.startswith("time_") and f != "time_dist"), key=lambda f: (f != "time_mean", len(f), f)
@@ -553,7 +534,7 @@ def _grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expl
             f, variant
         )  # time_mean / time_pNN: spread over today's players around the median (data/time_model.json)
         g[f] = (
-            round(tm * math.exp(lr) * _TIME.get("minutes_per_unit", 1.0), 1)
+            round(tm * math.exp(lr) * _time_model().get("minutes_per_unit", 1.0), 1)
             if tm is not None and lr is not None
             else None
         )

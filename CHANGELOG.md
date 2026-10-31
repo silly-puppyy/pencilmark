@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Package data: `price_params.json` is folded into `card_score.json` (`price_weights`, the only two weight vectors
+  that differed from `params.json`); `tiers.json` and `card_calibration.json` are gone, with the legacy code that read
+  them. All fitted parameters load once through one internal grader model. Cards are unchanged.
 - When the difficulty route cannot grade a puzzle, `difficulty` and `time` are null. `time` fell back to an older
   formula that skipped the minutes conversion (about 0.35 for a typical puzzle), and `difficulty` to a retired
   calibration.

@@ -87,9 +87,10 @@ def _apply_severity(notes, q):
 def _top3_share(puzzle, steps):
     """share of the solve's effort in its 3 hardest steps; effort per step = price^beta x candidate density / moves
     offered, as the card's difficulty"""
-    from . import _data
 
-    beta = _data.load_json("card_score.json")["beta"]
+    from . import grader_model as GM
+
+    beta = GM.default().score["beta"]
     nd = puzzle.N * puzzle.D
     v = []
     for st in steps:

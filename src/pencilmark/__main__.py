@@ -34,10 +34,10 @@ from . import puzzle_json as PJ
 
 def _params():
     """the engine parameters shipped with the package (data/params.json), completed with defaults."""
-    from . import _data
-    from .scoring import complete_params
+    from . import grader_model as GM
+    from .scoring import copy_params
 
-    return complete_params(_data.load_params("params.json"))
+    return copy_params(GM.default().route)
 
 
 def _whole_json(src):

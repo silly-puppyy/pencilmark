@@ -2,8 +2,8 @@
 
 card = grade_card(puzzle, P, band)      # band = (band name, required techniques) from the band path
 
-Returns {"status", "score", "effort_l1", "notes"}: score is the card's difficulty (card_score.score_parts, configured by
-data/card_score.json), effort_l1 the log step-value sum the time model reads, notes the publishing checks
+Returns {"status", "score", "effort_l1", "notes"}: score is the card's difficulty (card_score.score_parts, with the
+grader model), effort_l1 the log step-value sum the time model reads, notes the publishing checks
 (publish_flags.notes). score and effort_l1 are None when the route cannot grade the puzzle.
 """
 
@@ -21,29 +21,6 @@ def _code(name):
     return (("".join(ch for ch in name if ch.isalpha()).upper() + "XXX")[:3], name)
 
 
-_V2 = None
-
-
-_LAST_EFFORT = None
-
-
-def _score_v2(puzzle):
-    """Card score (pencilmark/card_score.py, configured by data/card_score.json); None if unavailable. Also leaves the
-    effort L1 (log step-value sum, read by the time model) in _LAST_EFFORT."""
-    global _V2, _LAST_EFFORT
-    from . import _data
-
-    if _V2 is None:
-        _V2 = _data.load_json("card_score.json") if _data.exists("card_score.json") else {}
-    if not _V2 or _V2.get("version") != 3:
-        return None
-    from . import card_score as C3
-
-    r = C3.score_parts(puzzle, _V2)
-    _LAST_EFFORT = None if r is None else r[1]
-    return None if r is None else r[0]
-
-
 def grade_card(puzzle, P, band, check_rules=True):
     g = MT.grade_puzzle_checked(puzzle, P)
     if "steps" not in g:  # no solution / several
@@ -56,10 +33,10 @@ def grade_card(puzzle, P, band, check_rules=True):
     if tier == "Unknown" and any(st.move.feat[0] == S.GUESS for st in steps):
         human = (P or {}).get("search") == "human"
         return {"status": "beyond human logic" if human else "beyond engine", "score": None, "effort_l1": None}
-    global _LAST_EFFORT
-    _LAST_EFFORT = None
-    score = _score_v2(puzzle)  # difficulty on the written route (data/card_score.json); None if it cannot grade
-    effort = _LAST_EFFORT
+    from . import card_score as C3
+
+    r = C3.score_parts(puzzle)  # difficulty and time effort on the written route; None if it cannot grade
+    score, effort = r if r is not None else (None, None)
     from . import publish_flags as PF
 
     work_min = g["grade"]["work_time"] / 60 if g.get("grade") else None
