@@ -228,3 +228,16 @@ figure.pm-chart figure { margin: 0; }
 .pm-pj-line { display: block; padding: 0 0.3rem 0 1.6rem; text-indent: -1.3rem; border-radius: 3px; white-space: pre-wrap; }
 .pm-pj-on { background: var(--docusaurus-highlighted-code-line-bg); outline: 1px solid var(--ifm-color-primary-lightest); }
 .pm-puzzle-json figcaption { flex-basis: 100%; font-size: 0.85rem; color: var(--pm-muted); }
+
+/* sidebar icons for the rule family pages (static/img/icons): line art masked in the text colour, so both themes follow */
+.pm-ico > .menu__link { display: flex; align-items: center; }
+.pm-ico > .menu__link::before { content: ''; flex: 0 0 18px; width: 18px; height: 18px; margin-right: 9px;
+  background-color: currentColor; -webkit-mask: center / contain no-repeat; mask: center / contain no-repeat; opacity: 0.8; }
+.pm-ico-board > .menu__link::before { -webkit-mask-image: url('/img/icons/board.svg'); mask-image: url('/img/icons/board.svg'); }
+.pm-ico-cages > .menu__link::before { -webkit-mask-image: url('/img/icons/cages.svg'); mask-image: url('/img/icons/cages.svg'); }
+.pm-ico-cells > .menu__link::before { -webkit-mask-image: url('/img/icons/cells.svg'); mask-image: url('/img/icons/cells.svg'); }
+.pm-ico-edges > .menu__link::before { -webkit-mask-image: url('/img/icons/edges.svg'); mask-image: url('/img/icons/edges.svg'); }
+.pm-ico-houses > .menu__link::before { -webkit-mask-image: url('/img/icons/houses.svg'); mask-image: url('/img/icons/houses.svg'); }
+.pm-ico-lines > .menu__link::before { -webkit-mask-image: url('/img/icons/lines.svg'); mask-image: url('/img/icons/lines.svg'); }
+.pm-ico-other > .menu__link::before { -webkit-mask-image: url('/img/icons/other.svg'); mask-image: url('/img/icons/other.svg'); }
+.pm-ico-outside > .menu__link::before { -webkit-mask-image: url('/img/icons/outside.svg'); mask-image: url('/img/icons/outside.svg'); }
