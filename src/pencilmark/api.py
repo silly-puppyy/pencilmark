@@ -66,16 +66,18 @@ class GenerationFailed(RuntimeError):
         self.reason, self.stats = reason, stats or {}
 
 
-_PARAMS = None
+_PARAMS = (None, None)  # (grader model, its engine params)
 
 
 def _params(mode):
     global _PARAMS
-    if _PARAMS is None:
+    from . import grader_model as GM
+
+    if _PARAMS[0] is not GM.default():  # the shipped model, or the one grader_model.use() put in place
         from .__main__ import _params as load_params
 
-        _PARAMS = load_params()
-    return dict(_PARAMS, search="computer" if mode == "computer" else "human")
+        _PARAMS = (GM.default(), load_params())
+    return dict(_PARAMS[1], search="computer" if mode == "computer" else "human")
 
 
 def load(puzzle):

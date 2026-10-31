@@ -293,3 +293,17 @@ def test_step_notation_levels():
     assert all(set(x["explanation"]) == {"notation"} for x in steps)
     full = pencilmark.rate(s, fields=["steps"], explain=True)["steps"]
     assert all("notation" in x["explanation"] for x in full) and any("teach" in x["explanation"] for x in full)
+
+
+def test_grader_model_overrides():
+    """a model with changed parameters grades inside use() and the shipped one is back after it"""
+    from pencilmark import grader_model as GM
+
+    s = "....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9......."
+    base = pencilmark.rate(s, fields=["difficulty", "time"])
+    with GM.use(GM.default().with_overrides({"score.map.A": "x1.2", "time.k_effort": 0.4})):
+        alt = pencilmark.rate(s, fields=["difficulty", "time"])
+    assert alt["difficulty"] > base["difficulty"] and alt["time"] > base["time"]
+    assert pencilmark.rate(s, fields=["difficulty", "time"]) == base
+    with pytest.raises(KeyError):
+        GM.default().with_overrides({"no.such": 1})
