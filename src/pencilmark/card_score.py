@@ -51,25 +51,19 @@ def _record(p, st):
     return out, cells_
 
 
-_LAST_REFUTE = None
-
-
 def refute_lr_cell(p):
     """technique-free search effort of the puzzle: the engine's generic refutation profile (singles + pair
     relations + n-ary consistency; when stuck, every candidate trialled, shortest refutations applied) -> log1p(sum over stuck points of
     log(candidates / shortest refutations) per empty cell). Puzzle-only: no technique catalogue, no prices."""
-    global _LAST_REFUTE
     from . import cbackend as _CB
 
     known = getattr(p, "_pm_solution", None)
     bs = [known] if known is not None else _CB.brute_solve(p, limit=1)
     if not bs:
-        _LAST_REFUTE = None
         return 0.0
     pr = _CB._C.refute_profile(
         _CB.to_cpuzzle(p), list(p.givens.items()), GM.default().route, [int(x) for x in bs[0]], 400
     )
-    _LAST_REFUTE = [tuple(x) for x in pr]
     s = sum((math.log(C / R) if R else math.log(max(C, 1)) + 2) for C, R, d, dp, rel in pr)
     return math.log1p(s / max(p.N - len(p.givens), 1))
 
