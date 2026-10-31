@@ -470,7 +470,12 @@ def _support_search(p, rule, dom, conflicts, node_limit=8000):
             return None
         if len(asg) == n:
             return dict(asg) if rule.check([asg[i] for i in range(n)]) else None
-        i = min((k for k in range(n) if k not in asg), key=lambda k: popcount(d[k]))
+        i, best = -1, 99  # the open cell with the fewest candidates, lowest index on ties
+        for k in range(n):
+            if k not in asg:
+                c = d[k].bit_count()
+                if c < best:
+                    i, best = k, c
         for v in digits_of(d[i]):
             budget["n"] += 1
             nd = list(d)

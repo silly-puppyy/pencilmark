@@ -24,16 +24,15 @@ def bit(d: int) -> int:
 
 
 def popcount(m: int) -> int:
-    return bin(m).count("1")
+    return m.bit_count()
 
 
 def digits_of(m: int):
-    d = 1
+    """the digits of a candidate mask, smallest first"""
     while m:
-        if m & 1:
-            yield d
-        m >>= 1
-        d += 1
+        low = m & -m
+        yield low.bit_length()
+        m ^= low
 
 
 def shape_ratio(coords) -> float:
