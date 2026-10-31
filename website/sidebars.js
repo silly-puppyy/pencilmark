@@ -41,6 +41,7 @@ module.exports = {
       {type: 'doc', id: 'NAMING', label: 'Variant names'},
       {type: 'doc', id: 'ENGINE', label: 'Engine mapping'},
       {type: 'doc', id: 'api', label: 'Python API'},
+      {type: 'doc', id: 'GLOSSARY', label: 'Glossary'},
     ]},
     {type: 'category', label: 'Contributing', collapsed: true, link: {type: 'generated-index', slug: '/dev/'}, items: [
       {type: 'doc', id: 'dev/WRITING_STYLE', label: 'Writing style'},
