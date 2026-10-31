@@ -57,7 +57,8 @@ Write commit messages that say what changed and why, and what the checks showed.
 ## Style
 
 Code follows the [code style](https://silly-puppyy.github.io/pencilmark/dev/CODE_STYLE) (ruff, line length 120:
-`ruff check` and `ruff format`); text follows the
+`ruff check` and `ruff format`, plus `codespell`; `python tools/tasks.py lint` runs all three, as CI does on every
+push, and `pre-commit install` runs them before each commit); text follows the
 [writing style](https://silly-puppyy.github.io/pencilmark/dev/WRITING_STYLE): result first, plain words, British
 spelling. [Add a technique](https://silly-puppyy.github.io/pencilmark/dev/ADD_TECHNIQUE) lists every place a new solving
 technique touches.

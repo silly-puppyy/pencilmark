@@ -1,0 +1,21 @@
+# Lint on every push to main and every pull request: ruff (lint and format) and codespell. About 20 seconds.
+name: lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+      - run: python -m pip install ruff==0.17.3 codespell==2.4.3
+      - run: ruff check src tests tools
+      - run: ruff format --check src tests tools
+      - run: codespell

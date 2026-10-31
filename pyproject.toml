@@ -72,6 +72,11 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "src/pencilmark/__init__.py" = ["F401"]   # re-exports the public API
 
+[tool.codespell]
+# technique and code abbreviations (ALS = almost locked set, nd / bu / te ...) and regex stems ("givin", "necessar")
+ignore-words-list = "als,nd,bu,hsi,thi,lins,te,inh,nin,strat,necessar,multipl,givin,assum"
+skip = "*.json,*.jsonl,*.csv,*.svg,./tests/fixtures,./tests/golden,./docs/dev/reference,./docs/api.md,./website/node_modules,./website/build,./build"
+
 
 [tool.cibuildwheel]
 build = "cp310-* cp311-* cp312-* cp313-* cp314-*"

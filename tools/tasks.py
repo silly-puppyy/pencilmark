@@ -4,7 +4,7 @@ python tools/tasks.py test        the quick suite (about 10 s)
 python tools/tasks.py slow        the doc examples, run as written (about 20 s)
 python tools/tasks.py golden      every output of the golden corpus identical (about a minute)
 python tools/tasks.py check       all three: what a change must pass
-python tools/tasks.py lint        ruff check and ruff format --check
+python tools/tasks.py lint        ruff check, ruff format --check and codespell
 python tools/tasks.py fixtures    rewrite the snapshot fixtures (only when a change is meant to alter them)
 python tools/tasks.py docs        generate the API, reference, techniques and parameters pages and swatches, build the site
 python tools/tasks.py serve       build, then serve the site on http://localhost:3000/pencilmark/
@@ -48,7 +48,8 @@ def check():
 
 
 def lint():
-    return run("ruff", "check", "src", "tests", "tools") or run("ruff", "format", "--check", "src", "tests", "tools")
+    return (run("ruff", "check", "src", "tests", "tools") or run("ruff", "format", "--check", "src", "tests", "tools")
+            or run("codespell"))  # fmt: skip
 
 
 def fixtures():
