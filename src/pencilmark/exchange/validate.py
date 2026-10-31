@@ -317,6 +317,11 @@ def _validate_rule(r, B):
             _int(r["value"], "value", 2 if kind == "modular" else 1)
             if kind != "modular" and r["value"] > D - 1:
                 raise FormatError(f"line {kind} value must be at most {D - 1} (a difference between digits 1..{D})")
+        if "groups" in r:  # entropic: low / middle / high
+            g = r["groups"]
+            flat = [v for x in g for v in x] if isinstance(g, list) and all(isinstance(x, list) for x in g) else None
+            if flat is None or len(g) != 3 or not all(g) or sorted(flat) != list(range(1, D + 1)):
+                raise FormatError(f"groups must be three non-empty groups that split the digits 1..{D}")
         if r.get("closed") and not LINE[kind].closable:
             raise FormatError(f"line {kind} cannot be closed")
         if "closed" in r and not isinstance(r["closed"], bool):
@@ -357,7 +362,11 @@ def _validate_rule(r, B):
                 if "value" in r:
                     raise FormatError("mathrax even / odd takes no value")
             elif op in ("+", "-", "x", "/"):
-                _int(r.get("value"), "value", 0)
+                v = _int(r.get("value"), "value", 0)
+                hit = {"+": lambda x, y: x + y == v, "-": lambda x, y: abs(x - y) == v, "x": lambda x, y: x * y == v,
+                       "/": lambda x, y: x == v * y or y == v * x}[op]  # fmt: skip
+                if not any(hit(x, y) for x in range(1, D + 1) for y in range(1, D + 1)):  # diagonal digits may repeat
+                    raise FormatError(f"no two digits 1..{D} make mathrax {op} {v}")
             else:
                 raise FormatError("mathrax op must be + - x / even odd")
     elif t == "sum":

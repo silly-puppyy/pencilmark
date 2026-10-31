@@ -763,18 +763,7 @@ def translate(sp, page_text=None, overrides=None):
                 continue
             m_ = re.search(r"lockout.{0,200}?(?:at least|by|difference of) (\d)", rules.lower(), re.S)
             k_ = int(m_.group(1)) if m_ else 4
-            p.relations.append(("diffge", a, b, k_))
-            D_ = n
-            for c in ids[1:-1]:
-                allowed = [
-                    (x, y, z)
-                    for x in range(1, D_ + 1)
-                    for y in range(1, D_ + 1)
-                    if abs(x - y) >= k_
-                    for z in range(1, D_ + 1)
-                    if z < min(x, y) or z > max(x, y)
-                ]
-                p.constraints.append({"type": "table", "cells": [a, b, c], "allowed": allowed})
+            p.constraints.append({"type": "line", "kind": "lockout", "cells": ids, "k": k_})  # compiled by finalize
         elif rule == "double_arrow":  # the two circle digits sum to the line's digits between them
             if len(ids) < 3 or ids[0] == ids[-1]:
                 unknown.append("malformed double arrow")

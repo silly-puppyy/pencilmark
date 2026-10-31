@@ -81,6 +81,16 @@ def test_fpuzzles_killer_cage():
     assert pencilmark.solve(pj) == sol
 
 
+def test_fpuzzles_lockout_written_back():
+    """an imported lockout line exports as a lockout line with its value (it compiled to digit tables, which no format
+    rule can carry, so to_export and fingerprint failed on every imported lockout puzzle)"""
+    d = fpuzzles_json(CLASSIC)
+    d["lockout"] = [{"lines": [["R1C1", "R2C1", "R3C1", "R4C1"]], "value": "5"}]
+    doc = pencilmark.to_export(FP.to_puzzle(fpuzzles_url(d), rules_text="Lockout lines: ends differ by at least 5."))
+    assert {"type": "line", "kind": "lockout", "value": 5, "cells": ["r1c1", "r2c1", "r3c1", "r4c1"]} in doc["rules"]
+    assert pencilmark.fingerprint(doc)
+
+
 def test_user_agent_contact():
     assert "347531506+silly-puppyy@users.noreply.github.com" in sources.USER_AGENT
 

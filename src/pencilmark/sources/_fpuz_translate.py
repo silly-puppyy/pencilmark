@@ -225,18 +225,7 @@ def translate(fp, line_kinds=None):
             cs = [ix(x) for x in line]
             if len(cs) < 2 or cs[0] == cs[-1]:
                 continue
-            a, b = cs[0], cs[-1]
-            p.relations.append(("diffge", a, b, k_))
-            for c in cs[1:-1]:
-                allowed = [
-                    (x, y, z)
-                    for x in range(1, n + 1)
-                    for y in range(1, n + 1)
-                    if abs(x - y) >= k_
-                    for z in range(1, n + 1)
-                    if z < min(x, y) or z > max(x, y)
-                ]
-                p.constraints.append({"type": "table", "cells": [a, b, c], "allowed": allowed})
+            p.constraints.append({"type": "line", "kind": "lockout", "cells": cs, "k": k_})  # compiled by finalize
             used["lockout"] = used.get("lockout", 0) + 1
     for cg in fp.get("_sumcage") or []:
         p.constraints.append({"type": "sum", "cells": sorted(ix(x) for x in cg["cells"]), "total": int(cg["value"])})

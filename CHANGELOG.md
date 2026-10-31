@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Lockout lines imported from SudokuPad or f-puzzles are written back too (the readers built digit tables directly,
+  so `to_export` and `fingerprint` failed on those puzzles).
+- Stricter reading: a mathrax clue no two digits can make (`+` 30) and entropic `groups` that are not three non-empty
+  groups splitting 1..D are format errors (they passed and failed later with an engine message).
 - Lockout lines can be written back: `to_export`, `fingerprint` and the canonical text failed on any puzzle with one
   (NotSupportedError). The lockout is now an engine line kind compiled to the same relation and digit tables. Its
   rule text states its own value (it always said 4).
