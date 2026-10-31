@@ -258,6 +258,11 @@ def test_format_md_examples():
         X.validate(d)
         X.read(d)
         n += 1
+    for f in sorted((ROOT / "docs" / "examples").glob("*.json")):  # the example files the pages draw
+        d = json.loads(f.read_text(encoding="utf-8"))
+        X.validate(d)
+        X.read(d)
+        n += 1
     assert n >= 3
 
 
