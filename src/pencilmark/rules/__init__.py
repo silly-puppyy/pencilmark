@@ -4,7 +4,9 @@ of their own lists; the C++ engine keeps its own table (csrc/nary.hpp), checked 
 
 line   the line kinds (rules/line.py)
 edge   the edge kinds (rules/edge.py)
+cell   the cell kinds (rules/cell.py)
 """
 
+from .cell import CELL  # noqa: F401
 from .edge import EDGE  # noqa: F401
 from .line import LINE  # noqa: F401

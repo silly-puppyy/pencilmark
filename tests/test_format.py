@@ -868,3 +868,17 @@ def test_edge_registry_matches_schema_docs():
     assert not {k for k, v in EDGE.items() if not v.negative} & set(neg)
     page = (ROOT / "docs" / "rules" / "edges-and-corners.mdx").read_text(encoding="utf-8")
     assert all(f"| `{k}` |" in page for k in EDGE), [k for k in EDGE if f"| `{k}` |" not in page]
+
+
+def test_cell_registry_matches_schema_docs():
+    """rules/cell.py is the one list of cell kinds: the JSON Schema and the rule page agree"""
+    from pencilmark.rules import CELL
+
+    schema = json.loads((ROOT / "docs" / "sudoku-puzzle.schema.json").read_text(encoding="utf-8"))
+    rc = schema["$defs"]["rule_cell"]["properties"]
+    assert set(rc["kind"]["enum"]) == set(CELL)
+    assert {k.param for k in CELL.values() if k.param} <= set(rc)
+    neg = schema["$defs"]["rule_negative"]["properties"]["kind"]["enum"]
+    assert set(neg) == {k for k, v in CELL.items() if v.negative}
+    page = (ROOT / "docs" / "rules" / "cell-clues.mdx").read_text(encoding="utf-8")
+    assert all(f"`{k}`" in page for k in CELL), [k for k in CELL if f"`{k}`" not in page]

@@ -11,11 +11,11 @@ from pathlib import Path
 
 try:  # an installed pencilmark (with its engine) if there is one, else the source tree
     from pencilmark import exchange as X
-    from pencilmark.rules import EDGE, LINE
+    from pencilmark.rules import CELL, EDGE, LINE
 except ImportError:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
     from pencilmark import exchange as X  # noqa: E402
-    from pencilmark.rules import EDGE, LINE  # noqa: E402
+    from pencilmark.rules import CELL, EDGE, LINE  # noqa: E402
 
 # board style, in cell units unless noted (docs/STYLE.md; values in docs/palette.json)
 _PAL = json.loads((Path(__file__).resolve().parents[1] / "docs/palette.json").read_text(encoding="utf-8"))
@@ -347,14 +347,15 @@ def render(doc, dark=False, cell=48, annotate=False, labels=False):
         elif t == "cell":
             for x in r["cells"]:
                 cxx, cyy = ctr(x)
-                if k == "odd":
+                mk = CELL[k].mark if k in CELL else "digits"
+                if mk == "circle":
                     add("shade", f'<circle cx="{cxx:.1f}" cy="{cyy:.1f}" r="{0.4 * u:.1f}" fill="{T["odd"]}"/>')
-                elif k == "even":
+                elif mk == "square":
                     add(
                         "shade",
                         f'<rect x="{cxx - 0.4 * u:.1f}" y="{cyy - 0.4 * u:.1f}" width="{0.8 * u:.1f}" height="{0.8 * u:.1f}" fill="{T["even"]}"/>',
                     )
-                elif k in ("low", "high"):
+                elif mk == "diamond":
                     d = 0.42 * u
                     add(
                         "shade",

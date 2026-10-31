@@ -24,6 +24,7 @@ from dataclasses import dataclass
 
 from . import puzzle_json as PJ
 from .exchange import cell_name
+from .rules.cell import CELL, VARIANT_TEXT
 from .rules.edge import EDGE
 from .rules.line import LINE
 
@@ -283,23 +284,21 @@ family("Quadruple", _t("contains"), "Digits in a circle appear at least once amo
 family("Cupid", _t("appears"), "The digit in a cell with an arrow appears again in the direction of the arrow.")
 family("Clone", _t("clone"), "Shaded shapes of the same colour hold the same digits in corresponding cells.")
 family("Twin", _t("isomorphic"), "The two grids are the same solution with the digits relabelled.")
-family(
-    "Odd-Even",
-    lambda r: (
-        (r["type"] == "cell" and r["kind"] in ("odd", "even"))
-        or (r["type"] == "negative" and r["of"] == "cell" and r.get("kind") in ("odd", "even"))
-    ),
-    lambda rs, c: _odd_even_text(rs),
-)
-family(
-    "Low-High",
-    lambda r: (
-        (r["type"] == "cell" and r["kind"] in ("low", "high"))
-        or (r["type"] == "negative" and r["of"] == "cell" and r.get("kind") in ("low", "high"))
-    ),
-    lambda rs, c: _low_high_text(rs, c),
-)
-family("Digit Class", _t("cell", "set"), "A cell marked with small digits contains one of them.")
+for _v, _txt in VARIANT_TEXT.items():  # the cell families (rules/cell.py)
+    _ks = {k for k, ck in CELL.items() if ck.variant == _v}
+    _neg = {k for k in _ks if CELL[k].negative}
+    family(
+        _v,
+        (
+            lambda ks, neg: (
+                lambda r: (
+                    (r["type"] == "cell" and r["kind"] in ks)
+                    or (r["type"] == "negative" and r["of"] == "cell" and r.get("kind") in neg)
+                )
+            )
+        )(_ks, _neg),
+        _txt,
+    )
 family(
     "Double",
     lambda r: r["type"] == "count" and "each" in r,
@@ -357,27 +356,6 @@ GENERIC_REGION = {
     "extra": ("Extra Regions", "Digits don't repeat in a shaded region."),
     "region": ("Extra Regions", "Digits don't repeat in a shaded region."),
 }
-
-
-def _odd_even_text(rs):
-    k = {r["kind"] for r in rs if r["type"] == "cell"}
-    parts = (["a digit in a grey circle is odd"] if "odd" in k else []) + (
-        ["a digit in a grey square is even"] if "even" in k else []
-    )
-    s = "; ".join(parts) or "shaded cells have a fixed parity"
-    s = s[0].upper() + s[1:] + "."
-    if any(r["type"] == "negative" for r in rs):
-        s += " Every unmarked cell has the other parity."
-    return s
-
-
-def _low_high_text(rs, c):
-    sp = (_vals(rs, "split") or [c["D"] // 2])[0]
-    s = f"A cell with a light diamond holds 1–{sp}; a cell with a dark diamond holds {sp + 1}–{c['D']}."
-    neg = [r for r in rs if r["type"] == "negative"]
-    if neg:
-        s += f" Every unmarked cell holds {'1–' + str(sp) if neg[0]['kind'] == 'high' else str(sp + 1) + '–' + str(c['D'])}."
-    return s
 
 
 # ------------------------------------------------------------------------------------------------------------- layouts

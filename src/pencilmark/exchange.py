@@ -23,6 +23,7 @@ from collections import Counter
 
 from . import model as M
 from . import puzzle_json as PJ
+from .rules.cell import CELL
 from .rules.edge import EDGE, NEG_SELECTOR, edge_family, edge_relation, edge_rule, negative_relation
 from .rules.line import LINE, line_from_engine, line_to_engine
 
@@ -479,7 +480,7 @@ KINDS = {
     "corner": {"battenburg", "mathrax", "exclude"},
     "sum": {"little_killer", "frame", "group", "corner"},
     "neighbours": {"antiknight", "antiking", "nonconsecutive"},
-    "cell": {"odd", "even", "low", "high", "set", "exclude"},
+    "cell": set(CELL),  # rules/cell.py
     "count": {"circles"},
 }
 LINE_PARAMS = {k: set(v.params) for k, v in LINE.items() if v.params}
@@ -697,11 +698,11 @@ def _validate_rule(r, B):
         ):
             raise FormatError(f"digits must be a list of digits 1..{D}")
         if t == "cell":
-            if kind in ("low", "high"):
+            if CELL[kind].param == "split":
                 if "split" not in r or "values" in r:
                     raise FormatError(f"digits {kind} takes split (and no values)")
                 _int(r["split"], "split", 1)
-            elif kind in ("set", "exclude"):
+            elif CELL[kind].param == "values":
                 if "values" not in r or "split" in r:
                     raise FormatError(f"digits {kind} takes values")
                 if (
@@ -851,9 +852,10 @@ def _validate_rule(r, B):
             if sel:
                 raise FormatError(f"negative {of} takes no selector")
         elif of == "cell":
-            if r.get("kind") not in ("odd", "even", "low", "high"):
+            ck = CELL.get(r["kind"]) if isinstance(r.get("kind"), str) else None
+            if not ck or not ck.negative:
                 raise FormatError("negative cell needs kind odd / even / low / high")
-            if (r["kind"] in ("low", "high")) != ("split" in r) or sel - {"kind", "split"}:
+            if (ck.param == "split") != ("split" in r) or sel - {"kind", "split"}:
                 raise FormatError("negative cell low / high need split (others take none)")
         if "area" in r:
             area_cells(B, r["area"])
