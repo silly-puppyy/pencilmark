@@ -10,6 +10,7 @@ from typing import Any
 
 from .. import band_path as BP
 from .. import export as E2
+from .. import model as M
 from .. import puzzle_json as PJ
 from .. import solver as S
 from ..api import GenerationFailed
@@ -186,7 +187,8 @@ def _shape(s):
 
 def board_of(s):
     """the Board of a Spec: its size and layout, with the locked rules' all-different units (extra regions,
-    diagonals, windows; anti-knight / anti-king pairs) and their puzzle JSON parts for every candidate"""
+    diagonals, windows; anti-knight / anti-king pairs), their other pair rules (nonconsecutive) and their puzzle
+    JSON parts for every candidate"""
     b = Board(s.size, s.layout)
     if not s.locked:
         b.extra_json = None
@@ -215,11 +217,14 @@ def board_of(s):
     p.finalize()
     at = lambda i: b.cid[tuple(p.coords[i])]
     units = [[at(i) for i in g.cells] for g in p.groups if g.kind not in ("cage",)]
+    rels = []
     for rel in p.relations:
-        if rel[0] != "neq":
-            raise ValueError(f"locked rules: the generator's grids respect all-different rules only, not {rel[0]}")
-        units.append([at(rel[1]), at(rel[2])])
-    b = Board(s.size, s.layout, extra=units)
+        if rel[0] == "neq":
+            units.append([at(rel[1]), at(rel[2])])
+            continue
+        f, args, digits = M.RELATIONS[rel[0]], rel[3:], range(1, s.size + 1)
+        rels.append((at(rel[1]), at(rel[2]), {(v, w) for v in digits for w in digits if f(v, w, *args)}))
+    b = Board(s.size, s.layout, extra=units, rels=rels)
     b.extra_json = {
         "regions": [g for g in internal.get("regions") or [] if g.get("kind") not in ("row", "col", "box")],
         "rules": list(internal.get("rules") or []),

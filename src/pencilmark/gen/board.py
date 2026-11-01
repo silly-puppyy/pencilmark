@@ -32,7 +32,7 @@ class Board:
     puzzle_json's cell order, so a puzzle's numbers string lines up. extra: more all-different units (extra regions,
     diagonals) that the solution must respect."""
 
-    def __init__(self, n, layout=None, extra=()):
+    def __init__(self, n, layout=None, extra=(), rels=()):
         if n not in BOXES:
             raise ValueError(f"unsupported board size {n} (supported: {sorted(BOXES)})")
         self.n, self.layout = n, layout
@@ -67,6 +67,10 @@ class Board:
         self.rows = max(r for r, _ in self.coords) + 1
         self.cols = max(c for _, c in self.coords) + 1
         self.units += [list(u) for u in extra]
+        self.rels = {}  # cell -> [(other cell, allowed (digit here, digit there) pairs)]: the locked pair rules
+        for i, j, ok in rels:
+            self.rels.setdefault(i, []).append((j, ok))
+            self.rels.setdefault(j, []).append((i, {(w, v) for v, w in ok}))
         self.peers = [sorted({j for u in self.units if i in u for j in u} - {i}) for i in range(self.N)]
         self.grid_cells = [  # the cells of each n x n grid, the grids in reading order of their origins
             [self.cid[(o_r + r, o_c + c)] for r in range(n) for c in range(n)] for o_r, o_c in sorted(self.origins)
@@ -98,6 +102,9 @@ class Board:
             for j in self.peers[i]:
                 if g[j]:
                     m &= ~(1 << (g[j] - 1))
+            for j, ok in self.rels.get(i, ()):
+                if g[j]:
+                    m &= sum(1 << (v - 1) for v in range(1, n + 1) if (v, g[j]) in ok)
             return m
 
         def bt():
@@ -140,11 +147,14 @@ class Board:
 
         for _ in range(50 if not preset else 1):
             seed = dict(preset or {})
-            for i in rng.sample(
-                range(self.N), 0 if preset else min(12, self.N)
-            ):  # a few random digits, consistent with each other
+            k = 0 if preset else min(4 if self.rels else 12, self.N)  # pair rules leave fewer free combinations
+            for i in rng.sample(range(self.N), k):  # a few random digits, consistent with each other
                 used = {seed[j] for j in self.peers[i] if j in seed}
-                free = [d for d in range(1, self.n + 1) if d not in used]
+                free = [
+                    d
+                    for d in range(1, self.n + 1)
+                    if d not in used and all((d, seed[j]) in ok for j, ok in self.rels.get(i, ()) if j in seed)
+                ]
                 if free:
                     seed[i] = rng.choice(free)
             p = PJ.from_json(to_json(self, seed, []))
@@ -152,7 +162,8 @@ class Board:
             sols = CB.brute_solve(p, limit=1, node_limit=2_000_000)
             if sols:
                 perm = list(range(1, self.n + 1))
-                rng.shuffle(perm)
+                if not self.rels:  # relabelling keeps all-different rules, not pair rules (nonconsecutive)
+                    rng.shuffle(perm)
                 return list(sols[0]) if preset else [perm[v - 1] for v in sols[0]]
         if preset:
             return None

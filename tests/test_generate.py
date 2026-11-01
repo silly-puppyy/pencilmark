@@ -266,7 +266,7 @@ def test_malformed_request_parts_are_format_errors():
 
 def test_layout_requests():
     """a named layout is one box_grid per grid at its origins; locked rules of different digits and givens per grid
-    are read and written back; other locked rules and unknown origins are refused"""
+    are read and written back; locked rules the grid fill cannot respect and unknown origins are refused"""
     from pencilmark import puzzle_json as PJ
     from pencilmark import spec_format as SF
 
@@ -281,7 +281,7 @@ def test_layout_requests():
     b = GA.board_of(GA.Spec.from_any(g))
     assert b.N == 369 and len(b.grid_cells) == 5 and b.extra_json["regions"][0]["kind"] == "diag"
     for bad in (
-        dict(doc, rules=grids + [{"type": "neighbours", "kind": "nonconsecutive"}]),  # not a rule of different digits
+        dict(doc, rules=grids + [{"type": "cage", "cells": ["r1c1", "r1c2"], "sum": 3}]),  # a locked rule it can't fill
         dict(doc, rules=grids[:4]),  # origins of no named layout
         dict(doc, board={"rows": 21, "cols": 22}),  # not the layout's extent
     ):
@@ -392,3 +392,12 @@ def test_corner_clues():
                 assert EL.corner_holds("quadruple", ds, x["digits"])
             else:
                 assert (x["op"], x.get("value")) in EL.mathrax_clues(ds)
+
+
+def test_locked_nonconsecutive():
+    """a locked nonconsecutive rule: the grid fill respects pair rules (no relabelling), every result carries it"""
+    r = run(spec(6, rules=[{"type": "neighbours", "kind": "nonconsecutive"}], seed=1, time_limit=30))
+    assert {"type": "neighbours", "kind": "nonconsecutive"} in r["puzzle"]["rules"]
+    sol = r["puzzle"]["solution"]
+    pairs = [(i, i + 1) for i in range(36) if i % 6 < 5] + [(i, i + 6) for i in range(30)]
+    assert all(abs(sol[i] - sol[j]) != 1 for i, j in pairs)

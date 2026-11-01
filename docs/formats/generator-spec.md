@@ -39,8 +39,8 @@ grids: one `box_grid` rule per grid, at the origins of samurai, super-samurai, t
 windmill, flower-4, tridoku, wing-3, sensei, shogun, sumo, twins, clueless-1 or clueless-2 (the board is their extent).
 
 Rules with cells and no `count` are **locked**: every result carries them and its solution respects them. The
-generator takes rules of different digits: `region` kinds `diagonal`, `extra` and `window`, and `neighbours` kinds
-`antiknight` and `antiking`. Without a `where.band`, a layout's result is at most Hard (digging with every technique
+generator takes rules of different digits (`region` kinds `diagonal`, `extra` and `window`; `neighbours` kinds
+`antiknight` and `antiking`) and the `neighbours` kind `nonconsecutive`. Without a `where.band`, a layout's result is at most Hard (digging with every technique
 is slow on hundreds of cells). A super samurai with X diagonals on its top three grids is eight `box_grid` rules and six
 `region` `diagonal` rules.
 

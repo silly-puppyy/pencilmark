@@ -227,7 +227,8 @@ LOCKED_OK = {
     ("region", "window"),
     ("neighbours", "antiknight"),
     ("neighbours", "antiking"),
-}  # locked rules the generator's grids can respect: all-different cells
+    ("neighbours", "nonconsecutive"),
+}  # locked rules the generator's grids can respect: all-different cells and pair rules
 
 
 def _board(doc):
@@ -247,7 +248,7 @@ def _board(doc):
     for r in other:
         if (r.get("type"), r.get("kind")) not in LOCKED_OK:
             return (f"locked {r.get('type')} {r.get('kind') or ''} rules are reserved for a later version of the spec"
-                    " (docs/formats/generator-spec.md 7); the generator takes all-different ones: "
+                    " (docs/formats/generator-spec.md 7); the generator takes: "
                     + ", ".join(f"{t} {k}" for t, k in sorted(LOCKED_OK)))  # fmt: skip
     if any(r.get("box") != [bh, bw] for r in grids):
         return f"box_grid rules need the standard {bh}x{bw} boxes"
