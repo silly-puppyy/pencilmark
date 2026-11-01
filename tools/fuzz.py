@@ -9,7 +9,7 @@ accepted by the referee, then
   - the transposed puzzle (rows <-> columns, sides swapped) gets the same band and nearly the same difficulty (ties
     between equally priced steps are broken in reading order, so its route can differ: 0.3 or 5% allowed).
 Failures are grouped by symptom with the seed that reproduces them; `--seed S` reruns one case and prints its file.
-  python tools/fuzz.py N [--jobs J] [--start S]       python tools/fuzz.py --seed S"""
+  python tools/fuzz.py N [--jobs J] [--start S] [--sizes 12,16]       python tools/fuzz.py --seed S"""
 
 import collections
 import json
@@ -22,7 +22,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import spec_check as SC  # noqa: E402
 
-BOXES = {4: (2, 2), 6: (2, 3), 8: (2, 4), 9: (3, 3)}
+BOXES = {4: (2, 2), 6: (2, 3), 8: (2, 4), 9: (3, 3), 12: (3, 4), 16: (4, 4)}
+SIZES = [4, 6, 8, 9, 9, 9]  # --sizes 12,16 for the big boards
 NB8 = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
 NB4 = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 
@@ -275,7 +276,7 @@ def case(seed):
     import pencilmark as pm
 
     rng = random.Random(seed)
-    D = rng.choice([4, 6, 8, 9, 9, 9])
+    D = rng.choice(SIZES)
     S = solution(rng, D)
     flat = [x for row in S for x in row]
     base = {"format": "sudoku-puzzle", "format_version": 1, "board": {"rows": D, "cols": D}, "digits": D,
@@ -383,6 +384,8 @@ def case_full(seed):
 
 
 def main(argv):
+    if "--sizes" in argv:  # global, read by the workers (fork)
+        SIZES[:] = [int(x) for x in argv[argv.index("--sizes") + 1].split(",")]
     if "--seed" in argv:
         s = int(argv[argv.index("--seed") + 1])
         print(case_full(s)[:2])
