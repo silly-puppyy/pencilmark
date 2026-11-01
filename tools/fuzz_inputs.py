@@ -2,7 +2,9 @@
 replaced by other types, list entries dropped or doubled). Reading a broken file must fail with a FormatError,
 NotSupportedError or ValueError that says what is wrong, never another exception; a request must do the same (or
 GenerationFailed), within its two-second limit. Prints counts per outcome and the seeds of anything else.
-  python tools/fuzz_inputs.py N [--jobs J] [--specs]"""
+An f-puzzles document with most of its features is broken the same way (--fpuzzles): the reader must translate it or
+raise a SourceError.
+  python tools/fuzz_inputs.py N [--jobs J] [--specs | --fpuzzles]"""
 
 import collections
 import copy
@@ -16,6 +18,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 VALUES = [None, True, 0, -1, 1, 99, 2.5, "", "x", "r0c0", "r99c1", [], [1], ["r1c1"], [["r1c1"]], {}, {"a": 1}]
 NOT_A_SPEC = 'generate takes a "sudoku-spec"'  # generate's own TypeError for anything that is no request at all
+CLASSIC = "....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9......."
 
 
 def puzzles():
@@ -108,10 +111,64 @@ def spec_case(seed):
         return seed, type(e).__name__, where(e)
 
 
+def fpuzzles_base():
+    """an f-puzzles document with most of its features, on a classic"""
+    grid = [
+        [({"value": int(CLASSIC[r * 9 + c]), "given": True} if CLASSIC[r * 9 + c] != "." else {}) for c in range(9)]
+        for r in range(9)
+    ]
+    return {
+        "size": 9,
+        "grid": grid,
+        "killercage": [{"cells": ["R1C1", "R1C2"], "value": "10"}],
+        "thermometer": [{"lines": [["R2C2", "R2C3", "R2C4"]]}],
+        "arrow": [{"cells": ["R5C5"], "lines": [["R5C5", "R5C6", "R5C7"]]}],
+        "littlekillersum": [{"cell": "R0C1", "cells": ["R1C2", "R2C3"], "direction": "DR", "value": "9"}],
+        "sandwichsum": [{"cell": "R0C3", "value": "15"}],
+        "difference": [{"cells": ["R7C7", "R7C8"]}],
+        "ratio": [{"cells": ["R8C8", "R8C9"]}],
+        "xv": [{"cells": ["R9C1", "R9C2"], "value": "X"}],
+        "odd": [{"cell": "R3C3"}],
+        "even": [{"cell": "R4C4"}],
+        "renban": [{"lines": [["R6C1", "R6C2"]]}],
+        "whispers": [{"lines": [["R6C4", "R6C5"]]}],
+        "betweenline": [{"lines": [["R8C1", "R8C2", "R8C3"]]}],
+        "palindrome": [{"lines": [["R3C7", "R3C8"]]}],
+        "lockout": [{"lines": [["R4C7", "R4C8", "R4C9"]], "value": "5"}],
+        "diagonal+": True,
+        "antiknight": False,
+        "extraregion": [{"cells": ["R1C9", "R2C9"]}],
+        "quadruple": [{"cells": ["R5C1", "R5C2", "R6C1", "R6C2"], "values": [1, 2]}],
+        "minimum": [{"cell": "R9C9"}],
+    }
+
+
+def fpuzzles_case(seed):
+    import urllib.parse
+
+    import lzstring
+
+    import pencilmark as pm
+    from pencilmark.sources import SourceError
+    from pencilmark.sources import fpuzzles as FP
+
+    d = mutate(random.Random(seed), fpuzzles_base())
+    url = "https://f-puzzles.com/?load=" + urllib.parse.quote(
+        lzstring.LZString().compressToBase64(json.dumps(d)), safe=""
+    )
+    try:
+        pm.load(FP.to_puzzle(url, rules_text="Normal sudoku rules apply.", fetch=False))
+        return seed, "accepted", None
+    except (SourceError, pm.FormatError, pm.NotSupportedError, ValueError):
+        return seed, "clear error", None
+    except Exception as e:  # noqa: BLE001
+        return seed, type(e).__name__, where(e)
+
+
 def main(argv):
     n = int(argv[0])
     jobs = int(argv[argv.index("--jobs") + 1]) if "--jobs" in argv else 8
-    case = spec_case if "--specs" in argv else puzzle_case
+    case = spec_case if "--specs" in argv else fpuzzles_case if "--fpuzzles" in argv else puzzle_case
     by = collections.defaultdict(list)
     with ProcessPoolExecutor(jobs) as ex:
         for seed, what, detail in ex.map(case, range(n), chunksize=4):
