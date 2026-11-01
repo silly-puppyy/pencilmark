@@ -8,6 +8,8 @@
   thermo, entropic, modular, parity, palindrome, zipper, region-sum, lockout and double-arrow lines, each true in the
   solution with the format's default parameters. Entropic lines need a board of 6 x 6 or more; palindromes and zippers
   have an odd length; double arrows are 5 cells or more (a shorter one is a zipper).
+- The generator places corner clues: quadruples (`{"type": "contains", "count": ...}`, all four digits or three) and
+  mathrax clues (`{"type": "corner", "kind": "mathrax", "count": ...}`, whichever operator holds on both diagonals).
 - The generator places outside clues on single grids: sandwich, x-sum and skyscraper clues on a row or column, little
   killer clues on a diagonal (`{"type": "sandwich" | "xsum" | "skyscraper", "count": ...}`,
   `{"type": "sum", "kind": "little_killer", "count": ...}`), read from either end.

@@ -373,3 +373,22 @@ def test_outside_clues():
         pencilmark.generate(
             dict(spec(), board={"rows": 15, "cols": 15}, rules=grids + [{"type": "sandwich", "count": 2}])
         )
+
+
+@pytest.mark.slow  # about 10 s
+def test_corner_clues():
+    """quadruples (corner circles) and mathrax clues are true in the solution and are written as `contains` and
+    `corner` rules (the generator's pair tables per diagonal read back as one mathrax corner)"""
+    from pencilmark.gen import elements as EL
+
+    for t in ({"type": "contains"}, {"type": "corner", "kind": "mathrax"}):
+        r = run(spec(6, rules=[dict(t, count=[2, None])], seed=1, time_limit=60))
+        clues = [x for x in r["puzzle"]["rules"] if x["type"] == t["type"]]
+        assert len(clues) >= 2 and not [x for x in r["puzzle"]["rules"] if x["type"] == "table"], t
+        sol = r["puzzle"]["solution"]
+        for x in clues:
+            ds = [sol[(int(c[1]) - 1) * 6 + int(c[3]) - 1] for c in x["cells"]]
+            if t["type"] == "contains":
+                assert EL.corner_holds("quadruple", ds, x["digits"])
+            else:
+                assert (x["op"], x.get("value")) in EL.mathrax_clues(ds)

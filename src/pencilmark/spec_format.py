@@ -36,6 +36,8 @@ GEN_KINDS = {
     "parity": ("cell", "parity"),
     **{k: (k, None) for k in ("sandwich", "xsum", "skyscraper")},  # outside clues (gen/elements.OUTSIDE)
     "little_killer": ("sum", "little_killer"),
+    "quadruple": ("contains", None),  # corner circles (gen/elements.CORNER)
+    "mathrax": ("corner", "mathrax"),
 }
 RULE_KIND = {v: k for k, v in GEN_KINDS.items()}
 RULE_KIND.update({("cell", "odd"): "odd", ("cell", "even"): "even"})  # one parity: its own element class

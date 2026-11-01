@@ -13,6 +13,7 @@ from concurrent.futures import ProcessPoolExecutor
 
 BOX = {4: [2, 2], 6: [2, 3], 8: [2, 4], 9: [3, 3]}
 OUTSIDE = [{"type": "sandwich"}, {"type": "xsum"}, {"type": "skyscraper"}, {"type": "sum", "kind": "little_killer"}]
+CORNER = [{"type": "contains"}, {"type": "corner", "kind": "mathrax"}]
 LINES = None  # every line kind the generator places (rules/line.py), read in request()
 
 
@@ -40,7 +41,7 @@ def request(rng):
             )
     used = set()
     for _ in range(rng.randint(1, 3)):
-        k = rng.choice(["cage", "line", "arrow", "kropki", "xv", "cell", "outside"])
+        k = rng.choice(["cage", "line", "arrow", "kropki", "xv", "cell", "outside", "corner"])
         t = {
             "cage": {"type": "cage"},
             "arrow": {"type": "arrow"},
@@ -49,6 +50,7 @@ def request(rng):
             "cell": {"type": "cell", "kind": rng.choice(["odd", "even", "parity"])},
             "line": {"type": "line", "kind": rng.choice(LINES)},
             "outside": dict(rng.choice(OUTSIDE)),
+            "corner": dict(rng.choice(CORNER)),
         }[k]
         key = (t["type"], t.get("kind"))
         if key in used:

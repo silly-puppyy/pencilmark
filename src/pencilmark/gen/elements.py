@@ -19,6 +19,8 @@ An element is a tuple (kind, cells, extra):
   ("xsum", row / column from the clue, total)        the first X cells sum to total, X = the first digit
   ("skyscraper", row / column from the clue, count)  cells higher than every earlier one
   ("little_killer", diagonal from the clue, total)   the diagonal's digits sum to total (they may repeat)
+  ("quadruple", (TL, TR, BL, BR), digits)            the 2 x 2 block holds these digits (a corner circle)
+  ("mathrax", (TL, TR, BL, BR), (op, value))         both diagonals combine to value by op (+ - x /), or op even / odd
   ("arrow", (circle,) + shaft, None)     shaft digits sum to the circle digit
   ("kropki", (i, j), "white" | "black")  consecutive / 1:2 ratio
   ("xv", (i, j), "X" | "V")              sum 10 / sum 5
@@ -34,9 +36,11 @@ from .. import puzzle_json as PJ
 
 KINDS = ("cage", "thermo", "slow_thermo", "whisper", "renban", "between", "entropic", "modular", "parity_line",
          "palindrome", "zipper", "region_sum", "lockout", "double_arrow", "arrow", "kropki", "xv", "parity", "sandwich",
-         "xsum", "skyscraper", "little_killer")  # fmt: skip
+         "xsum", "skyscraper", "little_killer", "quadruple", "mathrax")  # fmt: skip
 OUTSIDE = ("sandwich", "xsum", "skyscraper", "little_killer")  # clues outside the grid on a whole row, column, diagonal
-SHARED = ("kropki", "xv", *OUTSIDE)  # elements that may share cells with their own kind (never the same edge / line)
+CORNER = ("quadruple", "mathrax")  # clues on a corner: a 2 x 2 block
+# elements that may share cells with their own kind (never the same edge, line or block)
+SHARED = ("kropki", "xv", *OUTSIDE, *CORNER)
 ALIASES = {
     "killer": "cage",
     "cages": "cage",
@@ -139,6 +143,41 @@ def outside_value(kind, ds):
     return sum(ds)  # little killer
 
 
+def blocks(b, start):
+    """the 2 x 2 blocks (TL, TR, BL, BR) holding `start`"""
+    r0, c0 = b.coords[start]
+    out = []
+    for r, c in ((r0 - 1, c0 - 1), (r0 - 1, c0), (r0, c0 - 1), (r0, c0)):
+        blk = [b.cid.get(x) for x in ((r, c), (r, c + 1), (r + 1, c), (r + 1, c + 1))]
+        if None not in blk:
+            out.append(tuple(blk))
+    return out
+
+
+def mathrax_clues(ds):
+    """the mathrax clues true of a block's digits (TL, TR, BL, BR): both diagonals combine to the same value"""
+    a, b_, c, d = ds
+    out = []
+    if a + d == b_ + c:
+        out.append(("+", a + d))
+    if abs(a - d) == abs(b_ - c):
+        out.append(("-", abs(a - d)))
+    if a * d == b_ * c:
+        out.append(("x", a * d))
+    lo1, hi1, lo2, hi2 = min(a, d), max(a, d), min(b_, c), max(b_, c)
+    if hi1 % lo1 == 0 and hi2 % lo2 == 0 and hi1 // lo1 == hi2 // lo2:
+        out.append(("/", hi1 // lo1))
+    if len({x % 2 for x in ds}) == 1:
+        out.append(("odd" if a % 2 else "even", None))
+    return out
+
+
+def corner_holds(kind, ds, x):
+    if kind == "quadruple":
+        return all(ds.count(v) >= list(x).count(v) for v in set(x))
+    return x in mathrax_clues(ds)
+
+
 def outside_lines(b, kind, start):
     """the lines through `start` an outside clue of `kind` reads, each from the clue inwards: the row and column from
     both ends, or for a little killer the two diagonals from both ends (2 cells or more)"""
@@ -221,6 +260,17 @@ def grow(b, kind, sol, start, taken, rng, n=40, shape=None):
         lines = [ln for ln in outside_lines(b, kind, start) if taken.isdisjoint(ln)]
         return sorted(_stable((kind, ln, outside_value(kind, [sol[c] for c in ln])) for ln in lines),
                       key=lambda e: (rng.random(),))  # fmt: skip
+    if kind in CORNER:  # every true clue on each block through `start` (a quadruple: all four digits, or three)
+        for blk in blocks(b, start):
+            if not taken.isdisjoint(blk):
+                continue
+            ds = [sol[c] for c in blk]
+            if kind == "quadruple":
+                out.add(("quadruple", blk, tuple(sorted(ds))))
+                out.add(("quadruple", blk, tuple(sorted(rng.sample(ds, 3)))))
+            else:
+                out.update(("mathrax", blk, m) for m in mathrax_clues(ds))
+        return sorted(_stable(out), key=lambda e: (rng.random(),))
     if kind in ("kropki", "xv"):  # 2-cell markers true in the solution
         for j in NB[start]:
             if j in taken:
@@ -475,6 +525,9 @@ def satisfies(b, g, givens, els):
         elif kind in OUTSIDE:
             if outside_value(kind, ds) != x:
                 return False
+        elif kind in CORNER:
+            if not corner_holds(kind, ds, x):
+                return False
         elif kind in ("entropic", "modular"):
             cls = [digit_third(d, b.n) if kind == "entropic" else d % 3 for d in ds]
             if any(len(set(cls[i : i + 3])) < len(cls[i : i + 3]) for i in range(len(cls) - 1)):
@@ -546,6 +599,20 @@ def to_json(b, givens, els, sol=None, title=None):
         elif kind in OUTSIDE:  # engine constraints, cells from the clue inwards (the writer reads the side off them)
             key = "count" if kind == "skyscraper" else "total"
             d["rules"].append({"type": kind, "cells": [rc(c) for c in cells], key: x})
+        elif kind == "quadruple":
+            d["rules"].append({"type": "quadruple", "cells": [rc(c) for c in cells], "digits": list(x)})
+        elif kind == "mathrax":  # as the reader builds it: parity, or a pair table per diagonal (TL-BR, then TR-BL)
+            op, v = x
+            if v is None:
+                d["rules"].append({"type": "parity", "parity": op, "cells": [rc(c) for c in cells]})
+            else:
+                ok = {"+": lambda p, q: p + q == v, "-": lambda p, q: abs(p - q) == v, "x": lambda p, q: p * q == v,
+                      "/": lambda p, q: max(p, q) == v * min(p, q)}[op]  # fmt: skip
+                for i, j in ((cells[0], cells[3]), (cells[1], cells[2])):
+                    same = j in b.peers[i]
+                    digits = range(1, b.n + 1)
+                    allowed = [[p, q] for p in digits for q in digits if (p != q or not same) and ok(p, q)]
+                    d["rules"].append({"type": "table", "cells": [rc(i), rc(j)], "allowed": allowed})
         elif kind == "double_arrow":  # the engine's equal sum: ends against the cells between (written as the line)
             ends, mid = [rc(cells[0]), rc(cells[-1])], [rc(c) for c in cells[1:-1]]
             d["rules"].append({"type": "equal_sum", "segments": [ends, mid]})
@@ -600,6 +667,8 @@ def element_bits(b, kind):
     lg = math.log2
     if kind in ("kropki", "xv"):
         return lg(E) + 1
+    if kind in CORNER:  # a block and a clue (four digits / an operator and value)
+        return lg(N) + lg(4 * n * n)
     if kind in OUTSIDE:  # 4 sides x n lines (diagonals: about as many) and a clue up to the digits' total
         return lg(4 * n) + lg(n * (n + 1) // 2)
     if kind == "parity":
