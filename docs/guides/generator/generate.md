@@ -82,8 +82,12 @@ This asks for a 6×6 with exactly two thermometers, one to three Kropki dots and
 The puzzle in [Write a variant puzzle file](../grader/variant-file.mdx) came from a request like this one. `pencilmark.dumps`
 writes the puzzle in the format's canonical layout, one rule per line.
 
-[Generator examples](generator-examples.mdx) has one request for every feature (each template, count form, target,
-symmetry and board size), with the puzzle each produced.
+A template can also limit the shape of what it places: `"length": [8, null]` asks for lines of eight cells or more,
+`"size": 2` for two-cell cages, `"sum": 10` for cages that add up to 10. The count `"max"` asks for as many as fit,
+and `"where": {"difficulty": "max"}` for the hardest puzzle found; both searches use the whole time limit.
+
+[Generator examples](generator-examples.mdx) shows requests of every kind (templates, shapes, counts, targets,
+symmetry, board sizes), with the puzzle each produced and how long it took.
 
 ## 4. When the generator cannot do it
 
