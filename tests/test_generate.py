@@ -243,3 +243,11 @@ def test_max_leaves_room_for_required_classes():
     ]
     r = run(spec(6, rules=rules, givens={"count": [0, 10]}, seed=41, time_limit=6))
     assert sum(1 for x in r["puzzle"]["rules"] if x["type"] == "line") == 2
+
+
+def test_malformed_request_parts_are_format_errors():
+    """found by mutating requests: a where, limits, meta, rules or symmetry of the wrong type raised TypeError or
+    AttributeError"""
+    for extra in ({"where": 5}, {"limits": "x"}, {"meta": 3}, {"rules": 5}, {"symmetry": 5}):
+        with pytest.raises(pencilmark.FormatError):
+            pencilmark.generate(dict(spec(4), **extra))

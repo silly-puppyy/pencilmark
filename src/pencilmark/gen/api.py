@@ -418,10 +418,10 @@ def _generate(spec, log=None):
     screen_alts = bool(s.require) and not s.strict_require
     screen_fields = None if s.require else ["difficulty", "time", "band"]
 
-    def grade(d, alternatives=screen_alts, fields=screen_fields):
+    def grade(d, alternatives=screen_alts, fields=screen_fields, cap=s.grade_seconds):
         p = PJ.from_json(d)
         p.finalize()
-        return E2.grade(p, P, with_steps=False, max_seconds=s.grade_seconds, alternatives=alternatives, fields=fields)
+        return E2.grade(p, P, with_steps=False, max_seconds=cap, alternatives=alternatives, fields=fields)
 
     while time.time() < deadline:
         stats["attempts"] += 1
@@ -454,7 +454,8 @@ def _generate(spec, log=None):
                 dense=dense,
                 shape=shape,
                 most=most,
-                deadline=deadline if best is not None else None,  # a best-so-far search with a result stops on time
+                deadline=deadline,  # on time: an attempt still digging then is given up, or for a best-so-far search
+                keep=best is not None,  # that has a result already, kept as dug so far
             )
         elif mode == "partition":
             r = SR.partition(b, rng, chk, n_givens=s.min_givens)
@@ -465,7 +466,7 @@ def _generate(spec, log=None):
         else:
             r = SR.min_kropki(b, rng, chk=chk if s.solver == "logic" else None)
         if r is None:
-            reject("construction failed")
+            reject("time ran out during an attempt" if time.time() > deadline else "construction failed")
             continue
         sol, givens, els = r
         if s.max_givens is not None and len(givens) > s.max_givens:
@@ -504,6 +505,7 @@ def _generate(spec, log=None):
                     caps=value if mode == "dig" else None,
                     shape=shape,
                     most=most,
+                    deadline=deadline,
                 )
                 if rf is not None:
                     got = SR.pull(b, sol, rf[1], rf[2], chk, low, rng, symmetry=s.symmetry, max_givens=s.max_givens)
@@ -535,8 +537,9 @@ def _generate(spec, log=None):
             reject("not unique (CP-SAT)")
             continue
         whole = not screen_alts or screen_fields is not None  # the result's card is made in full (once, for a search)
+        whole = whole or card.get("completed") is False  # the result's card is complete: no grade_seconds cap
         if whole and hunt is None:
-            card = grade(d, alternatives=True, fields=None)
+            card = grade(d, alternatives=True, fields=None, cap=None)
         info = {
             "mode": mode,
             "givens": len(givens),
@@ -563,7 +566,7 @@ def _generate(spec, log=None):
     if best is not None:
         r = best[1]
         if whole:
-            r["card"] = grade(r["puzzle"], alternatives=True, fields=None)
+            r["card"] = grade(r["puzzle"], alternatives=True, fields=None, cap=None)
         r["info"]["found"] = stats["found"]  # puzzles that met the spec; the best of them is returned
         r["info"]["seconds"] = round(time.time() - t0, 1)
         return r

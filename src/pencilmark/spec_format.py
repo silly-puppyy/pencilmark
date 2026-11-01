@@ -91,6 +91,14 @@ def _is_template(r):
     return "count" in r and not ({"cells", "bulb", "regions", "origin", "source"} & set(r))
 
 
+def _n_or_range(v, what):
+    """n or [min, max] of whole numbers >= 0 (min / max null = open), else a FormatError naming what"""
+    num = lambda x: isinstance(x, int) and not isinstance(x, bool) and x >= 0
+    if num(v) or (isinstance(v, list) and len(v) == 2 and all(x is None or num(x) for x in v)):
+        return
+    raise FormatError(f"{what} must be a whole number or [min, max], got {v!r}")
+
+
 def validate_spec(doc):
     """strict reading of a sudoku-spec (docs/formats/generator-spec.md); locked rules are checked like puzzle rules"""
     if not isinstance(doc, dict) or doc.get("format") != FORMAT:
@@ -110,22 +118,36 @@ def validate_spec(doc):
     if giv is not None and not isinstance(giv, list):
         if not isinstance(giv, dict) or set(giv) - {"count", "mask", "values"}:
             raise FormatError('givens must be a flat list or {"count", "mask", "values"}')
+        if "count" in giv:
+            _n_or_range(giv["count"], "givens.count")
+    if doc.get("meta") is not None and not isinstance(doc["meta"], dict):
+        raise FormatError("meta must be an object")
+    if doc.get("rules") is not None and not isinstance(doc["rules"], list):
+        raise FormatError("rules must be a list")
     for r in doc.get("rules") or []:
-        if not isinstance(r, dict) or "type" not in r:
+        if not isinstance(r, dict) or not isinstance(r.get("type"), str):
             raise FormatError("a rule must be an object with a type")
         if _is_template(r):
+            for k in ("kind", "color", "letter"):
+                if k in r and not isinstance(r[k], str):
+                    raise FormatError(f"template {r['type']}: {k} must be a string, got {r[k]!r}")
+            for k in ("size", "length", "sum"):
+                if k in r:
+                    _n_or_range(r[k], f"template {r['type']}: {k}")
             bad = set(r) - TEMPLATE_KEYS
             if bad:
                 raise FormatError(f"template {r['type']}: unknown key(s) {sorted(bad)}")
             c = r["count"]
-            if not (
-                isinstance(c, int) or (isinstance(c, str) and c in COUNT_WORDS) or (isinstance(c, list) and len(c) == 2)
-            ):
+            if isinstance(c, list) or isinstance(c, int):
+                _n_or_range(c, f"template {r['type']}: count")
+            elif not (isinstance(c, str) and c in COUNT_WORDS):
                 raise FormatError(
                     f"template {r['type']}: count must be a number, [min, max] or one of {sorted(COUNT_WORDS)}"
                 )
         elif "lock" in r and not isinstance(r["lock"], bool):
             raise FormatError("lock must be true / false")
+    if doc.get("symmetry") is not None and not isinstance(doc["symmetry"], list):
+        raise FormatError("symmetry must be a list of entries")
     for s in doc.get("symmetry") or []:
         if (
             not isinstance(s, dict)
@@ -143,9 +165,30 @@ def validate_spec(doc):
         except ValueError as e:
             raise FormatError(str(e)) from None
     for blk, keys in (("where", WHERE_KEYS), ("limits", LIMIT_KEYS)):
+        if doc.get(blk) is not None and not isinstance(doc[blk], dict):
+            raise FormatError(f"{blk} must be an object")
         for k in doc.get(blk) or {}:
             if k not in keys:
                 raise FormatError(f"unknown {blk} key {k!r}")
+    w, lim = doc.get("where") or {}, doc.get("limits") or {}
+    if "band" in w and not isinstance(w["band"], (str, list)):
+        raise FormatError(f"where.band must be a band name, got {w['band']!r}")
+    d = w.get("difficulty")
+    real = lambda x: isinstance(x, (int, float)) and not isinstance(x, bool)
+    if d is not None and not (d in ("max", "min") or (isinstance(d, list) and len(d) == 2 and all(map(real, d)))):
+        raise FormatError(f'where.difficulty must be [lo, hi], "max" or "min", got {d!r}')
+    c = w.get("contains")
+    codes = c.get("codes") if isinstance(c, dict) else c
+    if c is not None and not (isinstance(codes, list) and all(isinstance(x, str) for x in codes)):
+        raise FormatError('where.contains must be a list of technique codes or {"codes": [...], "strict": true}')
+    if "elements" in w and not (isinstance(w["elements"], dict) and set(w["elements"]) <= {"max"}):
+        raise FormatError('where.elements takes {"max": n}')
+    if "elements" in w and "max" in w["elements"]:
+        _n_or_range(w["elements"]["max"], "where.elements.max")
+    if "time" in lim and not (real(lim["time"]) and lim["time"] > 0):
+        raise FormatError(f"limits.time must be a number of seconds > 0, got {lim['time']!r}")
+    if "seed" in lim and not (isinstance(lim["seed"], int) and not isinstance(lim["seed"], bool)):
+        raise FormatError(f"limits.seed must be a whole number, got {lim['seed']!r}")
     if doc.get("fields") is not None:
         if not isinstance(doc["fields"], list):
             raise FormatError("fields must be a list of card keys")

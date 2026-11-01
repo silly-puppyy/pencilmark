@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- The generator keeps to `limits.time`: an attempt still digging when the time is up is given up (a 2 s request on a
+  thermo puzzle ran 130 s). The returned puzzle's card is graded in full; it was capped at `grade_seconds` and could
+  come back with band Unknown and no difficulty.
+- A generator request with a part of the wrong type (`where`, `limits`, `meta`, `rules` or `symmetry` not an object /
+  list, a count, size or given count that is not a whole number, a template kind that is not a string) is a format
+  error; several raised TypeError or AttributeError (found by mutating requests).
 - Malformed files get a format error, not a crash: a rule `type` or `kind` that is not a string, a `meta` that is not
   an object (validate accepted it and `load` failed) and `true` in a solution (found by mutating valid files).
 - Chains through a group of cells are explained when the group ends the chain too (they fell back to a generic

@@ -98,10 +98,12 @@ Conditions on the result's card, using the card's keys ([Grade card](grade-card.
 ## 5. Limits, fields and program data
 
 - `limits`: `time` (seconds for the whole run, default 120), `seed` (reproducible runs, default 1). The run returns one
-  puzzle or fails with the reason after `time`.
+  puzzle or fails with the reason after `time`; an attempt still digging when the time is up is given up. Grading the
+  returned puzzle in full comes on top.
 - `fields`: which card fields to return with the result ([Grade card](grade-card.md)); default fields without it.
 - `meta`: free information as in the puzzle format. pencilmark reads its own knobs from
-  `meta["io.github.silly-puppyy.pencilmark"]`: `{"solver": "logic" | "cpsat", "grade_seconds": s}`.
+  `meta["io.github.silly-puppyy.pencilmark"]`: `{"solver": "logic" | "cpsat", "grade_seconds": s}` (`grade_seconds`:
+  how long each candidate may be graded, default 60; the returned puzzle's card is always graded in full).
 
 A part of a request the generator cannot meet in time is never ignored: the run fails and says why.
 

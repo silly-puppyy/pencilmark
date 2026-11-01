@@ -29,6 +29,7 @@ def dig(
     shape=None,
     most=(),
     deadline=None,
+    keep=False,
 ):
     """givens-digging with elements added on demand.
 
@@ -42,8 +43,9 @@ def dig(
     classes (kropki_black, x, odd, ...); caps {class: max} limits how many of a class are added. dense: 2-cell / 1-cell
     classes seeded with EVERY instance true in the solution before digging (few-givens targets); pruning then removes the
     ones the puzzle doesn't need. shape {kind: limits}: the templates' length / sum limits (elements.fits). most: classes
-    packed into the grid after the seeds, as many disjoint ones as a few random packings find, and never pruned. deadline: stop
-    digging then (time.time()), keeping the givens still in place."""
+    packed into the grid after the seeds, as many disjoint ones as a few random packings find, and never pruned.
+    deadline (time.time()): when it passes, the attempt is given up (None), or with keep the digging stops and the givens
+    still in place stay."""
     fixed = dict(fixed or {})
     sol = sol or b.solution(rng)
     givens = {i: sol[i] for i in range(b.N) if fixed.get(i, True)}
@@ -107,7 +109,11 @@ def dig(
         return None
     done = set()
     for i in order:
-        if len(givens) <= min_givens or (deadline is not None and time.time() > deadline):
+        if len(givens) <= min_givens:
+            break
+        if deadline is not None and time.time() > deadline:
+            if not keep:
+                return None
             break
         if i in done:
             continue
