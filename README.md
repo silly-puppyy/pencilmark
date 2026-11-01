@@ -1,5 +1,10 @@
 # pencilmark
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/silly-puppyy/pencilmark/main/website/static/img/banner-dark.png">
+  <img alt="pencilmark: human-like difficulty grader, solver and generator for classic and variant sudoku" src="https://raw.githubusercontent.com/silly-puppyy/pencilmark/main/website/static/img/banner-light.png">
+</picture>
+
 [![PyPI](https://img.shields.io/pypi/v/pencilmark?include_prereleases)](https://pypi.org/project/pencilmark/)
 [![Python](https://img.shields.io/badge/python-3.10%E2%80%933.14-blue)](https://pypi.org/project/pencilmark/)
 [![Wheels](https://github.com/silly-puppyy/pencilmark/actions/workflows/wheels.yml/badge.svg)](https://github.com/silly-puppyy/pencilmark/actions/workflows/wheels.yml)
