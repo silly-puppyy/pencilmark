@@ -1,5 +1,5 @@
 # Doxygen reads the comments in csrc/ into XML; tools/gen_cpp_reference.py turns the XML into the C++ reference pages
-# of the docs site (docs/dev/reference/cpp-*.md). Run that script, not doxygen.
+# of the docs site (docs/reference/cpp-*.md). Run that script, not doxygen.
 PROJECT_NAME           = "pencilmark engine"
 INPUT                  = csrc
 FILE_PATTERNS          = *.hpp *.cpp

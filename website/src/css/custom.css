@@ -235,13 +235,19 @@ figure.pm-chart figure { margin: 0; }
 .pm-puzzle-json figcaption { flex-basis: 100%; font-size: 0.85rem; color: var(--pm-muted); }
 
 /* page and section icons (static/img/icons, one per sidebar item with a pm-ico-<name> class): line art masked in the text
-   colour, so both themes follow. Shown before the sidebar link (pages and categories) and as the card icon on the
-   section pages (src/theme/DocCard). */
+   colour, so both themes follow. Shown before the sidebar link only with the pm-ico class too (sections and the rule
+   families), and as the card icon on the section pages (src/theme/DocCard). */
 .pm-ico > .menu__link, .pm-ico > .menu__list-item-collapsible > .menu__link { display: flex; align-items: center; }
 .pm-ico > .menu__link::before, .pm-ico > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon {
   content: ''; flex: 0 0 18px; width: 18px; height: 18px; margin-right: 9px; background-color: currentColor;
   -webkit-mask: center / contain no-repeat; mask: center / contain no-repeat; opacity: 0.8; }
 .pm-card-icon { display: inline-block; width: 1.6em; height: 1.6em; margin-right: 0.5rem; vertical-align: -0.35em; opacity: 0.9; }
+.pm-ico-development > .menu__link::before, .pm-ico-development > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-development {
+  -webkit-mask-image: url('/img/icons/development.svg'); mask-image: url('/img/icons/development.svg'); }
+.pm-ico-generator > .menu__link::before, .pm-ico-generator > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-generator {
+  -webkit-mask-image: url('/img/icons/generator.svg'); mask-image: url('/img/icons/generator.svg'); }
+.pm-ico-grader > .menu__link::before, .pm-ico-grader > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-grader {
+  -webkit-mask-image: url('/img/icons/grader.svg'); mask-image: url('/img/icons/grader.svg'); }
 .pm-ico-add-rule-kind > .menu__link::before, .pm-ico-add-rule-kind > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-add-rule-kind {
   -webkit-mask-image: url('/img/icons/add-rule-kind.svg'); mask-image: url('/img/icons/add-rule-kind.svg'); }
 .pm-ico-add-technique > .menu__link::before, .pm-ico-add-technique > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-add-technique {
@@ -298,6 +304,8 @@ figure.pm-chart figure { margin: 0; }
   -webkit-mask-image: url('/img/icons/houses.svg'); mask-image: url('/img/icons/houses.svg'); }
 .pm-ico-import > .menu__link::before, .pm-ico-import > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-import {
   -webkit-mask-image: url('/img/icons/import.svg'); mask-image: url('/img/icons/import.svg'); }
+.pm-ico-learning > .menu__link::before, .pm-ico-learning > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-learning {
+  -webkit-mask-image: url('/img/icons/learning.svg'); mask-image: url('/img/icons/learning.svg'); }
 .pm-ico-library > .menu__link::before, .pm-ico-library > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-library {
   -webkit-mask-image: url('/img/icons/library.svg'); mask-image: url('/img/icons/library.svg'); }
 .pm-ico-lines > .menu__link::before, .pm-ico-lines > .menu__list-item-collapsible > .menu__link::before, .pm-card-icon.pm-ico-lines {

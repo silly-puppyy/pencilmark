@@ -21,8 +21,11 @@ PAGES = [
     ROOT / "docs" / "formats" / "grade-card.md",
     ROOT / "docs" / "formats" / "puzzle-format.md",
 ]
-PAGES += sorted((ROOT / "docs" / "start").glob("*.md*")) + sorted((ROOT / "docs" / "guides").glob("*.md*"))
-PAGES += [ROOT / "docs" / "dev" / "environment.md"]
+PAGES += sorted((ROOT / "docs" / "start").glob("*.md*"))
+PAGES += sorted((ROOT / "docs" / "guides").glob("grader/*.md*")) + sorted(
+    (ROOT / "docs" / "guides").glob("generator/*.md*")
+)
+PAGES += [ROOT / "docs" / "guides" / "development" / "environment.md"]
 CLASSIC = "....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9......."
 FENCE = re.compile(r"```(\w*)[^\n]*\n(.*?)```", re.S)
 SHOWN_ERROR = re.compile(r"^[\w.]*?(\w+(?:Error|Failed|Unique|Solution|Undecided)): ", re.M)

@@ -23,7 +23,7 @@ FIXTURES = ["test_line_matrix", "test_edge_matrix", "test_cell_matrix", "test_ru
 GENERATORS = ["gen_api_md", "gen_reference_md", "gen_cpp_reference", "gen_techniques_md", "gen_parameters_md",
               "gen_palette_md", "gen_swatches"]  # fmt: skip
 COPIES = [("README.md", "docs/index.md", None),
-          ("ARCHITECTURE.md", "docs/dev/architecture.md", "How a card is computed in the code, and which file holds each part."),
+          ("ARCHITECTURE.md", "docs/guides/development/architecture.md", "How a card is computed in the code, and which file holds each part."),
           ("CONTRIBUTING.md", "docs/dev/contributing.md", "How to set up, prove a change, and the style pencilmark's code and docs follow.")]  # fmt: skip
 
 
@@ -63,7 +63,7 @@ def prepare():
         if run(PY, f"tools/{g}.py"):
             return 1
     for src, dst, description in COPIES:  # the copies get a description for search results (the sources have none)
-        text = (ROOT / src).read_text(encoding="utf-8")
+        text = re.sub(r"\n<picture>.*?</picture>\n", "", (ROOT / src).read_text(encoding="utf-8"), flags=re.S)  # banner
         head = f'---\ndescription: "{description}"\n---\n\n' if description else ""
         (ROOT / dst).write_text(head + text, encoding="utf-8")
     return 0

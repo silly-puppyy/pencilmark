@@ -41,7 +41,7 @@ python -m pytest -q tests -k listing_cache
 
 The golden check (`tools/golden.py check`) compares every output of 55 puzzles with `tests/golden/expected.jsonl`. A
 change that should alter nothing must keep every record identical; one that should alter output rewrites the records
-in a commit of its own ([Contributing](contributing.md)).
+in a commit of its own ([Contributing](../../dev/contributing.md)).
 
 ## 3. The docs site
 

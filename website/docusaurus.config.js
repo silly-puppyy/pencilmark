@@ -39,10 +39,10 @@ module.exports = async function createConfig() {
         // "Edit this page": copies point to their source at the repository root; generated pages (tools/gen_*.py) have
         // no link, since an edit there is overwritten
         editUrl: ({docPath}) => {
-          const copies = {'index.md': 'README.md', 'dev/architecture.md': 'ARCHITECTURE.md',
+          const copies = {'index.md': 'README.md', 'guides/development/architecture.md': 'ARCHITECTURE.md',
                           'dev/contributing.md': 'CONTRIBUTING.md'};
-          const generated = ['library/python-api.md', 'grades/techniques.md', 'library/palette.md', 'dev/parameters.md'];
-          if (generated.includes(docPath) || docPath.startsWith('dev/reference/')) return undefined;
+          const generated = ['library/python-api.md', 'grades/techniques.md', 'library/palette.md', 'guides/development/parameters.md'];
+          if (generated.includes(docPath) || docPath.startsWith('reference/')) return undefined;
           return `${GH}/edit/main/${copies[docPath] || 'docs/' + docPath}`;
         },
         exclude: ['**/*.json'],

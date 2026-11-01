@@ -162,7 +162,7 @@ def test_code_explain_entries_exist():
 
 @pytest.mark.skipif(not (ROOT / "tools").is_dir(), reason="needs the source tree")
 def test_parameters_page_up_to_date():
-    """docs/dev/parameters.md lists the shipped grader model; a parameter change must regenerate it"""
+    """docs/guides/development/parameters.md lists the shipped grader model; a parameter change must regenerate it"""
     import subprocess
     import sys
 

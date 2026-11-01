@@ -54,7 +54,7 @@ Write a handler `_h_your_technique(ctx)` in `explain/records.py` that returns `_
 teaching paragraph, and add it to `_X_HANDLERS` in `explain/dispatch.py` with its catalogue key, family and a
 one-sentence concept (import it there from `records`). Read the pattern cells from
 `ctx.raw_engine["pattern_cells"]` and the extra fields from `ctx.xm`. `test_every_move_technique_has_an_explanation`
-fails until the handler exists. Follow the [writing style](writing-style.md): result first, plain words.
+fails until the handler exists. Follow the [writing style](../../dev/writing-style.md): result first, plain words.
 
 ## 5. Check and record
 

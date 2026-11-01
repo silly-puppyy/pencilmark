@@ -8,8 +8,8 @@ import PuzzleJson from '@site/src/components/PuzzleJson';
 # Write a variant puzzle file
 
 A variant puzzle does not fit in one line of digits, so pencilmark reads it as a JSON file in the
-[puzzle format](../formats/puzzle-format.md). In this tutorial you write a small 6×6 puzzle with two thermometers and three Kropki
-dots, check it and grade it. It assumes you have done [Grade your first puzzle](../start/first-puzzle.md).
+[puzzle format](../../formats/puzzle-format.md). In this tutorial you write a small 6×6 puzzle with two thermometers and three Kropki
+dots, check it and grade it. It assumes you have done [Grade your first puzzle](../../start/first-puzzle.md).
 
 ## 1. The board and the givens
 
@@ -65,7 +65,7 @@ Add the variant rules after the `box_grid`:
 - A **Kropki dot** sits between two cells. White means the digits are consecutive; black means one is double the
   other.
 
-[Lines and arrows](../formats/rules/lines-and-arrows.mdx) and [Edges and corners](../formats/rules/edges-and-corners.mdx) list every
+[Lines and arrows](../../formats/rules/lines-and-arrows.mdx) and [Edges and corners](../../formats/rules/edges-and-corners.mdx) list every
 option of these rules. The complete file is now:
 
 <PuzzleJson name="mini-thermo-kropki"
@@ -120,4 +120,4 @@ not unique
 ```
 
 Without it the puzzle has more than one solution, so pencilmark will not grade it. The
-[generator](generate.md) can find a set of clues like this one for you.
+[generator](../generator/generate.md) can find a set of clues like this one for you.

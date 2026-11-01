@@ -1,4 +1,4 @@
-"""Write the internal Python reference (docs/dev/reference/*.md) from the package's docstrings, read with ast (the engine
+"""Write the internal Python reference (docs/reference/*.md) from the package's docstrings, read with ast (the engine
 need not be built): one page per area; per module its docstring, a summary table, then each public function and class
 (tools/apidoc.py renders them).
   python tools/gen_reference_md.py"""
@@ -11,8 +11,8 @@ import apidoc
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src" / "pencilmark"
-OUT = ROOT / "docs" / "dev" / "reference"
-BASE = "../../"  # from a reference page to docs/
+OUT = ROOT / "docs" / "reference"
+BASE = "../"  # from a reference page to docs/
 # page slug -> (title, description, modules in reading order)
 PAGES = {
     "card": (

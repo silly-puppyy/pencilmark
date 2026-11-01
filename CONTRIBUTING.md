@@ -28,8 +28,8 @@ python -m pytest -q -n auto tests             # the quick suite: about 10 second
 | `tools/` | the golden tool, the docs generators, the drawing |
 | `docs/`, `website/` | the documentation site (Docusaurus) |
 
-[Architecture](https://silly-puppyy.github.io/pencilmark/dev/architecture/) explains how a card is computed
-and which file holds each part of the engine; the [reference](https://silly-puppyy.github.io/pencilmark/dev/reference/)
+[Architecture](https://silly-puppyy.github.io/pencilmark/guides/development/architecture/) explains how a card is computed
+and which file holds each part of the engine; the [reference](https://silly-puppyy.github.io/pencilmark/reference/)
 lists every module, function and class, Python from the docstrings and C++ from the header comments (`///` above a
 declaration, `///<` after a member; read by Doxygen, so building it needs `doxygen`).
 
@@ -60,8 +60,8 @@ Code follows the [code style](https://silly-puppyy.github.io/pencilmark/dev/code
 `ruff check` and `ruff format`, plus `codespell`; `python tools/tasks.py lint` runs all three, as CI does on every
 push, and `pre-commit install` runs them before each commit); text follows the
 [writing style](https://silly-puppyy.github.io/pencilmark/dev/writing-style/): result first, plain words, British
-spelling. [Add a technique](https://silly-puppyy.github.io/pencilmark/dev/add-technique/) lists every place a new solving
-technique touches, and [Add a rule kind](https://silly-puppyy.github.io/pencilmark/dev/add-rule-kind/) every place a new
+spelling. [Add a technique](https://silly-puppyy.github.io/pencilmark/guides/development/add-technique/) lists every place a new solving
+technique touches, and [Add a rule kind](https://silly-puppyy.github.io/pencilmark/guides/development/add-rule-kind/) every place a new
 line, edge or cell kind touches.
 
 ## Conduct and security

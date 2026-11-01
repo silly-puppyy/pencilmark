@@ -42,7 +42,7 @@ $ pencilmark rate puzzles.txt -j 4 --format '%i,%b,%d,%m,%c'
 4,Expert,6.9,13.7,NSI PPRx2 HPR/NQDx2 KTE/SKY/MCH AIC/ALS/WIF
 ```
 
-[Usage](../start/usage.mdx#command-line) lists every `%` field.
+[Usage](../../start/usage.mdx#command-line) lists every `%` field.
 
 ## Keep the full cards
 
@@ -64,7 +64,7 @@ $ pencilmark rate puzzles.txt -j 4 --fields difficulty,time,band
 ```
 
 `--no-alternatives` keeps `contains` but skips the search for interchangeable techniques. `--max-seconds N` caps the
-time per puzzle; a card that hits the cap says `"completed": false` ([Grade card](../formats/grade-card.md)).
+time per puzzle; a card that hits the cap says `"completed": false` ([Grade card](../../formats/grade-card.md)).
 
 ## Bad lines
 

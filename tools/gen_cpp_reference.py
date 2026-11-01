@@ -1,4 +1,4 @@
-"""Write the C++ engine reference (docs/dev/reference/cpp-*.md) from the comments in csrc/: Doxygen reads them into XML
+"""Write the C++ engine reference (docs/reference/cpp-*.md) from the comments in csrc/: Doxygen reads them into XML
 (build/doxygen-xml), this script turns the XML into pages in the shape of the Python reference (tools/apidoc.py). One
 page per header, its classes with their public functions and fields, and a page listing every source file. Without
 doxygen (on PATH, or $DOXYGEN) the pages say so and the site builds without them.
@@ -15,7 +15,7 @@ import apidoc
 
 ROOT = Path(__file__).resolve().parents[1]
 XML = ROOT / "build" / "doxygen-xml"
-OUT = ROOT / "docs" / "dev" / "reference"
+OUT = ROOT / "docs" / "reference"
 # page slug -> (title, description, headers)
 PAGES = {
     "cpp-solver": ("The solver", "The techniques, moves, pricing parameters and the Solver class.", ["solver.hpp"]),

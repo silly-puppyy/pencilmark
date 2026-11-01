@@ -21,6 +21,7 @@ FAVICONS = {
     "sudokucoach": "https://sudoku.coach/img/favicons/favicon-32x32.png",
     "krazydad": "https://files.krazydad.com/favicon-32x32.png",
     "sudokuvariants": "https://sudokuvariants.com/favicon.png",
+    "logicmasters": "https://logic-masters.de/favicon.ico",
     "artisanalsudoku": "https://substackcdn.com/image/fetch/$s_!-ZRo!,f_auto,q_auto:good,fl_progressive:steep/"
     "https%3A%2F%2Fbucketeer-e05bbc84-baa3-437e-9518-adb32be77984.s3.amazonaws.com%2Fpublic%2Fimages%2F"
     "5db097c2-4913-46cb-8612-1148c6cb8a65%2Ffavicon-32x32.png",
