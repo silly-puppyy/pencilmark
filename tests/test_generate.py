@@ -401,3 +401,8 @@ def test_locked_nonconsecutive():
     sol = r["puzzle"]["solution"]
     pairs = [(i, i + 1) for i in range(36) if i % 6 < 5] + [(i, i + 6) for i in range(30)]
     assert all(abs(sol[i] - sol[j]) != 1 for i, j in pairs)
+    # any op on neighbours: no orthogonal pair sums to 7, written back as the negative rule of the matching edge
+    rule = {"type": "neighbours", "op": "not_sum", "sum": 7, "where": "orthogonal"}
+    r = run(spec(6, rules=[rule], seed=1, time_limit=30))
+    sol = r["puzzle"]["solution"]
+    assert all(sol[i] + sol[j] != 7 for i, j in pairs)

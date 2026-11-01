@@ -8,6 +8,8 @@
   thermo, entropic, modular, parity, palindrome, zipper, region-sum, lockout and double-arrow lines, each true in the
   solution with the format's default parameters. Entropic lines need a board of 6 x 6 or more; palindromes and zippers
   have an odd length; double arrows are 5 cells or more (a shorter one is a zipper).
+- Generator requests may lock a `neighbours` rule with any `op` and `where` too (for example no two orthogonal
+  neighbours summing to 10); the result writes it in canonical form (there: the `negative` rule of X marks).
 - Generator requests may lock `{"type": "neighbours", "kind": "nonconsecutive"}`: every result's grid has no
   consecutive orthogonal neighbours (the grid fill respects pair rules, not only rules of different digits). Without a
   band target the result is very hard (few givens); a band target keeps it in range.

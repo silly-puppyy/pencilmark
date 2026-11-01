@@ -228,6 +228,7 @@ LOCKED_OK = {
     ("neighbours", "antiknight"),
     ("neighbours", "antiking"),
     ("neighbours", "nonconsecutive"),
+    ("neighbours", None),  # any op on orthogonal / diagonal / king / knight pairs: a pair rule
 }  # locked rules the generator's grids can respect: all-different cells and pair rules
 
 
@@ -249,7 +250,7 @@ def _board(doc):
         if (r.get("type"), r.get("kind")) not in LOCKED_OK:
             return (f"locked {r.get('type')} {r.get('kind') or ''} rules are reserved for a later version of the spec"
                     " (docs/formats/generator-spec.md 7); the generator takes: "
-                    + ", ".join(f"{t} {k}" for t, k in sorted(LOCKED_OK)))  # fmt: skip
+                    + ", ".join(f"{t} {k or '(any op)'}" for t, k in sorted(LOCKED_OK, key=lambda x: (x[0], x[1] or ""))))  # fmt: skip
     if any(r.get("box") != [bh, bw] for r in grids):
         return f"box_grid rules need the standard {bh}x{bw} boxes"
     origins = sorted(tuple(x - 1 for x in map(int, r["origin"][1:].split("c"))) for r in grids)

@@ -40,7 +40,8 @@ windmill, flower-4, tridoku, wing-3, sensei, shogun, sumo, twins, clueless-1 or 
 
 Rules with cells and no `count` are **locked**: every result carries them and its solution respects them. The
 generator takes rules of different digits (`region` kinds `diagonal`, `extra` and `window`; `neighbours` kinds
-`antiknight` and `antiking`) and the `neighbours` kind `nonconsecutive`. Without a `where.band`, a layout's result is at most Hard (digging with every technique
+`antiknight` and `antiking`) and pair rules on neighbours: the `neighbours` kind `nonconsecutive`, or any `op` with
+`where` (written back in canonical form: "no two orthogonal neighbours sum to 10" is the `negative` rule of X marks). Without a `where.band`, a layout's result is at most Hard (digging with every technique
 is slow on hundreds of cells). A super samurai with X diagonals on its top three grids is eight `box_grid` rules and six
 `region` `diagonal` rules.
 
