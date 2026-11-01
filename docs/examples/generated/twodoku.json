@@ -30,6 +30,7 @@
   "where": {
    "band": "Hard"
   },
+  "quality": {},
   "limits": {
    "time": 900,
    "seed": 1
@@ -42,7 +43,7 @@
    "title": "generated 9x9 classic, 41 givens",
    "rules_text": "Twodoku: Each 9×9 grid follows normal sudoku rules: place 1–9 in every row, column and box; shared cells belong to both grids.",
    "type": "Twodoku",
-   "generated_from": "sha256:b0c9bdce274df78b735a9e2102cb11ef263e122b17bbc7211aec813304adb034"
+   "generated_from": "sha256:959b000457270fff295a4ae752f919e438ef4516fe991e4f549af46ad87767e9"
   },
   "board": {
    "rows": 15,
@@ -582,10 +583,13 @@
   ]
  },
  "info": {
-  "seconds": 1.2,
+  "seconds": 1.4,
   "attempts": 2,
   "found": null,
   "givens": 41,
-  "elements": {}
+  "elements": {},
+  "rejected": {
+   "band too low (logic pre-check)": 1
+  }
  }
 }

@@ -91,7 +91,6 @@
   }
  ],
  "where": {
-  "band": "Hard",
   "elements": {
    "max": 20
   }

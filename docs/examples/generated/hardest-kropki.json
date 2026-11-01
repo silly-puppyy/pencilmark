@@ -34,6 +34,7 @@
   "where": {
    "difficulty": "max"
   },
+  "quality": {},
   "limits": {
    "time": 600,
    "seed": 5
@@ -47,7 +48,7 @@
    "rules_text": "Mini Sudoku: Place 1–6 in every row, column and 2×3 box.\nKropki: Digits separated by a white dot are consecutive; digits separated by a black dot are in a 1:2 ratio.",
    "type": "Mini Kropki Sudoku",
    "description": "No givens, a minimal set of kropki dots, as hard as the search can find in the time.",
-   "generated_from": "sha256:a6271944e1e997b5f2ffd5be72732803f3367d5719351215cb0b48a54f3a2a02"
+   "generated_from": "sha256:e9fa87944263e5c94abbd6587273d8f332d225c6cae6e019a4e5f386d799c5b9"
   },
   "board": {
    "rows": 6,
@@ -335,13 +336,16 @@
   ]
  },
  "info": {
-  "seconds": 604.0,
+  "seconds": 602.5,
   "attempts": 17,
-  "found": 71,
+  "found": 61,
   "givens": 0,
   "elements": {
    "kropki_black": 1,
    "kropki_white": 11
+  },
+  "rejected": {
+   "construction failed": 19
   }
  }
 }

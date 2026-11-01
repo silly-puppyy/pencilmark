@@ -28,6 +28,7 @@
     "count": 3
    }
   ],
+  "quality": {},
   "limits": {
    "time": 180,
    "seed": 1
@@ -40,7 +41,7 @@
    "title": "generated 9x9 3 thermo, 13 givens",
    "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nThermo: Digits strictly increase along a thermometer from the bulb.",
    "type": "Thermo Sudoku",
-   "generated_from": "sha256:431a3214dd70ae3a5e164b35356aca8f8049fae724aba9ee1cecd5d1b8ae33f2"
+   "generated_from": "sha256:98d1dd6c728c692f495be602dec6d933b2eb2b3b48c625293b3a49389616675e"
   },
   "board": {
    "rows": 9,
@@ -292,12 +293,15 @@
   ]
  },
  "info": {
-  "seconds": 60.5,
+  "seconds": 61.0,
   "attempts": 5,
   "found": null,
   "givens": 13,
   "elements": {
    "thermo": 3
+  },
+  "rejected": {
+   "kind pruned: thermo": 4
   }
  }
 }

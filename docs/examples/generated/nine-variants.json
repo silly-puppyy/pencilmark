@@ -94,11 +94,11 @@
    }
   ],
   "where": {
-   "band": "Hard",
    "elements": {
     "max": 20
    }
   },
+  "quality": {},
   "limits": {
    "time": 1800,
    "seed": 9
@@ -109,10 +109,10 @@
   "format_version": 1,
   "meta": {
    "title": "Nine variants on one 9x9",
-   "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nKiller: Digits in a cage sum to its small clue and don't repeat within the cage.\nArrow: Digits along an arrow sum to the number in its circle.\nThermo: Digits strictly increase along a thermometer from the bulb.\nGerman Whispers: Adjacent digits on a whisper line differ by at least 5.\nRenban: A renban line holds a set of consecutive digits in any order, without repeats.\nBetween Lines: Digits on a between line lie strictly between the digits in its end circles.\nKropki: Digits separated by a white dot are consecutive; digits separated by a black dot are in a 1:2 ratio.\nXV: Digits separated by a V sum to 5.\nOdd-Even: A digit in a grey square is even.",
+   "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nKiller: Digits in a cage sum to its small clue and don't repeat within the cage.\nArrow: Digits along an arrow sum to the number in its circle.\nThermo: Digits strictly increase along a thermometer from the bulb.\nGerman Whispers: Adjacent digits on a whisper line differ by at least 5.\nRenban: A renban line holds a set of consecutive digits in any order, without repeats.\nBetween Lines: Digits on a between line lie strictly between the digits in its end circles.\nConsecutive: Digits separated by a white dot are consecutive.\nXV: Digits separated by an X sum to 10; digits separated by a V sum to 5.\nOdd-Even: A digit in a grey circle is odd.",
    "type": "Variant Sudoku",
    "description": "At least one cage, thermo, whisper, renban, between line, arrow, kropki dot, XV clue and odd / even cell, each needed by the solve.",
-   "generated_from": "sha256:b9a1644154672ab7b48fdd6f4ec7db8e1a62a7a0e08bc60aa3d4fef764cc7068"
+   "generated_from": "sha256:855847b7249d99cf0acdc8c61278cfdd48a1a988c815b7a776aeb07b97f9347e"
   },
   "board": {
    "rows": 9,
@@ -132,30 +132,7 @@
    0,
    0,
    0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   5,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   6,
+   9,
    0,
    0,
    0,
@@ -194,96 +171,119 @@
    0,
    0,
    0,
-   2,
    0,
-   8,
    0,
-   1,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
    0,
    0
   ],
   "solution": [
-   7,
    9,
    5,
-   2,
-   3,
-   1,
-   8,
-   6,
-   4,
-   8,
-   1,
-   4,
-   9,
    7,
    6,
-   2,
-   3,
-   5,
-   2,
-   6,
-   3,
    8,
+   2,
    4,
-   5,
+   1,
+   3,
+   4,
+   6,
+   8,
    9,
    1,
-   7,
-   1,
-   8,
-   7,
-   4,
-   5,
+   3,
    2,
-   3,
-   9,
-   6,
    5,
-   4,
-   9,
-   3,
-   6,
-   8,
    7,
    2,
    1,
    3,
-   2,
-   6,
-   1,
-   9,
    7,
-   4,
    5,
+   4,
    8,
    9,
-   5,
+   6,
    8,
    7,
+   9,
    1,
+   4,
+   5,
+   6,
    3,
-   6,
-   4,
    2,
-   4,
-   7,
-   1,
    6,
+   3,
+   5,
    2,
    9,
-   5,
    8,
-   3,
-   6,
-   3,
-   2,
-   5,
-   8,
+   7,
    4,
    1,
+   1,
+   4,
+   2,
+   3,
+   6,
    7,
-   9
+   9,
+   8,
+   5,
+   7,
+   8,
+   1,
+   4,
+   3,
+   6,
+   5,
+   2,
+   9,
+   3,
+   2,
+   4,
+   5,
+   7,
+   9,
+   1,
+   6,
+   8,
+   5,
+   9,
+   6,
+   8,
+   2,
+   1,
+   3,
+   7,
+   4
   ],
   "rules": [
    {
@@ -296,17 +296,44 @@
    },
    {
     "type": "cage",
-    "sum": 13,
+    "sum": 7,
     "cells": [
-     "r8c7",
-     "r8c8"
+     "r7c4",
+     "r7c5"
     ]
    },
    {
     "type": "cell",
-    "kind": "even",
+    "kind": "odd",
     "cells": [
      "r5c2"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "V",
+    "cells": [
+     "r4c8",
+     "r4c9"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r9c7",
+     "r9c8"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r8c3",
+     "r9c3"
     ]
    },
    {
@@ -314,46 +341,20 @@
     "kind": "kropki",
     "color": "white",
     "cells": [
-     "r1c9",
-     "r2c9"
-    ]
-   },
-   {
-    "type": "edge",
-    "kind": "xv",
-    "letter": "V",
-    "cells": [
-     "r1c4",
-     "r1c5"
-    ]
-   },
-   {
-    "type": "edge",
-    "kind": "xv",
-    "letter": "V",
-    "cells": [
-     "r2c2",
-     "r2c3"
-    ]
-   },
-   {
-    "type": "edge",
-    "kind": "kropki",
-    "color": "black",
-    "cells": [
-     "r1c8",
-     "r2c8"
+     "r8c3",
+     "r8c4"
     ]
    },
    {
     "type": "line",
     "kind": "thermo",
     "cells": [
-     "r6c4",
-     "r5c4",
      "r4c4",
-     "r3c4",
-     "r2c4"
+     "r4c5",
+     "r4c6",
+     "r4c7",
+     "r5c7",
+     "r6c7"
     ]
    },
    {
@@ -361,42 +362,32 @@
     "kind": "whisper",
     "value": 5,
     "cells": [
-     "r1c2",
-     "r2c2",
-     "r2c1",
-     "r3c1"
+     "r7c9",
+     "r7c8",
+     "r6c8"
     ]
    },
    {
     "type": "line",
     "kind": "renban",
     "cells": [
-     "r6c6",
-     "r7c6",
-     "r7c7",
-     "r6c7",
-     "r6c8"
-    ]
-   },
-   {
-    "type": "line",
-    "kind": "between",
-    "cells": [
      "r7c8",
      "r7c7",
-     "r8c7",
-     "r8c6"
+     "r7c6",
+     "r7c5",
+     "r7c4"
     ]
    },
    {
     "type": "arrow",
     "bulb": [
-     "r7c7"
+     "r7c1"
     ],
     "lines": [
      [
-      "r7c8",
-      "r7c9"
+      "r6c1",
+      "r6c2",
+      "r6c3"
      ]
     ]
    },
@@ -404,17 +395,29 @@
     "type": "line",
     "kind": "between",
     "cells": [
-     "r6c2",
-     "r6c3",
-     "r7c3"
+     "r1c6",
+     "r2c6",
+     "r3c6",
+     "r4c6",
+     "r5c6"
     ]
    },
    {
     "type": "line",
     "kind": "thermo",
     "cells": [
-     "r9c2",
-     "r9c1"
+     "r7c8",
+     "r7c7",
+     "r7c6",
+     "r8c6"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "thermo",
+    "cells": [
+     "r1c2",
+     "r1c1"
     ]
    },
    {
@@ -423,64 +426,47 @@
     "cells": [
      "r8c3",
      "r9c3",
-     "r9c4",
-     "r8c4",
-     "r7c4"
+     "r9c4"
     ]
    },
    {
     "type": "line",
     "kind": "thermo",
     "cells": [
-     "r3c5",
+     "r2c5",
+     "r2c6",
      "r3c6",
-     "r2c6"
+     "r3c7",
+     "r3c8"
     ]
    },
    {
     "type": "line",
     "kind": "renban",
     "cells": [
-     "r5c1",
-     "r5c2"
+     "r4c6",
+     "r5c6",
+     "r6c6",
+     "r6c5",
+     "r5c5"
     ]
    },
    {
     "type": "line",
-    "kind": "whisper",
-    "value": 5,
+    "kind": "renban",
     "cells": [
-     "r3c7",
-     "r3c8",
-     "r4c8",
-     "r4c7"
-    ]
-   },
-   {
-    "type": "line",
-    "kind": "between",
-    "cells": [
-     "r9c9",
-     "r8c9",
-     "r7c9"
-    ]
-   },
-   {
-    "type": "line",
-    "kind": "thermo",
-    "cells": [
-     "r3c8",
-     "r2c8",
-     "r1c8",
-     "r1c7"
+     "r1c4",
+     "r2c4",
+     "r2c3",
+     "r1c3"
     ]
    }
   ]
  },
  "card": {
-  "band": "Hard",
-  "difficulty": 12.7,
-  "time": 51.3,
+  "band": "Expert",
+  "difficulty": 14.4,
+  "time": 67.5,
   "contains": [
    {
     "code": "HSI",
@@ -512,44 +498,63 @@
     "chip": "PPR",
     "name": "Pointing / Box-Line Reduction",
     "band": 1,
-    "uses": 19
+    "uses": 18
    },
    {
-    "code": "CGC",
-    "chip": "CGC",
-    "name": "Killer cage combinations",
+    "code": "MSI",
+    "chip": "MSI",
+    "name": "Notes in the head",
     "band": 1,
-    "uses": 5
+    "uses": 3
    },
    {
     "code": "ARW",
     "chip": "ARW",
     "name": "Arrow sums",
     "band": 1,
-    "uses": 2
+    "uses": 1
    },
    {
     "code": "PWC",
     "chip": "PWC",
     "name": "Pair rules (dots, whispers, anti-knight...)",
     "band": 1,
-    "uses": 9
+    "uses": 19
    },
    {
     "code": "LNR",
     "chip": "LNR",
     "name": "Line ranges (thermo / whisper bounds)",
     "band": 1,
-    "uses": 8
+    "uses": 2
+   },
+   {
+    "code": "NPR",
+    "chip": "NPR/EQD/IOM",
+    "name": "Naked Pair",
+    "band": 2,
+    "alternatives": [
+     "EQD",
+     "IOM"
+    ],
+    "uses": 2
+   },
+   {
+    "code": "HPR",
+    "chip": "HPR/EQD/IOM",
+    "name": "Hidden Pair",
+    "band": 2,
+    "alternatives": [
+     "EQD",
+     "IOM"
+    ],
+    "uses": 1
    },
    {
     "code": "NQD",
-    "chip": "NQD/HQD",
+    "chip": "NQD",
     "name": "Naked Quad",
     "band": 2,
-    "alternatives": [
-     "HQD"
-    ],
     "uses": 2
    },
    {
@@ -557,33 +562,53 @@
     "chip": "RUL",
     "name": "Two rules together",
     "band": 2,
-    "uses": 49
+    "uses": 21
    },
    {
-    "code": "TUR",
-    "chip": "TUR",
-    "name": "Turbot Fish",
-    "band": 3,
+    "code": "DOM",
+    "chip": "DOM",
+    "name": "Domino pairs (dots / XV)",
+    "band": 2,
     "uses": 1
+   },
+   {
+    "code": "BAN",
+    "chip": "BAN",
+    "name": "Band set theory with cages",
+    "band": 4,
+    "uses": 10
+   },
+   {
+    "code": "CAS",
+    "chip": "CAS/STR",
+    "name": "Case analysis",
+    "band": 5,
+    "alternatives": [
+     "STR"
+    ],
+    "uses": 2
    }
   ]
  },
  "info": {
-  "seconds": 766.5,
-  "attempts": 6,
+  "seconds": 496.4,
+  "attempts": 2,
   "found": null,
-  "givens": 5,
+  "givens": 1,
   "elements": {
    "arrow": 1,
-   "between": 3,
+   "between": 1,
    "cage": 1,
-   "even": 1,
-   "kropki_black": 1,
    "kropki_white": 1,
-   "renban": 2,
+   "odd": 1,
+   "renban": 3,
    "thermo": 5,
-   "v": 2,
-   "whisper": 2
+   "v": 1,
+   "whisper": 1,
+   "x": 2
+  },
+  "rejected": {
+   "publishing check: unusual": 1
   }
  }
 }

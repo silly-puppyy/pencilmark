@@ -24,6 +24,7 @@
     "count": "max"
    }
   ],
+  "quality": {},
   "limits": {
    "time": 300,
    "seed": 1
@@ -36,7 +37,7 @@
    "title": "generated 9x9 36 parity, 10 givens",
    "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nOdd-Even: A digit in a grey square is even.",
    "type": "Odd-Even Sudoku",
-   "generated_from": "sha256:8cfa1a55ab354e7217951b2969345b4539b1f6d1a91f896905cddd72d0be9a26"
+   "generated_from": "sha256:3a756f98f51ee7326c4f96f4127c1ec348851d2284ecb0be57123ffedc30b9ca"
   },
   "board": {
    "rows": 9,
@@ -555,10 +556,13 @@
  "info": {
   "seconds": 300.5,
   "attempts": 164,
-  "found": 255,
+  "found": 211,
   "givens": 10,
   "elements": {
    "even": 36
+  },
+  "rejected": {
+   "publishing check: unusual": 27
   }
  }
 }

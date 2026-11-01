@@ -28,6 +28,7 @@
     "strict": true
    }
   },
+  "quality": {},
   "limits": {
    "time": 300,
    "seed": 1
@@ -40,7 +41,7 @@
    "title": "generated 9x9 classic, 24 givens",
    "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.",
    "type": "Sudoku",
-   "generated_from": "sha256:32f3b0fdd98c3ec971998f002e59b6002fd1feedd80b569ec15e65333f3663ba"
+   "generated_from": "sha256:f3c0972ec1d7c0e52b7faa016503b9d485eb89bf715579381f5dafd4b5f46700"
   },
   "board": {
    "rows": 9,
@@ -259,8 +260,12 @@
  "info": {
   "seconds": 300.0,
   "attempts": 1619,
-  "found": 18,
+  "found": 17,
   "givens": 24,
-  "elements": {}
+  "elements": {},
+  "rejected": {
+   "band too low (logic pre-check)": 2983,
+   "publishing check: unusual": 1
+  }
  }
 }

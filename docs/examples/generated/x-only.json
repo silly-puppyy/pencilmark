@@ -31,6 +31,7 @@
     "count": 0
    }
   ],
+  "quality": {},
   "limits": {
    "time": 300,
    "seed": 1
@@ -43,7 +44,7 @@
    "title": "generated 9x9 24 xv, 9 givens",
    "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nXV: Digits separated by an X sum to 10.",
    "type": "XV Sudoku",
-   "generated_from": "sha256:6e865d74bd735aefe1081e63523aaf7582096478bba93cb5ad49d82c2542cace"
+   "generated_from": "sha256:e0da35539d764ef280bb2e39684f0f38a33ef1c93faea0509a142aac9bbbecc5"
   },
   "board": {
    "rows": 9,
@@ -507,12 +508,17 @@
   ]
  },
  "info": {
-  "seconds": 306.0,
+  "seconds": 302.1,
   "attempts": 35,
-  "found": 48,
+  "found": 27,
   "givens": 9,
   "elements": {
    "x": 24
+  },
+  "rejected": {
+   "publishing check: barely_used": 9,
+   "publishing check: unusual": 2,
+   "publishing check: barely_used/unusual": 1
   }
  }
 }
