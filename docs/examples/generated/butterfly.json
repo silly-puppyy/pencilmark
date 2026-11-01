@@ -1,0 +1,636 @@
+{
+ "title": "A butterfly killer",
+ "shows": "four grids overlapping on a 12 × 12 board, with cages",
+ "spec": {
+  "format": "sudoku-spec",
+  "format_version": 1,
+  "board": {
+   "rows": 12,
+   "cols": 12
+  },
+  "digits": 9,
+  "rules": [
+   {
+    "type": "box_grid",
+    "origin": "r1c1",
+    "box": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "box_grid",
+    "origin": "r1c4",
+    "box": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "box_grid",
+    "origin": "r4c1",
+    "box": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "box_grid",
+    "origin": "r4c4",
+    "box": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "cage",
+    "count": [
+     6,
+     null
+    ]
+   }
+  ],
+  "limits": {
+   "time": 1800,
+   "seed": 1
+  }
+ },
+ "puzzle": {
+  "format": "sudoku-puzzle",
+  "format_version": 1,
+  "meta": {
+   "title": "generated 9x9 16 cage, 1 givens",
+   "rules_text": "Butterfly: Each 9×9 grid follows normal sudoku rules: place 1–9 in every row, column and box; shared cells belong to both grids.\nKiller: Digits in a cage sum to its small clue and don't repeat within the cage.",
+   "type": "Killer Butterfly Sudoku",
+   "generated_from": "sha256:54f73be2013451590e727faa1e8e06136997d5f1cdd5c8d0e2b3997c6b8bc3b7"
+  },
+  "board": {
+   "rows": 12,
+   "cols": 12
+  },
+  "digits": 9,
+  "givens": [
+   0,
+   3,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "solution": [
+   6,
+   3,
+   9,
+   2,
+   5,
+   1,
+   7,
+   4,
+   8,
+   6,
+   3,
+   9,
+   2,
+   7,
+   4,
+   6,
+   9,
+   8,
+   3,
+   1,
+   5,
+   2,
+   4,
+   7,
+   1,
+   5,
+   8,
+   3,
+   7,
+   4,
+   9,
+   6,
+   2,
+   8,
+   1,
+   5,
+   4,
+   8,
+   7,
+   1,
+   2,
+   9,
+   5,
+   3,
+   6,
+   7,
+   8,
+   4,
+   9,
+   6,
+   2,
+   5,
+   4,
+   3,
+   8,
+   7,
+   1,
+   9,
+   2,
+   6,
+   3,
+   1,
+   5,
+   8,
+   6,
+   7,
+   2,
+   9,
+   4,
+   3,
+   5,
+   1,
+   7,
+   2,
+   1,
+   9,
+   8,
+   6,
+   4,
+   5,
+   3,
+   1,
+   7,
+   2,
+   8,
+   4,
+   6,
+   7,
+   3,
+   5,
+   1,
+   2,
+   9,
+   4,
+   6,
+   8,
+   5,
+   9,
+   3,
+   4,
+   1,
+   2,
+   6,
+   8,
+   7,
+   5,
+   9,
+   3,
+   2,
+   7,
+   4,
+   6,
+   9,
+   8,
+   3,
+   1,
+   5,
+   2,
+   4,
+   7,
+   1,
+   5,
+   8,
+   3,
+   7,
+   4,
+   9,
+   6,
+   2,
+   8,
+   1,
+   5,
+   6,
+   3,
+   9,
+   2,
+   5,
+   1,
+   7,
+   4,
+   8,
+   6,
+   3,
+   9
+  ],
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "origin": "r1c1"
+   },
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "origin": "r1c4"
+   },
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "origin": "r4c1"
+   },
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "origin": "r4c4"
+   },
+   {
+    "type": "cage",
+    "sum": 15,
+    "cells": [
+     "r7c1",
+     "r8c1"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 16,
+    "cells": [
+     "r1c12",
+     "r2c12"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 7,
+    "cells": [
+     "r10c9",
+     "r11c9"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 29,
+    "cells": [
+     "r4c6",
+     "r4c7",
+     "r5c7",
+     "r5c8"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 14,
+    "cells": [
+     "r9c7",
+     "r9c8"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 6,
+    "cells": [
+     "r12c5",
+     "r12c6"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 33,
+    "cells": [
+     "r5c6",
+     "r6c4",
+     "r6c5",
+     "r6c6",
+     "r7c4"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 34,
+    "cells": [
+     "r11c7",
+     "r11c8",
+     "r12c7",
+     "r12c8",
+     "r12c9"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 24,
+    "cells": [
+     "r2c5",
+     "r2c6",
+     "r3c5"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 5,
+    "cells": [
+     "r7c10",
+     "r8c10"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 14,
+    "cells": [
+     "r11c10",
+     "r12c10"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 7,
+    "cells": [
+     "r6c2",
+     "r7c2",
+     "r8c2"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 8,
+    "cells": [
+     "r5c3",
+     "r6c3",
+     "r7c3"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 34,
+    "cells": [
+     "r1c3",
+     "r2c2",
+     "r2c3",
+     "r2c4",
+     "r3c3"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 12,
+    "cells": [
+     "r6c11",
+     "r7c11"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 15,
+    "cells": [
+     "r8c11",
+     "r9c11"
+    ]
+   }
+  ]
+ },
+ "card": {
+  "band": "Medium",
+  "difficulty": 7.9,
+  "time": 60.3,
+  "contains": [
+   {
+    "code": "HSI",
+    "chip": "HSI",
+    "name": "Hidden Single",
+    "band": 0
+   },
+   {
+    "code": "NSI",
+    "chip": "NSI",
+    "name": "Naked Single",
+    "band": 1
+   },
+   {
+    "code": "PPR",
+    "chip": "PPR",
+    "name": "Pointing / Box-Line Reduction",
+    "band": 1,
+    "uses": 87
+   },
+   {
+    "code": "MSI",
+    "chip": "MSI",
+    "name": "Notes in the head",
+    "band": 1,
+    "uses": 13
+   },
+   {
+    "code": "CGC",
+    "chip": "CGC",
+    "name": "Killer cage combinations",
+    "band": 1,
+    "uses": 22
+   },
+   {
+    "code": "HPR",
+    "chip": "HPR/EQD/HQD/RUL",
+    "name": "Hidden Pair",
+    "band": 2,
+    "alternatives": [
+     "EQD",
+     "HQD",
+     "RUL"
+    ],
+    "uses": 4
+   },
+   {
+    "code": "DGC",
+    "chip": "DGC/NPR/EQD/HQD/IOV",
+    "name": "Digit counting",
+    "band": 2,
+    "alternatives": [
+     "NPR",
+     "EQD",
+     "HQD",
+     "IOV"
+    ],
+    "uses": 15
+   },
+   {
+    "code": "NQD",
+    "chip": "NQD/EQD/HQD",
+    "name": "Naked Quad",
+    "band": 2,
+    "alternatives": [
+     "EQD",
+     "HQD"
+    ],
+    "uses": 1
+   },
+   {
+    "code": "IOM",
+    "chip": "IOM/CBL",
+    "name": "Innies & outies over several houses",
+    "band": 2,
+    "alternatives": [
+     "CBL"
+    ],
+    "uses": 2
+   }
+  ]
+ },
+ "info": {
+  "seconds": 116.6,
+  "attempts": 1,
+  "found": null,
+  "givens": 1,
+  "elements": {
+   "cage": 16
+  }
+ }
+}

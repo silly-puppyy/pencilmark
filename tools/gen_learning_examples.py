@@ -67,7 +67,7 @@ def run(name):
         rules=[{"type": "cage", "count": "tile"}],
         givens={"count": giv},
         where=where,
-        seed=KILLER_SEED.get(name, 1),
+        seed=KILLER_SEED.get(name, list(KILLERS).index(name) + 1),  # a seed per stage: one seed gives one grid
         time=600,
     )
     try:

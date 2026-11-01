@@ -553,9 +553,9 @@
   ]
  },
  "info": {
-  "seconds": 300.3,
+  "seconds": 300.5,
   "attempts": 164,
-  "found": 232,
+  "found": 255,
   "givens": 10,
   "elements": {
    "even": 36

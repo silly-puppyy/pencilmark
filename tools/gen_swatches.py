@@ -355,7 +355,7 @@ def drawings():
     ):  # the generator examples and the learning guide's puzzles (gen_*_examples.py)
         for f in sorted((Path(__file__).resolve().parents[1] / "docs" / "examples" / kind).glob("*.json")):
             doc = json.loads(f.read_text(encoding="utf-8"))["puzzle"]
-            cell = 16 if f.stem.startswith("sampler-") else 40  # the sampler's nine boards sit in one table
+            cell = min(40, 720 // doc["board"]["cols"])  # a multi-grid layout fits the page width
             out[f"{kind}-{f.stem}"] = lambda dark, doc=doc, cell=cell: RENDER(doc, dark=dark, cell=cell)
     for f in EXAMPLES:  # example puzzles: plain, and annotated with row / column numbers for the board + JSON view
         doc = json.loads(f.read_text(encoding="utf-8"))

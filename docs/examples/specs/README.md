@@ -17,6 +17,5 @@ card and run time of each.
 | `nine_variants_9x9.json` | Nine variants on one 9x9 |
 
 `reserved/` holds requests that use parts reserved for later versions of the spec
-([Generator spec](../../formats/generator-spec.md), section 7): a super samurai with a variant per row of grids, a
-classic with exactly one X-Wing (`where.contains` `only` / `uses`), givens in the shape of a heart (`mask`) and a
+([Generator spec](../../formats/generator-spec.md), section 7): a classic with exactly one X-Wing (`where.contains` `only` / `uses`), givens in the shape of a heart (`mask`) and a
 displaced jigsaw. The generator refuses them today.

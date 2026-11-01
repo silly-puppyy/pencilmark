@@ -1,5 +1,5 @@
 {
- "title": "A Easy killer",
+ "title": "First cages",
  "spec": {
   "format": "sudoku-spec",
   "format_version": 1,
@@ -19,17 +19,24 @@
    },
    {
     "type": "cage",
-    "count": [
-     6,
-     null
-    ]
+    "count": "tile"
    }
   ],
+  "givens": {
+   "count": [
+    50,
+    null
+   ]
+  },
   "where": {
-   "band": "Easy"
+   "band": "Very Easy",
+   "difficulty": [
+    0,
+    3
+   ]
   },
   "limits": {
-   "time": 300,
+   "time": 600,
    "seed": 1
   }
  },
@@ -37,10 +44,10 @@
   "format": "sudoku-puzzle",
   "format_version": 1,
   "meta": {
-   "title": "generated 9x9 15 cage, 3 givens",
+   "title": "generated 9x9 9 cage, 59 givens",
    "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nKiller: Digits in a cage sum to its small clue and don't repeat within the cage.",
    "type": "Killer Sudoku",
-   "generated_from": "sha256:5fd4eb09e87b89d89b4d6f70b87433ab6e7bf2b227c1111d5e386816b9261356"
+   "generated_from": "sha256:0833b14ed3c259770757e60b3ac778f9c0c2bdf4abab558ab12e160602fef78a"
   },
   "board": {
    "rows": 9,
@@ -48,86 +55,86 @@
   },
   "digits": 9,
   "givens": [
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   4,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   5,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
+   6,
    0,
    0,
    2,
+   5,
+   1,
+   7,
+   4,
+   8,
+   0,
+   0,
+   0,
+   3,
+   0,
+   0,
+   9,
+   1,
+   2,
+   0,
+   7,
+   2,
+   8,
+   4,
+   9,
+   3,
+   6,
+   5,
+   5,
+   0,
+   3,
+   4,
+   1,
+   6,
+   2,
+   9,
+   7,
+   2,
+   0,
+   4,
+   7,
+   3,
+   8,
+   1,
+   5,
+   6,
+   7,
+   6,
+   0,
+   0,
+   9,
+   2,
+   0,
+   0,
+   3,
+   3,
+   4,
+   6,
+   1,
+   2,
+   0,
+   8,
+   7,
+   9,
+   0,
+   2,
+   0,
+   9,
+   7,
+   0,
+   6,
+   3,
+   1,
+   0,
+   1,
+   0,
+   6,
+   8,
+   3,
+   5,
+   0,
    0
   ],
   "solution": [
@@ -224,121 +231,58 @@
    },
    {
     "type": "cage",
-    "sum": 10,
+    "sum": 6,
     "cells": [
-     "r1c4",
-     "r1c5",
-     "r2c4"
+     "r6c3",
+     "r6c4"
     ]
    },
    {
     "type": "cage",
-    "sum": 5,
+    "sum": 6,
     "cells": [
-     "r3c3",
-     "r4c3"
-    ]
-   },
-   {
-    "type": "cage",
-    "sum": 30,
-    "cells": [
-     "r8c4",
-     "r9c3",
-     "r9c4",
-     "r9c5"
-    ]
-   },
-   {
-    "type": "cage",
-    "sum": 10,
-    "cells": [
-     "r7c8",
-     "r8c8"
-    ]
-   },
-   {
-    "type": "cage",
-    "sum": 13,
-    "cells": [
-     "r3c5",
-     "r3c6"
-    ]
-   },
-   {
-    "type": "cage",
-    "sum": 14,
-    "cells": [
-     "r7c7",
-     "r8c7"
-    ]
-   },
-   {
-    "type": "cage",
-    "sum": 33,
-    "cells": [
-     "r3c4",
-     "r4c4",
-     "r5c4",
-     "r6c4",
-     "r6c5"
-    ]
-   },
-   {
-    "type": "cage",
-    "sum": 23,
-    "cells": [
-     "r4c2",
-     "r5c2",
-     "r6c2"
-    ]
-   },
-   {
-    "type": "cage",
-    "sum": 16,
-    "cells": [
-     "r2c6",
-     "r2c7"
-    ]
-   },
-   {
-    "type": "cage",
-    "sum": 16,
-    "cells": [
-     "r1c8",
-     "r2c8",
-     "r2c9",
-     "r3c7",
-     "r3c8"
-    ]
-   },
-   {
-    "type": "cage",
-    "sum": 8,
-    "cells": [
-     "r1c6",
-     "r1c7"
-    ]
-   },
-   {
-    "type": "cage",
-    "sum": 12,
-    "cells": [
-     "r8c9",
-     "r9c7",
      "r9c8",
      "r9c9"
     ]
    },
    {
     "type": "cage",
-    "sum": 16,
+    "sum": 17,
     "cells": [
-     "r6c3",
-     "r7c1",
-     "r7c2",
-     "r7c3",
-     "r8c2"
+     "r4c2",
+     "r5c2"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 13,
+    "cells": [
+     "r2c5",
+     "r2c6"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 9,
+    "cells": [
+     "r7c6",
+     "r8c6"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 12,
+    "cells": [
+     "r6c7",
+     "r6c8"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 12,
+    "cells": [
+     "r8c3",
+     "r9c3"
     ]
    },
    {
@@ -351,47 +295,28 @@
    },
    {
     "type": "cage",
-    "sum": 33,
+    "sum": 30,
     "cells": [
-     "r4c9",
-     "r5c9",
-     "r6c8",
-     "r6c9",
-     "r7c9"
+     "r1c2",
+     "r1c3",
+     "r2c1",
+     "r2c2",
+     "r2c3",
+     "r3c1"
     ]
    }
   ]
  },
  "card": {
-  "band": "Easy",
-  "difficulty": 8.1,
-  "time": 33.9,
+  "band": "Very Easy",
+  "difficulty": 0.5,
+  "time": 1.4,
   "contains": [
    {
     "code": "HSI",
     "chip": "HSI",
     "name": "Hidden Single",
     "band": 0
-   },
-   {
-    "code": "NSI",
-    "chip": "NSI",
-    "name": "Naked Single",
-    "band": 1
-   },
-   {
-    "code": "MSI",
-    "chip": "MSI",
-    "name": "Pair / triple in the head",
-    "band": 1,
-    "uses": 13
-   },
-   {
-    "code": "IOU",
-    "chip": "IOU",
-    "name": "Innies & outies (rule of 45)",
-    "band": 1,
-    "uses": 1
    }
   ]
  },

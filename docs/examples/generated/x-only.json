@@ -40,7 +40,7 @@
   "format": "sudoku-puzzle",
   "format_version": 1,
   "meta": {
-   "title": "generated 9x9 18 xv, 8 givens",
+   "title": "generated 9x9 24 xv, 9 givens",
    "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nXV: Digits separated by an X sum to 10.",
    "type": "XV Sudoku",
    "generated_from": "sha256:6e865d74bd735aefe1081e63523aaf7582096478bba93cb5ad49d82c2542cace"
@@ -64,8 +64,37 @@
    0,
    0,
    0,
+   0,
+   1,
+   8,
+   0,
+   0,
+   0,
+   0,
+   0,
+   5,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   8,
+   0,
+   0,
+   0,
+   0,
+   0,
    2,
-   4,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
    0,
    0,
    0,
@@ -85,24 +114,6 @@
    0,
    0,
    0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   6,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
    4,
    0,
    0,
@@ -112,109 +123,98 @@
    0,
    0,
    0,
-   0,
-   0,
-   0,
-   0,
    1,
+   3,
    0,
    0,
    0,
    0,
    0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   1,
-   7,
    0,
    0
   ],
   "solution": [
-   9,
    2,
    8,
-   3,
-   1,
-   7,
    4,
-   6,
-   5,
-   1,
-   5,
-   6,
    9,
-   2,
-   4,
+   6,
    3,
-   7,
-   8,
-   4,
+   5,
+   1,
    7,
    3,
    5,
-   6,
-   8,
-   1,
    9,
-   2,
-   6,
-   8,
    7,
    4,
-   9,
+   1,
+   8,
+   6,
+   2,
+   6,
+   7,
+   1,
    5,
    2,
+   8,
    3,
-   1,
-   2,
+   9,
    4,
    9,
    1,
    3,
+   4,
+   8,
+   2,
+   7,
+   5,
    6,
    8,
+   2,
    5,
-   7,
+   6,
    3,
-   1,
-   5,
    7,
-   8,
-   2,
-   6,
-   4,
    9,
+   4,
+   1,
    7,
+   4,
+   6,
+   1,
+   9,
+   5,
+   2,
    3,
-   2,
    8,
-   4,
-   9,
-   5,
-   1,
-   6,
    5,
    6,
-   1,
-   2,
    7,
+   8,
+   1,
+   9,
+   4,
+   2,
    3,
-   9,
-   8,
    4,
-   8,
    9,
-   4,
+   2,
+   3,
+   7,
    6,
+   1,
+   8,
    5,
    1,
-   7,
+   3,
+   8,
    2,
-   3
+   5,
+   4,
+   6,
+   7,
+   9
   ],
   "rules": [
    {
@@ -230,8 +230,8 @@
     "kind": "xv",
     "letter": "X",
     "cells": [
-     "r3c3",
-     "r4c3"
+     "r4c1",
+     "r4c2"
     ]
    },
    {
@@ -239,8 +239,8 @@
     "kind": "xv",
     "letter": "X",
     "cells": [
-     "r1c7",
-     "r1c8"
+     "r6c2",
+     "r6c3"
     ]
    },
    {
@@ -248,8 +248,8 @@
     "kind": "xv",
     "letter": "X",
     "cells": [
-     "r2c9",
-     "r3c9"
+     "r6c4",
+     "r6c5"
     ]
    },
    {
@@ -257,98 +257,8 @@
     "kind": "xv",
     "letter": "X",
     "cells": [
-     "r8c8",
-     "r9c8"
-    ]
-   },
-   {
-    "type": "edge",
-    "kind": "xv",
-    "letter": "X",
-    "cells": [
-     "r8c5",
-     "r8c6"
-    ]
-   },
-   {
-    "type": "edge",
-    "kind": "xv",
-    "letter": "X",
-    "cells": [
-     "r6c7",
-     "r6c8"
-    ]
-   },
-   {
-    "type": "edge",
-    "kind": "xv",
-    "letter": "X",
-    "cells": [
-     "r3c7",
-     "r3c8"
-    ]
-   },
-   {
-    "type": "edge",
-    "kind": "xv",
-    "letter": "X",
-    "cells": [
-     "r6c1",
-     "r7c1"
-    ]
-   },
-   {
-    "type": "edge",
-    "kind": "xv",
-    "letter": "X",
-    "cells": [
-     "r3c1",
-     "r4c1"
-    ]
-   },
-   {
-    "type": "edge",
-    "kind": "xv",
-    "letter": "X",
-    "cells": [
-     "r5c3",
-     "r5c4"
-    ]
-   },
-   {
-    "type": "edge",
-    "kind": "xv",
-    "letter": "X",
-    "cells": [
-     "r2c7",
-     "r2c8"
-    ]
-   },
-   {
-    "type": "edge",
-    "kind": "xv",
-    "letter": "X",
-    "cells": [
-     "r4c7",
-     "r5c7"
-    ]
-   },
-   {
-    "type": "edge",
-    "kind": "xv",
-    "letter": "X",
-    "cells": [
-     "r7c9",
-     "r8c9"
-    ]
-   },
-   {
-    "type": "edge",
-    "kind": "xv",
-    "letter": "X",
-    "cells": [
-     "r7c4",
-     "r8c4"
+     "r5c1",
+     "r5c2"
     ]
    },
    {
@@ -365,8 +275,71 @@
     "kind": "xv",
     "letter": "X",
     "cells": [
+     "r3c7",
+     "r4c7"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r7c5",
+     "r7c6"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r7c8",
+     "r8c8"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r2c3",
+     "r3c3"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r8c4",
+     "r8c5"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
      "r6c5",
-     "r6c6"
+     "r7c5"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r1c5",
+     "r2c5"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r3c6",
+     "r4c6"
     ]
    },
    {
@@ -375,7 +348,7 @@
     "letter": "X",
     "cells": [
      "r1c1",
-     "r2c1"
+     "r1c2"
     ]
    },
    {
@@ -383,16 +356,97 @@
     "kind": "xv",
     "letter": "X",
     "cells": [
-     "r1c2",
-     "r1c3"
+     "r3c9",
+     "r4c9"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r5c5",
+     "r5c6"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r8c3",
+     "r9c3"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r4c4",
+     "r5c4"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r6c2",
+     "r7c2"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r3c5",
+     "r4c5"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r9c6",
+     "r9c7"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r3c5",
+     "r3c6"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r8c6",
+     "r9c6"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r4c5",
+     "r4c6"
     ]
    }
   ]
  },
  "card": {
   "band": "Medium",
-  "difficulty": 8.6,
-  "time": 24.7,
+  "difficulty": 8.7,
+  "time": 29.6,
   "contains": [
    {
     "code": "HSI",
@@ -414,45 +468,51 @@
     "uses": 1
    },
    {
+    "code": "NSI",
+    "chip": "NSI",
+    "name": "Naked Single",
+    "band": 1
+   },
+   {
     "code": "PPR",
     "chip": "PPR",
     "name": "Pointing / Box-Line Reduction",
     "band": 1,
-    "uses": 14
-   },
-   {
-    "code": "MSI",
-    "chip": "MSI",
-    "name": "Pair / triple in the head",
-    "band": 1,
-    "uses": 5
+    "uses": 11
    },
    {
     "code": "PWC",
     "chip": "PWC",
     "name": "Pair rules (dots, whispers, anti-knight...)",
     "band": 1,
-    "uses": 41
+    "uses": 18
    },
    {
-    "code": "NPR",
-    "chip": "NPR/DOM",
-    "name": "Naked Pair",
+    "code": "HPR",
+    "chip": "HPR/NQD",
+    "name": "Hidden Pair",
     "band": 2,
     "alternatives": [
-     "DOM"
+     "NQD"
     ],
-    "uses": 1
+    "uses": 2
+   },
+   {
+    "code": "RUL",
+    "chip": "RUL",
+    "name": "Two rules together",
+    "band": 2,
+    "uses": 7
    }
   ]
  },
  "info": {
-  "seconds": 301.3,
-  "attempts": 2,
-  "found": 34,
-  "givens": 8,
+  "seconds": 306.0,
+  "attempts": 35,
+  "found": 48,
+  "givens": 9,
   "elements": {
-   "x": 18
+   "x": 24
   }
  }
 }

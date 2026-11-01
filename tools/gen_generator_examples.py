@@ -1,8 +1,8 @@
 """Run the generator examples and keep what they produce in docs/examples/generated/<name>.json ({"title", "shows",
 "spec", "puzzle", "card", "info"}); the Generator examples page shows each request, the drawn puzzle
-(tools/gen_swatches.py), its card and how long the run took. Three groups: curiosities (each shows another side of the
-generator spec), the larger requests kept in docs/examples/specs/, and a sampler (a variant per row, harder to the
-right). Generation takes up to an hour in all and the same seed gives the same puzzle, so the results are committed;
+(tools/gen_swatches.py), its card and how long the run took. Two groups: curiosities (each shows another side of the
+generator spec), and larger requests: multi-grid layouts (a super samurai with a variant per row of grids, harder to
+the right) and the requests kept in docs/examples/specs/. Generation takes a few hours in all and the same seed gives the same puzzle, so the results are committed;
 run this again when the generator changes.
   python tools/gen_generator_examples.py [name ...] [--jobs N]     (--page: only rewrite the page)"""
 
@@ -30,6 +30,61 @@ def spec(size=9, rules=(), where=None, givens=None, symmetry=None, seed=1, time=
     return s
 
 
+def layout_spec(layout, rules=(), locked=(), where=None, givens=None, symmetry=None, seed=1, time=1800):
+    """a request for a named layout of 9 x 9 grids (one box_grid rule per grid)"""
+    from pencilmark import puzzle_json as PJ
+
+    origins = PJ._layouts()[layout]
+    s = {"format": "sudoku-spec", "format_version": 1,
+         "board": {"rows": max(r for r, _ in origins) + 9, "cols": max(c for _, c in origins) + 9}, "digits": 9,
+         "rules": [{"type": "box_grid", "origin": f"r{r + 1}c{c + 1}", "box": [3, 3]} for r, c in origins]
+         + list(locked) + list(rules)}  # fmt: skip
+    if givens:
+        s["givens"] = givens
+    if symmetry:
+        s["symmetry"] = [dict(symmetry, of="givens")]
+    if where:
+        s["where"] = where
+    s["limits"] = {"time": time, "seed": seed}
+    return s
+
+
+def nm(r, c):
+    return f"r{r + 1}c{c + 1}"
+
+
+def diagonals(o):
+    """X-sudoku diagonals of the 9 x 9 grid at origin o"""
+    r0, c0 = o
+    return [{"type": "region", "kind": "diagonal", "cells": [nm(r0 + i, c0 + i) for i in range(9)]},
+            {"type": "region", "kind": "diagonal", "cells": [nm(r0 + i, c0 + 8 - i) for i in range(9)]}]  # fmt: skip
+
+
+def windows(o):
+    """windoku's four extra boxes of the grid at origin o"""
+    r0, c0 = o
+    return [{"type": "region", "kind": "window", "cells": [nm(r0 + a + i, c0 + b + j) for i in range(3) for j in range(3)]}
+            for a in (1, 5) for b in (1, 5)]  # fmt: skip
+
+
+def asterisk(o):
+    """the asterisk's extra region of the grid at origin o"""
+    r0, c0 = o
+    cells = [(1, 4), (2, 1), (2, 7), (4, 0), (4, 4), (4, 8), (6, 1), (6, 7), (7, 4)]
+    return [{"type": "region", "kind": "extra", "cells": [nm(r0 + r, c0 + c) for r, c in cells]}]
+
+
+SUPER = [(0, 0), (0, 12), (0, 24), (6, 6), (6, 18), (12, 0), (12, 12), (12, 24)]  # super-samurai origins
+# a variant per row of grids: X on top, windoku in the middle, asterisk at the bottom
+SUPER_LOCKED = (
+    [x for o in SUPER[:3] for x in diagonals(o)]
+    + [x for o in SUPER[3:5] for x in windows(o)]
+    + [x for o in SUPER[5:] for x in asterisk(o)]
+)
+# harder to the right: more givens kept in the grids on the left (floors per grid, origins in reading order)
+SUPER_FLOOR = {0: 38, 6: 32, 12: 27, 18: 23, 24: 0}
+
+
 def from_file(name):
     return json.loads((SPECS / name).read_text(encoding="utf-8"))
 
@@ -42,10 +97,12 @@ CURIOSITIES = {
         spec(rules=[{"type": "cage", "sum": 10, "count": "max"}], time=300),
     ),
     "long-whisper": (
-        "One whisper, eighteen cells or more",
+        "One whisper, 25 cells or more",
         "a line `length` with no upper bound, and 180° symmetry of the givens",
         spec(
-            rules=[{"type": "line", "kind": "whisper", "length": [18, None], "count": 1}], symmetry={"kind": "rot180"}
+            rules=[{"type": "line", "kind": "whisper", "length": [25, None], "count": 1}],
+            symmetry={"kind": "rot180"},
+            time=300,
         ),
     ),
     "long-lines": (
@@ -63,16 +120,6 @@ CURIOSITIES = {
         "Three tall thermometers",
         "an exact count with a length range: three thermos of 7 to 9 cells",
         spec(rules=[{"type": "line", "kind": "thermo", "length": [7, 9], "count": 3}]),
-    ),
-    "dominoes": (
-        "A killer of dominoes, no givens",
-        "a cage `size`: every cage two cells, at least twelve of them",
-        spec(rules=[{"type": "cage", "size": 2, "count": [12, None]}], time=300),
-    ),
-    "long-arrows": (
-        "Arrows with long shafts",
-        "an arrow `length` (the shaft): three arrows of three cells or more, whose shafts must hold small digits",
-        spec(rules=[{"type": "arrow", "length": [3, None], "count": 3}]),
     ),
     "gentlest-xwing": (
         "The gentlest X-Wing",
@@ -116,37 +163,41 @@ CURIOSITIES = {
         spec(8, [{"type": "edge", "kind": "kropki", "count": "auto"}], where={"elements": {"max": 6}}),
     ),
 }
+MULTI = {
+    "super-samurai": (
+        "A super samurai: a variant per row, harder to the right",
+        "eight overlapping grids (box_grid rules at the super-samurai origins), locked rules per row of grids (X "
+        "diagonals on top, windoku windows in the middle, an asterisk at the bottom) and a given floor per grid "
+        "(`givens.grids`) that thins out from left to right",
+        layout_spec(
+            "super-samurai",
+            locked=SUPER_LOCKED,
+            givens={"grids": [[SUPER_FLOOR[c], None] for _r, c in sorted(SUPER)]},
+            time=3600,
+        ),  # fmt: skip
+    ),
+    "samurai": (
+        "A samurai",
+        "a named layout: five grids sharing their corner boxes, 180° symmetry of the givens",
+        layout_spec("samurai", symmetry={"kind": "rot180"}, time=1800),
+    ),
+    "twodoku": (
+        "Twodoku, Hard",
+        "two grids sharing a box, with a band target",
+        layout_spec("twodoku", where={"band": "Hard"}, time=900),
+    ),
+    "butterfly": (
+        "A butterfly killer",
+        "four grids overlapping on a 12 × 12 board, with cages",
+        layout_spec("butterfly", rules=[{"type": "cage", "count": [6, None]}], time=1800),
+    ),
+}
 LARGER = {
     "killer-whispers": ("Killer with German whispers and two givens", "", from_file("killer_whispers_2givens.json")),
     "zero-clue-kropki": ("A 0-clue 6×6 kropki", "", from_file("zero_clue_6x6_kropki.json")),
     "nine-variants": ("Nine variants on one 9×9", "", from_file("nine_variants_9x9.json")),
 }
-# the sampler: a variant per row, difficulty rising from left to right (the super samurai of reserved/, as separate
-# grids). Columns are difficulty ranges, not bands: a band says what you need to know, so a Hard puzzle can score lower
-# than a Medium one
-ROWS = {
-    "killer": ("Killer", [{"type": "cage", "count": [4, None]}]),
-    "thermo": ("Thermo", [{"type": "line", "kind": "thermo", "count": [3, None]}]),
-    "kropki": ("Kropki", [{"type": "edge", "kind": "kropki", "count": [4, None]}]),
-}
-COLS = {"gentle": [5, 7.5], "steady": [8, 10], "tough": [10.5, 13]}
-SAMPLER_TIME = {"killer-steady": 900, "killer-tough": 900}  # 300 s found only killers too hard for their range
-SAMPLER_SEED = {"killer-tough": 4}  # seed 3 found none in 300 s
-SAMPLER = {
-    f"sampler-{r}-{c}": (
-        f"{label}, difficulty {lo:g} to {hi:g}",
-        "",
-        spec(
-            rules=rules,
-            where={"difficulty": [lo, hi]},
-            seed=SAMPLER_SEED.get(f"{r}-{c}", k + 1),
-            time=SAMPLER_TIME.get(f"{r}-{c}", 300),
-        ),
-    )  # a seed per column: one seed would give a row the same grid and rules three times
-    for r, (label, rules) in ROWS.items()
-    for k, (c, (lo, hi)) in enumerate(COLS.items())
-}
-EXAMPLES = {**CURIOSITIES, **LARGER, **SAMPLER}
+EXAMPLES = {**CURIOSITIES, **MULTI, **LARGER}
 
 
 def run(name):
@@ -171,7 +222,7 @@ def run(name):
 PAGE = ROOT / "docs" / "guides" / "generator" / "generator-examples.mdx"
 HEAD = """---
 title: Generator examples
-description: "Generator requests and what they produced: curiosities, larger requests and a sampler, each with its card and how long the run took."
+description: "Generator requests and what they produced: curiosities and larger requests (multi-grid layouts among them), each with its card and how long the run took."
 ---
 
 import Swatch from '@site/src/components/Swatch';
@@ -192,29 +243,19 @@ Each shows another side of the spec.
 LARGER_HEAD = """
 ## Larger requests
 
-Requests kept as files in `docs/examples/specs/`; run one with `pencilmark generate FILE`.
-"""
-SAMPLER_HEAD = """
-## A sampler
-
-A variant per row, difficulty rising to the right: nine requests that differ only in the template and
-`where.difficulty` (5 to 7.5, 8 to 10, 10.5 to 13). Under each board: its band, difficulty and how long the run took.
-
-```json
-{"rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]},
-  {"type": "cage", "count": [4, null]}],
- "where": {"difficulty": [8, 10]},
- "limits": {"time": 300, "seed": 2}}
-```
+Multi-grid layouts, a request is a puzzle file with blanks: one `box_grid` rule per grid (the origins of a named
+layout: samurai, super-samurai, twodoku, butterfly, ...), locked rules every result carries (diagonals, extra regions,
+windoku windows, anti-knight, anti-king: rules of different digits), and givens per grid (`givens.grids`, the grids in
+reading order of their origins). Then requests kept as files in `docs/examples/specs/`; run one with
+`pencilmark generate FILE`.
 """
 LATER = """
 ## Not possible yet
 
 `docs/examples/specs/reserved/` holds requests that use parts reserved for later versions of the spec
-([Generator spec](../../formats/generator-spec.md), section 7); the generator refuses them today. Among them, a super
-samurai with a variant per row of grids that get harder from left to right (the sampler above is the same idea on
-separate grids), a classic with exactly one X-Wing, givens in the shape of a heart and a displaced jigsaw. A 16×16
-killer with exactly 32 cages and no givens is also out of reach: the uniqueness search does not finish.
+([Generator spec](../../formats/generator-spec.md), section 7); the generator refuses them today: a classic with
+exactly one X-Wing, givens in the shape of a heart and a displaced jigsaw. A 16×16 killer with exactly 32 cages and no
+givens is also out of reach: the uniqueness search does not finish.
 """
 
 
@@ -266,32 +307,14 @@ def section(name):
             f"Generated in {took(d)}.", ""]  # fmt: skip
 
 
-def sampler_table():
-    L = ["| | " + " | ".join(f"{lo:g} to {hi:g}" for lo, hi in COLS.values()) + " |", "|---|" + "---|" * len(COLS)]
-    for r, (label, _rules) in ROWS.items():
-        cells = []
-        for b in COLS:
-            d = load(f"sampler-{r}-{b}")
-            if d is None:
-                cells.append("–")
-                continue
-            c = d["card"]
-            cells.append(f'<Swatch name="generated-sampler-{r}-{b}" /><br/>{c["band"]}, {c["difficulty"]}, '
-                         f'{d["info"]["seconds"]:.0f} s')  # fmt: skip
-        L.append(f"| **{label}** | " + " | ".join(cells) + " |")
-    return L + [""]
-
-
 def write_page():
     """the Generator examples page, from the kept results: request, drawn puzzle, card, time taken"""
     L = [HEAD]
     for name in CURIOSITIES:
         L += section(name)
     L.append(LARGER_HEAD)
-    for name in LARGER:
+    for name in [*MULTI, *LARGER]:
         L += section(name)
-    L.append(SAMPLER_HEAD)
-    L += sampler_table()
     L.append(LATER)
     PAGE.write_text("\n".join(L), encoding="utf-8")
 

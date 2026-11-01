@@ -81,13 +81,6 @@
    0,
    0,
    0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
    7,
    0,
    0,
@@ -95,6 +88,7 @@
    0,
    0,
    0,
+   8,
    0,
    0,
    0,
@@ -141,7 +135,13 @@
    0,
    0,
    0,
-   9,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
    0,
    0,
    0,
@@ -156,87 +156,87 @@
    0
   ],
   "solution": [
-   7,
-   8,
    3,
-   2,
-   6,
-   5,
-   1,
-   9,
-   4,
-   6,
-   5,
-   2,
-   9,
-   4,
-   1,
-   7,
-   3,
-   8,
-   9,
-   1,
-   4,
-   7,
-   3,
-   8,
-   2,
-   5,
-   6,
-   2,
-   6,
-   1,
-   5,
-   9,
-   4,
-   8,
-   7,
-   3,
-   5,
-   3,
-   7,
-   8,
    1,
    2,
-   6,
-   4,
-   9,
-   4,
+   5,
    9,
    8,
    6,
+   4,
    7,
+   4,
+   9,
+   7,
+   6,
+   1,
+   2,
+   8,
    3,
    5,
+   8,
+   5,
+   6,
+   3,
+   7,
+   4,
+   9,
    1,
    2,
-   1,
    2,
+   3,
+   1,
+   8,
+   5,
+   6,
+   7,
    9,
    4,
+   7,
+   6,
+   4,
+   9,
+   3,
+   1,
+   2,
+   5,
    8,
+   5,
+   8,
+   9,
+   2,
+   4,
    7,
    3,
    6,
-   5,
-   8,
+   1,
+   9,
    7,
-   6,
-   3,
-   5,
-   9,
-   4,
-   2,
-   1,
-   3,
-   4,
-   5,
-   1,
-   2,
-   6,
-   9,
    8,
-   7
+   4,
+   6,
+   5,
+   1,
+   2,
+   3,
+   6,
+   2,
+   5,
+   1,
+   8,
+   3,
+   4,
+   7,
+   9,
+   1,
+   4,
+   3,
+   7,
+   2,
+   9,
+   5,
+   8,
+   6
   ],
   "rules": [
    {
@@ -249,77 +249,90 @@
    },
    {
     "type": "cage",
-    "sum": 13,
+    "sum": 11,
     "cells": [
-     "r3c2",
-     "r3c3",
-     "r4c1",
-     "r4c2"
+     "r9c5",
+     "r9c6"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 6,
+    "cells": [
+     "r2c6",
+     "r3c6"
     ]
    },
    {
     "type": "cage",
     "sum": 8,
     "cells": [
-     "r6c9",
-     "r7c9",
-     "r8c9"
-    ]
-   },
-   {
-    "type": "cage",
-    "sum": 34,
-    "cells": [
-     "r6c3",
-     "r7c3",
-     "r7c4",
-     "r8c2",
-     "r8c3"
-    ]
-   },
-   {
-    "type": "cage",
-    "sum": 15,
-    "cells": [
-     "r5c1",
-     "r5c2",
-     "r6c1",
-     "r7c1",
-     "r7c2"
-    ]
-   },
-   {
-    "type": "cage",
-    "sum": 29,
-    "cells": [
-     "r7c5",
-     "r7c6",
-     "r8c5",
-     "r8c6"
+     "r1c2",
+     "r1c3",
+     "r1c4"
     ]
    },
    {
     "type": "cage",
     "sum": 14,
     "cells": [
-     "r5c4",
-     "r6c4"
+     "r7c5",
+     "r8c5"
     ]
    },
    {
     "type": "cage",
-    "sum": 7,
+    "sum": 14,
     "cells": [
-     "r7c7",
-     "r8c7"
+     "r2c2",
+     "r3c2"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 16,
+    "cells": [
+     "r7c1",
+     "r7c2"
     ]
    },
    {
     "type": "cage",
     "sum": 8,
     "cells": [
-     "r9c5",
-     "r9c6"
+     "r2c8",
+     "r2c9"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 11,
+    "cells": [
+     "r7c6",
+     "r7c7",
+     "r7c8",
+     "r8c6"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 12,
+    "cells": [
+     "r5c7",
+     "r6c7",
+     "r6c8",
+     "r6c9"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 16,
+    "cells": [
+     "r8c1",
+     "r8c2",
+     "r9c1",
+     "r9c2",
+     "r9c3"
     ]
    },
    {
@@ -327,9 +340,28 @@
     "kind": "whisper",
     "value": 5,
     "cells": [
-     "r5c8",
-     "r5c9",
-     "r4c9"
+     "r3c3",
+     "r4c3",
+     "r4c4",
+     "r3c4"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "value": 5,
+    "cells": [
+     "r5c1",
+     "r4c1"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "value": 5,
+    "cells": [
+     "r8c9",
+     "r7c9"
     ]
    },
    {
@@ -338,7 +370,8 @@
     "value": 5,
     "cells": [
      "r6c8",
-     "r7c8"
+     "r6c9",
+     "r5c9"
     ]
    },
    {
@@ -346,31 +379,15 @@
     "kind": "whisper",
     "value": 5,
     "cells": [
-     "r6c5",
-     "r5c5",
-     "r4c5",
-     "r3c5",
-     "r3c6",
-     "r2c6",
-     "r2c7"
-    ]
-   },
-   {
-    "type": "line",
-    "kind": "whisper",
-    "value": 5,
-    "cells": [
-     "r1c7",
-     "r1c8",
-     "r2c8",
-     "r2c9"
+     "r5c7",
+     "r4c7"
     ]
    }
   ]
  },
  "card": {
   "band": "Hard",
-  "difficulty": 13.2,
+  "difficulty": 11.0,
   "time": null,
   "contains": [
    {
@@ -383,12 +400,6 @@
     "code": "LSI",
     "chip": "LSI",
     "name": "Line / dot read without notes",
-    "band": 0
-   },
-   {
-    "code": "CSI",
-    "chip": "CSI",
-    "name": "Last cell of a cage / line",
     "band": 0
    },
    {
@@ -409,56 +420,71 @@
     "chip": "PPR",
     "name": "Pointing / Box-Line Reduction",
     "band": 1,
-    "uses": 20
+    "uses": 14
+   },
+   {
+    "code": "MSI",
+    "chip": "MSI",
+    "name": "Pair / triple in the head",
+    "band": 1,
+    "uses": 3
    },
    {
     "code": "CGC",
     "chip": "CGC",
     "name": "Killer cage combinations",
     "band": 1,
-    "uses": 16
+    "uses": 20
    },
    {
-    "code": "LNR",
-    "chip": "LNR",
-    "name": "Line ranges (thermo / whisper bounds)",
+    "code": "PWC",
+    "chip": "PWC/LNR",
+    "name": "Pair rules (dots, whispers, anti-knight...)",
     "band": 1,
-    "uses": 9
+    "alternatives": [
+     "LNR"
+    ],
+    "uses": 10
    },
    {
     "code": "DGC",
-    "chip": "DGC",
+    "chip": "DGC/NPR/HPR/HQD/IOV/IOM/CBL",
     "name": "Digit counting",
     "band": 2,
-    "uses": 16
+    "alternatives": [
+     "NPR",
+     "HPR",
+     "HQD",
+     "IOV",
+     "IOM",
+     "CBL"
+    ],
+    "uses": 14
    },
    {
     "code": "RUL",
     "chip": "RUL",
     "name": "Two rules together",
     "band": 2,
-    "uses": 30
+    "uses": 12
    },
    {
     "code": "SKY",
-    "chip": "SKY/SCL",
+    "chip": "SKY",
     "name": "Skyscraper",
     "band": 3,
-    "alternatives": [
-     "SCL"
-    ],
     "uses": 1
    }
   ]
  },
  "info": {
-  "seconds": 880.6,
-  "attempts": 96,
+  "seconds": 418.0,
+  "attempts": 13,
   "found": null,
   "givens": 2,
   "elements": {
-   "cage": 8,
-   "whisper": 4
+   "cage": 10,
+   "whisper": 5
   }
  }
 }
