@@ -130,7 +130,7 @@ DEFAULT_LINE = {
 
 
 def color_name(hexcol):
-    h = (hexcol or "#000").lstrip("#")
+    h = str(hexcol or "#000").lstrip("#")  # a colour typed without "#" (777777) can arrive as a JSON number
     if len(h) in (3, 4):
         h = "".join(ch * 2 for ch in h[:3])
     h = h[:6]
@@ -318,7 +318,7 @@ def negative_types(flags, overrides=None):
 
 
 def hls(hexcol):
-    h = (hexcol or "#000").lstrip("#")
+    h = str(hexcol or "#000").lstrip("#")
     if len(h) in (3, 4):
         h = "".join(ch * 2 for ch in h[:3])
     try:
@@ -463,10 +463,26 @@ def edge_number_rule(rules):
     return None
 
 
+def without_nulls(P):
+    """the puzzle's element lists without null entries (SudokuPad skips them; some files carry them, in a list or in an
+    element's cells / way points); the cell grid keeps its nulls, where a position matters"""
+
+    def clean(x):
+        if isinstance(x, dict):
+            return {k: [y for y in v if y is not None] if k in ("cells", "wayPoints") and isinstance(v, list) else v
+                    for k, v in x.items()}  # fmt: skip
+        return x
+
+    return {
+        k: [clean(x) for x in v if x is not None] if isinstance(v, list) and k != "cells" else v for k, v in P.items()
+    }
+
+
 def translate(sp, page_text=None, overrides=None):
     """sp: decoded dict from sudokupad.fetch; page_text: the puzzle page's
     rules (e.g. the Logic Masters text) when the SudokuPad file has none.
     Returns (Puzzle, info) or (None, reason)."""
+    sp = dict(sp, puzzle=without_nulls(sp["puzzle"]))
     P = sp["puzzle"]
     meta = sp.get("meta", {})
     rules = (meta.get("rules") or "") + "\n" + (page_text or "")
@@ -1383,6 +1399,7 @@ def infer(sp, page_text=None, max_combos=120, node_limit=20_000_000, time_budget
     best one found so far. Returns (Puzzle, info, evidence) or (None, reason, None)."""
     import time
 
+    sp = dict(sp, puzzle=without_nulls(sp["puzzle"]))
     t_end = time.time() + time_budget if time_budget else None
     from .. import cbackend  # noqa: F401
 

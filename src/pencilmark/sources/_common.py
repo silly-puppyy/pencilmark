@@ -157,6 +157,8 @@ def to_puzzle_json(p, solution=None, meta=None):
     from ..puzzle_json import to_json
 
     sol = None
+    if isinstance(solution, int) and not isinstance(solution, bool):  # all digits: some files store it as a number
+        solution = str(solution)
     if solution is not None:
         s = (
             [int(x) for x in solution]

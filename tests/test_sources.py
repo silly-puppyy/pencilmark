@@ -112,3 +112,26 @@ def test_malformed_fpuzzles_is_a_decode_error():
         d = dict(fpuzzles_json(CLASSIC), **broken)
         with pytest.raises(sources.DecodeError, match="malformed f-puzzles"):
             FP.to_puzzle(fpuzzles_url(d), rules_text="Normal sudoku rules apply.")
+
+
+def test_sudokupad_numbers_and_nulls_in_real_files():
+    """found reading 19,194 stored SudokuPad puzzles: a colour typed without "#" arrives as a number (777777), an
+    all-digit solution as a number, and element lists can hold nulls (SudokuPad skips them); each crashed the reader"""
+    rows = [[{"value": v} if v else {} for v in row] for row in ([1, 2, 3, 4], [3, 4, 1, 2], [2, 1, 4, 3], [4, 3, 2, 0])]
+    sp = {
+        "format": "scl",
+        "meta": {"rules": "Normal sudoku rules apply.", "solution": 1234341221434321},
+        "puzzle": {
+            "cells": rows,
+            "regions": [[[r, c] for r in range(a, a + 2) for c in range(b, b + 2)] for a in (0, 2) for b in (0, 2)],
+            "lines": [None, {"color": 777777, "thickness": 2, "wayPoints": [[0.5, 0.5], None, [1.5, 0.5]]}],
+            "arrows": [None],
+            "overlays": [None],
+            "cages": [{"cells": [[0, 0], None, [0, 1]], "value": 3}],
+        },
+    }
+    try:
+        pj = SP.to_puzzle(sp, fetch=False)
+    except sources.UnsupportedPuzzle:  # the grey line may not be read; the point is that nothing crashes
+        return
+    assert pj["numbers"].startswith("1234")

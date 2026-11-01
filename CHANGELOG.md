@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- SudokuPad files read that crashed the reader (5 of 19,194 stored puzzles): a colour typed without "#" stored as a
+  number, an all-digit solution stored as a number, and null entries in element lists or in a cage's cells.
 - Chains held in the head (mental chains) are explained when they pass through a group of cells (they crashed into
   the generic sentence), and only with a chain that visibly closes: the engine's record can stop short of the step
   that comes back to the placement, and the text then claimed a return it did not show. A chain that stops short is
