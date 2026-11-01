@@ -33,8 +33,15 @@ The result is an ordinary `sudoku-puzzle` with its `solution`; `meta.generated_f
 
 ## 1. Board
 
-`board`, `digits` and the house rules as in the puzzle format, restricted to one gap-free D × D grid with standard
-boxes (D = 4, 6, 8, 9, 10, 12, 16): a single `box_grid` rule. It is copied into the result.
+`board`, `digits` and the house rules as in the puzzle format, copied into the result. Either one gap-free D × D grid
+with standard boxes (D = 4, 6, 8, 9, 10, 12, 16; a single `box_grid` rule), or a named layout of overlapping 9 × 9
+grids: one `box_grid` rule per grid, at the origins of samurai, super-samurai, twodoku, doubledoku, butterfly, sohei,
+windmill, flower-4, tridoku, wing-3, sensei, shogun, sumo, twins, clueless-1 or clueless-2 (the board is their extent).
+
+Rules with cells and no `count` are **locked**: every result carries them and its solution respects them. The
+generator takes rules of different digits: `region` kinds `diagonal`, `extra` and `window`, and `neighbours` kinds
+`antiknight` and `antiking`. A super samurai with X diagonals on its top three grids is eight `box_grid` rules and six
+`region` `diagonal` rules.
 
 ## 2. Templates
 
@@ -61,6 +68,9 @@ One template per variety, each with its own `count`:
 | `"tile"` | cages only: the grid tiled by cages |
 | `"max"` | as many as fit: the run uses its whole `limits.time` and returns the result with the most of them |
 
+Elements of one kind never share cells (two cages, two whispers); elements of different kinds may, so the rules
+interact (a whisper through a cage, a dot on a thermo). Dots and XV marks may share cells, never an edge.
+
 Shape limits, each a number or `[min, max]` (`max` `null` = no cap):
 
 | Key | Templates | Meaning |
@@ -79,7 +89,9 @@ Shape limits do not combine with `"tile"` or with a zero-given cage count.
 ## 3. Givens and symmetry
 
 - `givens`: `{"count": n}` or `{"count": [min, max]}` (`max` may be `null`). Without it, the generator digs as far as
-  the targets allow.
+  the targets allow. On a layout, `"grids": [...]` bounds each grid's givens (a number or `[min, max]` per grid, the
+  grids in reading order of their origins; a shared cell counts for both grids): more givens on one side makes that
+  side easier.
 - `symmetry`: at most one entry, `{"kind": "rot180" | "rot90" | "mirror", "axis"?: "horizontal" | "vertical" |
   "diagonal" | "antidiagonal", "of": "givens"}`. `rot90` and the diagonal mirrors need square boxes (4×4, 9×9, 16×16);
   on other boards the request is refused. The same entries are reported by `describe()` and the `symmetry` card field.
@@ -116,7 +128,8 @@ which puzzles qualify; `meta`, `limits` and `fields` do not).
 
 Refused by format_version 1 readers with a message naming the part:
 
-- other boards: multi-grid layouts, jigsaw boxes, locked clue rules (rules with cells), `"lock": false` starting points;
+- other boards: layouts that are not named, jigsaw boxes, locked rules other than those of different digits, `"lock":
+  false` starting points;
 - givens in puzzle form, `mask`, `values` (locked digits);
 - template shape limits `displaced` and `area`; other whisper gaps;
 - more symmetry entries, symmetry of rules (`of: "all"` or a rule selector);

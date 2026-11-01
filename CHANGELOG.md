@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- The generator makes multi-grid puzzles: a request with one `box_grid` per grid at the origins of a named layout
+  (samurai, super-samurai, twodoku, butterfly, ...). Requests may lock rules of different digits (diagonals, extra
+  regions, windoku windows, anti-knight, anti-king) that every result carries, and bound the givens per grid
+  (`givens.grids`). A layout without a band target is generated up to Hard.
+- Generated elements of different kinds may share cells (a whisper through a cage, a dot on a thermo), so the rules
+  interact; dots and XV marks may share cells. Before, no two elements shared a cell.
+- `"count": "tile"` covers the cells that are not givens; a cell left alone becomes a given instead of a 1-cell cage.
 - The inequality edge is `"kind": "greater"`, `cells[0] > cells[1]`, after the variant's name (Greater-Than); it was
   `"less"` with the cells the other way round. Files with `"less"` are refused: swap the two cells and rename the
   kind. The `less` / `less_equal` operators of `relation` rules are unchanged.

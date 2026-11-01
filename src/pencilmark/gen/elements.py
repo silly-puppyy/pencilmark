@@ -329,6 +329,13 @@ def to_json(b, givens, els, sol=None, title=None):
         "rules": [],
         "regions": [],
     }
+    if getattr(b, "layout", None):  # a multi-grid layout: its grids imply the houses (numbers in its cell order)
+        del d["box"]
+        d["layout"] = b.layout
+    extra = getattr(b, "extra_json", None)  # the request's locked rules
+    if extra:
+        d["regions"] += [dict(g) for g in extra["regions"]]
+        d["rules"] += [dict(r) for r in extra["rules"]]
     none_pairs = []
     for kind, cells, x in els:
         if kind == "cage":

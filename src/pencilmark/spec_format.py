@@ -116,10 +116,15 @@ def validate_spec(doc):
         raise FormatError("digits must be an integer")
     giv = doc.get("givens")
     if giv is not None and not isinstance(giv, list):
-        if not isinstance(giv, dict) or set(giv) - {"count", "mask", "values"}:
-            raise FormatError('givens must be a flat list or {"count", "mask", "values"}')
+        if not isinstance(giv, dict) or set(giv) - {"count", "grids", "mask", "values"}:
+            raise FormatError('givens must be a flat list or {"count", "grids", "mask", "values"}')
         if "count" in giv:
             _n_or_range(giv["count"], "givens.count")
+        if "grids" in giv:
+            if not isinstance(giv["grids"], list):
+                raise FormatError("givens.grids must be a list (one count or [min, max] per grid)")
+            for g in giv["grids"]:
+                _n_or_range(g, "givens.grids entry")
     if doc.get("meta") is not None and not isinstance(doc["meta"], dict):
         raise FormatError("meta must be an object")
     if doc.get("rules") is not None and not isinstance(doc["rules"], list):
@@ -201,29 +206,63 @@ def validate_spec(doc):
     return True
 
 
-def _board_ok(doc):
+LOCKED_OK = {
+    ("region", "diagonal"),
+    ("region", "extra"),
+    ("region", "window"),
+    ("neighbours", "antiknight"),
+    ("neighbours", "antiking"),
+}  # locked rules the generator's grids can respect: all-different cells
+
+
+def _board(doc):
+    """(layout name or None, locked rules) of a request, or a NotSupportedError message (str). The board is one
+    D x D grid with a single box_grid, or a named multi-grid layout of 9 x 9 grids given by one box_grid per grid
+    (puzzle_json's layouts: samurai, super-samurai, twodoku, ...); locked rules are all-different rules."""
     D = doc["digits"]
-    if doc["board"].get("rows") != D or doc["board"].get("cols") != D:
-        return f"the generator makes gap-free {D}x{D} boards (board {doc['board']})"
     if D not in PJ.BOXES:
         return f"no standard boxes for size {D}"
     bh, bw = PJ.BOXES[D]
-    locked = [r for r in doc.get("rules") or [] if not _is_template(r)]
-    board = ({"type": "box_grid", "origin": "r1c1", "box": [bh, bw]}, {"type": "grid", "origin": "r1c1"})
-    for r in locked:
-        if {k: v for k, v in r.items() if k not in ("id", "label", "style")} not in board:
-            return f"locked rules other than the board's grid / box_grid are reserved for a later version of the spec (docs/formats/generator-spec.md 7) ({r.get('type')})"
-    return None
+    locked = [{k: v for k, v in r.items() if k not in ("id", "label", "style")} for r in doc.get("rules") or []
+              if not _is_template(r)]  # fmt: skip
+    grids = [r for r in locked if r.get("type") == "box_grid"]
+    other = [r for r in locked if r.get("type") not in ("box_grid", "grid")]
+    for r in other:
+        if (r.get("type"), r.get("kind")) not in LOCKED_OK:
+            return (f"locked {r.get('type')} {r.get('kind') or ''} rules are reserved for a later version of the spec"
+                    " (docs/formats/generator-spec.md 7); the generator takes all-different ones: "
+                    + ", ".join(f"{t} {k}" for t, k in sorted(LOCKED_OK)))  # fmt: skip
+    if any(r.get("box") != [bh, bw] for r in grids):
+        return f"box_grid rules need the standard {bh}x{bw} boxes"
+    origins = sorted(tuple(x - 1 for x in map(int, r["origin"][1:].split("c"))) for r in grids)
+    if origins == [(0, 0)] and doc["board"] == {"rows": D, "cols": D}:
+        return None, other
+    for name, orig in PJ._layouts().items():
+        if D == 9 and sorted(orig) == origins:
+            rows = max(r for r, _ in orig) + 9
+            cols = max(c for _, c in orig) + 9
+            if doc["board"] != {"rows": rows, "cols": cols}:
+                return f"layout {name} needs a {rows} x {cols} board, not {doc['board']}"
+            return name, other
+    return (
+        f"the generator makes one {D}x{D} grid or a named layout of 9 x 9 grids ("
+        + ", ".join(sorted(PJ._layouts()))
+        + "); these box_grid origins match none"
+    )
 
 
 def spec_to_gen(doc):
     """sudoku-spec -> pencilmark.gen Spec dict; NotSupportedError naming the first part the generator cannot run"""
     validate_spec(doc)
-    why = _board_ok(doc)
-    if why:
-        raise NotSupportedError(why)
+    bd = _board(doc)
+    if isinstance(bd, str):
+        raise NotSupportedError(bd)
     D = doc["digits"]
     out = {"size": D}
+    if bd[0]:
+        out["layout"] = bd[0]
+    if bd[1]:
+        out["locked"] = bd[1]
     giv = doc.get("givens")
     if isinstance(giv, list):
         if any(v not in (0, None) for v in giv) or any(v is None for v in giv):
@@ -235,6 +274,8 @@ def spec_to_gen(doc):
             raise NotSupportedError(
                 "givens masks / locked values are reserved for a later version of the spec (docs/formats/generator-spec.md 7)"
             )
+        if "grids" in giv:  # givens per n x n grid, in the order of the box_grid rules' origins (reading order)
+            out["grid_givens"] = [[g, g] if isinstance(g, int) else list(g) for g in giv["grids"]]
         c = giv.get("count")
         if isinstance(c, int):
             out["min_givens"], out["max_givens"] = c, c
@@ -394,7 +435,9 @@ def spec_from_gen(spec):
     if D not in PJ.BOXES:
         raise NotSupportedError(f"no standard boxes for size {D}")
     bh, bw = PJ.BOXES[D]
-    rules = [{"type": "box_grid", "origin": "r1c1", "box": [bh, bw]}]
+    origins = PJ._layouts()[s.layout] if s.layout else [(0, 0)]
+    rules = [{"type": "box_grid", "origin": f"r{r + 1}c{c + 1}", "box": [bh, bw]} for r, c in origins]
+    rules += [dict(r) for r in s.locked or []]
     from .gen.elements import CLASSES
 
     def tmpl(kind, count):
@@ -429,9 +472,13 @@ def spec_from_gen(spec):
             rules.append(tmpl(kind, [n, None]))
     for kind in s.kinds or []:
         rules.append(tmpl(kind, [1, None]))
-    doc = {"format": FORMAT, "format_version": FORMAT_VERSION, "board": {"rows": D, "cols": D}, "digits": D}
+    rows = max(r for r, _ in origins) + D
+    cols = max(c for _, c in origins) + D
+    doc = {"format": FORMAT, "format_version": FORMAT_VERSION, "board": {"rows": rows, "cols": cols}, "digits": D}
     if s.min_givens or s.max_givens is not None:
         doc["givens"] = {"count": s.min_givens if s.min_givens == s.max_givens else [s.min_givens, s.max_givens]}
+    if s.grid_givens:
+        doc.setdefault("givens", {})["grids"] = [g[0] if g[0] == g[1] else list(g) for g in s.grid_givens]
     doc["rules"] = rules
     if s.symmetry:
         k, axis = SYM_GEN[s.symmetry]

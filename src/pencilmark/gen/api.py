@@ -27,6 +27,10 @@ class Spec:
     """what to generate.
 
     size              board size (4, 6, 8, 9, 10, 12, 16; standard boxes)
+    layout            None (one size x size grid) or a named multi-grid layout of 9 x 9 grids (samurai, ...)
+    locked            sudoku-puzzle rules every result carries (all-different ones: diagonals, extra regions, windoku
+                      windows, anti-knight, anti-king); the solution respects them
+    grid_givens       [[min, max], ...] givens per grid of the layout (in its origins' order); None = no bound
     elements          {kind or class: N | [min, max] | "auto" | "full" | "min" | "partition"}: N = at least N needed elements
                       (0 / None / "auto" = allowed, not required); [min, max] = between min and max (max None = no cap;
                       [2, 2] = exactly 2). Classes count one colour / letter / parity of a kind: kropki_white, kropki_black,
@@ -52,6 +56,9 @@ class Spec:
     """
 
     size: int = 9
+    layout: str | None = None
+    locked: list | None = None
+    grid_givens: list | None = None
     elements: dict | None = None
     shape: dict | None = None
     kinds: list | None = None
@@ -174,6 +181,49 @@ def _shape(s):
     return out
 
 
+def board_of(s):
+    """the Board of a Spec: its size and layout, with the locked rules' all-different units (extra regions,
+    diagonals, windows; anti-knight / anti-king pairs) and their puzzle JSON parts for every candidate"""
+    b = Board(s.size, s.layout)
+    if not s.locked:
+        b.extra_json = None
+        return b
+    from .. import exchange
+    from ..exchange.read import to_internal
+
+    origins = b.origins
+    rows, cols = b.rows, b.cols
+    cells = set(b.coords)
+    doc = {
+        "format": "sudoku-puzzle",
+        "format_version": 1,
+        "board": {"rows": rows, "cols": cols},
+        "digits": s.size,
+        "givens": [0 if (r, c) in cells else None for r in range(rows) for c in range(cols)],
+        "rules": [{"type": "box_grid", "origin": f"r{o[0] + 1}c{o[1] + 1}", "box": [b.bh, b.bw]} for o in origins]
+        + list(s.locked),
+    }
+    try:
+        exchange.validate(doc)
+        internal = to_internal(doc)
+    except exchange.FormatError as e:
+        raise ValueError(f"locked rules: {e}") from None
+    p = PJ.from_json(internal)
+    p.finalize()
+    at = lambda i: b.cid[tuple(p.coords[i])]
+    units = [[at(i) for i in g.cells] for g in p.groups if g.kind not in ("cage",)]
+    for rel in p.relations:
+        if rel[0] != "neq":
+            raise ValueError(f"locked rules: the generator's grids respect all-different rules only, not {rel[0]}")
+        units.append([at(rel[1]), at(rel[2])])
+    b = Board(s.size, s.layout, extra=units)
+    b.extra_json = {
+        "regions": [g for g in internal.get("regions") or [] if g.get("kind") not in ("row", "col", "box")],
+        "rules": list(internal.get("rules") or []),
+    }
+    return b
+
+
 def feasibility(spec):
     """fast checks before any search; returns a list of problems (empty = go). Includes an information budget: givens and
     elements together must be able to carry log2(#grids) bits, and classic clue counts can't go below known minimums."""
@@ -186,7 +236,10 @@ def feasibility(spec):
     probs = []
     if s.size not in BOXES:
         return [f"size {s.size} not supported (supported: {sorted(BOXES)})"]
-    b = Board(s.size)
+    try:
+        b = board_of(s)
+    except ValueError as e:
+        return [str(e)]
     try:
         mode, kinds, seeds, value = _plan(s)
     except ValueError as e:
@@ -253,14 +306,18 @@ def feasibility(spec):
     if s.max_givens is not None:
         if s.max_givens < s.min_givens:
             probs.append(f"max_givens {s.max_givens} < min_givens {s.min_givens}")
-        if mode == "classic":
+        if mode == "classic" and not s.layout:
             floor = CLASSIC_MIN_GIVENS.get(s.size, s.size - 1)
             if s.max_givens < floor:
                 probs.append(
                     f"a unique {s.size}x{s.size} classic needs at least {floor} givens (max_givens={s.max_givens})"
                 )
-    # information budget for element-only / element-bounded specs
-    need = grid_log2(s.size)
+    if s.layout and mode not in ("classic", "dig"):
+        probs.append(f"a {s.layout} layout takes templates with counts; 'tile', 'all' and 'min' are for one grid")
+    if s.grid_givens is not None and len(s.grid_givens) != len(b.grid_cells):
+        probs.append(f"givens.grids has {len(s.grid_givens)} entries for {len(b.grid_cells)} grids")
+    # information budget for element-only / element-bounded specs (a layout's grids share cells: not counted)
+    need = grid_log2(s.size) if not s.layout else 0.0
     lg_c = lambda n_, k_: (math.lgamma(n_ + 1) - math.lgamma(k_ + 1) - math.lgamma(n_ - k_ + 1)) / math.log(2)
     gmax = s.max_givens if s.max_givens is not None else None
     if mode == "cage_count":
@@ -374,7 +431,8 @@ def _generate(spec, log=None):
         raise GenerationFailed("infeasible spec: " + "; ".join(probs))
     t0 = time.time()
     deadline = t0 + s.time_limit
-    b = Board(s.size)
+    b = board_of(s)
+    floors = [(set(cs), lo or 0) for cs, (lo, _hi) in zip(b.grid_cells, s.grid_givens)] if s.grid_givens else None
     rng = random.Random(s.seed)
     P = params()
     mode, kinds, seeds, value = _plan(s)
@@ -388,7 +446,10 @@ def _generate(spec, log=None):
 
     # band cap of the construction; with a required technique at the cap, only that technique is allowed at the cap
     # (everything easier stays allowed), so the logic route has to go through it
-    cap = tb if tb is not None else (max(codes[c] for c in req) if req else len(BANDS) - 1)
+    # without a target a layout is dug with techniques up to Hard: on hundreds of cells a failing check with every
+    # technique costs seconds (a sparse samurai: 14 s at Extreme, 0.1 s at Hard); ask where.band for harder layouts
+    free = 3 if s.layout else len(BANDS) - 1
+    cap = tb if tb is not None else (max(codes[c] for c in req) if req else free)
     top = [c for c in req if codes[c] == cap]
     if top and cap > 0:
         allowed = band_techs(P, cap - 1) | set().union(*(code_techs(P, c) for c in top))
@@ -426,8 +487,8 @@ def _generate(spec, log=None):
     while time.time() < deadline:
         stats["attempts"] += 1
         if mode in ("classic", "dig"):
-            few = s.max_givens is not None and s.max_givens < CLASSIC_MIN_GIVENS.get(
-                s.size, 0
+            few = (
+                not s.layout and s.max_givens is not None and s.max_givens < CLASSIC_MIN_GIVENS.get(s.size, 0)
             )  # elements must carry the puzzle
             dense = (
                 [
@@ -447,6 +508,7 @@ def _generate(spec, log=None):
                 rng,
                 chk,
                 min_givens=s.min_givens,
+                grid_floors=floors,
                 seeds=seeds,
                 max_els=s.max_elements if s.max_elements is not None else 10**6,
                 symmetry=s.symmetry,
@@ -471,6 +533,12 @@ def _generate(spec, log=None):
         sol, givens, els = r
         if s.max_givens is not None and len(givens) > s.max_givens:
             reject("too many givens")
+            continue
+        if s.grid_givens and any(
+            hi is not None and sum(1 for c in cs if c in givens) > hi
+            for cs, (_lo, hi) in zip(b.grid_cells, s.grid_givens)
+        ):
+            reject("too many givens in a grid")
             continue
         if s.max_elements is not None and len(els) > s.max_elements:
             reject("too many elements")
@@ -499,6 +567,7 @@ def _generate(spec, log=None):
                     full,
                     sol=sol,
                     min_givens=s.min_givens,
+                    grid_floors=floors,
                     seeds=seeds,
                     max_els=s.max_elements if s.max_elements is not None else 10**6,
                     symmetry=s.symmetry,

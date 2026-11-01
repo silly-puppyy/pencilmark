@@ -18,6 +18,7 @@ def dig(
     chk,
     sol=None,
     min_givens=0,
+    grid_floors=None,
     seeds=None,
     max_els=10**6,
     symmetry=None,
@@ -33,7 +34,7 @@ def dig(
 ):
     """givens-digging with elements added on demand.
 
-    1. `seeds` {kind: count} elements are placed first (disjoint), then the `most` classes are packed; their cells, then
+    1. `seeds` {kind: count} elements are placed first (apart from elements of their own kind), then the `most` classes are packed; their cells, then
        their peers, are emptied first, so they tend to end up required;
     2. the remaining givens are removed in random order (whole symmetry orbits at a time) down to `min_givens`; when a
        removal breaks solvability (chk: band-capped logic), the most informative element of `kinds` through that cell
@@ -44,48 +45,63 @@ def dig(
     classes seeded with EVERY instance true in the solution before digging (few-givens targets); pruning then removes the
     ones the puzzle doesn't need. shape {kind: limits}: the templates' length / sum limits (elements.fits). most: classes
     packed into the grid after the seeds, as many disjoint ones as a few random packings find, and never pruned.
+    grid_floors [(cells, n)]: no grid of a layout goes below n givens.
     deadline (time.time()): when it passes, the attempt is given up (None), or with keep the digging stops and the givens
     still in place stay."""
     fixed = dict(fixed or {})
     sol = sol or b.solution(rng)
     givens = {i: sol[i] for i in range(b.N) if fixed.get(i, True)}
-    els, used = [], set(blocked)
+    els = []
     caps = dict(caps or {})
+
+    def taken(kind):
+        """cells an element of `kind` may not use: blocked ones and those of elements of the same kind (cages and
+        lines stay apart; a whisper may cross a cage, a dot sit on a cage's cell); edge markers may share cells, never
+        the same edge"""
+        bk = EL.base_kind(kind)
+        if bk in ("kropki", "xv"):
+            return set(blocked)
+        return set(blocked) | {c for x in els if x[0] == bk for c in x[1]}
+
+    def fresh(e):
+        return all(x[1] != e[1] for x in els)
+
     room = lambda e: all(
         sum(1 for x in els if EL.in_class(x, k)) < m for k, m in caps.items() if m is not None and EL.in_class(e, k)
     )
     for kind, cnt in (seeds or {}).items():
         for _ in range(cnt):
             for _try in range(40):
+                t = taken(kind)
                 g_ = [
                     e
-                    for e in EL.grow(b, EL.base_kind(kind), sol, rng.randrange(b.N), used, rng, n=8, shape=shape)
-                    if used.isdisjoint(e[1]) and EL.in_class(e, kind)
+                    for e in EL.grow(b, EL.base_kind(kind), sol, rng.randrange(b.N), t, rng, n=8, shape=shape)
+                    if t.isdisjoint(e[1]) and EL.in_class(e, kind) and fresh(e)
                 ]
                 if g_:
                     els.append(g_[0])
-                    used |= set(g_[0][1])
                     break
     for kind in most:  # after the other classes' minimums, so they still find room
         best = []
         for _pack in range(12):
-            got, u = [], set(used)
+            got, u = [], taken(kind)
+            edge = EL.base_kind(kind) in ("kropki", "xv")
             for i in sorted(range(b.N), key=lambda _: rng.random()):
                 if i in u:
                     continue
                 g_ = [
                     e
                     for e in EL.grow(b, EL.base_kind(kind), sol, i, u, rng, n=40, shape=shape)
-                    if u.isdisjoint(e[1]) and EL.in_class(e, kind)
+                    if u.isdisjoint(e[1]) and EL.in_class(e, kind) and fresh(e) and all(x[1] != e[1] for x in got)
                 ]
                 if g_:  # the smallest one leaves the most room for others
                     e = min(g_, key=lambda e: (len(e[1]), rng.random()))
                     got.append(e)
-                    u |= set(e[1])
+                    if not edge:
+                        u |= set(e[1])
             if len(got) > len(best):
                 best = got
         els += best
-        used |= {c for e in best for c in e[1]}
     for kind in dense:
         bk = EL.base_kind(kind)
         if bk not in ("kropki", "xv", "parity"):
@@ -93,10 +109,10 @@ def dig(
         seen = {x[1] for x in els}
         for i in range(b.N):
             for e in EL.grow(b, bk, sol, i, set(blocked), rng, shape=shape):
-                if EL.in_class(e, kind) and e[1] not in seen and (bk != "parity" or i not in used):
+                if EL.in_class(e, kind) and e[1] not in seen and (bk != "parity" or i not in taken("parity")):
                     els.append(e)
                     seen.add(e[1])
-    el_cells = used - set(blocked)
+    el_cells = {c for x in els for c in x[1]} - set(blocked)
     peers = {j for c in el_cells for j in b.peers[c]} - el_cells
     rest = [i for i in range(b.N) if i not in el_cells and i not in peers]
     order = (
@@ -108,6 +124,32 @@ def dig(
     if not chk.ok(givens, els):
         return None
     done = set()
+
+    def removable(orb, also=()):  # the orbit's givens may go (with the cells `also` going too): the total and each of
+        gone = set(orb) | set(also)  # the orbit's grids stay at or above their floors
+        if not orb or len(givens) - len(gone) < min_givens:
+            return False
+        return not grid_floors or all(
+            sum(1 for c in cs if c in givens and c not in gone) >= n for cs, n in grid_floors if cs & set(orb)
+        )
+
+    if b.N > 100:  # a big board (a layout): remove eight orbits at a time while that keeps working, then one by one
+        pos, fails = 0, 0
+        while pos < len(order) and fails < 2 and (deadline is None or time.time() < deadline):
+            batch = []
+            while len(batch) < 8 and pos < len(order):
+                orb = [c for c in b.orbit(order[pos], symmetry) if c in givens and c not in fixed]
+                pos += 1
+                taken = {c for x in batch for c in x}
+                if removable(orb, taken) and taken.isdisjoint(orb):
+                    batch.append(orb)
+            removed = {c: givens.pop(c) for orb in batch for c in orb}
+            if batch and chk.ok(givens, els):
+                done.update(c for orb in batch for x in orb for c in b.orbit(x, symmetry))
+                fails = 0
+            else:
+                givens.update(removed)
+                fails += 1
     for i in order:
         if len(givens) <= min_givens:
             break
@@ -119,24 +161,20 @@ def dig(
             continue
         orb = [c for c in b.orbit(i, symmetry) if c in givens and c not in fixed]
         done.update(b.orbit(i, symmetry))
-        if not orb or len(givens) - len(orb) < min_givens:
+        if not removable(orb):
             continue
         removed = {c: givens.pop(c) for c in orb}
         if chk.ok(givens, els):
             continue
         restored = False
         if kinds and len(els) < max_els:
-            taken = {c for x in els for c in x[1]} | set(blocked)  # elements never share cells
-            cand = (
-                []
-                if i in taken
-                else [
-                    e
-                    for k in kinds
-                    for e in EL.grow(b, EL.base_kind(k), sol, i, taken, rng, shape=shape)
-                    if EL.in_class(e, k) and room(e)
-                ]
-            )
+            cand = [
+                e
+                for k in kinds
+                if i not in taken(k)
+                for e in EL.grow(b, EL.base_kind(k), sol, i, taken(k), rng, shape=shape)
+                if EL.in_class(e, k) and room(e) and fresh(e)
+            ]
             cand.sort(key=lambda e: (EL.ncomb(b.n, len(e[1]), e[2]) if e[0] == "cage" else 0, rng.random()))
             for e in cand[:pool_tries]:
                 if chk.ok(givens, els + [e]):
@@ -158,12 +196,14 @@ def dig(
 
 
 def partition(b, rng, chk, n_givens=0, min_els=0, cover=True):
-    """killer with few / no givens: tile the grid with 2-cell informative cages, keep `n_givens` random givens, then merge
-    neighbouring cages (distinct digits, <= 6 cells) -- or delete cages if cover=False -- while the puzzle stays solvable
-    within the checker's cap."""
+    """killer covering the board: keep `n_givens` random givens, tile the other cells with 2-cell informative cages,
+    then merge neighbouring cages (distinct digits, <= 6 cells) -- or delete cages if cover=False -- while the puzzle
+    stays solvable within the checker's cap. A cell left alone becomes a given (a 1-cell cage is a given in disguise)
+    when there are givens; with none it joins a neighbouring cage."""
     sol = b.solution(rng)
     NB = b.nb
-    owner, els = {}, []
+    givens = {i: sol[i] for i in sorted(range(b.N), key=lambda _: rng.random())[:n_givens]}
+    owner, els = dict.fromkeys(givens, 0), []
     cells = list(range(b.N))
     rng.shuffle(cells)
     for c in cells:
@@ -177,8 +217,12 @@ def partition(b, rng, chk, n_givens=0, min_els=0, cover=True):
         j = min(opts, key=lambda j: (EL.ncomb(b.n, 2, sol[c] + sol[j]), rng.random()))
         els.append(("cage", tuple(sorted((c, j))), sol[c] + sol[j]))
         owner[c] = owner[j] = 1
-    for e in [e for e in els if len(e[1]) == 1]:  # absorb single cells into a neighbouring cage
+    for e in [e for e in els if len(e[1]) == 1]:  # a single cell: a given, or absorbed into a neighbouring cage
         c = e[1][0]
+        if n_givens:
+            givens[c] = sol[c]
+            els.remove(e)
+            continue
         hosts = [
             x
             for x in els
@@ -189,7 +233,6 @@ def partition(b, rng, chk, n_givens=0, min_els=0, cover=True):
         h = min(hosts, key=lambda x: (EL.ncomb(b.n, len(x[1]) + 1, x[2] + sol[c]), rng.random()))
         els[els.index(h)] = ("cage", tuple(sorted(h[1] + (c,))), h[2] + sol[c])
         els.remove(e)
-    givens = {i: sol[i] for i in sorted(range(b.N), key=lambda _: rng.random())[:n_givens]}
     if not chk.ok(givens, els):
         return None
     for _ in range(400):
@@ -200,7 +243,8 @@ def partition(b, rng, chk, n_givens=0, min_els=0, cover=True):
             if a >= len(els):
                 continue
             ea = els[a]
-            nbrs = {next(k for k, e in enumerate(els) if j in e[1]) for c in ea[1] for j in NB[c]} - {a}
+            own = {c: k for k, e in enumerate(els) for c in e[1]}  # givens belong to no cage
+            nbrs = {own[j] for c in ea[1] for j in NB[c] if j in own} - {a}
             moves = []
             for k in sorted(nbrs):
                 eb = els[k]

@@ -251,3 +251,28 @@ def test_malformed_request_parts_are_format_errors():
     for extra in ({"where": 5}, {"limits": "x"}, {"meta": 3}, {"rules": 5}, {"symmetry": 5}):
         with pytest.raises(pencilmark.FormatError):
             pencilmark.generate(dict(spec(4), **extra))
+
+
+def test_layout_requests():
+    """a named layout is one box_grid per grid at its origins; locked rules of different digits and givens per grid
+    are read and written back; other locked rules and unknown origins are refused"""
+    from pencilmark import puzzle_json as PJ
+    from pencilmark import spec_format as SF
+
+    origins = PJ._layouts()["samurai"]
+    grids = [{"type": "box_grid", "origin": f"r{r + 1}c{c + 1}", "box": [3, 3]} for r, c in origins]
+    diag = {"type": "region", "kind": "diagonal", "cells": [f"r{i + 1}c{i + 1}" for i in range(9)]}
+    doc = dict(spec(), board={"rows": 21, "cols": 21}, rules=grids + [diag], givens={"grids": [30, 25, [0, 40], 20, 0]})
+    g = SF.spec_to_gen(doc)
+    assert g["layout"] == "samurai" and g["locked"] == [diag] and g["grid_givens"][2] == [0, 40]
+    back = SF.spec_from_gen(g)
+    assert back["board"] == {"rows": 21, "cols": 21} and diag in back["rules"] and back["givens"]["grids"][0] == 30
+    b = GA.board_of(GA.Spec.from_any(g))
+    assert b.N == 369 and len(b.grid_cells) == 5 and b.extra_json["regions"][0]["kind"] == "diag"
+    for bad in (
+        dict(doc, rules=grids + [{"type": "neighbours", "kind": "nonconsecutive"}]),  # not a rule of different digits
+        dict(doc, rules=grids[:4]),  # origins of no named layout
+        dict(doc, board={"rows": 21, "cols": 22}),  # not the layout's extent
+    ):
+        with pytest.raises(pencilmark.NotSupportedError):
+            SF.spec_to_gen(bad)
