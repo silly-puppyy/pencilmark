@@ -47,7 +47,8 @@ After a change to the engine or a rule, run the fuzzer: `python tools/fuzz.py 20
 true of a random solution and checks that the engine accepts the solution, finds only it, makes no step against it,
 round-trips the file and grades the transposed puzzle alike. Its referee, `tools/spec_check.py`, was written from the
 rule pages alone, so it disagrees with the engine wherever one of them is wrong. A failure prints its seed;
-`python tools/fuzz.py --seed S` prints that case's file.
+`python tools/fuzz.py --seed S` prints that case's file. After a change to the generator, `python
+tools/fuzz_generate.py 160 --jobs 8` sends it random requests and checks that every puzzle it returns meets its request.
 
 ## 3. The docs site
 
