@@ -60,6 +60,7 @@ LINE = {
             "Digits increase or stay equal along a thermometer from the bulb.",
             width="thermo",
             ends="hollow bulb",
+            generated=True,
         ),
         LineKind(
             "whisper", "Whispers", _whisper_text, ("value",), closable=True, name_fn=_whisper_name, generated=True
@@ -78,14 +79,22 @@ LINE = {
             "Entropic",
             "Any three consecutive cells on an entropic line hold a low, a middle and a high digit.",
             ("groups",),
+            generated=True,
         ),
         LineKind(
             "modular",
             "Modular",
             "Any three consecutive cells on a modular line hold different remainders modulo 3.",
             ("value",),
+            generated=True,
         ),
-        LineKind("parity", "Parity", "Adjacent digits on a parity line alternate between odd and even.", closable=True),
+        LineKind(
+            "parity",
+            "Parity",
+            "Adjacent digits on a parity line alternate between odd and even.",
+            closable=True,
+            generated=True,
+        ),
         LineKind(
             "zipper",
             "Zipper",

@@ -247,6 +247,8 @@ def feasibility(spec):
         mode, kinds, seeds, value = _plan(s)
     except ValueError as e:
         return [str(e)]
+    if s.size < 6 and any(EL.base_kind(k) == "entropic" for k in [*kinds, *seeds]):
+        probs.append("entropic lines need a low, a middle and a high digit group: boards of 6 x 6 or larger")
     try:
         tb = _band_index(s.target_band)
     except ValueError as e:
@@ -420,7 +422,9 @@ def generate(spec, log=None):
     r = _generate(SF.spec_to_gen(doc), log)
     meta = {k: v for k, v in (doc.get("meta") or {}).items() if k != SF.NS}
     meta["generated_from"] = SF.spec_fingerprint(doc)
-    puzzle = to_export(r["puzzle"], meta=meta)
+    p = PJ.from_json(r["puzzle"])  # with the solution the puzzle was dug from: exporting needs no search
+    p._pm_solution = [PJ._val(ch) for ch in r["puzzle"]["solution"]]
+    puzzle = to_export(p, meta=dict(r["puzzle"].get("meta") or {}, **meta))
     from ..exchange import validate
 
     validate(puzzle)  # what the generator returns is a valid file: a bad element fails here, not in the user's reader

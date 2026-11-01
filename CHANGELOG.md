@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- The generator places slow thermos, entropic, modular and parity lines (`{"type": "line", "kind": "slow_thermo" |
+  "entropic" | "modular" | "parity", "count": ...}`), each true in the solution with the format's default parameters; entropic
+  lines need a board of 6 x 6 or more.
+- The generator keeps to `limits.time` while trying elements to restore a removed given and while pruning: one attempt
+  on a 9 x 9 with entropic lines ran 40 s past a 180 s limit.
+- `to_export` uses a solution the puzzle already carries (`rate()` and the generator set it) instead of searching again,
+  and leaves the solution out when the search ends without a verdict: the generator crashed with `Undecided` on a
+  samurai without OR-Tools (found by the generator fuzzer).
+
 ## 1.1.0 (2026-11-01)
 
 - The generator's card is the card `rate()` gives the puzzle it returns. A butterfly killer's said 7.9 where `rate()`

@@ -3,9 +3,13 @@
 An element is a tuple (kind, cells, extra):
   ("cage", sorted cells, total)          killer cage, distinct digits
   ("thermo", path, None)                 strictly increasing from the bulb (path[0])
+  ("slow_thermo", path, None)            non-decreasing from the bulb (path[0])
   ("whisper", path, None)                German whisper, neighbours differ by >= whisper_gap(n)
   ("renban", path, None)                 a set of consecutive digits, any order
   ("between", path, None)                interior digits strictly between the two end circles
+  ("entropic", path, None)               every 3 consecutive cells: a low, a middle and a high digit (digit_third)
+  ("modular", path, None)                every 3 consecutive cells: three different remainders mod 3
+  ("parity_line", path, None)            neighbours on the line alternate odd / even (the format's line kind parity)
   ("arrow", (circle,) + shaft, None)     shaft digits sum to the circle digit
   ("kropki", (i, j), "white" | "black")  consecutive / 1:2 ratio
   ("xv", (i, j), "X" | "V")              sum 10 / sum 5
@@ -19,7 +23,8 @@ from itertools import combinations
 
 from .. import puzzle_json as PJ
 
-KINDS = ("cage", "thermo", "whisper", "renban", "between", "arrow", "kropki", "xv", "parity")
+KINDS = ("cage", "thermo", "slow_thermo", "whisper", "renban", "between", "entropic", "modular", "parity_line", "arrow",
+         "kropki", "xv", "parity")  # fmt: skip
 ALIASES = {
     "killer": "cage",
     "cages": "cage",
@@ -77,6 +82,11 @@ def in_class(e, k):
     return e[0] == k or element_class(e) == k
 
 
+def digit_third(v, n):
+    """the entropic group of digit v on an n-digit board (0 low, 1 middle, 2 high), as the engine splits them"""
+    return (v - 1) * 3 // n if n % 3 == 0 else (v - 1) // 3
+
+
 def whisper_gap(n):
     """German-whisper gap: 5 on 9x9 (standard); about half the digit range otherwise."""
     return 5 if n == 9 else (n + 1) // 2
@@ -93,7 +103,10 @@ def ncomb(n, size, total):
     return _NCOMB[key]
 
 
-LENGTHS = {"cage": (2, 5), "thermo": (2, 6), "whisper": (2, 7), "renban": (2, 5), "between": (3, 6), "arrow": (1, 4)}
+LENGTHS = {"cage": (2, 5), "thermo": (2, 6), "slow_thermo": (2, 6), "whisper": (2, 7), "renban": (2, 5), "between": (3, 6),
+           "entropic": (3, 7), "modular": (3, 7), "parity_line": (2, 7), "arrow": (1, 4)}  # fmt: skip
+# lines always grown by _walk (each step checks the cells before it)
+WALKED = ("slow_thermo", "entropic", "modular", "parity_line")
 
 
 def length_of(e):
@@ -180,7 +193,7 @@ def grow(b, kind, sol, start, taken, rng, n=40, shape=None):
             ):
                 out.add(("arrow", (circ,) + tuple(shaft), None))
             continue
-        if want_lo is not None and kind in ("thermo", "whisper", "renban"):  # long lines: a backtracking walk
+        if kind in WALKED or (want_lo is not None and kind in ("thermo", "whisper", "renban")):  # a backtracking walk
             path = _walk(b, kind, sol, start, taken, rng, rng.randint(lo, hi))
             if path and len(path) >= lo:
                 out.add((kind, tuple(path), None))
@@ -245,8 +258,16 @@ def _walk(b, kind, sol, start, taken, rng, target, budget=None):
         a, c = sol[path[-1]], sol[j]
         if kind == "thermo":
             return c > a
+        if kind == "slow_thermo":
+            return c >= a
+        if kind == "parity_line":
+            return c % 2 != a % 2
         if kind == "whisper":
             return abs(c - a) >= gap
+        if kind in ("entropic", "modular"):  # the new cell and the two before it: three classes
+            cls = (lambda v: digit_third(v, b.n)) if kind == "entropic" else (lambda v: v % 3)
+            last = [cls(sol[x]) for x in path[-2:]] + [cls(c)]
+            return len(set(last)) == len(last)
         ds = [sol[x] for x in path] + [c]  # renban: distinct digits that can still close up to a run of `target`
         return c not in ds[:-1] and max(ds) - min(ds) < target
 
@@ -329,6 +350,16 @@ def satisfies(b, g, givens, els):
         elif kind == "thermo":
             if any(a >= c for a, c in zip(ds, ds[1:])):
                 return False
+        elif kind == "slow_thermo":
+            if any(a > c for a, c in zip(ds, ds[1:])):
+                return False
+        elif kind == "parity_line":
+            if any(a % 2 == c % 2 for a, c in zip(ds, ds[1:])):
+                return False
+        elif kind in ("entropic", "modular"):
+            cls = [digit_third(d, b.n) if kind == "entropic" else d % 3 for d in ds]
+            if any(len(set(cls[i : i + 3])) < len(cls[i : i + 3]) for i in range(len(cls) - 1)):
+                return False
         elif kind == "whisper":
             if any(abs(a - c) < wk for a, c in zip(ds, ds[1:])):
                 return False
@@ -389,7 +420,9 @@ def to_json(b, givens, els, sol=None, title=None):
             d["regions"].append({"kind": "cage", "cells": [rc(c) for c in cells], "sum": x, "unique": True})
         elif kind == "whisper":
             d["rules"].append({"type": "line", "kind": kind, "k": whisper_gap(b.n), "cells": [rc(c) for c in cells]})
-        elif kind in ("thermo", "renban", "between"):
+        elif kind == "parity_line":
+            d["rules"].append({"type": "line", "kind": "parity", "cells": [rc(c) for c in cells]})
+        elif kind in ("thermo", "renban", "between", *WALKED):
             d["rules"].append({"type": "line", "kind": kind, "cells": [rc(c) for c in cells]})
         elif kind == "parity":  # graphical rule, not candidates
             d["rules"].append({"type": "parity", "parity": "odd" if x else "even", "cells": [rc(cells[0])]})

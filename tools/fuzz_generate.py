@@ -12,7 +12,7 @@ import traceback
 from concurrent.futures import ProcessPoolExecutor
 
 BOX = {4: [2, 2], 6: [2, 3], 8: [2, 4], 9: [3, 3]}
-LINES = ["thermo", "whisper", "renban", "between"]
+LINES = ["thermo", "slow_thermo", "whisper", "renban", "between", "entropic", "modular", "parity"]
 
 
 LAYOUTS = ["samurai", "twodoku", "butterfly", "sohei", "windmill"]

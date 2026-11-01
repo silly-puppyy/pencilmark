@@ -29,7 +29,8 @@ NS = "io.github.silly-puppyy.pencilmark"
 # generator element kind <-> template (type, kind)
 GEN_KINDS = {
     "cage": ("cage", None),
-    **{k: ("line", k) for k, lk in LINE.items() if lk.generated},  # rules/line.py
+    # rules/line.py; the parity line is the generator's parity_line ("parity" is its odd / even cells)
+    **{("parity_line" if k == "parity" else k): ("line", k) for k, lk in LINE.items() if lk.generated},
     "arrow": ("arrow", None),
     **{k: ("edge", k) for k, ek in EDGE.items() if ek.generated},  # rules/edge.py
     "parity": ("cell", "parity"),

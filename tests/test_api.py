@@ -330,3 +330,21 @@ def test_grader_model_overrides():
     assert pencilmark.rate(s, fields=["difficulty", "time"]) == base
     with pytest.raises(KeyError):
         GM.default().with_overrides({"no.such": 1})
+
+
+def test_to_export_uses_a_known_solution(monkeypatch):
+    """a puzzle carrying its proven solution (_pm_solution, as rate() and the generator set it) is exported without a
+    second search: on a big layout without OR-Tools that search could end Undecided and crash the generator
+    (2026-11-01); an Undecided search leaves the solution out"""
+    from pencilmark import api
+
+    p = pencilmark.load(CLASSIC)
+    want = pencilmark.solve(CLASSIC)
+    p._pm_solution = list(want)
+
+    def undecided(_):
+        raise pencilmark.Undecided("search limit")
+
+    monkeypatch.setattr(api, "solve", undecided)
+    assert pencilmark.to_export(p)["solution"] == list(want)
+    assert "solution" not in pencilmark.to_export(CLASSIC)

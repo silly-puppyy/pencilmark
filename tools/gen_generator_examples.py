@@ -305,7 +305,8 @@ def section(name):
     minutes = f", about {c['time']} min" if c.get("time") is not None else ""  # the request's fields may leave it out
     i = d.get("info") or {}
     plural = lambda n, w: f"{n} {w}" + ("" if n == 1 else "es" if w.endswith("x") else "s")
-    names = {"cage": "cage", "thermo": "thermo", "whisper": "whisper", "renban": "renban", "between": "between line",
+    names = {"cage": "cage", "thermo": "thermo", "slow_thermo": "slow thermo", "whisper": "whisper", "renban": "renban",
+             "between": "between line", "entropic": "entropic line", "modular": "modular line", "parity_line": "parity line",
              "arrow": "arrow", "kropki_white": "white dot", "kropki_black": "black dot", "x": "X", "v": "V",
              "odd": "odd cell", "even": "even cell"}  # fmt: skip
     made = [plural(n, names.get(k, k)) for k, n in sorted((i.get("elements") or {}).items(), key=lambda kv: -kv[1])]

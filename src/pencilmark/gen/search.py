@@ -50,6 +50,7 @@ def dig(
     still in place stay."""
     fixed = dict(fixed or {})
     seeds = dict(seeds or {})
+    over = lambda: deadline is not None and time.time() > deadline
     planted = None
     wl = (shape or {}).get("whisper", {}).get("length", (None, None))[0]
     if sol is None and wl and wl > 16 and seeds.get("whisper"):  # longer than random grids hold: build around it
@@ -186,12 +187,16 @@ def dig(
             ]
             cand.sort(key=lambda e: (EL.ncomb(b.n, len(e[1]), e[2]) if e[0] == "cage" else 0, rng.random()))
             for e in cand[:pool_tries]:
+                if over():  # each check can take seconds (forcing chains on sparse variants)
+                    break
                 if chk.ok(givens, els + [e]):
                     els.append(e)
                     restored = True
                     break
         if not restored:
             givens.update(removed)
+        if over() and not keep:
+            return None
     mins = {k: n for k, n in (seeds or {}).items() if n}
     for e in list(els):  # prune decorative elements (never below a class's minimum, never one being maximised)
         if e == planted or any(EL.in_class(e, k) for k in most):
@@ -199,6 +204,10 @@ def dig(
         rest_ = [x for x in els if x != e]
         if any(EL.in_class(e, k) and sum(1 for x in rest_ if EL.in_class(x, k)) < n for k, n in mins.items()):
             continue
+        if over():
+            if not keep:
+                return None
+            break  # keep: the elements left are those of a solvable puzzle, some maybe not needed
         if chk.ok(givens, rest_):
             els = rest_
     return sol, givens, els

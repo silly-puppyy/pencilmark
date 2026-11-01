@@ -396,9 +396,10 @@ def to_export(puzzle, meta=None, with_solution=True, describe=True, **meta_kw):
     p = load(puzzle)
     sol = None
     if with_solution:
+        sol = getattr(p, "_pm_solution", None)  # known already (rate(), the generator): no second search
         try:
-            sol = solve(p)
-        except ValueError:
+            sol = sol if sol is not None else solve(p)
+        except (ValueError, Undecided):  # no solution, several, or none found in the search limit: left out
             sol = None
     m = {}
     if isinstance(puzzle, dict):

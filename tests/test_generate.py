@@ -306,3 +306,27 @@ def test_layout_generation():
         card = pencilmark.rate(r["puzzle"])
         assert (r["card"]["difficulty"], r["card"]["band"]) == (card["difficulty"], card["band"])
         assert PJ.from_json({"layout": layout}).coords == pencilmark.load(r["puzzle"]).coords
+
+
+@pytest.mark.slow  # about 20 s
+def test_more_line_kinds():
+    """slow thermos, entropic, modular and parity lines are placed true in the solution; entropic lines need three
+    digit groups (no 4 x 4)"""
+    from pencilmark.gen import elements as EL
+
+    for kind in ("slow_thermo", "entropic", "modular", "parity"):
+        r = run(spec(6, rules=[{"type": "line", "kind": kind, "count": [2, None]}], seed=1, time_limit=60))
+        lines = [x for x in r["puzzle"]["rules"] if x["type"] == "line" and x["kind"] == kind]
+        assert len(lines) >= 2
+        sol, cid = r["puzzle"]["solution"], lambda n: (int(n[1]) - 1) * 6 + int(n[3]) - 1
+        for x in lines:
+            ds = [sol[cid(c)] for c in x["cells"]]
+            if kind == "slow_thermo":
+                assert ds == sorted(ds)
+            elif kind == "parity":
+                assert all(a % 2 != b % 2 for a, b in zip(ds, ds[1:]))
+            else:
+                cls = [EL.digit_third(d, 6) if kind == "entropic" else d % 3 for d in ds]
+                assert all(len(set(cls[i : i + 3])) == len(cls[i : i + 3]) for i in range(len(cls) - 1))
+    with pytest.raises(GenerationFailed, match="entropic"):
+        pencilmark.generate(spec(4, rules=[{"type": "line", "kind": "entropic", "count": 1}], seed=1, time_limit=5))

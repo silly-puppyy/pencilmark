@@ -51,7 +51,7 @@ A rule with `count` and no cells is a **template**: the generator places rules o
 | Template | Varieties |
 |---|---|
 | `{"type": "cage"}` | killer cages |
-| `{"type": "line", "kind": "thermo" \| "whisper" \| "renban" \| "between"}` | whisper gap: the default (5 on 9 × 9) |
+| `{"type": "line", "kind": "thermo" \| "slow_thermo" \| "whisper" \| "renban" \| "between" \| "entropic" \| "modular" \| "parity"}` | whisper gap: the default (5 on 9 × 9); entropic: the default groups, boards of 6 × 6 and up; modular: mod 3 |
 | `{"type": "arrow"}` | |
 | `{"type": "edge", "kind": "kropki"}` | `"color": "white" \| "black"` for one colour |
 | `{"type": "edge", "kind": "xv"}` | `"letter": "X" \| "V"` for one letter |
