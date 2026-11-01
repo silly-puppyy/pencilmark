@@ -6,9 +6,9 @@ description: Ask the generator for a classic or a variant puzzle with a given ba
 # Generate a puzzle
 
 pencilmark's generator makes puzzles to order: you say what the board holds and what the grade card must show, and it
-returns a unique puzzle that meets the request. In this tutorial you generate a Hard classic that needs an X-Wing, then
-a small variant. It assumes you have done [Write a variant puzzle file](../grader/variant-file.mdx). The generator is used from
-Python.
+returns a unique puzzle that meets the request. This guide generates a Hard classic that needs an X-Wing, then a small variant;
+[Write a variant puzzle file](../grader/variant-file.mdx) explains the file the variant comes back as. The generator is used
+from Python.
 
 ## 1. A request
 
@@ -98,8 +98,10 @@ puzzle that misses the request:
 pencilmark.generate(dict(spec, where={"band": "Extreme"}, limits={"time": 10, "seed": 1}))
 ```
 
+A message like this one (the counts depend on the machine):
+
 ```
-pencilmark.api.GenerationFailed: no puzzle met the spec in 10 s (7 attempts; rejected: band too low (logic pre-check) x7)
+pencilmark.api.GenerationFailed: no puzzle met the spec in 10 s (13 attempts; rejected: band too low (logic pre-check) x12, ...)
 ```
 
 The message says what went wrong: every puzzle tried was too easy. Parts of the format kept for later versions are

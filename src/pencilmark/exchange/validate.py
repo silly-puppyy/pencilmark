@@ -107,7 +107,7 @@ def validate(doc):
     g = doc["board"]
     if not isinstance(g, dict) or set(g) != {"rows", "cols"}:
         raise FormatError('"board" must be {"rows": R, "cols": C}')
-    R, C = _int(g["rows"], "grid.rows", 1), _int(g["cols"], "grid.cols", 1)
+    R, C = _int(g["rows"], "board.rows", 1), _int(g["cols"], "board.cols", 1)
     if isinstance(doc["digits"], dict):
         raise FormatError(
             '"digits" as an object (other digit sets, symbols) is reserved for a future version of the '

@@ -15,7 +15,7 @@ pencilmark rates sudoku puzzles the way a human solver experiences them. It solv
 techniques, easiest first, and reports how hard it is, how long it takes, which band it belongs to and which techniques
 you need. It works for classic sudoku of any standard size and for many variants (killer, thermo, arrow, kropki, XV,
 sandwich, multi-grid boards and more). It also solves puzzles, checks uniqueness, imports puzzles from [SudokuPad](https://sudokupad.app/),
-[f-puzzles](https://www.f-puzzles.com/), [penpa-edit](https://swaroopg92.github.io/penpa-edit/) and [Logic Masters](https://logic-masters.de/) links, and generates new puzzles to a target band or difficulty.
+[f-puzzles](https://www.f-puzzles.com/), [Penpa+](https://swaroopg92.github.io/penpa-edit/) and [Logic Masters](https://logic-masters.de/) links, and generates new puzzles to a target band or difficulty.
 
 The engine is written in C++ ([pybind11](https://github.com/pybind/pybind11)). Results are deterministic: the same puzzle always gets the same card.
 
@@ -43,7 +43,7 @@ card["band"], card["difficulty"], card["time"]          # ('Hard', 5.9, 10.7)
 card  = pencilmark.rate(puzzle, steps=True)             # add the step-by-step solve with explanations
 cards = pencilmark.rate_many(puzzles, jobs=4)           # several puzzles in parallel, input order kept
 sol   = pencilmark.solve(puzzle)                        # list of digits; raises NotUnique / NoSolution
-exp   = pencilmark.to_export(puzzle, title="My puzzle") # the "sudoku-puzzle" exchange format
+exp   = pencilmark.to_export(puzzle, title="My puzzle") # the sudoku-puzzle format
 ```
 
 A puzzle can be a classic string (`.` or `0` for blanks), a `sudoku-puzzle` dict, a puzzle JSON dict or string, or a
@@ -71,16 +71,19 @@ are computed ([docs/formats/grade-card.md](https://github.com/silly-puppyy/penci
 | Field | Meaning |
 |---|---|
 | `difficulty` | how hard each step feels, continuous, above 0 (a nearly finished grid is about 0.2), no ceiling; a typical newspaper medium is about 5 |
-| `time` | expected minutes for the median player (on request `time_mean` or any percentile `time_pNN`, e.g. `time_p80`: 80% of players finish within it) |
+| `time` | the predicted median solve time in minutes (on request `time_mean` or any percentile `time_pNN`: `time_p80`, 80% of players finish within it) |
 | `band` | Very Easy, Easy, Medium, Hard, Very Hard, Expert, Extreme; `"Unknown"` when guessing was allowed and used, or `max_seconds` passed (on request `band_index` 0..6) |
 | `contains` | techniques met going easy to hard: `code`, `chip`, `name`, `band`, `uses`, `alternatives`; with `stopped_at_step` when human logic ran out |
-| on request | `issues` / `reject` (publishing checks, below), `time_mean` / `time_pNN`, `steps` (technique, placement `r2c8=3` or eliminations `r4c5#7`; `explain="notation"` / `"short"` / `"teach"` adds explanations, from `X-Wing: 3 r58 c68 => r679c6<>3` to a short lesson), `se`, `band_index`, `describe`, `symmetry` |
+
+On request: `issues` and `reject` (publishing checks, below), `time_mean`, `time_pNN`, `steps` (each step's technique and
+its placement `r2c8=3` or eliminations `r4c5#7`; `explain="notation"`, `"short"` or `"teach"` adds explanations, from
+`X-Wing: 3 r58 c68 => r679c6<>3` to a short lesson), `se`, `band_index`, `describe` and `symmetry`.
 
 A chip like `XWG/KTE/SCL` means any one of those techniques gets you through at that point.
 
-Publishing checks are off unless you ask for them. They flag puzzles a publisher would usually not pick: a difficulty
-spike, a rule that is never used, too many givens, ... (`code`, `severity` reject / warning, `text`, and `rules`: the
-offending rules' indices in the exported puzzle); `reject` is true when any issue is a reject. Each check's limit is
+Publishing checks are off unless you ask for them. They flag what an editor would send back: a difficulty spike, a
+rule that is never used, too many givens. Each issue has a `code`, a `severity` (reject or warning), a `text` and the
+offending `rules` (their indices in the exported puzzle); `reject` is true when any issue is a reject. Each check's limit is
 adjustable:
 
 ```python
@@ -94,7 +97,7 @@ guess there instead, which is faster on the hardest puzzles; the card then says 
 says `completed: false` if the limit passed. A puzzle without exactly one solution has no card: `rate` raises `NotUnique` /
 `NoSolution`.
 
-## Exchange format
+## Puzzle format
 
 `to_export` writes, and every entry point reads, the `"sudoku-puzzle"` format, **format_version 1**, specified in
 [docs/formats/puzzle-format.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/formats/puzzle-format.md) (JSON Schema: [docs/sudoku-puzzle.schema.json](https://github.com/silly-puppyy/pencilmark/blob/main/docs/sudoku-puzzle.schema.json)):
@@ -126,9 +129,10 @@ says `completed: false` if the limit passed. A puzzle without exactly one soluti
 ### Other formats
 
 For convenience pencilmark also reads and writes [sudokuwiki.org](https://www.sudokuwiki.org/) packed strings, text grids and [ipuz](http://www.ipuz.org/), reads pencil-mark grids, and loads SudokuPad,
-f-puzzles, [Penpa](https://swaroopg92.github.io/penpa-edit/)+ and Logic Masters links. None of these is needed to use the `sudoku-puzzle` format; see
-[docs/formats/other-formats.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/formats/other-formats.md). How rules map onto the engine, and how to add one, is in
-[docs/library/engine-mapping.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/library/engine-mapping.md).
+f-puzzles, [Penpa+](https://swaroopg92.github.io/penpa-edit/) and Logic Masters links. None of these is needed to use the `sudoku-puzzle` format; see
+[docs/formats/other-formats.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/formats/other-formats.md). How rules map onto the engine is in
+[docs/library/engine-mapping.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/library/engine-mapping.md); how to add
+one, in [Add a rule kind](https://silly-puppyy.github.io/pencilmark/guides/development/add-rule-kind/).
 
 ## Supported rules
 
@@ -151,14 +155,15 @@ r["puzzle"], r["card"], r["info"]       # sudoku-puzzle, its card, run details
 
 The request is a `sudoku-spec` ([docs/formats/generator-spec.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/formats/generator-spec.md)).
 
-Targets: band, difficulty range, required techniques, symmetry, given counts, and rule elements (cages, thermos,
-whispers, renban, between lines, arrows, kropki, XV, parity). Every result is checked for uniqueness. Multi-grid boards
-are not generated.
+Targets: band, a difficulty range or the hardest / easiest found, required techniques, symmetry, given counts (per
+grid on a multi-grid layout), and rule elements with counts and shape limits (cages, thermos, whispers, renban, between
+lines, arrows, kropki, XV, parity). Boards: one grid, or a named multi-grid layout such as samurai, with locked rules of
+different digits. Every result is checked for uniqueness.
 
 ## Puzzle sources
 
 ```python
-card = pencilmark.rate("https://sudokupad.app/...")  # SudokuPad, f-puzzles, penpa-edit, Logic Masters, short links
+card = pencilmark.rate("https://sudokupad.app/...")  # SudokuPad, f-puzzles, Penpa+, Logic Masters, short links
 exp = pencilmark.to_export("https://sudokupad.app/...")  # the same puzzle as a sudoku-puzzle file
 ```
 
@@ -176,8 +181,8 @@ the `PENCILMARK_UA` environment variable.
   meaningful, and a single solve can vary a lot from the predicted time.
 - Bands depend on the technique catalogue; a puzzle that needs a technique the engine does not have is solved with
   Trial and error at that point and rated Extreme.
-- Very hard puzzles with many-cell rules (killers, arrows, palindromes, thermos) can take minutes while the contents list
-  is minimised; use `max_seconds` to cap it (the card then says `completed: false`).
+- Very hard puzzles with many-cell rules (killers, arrows, palindromes, thermos) can take minutes while the technique list
+  (`contains`) is made minimal; use `max_seconds` to cap it (the card then says `completed: false`).
 - The Sudoku Explainer-style ratings (`se=True`) are approximate and meaningful for classic sudoku only.
 
 ## Benchmark
@@ -190,11 +195,11 @@ classics. Details: [docs/grades/benchmark.mdx](https://github.com/silly-puppyy/p
 
 Being worked on after 1.0:
 
-- **Speed.** Grading takes a median 0.5 s per puzzle, but the slowest few percent take 10 s to minutes. On the
-  benchmark's classics: pencilmark 0.04 s, Rangsk's solver 0.09 s, Sudoku Explainer and HoDoKu under a millisecond (they do
-  not model human solving); on variants: pencilmark 0.49 s, Rangsk's solver 0.13 s. Use `max_seconds` to bound a call.
+- **Speed.** Grading takes a median 0.49 s per puzzle on the benchmark (classics 0.04 s; 90th percentile 3.8 s), and
+  the slowest few percent take 10 s to minutes. Sudoku Explainer and HoDoKu answer in under a millisecond (they do not
+  model human solving), Rangsk's solver in 0.07-0.13 s. Use `max_seconds` to bound a call.
 - **Generator speed and range.** About 20-70 s per puzzle that meets a spec (HoDoKu: 0.05-1 s), and classic Extreme puzzles
-  are not reached within the default 120 s. A maximum on the givens count is not always enforced.
+  are not reached within the default 120 s.
 - **Variants on one scale.** On classics, difficulty matches established ratings of the same puzzles; across variant
   types the same difficulty does not yet mean the same experience (puzzle types differ by about 2 points on average, and
   variants often score above the classic range of their band). Time is most off for the same reason (about 1.4x per

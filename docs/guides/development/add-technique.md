@@ -7,7 +7,7 @@ description: Every place a new solving technique touches, from the C++ engine to
 
 A technique lives in the C++ engine; Python names it, prices it and explains it. Adding one touches the places below,
 in this order. `tests/test_registry.py` fails until the engine, the registry and the explainer agree, so run it after
-each step. The restructure planned in [Architecture](https://github.com/silly-puppyy/pencilmark/blob/main/ARCHITECTURE.md)
+each step. The restructure planned in [Architecture](architecture.md)
 will shorten this list.
 
 ## 1. The engine (`csrc/`)
@@ -15,7 +15,7 @@ will shorten this list.
 1. **The id.** Add the technique to `enum Tech` in `csrc/solver.hpp`, with the next free number and a one-line
    comment.
 2. **The search.** Write `void Solver::your_technique(MoveBuf& out)` (declared in `solver.hpp`) in the file that holds
-   its kind of logic ([Architecture](https://github.com/silly-puppyy/pencilmark/blob/main/ARCHITECTURE.md) lists them).
+   its kind of logic ([Architecture](architecture.md) lists them).
    For each move it finds, as the techniques already in that file do:
    - `new_move(out, YOUR_TECH, 1.0, n_cells)`, then one call of the file's elimination helper (`add_el` in
      `variant_logic.cpp`, `add_elim` in `move_util.hpp` and `solver.cpp`) per elimination, or a placement;
@@ -28,9 +28,9 @@ will shorten this list.
    of techniques of similar difficulty, and add the name to the `strategy_off` table so a band-limited search can skip
    it.
 
-## 2. The registry (`src/pencilmark/data/`)
+## 2. The registry
 
-1. **`solver.py`.** Add the constant with the same number (`YOUR_TECH = 103`).
+1. **`src/pencilmark/solver.py`.** Add the constant with the same number (`YOUR_TECH = 103`).
 2. **`techniques.csv`.** One row: id, constant, engine name, role `logic`, chip code, band, family, gate and the
    flags the file's header in `registry.py` explains. Put it after the techniques it should be tried after: inside a
    family, the order of the rows matters.

@@ -8,7 +8,7 @@ toc_max_heading_level: 2
 
 Everything below is importable from `pencilmark` directly (`pencilmark.rate`, `pencilmark.to_export`, …). This page is generated from the docstrings (`tools/gen_api_md.py`).
 
-| | |
+| Name | What it does |
 |---|---|
 | def [`rate`](#rate) | The "sudoku-grade" card of one puzzle ([Grade card](../formats/grade-card.md)), with only the fields you ask for. |
 | def [`rate_many`](#rate_many) | Cards for many puzzles, in input order. |
@@ -16,10 +16,10 @@ Everything below is importable from `pencilmark` directly (`pencilmark.rate`, `p
 | def [`solve`](#solve) | The unique solution of a puzzle. |
 | def [`count_solutions`](#count_solutions) | How many solutions a puzzle has, counting up to a limit. |
 | def [`generate`](#generate) | One puzzle for a "sudoku-spec" request ([Generator spec](../formats/generator-spec.md)). |
-| def [`load`](#load) | Any accepted input -> a finalized engine Puzzle. |
+| def [`load`](#load) | Any accepted input -> a finalised engine Puzzle. |
 | def [`validate`](#validate) | Strict reading checks of a format_version 1 dict ([Puzzle format](../formats/puzzle-format.md) section 4). |
 | def [`fingerprint`](#fingerprint) | Content fingerprint of a puzzle: "sha256:&lt;hex>" of its canonical form. |
-| def [`to_export`](#to_export) | The "sudoku-puzzle" exchange dict of a puzzle (format_version 1, [Puzzle format](../formats/puzzle-format.md)). |
+| def [`to_export`](#to_export) | The sudoku-puzzle dict of a puzzle (format_version 1, [Puzzle format](../formats/puzzle-format.md)). |
 | def [`dumps`](#dumps) | Canonical JSON text of a sudoku-puzzle dict: fixed key order; pretty: one grid row per line, one rule per… |
 | def [`from_string`](#from_string) | A puzzle as text -> sudoku-puzzle dict ([Other formats](../formats/other-formats.md)). |
 | def [`to_string`](#to_string) | A puzzle as text ([Other formats](../formats/other-formats.md)). |
@@ -156,7 +156,7 @@ One puzzle for a "sudoku-spec" request ([Generator spec](../formats/generator-sp
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L83)
 
-Any accepted input -> a finalized engine Puzzle.
+Any accepted input -> a finalised engine Puzzle.
 
 **Parameters**
 
@@ -209,7 +209,7 @@ Covers the rules, grid, givens and candidates; not meta, style or the solution. 
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L368)
 
-The "sudoku-puzzle" exchange dict of a puzzle (format_version 1, [Puzzle format](../formats/puzzle-format.md)).
+The sudoku-puzzle dict of a puzzle (format_version 1, [Puzzle format](../formats/puzzle-format.md)).
 
 Canonical: houses and rules with "r1c1" cells, keys in a fixed order. Metadata already in a JSON input is kept.
 

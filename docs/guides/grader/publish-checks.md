@@ -19,9 +19,9 @@ editor would send back. A `warning` is worth a look but may be intended.
 
 ## What the checks find
 
-- **The rules:** a rule family nobody needs (`decorative`, `redundant`) or that the solve hardly uses (`barely_used`).
-- **The givens:** too many of them (`trivial`).
-- **The solve:** most of the effort in a few steps (`spike`), a long routine solve rated easy (`tedious`), or steps that
+- In the rules: a rule family nobody needs (`decorative`, `redundant`) or that the solve hardly uses (`barely_used`).
+- In the givens: too many of them (`trivial`).
+- In the solve: most of the effort in a few steps (`spike`), a long routine solve rated easy (`tedious`), or steps that
   rely on uniqueness or on trial and error (`uniqueness`, `trial`).
 
 The warning above is a `spike`: almost all the work is in the three hardest steps, and the rest are singles.

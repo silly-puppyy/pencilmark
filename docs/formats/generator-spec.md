@@ -40,7 +40,8 @@ windmill, flower-4, tridoku, wing-3, sensei, shogun, sumo, twins, clueless-1 or 
 
 Rules with cells and no `count` are **locked**: every result carries them and its solution respects them. The
 generator takes rules of different digits: `region` kinds `diagonal`, `extra` and `window`, and `neighbours` kinds
-`antiknight` and `antiking`. A super samurai with X diagonals on its top three grids is eight `box_grid` rules and six
+`antiknight` and `antiking`. Without a `where.band`, a layout's result is at most Hard (digging with every technique
+is slow on hundreds of cells). A super samurai with X diagonals on its top three grids is eight `box_grid` rules and six
 `region` `diagonal` rules.
 
 ## 2. Templates
@@ -65,7 +66,7 @@ One template per variety, each with its own `count`:
 | `"auto"` | allowed, as many as the puzzle needs (possibly none) |
 | `"all"` | kropki only: every true dot drawn, with the matching `negative` (no dot = neither relation) |
 | `"min"` | kropki only: a minimal set of dots |
-| `"tile"` | cages only: the grid tiled by cages |
+| `"tile"` | cages only: every cell that is not a given is in a cage; a cell left alone becomes a given when the request allows givens |
 | `"max"` | as many as fit: the run uses its whole `limits.time` and returns the result with the most of them |
 
 Elements of one kind never share cells (two cages, two whispers); elements of different kinds may, so the rules
@@ -121,7 +122,7 @@ A part of a request the generator cannot meet in time is never ignored: the run 
 
 ## 6. Fingerprint
 
-`sha256:` of the canonical JSON of `board`, `digits`, `givens`, `rules`, `symmetry` and `where` (the parts that decide
+`sha256:` of the canonical JSON of `board`, `digits`, `givens`, `rules`, `symmetry`, `where` and `quality` (the parts that decide
 which puzzles qualify; `meta`, `limits` and `fields` do not).
 
 ## 7. Reserved for later versions

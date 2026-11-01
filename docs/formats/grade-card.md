@@ -17,8 +17,9 @@ What `rate()` returns and `pencilmark rate --json` prints: one JSON object per p
  "grader": {"name": "pencilmark", "version": "1.0.0"},
  "difficulty": 5.9, "time": 10.7, "band": "Hard",
  "contains": [{"code": "HSI", "chip": "HSI", "name": "Hidden Single", "band": 0},
-              {"code": "NPR", "chip": "NPR/HPR", "name": "Naked Pair", "band": 2, "uses": 1, "alternatives": ["HPR"]},
-              {"code": "XWG", "chip": "XWG/KTE/SCL", "name": "X-Wing", "band": 3, "uses": 1, "alternatives": ["KTE", "SCL"]}]}
+              {"code": "NSI", "chip": "NSI", "name": "Naked Single", "band": 1},
+              {"code": "NPR", "chip": "NPR/HPR", "name": "Naked Pair", "band": 2, "alternatives": ["HPR"], "uses": 1},
+              {"code": "XWG", "chip": "XWG/KTE/SCL/MCH", "name": "X-Wing", "band": 3, "alternatives": ["KTE", "SCL", "MCH"], "uses": 1}]}
 ```
 
 A card exists only for a puzzle with exactly one solution. For any other puzzle, `rate()` raises `NotUnique`,
@@ -46,7 +47,7 @@ A card exists only for a puzzle with exactly one solution. For any other puzzle,
 | `warning` | optional | boolean | True when any issue has severity `warning`. |
 | `se` | optional | `{"er", "ep", "ed", "scale"}` or null | Sudoku Explainer-style ratings of the route on the classic SE scale (`scale` is `"classic"`). Null for anything but classic 9×9 sudoku (standard rows, columns and boxes, no other rule), where SE's scale is not defined. |
 | `steps` | optional | list | The step-by-step route (section 5). |
-| `describe` | optional | object | The `describe()` output ([Variant names](../library/variant-naming.md)). |
+| `describe` | optional | object | The `describe()` output ([How variants are named](../library/variant-naming.md)). |
 | `symmetry` | optional | list | Symmetries of the givens pattern, entries as in the generator spec (`{"kind", "axis"?, "of": "givens"}`). |
 
 Numbers are rounded as emitted: `difficulty`, `time`, `time_mean` and `time_pNN` to 1 decimal, the sigmas of
@@ -93,8 +94,8 @@ pencilmark.rate(puzzle, fields=["issues", "reject", "warning"],
                 quality={"trivial": {"limit": 0.5}, "trial": {"severity": "reject"}, "tedious": {"severity": "off"}})
 ```
 
-CLI: `--quality trivial.limit=0.5,trial.severity=reject,tedious.severity=off`. The generator spec's `quality`
-([Generator spec](generator-spec.md)) is the same object.
+CLI: `--quality trivial.limit=0.5,trial.severity=reject,tedious.severity=off`. The generator spec reserves a `quality` block
+of the same shape for a later version ([Generator spec](generator-spec.md), section 7).
 
 | Code | Severity when asked for | Meaning | Limit (default) |
 |---|---|---|---|

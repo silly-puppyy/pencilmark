@@ -25,7 +25,7 @@ $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7..
 Hard	5.9	10.7	X-Wing
 ```
 
-The four columns are the **band**, the **difficulty**, the **time** in minutes and the hardest technique the solve
+The four columns are the band, the difficulty, the time in minutes and the hardest technique the solve
 needs. `-` means "read puzzles from standard input"; you can also pass a file with one puzzle per line.
 
 ## 3. Read the card
@@ -38,12 +38,12 @@ $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7..
    contains: Naked Pair (or Hidden Pair), X-Wing (or 2-String Kite / Simple Colouring / Short chain in the head)
 ```
 
-- **Band: Hard.** The band says what you need to know. Hard means the puzzle needs a pattern most people learn after
-  the basics; here an X-Wing.
-- **Difficulty: 5.9.** How hard the steps are, on a scale with no ceiling. A typical newspaper medium is about 5.
-- **Time: 10.7 min.** The predicted median solve time; the median classic takes about 12 minutes.
-- **Contains.** The techniques the solve needs beyond singles, easiest first. "X-Wing (or 2-String Kite / …)" means any
-  one of those does the job at that point.
+- Hard is the band: what you need to know. Hard means the puzzle needs a pattern most people learn after the basics;
+  here an X-Wing.
+- 5.9 is the difficulty: how hard the steps are, on a scale with no ceiling. A typical newspaper medium is about 5.
+- 10.7 min is the predicted median solve time; the median classic takes about 12 minutes.
+- `contains` lists the techniques the solve needs, easiest first (the report leaves out the singles). "X-Wing (or
+  2-String Kite / …)" means any one of those does the job at that point.
 
 ## 4. See the steps
 

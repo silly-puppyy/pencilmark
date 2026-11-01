@@ -62,7 +62,7 @@ module.exports = {
       page('formats/generator-spec', 'generator-spec', 'Generator spec'),
       page('formats/other-formats', 'other-formats', 'Other formats'),
     ]),
-    section('Library', '/library/', 'The Python library: its API, the variant names it gives, and how it draws puzzles.', [
+    section('Library', '/library/', 'The Python library: its public API, the variant names it gives, and how it draws puzzles. The internals are in the Code reference.', [
       {type: 'doc', id: 'library/python-api', className: 'pm-ico-python-api', label: 'Python API'},
       {type: 'doc', id: 'library/variant-catalogue', className: 'pm-ico-variant-catalogue', label: 'Variant catalogue'},
       {type: 'doc', id: 'library/variant-naming', className: 'pm-ico-variant-naming', label: 'How variants are named'},
@@ -78,7 +78,7 @@ module.exports = {
       {type: 'doc', id: 'grades/experiments', className: 'pm-ico-experiments', label: 'Experiment log'},
       {type: 'doc', id: 'grades/glossary', className: 'pm-ico-glossary', label: 'Glossary'},
     ]),
-    section('Code reference', '/reference/', 'Every module, function and class, generated from the docstrings and the C++ header comments.', [
+    section('Code reference', '/reference/', 'Every module, function and class, generated from the docstrings and the C++ header comments: the internals, for tinkering. The stable public API is Library > Python API.', [
       {type: 'category', label: 'Python', collapsed: true, description: 'The package: the card, formats, the engine interface, explanations, the generator, sources and the command line.', items: [
         {type: 'doc', id: 'reference/card', label: 'The card'},
         {type: 'doc', id: 'reference/formats', label: 'Formats'},

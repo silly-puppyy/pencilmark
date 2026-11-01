@@ -30,7 +30,7 @@ This page covers the remaining rule families (6.13), vendor rules (6.15), what i
 | `type` | Meaning | Drawing |
 |---|---|---|
 | `contains` | Every listed digit (a multiset) appears among `cells` at least as often as it is listed. On a 2×2 block it is the quadruple clue. | <Swatch name="contains-quadruple" /> |
-| `appears` | The digit in `source` appears in at least one of `cells` (e.g. an in-cell arrow whose digit occurs again along its ray). |  |
+| `appears` | The digit in `source` appears in at least one of `cells` (an in-cell arrow whose digit occurs again along its ray). |  |
 | `clone` | ≥ 2 equal-sized ordered `regions`; corresponding cells hold equal digits. |  |
 | `isomorphic` | 2 ordered `regions` (twins): one fixed relabelling of the digits maps every cell of the first region to the corresponding cell of the second. |  |
 | `count` | `each` k: every digit appears exactly k times among `cells` (Double Sudoku rows). Or `counts` `[[digit, times], …]`: those digits appear exactly that often. Kind `circles`: a digit that appears among the cells appears exactly as many times as its own value. Cells under `count` MUST NOT also be in a house. |  |

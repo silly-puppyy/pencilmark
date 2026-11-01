@@ -81,7 +81,7 @@ def _params(mode):
 
 
 def load(puzzle):
-    """Any accepted input -> a finalized engine Puzzle.
+    """Any accepted input -> a finalised engine Puzzle.
 
     Parameters
     ----------
@@ -366,7 +366,7 @@ def count_solutions(puzzle, limit=1000):
 
 
 def to_export(puzzle, meta=None, with_solution=True, describe=True, **meta_kw):
-    """The "sudoku-puzzle" exchange dict of a puzzle (format_version 1, docs/formats/puzzle-format.md).
+    """The sudoku-puzzle dict of a puzzle (format_version 1, docs/formats/puzzle-format.md).
 
     Canonical: houses and rules with "r1c1" cells, keys in a fixed order. Metadata already in a JSON input is kept.
 

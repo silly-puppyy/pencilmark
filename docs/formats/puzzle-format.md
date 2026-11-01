@@ -86,7 +86,7 @@ are optional for readers: cosmetic layers may be ignored, and only a writer that
 | `$schema` | no | URL of the JSON Schema. Ignored by readers. |
 | `meta` | no | Information *about* the puzzle (2.1). Never changes how it is solved or graded. |
 | `board` | yes | `{"rows": R, "cols": C}`: the bounding rectangle of the board. No other keys. |
-| `digits` | yes | Integer D ≥ 1: cells hold the digits 1..D. (Other digit sets and display symbols are reserved for a later version; see [6.17](rules/other.mdx)). |
+| `digits` | yes | Integer D ≥ 1: cells hold the digits 1..D. (Other digit sets and display symbols are reserved for a later version; see [Reserved names (6.17)](rules/other.mdx#617-reserved)). |
 | `givens` | yes | Flat list of R×C entries in reading order (row by row). `0` = empty cell, `null` = no cell at that position (the gaps of multi-grid boards), otherwise the given digit as a number (so 10..D work). This is the **only** representation: no text rows, no digit strings, no per-cell objects. |
 | `solution` | no | Same shape as `givens`, every existing cell filled, `null` exactly where `givens` has `null`. |
 | `candidates` | no | Given pencil marks (Sukaku): `{"r1c1": [1, 3, 7], …}`, ascending integer lists. **Semantic**: each listed cell's digit is one of its list; unlisted cells are unrestricted. Graphical cell clues (odd, even, …) are `cell` rules, never candidates. |
@@ -100,19 +100,19 @@ There is no uniqueness flag: whether a puzzle has one solution is a property a t
 
 Everything a program wants to carry about the puzzle goes here: every key is optional and free-form, and tools keep
 keys they do not know, so adding `"author"` is all attribution needs. Text is plain (no HTML, no language maps). Data
-for one program goes under a reverse-DNS key, e.g. `"com.example.app": {…}`. The suggested keys, so that programs
+for one program goes under a reverse-DNS key, such as `"com.example.app": {…}`. The suggested keys, so that programs
 agree on the common ones:
 
 | Key | Meaning |
 |---|---|
 | `title` | Title. |
 | `author` | Setter's name. |
-| `source` | The website's domain, e.g. `"logic-masters.de"`. |
+| `source` | The website's domain, such as `"logic-masters.de"`. |
 | `id` | That site's own id. |
 | `url` | Link to the puzzle. |
 | `date` | ISO 8601 date. |
 | `rules_text` | The setter's own wording of the rules. Tools never overwrite it. |
-| `type` | Display name of the variant, e.g. `"Killer Sudoku"`. Variant names live **only** here; they never change the rules. `describe()` ([Variant names](../library/variant-naming.md)) fills it when it is empty. |
+| `type` | Display name of the variant, such as `"Killer Sudoku"`. Variant names live **only** here; they never change the rules. `describe()` ([How variants are named](../library/variant-naming.md)) fills it when it is empty. |
 | `license` | Licence of the puzzle. |
 | `tags` | List of strings. |
 | `generated_from` | Fingerprint of the `sudoku-spec` that produced the puzzle ([Generator spec](generator-spec.md)). |
@@ -182,16 +182,16 @@ these holds:
 3. A rule `type` it does not know, or a `kind` it does not know for a known type.
 4. A vendor rule type (`"com.example:foo"`: reverse-DNS namespace, colon, name) it does not implement. Core type names
    never contain a colon.
-5. `"type": "custom"` (reserved, [6.17](rules/other.mdx)).
+5. `"type": "custom"` (reserved, [Reserved names (6.17)](rules/other.mdx#617-reserved)).
 6. A structural check fails: `len(givens) != R*C`; `solution` or `candidates` disagree in shape; a cell name refers to
    a missing cell; an edge pair is not orthogonally adjacent; a corner set is not a 2×2 block; an outside clue's
    cells are not collinear and contiguous, or the position next to `cells[0]` on `side` is a cell; an arrow shaft
-   does not start next to a bulb cell; a digit lies outside 1..D; a required parameter is missing (e.g. `whisper`
+   does not start next to a bulb cell; a digit lies outside 1..D; a required parameter is missing (`whisper`
    without `value` when D ≠ 9); a `grid` / `box_grid` area is not fully made of existing cells; a `box_grid`'s
    `box` does not hold D cells.
 
 pencilmark raises `FormatError` (a `ValueError`) for these. A file can also be valid and still use something the
-pencilmark engine cannot build (e.g. a modular line with modulus 4); then it raises `NotSupportedError` (also a
+pencilmark engine cannot build (a modular line with modulus 4); then it raises `NotSupportedError` (also a
 `ValueError`) naming the rule and the reason, never a partial puzzle.
 
 A program that only *draws* MAY draw what it understands and show a warning, but MUST NOT present the puzzle as
@@ -274,7 +274,7 @@ Per-rule `style` (optional, never semantic):
 "shape": "circle" | "square" | "diamond", "label_cell": "r1c1", "dash": true}`. The text a rule shows is its
 `label` (section 5); `label_cell` only says where to draw it.
 
-Top-level `style`: puzzle-wide hints, e.g. `{"palette": [...], "cell_size": 64}`. Free-form.
+Top-level `style`: puzzle-wide hints, such as `{"palette": [...], "cell_size": 64}`. Free-form.
 
 `decorations`: artwork that carries no rule.
 
@@ -296,8 +296,7 @@ Coordinates are cell units `[row, col]` with the origin at the top-left corner o
   `values`, `digits`, `groups`, `each`, `counts`, `arrow`, `size`, `repeat`, `box`, `where`, `within`, `area`, `closed`),
   then `side`, then the cell keys (`origin`, `source`, `bulb`, `lines`, `cells`, `regions`, `segments`, `pairs`,
   `except`), then `id`, `label`, `style`.
-- Houses as described in 6.1. Rules in the order given (a grader's tie-breaks can depend on it); a `box_grid` expands
-  to rows, then columns, then boxes. Candidate lists ascending; `candidates` keys in reading order. Cells of sets as the source listed them (the
+- Houses as described in 6.1. Rules in the order given (a grader's tie-breaks can depend on it). Candidate lists ascending; `candidates` keys in reading order. Cells of sets as the source listed them (the
   fingerprint sorts them).
 - Defaults omitted (`closed: false`; whisper `value` 5, entropic `groups`, modular `value` 3, lockout `value` 4 on
   9×9; they are written when D ≠ 9).

@@ -48,7 +48,8 @@ Hard	5.9	10.7	X-Wing
 
 ## Links
 
-SudokuPad, f-puzzles, Penpa and Logic Masters links are read directly:
+SudokuPad, f-puzzles, Penpa+ and Logic Masters links are read directly. Here `links.txt` holds one line, the README's
+classic as an f-puzzles link, so the card is the classic's:
 
 ```
 $ pencilmark rate links.txt          # one link per line
@@ -59,7 +60,7 @@ Hard	5.9	10.7	X-Wing
 card = pencilmark.rate("https://f-puzzles.com/?load=N4IgzglgXgpiBcAC…")
 ```
 
-f-puzzles `?load=` links, Penpa links and bare SudokuPad payloads are decoded offline. SudokuPad short links, f-puzzles
+f-puzzles `?load=` links, Penpa+ links and bare SudokuPad payloads are decoded offline. SudokuPad short links, f-puzzles
 `?id=` links, short-link services and Logic Masters pages are fetched: one request each, identified as pencilmark, with
 robots.txt obeyed and a pause between requests to the same site.
 
@@ -81,8 +82,8 @@ card = pencilmark.rate(puzzle)
 ## ipuz files
 
 ```
-$ pencilmark rate killer.ipuz
-Hard	5.9	10.7	X-Wing
+$ pencilmark rate killer.ipuz        # docs/examples/killer-4x4.json written with to_ipuz
+Very Easy	0.1	0.8	Hidden Single
 ```
 
 `pencilmark.from_ipuz` and `to_ipuz` convert in both directions for classic, diagonal, windoku, jigsaw and killer

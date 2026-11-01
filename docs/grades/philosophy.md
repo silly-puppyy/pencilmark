@@ -17,8 +17,8 @@ when a change is in doubt.
    the same puzzle: every rule has one exact meaning, and a renderer can draw it from the rules alone. Anything else a
    program wants to carry (an author, a source, a date) goes in `meta`, which needs no change to the format: adding
    `"author"` to `meta` is enough for attribution to work.
-3. **Simple to understand and implement.** A small, strict core; a subset is a valid implementation (classic sudoku is
-   the envelope plus two rules). Fields that duplicate others are removed, not deprecated, until someone relies on them.
+3. **Simple to understand and implement.** A small, strict core; a subset is a valid implementation (a classic sudoku is
+   the envelope plus one `box_grid` rule).
 
 **Non-goals.** What lies outside the numbers and where we have no interest or data: enjoyment, beauty, theme, how a
 puzzle is presented, mistakes and long breaks, solving on paper versus an app. Publishing checks (`issues`) touch on

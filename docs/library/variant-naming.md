@@ -2,7 +2,7 @@
 description: "How describe() names a variant and writes its rules in words, from the rules alone."
 ---
 
-# Variant names
+# How variants are named
 
 How `describe()` names a variant and writes its rules from the rules alone. This is library behaviour, not part of
 any format: the names appear only in `meta.type` and in `describe()` output.
@@ -23,8 +23,8 @@ It is deterministic, never reads `meta`, and never feeds back into solving. `rul
 "Key: sentence" lines. `to_export` uses both only to fill an **empty** `meta.type` / `meta.rules_text`; it never
 overwrites them.
 
-The variant names are **not part of the file format**: they appear only in `meta.type` and in `describe()` output. They
-come from a registry in code (`pencilmark/variants.py`), so they generalise across sizes (a 16×16 windoku, a 6×6 X).
+They come from a registry in code (`pencilmark/variants.py`), so they generalise across sizes (a 16×16 windoku, a 6×6
+X).
 
 ## 1. Name
 

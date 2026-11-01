@@ -21,7 +21,7 @@ pip install -e ".[test]"
 python tools/tasks.py test       # about 10 seconds
 ```
 
-Add `verify` (`pip install -e ".[test,verify]"`) for OR-Tools, the uniqueness check's second opinion.
+Add `verify` (`pip install -e ".[test,verify]"`) for OR-Tools, which the uniqueness check falls back on when the engine's search hits its node limit.
 
 ## 2. The everyday loop
 

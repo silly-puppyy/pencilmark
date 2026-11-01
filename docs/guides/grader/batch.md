@@ -32,7 +32,7 @@ The columns are band, difficulty, time in minutes and the hardest technique.
 
 ## Choose the columns
 
-`--format` takes a template; `%i` is the line number, `%c` the techniques beyond singles with how often each is used:
+`--format` takes a template; `%i` is the line number, `%c` the techniques above Very Easy with how often each is used:
 
 ```
 $ pencilmark rate puzzles.txt -j 4 --format '%i,%b,%d,%m,%c'
@@ -51,7 +51,7 @@ $ pencilmark rate puzzles.txt -j 4 --format '%i,%b,%d,%m,%c'
 ```
 $ pencilmark rate puzzles.txt -j 4 --json > cards.jsonl
 $ head -c 120 cards.jsonl
-{"line": 1, "format": "sudoku-grade", "format_version": 1, "grader": {"name": "pencilmark", "version": "1.0.0"}, "d
+{"line": 1, "format": "sudoku-grade", "format_version": 1, "grader": {"name": "pencilmark", "version": "1.0.0"}, "diffic
 ```
 
 ## Grade faster
@@ -94,4 +94,4 @@ for card in cards:
 `rate_many` takes every option `rate` does; `alternatives=False` is the `--no-alternatives` of the command line.
 
 A puzzle that fails gives `{"error": "..."}` in its place instead of raising, so one bad puzzle does not stop the
-batch. `rate_many` takes the same `fields` and `max_seconds` options as `rate`.
+batch.

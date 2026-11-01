@@ -53,7 +53,6 @@ The same classic puzzle laid out on lines, as Simple Sudoku (`.ss`), SadMan (`.s
   digit is a given; several digits are that cell's candidates (`candidates` in the puzzle).
 - **729-character candidate string** (Sukaku): 9 characters per cell, position k holds the digit k+1 when it is a
   candidate and `.` or `0` otherwise; a cell with a single candidate is a given.
-
 - **HoDoKu library line** (`:0901:4:<81 characters>:<removed candidates>:…`): the puzzle and its removed candidates
   (tokens `drc` = digit d is not a candidate of rRcC); the fields describing the collected step are ignored.
 

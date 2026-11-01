@@ -20,7 +20,7 @@ is the band of the hardest technique on the route. See [Philosophy](philosophy.m
 
 **Chip.** One entry of `contains`: a technique code, or several joined by `/` when they are alternatives.
 
-**Contains.** The techniques a solver meets beyond singles, easiest first; the shortest list that still solves the
+**Contains.** The techniques the route needs, easiest first, singles included; the shortest list that still solves the
 puzzle.
 
 **Difficulty.** How hard the steps are to find, on a scale from 0 with no ceiling; it does not grow with the size of
@@ -39,7 +39,7 @@ region.
 **Issues.** Publishing checks on the card: a rule nobody needs, too many givens, most of the effort in a few steps.
 See [Check a puzzle before publishing](../guides/grader/publish-checks.md).
 
-**Layout.** The arrangement of the grids of a multi-grid puzzle (Samurai, Twodoku, ...). See [Variants](../library/variant-catalogue.mdx).
+**Layout.** The arrangement of the grids of a multi-grid puzzle (Samurai, Twodoku, ...). See [Variant catalogue](../library/variant-catalogue.mdx).
 
 **Placement variant.** A variant that adds fixed regions to a grid: X diagonals, Windoku windows, Argyle lines.
 
@@ -50,7 +50,7 @@ the band and `contains`; the written route, without the steps people do in their
 time.
 
 **Rule.** One entry of a puzzle file's `rules`: the grid, a cage, a thermometer, a dot. A **rule family** is a kind of
-rule (all cages, all thermometers). See [Rule families](/formats/rules/).
+rule (all cages, all thermometers). See [Rule families](../formats/puzzle-format.md#6-rule-families).
 
 **Single.** The simplest placements: a hidden single (the only place for a digit in a house) or a naked single (the
 only digit left for a cell).

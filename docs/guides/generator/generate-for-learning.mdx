@@ -18,7 +18,7 @@ Ask for the technique (`"strict": true`, so it must appear as itself, not only a
 belongs to, then keep the first puzzle whose card lists nothing beyond singles and what the learner already knows. The
 band caps what the solver may need, but other techniques of the same band can still turn up, hence the check:
 
-```py
+```python
 import pencilmark
 
 SINGLES = {"FHS", "HSI", "NSI"}
@@ -37,7 +37,7 @@ def practice(code, band, known=(), tries=24):
         if code in codes and codes <= SINGLES | set(known) | {code}:
             return result["puzzle"]
 
-puzzle = practice("XWG", "Hard", known=["PPR", "NPR"])   # an X-Wing, nothing new besides
+# puzzle = practice("XWG", "Hard", known=["PPR", "NPR"])   # an X-Wing, nothing new besides (a few minutes)
 ```
 
 [Techniques](../../grades/techniques.md) lists every code with its band. A ladder for classic sudoku, easiest first:
@@ -79,36 +79,17 @@ puzzle = practice("XWG", "Hard", known=["PPR", "NPR"])   # an X-Wing, nothing ne
 **Very Hard**, difficulty 7.6, about 14.0 min (seed 15). Contains: Hidden Single, Naked Single, Pointing / Box-Line Reduction, Swordfish.
 
 
-## 2. The same puzzle kind at rising bands
+## 2. A killer curriculum
 
-For a progression, keep the request and raise the band. Here, killers with at least six cages, from Very Easy to
-Hard; the cages are the same template every time, only `where.band` changes:
+Someone starting out with killers first meets a cage or two that are needed for simple singles; then the cages
+multiply; then the cages' digit sets do the work (a 3 in two cells is 1 and 2, which acts like a pointing pair); and at
+last there are no number clues at all. Each stage below is a killer whose cages cover every cell that is not a given
+(a cell left alone becomes a given: a 1-cell cage is a given in disguise), with a given range and a target:
 
 ```json
-{"rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}, {"type": "cage", "count": [6, null]}],
- "where": {"band": "Medium"}}
+{"rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}, {"type": "cage", "count": "tile"}],
+ "givens": {"count": [28, 40]}, "where": {"band": "Very Easy", "difficulty": [2, 4.5]}}
 ```
 
-### Very Easy
-
-<Swatch name="learning-killer-1-very-easy" />
-
-**Very Easy**, difficulty 5.4, about 16.5 min. Contains: Hidden Single.
-
-### Easy
-
-<Swatch name="learning-killer-2-easy" />
-
-**Easy**, difficulty 8.1, about 33.9 min. Contains: Hidden Single, Naked Single, Pair / triple in the head, Innies & outies (rule of 45).
-
-### Medium
-
-<Swatch name="learning-killer-3-medium" />
-
-**Medium**, difficulty 8.7, about 30.4 min. Contains: Hidden Single, Naked Single, Pointing / Box-Line Reduction, Pair / triple in the head, Two rules together.
-
-### Hard
-
-<Swatch name="learning-killer-4-hard" />
-
-**Hard**, difficulty 9.9, about 34.1 min. Contains: Hidden Single, Naked Single, Pointing / Box-Line Reduction, Notes in the head, Killer cage combinations, Naked Pair, Hidden Pair, Naked Quad, Simple Colouring.
+Without a difficulty range the generator removes every given it can, and a grid with few givens takes long to scan
+even when it needs only singles: a Very Easy puzzle then scores about 4-5. The range keeps the first stages gentle.

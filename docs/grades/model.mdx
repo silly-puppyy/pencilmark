@@ -52,7 +52,7 @@ The band route is the order of steps a person would take, choosing the easiest m
 2. Each move is named by its most specific shape (`band_path.classify`): an X-Chain of length 4 with its ends in one
    box is a Skyscraper, not a long X-Chain. The shape decides the band of the move.
 3. The engine searches band by band: first only Very Easy techniques, then up to Easy, and so on. In the first band
-   that has a move, it takes the move with the lowest study order in [`codes.csv`](techniques.md) (a hidden single
+   that has a move, it takes the move with the lowest study order ([Techniques](techniques.md); `data/codes.csv`) (a hidden single
    before a naked single, a pointing pair before a naked pair), the cheaper one on a tie.
 4. The move is applied and the route goes on until the grid is full.
 
@@ -166,7 +166,7 @@ $$
 - Very long predictions grow more slowly, and boards with more than about 92 empty cells (16×16, multi-grid layouts)
   take longer per cell than the power law alone gives.
 
-`time` is the median player; `time_pNN` and `time_mean` spread it over the players with a log-normal shape (wider for
+`time` is the predicted median solve time; `time_pNN` and `time_mean` spread it over the players with a log-normal shape (wider for
 classics than for variants).
 
 ## Where the numbers live

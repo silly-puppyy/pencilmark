@@ -10,7 +10,7 @@ pip install -e ".[test]"                      # builds the C++ engine and instal
 python -m pytest -q -n auto tests             # the quick suite: about 10 seconds
 ```
 
-`pip install -e ".[test,verify]"` adds OR-Tools, which the uniqueness check uses as a second opinion. After a change to
+`pip install -e ".[test,verify]"` adds OR-Tools, which the uniqueness check falls back on when the engine's search hits its node limit. After a change to
 `csrc/`, run `pip install -e .` again to rebuild the engine.
 
 ## Where things live
@@ -19,7 +19,7 @@ python -m pytest -q -n auto tests             # the quick suite: about 10 second
 |---|---|
 | `src/pencilmark/api.py` | the public functions (`rate`, `load`, `solve`, `generate`, ...) |
 | `src/pencilmark/export.py`, `band_path.py`, `card.py` | the card: its fields, the band route and technique list, difficulty and time |
-| `src/pencilmark/exchange/`, `rules/` | the puzzle format: reading, checking, writing; one module per rule family |
+| `src/pencilmark/exchange/`, `rules/` | the puzzle format: reading, checking, writing; `rules/` holds the kind registries of lines, edges and cell clues |
 | `src/pencilmark/explain/` | step explanations |
 | `src/pencilmark/data/` | techniques, codes and fitted parameters (CSV / JSON); every fitted number lives here |
 | `csrc/` | the C++ engine: techniques, move listing, the exhaustive search |

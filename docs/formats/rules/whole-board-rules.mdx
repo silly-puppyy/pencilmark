@@ -25,7 +25,7 @@ A rule over neighbouring pairs of the whole board.
 | `op` (+ its parameter) | A symmetric pair operator (5.1). |
 | `where` | `orthogonal` \| `diagonal` \| `king` \| `knight`. |
 | `within` | Optional scope: `"box"` (only pairs inside one box) or `"region"` (only pairs inside one `region` rule). |
-| `area` | Optional scope (5): only pairs with both cells in the area, e.g. one grid of a samurai. |
+| `area` | Optional scope (5): only pairs with both cells in the area, such as one grid of a samurai. |
 | `except` | Optional list of exempt pairs. |
 
 Pairs are formed among existing cells of the board, unless a scope narrows them.
@@ -70,5 +70,5 @@ States exactly which clues are "all shown".
 - **Adjacency is only within one grid**: two cells form a pair only if some `grid` / `box_grid` area contains both (on a
   board without one, all orthogonally adjacent existing cells).
 - Optional `area` (5): only positions whose cells are all in the area are covered.
-- With no clue of the family in the file at all, the negative still applies (e.g. "no two adjacent digits sum to 10
+- With no clue of the family in the file at all, the negative still applies ("no two adjacent digits sum to 10
   or 5").

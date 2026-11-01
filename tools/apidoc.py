@@ -69,7 +69,7 @@ def table(rows, base="../"):
     """a summary table: rows of (anchor, kind, name, summary text)"""
     if not rows:
         return []
-    out = ["| | |", "|---|---|"]
+    out = ["| Name | What it does |", "|---|---|"]
     for anchor, kind, name, text in rows:
         cell = links(md_esc(text), base).replace("|", "\\|")
         out.append(f"| {kind + ' ' if kind else ''}[`{name}`](#{anchor}) | {cell} |")
