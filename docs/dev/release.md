@@ -20,7 +20,8 @@ before the last step.
 ## 2. Prepare main
 
 1. The version goes in two places: `pyproject.toml` (`version`) and `src/pencilmark/__init__.py` (`__version__`).
-   Cards read it from `__version__`; the golden records leave it out, so they do not change.
+   Cards read it from `__version__`; the golden records leave it out, so they do not change. The reference cards in
+   `tests/fixtures/variants.json` keep it: change their `"version"` too.
 2. In `CHANGELOG.md`, rename "## Unreleased" to "## 1.1.0 (date)" and start a new empty "## Unreleased" above it.
 3. Commit, then on a fresh install (`pip install -e .`) run `python tools/tasks.py release 1.1.0`. It checks that both
    version numbers say 1.1.0, that the CHANGELOG has its section and an empty "Unreleased", and that nothing is
