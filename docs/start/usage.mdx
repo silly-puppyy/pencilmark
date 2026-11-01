@@ -2,7 +2,6 @@
 description: "Grading puzzles from Python and the command line: cards, fields, explanations, limits and labels."
 ---
 
-import LabelsChart from '@site/src/components/LabelsChart';
 
 # Usage
 
@@ -121,29 +120,8 @@ in `docs/examples/specs/`.
 
 ## The card
 
-- **band**: what you need to know, from Very Easy to Extreme: the hardest technique on the easiest route. Guessing is
-  off by default: where no technique applies, the engine proves an elimination by full search (Trial and error,
-  Extreme).
-- **difficulty**: how hard the steps are to find, independent of the puzzle's size, from 0 with no ceiling. A typical
-  newspaper medium is about 5, [fed-sudoku](https://www.fed-sudoku.eu/) "hard" about 6.5. Variants often sit above
-  classics of the same band, because the same techniques are harder to spot among clues and sums.
-- **time**: the predicted median solve time in minutes; the median classic takes about 12. Typical error 20-26%.
-  `time_pNN` and `time_mean` spread it over the players.
-- **contains**: the techniques the puzzle needs, easiest first, singles included (a full house counts as a hidden
-  single). A chip like `XWG/KTE/SCL` means any one of them works at that point; [Techniques](../grades/techniques.md)
-  lists every code.
-
-Only the requested fields are computed. `contains` is the slow part: without it (`fields=["difficulty", "time",
-"band"]`) a card takes about a third of the time, with the same band, difficulty and time. [Philosophy](../grades/philosophy.md)
-says what the numbers mean, [How a card is computed](../grades/model.mdx) how they are computed.
-
-## Other sites' labels on this scale
-
-Where each site's difficulty labels fall on pencilmark's scale: the bar is the median difficulty of the site's puzzles
-with that label, the line the middle half where it was measured. Each site rates for its own audience and neighbouring
-labels overlap a lot, so treat this as a rough conversion.
-
-<LabelsChart />
+What each field means, and how the techniques in `contains` are listed: [Grade card](../formats/grade-card.md). Where
+other sites' difficulty labels fall on pencilmark's scale: [Benchmark](../grades/benchmark.mdx#other-sites-labels-on-this-scale).
 
 ## Speed
 

@@ -107,6 +107,7 @@ of the same shape for a later version ([Generator spec](generator-spec.md), sect
 | `tedious` | warning | Very Easy or Easy, but over *limit* minutes of routine work. | minutes (60) |
 | `uniqueness` | warning | Needs a uniqueness-based technique (relies on assuming one solution). | – |
 | `trial` | warning | Needs trial and error or forcing chains. | – |
+| `unusual` | warning | A difficulty outside the middle 80% of published puzzles of the same band (classic 9×9 and variants apart; [Generate a puzzle](../guides/generator/generate.md#4-typical-difficulty) has the ranges). | – |
 
 The three rule checks look at whole families: one extra dot among needed dots is not reported.
 

@@ -17,7 +17,7 @@ SPECS = ROOT / "docs" / "examples" / "specs"
 BOX = {4: [2, 2], 6: [2, 3], 8: [2, 4], 9: [3, 3]}
 
 
-def spec(size=9, rules=(), where=None, givens=None, symmetry=None, seed=1, time=180):
+def spec(size=9, rules=(), where=None, givens=None, symmetry=None, seed=1, time=180, quality=None):
     s = {"format": "sudoku-spec", "format_version": 1, "board": {"rows": size, "cols": size}, "digits": size,
          "rules": [{"type": "box_grid", "origin": "r1c1", "box": BOX[size]}, *rules]}  # fmt: skip
     if givens:
@@ -26,6 +26,7 @@ def spec(size=9, rules=(), where=None, givens=None, symmetry=None, seed=1, time=
         s["symmetry"] = [dict(symmetry, of="givens")]
     if where:
         s["where"] = where
+    s["quality"] = quality if quality is not None else {}  # every example: the default publishing checks
     s["limits"] = {"time": time, "seed": seed}
     return s
 
@@ -45,6 +46,7 @@ def layout_spec(layout, rules=(), locked=(), where=None, givens=None, symmetry=N
         s["symmetry"] = [dict(symmetry, of="givens")]
     if where:
         s["where"] = where
+    s["quality"] = {}  # every example: the default publishing checks
     s["limits"] = {"time": time, "seed": seed}
     return s
 
@@ -212,7 +214,7 @@ def run(name):
     except pencilmark.GenerationFailed as e:
         return name, f"failed after {time.time() - t:.0f} s: {e}"
     card = {k: r["card"].get(k) for k in ("band", "difficulty", "time", "contains")}
-    info = {k: r["info"].get(k) for k in ("seconds", "attempts", "found", "givens", "elements")}
+    info = {k: r["info"].get(k) for k in ("seconds", "attempts", "found", "givens", "elements", "rejected")}
     info["seconds"] = round(time.time() - t, 1)  # the whole call, the final grading included
     d = {"title": title, "shows": shows, "spec": s, "puzzle": r["puzzle"], "card": card, "info": info}
     (OUT / f"{name}.json").write_text(json.dumps(d, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
@@ -265,11 +267,17 @@ def load(name):
 
 
 def took(d):
-    """how the run went, in words"""
+    """how the run went, in words (with the candidates the publishing checks refused, if any)"""
     i, lim = d.get("info") or {}, d["spec"].get("limits", {}).get("time", 120)
+    checks = {k.split(": ", 1)[1]: v for k, v in (i.get("rejected") or {}).items() if k.startswith("publishing check")}
+    refused = (
+        f"; the publishing checks refused {sum(checks.values())} other candidates ({', '.join(sorted(checks))})"
+        if checks
+        else ""
+    )
     if i.get("found"):
-        return f"{i['seconds']:.0f} s, the best of {i['found']} found (time limit {lim:g} s)"
-    return f"{i.get('seconds', 0):.0f} s, {i.get('attempts', 1)} attempt{'s' if i.get('attempts', 1) != 1 else ''} (time limit {lim:g} s)"
+        return f"{i['seconds']:.0f} s, the best of {i['found']} found (time limit {lim:g} s){refused}"
+    return f"{i.get('seconds', 0):.0f} s, {i.get('attempts', 1)} attempt{'s' if i.get('attempts', 1) != 1 else ''} (time limit {lim:g} s){refused}"
 
 
 def chips(c):

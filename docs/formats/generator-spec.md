@@ -108,6 +108,13 @@ Conditions on the result's card, using the card's keys ([Grade card](grade-card.
 | `contains` | technique codes that must appear in `contains`; `{"codes": [...], "strict": true}` = as the code itself, not only as an alternative in a chip |
 | `elements` | `{"max": n}`: at most n placed rule elements in total |
 
+`quality` (top level, recommended) filters candidates by the publishing checks of the grade card: one with an issue of
+severity reject is not returned, and the run's `info.rejected` counts the candidates refused, by check. `"quality": {}`
+applies the default checks; an object adjusts them as [`rate(quality=...)`](grade-card.md) does:
+`{"trivial": {"limit": 0.45}}` refuses puzzles with more than 45% of the cells given, `{"spike": {"severity":
+"reject"}}` those whose effort sits in a few steps, `{"trivial": {"severity": "off"}}` turns a check off (a learner's
+first puzzle may well be mostly given). Without `quality` no candidate is filtered.
+
 ## 5. Limits, fields and program data
 
 - `limits`: `time` (seconds for the whole run, default 120), `seed` (reproducible runs, default 1). The run returns one
@@ -136,5 +143,4 @@ Refused by format_version 1 readers with a message naming the part:
 - more symmetry entries, symmetry of rules (`of: "all"` or a rule selector);
 - targets: a list of bands, `time`, `issues`, `not_contains`,
   `contains` `only` / `uses`, per-area targets;
-- `quality` (the publishing checks applied as targets);
 - `limits.results` above 1 and `limits.attempts`.

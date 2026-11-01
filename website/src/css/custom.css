@@ -450,3 +450,11 @@ html[data-theme='dark'] {
 
 /* section card pages: titles and descriptions wrap instead of ending in an ellipsis */
 .theme-doc-card-container h2, .theme-doc-card-container p { white-space: normal; overflow: visible; text-overflow: clip; }
+
+/* experiment log (docs/grades/experiments.md): the verdict cell tinted by the verdict's first word */
+:root { --pm-verdict-kept: #e3f1e3; --pm-verdict-dropped: #f6e1df; --pm-verdict-info: #e2ecf6; --pm-verdict-mixed: #f5ecd8; }
+[data-theme='dark'] { --pm-verdict-kept: #23382a; --pm-verdict-dropped: #3d2523; --pm-verdict-info: #22303f; --pm-verdict-mixed: #3a3122; }
+td:has(> .pm-verdict-kept) { background: var(--pm-verdict-kept); }
+td:has(> .pm-verdict-dropped) { background: var(--pm-verdict-dropped); }
+td:has(> .pm-verdict-info) { background: var(--pm-verdict-info); }
+td:has(> .pm-verdict-mixed) { background: var(--pm-verdict-mixed); }

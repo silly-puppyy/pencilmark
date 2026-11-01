@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- New publishing check `unusual` (warning): a difficulty outside the middle 80% of published puzzles of the same band,
+  classic 9x9 and variants apart (ranges measured on the development set, 6,452 puzzles from seven sources).
+- Generator requests take `quality` (recommended; it was reserved): candidates are filtered by the grade card's
+  publishing checks, a candidate with a reject issue is not returned, and `info.rejected` counts the ones refused by
+  check. `"quality": {}` applies the defaults; an object adjusts each check as `rate(quality=...)` does. Without it,
+  nothing is filtered.
 - The generator makes multi-grid puzzles: a request with one `box_grid` per grid at the origins of a named layout
   (samurai, super-samurai, twodoku, butterfly, ...). Requests may lock rules of different digits (diagonals, extra
   regions, windoku windows, anti-knight, anti-king) that every result carries, and bound the givens per grid

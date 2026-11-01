@@ -3,6 +3,7 @@ description: "How well pencilmark's difficulty and time follow real solve times,
 ---
 
 import {AccuracyChart, GradersChart} from '@site/src/components/BenchmarkCharts';
+import LabelsChart from '@site/src/components/LabelsChart';
 
 # Benchmark
 
@@ -97,6 +98,14 @@ so most of its gap is noise. On the other three the human signal is clean and th
 The bands follow the same technique steps as HoDoKu's levels, and pencilmark's difficulty is within 0.3 of the
 sudokuwiki.org rating at every band. A Hard puzzle can rate below a Medium one: the band orders the knowledge a puzzle
 needs, the number its overall difficulty ([Philosophy](philosophy.md)); the sudokuwiki.org ratings show the same.
+
+## Other sites' labels on this scale
+
+Where each site's difficulty labels fall on pencilmark's scale: the bar is the median difficulty of the site's puzzles
+with that label, the line the middle half where it was measured. Each site rates for its own audience and neighbouring
+labels overlap a lot, so treat this as a rough conversion.
+
+<LabelsChart />
 
 ## Coverage and speed
 

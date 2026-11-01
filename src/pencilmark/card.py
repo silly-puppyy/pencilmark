@@ -44,5 +44,14 @@ def grade_card(puzzle, P, band, check_rules=True):
         "status": g["status"],
         "score": round(score, 1) if score is not None else None,
         "effort_l1": round(effort, 3) if effort is not None else None,
-        "notes": PF.notes(puzzle, P, steps, tier, req, work_min, check_rules=check_rules),
+        "notes": PF.notes(
+            puzzle,
+            P,
+            steps,
+            tier,
+            req,
+            work_min,
+            check_rules=check_rules,
+            difficulty=None if score is None else round(score, 1),
+        ),
     }

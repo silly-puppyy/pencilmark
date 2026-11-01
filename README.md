@@ -64,43 +64,18 @@ More in [Usage](https://silly-puppyy.github.io/pencilmark/start/usage/).
 
 ## The card
 
-`rate` returns a dict (format `"sudoku-grade"`) with these fields by default (`grader`, `format`, `format_version` are
-always there); `rate(puzzle, fields=[...])` / `--fields` asks for others by their key names, and only requested fields
-are computed ([docs/formats/grade-card.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/formats/grade-card.md)):
-
-| Field | Meaning |
-|---|---|
-| `difficulty` | how hard each step feels, continuous, above 0 (a nearly finished grid is about 0.2), no ceiling; a typical newspaper medium is about 5 |
-| `time` | the predicted median solve time in minutes (on request `time_mean` or any percentile `time_pNN`: `time_p80`, 80% of players finish within it) |
-| `band` | Very Easy, Easy, Medium, Hard, Very Hard, Expert, Extreme; `"Unknown"` when guessing was allowed and used, or `max_seconds` passed (on request `band_index` 0..6) |
-| `contains` | techniques met going easy to hard: `code`, `chip`, `name`, `band`, `uses`, `alternatives`; with `stopped_at_step` when human logic ran out |
-
-On request: `issues` and `reject` (publishing checks, below), `time_mean`, `time_pNN`, `steps` (each step's technique and
-its placement `r2c8=3` or eliminations `r4c5#7`; `explain="notation"`, `"short"` or `"teach"` adds explanations, from
-`X-Wing: 3 r58 c68 => r679c6<>3` to a short lesson), `se`, `band_index`, `describe` and `symmetry`.
-
-A chip like `XWG/KTE/SCL` means any one of those techniques gets you through at that point.
-
-Publishing checks are off unless you ask for them. They flag what an editor would send back: a difficulty spike, a
-rule that is never used, too many givens. Each issue has a `code`, a `severity` (reject or warning), a `text` and the
-offending `rules` (their indices in the exported puzzle); `reject` is true when any issue is a reject. Each check's limit is
-adjustable:
-
-```python
-card = pencilmark.rate(puzzle, fields=["difficulty", "band", "issues", "reject"], quality={"trivial": {"limit": 0.4}, "trial": {"severity": "off"}})
-```
-
-Guessing is off by default: where no technique applies, the engine proves an elimination by full search (Trial and
-error, band Extreme), so every uniquely solvable puzzle gets a band. `allow_guessing=True` (CLI `--allow-guessing`) lets it
-guess there instead, which is faster on the hardest puzzles; the card then says Unknown, with
-`stopped_at_step`. With `max_seconds` set, the whole call is capped and the card
-says `completed: false` if the limit passed. A puzzle without exactly one solution has no card: `rate` raises `NotUnique` /
-`NoSolution`.
+`rate` returns a `"sudoku-grade"` card: by default the band (Very Easy to Extreme: what you need to know), the
+difficulty (how hard the steps are to find, no ceiling; a newspaper medium is about 5), the predicted median solve time
+in minutes, and the techniques the puzzle contains, easiest first. On request it adds publishing checks (a difficulty
+spike, a rule nobody needs, too many givens), the steps with explanations, time percentiles and more; only requested
+fields are computed. A puzzle without exactly one solution has no card: `rate` raises `NotUnique` / `NoSolution`.
+Every field is in [Grade card](https://silly-puppyy.github.io/pencilmark/formats/grade-card/).
 
 ## Puzzle format
 
-`to_export` writes, and every entry point reads, the `"sudoku-puzzle"` format, **format_version 1**, specified in
-[docs/formats/puzzle-format.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/formats/puzzle-format.md) (JSON Schema: [docs/sudoku-puzzle.schema.json](https://github.com/silly-puppyy/pencilmark/blob/main/docs/sudoku-puzzle.schema.json)):
+`to_export` writes, and every entry point reads, the `"sudoku-puzzle"` format, format_version 1: every constraint is a
+rule, houses included, each with one exact meaning and a default drawing, and an unknown key makes the reader refuse
+the file instead of dropping a rule.
 
 ```json
 {"format": "sudoku-puzzle", "format_version": 1,
@@ -115,16 +90,8 @@ says `completed: false` if the limit passed. A puzzle without exactly one soluti
   {"type": "edge", "kind": "kropki", "color": "white", "cells": ["r5c5", "r5c6"]}]}
 ```
 
-- Every constraint is a rule, houses included: a `grid` gives a sudoku grid's rows and columns, a `box_grid` adds its
-  regular boxes, so a classic is one `box_grid` and a jigsaw is a `grid` plus `box` rules. Nothing is implied. Cells are
-  named `r{row}c{col}`, 1-based.
-  `givens`: `0` = empty, `null` = no cell (multi-grid gaps).
-- Each rule has one exact meaning and a default drawing, so a renderer needs nothing else; `style` and `decorations`
-  are cosmetic only. `meta` is free-form information that never changes solving.
-- Strict reading: an unknown key or rule type makes the reader refuse the file (`FormatError`) instead of dropping a
-  rule.
-- `pencilmark.dumps` writes the canonical text (one grid row per line, one rule per line); `pencilmark.fingerprint`
-  gives a content hash that ignores metadata and styling; `pencilmark.describe` names the variant and lists its rules.
+The specification is [Puzzle format](https://silly-puppyy.github.io/pencilmark/formats/puzzle-format/) (JSON Schema:
+[docs/sudoku-puzzle.schema.json](https://github.com/silly-puppyy/pencilmark/blob/main/docs/sudoku-puzzle.schema.json)).
 
 ### Other formats
 

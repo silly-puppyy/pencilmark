@@ -550,7 +550,6 @@ def test_spec_round_trip():
     bad["rules"].append({"type": "line", "kind": "thermo", "cells": ["r1c1", "r1c2"]})
     for extra in (
         {"rules": bad["rules"]},
-        {"quality": {"trivial": {"limit": 0.4}}},
         {"givens": {"mask": [1] * 81}},
         {"where": {"time": [5, 20]}},
         {"limits": {"results": 3}},

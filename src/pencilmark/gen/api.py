@@ -31,6 +31,8 @@ class Spec:
     locked            sudoku-puzzle rules every result carries (all-different ones: diagonals, extra regions, windoku
                       windows, anti-knight, anti-king); the solution respects them
     grid_givens       [[min, max], ...] givens per grid of the layout (in its origins' order); None = no bound
+    quality           None (no filtering), or the publishing checks as rate() takes them ({} = the defaults): a
+                      candidate with a reject issue is not returned
     elements          {kind or class: N | [min, max] | "auto" | "full" | "min" | "partition"}: N = at least N needed elements
                       (0 / None / "auto" = allowed, not required); [min, max] = between min and max (max None = no cap;
                       [2, 2] = exactly 2). Classes count one colour / letter / parity of a kind: kropki_white, kropki_black,
@@ -59,6 +61,7 @@ class Spec:
     layout: str | None = None
     locked: list | None = None
     grid_givens: list | None = None
+    quality: dict | None = None
     elements: dict | None = None
     shape: dict | None = None
     kinds: list | None = None
@@ -312,6 +315,13 @@ def feasibility(spec):
                 probs.append(
                     f"a unique {s.size}x{s.size} classic needs at least {floor} givens (max_givens={s.max_givens})"
                 )
+    if s.quality is not None:
+        from ..publish_flags import quality_limits
+
+        try:
+            quality_limits(s.quality)
+        except ValueError as e:
+            probs.append(str(e))
     if s.layout and mode not in ("classic", "dig"):
         probs.append(f"a {s.layout} layout takes templates with counts; 'tile', 'all' and 'min' are for one grid")
     if s.grid_givens is not None and len(s.grid_givens) != len(b.grid_cells):
@@ -601,6 +611,15 @@ def _generate(spec, log=None):
         if (s.max_givens is not None and len(givens) > s.max_givens) or len(givens) < (s.min_givens or 0):
             reject("givens outside the spec (late stage)")  # every stage keeps the bounds; this is the last word
             continue
+        if s.quality is not None:  # the publishing checks, after the cheaper targets
+            p_ = PJ.from_json(d)
+            p_.finalize()
+            qc = E2.grade(p_, dict(P, quality=s.quality), with_steps=False, max_seconds=s.grade_seconds,
+                          fields=["issues", "reject"])  # fmt: skip
+            if qc.get("reject"):
+                codes = "/".join(sorted({i["code"] for i in qc.get("issues") or [] if i.get("severity") == "reject"}))
+                reject(f"publishing check: {codes}")
+                continue
         verified = _verify(d, sol)
         if verified is False:
             reject("not unique (CP-SAT)")

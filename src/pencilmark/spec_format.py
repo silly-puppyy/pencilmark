@@ -401,11 +401,8 @@ def spec_to_gen(doc):
         if set(w["elements"]) != {"max"}:
             raise NotSupportedError('where.elements takes {"max": n}')
         out["max_elements"] = w["elements"]["max"]
-    q = doc.get("quality") or {}
-    if q:
-        raise NotSupportedError(
-            "quality is reserved for a later version of the spec (docs/formats/generator-spec.md 7); every result is unique and graded"
-        )
+    if doc.get("quality") is not None:  # the publishing checks: a candidate with a reject issue is not returned
+        out["quality"] = dict(doc["quality"])
     lim = doc.get("limits") or {}
     if lim.get("results", 1) != 1:
         raise NotSupportedError("the generator returns one puzzle per run (limits.results 1; run several seeds)")
@@ -507,6 +504,8 @@ def spec_from_gen(spec):
         lim["seed"] = s.seed
     if lim:
         doc["limits"] = lim
+    if s.quality is not None:  # {} = the default checks
+        doc["quality"] = dict(s.quality)
     ext = {k: getattr(s, k) for k in ("solver", "grade_seconds") if getattr(s, k) != DEFAULTS[k]}
     if ext:
         doc.setdefault("meta", {})[NS] = ext

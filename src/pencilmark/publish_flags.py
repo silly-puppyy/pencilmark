@@ -11,6 +11,8 @@ common sense first; the coach analysis only informed the spike rule's direction)
   tedious      Very Easy / Easy but over `tedious` (60) minutes of work (long and routine)
   uniqueness   needs a uniqueness-based technique (UR, BUG, Gurth): relies on assuming a unique solution
   trial        needs trial / forcing chains: computer-strength logic, not a human-friendly finish
+  unusual      a difficulty outside the middle 80% of published puzzles of the same band (classic 9x9 and variants
+               apart, TYPICAL): a Very Easy puzzle that scans like an Easy one, a Medium that plays like a Very Hard
 Each note is (code, severity, text); severity 'reject' = would not be published, 'note' = informational.
 Every check is adjustable with an object (quality_limits): {"limit": n} replaces its limit (checks with one), {"severity":
 "reject" | "warning" | "off"} overrides its severity or turns it off.
@@ -41,7 +43,17 @@ QUALITY = {
     "redundant": None,
     "uniqueness": None,
     "trial": None,
+    "unusual": None,
 }
+# difficulty of published puzzles per band: (10th, 90th percentile), classic 9x9 and variants apart. Measured
+# 2026-11-01 on the development set (7,253 puzzles with human data from seven sources, 6,452 graded; never the frozen
+# benchmark); a band with fewer than 20 puzzles has no range. docs/guides/generator/generate.md shows the middle halves.
+TYPICAL = {
+    "classic": {"Very Easy": (2.8, 4.2), "Easy": (3.9, 6.6), "Medium": (6.0, 7.8), "Hard": (4.7, 7.3),
+                "Very Hard": (7.0, 9.0), "Expert": (7.1, 12.3)},
+    "variant": {"Very Easy": (1.4, 5.4), "Easy": (4.0, 8.8), "Medium": (6.8, 12.1), "Hard": (4.3, 10.2),
+                "Very Hard": (8.8, 14.5), "Expert": (9.3, 14.4), "Extreme": (12.3, 23.3)},
+}  # fmt: skip
 SEVERITIES = ("reject", "warning", "off")
 
 
@@ -105,8 +117,9 @@ class _Ctx:
     """what the checks read: the puzzle, its steps (pencil-mark steps left out), band, required techniques, routine
     work in minutes, and the quality object (limits and severities)"""
 
-    def __init__(self, puzzle, P, steps, tier, required, work_min, q):
+    def __init__(self, puzzle, P, steps, tier, required, work_min, q, difficulty=None):
         self.puzzle, self.P, self.tier, self.work_min, self.q = puzzle, P, tier, work_min, q
+        self.difficulty = difficulty
         self.moves = [st for st in steps if st.move.feat[0] not in S.NOTE_TECHS]
         self.band_i = MT.BANDS.index(tier) if tier in MT.BANDS else -1
         self.required = set(required or [])
@@ -143,6 +156,20 @@ def _c_uniqueness(c):
     )
 
 
+def _c_unusual(c):
+    if c.difficulty is None:
+        return []
+    from .interop import is_classic9
+
+    kind = "classic" if is_classic9(c.puzzle) else "variant"
+    lo_hi = TYPICAL[kind].get(c.tier)
+    if lo_hi is None or lo_hi[0] <= c.difficulty <= lo_hi[1]:
+        return []
+    what = "classics" if kind == "classic" else "variants"
+    return [("unusual", "note", f"{c.tier} at difficulty {c.difficulty:g}: most published {c.tier} {what} are "
+                                f"{lo_hi[0]:g} to {lo_hi[1]:g}")]  # fmt: skip
+
+
 def _c_trial(c):
     hit = c.required & TRIAL
     return [("trial", "note", "needs trial / forcing chains (" + ", ".join(sorted(hit)) + ")")] if hit else []
@@ -156,15 +183,16 @@ CHECKS = [
     (_c_tedious, ("tedious",)),
     (_c_uniqueness, ("uniqueness",)),
     (_c_trial, ("trial",)),
+    (_c_unusual, ("unusual",)),
 ]
 RULE_CODES = ("decorative", "redundant", "barely_used")
 
 
-def notes(puzzle, P, steps, tier, required, work_min, check_rules=True):
+def notes(puzzle, P, steps, tier, required, work_min, check_rules=True, difficulty=None):
     """the publishing notes [(code, severity, text, ...)] of a graded puzzle, as the quality object asks"""
     q = quality_limits(P.get("quality"))
     on = lambda codes: any(q[k]["severity"] != "off" for k in codes)
-    c = _Ctx(puzzle, P, steps, tier, required, work_min, q)
+    c = _Ctx(puzzle, P, steps, tier, required, work_min, q, difficulty)
     out = [n for check, codes in CHECKS if on(codes) for n in check(c)]
     if check_rules and on(RULE_CODES):
         out += _rule_notes(puzzle, P, q)
