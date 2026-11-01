@@ -20,7 +20,7 @@ PARAMS = {
     "sum": [("sum", 5), ("sum", 11), ("sum", 40), None],
     "product": [("value", 6), ("value", 7), None],
     "ratio": [("value", 2), ("value", 3), ("value", 1), None],
-    "less": [None, ("value", 2)],
+    "greater": [None, ("value", 2)],
 }
 PAIRS = (["r1c1", "r1c2"], ["r1c1", "r2c1"], ["r1c1", "r2c2"])  # across, down, diagonal (not an edge)
 

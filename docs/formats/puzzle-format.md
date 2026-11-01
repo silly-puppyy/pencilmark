@@ -153,8 +153,8 @@ clues competing for one gap) is the renderer's business; the semantics never dep
 | `line` cells (thermo bulb first; a whisper's order is its path) | `box`, `row`, `column`, `region`, `cage` cells; `sum` kinds `group` / `corner` |
 | `arrow` `bulb` (a pill reads as a number in `bulb` order) and each shaft in `lines` (away from the bulb) | `cell`, `contains`, `appears` cells, `count`, `distinct_count` without `side` |
 | outside clues (`sandwich`, `xsum`, `skyscraper`, `rossini`, `first_seen`, `sum` kinds `little_killer` / `frame`, `distinct_count` with `side`): from the cell next to the clue outwards | `equal_sum` segments (each a set; the segment list is unordered) |
-| `clone` / `isomorphic` regions: corresponding positions | `edge` pairs except `less`, `relation` pairs of symmetric operators |
-| `edge` kind `less` and `relation` pairs of `less` / `less_equal` / `any_of`: `[a, b]` in operator order | `area` cell lists, `except` pairs |
+| `clone` / `isomorphic` regions: corresponding positions | `edge` pairs except `greater`, `relation` pairs of symmetric operators |
+| `edge` kind `greater` (larger digit first) and `relation` pairs of `less` / `less_equal` / `any_of`: `[a, b]` in operator order | `area` cell lists, `except` pairs |
 | `vudoku` cells (vertex first); `corner` cells TL, TR, BL, BR (reading order; any other order is refused) | |
 
 The order of the `rules` array carries **no meaning**. Writers SHOULD keep the order they were given (the
@@ -261,7 +261,7 @@ Each rule family has its own page; the quick reference lists every `type` and `k
 - [Whole-board rules](rules/whole-board-rules.mdx): 6.10 `neighbours`, 6.11 `relation`, 6.14 `negative`
 - [Cell clues](rules/cell-clues.mdx): 6.12 `cell`
 - [Other rules](rules/other.mdx): 6.13 other families, 6.15 vendor rules, 6.16 what is not a rule, 6.17 reserved
-- [Quick reference](rules/quick-reference.mdx): every `type` and `kind` on one page
+- [Quick reference](quick-reference.mdx): every `type` and `kind` on one page
 
 "Repeats" in the family tables says whether digits may repeat among a rule's cells **because of that rule**; houses still apply.
 
@@ -343,7 +343,7 @@ The keys are reordered and the grid laid out row by row; the rules and the cage'
    `{"type": "row" | "column" | "box", "cells": [...]}` per distinct house, so every spelling of the same houses (a
    `box_grid`, a `grid` plus `box` rules, single rules, in any order) gives the same result.
 4. Sort the cells of set-like lists (3.3: region, cage, cell, contains, appears, count, sum group / corner,
-   edge clues other than `less`, scope and `except` lists, the pairs of symmetric `relation` operators, `equal_sum`
+   edge clues other than `greater`, scope and `except` lists, the pairs of symmetric `relation` operators, `equal_sum`
    segments) in reading order.
 5. Sort `rules` by their compact canonical JSON text.
 6. Serialise with RFC 8785 (JSON Canonicalization Scheme) and hash with SHA-256.
@@ -368,4 +368,4 @@ decompressed text is a normal `sudoku-puzzle` file.
 
 ## 9. Examples
 
-Complete example files are on the [examples page](rules/examples.mdx).
+Complete example files are on the [examples page](examples.mdx).

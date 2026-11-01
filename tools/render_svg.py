@@ -298,8 +298,8 @@ def render(doc, dark=False, cell=48, annotate=False, labels=False, background=Tr
                         f'<text x="{x:.1f}" y="{y + 0.35 * 0.3 * u:.1f}" font-size="{0.3 * u:.1f}" text-anchor="middle" '
                         f'font-family="Inter,Helvetica,Arial,sans-serif" font-weight="650" fill="{T["given"]}">{r[EDGE[k].param]}</text>',
                     )
-                else:  # chevron pointing at cells[0], symmetric about the midpoint
-                    ux, uy = (x0 - x1), (y0 - y1)
+                else:  # chevron pointing at the smaller digit, cells[1], symmetric about the midpoint
+                    ux, uy = (x1 - x0), (y1 - y0)
                     L = math.hypot(ux, uy)
                     ux, uy = ux / L, uy / L
                     h = 0.075 * u

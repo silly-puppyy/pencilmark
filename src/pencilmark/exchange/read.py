@@ -142,8 +142,8 @@ class _ReadCtx:
                 return [{"type": "kropki", "color": r["color"], "cells": list(r["cells"])}]
             if k == "xv":
                 return [{"type": "xv", "letter": r["letter"], "cells": list(r["cells"])}]
-            if k == "less":
-                return [{"type": "less", "cells": list(r["cells"])}]
+            if k == "greater":  # cells[0] > cells[1]: the engine's less-than of the reversed pair
+                return [{"type": "less", "cells": [r["cells"][1], r["cells"][0]]}]
             if NUMBERED_PAIR_FORM == "table":
                 return [self.pair_table(a, b, _NUMBERED_OK[k](r))]
             rel = edge_relation(r, D)

@@ -258,8 +258,8 @@ def check_edge(doc, rule):
     elif k == "ratio":
         kk = rule["value"]
         need(a == kk * b or b == kk * a, "ratio wrong")
-    elif k == "less":
-        need(a < b, "cells[0] not < cells[1]")
+    elif k == "greater":
+        need(a > b, "cells[0] not > cells[1]")
     else:
         raise NotImplementedError
 

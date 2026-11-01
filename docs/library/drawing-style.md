@@ -48,7 +48,7 @@ corner clues, digits, outside clues.
 | `edge` `kropki` | Dot (0.25) at the midpoint: white with a black outline, or black. |
 | `edge` `xv` | The letter X or V (height 0.3) on a white chip. |
 | `edge` `difference` / `sum` / `product` / `ratio` | Small white circle (0.3) with the number; `ratio` shows `k:1`, `product` `×p`. |
-| `edge` `less` | Chevron at the midpoint pointing at `cells[0]`. |
+| `edge` `greater` | Chevron at the midpoint pointing at the smaller digit, `cells[1]`. |
 | `corner` `battenburg` | Small 2×2 checker square (0.3) at the corner. |
 | `corner` `mathrax` | Small white circle at the corner with `value` and `op` (`10+`), or `E` / `O`. |
 | `corner` `exclude` | Small white circle at the corner with the digit. |

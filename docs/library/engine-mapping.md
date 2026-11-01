@@ -22,7 +22,7 @@ whatever its source.
 | `cage` | a `cage` group with its total |
 | `line` | `{"type": "line", "kind": …}` (whisper `value` → `k`; closed: the first cell repeated at the end); `double_arrow` → `equal_sum` `[[ends], middle]`; `lockout` → `diffge` on the ends plus a 3-cell table per middle cell |
 | `arrow` | one `arrow` constraint per shaft |
-| `edge` | relations `diff 1` / `ratio 2` (kropki), `sum 10` / `sum 5` (xv), `lt` (less); difference / sum / product / ratio: a 2-cell table of the allowed pairs (normalisation 8) |
+| `edge` | relations `diff 1` / `ratio 2` (kropki), `sum 10` / `sum 5` (xv), `lt` of the reversed pair (greater); difference / sum / product / ratio: a 2-cell table of the allowed pairs (normalisation 8) |
 | `corner` | battenburg: a 4-cell table; mathrax: a 2-cell table per diagonal pair (TL–BR, then TR–BL), even / odd: a `cell` clue; exclude: a `cell` exclude clue |
 | `sum` | `little_killer` / `sum` constraints |
 | outside clues | `sandwich` / `xsum` / `skyscraper` / `first_seen` constraints; rossini: `lt` relations and, with its negative, 3-cell tables |

@@ -83,7 +83,7 @@ def edges(g, kind, pairs, **params):
         rule = {"type": "edge", "kind": kind, "cells": [nm(r1, c1), nm(r2, c2)]}
         for key, fn in params.items():
             rule[key] = fn(a, b)
-        if kind == "less" and a > b:
+        if kind == "greater" and a < b:
             rule["cells"].reverse()
         out.append(rule)
     return out
@@ -108,7 +108,7 @@ G_X = grid("195", "382", "467")
 G_V = grid("146", "278", "395")
 G_ARITH = grid("152", "837", "496")
 G_RATIO = grid("248", "631", "597")
-G_LESS = grid("528", "194", "637")
+G_GREATER = grid("528", "194", "637")
 G_MATH = grid("124", "365", "789")
 G_VUD = grid("648", "195", "237")
 G_CAGE = grid("159", "274", "386")
@@ -222,7 +222,7 @@ SWATCHES = {
         ),
         G_RATIO,
     ),
-    "edge-less": (edges(G_LESS, "less", ALL_PAIRS), G_LESS),
+    "edge-greater": (edges(G_GREATER, "greater", ALL_PAIRS), G_GREATER),
     # 6.7 corner: two clues per picture where two fit
     "corner-battenburg": (
         [

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- The inequality edge is `"kind": "greater"`, `cells[0] > cells[1]`, after the variant's name (Greater-Than); it was
+  `"less"` with the cells the other way round. Files with `"less"` are refused: swap the two cells and rename the
+  kind. The `less` / `less_equal` operators of `relation` rules are unchanged.
 - SudokuPad files read that crashed the reader (5 of 19,194 stored puzzles): a colour typed without "#" stored as a
   number, an all-digit solution stored as a number, and null entries in element lists or in a cage's cells.
 - Chains held in the head (mental chains) are explained when they pass through a group of cells (they crashed into
@@ -27,7 +30,7 @@
   or `[min, max]`); a template's count may be `"max"` (as many as fit), and `where.difficulty` may be `"max"` or
   `"min"` (the hardest or easiest puzzle found). These searches use the whole `limits.time` and return the best
   result. Long lines are grown by a backtracking walk, so a request for a 15-cell whisper finds one.
-- Vudoku is drawn as on sudoku.one: a grey right-angle corner, elbow in the vertex cell, arms reaching into the arm
+- Vudoku is drawn as a grey right-angle corner, elbow in the vertex cell, arms reaching into the arm
   cells (it was a thin V through the cell centres). The docs' examples use the L of three cells the rule is played on.
 - Explanations of chains through a group of cells (grouped AIC, Grouped X-Chain, Empty Rectangle) name the group:
   they described it as "an almost locked set", which the step does not contain (43 steps in the golden corpora).

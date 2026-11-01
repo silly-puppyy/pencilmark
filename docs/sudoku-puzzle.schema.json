@@ -442,8 +442,8 @@
     "kind": {
      "enum": [
       "difference",
+      "greater",
       "kropki",
-      "less",
       "product",
       "ratio",
       "sum",

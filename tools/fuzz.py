@@ -68,7 +68,7 @@ def propose(rng, S, D):
     v = lambda x: S[x[0]][x[1]]
     k = rng.choice(["cage", "thermo", "slow_thermo", "whisper", "renban", "parity", "between", "lockout", "arrow",
                     "double_arrow", "palindrome", "entropic", "modular", "zipper", "region_sum",
-                    "kropki", "xv", "less", "difference", "sum", "product", "ratio", "kropki_all", "xv_all",
+                    "kropki", "xv", "greater", "difference", "sum", "product", "ratio", "kropki_all", "xv_all",
                     "odd", "even", "low", "set", "exclude", "corner_exclude", "mathrax", "battenburg",
                     "little_killer", "frame", "sum_corner", "sum_group", "sandwich", "xsum", "skyscraper",
                     "contains", "extra", "window"])  # fmt: skip
@@ -116,7 +116,7 @@ def propose(rng, S, D):
         if not sh or max(abs(sh[0][0] - b[0]), abs(sh[0][1] - b[1])) != 1:
             return None
         return [{"type": "arrow", "bulb": [nm(*b)], "lines": [[nm(*x) for x in sh]]}]
-    if k in ("kropki", "xv", "less", "difference", "sum", "product", "ratio"):
+    if k in ("kropki", "xv", "greater", "difference", "sum", "product", "ratio"):
         r, c = rng.randrange(D), rng.randrange(D)
         a, b = rng.choice(NB4)
         if not (0 <= r + a < D and 0 <= c + b < D):
@@ -128,8 +128,8 @@ def propose(rng, S, D):
             e["color"] = "white" if abs(X - Y) == 1 else "black"
         elif k == "xv":
             e["letter"] = "X" if X + Y == 10 else "V"
-        elif k == "less":
-            e["cells"] = [nm(*x), nm(*y)] if X < Y else [nm(*y), nm(*x)]
+        elif k == "greater":
+            e["cells"] = [nm(*x), nm(*y)] if X > Y else [nm(*y), nm(*x)]
         elif k == "difference":
             e["value"] = abs(X - Y)
         elif k == "sum":

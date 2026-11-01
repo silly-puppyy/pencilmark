@@ -132,7 +132,7 @@ EDGE = {
             label=lambda r: f"{r['value']}:1",
         ),
         EdgeKind(
-            "less",
+            "greater",
             "Greater-Than",
             "An inequality sign points to the smaller of the two digits it separates.",
             "inequality sign",
@@ -174,7 +174,7 @@ def edge_relation(rule, D):
         return ("ratio", rule["value"])
     if k == "product":
         return ("allowed", product_pairs(D, rule["value"]))
-    if k == "less":
+    if k == "greater":  # cells[0] > cells[1]: the engine's lt of the reversed pair (the reader swaps them)
         return ("lt",)
     raise FormatError(f"unknown edge kind {k!r}")
 
@@ -198,7 +198,7 @@ def edge_family(kind, args, D):
     if kind == "ratio" and len(args) == 1:
         return ("ratio", args[0])
     if kind == "lt" and not args:
-        return ("less", None)
+        return ("greater", None)
     if kind == "allowed" and len(args) == 1:
         A = {tuple(x) for x in args[0]}
         for p in range(1, D * D + 1):
@@ -211,7 +211,7 @@ def edge_rule(family, value, a, b, B):
     r = {"type": "edge", "kind": family}
     if EDGE[family].param:
         r[EDGE[family].param] = value
-    r["cells"] = [B.name(a), B.name(b)]
+    r["cells"] = [B.name(b), B.name(a)] if family == "greater" else [B.name(a), B.name(b)]  # lt(a, b): b > a
     return r
 
 

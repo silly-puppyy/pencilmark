@@ -136,7 +136,7 @@ def _norm_rule(r, D):
         t in SET_TYPES
         or (t == "sum" and r.get("kind") in ("group", "corner"))
         or (t == "distinct_count" and "side" not in r)
-        or (t == "edge" and r.get("kind") != "less")
+        or (t == "edge" and r.get("kind") != "greater")
     ):
         if "cells" in r:
             r["cells"] = srt(r["cells"])
