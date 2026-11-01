@@ -38,7 +38,7 @@
    }
   ],
   "limits": {
-   "time": 180,
+   "time": 600,
    "seed": 1
   }
  },
@@ -349,19 +349,6 @@
     "band": 0
    },
    {
-    "code": "CSI",
-    "chip": "CSI",
-    "name": "Last cell of a cage / line",
-    "band": 0
-   },
-   {
-    "code": "CFX",
-    "chip": "CFX",
-    "name": "Clue Facts",
-    "band": 0,
-    "uses": 1
-   },
-   {
     "code": "NSI",
     "chip": "NSI",
     "name": "Naked Single",
@@ -375,32 +362,18 @@
     "uses": 14
    },
    {
-    "code": "PWC",
-    "chip": "PWC",
-    "name": "Pair rules (dots, whispers, anti-knight...)",
-    "band": 1,
-    "uses": 5
-   },
-   {
     "code": "LNR",
     "chip": "LNR",
     "name": "Line ranges (thermo / whisper bounds)",
     "band": 1,
-    "uses": 10
-   },
-   {
-    "code": "NPR",
-    "chip": "NPR",
-    "name": "Naked Pair",
-    "band": 2,
-    "uses": 1
+    "uses": 11
    },
    {
     "code": "DGC",
     "chip": "DGC",
     "name": "Digit counting",
     "band": 2,
-    "uses": 15
+    "uses": 16
    },
    {
     "code": "RUL",
@@ -410,18 +383,11 @@
     "uses": 19
    },
    {
-    "code": "ERE",
-    "chip": "ERE",
-    "name": "Empty Rectangle",
-    "band": 4,
-    "uses": 1
-   },
-   {
     "code": "FRK",
     "chip": "FRK",
     "name": "Finned Franken Swordfish",
     "band": 4,
-    "uses": 2
+    "uses": 3
    },
    {
     "code": "BAN",
@@ -440,7 +406,7 @@
   ]
  },
  "info": {
-  "seconds": 384.9,
+  "seconds": 484.1,
   "attempts": 2,
   "found": null,
   "givens": 5,

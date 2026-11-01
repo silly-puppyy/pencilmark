@@ -55,7 +55,8 @@ CURIOSITIES = {
             rules=[
                 {"type": "line", "kind": "whisper", "length": [7, None], "count": 2},
                 {"type": "line", "kind": "renban", "length": [5, None], "count": "auto"},
-            ]
+            ],
+            time=600,
         ),
     ),
     "tall-thermos": (
