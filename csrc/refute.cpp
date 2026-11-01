@@ -13,8 +13,35 @@ namespace cs {
 bool Solver::basic_propagate(int& placed) {
     for (int it = 0; it < 1000; ++it) {
         bool prog = false;
-        const std::vector<uint32_t>* ref = gac_ref;     // consistent state: unchanged cells / houses hold no single
-        for (int x = 0; x < p.N; ++x) {
+        if (P.refute_rounds) {  // a round: every single of the state at its start, placed together, counted once
+            std::vector<std::pair<int, int>> sing;
+            for (int x = 0; x < p.N; ++x) {
+                if (vals[x]) continue;
+                if (!cand[x]) return false;
+                if (popc(cand[x]) == 1) sing.push_back({x, lowdigit(cand[x])});
+            }
+            for (int hi : p.houses)
+                for (uint32_t mm = p.full & ~placed_g[hi]; mm; mm &= mm - 1) {
+                    uint32_t b = mm & (~mm + 1);
+                    int cnt = 0, last = -1;
+                    for (int x : p.groups[hi].cells)
+                        if (!vals[x] && (cand[x] & b)) ++cnt, last = x;
+                    if (cnt == 0) return false;
+                    if (cnt == 1) sing.push_back({last, lowdigit(b)});
+                }
+            for (auto [x, d] : sing) {
+                if (vals[x]) {
+                    if (vals[x] != d) return false;
+                    continue;
+                }
+                if (!(cand[x] & bit(d))) return false;  // two singles of one round clash
+                place(x, d);
+                prog = true;
+            }
+            if (prog && ++placed > prop_cap) return true;
+        }
+        const std::vector<uint32_t>* ref = P.refute_rounds ? nullptr : gac_ref;  // consistent: no single in unchanged cells
+        for (int x = 0; x < p.N && !P.refute_rounds; ++x) {
             if (vals[x] || (ref && cand[x] == (*ref)[x])) continue;
             if (!cand[x]) return false;
             if (popc(cand[x]) == 1) {
@@ -23,6 +50,7 @@ bool Solver::basic_propagate(int& placed) {
                 prog = true;
             }
         }
+        if (!P.refute_rounds)
         for (int hi : p.houses) {
             if (ref) {
                 bool dirty = false;
