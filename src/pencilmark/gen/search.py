@@ -5,6 +5,8 @@ All functions take a Board, a random.Random and return (solution, givens {cell: 
 
 from __future__ import annotations
 
+import time
+
 from . import elements as EL
 from .checks import Oracle
 
@@ -24,6 +26,9 @@ def dig(
     pool_tries=25,
     caps=None,
     dense=(),
+    shape=None,
+    most=(),
+    deadline=None,
 ):
     """givens-digging with elements added on demand.
 
@@ -36,7 +41,9 @@ def dig(
     fixed {cell: True (stays given) / False (stays empty)}; blocked cells take no elements. kinds / seeds may name element
     classes (kropki_black, x, odd, ...); caps {class: max} limits how many of a class are added. dense: 2-cell / 1-cell
     classes seeded with EVERY instance true in the solution before digging (few-givens targets); pruning then removes the
-    ones the puzzle doesn't need."""
+    ones the puzzle doesn't need. shape {kind: limits}: the templates' length / sum limits (elements.fits). most: classes
+    packed into the grid first, as many disjoint ones as a few random packings find, and never pruned. deadline: stop
+    digging then (time.time()), keeping the givens still in place."""
     fixed = dict(fixed or {})
     sol = sol or b.solution(rng)
     givens = {i: sol[i] for i in range(b.N) if fixed.get(i, True)}
@@ -45,12 +52,32 @@ def dig(
     room = lambda e: all(
         sum(1 for x in els if EL.in_class(x, k)) < m for k, m in caps.items() if m is not None and EL.in_class(e, k)
     )
+    for kind in most:
+        best = []
+        for _pack in range(12):
+            got, u = [], set(used)
+            for i in sorted(range(b.N), key=lambda _: rng.random()):
+                if i in u:
+                    continue
+                g_ = [
+                    e
+                    for e in EL.grow(b, EL.base_kind(kind), sol, i, u, rng, n=40, shape=shape)
+                    if u.isdisjoint(e[1]) and EL.in_class(e, kind)
+                ]
+                if g_:  # the smallest one leaves the most room for others
+                    e = min(g_, key=lambda e: (len(e[1]), rng.random()))
+                    got.append(e)
+                    u |= set(e[1])
+            if len(got) > len(best):
+                best = got
+        els += best
+        used |= {c for e in best for c in e[1]}
     for kind, cnt in (seeds or {}).items():
         for _ in range(cnt):
             for _try in range(40):
                 g_ = [
                     e
-                    for e in EL.grow(b, EL.base_kind(kind), sol, rng.randrange(b.N), used, rng, n=8)
+                    for e in EL.grow(b, EL.base_kind(kind), sol, rng.randrange(b.N), used, rng, n=8, shape=shape)
                     if used.isdisjoint(e[1]) and EL.in_class(e, kind)
                 ]
                 if g_:
@@ -63,7 +90,7 @@ def dig(
             continue
         seen = {x[1] for x in els}
         for i in range(b.N):
-            for e in EL.grow(b, bk, sol, i, set(blocked), rng):
+            for e in EL.grow(b, bk, sol, i, set(blocked), rng, shape=shape):
                 if EL.in_class(e, kind) and e[1] not in seen and (bk != "parity" or i not in used):
                     els.append(e)
                     seen.add(e[1])
@@ -80,7 +107,7 @@ def dig(
         return None
     done = set()
     for i in order:
-        if len(givens) <= min_givens:
+        if len(givens) <= min_givens or (deadline is not None and time.time() > deadline):
             break
         if i in done:
             continue
@@ -100,7 +127,7 @@ def dig(
                 else [
                     e
                     for k in kinds
-                    for e in EL.grow(b, EL.base_kind(k), sol, i, taken, rng)
+                    for e in EL.grow(b, EL.base_kind(k), sol, i, taken, rng, shape=shape)
                     if EL.in_class(e, k) and room(e)
                 ]
             )
@@ -113,7 +140,9 @@ def dig(
         if not restored:
             givens.update(removed)
     mins = {k: n for k, n in (seeds or {}).items() if n}
-    for e in list(els):  # prune decorative elements (never below a class's minimum)
+    for e in list(els):  # prune decorative elements (never below a class's minimum, never one being maximised)
+        if any(EL.in_class(e, k) for k in most):
+            continue
         rest_ = [x for x in els if x != e]
         if any(EL.in_class(e, k) and sum(1 for x in rest_ if EL.in_class(x, k)) < n for k, n in mins.items()):
             continue

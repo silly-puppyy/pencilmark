@@ -32,8 +32,7 @@
   "difficulty": "max"
  },
  "limits": {
-  "results": 1,
-  "time": 1800,
+  "time": 600,
   "seed": 5
  }
 }

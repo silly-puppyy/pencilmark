@@ -65,6 +65,7 @@ TEMPLATE_KEYS = {
     "count",
     "size",
     "length",
+    "sum",
     "value",
     "displaced",
     "area",
@@ -74,7 +75,7 @@ TEMPLATE_KEYS = {
     "color",
     "letter",
 }
-COUNT_WORDS = {"auto", "all", "min", "tile"}
+COUNT_WORDS = {"auto", "all", "min", "tile", "max"}
 DEFAULTS = {
     "solver": "logic",
     "seed": 1,
@@ -203,12 +204,29 @@ def spec_to_gen(doc):
         key = (r["type"], r.get("kind"))
         if key not in RULE_KIND:
             raise NotSupportedError(f"the generator cannot place {r['type']} {r.get('kind') or ''}".strip())
-        for k in ("size", "length", "displaced", "area"):
+        for k in ("displaced", "area"):
             if k in r:
                 raise NotSupportedError(
                     f"template {r['type']}: {k!r} is reserved for a later version of the spec (docs/formats/generator-spec.md 7)"
                 )
         kind = RULE_KIND[key]
+        lim = {}
+        for k in ("size", "length", "sum"):  # n or [min, max] (max null = open)
+            if k not in r:
+                continue
+            v = r[k]
+            if not (isinstance(v, int) or (isinstance(v, list) and len(v) == 2)):
+                raise FormatError(f"template {r['type']}: {k} must be a number or [min, max]")
+            want = "size" if kind == "cage" else "length"
+            if k != "sum" and k != want:
+                raise NotSupportedError(
+                    f"template {r['type']}: use {want!r} for its {'cells' if want == 'size' else 'length'}"
+                )
+            if k == "sum" and kind != "cage":
+                raise NotSupportedError(f"template {r['type']}: 'sum' applies to cages")
+            lim["sum" if k == "sum" else "length"] = [v, v] if isinstance(v, int) else list(v)
+        if lim:
+            out.setdefault("shape", {})[kind] = lim
         # one colour / letter / parity of a kind is its own element class (counted separately)
         cls = {
             ("kropki", "white"): "kropki_white",
@@ -239,6 +257,8 @@ def spec_to_gen(doc):
             if kind != "kropki":
                 raise NotSupportedError(f"count 'min' is supported for kropki only, not {kind}")
             elements[kind] = "min"
+        elif c == "max":
+            elements[kind] = "max"
         elif c == "tile":
             if kind != "cage":
                 raise NotSupportedError(f"count 'tile' is supported for cages only, not {kind}")
@@ -272,11 +292,10 @@ def spec_to_gen(doc):
             raise NotSupportedError("a list of bands is not supported (one band)")
         out["target_band"] = w["band"]
     if "difficulty" in w:
-        if not isinstance(w["difficulty"], list):
-            raise NotSupportedError(
-                "difficulty 'max' / 'min' (best-so-far search) is reserved for a later version of the spec (docs/formats/generator-spec.md 7)"
-            )
-        out["target_difficulty"] = list(w["difficulty"])
+        dv = w["difficulty"]
+        if dv not in ("max", "min") and not (isinstance(dv, list) and len(dv) == 2):
+            raise FormatError('where.difficulty must be [lo, hi], "max" or "min"')
+        out["target_difficulty"] = dv if isinstance(dv, str) else list(dv)
     if "contains" in w:
         c = w["contains"]
         if isinstance(c, list):
@@ -347,13 +366,16 @@ def spec_from_gen(spec):
         if sel is not None and base == "parity":  # odd / even cells: the template names the parity
             r["kind"] = "odd" if sel else "even"
         r["count"] = count
+        for key, (lo, hi) in ((s.shape or {}).get(base) or {}).items():
+            name = "sum" if key == "sum" else "size" if base == "cage" else "length"
+            r[name] = lo if lo == hi else [lo, hi]
         return r
 
     for kind, n in (s.elements or {}).items():
         if isinstance(n, str) and n.lower() == "auto":
             rules.append(tmpl(kind, "auto"))
         elif isinstance(n, str):
-            rules.append(tmpl(kind, {"full": "all", "min": "min", "partition": "tile"}[n.lower()]))
+            rules.append(tmpl(kind, {"full": "all", "min": "min", "partition": "tile", "max": "max"}[n.lower()]))
         elif isinstance(n, (list, tuple)):
             rules.append(tmpl(kind, n[0] if n[0] == n[1] else [n[0], n[1]]))
         elif not n:
@@ -375,7 +397,8 @@ def spec_from_gen(spec):
     if s.target_band is not None:
         w["band"] = s.target_band
     if s.target_difficulty is not None:
-        w["difficulty"] = list(s.target_difficulty)
+        td = s.target_difficulty
+        w["difficulty"] = td if isinstance(td, str) else list(td)
     if s.require:
         w["contains"] = {"codes": list(s.require), "strict": True} if s.strict_require else list(s.require)
     if s.max_elements is not None:

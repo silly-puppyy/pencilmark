@@ -194,3 +194,41 @@ def test_parity_templates():
         SF.validate_spec(spec)
         back = SF.spec_from_gen(SF.spec_to_gen(spec))
         assert [r for r in back["rules"] if r["type"] == "cell"] == [{"type": "cell", "kind": kind, "count": 6}]
+
+
+def test_shape_limits_and_max():
+    """docs/formats/generator-spec.md 2: a cage `sum` with the count "max" (every cage sums to 7, as many as fit) and a
+    line `length` (one whisper of at least 8 cells)"""
+    r = run(spec(6, rules=[{"type": "cage", "sum": 7, "count": "max"}], seed=1, time_limit=5))
+    cages = [x for x in r["puzzle"]["rules"] if x["type"] == "cage"]
+    assert len(cages) >= 4 and all(c["sum"] == 7 for c in cages), cages
+    assert r["info"]["found"] >= 1
+    r = run(spec(rules=[{"type": "line", "kind": "whisper", "length": [8, None], "count": 1}], seed=1, time_limit=60))
+    lines = [x for x in r["puzzle"]["rules"] if x["type"] == "line"]
+    assert len(lines) == 1 and len(lines[0]["cells"]) >= 8, lines
+
+
+def test_difficulty_min():
+    """where.difficulty "min": the easiest result found in the time is returned"""
+    r = run(spec(4, where={"difficulty": "min"}, seed=1, time_limit=3))
+    assert r["info"]["found"] >= 1
+
+
+def test_shape_round_trip_and_refusals():
+    from pencilmark import spec_format as SF
+
+    rules = [
+        {"type": "cage", "count": "max", "size": [2, 3], "sum": 10},
+        {"type": "line", "kind": "thermo", "count": 2, "length": [7, 9]},
+        {"type": "arrow", "count": 1, "length": 3},
+    ]
+    doc = spec(rules=rules, where={"difficulty": "max"})
+    back = SF.spec_from_gen(SF.spec_to_gen(doc))
+    assert back["rules"][1:] == rules and back["where"] == {"difficulty": "max"}
+    for bad in (
+        {"type": "line", "kind": "thermo", "count": 1, "sum": 10},  # sum is for cages
+        {"type": "cage", "count": 1, "length": 3},  # a cage has a size
+    ):
+        with pytest.raises(pencilmark.NotSupportedError):
+            SF.spec_to_gen(spec(rules=[bad]))
+    assert GA.feasibility(SF.spec_to_gen(spec(rules=[{"type": "cage", "count": 2, "size": [12, None]}])))

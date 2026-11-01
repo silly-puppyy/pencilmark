@@ -33,10 +33,14 @@ class Spec:
                       x, v, odd, even ({"kropki_black": [2, 2], "kropki_white": "auto"}); {"kropki": "full"} = zero-given
                       full kropki (no dot = neither relation);
                       {"kropki": "min"} = zero-given minimal dot set; {"cage": "partition"} = killer tiled by cages, few
-                      givens; {"cage": N} with max_givens=0 = killer with exactly N cages and no givens (CP-SAT)
+                      givens; {"cage": N} with max_givens=0 = killer with exactly N cages and no givens (CP-SAT);
+                      "max" = as many as fit: the run uses its whole time and keeps the result with the most
+    shape             {kind: {"length": [lo, hi], "sum": [lo, hi]}}: limits on the placed elements (length: cells of a
+                      cage or line, the shaft of an arrow; sum: cages); None = no limit on that side
     kinds             shorthand: every listed kind keeps >= 1 needed element (each-kind mode)
     target_band       "Very Easy" .. "Extreme" (or 0..6): the card's band must equal it
-    target_difficulty [lo, hi] on the card's difficulty scale
+    target_difficulty [lo, hi] on the card's difficulty scale, or "max" / "min": the hardest / easiest result found in
+                      the whole time
     require           technique codes the card must contain (e.g. ["XWG"]); strict_require = listed as the code itself,
                       not only as an alternative chip
     symmetry          None | rot180 | rot90 | mirror | mirror_v | diagonal | antidiagonal (for givens)
@@ -49,6 +53,7 @@ class Spec:
 
     size: int = 9
     elements: dict | None = None
+    shape: dict | None = None
     kinds: list | None = None
     target_band: Any = None
     target_difficulty: Any = None
@@ -123,7 +128,7 @@ def _plan(s):
         return "classic", [], {}, None
     if len(els) == 1:
         ((k, v),) = els.items()
-        if isinstance(v, str):
+        if isinstance(v, str) and v.lower() not in ("max", "auto"):
             v = v.lower()
             if k == "kropki" and v in ("full", "min"):
                 return f"kropki_{v}", [k], {}, None
@@ -136,7 +141,7 @@ def _plan(s):
             return "cage_count", [k], {}, v
     seeds, caps = {}, {}
     for k, v in els.items():
-        if isinstance(v, str) and v.lower() == "auto":
+        if isinstance(v, str) and v.lower() in ("auto", "max"):
             v = None
         if isinstance(v, str):
             raise ValueError(f"{k}: {v!r} can't be mixed with other kinds (use a count, [min, max] or 'auto')")
@@ -150,6 +155,23 @@ def _plan(s):
         else:
             seeds[k] = int(v or 0)
     return "dig", list(els), seeds, caps
+
+
+def _most(s):
+    """the element classes to maximise (count "max")"""
+    return [EL.norm_kind(k) for k, v in (s.elements or {}).items() if isinstance(v, str) and v.lower() == "max"]
+
+
+def _shape(s):
+    """the shape limits as {kind: {"length": (lo, hi), "sum": (lo, hi)}} with every bound present (None = open)"""
+    out = {}
+    for k, lim in (s.shape or {}).items():
+        k = EL.base_kind(EL.norm_kind(k))
+        out[k] = {}
+        for key, v in lim.items():
+            lo, hi = (v, v) if isinstance(v, int) else v
+            out[k][key] = (lo, hi)
+    return out
 
 
 def feasibility(spec):
@@ -174,13 +196,34 @@ def feasibility(spec):
     except ValueError as e:
         probs.append(str(e))
         tb = None
-    if s.target_difficulty is not None:
+    if isinstance(s.target_difficulty, str) and s.target_difficulty not in ("max", "min"):
+        probs.append(f"target_difficulty must be [low, high], 'max' or 'min', got {s.target_difficulty!r}")
+    elif s.target_difficulty is not None and not isinstance(s.target_difficulty, str):
         try:
             lo, hi = s.target_difficulty
             if lo > hi:
                 probs.append(f"target_difficulty {s.target_difficulty}: low > high")
         except (TypeError, ValueError):
             probs.append(f"target_difficulty must be [low, high], got {s.target_difficulty!r}")
+    for k, lim in _shape(s).items():
+        lo, hi = lim.get("length", (None, None))
+        least = 3 if k == "between" else 1 if k == "arrow" else 2
+        if k not in EL.LENGTHS:
+            probs.append(f"{k}: no length or sum limits (cages, lines and arrows have them)")
+            continue
+        if set(lim) - ({"length", "sum"} if k == "cage" else {"length"}):
+            probs.append(f"{k}: limits {sorted(set(lim) - {'length'})} only apply to cages (sum)")
+        if (lo is not None and lo < least) or (hi is not None and lo is not None and lo > hi):
+            probs.append(f"{k}: length {[lo, hi]} impossible (at least {least}, minimum <= maximum)")
+        if k in ("cage", "renban") and lo is not None and lo > s.size:
+            probs.append(f"{k}: length {lo} above {s.size} (its digits are all different)")
+        if "sum" in lim:
+            slo, shi = lim["sum"]
+            top = s.size * (s.size + 1) // 2
+            if (slo is not None and slo > top) or (shi is not None and shi < 3):
+                probs.append(f"cage sum {[slo, shi]} impossible (a cage of 2..{s.size} cells sums to 3..{top})")
+        if mode in ("partition", "cage_count"):
+            probs.append(f"{k}: length / sum limits are not supported with count 'tile' or a zero-given cage count")
     if s.symmetry is not None:
         try:
             b.orbit(0, s.symmetry)
@@ -336,7 +379,10 @@ def _generate(spec, log=None):
     P = params()
     mode, kinds, seeds, value = _plan(s)
     tb = _band_index(s.target_band)
-    td = tuple(s.target_difficulty) if s.target_difficulty is not None else None
+    td = tuple(s.target_difficulty) if isinstance(s.target_difficulty, (list, tuple)) else None
+    most, shape = _most(s), _shape(s)
+    hunt = s.target_difficulty if isinstance(s.target_difficulty, str) else ("count" if most else None)
+    best = None  # best-so-far search (count "max", difficulty "max" / "min"): (score, result)
     req = list(s.require or [])
     codes = _known_codes()
 
@@ -406,6 +452,9 @@ def _generate(spec, log=None):
                 symmetry=s.symmetry,
                 caps=value if mode == "dig" else None,
                 dense=dense,
+                shape=shape,
+                most=most,
+                deadline=deadline if best is not None else None,  # a best-so-far search with a result stops on time
             )
         elif mode == "partition":
             r = SR.partition(b, rng, chk, n_givens=s.min_givens)
@@ -453,6 +502,8 @@ def _generate(spec, log=None):
                     max_els=s.max_elements if s.max_elements is not None else 10**6,
                     symmetry=s.symmetry,
                     caps=value if mode == "dig" else None,
+                    shape=shape,
+                    most=most,
                 )
                 if rf is not None:
                     got = SR.pull(b, sol, rf[1], rf[2], chk, low, rng, symmetry=s.symmetry, max_givens=s.max_givens)
@@ -483,7 +534,8 @@ def _generate(spec, log=None):
         if verified is False:
             reject("not unique (CP-SAT)")
             continue
-        if not screen_alts or screen_fields is not None:
+        whole = not screen_alts or screen_fields is not None  # the result's card is made in full (once, for a search)
+        if whole and hunt is None:
             card = grade(d, alternatives=True, fields=None)
         info = {
             "mode": mode,
@@ -497,7 +549,24 @@ def _generate(spec, log=None):
             "unique_verified": verified,
             "seed": s.seed,
         }
-        return {"puzzle": d, "card": card, "info": info}
+        if hunt is None:
+            return {"puzzle": d, "card": card, "info": info}
+        if hunt == "count":  # most of the maximised classes, then fewest givens
+            score = (sum(1 for e in els if any(EL.in_class(e, k) for k in most)), -len(givens))
+        else:
+            score = (card.get("difficulty") or 0) * (1 if hunt == "max" else -1)
+        stats["found"] = stats.get("found", 0) + 1
+        if best is None or score > best[0]:
+            best = (score, {"puzzle": d, "card": card, "info": info})
+            if log:
+                log(f"attempt {stats['attempts']}: best so far {score}")
+    if best is not None:
+        r = best[1]
+        if whole:
+            r["card"] = grade(r["puzzle"], alternatives=True, fields=None)
+        r["info"]["found"] = stats["found"]  # puzzles that met the spec; the best of them is returned
+        r["info"]["seconds"] = round(time.time() - t0, 1)
+        return r
     rej = ", ".join(f"{k} x{v}" for k, v in sorted(stats["rejected"].items(), key=lambda x: -x[1])) or "none"
     raise GenerationFailed(
         f"no puzzle met the spec in {s.time_limit:.0f} s ({stats['attempts']} attempts; rejected: {rej})", stats

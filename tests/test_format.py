@@ -246,8 +246,8 @@ def test_format_md_examples():
     """the complete example files in docs/formats/puzzle-format.md, the rule family pages and the guides are valid"""
     pages = [
         ROOT / "docs" / "formats" / "puzzle-format.md",
-        *sorted((ROOT / "docs").glob("rules/*.mdx")),
-        *(ROOT / "docs").glob("guides/*"),
+        *sorted((ROOT / "docs").glob("formats/rules/*.mdx")),
+        *(ROOT / "docs").glob("guides/**/*.md*"),
     ]
     text = "\n".join(f.read_text(encoding="utf-8") for f in pages)
     n = 0
@@ -552,7 +552,7 @@ def test_spec_round_trip():
         {"rules": bad["rules"]},
         {"quality": {"trivial": {"limit": 0.4}}},
         {"givens": {"mask": [1] * 81}},
-        {"where": {"difficulty": "max"}},
+        {"where": {"time": [5, 20]}},
         {"limits": {"results": 3}},
     ):
         d = dict(SF.spec_from_gen(specs[0]), **extra)

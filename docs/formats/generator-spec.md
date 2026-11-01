@@ -7,7 +7,7 @@ description: "The sudoku-spec format: a request to the puzzle generator (board, 
 The `sudoku-spec` format, version 1: a request to a puzzle generator. It reuses the vocabulary of the
 [puzzle format](puzzle-format.md) and the keys of the [grade card](grade-card.md). Version 1 contains exactly what pencilmark's generator runs
 (`pencilmark.generate(spec)`); the parts planned for later versions are listed in section 7 and refused today. Example
-specs: [Example generator specs](../examples/specs/README.md).
+specs: [Generator examples](../guides/generator/generator-examples.mdx).
 
 A request **is a puzzle file with blanks**: the same envelope and rule vocabulary, its own `format` (no puzzle reader
 mistakes it for a puzzle), plus blocks that say what the result must satisfy and how long to try.
@@ -59,6 +59,22 @@ One template per variety, each with its own `count`:
 | `"all"` | kropki only: every true dot drawn, with the matching `negative` (no dot = neither relation) |
 | `"min"` | kropki only: a minimal set of dots |
 | `"tile"` | cages only: the grid tiled by cages |
+| `"max"` | as many as fit: the run uses its whole `limits.time` and returns the result with the most of them |
+
+Shape limits, each a number or `[min, max]` (`max` `null` = no cap):
+
+| Key | Templates | Meaning |
+|---|---|---|
+| `size` | cage | cells per cage |
+| `sum` | cage | the cage total |
+| `length` | line, arrow | cells per line; for an arrow, cells in the shaft (the circle not counted) |
+
+```json
+{"type": "cage", "sum": 10, "count": "max"}
+{"type": "line", "kind": "whisper", "length": [12, null], "count": 1}
+```
+
+Shape limits do not combine with `"tile"` or with a zero-given cage count.
 
 ## 3. Givens and symmetry
 
@@ -75,7 +91,7 @@ Conditions on the result's card, using the card's keys ([Grade card](grade-card.
 | Key | Value |
 |---|---|
 | `band` | one band name |
-| `difficulty` | `[lo, hi]` |
+| `difficulty` | `[lo, hi]`, or `"max"` / `"min"`: the hardest / easiest result found in `limits.time` (the run uses all of it) |
 | `contains` | technique codes that must appear in `contains`; `{"codes": [...], "strict": true}` = as the code itself, not only as an alternative in a chip |
 | `elements` | `{"max": n}`: at most n placed rule elements in total |
 
@@ -100,9 +116,9 @@ Refused by format_version 1 readers with a message naming the part:
 
 - other boards: multi-grid layouts, jigsaw boxes, locked clue rules (rules with cells), `"lock": false` starting points;
 - givens in puzzle form, `mask`, `values` (locked digits);
-- template shape limits: `size`, `length`, `displaced`, `area`; other whisper gaps;
+- template shape limits `displaced` and `area`; other whisper gaps;
 - more symmetry entries, symmetry of rules (`of: "all"` or a rule selector);
-- targets: a list of bands, `difficulty` `"max"` / `"min"` (best-so-far search), `time`, `issues`, `not_contains`,
+- targets: a list of bands, `time`, `issues`, `not_contains`,
   `contains` `only` / `uses`, per-area targets;
 - `quality` (the publishing checks applied as targets);
 - `limits.results` above 1 and `limits.attempts`.

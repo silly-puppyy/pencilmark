@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Generator spec: templates take shape limits, `size` and `sum` for cages and `length` for lines and arrows (a number
+  or `[min, max]`); a template's count may be `"max"` (as many as fit), and `where.difficulty` may be `"max"` or
+  `"min"` (the hardest or easiest puzzle found). These searches use the whole `limits.time` and return the best
+  result. Long lines are grown by a backtracking walk, so a request for a 15-cell whisper finds one.
+- Vudoku is drawn as on sudoku.one: a grey right-angle corner, elbow in the vertex cell, arms reaching into the arm
+  cells (it was a thin V through the cell centres). The docs' examples use the L of three cells the rule is played on.
 - Explanations of chains through a group of cells (grouped AIC, Grouped X-Chain, Empty Rectangle) name the group:
   they described it as "an almost locked set", which the step does not contain (43 steps in the golden corpora).
 - Region-sum lines split only at box borders. An extra region overlapping a box split a line inside that box,
