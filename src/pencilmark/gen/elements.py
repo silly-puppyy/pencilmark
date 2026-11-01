@@ -10,6 +10,15 @@ An element is a tuple (kind, cells, extra):
   ("entropic", path, None)               every 3 consecutive cells: a low, a middle and a high digit (digit_third)
   ("modular", path, None)                every 3 consecutive cells: three different remainders mod 3
   ("parity_line", path, None)            neighbours on the line alternate odd / even (the format's line kind parity)
+  ("palindrome", path, None)             reads the same from both ends (odd length, built from its centre)
+  ("zipper", path, None)                 cells equally far from the centre sum to the centre digit (odd length)
+  ("region_sum", path, None)             the same sum in each box it passes through (two boxes or more)
+  ("lockout", path, None)                ends differ by >= lockout_gap(n), the other digits outside their range
+  ("double_arrow", path, None)           the two ends sum to the digits between them (5+ cells: shorter is a zipper)
+  ("sandwich", row / column from the clue, total)    digits between the 1 and the n sum to total
+  ("xsum", row / column from the clue, total)        the first X cells sum to total, X = the first digit
+  ("skyscraper", row / column from the clue, count)  cells higher than every earlier one
+  ("little_killer", diagonal from the clue, total)   the diagonal's digits sum to total (they may repeat)
   ("arrow", (circle,) + shaft, None)     shaft digits sum to the circle digit
   ("kropki", (i, j), "white" | "black")  consecutive / 1:2 ratio
   ("xv", (i, j), "X" | "V")              sum 10 / sum 5
@@ -23,8 +32,11 @@ from itertools import combinations
 
 from .. import puzzle_json as PJ
 
-KINDS = ("cage", "thermo", "slow_thermo", "whisper", "renban", "between", "entropic", "modular", "parity_line", "arrow",
-         "kropki", "xv", "parity")  # fmt: skip
+KINDS = ("cage", "thermo", "slow_thermo", "whisper", "renban", "between", "entropic", "modular", "parity_line",
+         "palindrome", "zipper", "region_sum", "lockout", "double_arrow", "arrow", "kropki", "xv", "parity", "sandwich",
+         "xsum", "skyscraper", "little_killer")  # fmt: skip
+OUTSIDE = ("sandwich", "xsum", "skyscraper", "little_killer")  # clues outside the grid on a whole row, column, diagonal
+SHARED = ("kropki", "xv", *OUTSIDE)  # elements that may share cells with their own kind (never the same edge / line)
 ALIASES = {
     "killer": "cage",
     "cages": "cage",
@@ -87,6 +99,65 @@ def digit_third(v, n):
     return (v - 1) * 3 // n if n % 3 == 0 else (v - 1) // 3
 
 
+def lockout_gap(n):
+    """lockout: how far apart the ends must be (4 on 9 x 9, the format's default; about half the range otherwise)"""
+    return 4 if n == 9 else max(1, (n - 1) // 2)
+
+
+def line_holds(b, kind, cells, ds):
+    """does a line of a kind checked as a whole (CENTRED, WHOLE) hold for these digits?"""
+    if kind == "palindrome":
+        return ds == ds[::-1]
+    if kind == "zipper":
+        m = len(ds) // 2
+        return len(ds) % 2 == 1 and all(ds[i] + ds[-1 - i] == ds[m] for i in range(m))
+    if kind == "region_sum":
+        sums, prev = [], None
+        for c, d in zip(cells, ds):
+            if b.box_of[c] != prev:
+                sums.append(0)
+                prev = b.box_of[c]
+            sums[-1] += d
+        return len(sums) >= 2 and len(set(sums)) == 1
+    if kind == "lockout":
+        lo, hi = sorted((ds[0], ds[-1]))
+        return hi - lo >= lockout_gap(b.n) and all(d < lo or d > hi for d in ds[1:-1])
+    if kind == "double_arrow":
+        return ds[0] + ds[-1] == sum(ds[1:-1])
+    raise ValueError(kind)
+
+
+def outside_value(kind, ds):
+    """the clue an outside element shows for its digits, read from the clue inwards"""
+    if kind == "sandwich":
+        i, j = sorted((ds.index(1), ds.index(max(ds))))
+        return sum(ds[i + 1 : j])
+    if kind == "xsum":
+        return sum(ds[: ds[0]])
+    if kind == "skyscraper":
+        return sum(1 for i, d in enumerate(ds) if all(d > e for e in ds[:i]))
+    return sum(ds)  # little killer
+
+
+def outside_lines(b, kind, start):
+    """the lines through `start` an outside clue of `kind` reads, each from the clue inwards: the row and column from
+    both ends, or for a little killer the two diagonals from both ends (2 cells or more)"""
+    r0, c0 = b.coords[start]
+    steps = ((1, 1), (1, -1)) if kind == "little_killer" else ((0, 1), (1, 0))
+    out = []
+    for dr, dc in steps:
+        r, c = r0, c0
+        while (r - dr, c - dc) in b.cid:
+            r, c = r - dr, c - dc
+        line = []
+        while (r, c) in b.cid:
+            line.append(b.cid[(r, c)])
+            r, c = r + dr, c + dc
+        if len(line) >= 2:
+            out += [tuple(line), tuple(reversed(line))]
+    return out
+
+
 def whisper_gap(n):
     """German-whisper gap: 5 on 9x9 (standard); about half the digit range otherwise."""
     return 5 if n == 9 else (n + 1) // 2
@@ -104,9 +175,12 @@ def ncomb(n, size, total):
 
 
 LENGTHS = {"cage": (2, 5), "thermo": (2, 6), "slow_thermo": (2, 6), "whisper": (2, 7), "renban": (2, 5), "between": (3, 6),
-           "entropic": (3, 7), "modular": (3, 7), "parity_line": (2, 7), "arrow": (1, 4)}  # fmt: skip
+           "entropic": (3, 7), "modular": (3, 7), "parity_line": (2, 7), "palindrome": (3, 7), "zipper": (3, 7),
+           "region_sum": (3, 8), "lockout": (3, 6), "double_arrow": (5, 7), "arrow": (1, 4)}  # fmt: skip
 # lines always grown by _walk (each step checks the cells before it)
 WALKED = ("slow_thermo", "entropic", "modular", "parity_line")
+CENTRED = ("palindrome", "zipper")  # grown from the centre cell, one cell at each end per step
+WHOLE = ("region_sum", "lockout", "double_arrow")  # a random walk, kept at its longest prefix that holds
 
 
 def length_of(e):
@@ -143,6 +217,10 @@ def grow(b, kind, sol, start, taken, rng, n=40, shape=None):
     smax = lim.get("sum", (None, None))[1]
     if kind == "parity":
         return [("parity", (start,), sol[start] % 2)] if start not in taken else []
+    if kind in OUTSIDE:  # the clue's value is read off the solution; the line must not reach a blocked cell
+        lines = [ln for ln in outside_lines(b, kind, start) if taken.isdisjoint(ln)]
+        return sorted(_stable((kind, ln, outside_value(kind, [sol[c] for c in ln])) for ln in lines),
+                      key=lambda e: (rng.random(),))  # fmt: skip
     if kind in ("kropki", "xv"):  # 2-cell markers true in the solution
         for j in NB[start]:
             if j in taken:
@@ -192,6 +270,23 @@ def grow(b, kind, sol, start, taken, rng, n=40, shape=None):
                 and circ not in taken
             ):
                 out.add(("arrow", (circ,) + tuple(shaft), None))
+            continue
+        if kind in CENTRED:
+            path = _centred(b, kind, sol, start, taken, rng, rng.randint(lo, hi))
+            if path and len(path) >= lo:
+                out.add((kind, tuple(path), None))
+            continue
+        if kind in WHOLE:
+            path = [start]
+            for _s in range(rng.randint(lo, hi) - 1):
+                nxt = [j for j in NB[path[-1]] if j not in path and j not in taken]
+                if not nxt:
+                    break
+                path.append(rng.choice(nxt))
+            while len(path) >= lo and not line_holds(b, kind, path, [sol[c] for c in path]):
+                path.pop()
+            if len(path) >= lo:
+                out.add((kind, tuple(path), None))
             continue
         if kind in WALKED or (want_lo is not None and kind in ("thermo", "whisper", "renban")):  # a backtracking walk
             path = _walk(b, kind, sol, start, taken, rng, rng.randint(lo, hi))
@@ -245,6 +340,24 @@ def grow(b, kind, sol, start, taken, rng, n=40, shape=None):
         return (-len(e[1]),)
 
     return sorted(_stable(e for e in out if fits(e, shape)), key=lambda e: (info(e), rng.random()))
+
+
+def _centred(b, kind, sol, start, taken, rng, target):
+    """a palindrome or zipper around `start`: each step adds a cell at both ends that keep it true in the solution"""
+    path = [start]
+    while len(path) + 2 <= target:
+        pairs = [
+            (j, k)
+            for j in b.nb[path[0]]
+            for k in b.nb[path[-1]]
+            if j != k and j not in path and k not in path and j not in taken and k not in taken
+            and (sol[j] == sol[k] if kind == "palindrome" else sol[j] + sol[k] == sol[start])
+        ]  # fmt: skip
+        if not pairs:
+            break
+        j, k = rng.choice(pairs)
+        path = [j] + path + [k]
+    return path
 
 
 def _walk(b, kind, sol, start, taken, rng, target, budget=None):
@@ -356,6 +469,12 @@ def satisfies(b, g, givens, els):
         elif kind == "parity_line":
             if any(a % 2 == c % 2 for a, c in zip(ds, ds[1:])):
                 return False
+        elif kind in CENTRED or kind in WHOLE:
+            if not line_holds(b, kind, cells, ds):
+                return False
+        elif kind in OUTSIDE:
+            if outside_value(kind, ds) != x:
+                return False
         elif kind in ("entropic", "modular"):
             cls = [digit_third(d, b.n) if kind == "entropic" else d % 3 for d in ds]
             if any(len(set(cls[i : i + 3])) < len(cls[i : i + 3]) for i in range(len(cls) - 1)):
@@ -422,7 +541,15 @@ def to_json(b, givens, els, sol=None, title=None):
             d["rules"].append({"type": "line", "kind": kind, "k": whisper_gap(b.n), "cells": [rc(c) for c in cells]})
         elif kind == "parity_line":
             d["rules"].append({"type": "line", "kind": "parity", "cells": [rc(c) for c in cells]})
-        elif kind in ("thermo", "renban", "between", *WALKED):
+        elif kind == "lockout":
+            d["rules"].append({"type": "line", "kind": kind, "k": lockout_gap(b.n), "cells": [rc(c) for c in cells]})
+        elif kind in OUTSIDE:  # engine constraints, cells from the clue inwards (the writer reads the side off them)
+            key = "count" if kind == "skyscraper" else "total"
+            d["rules"].append({"type": kind, "cells": [rc(c) for c in cells], key: x})
+        elif kind == "double_arrow":  # the engine's equal sum: ends against the cells between (written as the line)
+            ends, mid = [rc(cells[0]), rc(cells[-1])], [rc(c) for c in cells[1:-1]]
+            d["rules"].append({"type": "equal_sum", "segments": [ends, mid]})
+        elif kind in ("thermo", "renban", "between", *WALKED, *CENTRED, "region_sum"):
             d["rules"].append({"type": "line", "kind": kind, "cells": [rc(c) for c in cells]})
         elif kind == "parity":  # graphical rule, not candidates
             d["rules"].append({"type": "parity", "parity": "odd" if x else "even", "cells": [rc(cells[0])]})
@@ -473,6 +600,8 @@ def element_bits(b, kind):
     lg = math.log2
     if kind in ("kropki", "xv"):
         return lg(E) + 1
+    if kind in OUTSIDE:  # 4 sides x n lines (diagonals: about as many) and a clue up to the digits' total
+        return lg(4 * n) + lg(n * (n + 1) // 2)
     if kind == "parity":
         return lg(N) + 1
     if kind == "cage":  # up to n cells: placement (start + 3 directions per step) + sum

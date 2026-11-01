@@ -33,7 +33,7 @@ This page covers the remaining rule families (6.13), vendor rules (6.15), what i
 | `appears` | The digit in `source` appears in at least one of `cells` (an in-cell arrow whose digit occurs again along its ray). |  |
 | `clone` | ≥ 2 equal-sized ordered `regions`; corresponding cells hold equal digits. |  |
 | `isomorphic` | 2 ordered `regions` (twins): one fixed relabelling of the digits maps every cell of the first region to the corresponding cell of the second. |  |
-| `count` | `each` k: every digit appears exactly k times among `cells` (Double Sudoku rows). Or `counts` `[[digit, times], …]`: those digits appear exactly that often. Kind `circles`: a digit that appears among the cells appears exactly as many times as its own value. Cells under `count` MUST NOT also be in a house. |  |
+| `count` | `each` k: every digit appears exactly k times among `cells` (Double Sudoku rows). Or `counts` `[[digit, times], …]`: those digits appear exactly that often. Kind `circles`: a digit that appears among the cells appears exactly as many times as its own value. The cells of an `each` or `counts` rule MUST NOT also form a house (their digits repeat: a Double Sudoku row is a `count`, not a `row`); counting circles may sit on any cells. |  |
 | `distinct_count` | Exactly `value` different digits among `cells`. With `side` it is an outside clue (ordered cells). |  |
 | `global_entropy` | Every 2×2 window of existing cells holds a low, a middle and a high digit (thirds of 1..D; D divisible by 3). |  |
 | `equal_sum` | Every segment (a cell set) has the same sum. For lines, use the `line` kinds `zipper`, `region_sum`, `double_arrow`. |  |

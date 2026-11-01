@@ -72,8 +72,13 @@ LINE = {
             closable=True,
             generated=True,
         ),
-        LineKind("region_sum", "Region Sum", "A region sum line has the same sum in every box it passes through."),
-        LineKind("palindrome", "Palindrome", "A palindrome line reads the same from either end."),
+        LineKind(
+            "region_sum",
+            "Region Sum",
+            "A region sum line has the same sum in every box it passes through.",
+            generated=True,
+        ),
+        LineKind("palindrome", "Palindrome", "A palindrome line reads the same from either end.", generated=True),
         LineKind(
             "entropic",
             "Entropic",
@@ -100,6 +105,7 @@ LINE = {
             "Zipper",
             "Digits equally far from the centre of a zipper line sum to the same total.",
             ends="centre dot",
+            generated=True,
         ),
         LineKind(
             "between",
@@ -116,6 +122,7 @@ LINE = {
             ("value",),
             width=0.05,
             ends="diamonds",
+            generated=True,
         ),
         LineKind(
             "double_arrow",
@@ -123,6 +130,7 @@ LINE = {
             "The two circled ends of a double arrow sum to the digits between them.",
             width=0.05,
             ends="circles",
+            generated=True,
         ),
     )
 }

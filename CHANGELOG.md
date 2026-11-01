@@ -2,9 +2,15 @@
 
 ## Unreleased
 
-- The generator places slow thermos, entropic, modular and parity lines (`{"type": "line", "kind": "slow_thermo" |
-  "entropic" | "modular" | "parity", "count": ...}`), each true in the solution with the format's default parameters; entropic
-  lines need a board of 6 x 6 or more.
+- Format docs: the `count` rule's restriction is that an `each` / `counts` rule's cells must not also form a house; it
+  read as if no counted cell could be in any house, which would forbid counting circles on a normal grid.
+- The generator places every line kind the engine grades: besides thermo, whisper, renban and between, now slow
+  thermo, entropic, modular, parity, palindrome, zipper, region-sum, lockout and double-arrow lines, each true in the
+  solution with the format's default parameters. Entropic lines need a board of 6 x 6 or more; palindromes and zippers
+  have an odd length; double arrows are 5 cells or more (a shorter one is a zipper).
+- The generator places outside clues on single grids: sandwich, x-sum and skyscraper clues on a row or column, little
+  killer clues on a diagonal (`{"type": "sandwich" | "xsum" | "skyscraper", "count": ...}`,
+  `{"type": "sum", "kind": "little_killer", "count": ...}`), read from either end.
 - The generator keeps to `limits.time` while trying elements to restore a removed given and while pruning: one attempt
   on a 9 x 9 with entropic lines ran 40 s past a 180 s limit.
 - `to_export` uses a solution the puzzle already carries (`rate()` and the generator set it) instead of searching again,

@@ -247,6 +247,8 @@ def feasibility(spec):
         mode, kinds, seeds, value = _plan(s)
     except ValueError as e:
         return [str(e)]
+    if s.layout and any(EL.base_kind(k) in EL.OUTSIDE for k in [*kinds, *seeds]):
+        probs.append("outside clues (sandwich, x-sum, skyscraper, little killer) are generated on single grids only")
     if s.size < 6 and any(EL.base_kind(k) == "entropic" for k in [*kinds, *seeds]):
         probs.append("entropic lines need a low, a middle and a high digit group: boards of 6 x 6 or larger")
     try:
@@ -265,7 +267,8 @@ def feasibility(spec):
             probs.append(f"target_difficulty must be [low, high], got {s.target_difficulty!r}")
     for k, lim in _shape(s).items():
         lo, hi = lim.get("length", (None, None))
-        least = 3 if k == "between" else 1 if k == "arrow" else 2
+        # a double arrow of 3 or 4 cells is a zipper (and written as one)
+        least = 3 if k == "between" else 5 if k == "double_arrow" else 1 if k == "arrow" else 2
         if k not in EL.LENGTHS:
             probs.append(f"{k}: no length or sum limits (cages, lines and arrows have them)")
             continue

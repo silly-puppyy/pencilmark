@@ -307,6 +307,9 @@ def section(name):
     plural = lambda n, w: f"{n} {w}" + ("" if n == 1 else "es" if w.endswith("x") else "s")
     names = {"cage": "cage", "thermo": "thermo", "slow_thermo": "slow thermo", "whisper": "whisper", "renban": "renban",
              "between": "between line", "entropic": "entropic line", "modular": "modular line", "parity_line": "parity line",
+             "palindrome": "palindrome", "zipper": "zipper", "region_sum": "region-sum line", "lockout": "lockout line",
+             "double_arrow": "double arrow", "sandwich": "sandwich clue", "xsum": "x-sum clue",
+             "skyscraper": "skyscraper clue", "little_killer": "little killer clue",
              "arrow": "arrow", "kropki_white": "white dot", "kropki_black": "black dot", "x": "X", "v": "V",
              "odd": "odd cell", "even": "even cell"}  # fmt: skip
     made = [plural(n, names.get(k, k)) for k, n in sorted((i.get("elements") or {}).items(), key=lambda kv: -kv[1])]

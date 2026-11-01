@@ -46,6 +46,7 @@ class Board:
             self.origins = list(origins)
             self.coords, groups = _layout_regions(self.origins, n, self.bh, self.bw)
             self.units = [list(g.cells) for g in groups]
+            boxes = [list(g.cells) for g in groups if g.kind == "box"]
         else:
             self.origins = [(0, 0)]
             self.coords = [(r, c) for r in range(n) for c in range(n)]
@@ -58,6 +59,10 @@ class Board:
             ]
             self.units = rows + cols + boxes
         self.N = len(self.coords)
+        self.box_of = {}  # cell -> its box (region-sum lines split at box borders)
+        for k, box in enumerate(boxes):
+            for c in box:
+                self.box_of.setdefault(c, k)
         self.cid = {rc: i for i, rc in enumerate(self.coords)}
         self.rows = max(r for r, _ in self.coords) + 1
         self.cols = max(c for _, c in self.coords) + 1

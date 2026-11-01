@@ -121,7 +121,7 @@ def test_feasibility_fails_fast():
     with pytest.raises(GenerationFailed, match="at least 17 givens"):
         pencilmark.generate(spec(9, givens={"count": [0, 12]}))
     assert any("Hard technique" in p for p in GA.feasibility({"size": 9, "target_band": "Easy", "require": ["SWF"]}))
-    assert any("unknown element kind" in p for p in GA.feasibility({"elements": {"sandwich": 2}}))
+    assert any("unknown element kind" in p for p in GA.feasibility({"elements": {"yin_yang": 2}}))
     assert time.time() - t < 2
 
 
@@ -330,3 +330,46 @@ def test_more_line_kinds():
                 assert all(len(set(cls[i : i + 3])) == len(cls[i : i + 3]) for i in range(len(cls) - 1))
     with pytest.raises(GenerationFailed, match="entropic"):
         pencilmark.generate(spec(4, rules=[{"type": "line", "kind": "entropic", "count": 1}], seed=1, time_limit=5))
+
+
+@pytest.mark.slow  # about 40 s
+def test_whole_line_kinds():
+    """palindrome, zipper, region-sum, lockout and double-arrow lines are true in the solution and come back as the
+    kind requested (a double arrow is 5+ cells: a shorter one is a zipper and is written as one)"""
+    from pencilmark.gen import elements as EL
+    from pencilmark.gen.board import Board
+
+    b = Board(6)
+    for kind in ("palindrome", "zipper", "region_sum", "lockout", "double_arrow"):
+        r = run(spec(6, rules=[{"type": "line", "kind": kind, "count": [2, None]}], seed=1, time_limit=60))
+        lines = [x for x in r["puzzle"]["rules"] if x["type"] == "line" and x["kind"] == kind]
+        assert len(lines) >= 2, kind
+        sol = r["puzzle"]["solution"]
+        for x in lines:
+            cells = [(int(c[1]) - 1) * 6 + int(c[3]) - 1 for c in x["cells"]]
+            assert EL.line_holds(b, kind, cells, [sol[c] for c in cells]), (kind, x)
+    with pytest.raises(GenerationFailed, match="double_arrow"):
+        pencilmark.generate(spec(6, rules=[{"type": "line", "kind": "double_arrow", "count": 1, "length": 4}], seed=1))
+
+
+@pytest.mark.slow  # about 25 s
+def test_outside_clues():
+    """sandwich, skyscraper and little killer clues are true in the solution, read from the side the file names;
+    layouts refuse them (the little killer on 4 x 4: a 6 x 6 one digs for about a minute)"""
+    from pencilmark.gen import elements as EL
+
+    for t, D in (({"type": "sandwich"}, 6), ({"type": "skyscraper"}, 6), ({"type": "sum", "kind": "little_killer"}, 4)):
+        r = run(spec(D, rules=[dict(t, count=[2, None])], seed=1, time_limit=60))
+        clues = [x for x in r["puzzle"]["rules"] if x["type"] == t["type"] and x.get("kind") == t.get("kind")]
+        assert len(clues) >= 2, t
+        sol = r["puzzle"]["solution"]
+        for x in clues:
+            ds = [sol[(int(c[1]) - 1) * D + int(c[3]) - 1] for c in x["cells"]]
+            kind = t.get("kind") or t["type"]
+            assert EL.outside_value(kind, ds) == x.get("sum", x.get("value")), x
+    origins = [(0, 0), (6, 6)]  # twodoku
+    grids = [{"type": "box_grid", "origin": f"r{r + 1}c{c + 1}", "box": [3, 3]} for r, c in origins]
+    with pytest.raises(GenerationFailed, match="outside clues"):
+        pencilmark.generate(
+            dict(spec(), board={"rows": 15, "cols": 15}, rules=grids + [{"type": "sandwich", "count": 2}])
+        )

@@ -69,7 +69,7 @@ def dig(
         lines stay apart; a whisper may cross a cage, a dot sit on a cage's cell); edge markers may share cells, never
         the same edge"""
         bk = EL.base_kind(kind)
-        if bk in ("kropki", "xv"):
+        if bk in EL.SHARED:
             return set(blocked)
         return set(blocked) | {c for x in els if x[0] == bk for c in x[1]}
 
@@ -95,7 +95,7 @@ def dig(
         best = []
         for _pack in range(12):
             got, u = [], taken(kind)
-            edge = EL.base_kind(kind) in ("kropki", "xv")
+            edge = EL.base_kind(kind) in EL.SHARED
             for i in sorted(range(b.N), key=lambda _: rng.random()):
                 if i in u:
                     continue

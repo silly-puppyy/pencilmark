@@ -34,6 +34,8 @@ GEN_KINDS = {
     "arrow": ("arrow", None),
     **{k: ("edge", k) for k, ek in EDGE.items() if ek.generated},  # rules/edge.py
     "parity": ("cell", "parity"),
+    **{k: (k, None) for k in ("sandwich", "xsum", "skyscraper")},  # outside clues (gen/elements.OUTSIDE)
+    "little_killer": ("sum", "little_killer"),
 }
 RULE_KIND = {v: k for k, v in GEN_KINDS.items()}
 RULE_KIND.update({("cell", "odd"): "odd", ("cell", "even"): "even"})  # one parity: its own element class

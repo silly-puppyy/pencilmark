@@ -12,13 +12,19 @@ import traceback
 from concurrent.futures import ProcessPoolExecutor
 
 BOX = {4: [2, 2], 6: [2, 3], 8: [2, 4], 9: [3, 3]}
-LINES = ["thermo", "slow_thermo", "whisper", "renban", "between", "entropic", "modular", "parity"]
+OUTSIDE = [{"type": "sandwich"}, {"type": "xsum"}, {"type": "skyscraper"}, {"type": "sum", "kind": "little_killer"}]
+LINES = None  # every line kind the generator places (rules/line.py), read in request()
 
 
 LAYOUTS = ["samurai", "twodoku", "butterfly", "sohei", "windmill"]
 
 
 def request(rng):
+    global LINES
+    if LINES is None:
+        from pencilmark.rules.line import LINE
+
+        LINES = [k for k, lk in LINE.items() if lk.generated]
     D = rng.choice([4, 6, 6, 8, 9, 9, 9])
     rules = [{"type": "box_grid", "origin": "r1c1", "box": BOX[D]}]
     layout = rng.choice(LAYOUTS) if rng.random() < 0.25 else None
@@ -34,7 +40,7 @@ def request(rng):
             )
     used = set()
     for _ in range(rng.randint(1, 3)):
-        k = rng.choice(["cage", "line", "arrow", "kropki", "xv", "cell"])
+        k = rng.choice(["cage", "line", "arrow", "kropki", "xv", "cell", "outside"])
         t = {
             "cage": {"type": "cage"},
             "arrow": {"type": "arrow"},
@@ -42,6 +48,7 @@ def request(rng):
             "xv": {"type": "edge", "kind": "xv"},
             "cell": {"type": "cell", "kind": rng.choice(["odd", "even", "parity"])},
             "line": {"type": "line", "kind": rng.choice(LINES)},
+            "outside": dict(rng.choice(OUTSIDE)),
         }[k]
         key = (t["type"], t.get("kind"))
         if key in used:
