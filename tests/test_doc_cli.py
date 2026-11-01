@@ -4,6 +4,7 @@ lines left out. Slow (about 10 s): marked `slow`, run with `pytest -m slow`.
 """
 
 import re
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -38,8 +39,13 @@ def norm(lines):
 @pytest.mark.slow
 @pytest.mark.parametrize("command,shown", examples())
 def test_cli_example_output(command, shown):
-    cmd = command.replace("| pencilmark ", f"| {sys.executable} -m pencilmark ")
-    real = norm(subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=300).stdout.split("\n"))
+    # no shell: Windows cmd would pass echo's quotes on, so the piped text is made here as a POSIX shell makes it
+    feed, args = command.split("| pencilmark ", 1)
+    word, text = shlex.split(feed)
+    text = text + "\n" if word == "echo" else text.encode().decode("unicode_escape")
+    run = subprocess.run([sys.executable, "-m", "pencilmark", *shlex.split(args)], input=text, capture_output=True,
+                         text=True, timeout=300)  # fmt: skip
+    real = norm(run.stdout.split("\n"))
     k = 0
     for want in norm(shown):
         if want in ("...", "…"):
