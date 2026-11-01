@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Chains held in the head (mental chains) are explained when they pass through a group of cells (they crashed into
+  the generic sentence), and only with a chain that visibly closes: the engine's record can stop short of the step
+  that comes back to the placement, and the text then claimed a return it did not show. A chain that stops short is
+  completed by the explainer's own search, or its closing clash is stated ("But r4c7 = 9 and r2c6 = 9 can't both
+  hold").
 - A malformed SudokuPad, f-puzzles or penpa payload is a `DecodeError` saying so ("malformed f-puzzles data (KeyError:
   'cells')"); a missing key or a value of the wrong type raised KeyError, TypeError, AttributeError or IndexError from
   the translator (over half of 3,000 mutated f-puzzles payloads).

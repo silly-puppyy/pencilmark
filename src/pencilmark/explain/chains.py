@@ -1022,6 +1022,16 @@ def _mental_chain_single(ctx, ps, path):
     )
 
 
+def _closes(p, st, path):
+    """does a placement chain visibly come back? Its last node is the placement itself, or clashes with the first
+    consequence of assuming it false (the engine's record can stop before the step that closes the loop)"""
+    z = path[-1][0]
+    if z == path[0][0]:
+        return True
+    second = path[1][0] if len(path) > 1 else None
+    return "grp" not in (z[0], (second or ("grp",))[0]) and second is not None and _weak(p, st, z, second)
+
+
 def _h_mental_chain(ctx):
     """Short chain reasoned without notes (on the mental view), ending in a single."""
     nm, p, st = ctx.nm, ctx.p, ctx.st
@@ -1034,7 +1044,8 @@ def _h_mental_chain(ctx):
         r = _mental_chain_single(ctx, ps, ep)
         if r:
             return r
-    path = ep if ep and ep[0][0] == (c, v) else _find_chain(p, ps, (c, v), "aic", max_len=8, place=True)
+    closes = ep and ep[0][0] == (c, v) and _closes(p, ps, ep)
+    path = ep if closes else _find_chain(p, ps, (c, v), "aic", max_len=8, place=True)
     if path:
         steps = _chain_text(nm, p, path)
         links = [
@@ -1048,17 +1059,19 @@ def _h_mental_chain(ctx):
             for i in range(1, len(path))
         ]
         short = f"{nm.cell(c)} = {v}: a short chain without notes -- if it weren't {v}, it would have to be {v}"
+        z, second = path[-1][0], path[1][0]
+        back = (  # the clash that closes the loop, when the chain stops short of the placement itself
+            f"But {nm.cell(z[0])} = {z[1]} and {nm.cell(second[0])} = {second[1]} can't both hold, so {nm.cell(c)} is "
+            f"{v} after all."
+            if z != path[0][0] and "grp" not in (z[0], second[0])
+            else f"The chain comes back and forces {nm.cell(c)} to be {v} after all, so it is {v}."
+        )
         teach = (
             f"No pencil marks needed, just a few 'if-then' steps on what each cell can still be. Suppose "
-            f"{nm.cell(c)} is not {v}: {', '.join(steps)}. The chain comes back and forces {nm.cell(c)} to be "
-            f"{v} after all, so it is {v}."
+            f"{nm.cell(c)} is not {v}: {', '.join(steps)}. {back}"
         )
         J = _J(ctx, digits=[v], links=links, base_cells=[c for n in path for c in _node_cells(n[0])])
-        chain = [
-            [nm.cell(l["a"][0]), l["a"][1], nm.cell(l["b"][0]), l["b"][1], "strong" if l["strong"] else "weak"]
-            for l in links
-        ]
-        return _result(ctx, J, short, teach, True, chain=chain, lines=_chain_lines(p, path))
+        return _result(ctx, J, short, teach, True, chain=_chain_vis(nm, links), lines=_chain_lines(p, path))
     others = [d for d in digits_of(md[c]) if d != v]
     found = []
     for d in others:
