@@ -129,7 +129,8 @@ def validate(doc):
         if not isinstance(sol, list) or len(sol) != R * C:
             raise FormatError("solution must have the shape of givens")
         for k, (v, w) in enumerate(zip(giv, sol)):
-            if (v is None) != (w is None) or (w is not None and (not isinstance(w, int) or not 1 <= w <= D)):
+            bad = w is not None and (not isinstance(w, int) or isinstance(w, bool) or not 1 <= w <= D)
+            if (v is None) != (w is None) or bad:
                 raise FormatError(f"solution entry {k} does not match givens (null where givens is null, else 1..{D})")
     cands = doc.get("candidates")
     if cands is not None:
@@ -139,6 +140,8 @@ def validate(doc):
             B.idx(k)
             if not isinstance(v, list) or any(not isinstance(x, int) or not 1 <= x <= D for x in v):
                 raise FormatError(f"candidates of {k} must be a list of digits 1..{D}")
+    if doc.get("meta") is not None and not isinstance(doc["meta"], dict):
+        raise FormatError("meta must be an object")
     if not isinstance(doc["rules"], list):
         raise FormatError("rules must be a list")
     B.grid_origins = {
@@ -231,6 +234,8 @@ def _validate_rule(r, B):
     if not isinstance(r, dict) or "type" not in r:
         raise FormatError("a rule must be an object with a type")
     t = r["type"]
+    if not isinstance(t, str):
+        raise FormatError(f"a rule type must be a string, not {t!r}")
     if t == "custom":
         raise FormatError(
             '"type": "custom" is reserved for a future rule language (custom rules written in the file); '
@@ -250,6 +255,8 @@ def _validate_rule(r, B):
         if k not in r:
             raise FormatError(f"missing key {k!r}")
     kind = r.get("kind")
+    if kind is not None and not isinstance(kind, str):
+        raise FormatError(f"a rule kind must be a string, not {kind!r}")
     if t in KINDS and (kind is not None or t not in ("neighbours", "count")) and kind not in KINDS[t]:
         raise FormatError(f"unknown kind {kind!r}")
     if t in ("grid", "box_grid"):

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Malformed files get a format error, not a crash: a rule `type` or `kind` that is not a string, a `meta` that is not
+  an object (validate accepted it and `load` failed) and `true` in a solution (found by mutating valid files).
 - Chains through a group of cells are explained when the group ends the chain too (they fell back to a generic
   sentence: "one of r2c5, r8c5 is 9" now states that end), and grouped chains are named as their step (Grouped
   X-Chain, Empty Rectangle) instead of "Alternating Inference Chain" (6 steps in the private corpus).

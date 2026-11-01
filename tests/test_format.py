@@ -921,3 +921,21 @@ def test_entropic_groups_with_an_empty_third_round_trip():
                    {"type": "line", "kind": "entropic", "groups": [[1, 2, 3], [4], []], "cells": ["r1c1", "r1c2"]}]}  # fmt: skip
     doc = pencilmark.to_export(d)
     assert doc["rules"][1]["groups"] == [[1, 2, 3], [4], []] and pencilmark.to_export(doc) == doc
+
+
+def test_malformed_values_are_format_errors():
+    """found by mutating valid files: a rule type or kind that is not a string, a meta that is not an object and a
+    true in the solution raised TypeError (or crashed load) instead of a FormatError"""
+    base = json.loads((ROOT / "docs" / "examples" / "classic.json").read_text(encoding="utf-8"))
+    rule = {"type": "line", "kind": "thermo", "cells": ["r1c1", "r1c2"]}
+    sol = list(base.get("solution") or [])
+    bads = [
+        dict(base, rules=base["rules"] + [dict(rule, type={"a": 1})]),
+        dict(base, rules=base["rules"] + [dict(rule, kind=["thermo"])]),
+        dict(base, meta=-1),
+    ]
+    if sol:
+        bads.append(dict(base, solution=[True if i == 0 else v for i, v in enumerate(sol)]))
+    for bad in bads:
+        with pytest.raises(pencilmark.FormatError):
+            pencilmark.validate(bad)
