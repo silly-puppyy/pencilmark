@@ -1,0 +1,114 @@
+---
+title: Generate for learning
+description: "Puzzles for practice: one new technique at a time, and the same kind of puzzle at rising bands."
+---
+
+import Swatch from '@site/src/components/Swatch';
+
+# Generate for learning
+
+A learner needs puzzles that ask for one new idea at a time. The generator can target a band and require a technique;
+a short loop does the rest. Two recipes: a technique ladder, where each puzzle adds exactly one new technique to what
+the earlier rungs taught, and a progression, the same kind of puzzle at rising bands. The puzzles below were made this way by
+`tools/gen_learning_examples.py`.
+
+## 1. One new technique at a time
+
+Ask for the technique (`"strict": true`, so it must appear as itself, not only as an alternative) and the band it
+belongs to, then keep the first puzzle whose card lists nothing beyond singles and what the learner already knows. The
+band caps what the solver may need, but other techniques of the same band can still turn up, hence the check:
+
+```py
+import pencilmark
+
+SINGLES = {"FHS", "HSI", "NSI"}
+
+def practice(code, band, known=(), tries=24):
+    for seed in range(1, tries + 1):
+        spec = {"format": "sudoku-spec", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
+                "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}],
+                "where": {"band": band, "contains": {"codes": [code], "strict": True}},
+                "limits": {"time": 120, "seed": seed}}
+        try:
+            result = pencilmark.generate(spec)
+        except pencilmark.GenerationFailed:
+            continue
+        codes = {c["code"] for c in result["card"]["contains"]}
+        if code in codes and codes <= SINGLES | set(known) | {code}:
+            return result["puzzle"]
+
+puzzle = practice("XWG", "Hard", known=["PPR", "NPR"])   # an X-Wing, nothing new besides
+```
+
+[Techniques](../../grades/techniques.md) lists every code with its band. A ladder for classic sudoku, easiest first:
+
+### Pointing / box-line reduction (`PPR`, Easy)
+
+<Swatch name="learning-ladder-1-pointing" />
+
+**Easy**, difficulty 5.0, about 8.6 min (seed 1). Contains: Hidden Single, Pointing / Box-Line Reduction.
+
+### Naked pair (`NPR`, Medium)
+
+<Swatch name="learning-ladder-2-naked-pair" />
+
+**Medium**, difficulty 6.9, about 12.7 min (seed 1). Contains: Hidden Single, Naked Single, Pointing / Box-Line Reduction, Naked Pair.
+
+### Hidden pair (`HPR`, Medium)
+
+<Swatch name="learning-ladder-3-hidden-pair" />
+
+**Medium**, difficulty 7.7, about 14.2 min (seed 10). Contains: Hidden Single, Naked Single, Hidden Pair.
+
+### Naked triple (`NTR`, Medium)
+
+<Swatch name="learning-ladder-4-naked-triple" />
+
+**Medium**, difficulty 6.4, about 12.4 min (seed 1). Contains: Hidden Single, Pointing / Box-Line Reduction, Naked Triple.
+
+### X-Wing (`XWG`, Hard)
+
+<Swatch name="learning-ladder-5-x-wing" />
+
+**Hard**, difficulty 5.4, about 8.7 min (seed 3). Contains: Hidden Single, X-Wing.
+
+### Swordfish (`SWF`, Very Hard)
+
+<Swatch name="learning-ladder-6-swordfish" />
+
+**Very Hard**, difficulty 7.6, about 14.0 min (seed 15). Contains: Hidden Single, Naked Single, Pointing / Box-Line Reduction, Swordfish.
+
+
+## 2. The same puzzle kind at rising bands
+
+For a progression, keep the request and raise the band. Here, killers with at least six cages, from Very Easy to
+Hard; the cages are the same template every time, only `where.band` changes:
+
+```json
+{"rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}, {"type": "cage", "count": [6, null]}],
+ "where": {"band": "Medium"}}
+```
+
+### Very Easy
+
+<Swatch name="learning-killer-1-very-easy" />
+
+**Very Easy**, difficulty 5.4, about 16.5 min. Contains: Hidden Single.
+
+### Easy
+
+<Swatch name="learning-killer-2-easy" />
+
+**Easy**, difficulty 8.1, about 33.9 min. Contains: Hidden Single, Naked Single, Pair / triple in the head, Innies & outies (rule of 45).
+
+### Medium
+
+<Swatch name="learning-killer-3-medium" />
+
+**Medium**, difficulty 8.7, about 30.4 min. Contains: Hidden Single, Naked Single, Pointing / Box-Line Reduction, Pair / triple in the head, Two rules together.
+
+### Hard
+
+<Swatch name="learning-killer-4-hard" />
+
+**Hard**, difficulty 9.9, about 34.1 min. Contains: Hidden Single, Naked Single, Pointing / Box-Line Reduction, Notes in the head, Killer cage combinations, Naked Pair, Hidden Pair, Naked Quad, Simple Colouring.
