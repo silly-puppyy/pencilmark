@@ -421,8 +421,20 @@ def render(doc, dark=False, cell=48, annotate=False, labels=False, background=Tr
                         "shade",
                         f'<rect x="{m + cc * u}" y="{m + rr * u}" width="{u}" height="{u}" fill="{col}" opacity="{0.72 if dark else 1}"/>',
                     )
-        elif t == "vudoku":
-            add("lines", polyline([r["cells"][1], r["cells"][0], r["cells"][2]], "#aaaaaa", 0.04))
+        elif t == "vudoku":  # a right-angle corner: elbow inside the vertex cell, arms reaching into the arm cells
+            (vr, vc), arms = rc(r["cells"][0]), [rc(x) for x in r["cells"][1:]]
+            d = [(ar - vr, ac - vc) for ar, ac in arms]
+            if sorted(abs(a) + abs(b) for a, b in d) == [1, 1] and d[0][0] * d[1][0] + d[0][1] * d[1][1] == 0:
+                sx, sy = sum(b for _, b in d), sum(a for a, _ in d)  # towards the corner the three cells share
+                ex, ey = cx(vc) + sx * 0.2 * u, cy(vr) + sy * 0.2 * u
+                pts = [(ex + b * 0.47 * u, ey + a * 0.47 * u) for a, b in d]
+                add(
+                    "lines",
+                    f'<polyline points="{pts[0][0]:.1f},{pts[0][1]:.1f} {ex:.1f},{ey:.1f} {pts[1][0]:.1f},{pts[1][1]:.1f}" '
+                    f'fill="none" stroke="#a7abb0" stroke-width="{0.08 * u:.1f}" stroke-linejoin="miter"/>',
+                )
+            else:  # not an L: a V through the cell centres
+                add("lines", polyline([r["cells"][1], r["cells"][0], r["cells"][2]], "#a7abb0", 0.06))
 
     cur[0] = None
     if labels:  # r1.. down the left, c1.. along the top, in the muted text colour

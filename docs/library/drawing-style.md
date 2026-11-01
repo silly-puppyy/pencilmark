@@ -62,7 +62,7 @@ corner clues, digits, outside clues.
 | `cell` `low` / `high` | Light / dark grey diamond behind the digit. |
 | `cell` `set` / `exclude` | The values in small type along the bottom of the cell; `exclude` struck through. |
 | `clone` | The same light shading colour for all regions of one rule (palette as for colour regions). |
-| `vudoku` | A thin V through the three cell centres, vertex at `cells[0]`. |
+| `vudoku` | A grey right-angle corner: the elbow inside the vertex cell `cells[0]`, near the corner the three cells share, the arms reaching into the arm cells. Cells that are not an L get a V through their centres. |
 | `equal_sum` | Thin dashed outline around each segment. |
 | `isomorphic`, `count`, `global_entropy`, `neighbours`, `negative` | Nothing in the grid (listed in the legend). |
 | `relation` | Thin grey connector between the two cell centres. |

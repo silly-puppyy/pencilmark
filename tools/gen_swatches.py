@@ -253,7 +253,7 @@ SWATCHES = {
         grid("136", "524", "798"),
     ),
     "vudoku": (
-        [{"type": "vudoku", "cells": ["r2c2", "r3c1", "r3c3"]}, {"type": "vudoku", "cells": ["r1c2", "r2c1", "r2c3"]}],
+        [{"type": "vudoku", "cells": ["r2c2", "r1c2", "r2c3"]}, {"type": "vudoku", "cells": ["r3c1", "r2c1", "r3c2"]}],
         G_VUD,
     ),
     # 6.9 outside clues: several sides, the box filled
@@ -349,9 +349,13 @@ def drawings():
             rules=[BOXES] + variants.preset_rules(v),
         )
         out["variant-" + v.lower().replace(" ", "-")] = lambda dark, doc=doc: RENDER(doc, dark=dark, cell=24)
-    for f in sorted((Path(__file__).resolve().parents[1] / "docs" / "examples" / "generated").glob("*.json")):
-        doc = json.loads(f.read_text(encoding="utf-8"))["puzzle"]  # the generator examples (gen_generator_examples.py)
-        out["generated-" + f.stem] = lambda dark, doc=doc: RENDER(doc, dark=dark, cell=40)
+    for kind in (
+        "generated",
+        "learning",
+    ):  # the generator examples and the learning guide's puzzles (gen_*_examples.py)
+        for f in sorted((Path(__file__).resolve().parents[1] / "docs" / "examples" / kind).glob("*.json")):
+            doc = json.loads(f.read_text(encoding="utf-8"))["puzzle"]
+            out[f"{kind}-{f.stem}"] = lambda dark, doc=doc: RENDER(doc, dark=dark, cell=40)
     for f in EXAMPLES:  # example puzzles: plain, and annotated with row / column numbers for the board + JSON view
         doc = json.loads(f.read_text(encoding="utf-8"))
         out["example-" + f.stem] = lambda dark, doc=doc: RENDER(doc, dark=dark, cell=40)

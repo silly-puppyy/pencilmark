@@ -18,7 +18,7 @@ Full form (every field optional except what the puzzle needs):
                {"type": "antiknight"}, {"type": "antiking"}, {"type": "nonconsecutive"},
                {"type": "frame", "side": "top", "index": 3, "sum": 12},              # first 3 cells from that edge
                {"type": "rossini", "arrows": [{"side": "left", "index": 2, "towards": "in"}], "all_given": true},
-               {"type": "vudoku", "cells": ["r2c2", "r3c1", "r3c3"]},   # vertex = sum or difference of the arms
+               {"type": "vudoku", "cells": ["r2c2", "r1c2", "r2c3"]},   # vertex = sum or difference of the arms
                {"type": "lowhigh", "high": ["r1c1", ...], "split": 5},  # marked 6..9, the rest 1..5
                {"type": "parity", "parity": "odd", "cells": [...]},    # shaded odd / even cells (graphical)
                {"type": "digit_class", "digits": "123", "cells": [...]},  # cells marked as holding one of these digits
