@@ -2,10 +2,12 @@
 
 ## Unreleased
 
+## 1.1.0 (2026-11-01)
+
 - The generator's card is the card `rate()` gives the puzzle it returns. A butterfly killer's said 7.9 where `rate()`
   said 8.9: the search-effort part of the card ran a capped search when no solution was at hand and counted 0 when
   it gave up (it now uses the uniqueness search), and multi-grid layouts numbered their cells grid by grid inside the
-  generator but row by row when read back. Generated layout puzzles differ from 1.1.0 for the same seed.
+  generator but row by row when read back.
 - Faster cards on long renbans and other all-different rules, same cards: combining rules with houses asks at every
   step of its search whether a rule can still be met, and answers it with a matching search instead of counting
   every assignment (the long-lines example: 26 s to 6 s).
@@ -14,8 +16,6 @@
 - Malformed generator requests get a format error, not a crash: a `quality` that is not an object, a `box_grid`
   without an `origin` cell, a rule `kind` that is not a string, or `fields` holding something other than names
   (`rate(fields=...)` too, as a ValueError). Found by mutating requests.
-
-## 1.1.0 (2026-11-01)
 
 - New publishing check `unusual` (reject): a difficulty outside the middle 80% of published puzzles of the same band,
   classic 9x9 and variants apart, Very Easy without a floor and Extreme without a ceiling (ranges measured on the
