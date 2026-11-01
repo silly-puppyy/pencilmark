@@ -117,7 +117,9 @@ def test_malformed_fpuzzles_is_a_decode_error():
 def test_sudokupad_numbers_and_nulls_in_real_files():
     """found reading 19,194 stored SudokuPad puzzles: a colour typed without "#" arrives as a number (777777), an
     all-digit solution as a number, and element lists can hold nulls (SudokuPad skips them); each crashed the reader"""
-    rows = [[{"value": v} if v else {} for v in row] for row in ([1, 2, 3, 4], [3, 4, 1, 2], [2, 1, 4, 3], [4, 3, 2, 0])]
+    rows = [
+        [{"value": v} if v else {} for v in row] for row in ([1, 2, 3, 4], [3, 4, 1, 2], [2, 1, 4, 3], [4, 3, 2, 0])
+    ]
     sp = {
         "format": "scl",
         "meta": {"rules": "Normal sudoku rules apply.", "solution": 1234341221434321},
