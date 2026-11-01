@@ -470,6 +470,45 @@ static bool alldiff_path_ok(const NConstraint& k) {
     return true;
 }
 
+// the digit sets an all-different rule allows, from the digits in uni: runs of nv consecutive digits (a set) or nv
+// distinct digits summing to a total (a sum). fn(set) returns true to stop; returns whether one did.
+template <class Fn>
+static bool alldiff_sets(const NConstraint& k, uint32_t uni, int D, Fn&& fn) {
+    const int nv = k.nv();
+    if (k.type == NT_SET) {
+        for (int lo = 1; lo + nv - 1 <= D; ++lo) {
+            uint32_t set = 0;
+            for (int d = lo; d < lo + nv; ++d) set |= bitd(d);
+            if ((set & uni) == set && fn(set)) return true;
+        }
+        return false;
+    }
+    std::vector<int> digs;  // ascending
+    for (uint32_t m = uni; m; m &= m - 1) digs.push_back(__builtin_ctz(m) + 1);
+    const int nd = (int)digs.size();
+    bool stop = false;
+    std::function<void(int, int, int, uint32_t)> rec = [&](int s, int r, int rem, uint32_t set) {
+        if (r == 0) {
+            if (rem == 0) stop = fn(set);
+            return;
+        }
+        for (int i = s; i <= nd - r && !stop; ++i) {
+            int d = digs[i];
+            if (d * r > rem) break;  // digits ascending: min sum of r more >= d*r
+            // max achievable with r digits from the top of the list
+            int mx = 0;
+            for (int j = nd - r; j < nd; ++j) mx += digs[j];
+            if (mx < rem) return;
+            rec(i + 1, r - 1, rem - d, set | bitd(d));
+        }
+    };
+    if (k.totals.empty()) rec(0, nv, k.total, 0);
+    else
+        for (int t : k.totals)
+            if (!stop) rec(0, nv, t, 0);
+    return stop;
+}
+
 static void alldiff_gac(const NConstraint& k, const uint32_t* dom0, const std::vector<GacReq>& req, int D,
                         GacOut& out) {
     const int nv = k.nv();
@@ -534,38 +573,48 @@ static void alldiff_gac(const NConstraint& k, const uint32_t* dom0, const std::v
             }
         }
     };
-    if (k.type == NT_SET) {
-        for (int lo = 1; lo + nv - 1 <= D; ++lo) {
-            uint32_t set = 0;
-            for (int d = lo; d < lo + nv; ++d) set |= bitd(d);
-            if ((set & uni) == set) do_set(set);
-        }
-    } else {
-        // digit sets of size nv from uni summing to total
-        std::vector<int> digs;
-        for (uint32_t m = uni; m; m &= m - 1) digs.push_back(__builtin_ctz(m) + 1);
-        const int nd = (int)digs.size();
-        std::vector<int> suf(nd + 1, 0);
-        std::function<void(int, int, int, uint32_t)> rec = [&](int s, int r, int rem, uint32_t set) {
-            if (r == 0) {
-                if (rem == 0) do_set(set);
-                return;
-            }
-            for (int i = s; i <= nd - r; ++i) {
-                int d = digs[i];
-                if (d * r > rem) break;  // digits ascending: min sum of r more >= d*r
-                // max achievable with r digits from the top of the list
-                int mx = 0;
-                for (int j = nd - r; j < nd; ++j) mx += digs[j];
-                if (mx < rem) return;
-                rec(i + 1, r - 1, rem - d, set | bitd(d));
-            }
-        };
-        if (k.totals.empty()) rec(0, nv, k.total, 0);
-        else
-            for (int t : k.totals) rec(0, nv, t, 0);
-    }
+    alldiff_sets(k, uni, D, [&](uint32_t set) {
+        do_set(set);
+        return false;
+    });
     if (!out.any) out.must = 0;
+}
+
+// Kuhn's augmenting path: give var i a digit of `set` in its domain, re-seating the digit's owner if it can move
+static bool augment(int i, const uint32_t* dom, uint32_t set, int* owner, uint32_t& seen) {
+    for (uint32_t m = dom[i] & set; m; m &= m - 1) {
+        const int d = __builtin_ctz(m);
+        if (seen >> d & 1) continue;
+        seen |= 1u << d;
+        if (owner[d] < 0 || augment(owner[d], dom, set, owner, seen)) {
+            owner[d] = i;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool nary_consistent(const NConstraint& k, const uint32_t* dom, pm_long budget, int D) {
+    if (!alldiff_path_ok(k)) {
+        GacOut o;
+        static const std::vector<GacReq> noreq;
+        nary_gac(k, dom, noreq, budget, D, o);
+        return !(o.complete && !o.any);
+    }
+    // all-different: alldiff_gac finds a solution iff some allowed digit set has a perfect matching vars <-> digits;
+    // a matching search answers that in nv^2 steps where the counting DP takes 2^nv * nv
+    const int nv = k.nv();
+    uint32_t uni = 0;
+    for (int i = 0; i < nv; ++i) uni |= dom[i];
+    return alldiff_sets(k, uni, D, [&](uint32_t set) {
+        int owner[32];
+        std::fill(owner, owner + 32, -1);
+        for (int i = 0; i < nv; ++i) {
+            uint32_t seen = 0;
+            if (!augment(i, dom, set, owner, seen)) return false;
+        }
+        return true;
+    });
 }
 
 // leftovers / set equivalence: digits(A) == digits(B) as multisets. Propagation

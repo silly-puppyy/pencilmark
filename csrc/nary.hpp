@@ -145,6 +145,9 @@ struct GacOut {
 void nary_gac(const NConstraint& k, const uint32_t* dom, const std::vector<GacReq>& req, pm_long budget, int D,
               GacOut& out);
 /// consistency of a constraint by enumeration (long sandwiches: small exact budget, then a relaxation)
+/// whether the rule can still be met at these domains: !(complete && !any) of nary_gac, by a matching search on
+/// all-different rules (sums with distinct digits, consecutive sets)
+bool nary_consistent(const NConstraint& k, const uint32_t* dom, pm_long budget, int D);
 void nary_gac_brute(const NConstraint& k, const uint32_t* dom, pm_long budget, int D, GacOut& out);
 
 }  // namespace cs

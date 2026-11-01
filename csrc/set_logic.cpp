@@ -372,10 +372,7 @@ void Solver::rule_intersect(MoveBuf& out) {
             }
             auto mh = rok_memo.find(key);
             if (mh != rok_memo.end()) return mh->second;
-            GacOut o;
-            static const std::vector<GacReq> noreq;
-            nary_gac(k, dom, noreq, 3000, D, o);
-            const bool r = !(o.complete && !o.any);
+            const bool r = nary_consistent(k, dom, 3000, D);
             if (rok_memo.size() < 200000) rok_memo.emplace(std::move(key), r);
             return r;
         };
