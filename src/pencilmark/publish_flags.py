@@ -12,7 +12,8 @@ common sense first; the coach analysis only informed the spike rule's direction)
   uniqueness   needs a uniqueness-based technique (UR, BUG, Gurth): relies on assuming a unique solution
   trial        needs trial / forcing chains: computer-strength logic, not a human-friendly finish
   unusual      a difficulty outside the middle 80% of published puzzles of the same band (classic 9x9 and variants
-               apart, TYPICAL): a Very Easy puzzle that scans like an Easy one, a Medium that plays like a Very Hard
+               apart, TYPICAL; Very Easy has no floor, Extreme no ceiling): a Very Easy puzzle that scans like an Easy
+               one, a Medium that plays like a Very Hard (reject)
 Each note is (code, severity, text); severity 'reject' = would not be published, 'note' = informational.
 Every check is adjustable with an object (quality_limits): {"limit": n} replaces its limit (checks with one), {"severity":
 "reject" | "warning" | "off"} overrides its severity or turns it off.
@@ -48,11 +49,12 @@ QUALITY = {
 # difficulty of published puzzles per band: (10th, 90th percentile), classic 9x9 and variants apart. Measured
 # 2026-11-01 on the development set (7,253 puzzles with human data from seven sources, 6,452 graded; never the frozen
 # benchmark); a band with fewer than 20 puzzles has no range. docs/guides/generator/generate.md shows the middle halves.
+# Very Easy has no floor and Extreme no ceiling (nothing is too easy or too hard for them)
 TYPICAL = {
-    "classic": {"Very Easy": (2.8, 4.2), "Easy": (3.9, 6.6), "Medium": (6.0, 7.8), "Hard": (4.7, 7.3),
+    "classic": {"Very Easy": (None, 4.2), "Easy": (3.9, 6.6), "Medium": (6.0, 7.8), "Hard": (4.7, 7.3),
                 "Very Hard": (7.0, 9.0), "Expert": (7.1, 12.3)},
-    "variant": {"Very Easy": (1.4, 5.4), "Easy": (4.0, 8.8), "Medium": (6.8, 12.1), "Hard": (4.3, 10.2),
-                "Very Hard": (8.8, 14.5), "Expert": (9.3, 14.4), "Extreme": (12.3, 23.3)},
+    "variant": {"Very Easy": (None, 5.4), "Easy": (4.0, 8.8), "Medium": (6.8, 12.1), "Hard": (4.3, 10.2),
+                "Very Hard": (8.8, 14.5), "Expert": (9.3, 14.4), "Extreme": (12.3, None)},
 }  # fmt: skip
 SEVERITIES = ("reject", "warning", "off")
 
@@ -163,11 +165,14 @@ def _c_unusual(c):
 
     kind = "classic" if is_classic9(c.puzzle) else "variant"
     lo_hi = TYPICAL[kind].get(c.tier)
-    if lo_hi is None or lo_hi[0] <= c.difficulty <= lo_hi[1]:
+    if lo_hi is None:
+        return []
+    lo, hi = lo_hi
+    if (lo is None or c.difficulty >= lo) and (hi is None or c.difficulty <= hi):
         return []
     what = "classics" if kind == "classic" else "variants"
-    return [("unusual", "note", f"{c.tier} at difficulty {c.difficulty:g}: most published {c.tier} {what} are "
-                                f"{lo_hi[0]:g} to {lo_hi[1]:g}")]  # fmt: skip
+    rng = f"up to {hi:g}" if lo is None else f"{lo:g} and above" if hi is None else f"{lo:g} to {hi:g}"
+    return [("unusual", "reject", f"{c.tier} at difficulty {c.difficulty:g}: most published {c.tier} {what} are {rng}")]
 
 
 def _c_trial(c):

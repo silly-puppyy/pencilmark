@@ -103,19 +103,19 @@ The middle half of published puzzles per band (development set: 6,452 puzzles fr
 
 | Band | Classic 9×9 | Variants |
 |---|---|---|
-| Very Easy | 3.1 to 3.8 | 2.4 to 4.9 |
+| Very Easy | up to 3.8 | up to 4.9 |
 | Easy | 4.5 to 5.9 | 4.8 to 7.5 |
 | Medium | 6.3 to 7.4 | 8.8 to 11.0 |
 | Hard | 5.3 to 6.7 | 5.9 to 8.4 |
 | Very Hard | 7.1 to 8.2 | 10.6 to 13.4 |
 | Expert | 8.2 to 10.9 | 10.8 to 13.6 |
-| Extreme | (too few) | 13.7 to 21.9 |
+| Extreme | (too few) | 13.7 and above |
 
 A band says which techniques a puzzle needs and the difficulty how hard its steps are to find, so a Hard puzzle (one
 X-Wing) is often quicker than a long Medium. For classics, Andrew Stuart's sudokuwiki.org grades read directly on
 pencilmark's difficulty (the two scales agree within 0.3 on the same puzzles): Gentle 3 to 4, Moderate 4 to 5, Tough 5
-to 7, Diabolical 7 to 9, Extreme 9 and above. With `"quality": {}` the check `unusual` notes a result outside the
-middle 80% of its band (it warns; `{"unusual": {"severity": "reject"}}` refuses it).
+to 7, Diabolical 7 to 9, Extreme 9 and above. With `"quality": {}` the check `unusual` refuses a result outside the
+middle 80% of its band (Very Easy has no floor, Extreme no ceiling); `{"unusual": {"severity": "off"}}` lets it through.
 
 ## 5. When the generator cannot do it
 
