@@ -81,16 +81,20 @@ def code_names():
     return {c: v.name for c, v in R.codes().items()}
 
 
-def chip_of(tech_id, specific=None):
-    """(chip code, band index) for a technique, using its most specific pattern name where the band depends on it:
-    short X-Chains (Skyscraper / 2-String Kite / Turbot) Hard, longer ones Very Hard; Franken X-Wing Very Hard."""
+@functools.cache
+def _chip_base(tech_id):
+    """(name, chip code, band index) of a technique; the band is the technique's (data/techniques.csv; it separates
+    forms that share a code, e.g. direct innies / outies Easy vs set-theory forms Medium)"""
     from .card import _code
 
     name = S.TECH_NAMES.get(tech_id, str(tech_id))
-    code, _ = _code(name)
-    # base band: the technique's (data/techniques.csv; it separates forms that share a code, e.g. direct innies / outies
-    # Easy vs set-theory forms Medium)
-    band = MT.band_of(tech_id)
+    return name, _code(name)[0], MT.band_of(tech_id)
+
+
+def chip_of(tech_id, specific=None):
+    """(chip code, band index) for a technique, using its most specific pattern name where the band depends on it:
+    short X-Chains (Skyscraper / 2-String Kite / Turbot) Hard, longer ones Very Hard; Franken X-Wing Very Hard."""
+    name, code, band = _chip_base(tech_id)
     if specific and name in SPLIT:
         sh = _shape(name, specific)
         if sh:
