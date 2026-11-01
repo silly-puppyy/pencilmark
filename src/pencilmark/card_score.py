@@ -56,9 +56,10 @@ def refute_lr_cell(p):
     relations + n-ary consistency; when stuck, every candidate trialled, shortest refutations applied) -> log1p(sum over stuck points of
     log(candidates / shortest refutations) per empty cell). Puzzle-only: no technique catalogue, no prices."""
     from . import cbackend as _CB
+    from . import cpsat_verify as V
 
-    known = getattr(p, "_pm_solution", None)
-    bs = [known] if known is not None else _CB.brute_solve(p, limit=1)
+    known = getattr(p, "_pm_solution", None)  # set by rate(); otherwise the uniqueness search's solution, not a capped
+    bs = [known] if known is not None else V.decide(p, limit=1)[0]  # brute_solve that gave up (2026-11-01: 0.0)
     if not bs:
         return 0.0
     pr = _CB._C.refute_profile(

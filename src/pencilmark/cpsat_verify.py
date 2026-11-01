@@ -4,14 +4,17 @@ exhaustive C++ search.
 solutions(p, limit=2, time_limit=60) -> list of solutions (each a list of digits, len p.N),
                                          or None if undecided: the puzzle uses a rule the checker does not model,
                                          or the search hit its node / time limit.
-decide() (used by pencilmark.solve) runs the C++ search (cbackend.brute_solve) first and CP-SAT only when that search
-hits its node limit. CP-SAT is independent of the engine's propagation.
+decide() (used by rate, solve and count_solutions) runs the C++ search (cbackend.brute_solve) first, which settles most
+puzzles in microseconds. With OR-Tools installed that first search gets QUICK_NODES and CP-SAT takes over when it runs
+out (a sparse killer on a big board: 0.4 s instead of 27 s); without it, or when CP-SAT cannot decide, the C++ search
+gets the full NODE_LIMIT. CP-SAT is independent of the engine's propagation.
 Pair relations are encoded generically as allowed-pair tables from model.RELATIONS, so any relation kind works.
 """
 
 from . import model as M
 
 NODE_LIMIT = 20_000_000
+QUICK_NODES = 100_000  # the C++ search's share before CP-SAT, when OR-Tools is installed (about 0.3 s)
 
 # constraint types the checker models (the same set the CP-SAT model below encodes); anything else -> undecided
 _CON_TYPES = {
@@ -380,13 +383,19 @@ def decide(p, limit=2, node_limit=NODE_LIMIT, time_limit=60.0):
     """-> (solutions, decided). decided False: neither search could finish (solutions may be partial)."""
     if not hasattr(p, "groups_of"):
         p.finalize()
-    sols, complete = _engine(p, limit, node_limit)
+    ortools = have_ortools()
+    first = min(node_limit, QUICK_NODES) if ortools else node_limit
+    sols, complete = _engine(p, limit, first)
     if complete or len(sols) >= limit:
         return sols, True
-    if have_ortools():
+    if ortools:
         s = cpsat_solutions(p, limit=limit, time_limit=time_limit)
         if s is not None:
             return s, True
+        if first < node_limit:  # a rule CP-SAT does not model, or its time ran out: the full C++ search
+            sols, complete = _engine(p, limit, node_limit)
+            if complete or len(sols) >= limit:
+                return sols, True
     return sols, False
 
 

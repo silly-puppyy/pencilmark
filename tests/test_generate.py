@@ -300,3 +300,9 @@ def test_layout_generation():
         grids = [{"type": "box_grid", "origin": f"r{r + 1}c{c + 1}", "box": [3, 3]} for r, c in origins]
         r = run(dict(spec(), board={"rows": rows, "cols": cols}, rules=grids, limits={"time": 60, "seed": 1}))
         assert r["info"]["givens"] == sum(1 for v in r["puzzle"]["givens"] if v)
+        # the card is the one rate() gives the returned file: the generator numbers layout cells as the reader does
+        # (row by row) and the refutation profile no longer falls to 0 when a capped search gave up (2026-11-01:
+        # a butterfly killer's card said 7.9, rate() 8.9)
+        card = pencilmark.rate(r["puzzle"])
+        assert (r["card"]["difficulty"], r["card"]["band"]) == (card["difficulty"], card["band"])
+        assert PJ.from_json({"layout": layout}).coords == pencilmark.load(r["puzzle"]).coords

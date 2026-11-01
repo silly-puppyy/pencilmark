@@ -122,14 +122,11 @@ def _layout_extra(name, coords):
 
 
 def _layout_regions(origins, D=9, bh=3, bw=3):
-    """rows / columns / boxes of D x D sub-grids at origins -> (coords, groups) with shared cells merged."""
-    cid, coords = {}, []
-    for o_r, o_c in origins:
-        for r in range(D):
-            for c in range(D):
-                if (o_r + r, o_c + c) not in cid:
-                    cid[(o_r + r, o_c + c)] = len(coords)
-                    coords.append((o_r + r, o_c + c))
+    """rows / columns / boxes of D x D sub-grids at origins -> (coords, groups) with shared cells merged. Cells are
+    numbered row-major, as the sudoku-puzzle reader numbers the same board: parts of the card depend on cell order
+    (the refutation profile), and the generator's card must equal rate() of the file it writes."""
+    coords = sorted({(o_r + r, o_c + c) for o_r, o_c in origins for r in range(D) for c in range(D)})
+    cid = {rc: i for i, rc in enumerate(coords)}
     groups, seen = [], set()
     for k, (o_r, o_c) in enumerate(origins):
         units = [("row", [(o_r + r, o_c + c) for c in range(D)]) for r in range(D)]
