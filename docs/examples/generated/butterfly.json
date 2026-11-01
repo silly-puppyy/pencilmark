@@ -60,7 +60,7 @@
   "format": "sudoku-puzzle",
   "format_version": 1,
   "meta": {
-   "title": "generated 9x9 16 cage, 1 givens",
+   "title": "generated 9x9 18 cage, 2 givens",
    "rules_text": "Butterfly: Each 9×9 grid follows normal sudoku rules: place 1–9 in every row, column and box; shared cells belong to both grids.\nKiller: Digits in a cage sum to its small clue and don't repeat within the cage.",
    "type": "Killer Butterfly Sudoku",
    "generated_from": "sha256:d6328f45af54f6c9e977bb147ade3d4879fa1d247fd36bc3b65557d5c78f572e"
@@ -72,7 +72,6 @@
   "digits": 9,
   "givens": [
    0,
-   3,
    0,
    0,
    0,
@@ -131,6 +130,7 @@
    0,
    0,
    0,
+   1,
    0,
    0,
    0,
@@ -146,7 +146,7 @@
    0,
    0,
    0,
-   0,
+   1,
    0,
    0,
    0,
@@ -218,148 +218,148 @@
   ],
   "solution": [
    6,
-   3,
-   9,
-   2,
-   5,
-   1,
-   7,
    4,
    8,
+   2,
+   3,
+   1,
+   5,
+   9,
+   7,
    6,
-   3,
-   9,
-   2,
-   7,
-   4,
-   6,
-   9,
-   8,
-   3,
-   1,
-   5,
-   2,
-   4,
-   7,
-   1,
-   5,
-   8,
-   3,
-   7,
-   4,
-   9,
-   6,
-   2,
-   8,
-   1,
-   5,
-   4,
-   8,
-   7,
-   1,
-   2,
-   9,
-   5,
-   3,
-   6,
-   7,
    8,
    4,
-   9,
-   6,
-   2,
    5,
-   4,
-   3,
-   8,
    7,
-   1,
-   9,
-   2,
-   6,
-   3,
-   1,
-   5,
-   8,
-   6,
-   7,
-   2,
-   9,
-   4,
-   3,
-   5,
-   1,
-   7,
-   2,
-   1,
    9,
    8,
    6,
    4,
-   5,
+   2,
    3,
    1,
-   7,
-   2,
-   8,
-   4,
-   6,
-   7,
-   3,
-   5,
-   1,
-   2,
-   9,
-   4,
-   6,
-   8,
-   5,
-   9,
-   3,
-   4,
-   1,
-   2,
-   6,
-   8,
    7,
    5,
    9,
    3,
    2,
+   1,
+   5,
    7,
+   9,
+   8,
    4,
+   6,
+   1,
+   2,
+   3,
+   7,
+   6,
+   2,
+   3,
+   1,
+   5,
+   4,
+   8,
+   9,
+   2,
+   6,
+   7,
+   1,
+   3,
+   4,
+   7,
+   9,
+   8,
+   6,
+   2,
+   5,
+   3,
+   4,
+   1,
+   8,
+   9,
+   5,
+   4,
+   2,
+   6,
+   1,
+   7,
+   3,
+   5,
+   9,
+   8,
+   9,
+   5,
+   7,
+   1,
+   4,
+   2,
+   3,
+   6,
+   8,
+   9,
+   7,
+   5,
+   2,
+   8,
+   3,
+   6,
+   5,
+   7,
+   9,
+   1,
+   4,
+   8,
+   3,
+   2,
+   4,
+   1,
    6,
    9,
    8,
    3,
-   1,
+   7,
    5,
    2,
    4,
-   7,
    1,
-   5,
-   8,
+   6,
    3,
-   7,
+   2,
+   1,
+   8,
+   6,
    4,
+   5,
    9,
-   6,
-   2,
-   8,
-   1,
-   5,
-   6,
-   3,
-   9,
-   2,
-   5,
-   1,
    7,
+   1,
+   2,
+   3,
+   6,
    4,
    8,
-   6,
+   5,
+   7,
+   9,
+   2,
    3,
+   1,
+   6,
+   8,
+   4,
+   5,
+   7,
+   9,
+   2,
+   3,
+   1,
+   8,
+   4,
+   6,
+   7,
+   5,
    9
   ],
   "rules": [
@@ -397,144 +397,167 @@
    },
    {
     "type": "cage",
-    "sum": 15,
-    "cells": [
-     "r7c1",
-     "r8c1"
-    ]
-   },
-   {
-    "type": "cage",
     "sum": 16,
     "cells": [
-     "r1c12",
-     "r2c12"
+     "r11c5",
+     "r11c6"
     ]
    },
    {
     "type": "cage",
-    "sum": 7,
+    "sum": 4,
     "cells": [
-     "r10c9",
+     "r11c8",
      "r11c9"
     ]
    },
    {
     "type": "cage",
-    "sum": 29,
+    "sum": 27,
     "cells": [
-     "r4c6",
-     "r4c7",
-     "r5c7",
-     "r5c8"
+     "r4c11",
+     "r5c11",
+     "r6c11",
+     "r6c12"
     ]
    },
    {
     "type": "cage",
-    "sum": 14,
+    "sum": 3,
     "cells": [
-     "r9c7",
-     "r9c8"
-    ]
-   },
-   {
-    "type": "cage",
-    "sum": 6,
-    "cells": [
-     "r12c5",
-     "r12c6"
-    ]
-   },
-   {
-    "type": "cage",
-    "sum": 33,
-    "cells": [
-     "r5c6",
-     "r6c4",
-     "r6c5",
-     "r6c6",
-     "r7c4"
-    ]
-   },
-   {
-    "type": "cage",
-    "sum": 34,
-    "cells": [
-     "r11c7",
-     "r11c8",
-     "r12c7",
-     "r12c8",
-     "r12c9"
-    ]
-   },
-   {
-    "type": "cage",
-    "sum": 24,
-    "cells": [
-     "r2c5",
-     "r2c6",
-     "r3c5"
-    ]
-   },
-   {
-    "type": "cage",
-    "sum": 5,
-    "cells": [
-     "r7c10",
-     "r8c10"
-    ]
-   },
-   {
-    "type": "cage",
-    "sum": 14,
-    "cells": [
-     "r11c10",
-     "r12c10"
-    ]
-   },
-   {
-    "type": "cage",
-    "sum": 7,
-    "cells": [
-     "r6c2",
-     "r7c2",
-     "r8c2"
-    ]
-   },
-   {
-    "type": "cage",
-    "sum": 8,
-    "cells": [
-     "r5c3",
-     "r6c3",
-     "r7c3"
-    ]
-   },
-   {
-    "type": "cage",
-    "sum": 34,
-    "cells": [
-     "r1c3",
-     "r2c2",
-     "r2c3",
-     "r2c4",
-     "r3c3"
+     "r9c11",
+     "r10c11"
     ]
    },
    {
     "type": "cage",
     "sum": 12,
     "cells": [
-     "r6c11",
-     "r7c11"
+     "r3c8",
+     "r4c8"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 35,
+    "cells": [
+     "r11c11",
+     "r12c9",
+     "r12c10",
+     "r12c11",
+     "r12c12"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 11,
+    "cells": [
+     "r3c10",
+     "r4c10",
+     "r5c9",
+     "r5c10"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 10,
+    "cells": [
+     "r11c7",
+     "r12c7"
     ]
    },
    {
     "type": "cage",
     "sum": 15,
     "cells": [
-     "r8c11",
-     "r9c11"
+     "r3c9",
+     "r4c9"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 7,
+    "cells": [
+     "r6c4",
+     "r6c5",
+     "r7c4"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 16,
+    "cells": [
+     "r7c10",
+     "r7c11"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 12,
+    "cells": [
+     "r1c6",
+     "r1c7",
+     "r2c6",
+     "r2c7"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 35,
+    "cells": [
+     "r1c9",
+     "r1c10",
+     "r1c11",
+     "r2c11",
+     "r2c12"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 15,
+    "cells": [
+     "r4c3",
+     "r5c1",
+     "r5c2",
+     "r5c3",
+     "r6c3"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 16,
+    "cells": [
+     "r8c1",
+     "r9c1",
+     "r9c2",
+     "r10c1",
+     "r11c1"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 24,
+    "cells": [
+     "r1c3",
+     "r2c2",
+     "r2c3"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 12,
+    "cells": [
+     "r7c7",
+     "r8c7"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 23,
+    "cells": [
+     "r8c4",
+     "r9c4",
+     "r10c4"
     ]
    }
   ]
@@ -542,7 +565,7 @@
  "card": {
   "band": "Medium",
   "difficulty": 7.9,
-  "time": 60.3,
+  "time": 57.6,
   "contains": [
    {
     "code": "HSI",
@@ -561,78 +584,47 @@
     "chip": "PPR",
     "name": "Pointing / Box-Line Reduction",
     "band": 1,
-    "uses": 87
+    "uses": 86
    },
    {
     "code": "MSI",
     "chip": "MSI",
     "name": "Notes in the head",
     "band": 1,
-    "uses": 13
+    "uses": 5
    },
    {
     "code": "CGC",
     "chip": "CGC",
     "name": "Killer cage combinations",
     "band": 1,
-    "uses": 22
+    "uses": 24
    },
    {
-    "code": "HPR",
-    "chip": "HPR/EQD/HQD/RUL",
-    "name": "Hidden Pair",
+    "code": "EQD",
+    "chip": "EQD/DGC/CBL/RUL/HTR",
+    "name": "Equal cells (same digit)",
     "band": 2,
     "alternatives": [
-     "EQD",
-     "HQD",
-     "RUL"
+     "DGC",
+     "CBL",
+     "RUL",
+     "HTR"
     ],
-    "uses": 4
-   },
-   {
-    "code": "DGC",
-    "chip": "DGC/NPR/EQD/HQD/IOV",
-    "name": "Digit counting",
-    "band": 2,
-    "alternatives": [
-     "NPR",
-     "EQD",
-     "HQD",
-     "IOV"
-    ],
-    "uses": 15
-   },
-   {
-    "code": "NQD",
-    "chip": "NQD/EQD/HQD",
-    "name": "Naked Quad",
-    "band": 2,
-    "alternatives": [
-     "EQD",
-     "HQD"
-    ],
-    "uses": 1
-   },
-   {
-    "code": "IOM",
-    "chip": "IOM/CBL",
-    "name": "Innies & outies over several houses",
-    "band": 2,
-    "alternatives": [
-     "CBL"
-    ],
-    "uses": 2
+    "uses": 3
    }
   ]
  },
  "info": {
-  "seconds": 159.3,
-  "attempts": 1,
+  "seconds": 219.7,
+  "attempts": 2,
   "found": null,
-  "givens": 1,
+  "givens": 2,
   "elements": {
-   "cage": 16
+   "cage": 18
   },
-  "rejected": {}
+  "rejected": {
+   "publishing check: barely_used": 1
+  }
  }
 }
