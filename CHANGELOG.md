@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.1.0 (2026-11-01)
+
 - New publishing check `unusual` (reject): a difficulty outside the middle 80% of published puzzles of the same band,
   classic 9x9 and variants apart, Very Easy without a floor and Extreme without a ceiling (ranges measured on the
   development set, 6,452 puzzles from seven sources).

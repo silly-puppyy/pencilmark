@@ -10,7 +10,7 @@ mostly given, a single hard step in an easy solve. Ask for the `issues` and `rej
 
 ```
 $ pencilmark rate mini.json --json --fields band,issues,reject
-{"line": 1, "format": "sudoku-grade", "format_version": 1, "grader": {"name": "pencilmark", "version": "1.0.0"}, "band": "Medium", "issues": [{"code": "spike", "severity": "warning", "text": "98% of the effort is in the 3 hardest steps"}], "reject": false}
+{"line": 1, "format": "sudoku-grade", "format_version": 1, "grader": {"name": "pencilmark", "version": "1.1.0"}, "band": "Medium", "issues": [{"code": "spike", "severity": "warning", "text": "98% of the effort is in the 3 hardest steps"}], "reject": false}
 ```
 
 This is the 6×6 puzzle from [Write a variant puzzle file](variant-file.mdx). Each issue has a `code`, a
