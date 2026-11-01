@@ -251,6 +251,8 @@ def _time_stat(field, variant=False):
 def card_fields(fields=None, steps=False, se=False):
     """the field mask (docs/formats/grade-card.md 2): the requested top-level card keys; None = the default fields. format,
     format_version and grader are always present. steps=True / se=True are shorthands."""
+    if fields is not None and not all(isinstance(f, str) for f in fields):
+        raise ValueError(f"card fields are names (strings), got {list(fields)!r}")
     out = set(DEFAULT_FIELDS) if fields is None else set(fields) - set(ALWAYS)
     bad = {f for f in out - set(DEFAULT_FIELDS) - set(OPTIONAL_FIELDS) if _time_stat(f) is None}
     if bad:

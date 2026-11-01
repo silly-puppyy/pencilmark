@@ -86,6 +86,8 @@ def puzzle_case(seed):
             fn(d)
         except (pm.FormatError, pm.NotSupportedError, ValueError):
             return seed, "clear error", None
+        except pm.Undecided:  # a broken puzzle can have too many solutions to settle in max_seconds: documented
+            return seed, "undecided", None
         except Exception as e:  # noqa: BLE001
             return seed, f"{name}: {type(e).__name__}", where(e)
     return seed, "accepted", None
@@ -176,7 +178,7 @@ def main(argv):
     bad = 0
     for what, xs in sorted(by.items(), key=lambda kv: -len(kv[1])):
         print(f"{len(xs):5d}  {what}")
-        if what not in ("clear error", "accepted", "generated", "not a request"):
+        if what not in ("clear error", "accepted", "undecided", "generated", "not a request"):
             bad += len(xs)
             for s, d in xs[:4]:
                 print(f"         seed {s}: {d}")

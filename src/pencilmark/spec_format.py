@@ -16,6 +16,7 @@ never ignored.
 from __future__ import annotations
 
 import hashlib
+import re
 
 from . import puzzle_json as PJ
 from .exchange import FormatError, NotSupportedError, jcs
@@ -134,8 +135,10 @@ def validate_spec(doc):
     for r in doc.get("rules") or []:
         if not isinstance(r, dict) or not isinstance(r.get("type"), str):
             raise FormatError("a rule must be an object with a type")
+        if "kind" in r and not isinstance(r["kind"], str):
+            raise FormatError(f"{r['type']} rule: kind must be a string, got {r['kind']!r}")
         if _is_template(r):
-            for k in ("kind", "color", "letter"):
+            for k in ("color", "letter"):
                 if k in r and not isinstance(r[k], str):
                     raise FormatError(f"template {r['type']}: {k} must be a string, got {r[k]!r}")
             for k in ("size", "length", "sum"):
@@ -153,6 +156,10 @@ def validate_spec(doc):
                 )
         elif "lock" in r and not isinstance(r["lock"], bool):
             raise FormatError("lock must be true / false")
+        elif r["type"] == "box_grid" and not (
+            isinstance(r.get("origin"), str) and re.fullmatch(r"r\d+c\d+", r["origin"])
+        ):
+            raise FormatError(f'box_grid needs an "origin" cell such as "r1c1", got {r.get("origin")!r}')
     if doc.get("symmetry") is not None and not isinstance(doc["symmetry"], list):
         raise FormatError("symmetry must be a list of entries")
     for s in doc.get("symmetry") or []:

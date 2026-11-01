@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Malformed generator requests get a format error, not a crash: a `quality` that is not an object, a `box_grid`
+  without an `origin` cell, a rule `kind` that is not a string, or `fields` holding something other than names
+  (`rate(fields=...)` too, as a ValueError). Found by mutating requests.
+
 ## 1.1.0 (2026-11-01)
 
 - New publishing check `unusual` (reject): a difficulty outside the middle 80% of published puzzles of the same band,

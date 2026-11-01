@@ -64,6 +64,8 @@ def quality_limits(q=None):
     Each entry of q is an object with "limit" (checks with a limit: a number >= 0) and / or "severity"; severity None =
     the check's own (docs/formats/grade-card.md 4). Raises ValueError for unknown checks, keys or values."""
     out = {k: {"limit": v, "severity": None} for k, v in QUALITY.items()}
+    if q is not None and not isinstance(q, dict):
+        raise ValueError(f'quality must be an object of checks, e.g. {{"trivial": {{"severity": "off"}}}}, got {q!r}')
     for k, v in (q or {}).items():
         if k not in QUALITY:
             raise ValueError(f"unknown quality check {k!r}; known: {list(QUALITY)}")

@@ -246,11 +246,22 @@ def test_max_leaves_room_for_required_classes():
 
 
 def test_malformed_request_parts_are_format_errors():
-    """found by mutating requests: a where, limits, meta, rules or symmetry of the wrong type raised TypeError or
+    """found by mutating requests (tools/fuzz_inputs.py --specs): parts of the wrong type raised TypeError, KeyError or
     AttributeError"""
     for extra in ({"where": 5}, {"limits": "x"}, {"meta": 3}, {"rules": 5}, {"symmetry": 5}):
         with pytest.raises(pencilmark.FormatError):
             pencilmark.generate(dict(spec(4), **extra))
+    # and a quality that is not an object, or a box_grid without an origin cell (2026-11-01, KeyError / TypeError)
+    for extra in ({"quality": 0}, {"quality": ["x"]}, {"quality": "x"}):
+        with pytest.raises(pencilmark.FormatError):
+            pencilmark.generate(dict(spec(4), **extra))
+    with pytest.raises(pencilmark.FormatError):  # a field that is not a name
+        pencilmark.generate(dict(spec(4), fields=[["band"]]))
+    with pytest.raises(pencilmark.FormatError):  # a locked rule's kind that is not a string
+        pencilmark.generate(dict(spec(4), rules=spec(4)["rules"] + [{"type": "region", "kind": ["diagonal"]}]))
+    for origin in ({}, {"origin": 0}, {"origin": "a1"}):
+        with pytest.raises(pencilmark.FormatError):
+            pencilmark.generate(dict(spec(4), rules=[{"type": "box_grid", "box": [2, 2], **origin}]))
 
 
 def test_layout_requests():
