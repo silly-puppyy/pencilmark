@@ -49,6 +49,8 @@ round-trips the file and grades the transposed puzzle alike. Its referee, `tools
 rule pages alone, so it disagrees with the engine wherever one of them is wrong. A failure prints its seed;
 `python tools/fuzz.py --seed S` prints that case's file. After a change to the generator, `python
 tools/fuzz_generate.py 160 --jobs 8` sends it random requests and checks that every puzzle it returns meets its request.
+`python tools/fuzz_inputs.py 2000` (and `--specs` for requests) breaks valid files at random and checks that every
+broken one is refused with a message, not a crash.
 
 ## 3. The docs site
 
