@@ -49,9 +49,18 @@ def dig(
     deadline (time.time()): when it passes, the attempt is given up (None), or with keep the digging stops and the givens
     still in place stay."""
     fixed = dict(fixed or {})
+    seeds = dict(seeds or {})
+    planted = None
+    wl = (shape or {}).get("whisper", {}).get("length", (None, None))[0]
+    if sol is None and wl and wl > 16 and seeds.get("whisper"):  # longer than random grids hold: build around it
+        got = EL.planted_whisper(b, wl, rng)
+        sol = b.solution(rng, preset=got[1]) if got else None
+        if sol is not None:
+            planted = ("whisper", tuple(got[0]), None)
+            seeds["whisper"] -= 1
     sol = sol or b.solution(rng)
     givens = {i: sol[i] for i in range(b.N) if fixed.get(i, True)}
-    els = []
+    els = [planted] if planted else []
     caps = dict(caps or {})
 
     def taken(kind):
@@ -140,8 +149,8 @@ def dig(
             while len(batch) < 8 and pos < len(order):
                 orb = [c for c in b.orbit(order[pos], symmetry) if c in givens and c not in fixed]
                 pos += 1
-                taken = {c for x in batch for c in x}
-                if removable(orb, taken) and taken.isdisjoint(orb):
+                in_batch = {c for x in batch for c in x}
+                if removable(orb, in_batch) and in_batch.isdisjoint(orb):
                     batch.append(orb)
             removed = {c: givens.pop(c) for orb in batch for c in orb}
             if batch and chk.ok(givens, els):
@@ -185,7 +194,7 @@ def dig(
             givens.update(removed)
     mins = {k: n for k, n in (seeds or {}).items() if n}
     for e in list(els):  # prune decorative elements (never below a class's minimum, never one being maximised)
-        if any(EL.in_class(e, k) for k in most):
+        if e == planted or any(EL.in_class(e, k) for k in most):
             continue
         rest_ = [x for x in els if x != e]
         if any(EL.in_class(e, k) and sum(1 for x in rest_ if EL.in_class(x, k)) < n for k, n in mins.items()):

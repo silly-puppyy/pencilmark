@@ -5,10 +5,12 @@
     spec_from_gen(spec) -> dict           pencilmark.gen Spec (or dict) -> sudoku-spec
     gen_support(doc) -> (bool, reason)    can pencilmark.gen run it today?
 
-What pencilmark.gen runs today: gap-free D x D boards (4, 6, 8, 9, 10, 12, 16) with the standard box_grid; templates for
-cages, thermo / whisper / renban / between lines, arrows, kropki / XV (incl. "all" and "min"), parity cells; givens count;
-one symmetry of the givens; where: band, difficulty range, contains (codes), elements max; limits: time, seed. Everything
-else in a spec is refused with the reason, never ignored.
+What pencilmark.gen runs today: gap-free D x D boards (4, 6, 8, 9, 10, 12, 16) with the standard box_grid, or a named
+layout of 9 x 9 grids (one box_grid per grid); locked rules of different digits; templates for cages, thermo / whisper /
+renban / between lines, arrows, kropki / XV, parity cells, with counts (incl. "all", "min", "tile", "max") and shape
+limits (size, sum, length); givens count and per grid; one symmetry of the givens; where: band, difficulty range or
+"max" / "min", contains (codes), elements max; limits: time, seed. Everything else in a spec is refused with the reason,
+never ignored.
 """
 
 from __future__ import annotations
@@ -184,7 +186,8 @@ def validate_spec(doc):
         raise FormatError(f'where.difficulty must be [lo, hi], "max" or "min", got {d!r}')
     c = w.get("contains")
     codes = c.get("codes") if isinstance(c, dict) else c
-    if c is not None and not (isinstance(codes, list) and all(isinstance(x, str) for x in codes)):
+    reserved = isinstance(c, dict) and set(c) - {"codes", "strict"}  # only / uses: spec_to_gen names them as reserved
+    if c is not None and not reserved and not (isinstance(codes, list) and all(isinstance(x, str) for x in codes)):
         raise FormatError('where.contains must be a list of technique codes or {"codes": [...], "strict": true}')
     if "elements" in w and not (isinstance(w["elements"], dict) and set(w["elements"]) <= {"max"}):
         raise FormatError('where.elements takes {"max": n}')
@@ -219,9 +222,11 @@ def _board(doc):
     """(layout name or None, locked rules) of a request, or a NotSupportedError message (str). The board is one
     D x D grid with a single box_grid, or a named multi-grid layout of 9 x 9 grids given by one box_grid per grid
     (puzzle_json's layouts: samurai, super-samurai, twodoku, ...); locked rules are all-different rules."""
+    from .gen.board import BOXES as GEN_BOXES
+
     D = doc["digits"]
-    if D not in PJ.BOXES:
-        return f"no standard boxes for size {D}"
+    if D not in GEN_BOXES:
+        return f"the generator makes boards of size {', '.join(map(str, sorted(GEN_BOXES)))}, not {D}"
     bh, bw = PJ.BOXES[D]
     locked = [{k: v for k, v in r.items() if k not in ("id", "label", "style")} for r in doc.get("rules") or []
               if not _is_template(r)]  # fmt: skip

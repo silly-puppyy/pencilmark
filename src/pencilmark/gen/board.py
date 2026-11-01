@@ -77,12 +77,15 @@ class Board:
         r, c = self.coords[i]
         return f"r{r + 1}c{c + 1}"
 
-    def solution(self, rng):
+    def solution(self, rng, preset=None):
         """random full grid: bitmask backtracking, fewest candidates first. A board the backtracking cannot fill within
         its step budget (a layout with diagonals and windows) is completed by the engine's search from a few random
-        digits, then relabelled with a random digit permutation."""
+        digits, then relabelled with a random digit permutation. preset {cell: digit}: cells the grid keeps (then no
+        relabelling); None if they cannot be completed."""
         n, full = self.n, (1 << self.n) - 1
         g = [0] * self.N
+        for i, v in (preset or {}).items():
+            g[i] = v
         steps = [0]
 
         def cand(i):
@@ -119,18 +122,22 @@ class Board:
         try:
             if bt():
                 return g
+            if preset:
+                return None
         except TimeoutError:
             pass
-        return self._engine_solution(rng)
+        return self._engine_solution(rng, preset)
 
-    def _engine_solution(self, rng):
+    def _engine_solution(self, rng, preset=None):
         from .. import cbackend as CB
         from .. import puzzle_json as PJ
         from .elements import to_json
 
-        for _ in range(50):
-            seed = {}
-            for i in rng.sample(range(self.N), min(12, self.N)):  # a few random digits, consistent with each other
+        for _ in range(50 if not preset else 1):
+            seed = dict(preset or {})
+            for i in rng.sample(
+                range(self.N), 0 if preset else min(12, self.N)
+            ):  # a few random digits, consistent with each other
                 used = {seed[j] for j in self.peers[i] if j in seed}
                 free = [d for d in range(1, self.n + 1) if d not in used]
                 if free:
@@ -141,7 +148,9 @@ class Board:
             if sols:
                 perm = list(range(1, self.n + 1))
                 rng.shuffle(perm)
-                return [perm[v - 1] for v in sols[0]]
+                return list(sols[0]) if preset else [perm[v - 1] for v in sols[0]]
+        if preset:
+            return None
         raise RuntimeError("no full grid found for this board and its locked rules")
 
     # ---- symmetry orbits for given placement

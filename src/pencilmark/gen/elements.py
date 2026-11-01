@@ -234,10 +234,11 @@ def grow(b, kind, sol, start, taken, rng, n=40, shape=None):
     return sorted(_stable(e for e in out if fits(e, shape)), key=lambda e: (info(e), rng.random()))
 
 
-def _walk(b, kind, sol, start, taken, rng, target, budget=400):
+def _walk(b, kind, sol, start, taken, rng, target, budget=None):
     """a line of `kind` from `start` (its bulb for a thermo), true in the solution, by randomised depth-first search:
     the first path of `target` cells, else the longest found within `budget` steps"""
     gap = whisper_gap(b.n)
+    budget = budget or 40 * target * target  # a long line needs a deeper search (25 cells: 25,000 steps)
     best, steps = [start], 0
 
     def ok(path, j):
@@ -257,7 +258,9 @@ def _walk(b, kind, sol, start, taken, rng, target, budget=400):
             return len(path) >= target
         steps += 1
         nxt = [j for j in b.nb[path[-1]] if j not in path and j not in taken and ok(path, j)]
-        rng.shuffle(nxt)
+        # fewest onward steps first (Warnsdorff's rule): long paths use up the cramped cells before they are cut off
+        onward = lambda j: sum(1 for k in b.nb[j] if k not in path and k != j and k not in taken and ok(path + [j], k))
+        nxt.sort(key=lambda j: (onward(j), rng.random()))
         return any(dfs(path + [j]) for j in nxt)
 
     if kind == "whisper" and not any(abs(sol[start] - sol[j]) >= gap for j in b.nb[start]):
@@ -267,6 +270,45 @@ def _walk(b, kind, sol, start, taken, rng, target, budget=400):
         while len(best) > 1 and max(sol[x] for x in best) - min(sol[x] for x in best) != len(best) - 1:
             best.pop()
     return best
+
+
+def planted_whisper(b, length, rng, tries=200):
+    """(path, {cell: digit}) of a German whisper of `length` cells to build a grid around: a random self-avoiding path
+    (fewest onward cells first) and digits alternating low / high, the gap kept, different within each house. Random
+    grids rarely hold a whisper of more than about 20 cells (22 at most in 1,500 9 x 9 grids); a longer one is planted
+    first and the grid completed around it. None if no path or digits were found."""
+    gap = whisper_gap(b.n)
+    for _ in range(tries):
+        path = [rng.randrange(b.N)]
+        while len(path) < length:
+            nxt = [j for j in b.nb[path[-1]] if j not in path]
+            if not nxt:
+                break
+            onward = lambda j: sum(1 for k in b.nb[j] if k not in path and k != j)
+            nxt.sort(key=lambda j: (onward(j), rng.random()))
+            path.append(nxt[0] if rng.random() < 0.8 else rng.choice(nxt))
+        if len(path) < length:
+            continue
+        digits = {}
+
+        def assign(k):
+            if k == len(path):
+                return True
+            c = path[k]
+            opts = [d for d in range(1, b.n + 1)
+                    if (k == 0 or abs(d - digits[path[k - 1]]) >= gap)
+                    and all(digits.get(j) != d for j in b.peers[c])]  # fmt: skip
+            rng.shuffle(opts)
+            for d in opts:
+                digits[c] = d
+                if assign(k + 1):
+                    return True
+                del digits[c]
+            return False
+
+        if assign(0):
+            return path, digits
+    return None
 
 
 def _stable(out):
