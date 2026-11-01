@@ -43,6 +43,12 @@ The golden check (`tools/golden.py check`) compares every output of 55 puzzles w
 change that should alter nothing must keep every record identical; one that should alter output rewrites the records
 in a commit of its own ([Contributing](../../dev/contributing.md)).
 
+After a change to the engine or a rule, run the fuzzer: `python tools/fuzz.py 2000 --jobs 8` builds random puzzles
+true of a random solution and checks that the engine accepts the solution, finds only it, makes no step against it,
+round-trips the file and grades the transposed puzzle alike. Its referee, `tools/spec_check.py`, was written from the
+rule pages alone, so it disagrees with the engine wherever one of them is wrong. A failure prints its seed;
+`python tools/fuzz.py --seed S` prints that case's file.
+
 ## 3. The docs site
 
 The site needs Node 20 or newer:
