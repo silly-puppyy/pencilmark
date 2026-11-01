@@ -258,9 +258,7 @@ def _walk(b, kind, sol, start, taken, rng, target, budget=None):
             return len(path) >= target
         steps += 1
         nxt = [j for j in b.nb[path[-1]] if j not in path and j not in taken and ok(path, j)]
-        # fewest onward steps first (Warnsdorff's rule): long paths use up the cramped cells before they are cut off
-        onward = lambda j: sum(1 for k in b.nb[j] if k not in path and k != j and k not in taken and ok(path + [j], k))
-        nxt.sort(key=lambda j: (onward(j), rng.random()))
+        rng.shuffle(nxt)
         return any(dfs(path + [j]) for j in nxt)
 
     if kind == "whisper" and not any(abs(sol[start] - sol[j]) >= gap for j in b.nb[start]):
@@ -371,9 +369,16 @@ def to_json(b, givens, els, sol=None, title=None):
         "rules": [],
         "regions": [],
     }
-    if getattr(b, "layout", None):  # a multi-grid layout: its grids imply the houses (numbers in its cell order)
+    if getattr(b, "layout", None):  # a multi-grid layout: its grids imply the houses
         del d["box"]
         d["layout"] = b.layout
+        # numbers row by row over the whole board, "." at gaps too: a layout that fills its bounding box (butterfly)
+        # would otherwise be read row by row while written in the layout's cell order
+        d["numbers"] = "".join(
+            PJ._sym(givens[b.cid[(r, c)]]) if b.cid.get((r, c)) in givens else "."
+            for r in range(b.rows)
+            for c in range(b.cols)
+        )
     extra = getattr(b, "extra_json", None)  # the request's locked rules
     if extra:
         d["regions"] += [dict(g) for g in extra["regions"]]

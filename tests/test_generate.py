@@ -276,3 +276,16 @@ def test_layout_requests():
     ):
         with pytest.raises(pencilmark.NotSupportedError):
             SF.spec_to_gen(bad)
+
+
+def test_layout_generation():
+    """a butterfly fills its 12 x 12 bounding box, so its numbers string is read row by row: the generator writes it so
+    (written in the layout's cell order, every candidate came back not unique); a twodoku has gaps"""
+    from pencilmark import puzzle_json as PJ
+
+    for layout in ("butterfly", "twodoku"):
+        origins = PJ._layouts()[layout]
+        rows, cols = max(r for r, _ in origins) + 9, max(c for _, c in origins) + 9
+        grids = [{"type": "box_grid", "origin": f"r{r + 1}c{c + 1}", "box": [3, 3]} for r, c in origins]
+        r = run(dict(spec(), board={"rows": rows, "cols": cols}, rules=grids, limits={"time": 60, "seed": 1}))
+        assert r["info"]["givens"] == sum(1 for v in r["puzzle"]["givens"] if v)
