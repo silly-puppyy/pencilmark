@@ -1,0 +1,458 @@
+{
+ "title": "Only X, no V",
+ "shows": "an exact count of 0 forbids a letter: as many X clues as fit and no V",
+ "spec": {
+  "format": "sudoku-spec",
+  "format_version": 1,
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "rules": [
+   {
+    "type": "box_grid",
+    "origin": "r1c1",
+    "box": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "count": "max"
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "V",
+    "count": 0
+   }
+  ],
+  "limits": {
+   "time": 300,
+   "seed": 1
+  }
+ },
+ "puzzle": {
+  "format": "sudoku-puzzle",
+  "format_version": 1,
+  "meta": {
+   "title": "generated 9x9 18 xv, 8 givens",
+   "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nXV: Digits separated by an X sum to 10.",
+   "type": "XV Sudoku",
+   "generated_from": "sha256:6e865d74bd735aefe1081e63523aaf7582096478bba93cb5ad49d82c2542cace"
+  },
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "givens": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   2,
+   4,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   8,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   6,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   4,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   1,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   1,
+   7,
+   0,
+   0
+  ],
+  "solution": [
+   9,
+   2,
+   8,
+   3,
+   1,
+   7,
+   4,
+   6,
+   5,
+   1,
+   5,
+   6,
+   9,
+   2,
+   4,
+   3,
+   7,
+   8,
+   4,
+   7,
+   3,
+   5,
+   6,
+   8,
+   1,
+   9,
+   2,
+   6,
+   8,
+   7,
+   4,
+   9,
+   5,
+   2,
+   3,
+   1,
+   2,
+   4,
+   9,
+   1,
+   3,
+   6,
+   8,
+   5,
+   7,
+   3,
+   1,
+   5,
+   7,
+   8,
+   2,
+   6,
+   4,
+   9,
+   7,
+   3,
+   2,
+   8,
+   4,
+   9,
+   5,
+   1,
+   6,
+   5,
+   6,
+   1,
+   2,
+   7,
+   3,
+   9,
+   8,
+   4,
+   8,
+   9,
+   4,
+   6,
+   5,
+   1,
+   7,
+   2,
+   3
+  ],
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "origin": "r1c1"
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r3c3",
+     "r4c3"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r1c7",
+     "r1c8"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r2c9",
+     "r3c9"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r8c8",
+     "r9c8"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r8c5",
+     "r8c6"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r6c7",
+     "r6c8"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r3c7",
+     "r3c8"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r6c1",
+     "r7c1"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r3c1",
+     "r4c1"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r5c3",
+     "r5c4"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r2c7",
+     "r2c8"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r4c7",
+     "r5c7"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r7c9",
+     "r8c9"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r7c4",
+     "r8c4"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r9c3",
+     "r9c4"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r6c5",
+     "r6c6"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r1c1",
+     "r2c1"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r1c2",
+     "r1c3"
+    ]
+   }
+  ]
+ },
+ "card": {
+  "band": "Medium",
+  "difficulty": 8.6,
+  "time": 24.7,
+  "contains": [
+   {
+    "code": "HSI",
+    "chip": "HSI",
+    "name": "Hidden Single",
+    "band": 0
+   },
+   {
+    "code": "LSI",
+    "chip": "LSI",
+    "name": "Line / dot read without notes",
+    "band": 0
+   },
+   {
+    "code": "CFX",
+    "chip": "CFX",
+    "name": "Clue Facts",
+    "band": 0,
+    "uses": 1
+   },
+   {
+    "code": "PPR",
+    "chip": "PPR",
+    "name": "Pointing / Box-Line Reduction",
+    "band": 1,
+    "uses": 14
+   },
+   {
+    "code": "MSI",
+    "chip": "MSI",
+    "name": "Pair / triple in the head",
+    "band": 1,
+    "uses": 5
+   },
+   {
+    "code": "PWC",
+    "chip": "PWC",
+    "name": "Pair rules (dots, whispers, anti-knight...)",
+    "band": 1,
+    "uses": 41
+   },
+   {
+    "code": "NPR",
+    "chip": "NPR/DOM",
+    "name": "Naked Pair",
+    "band": 2,
+    "alternatives": [
+     "DOM"
+    ],
+    "uses": 1
+   }
+  ]
+ },
+ "info": {
+  "seconds": 301.3,
+  "attempts": 2,
+  "found": 34,
+  "givens": 8,
+  "elements": {
+   "x": 18
+  }
+ }
+}

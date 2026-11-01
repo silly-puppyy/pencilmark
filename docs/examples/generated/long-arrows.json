@@ -1,6 +1,6 @@
 {
- "title": "Odd and even cells",
- "shows": "the parity template (odd or even cells, either kind)",
+ "title": "Arrows with long shafts",
+ "shows": "an arrow `length` (the shaft): three arrows of three cells or more, whose shafts must hold small digits",
  "spec": {
   "format": "sudoku-spec",
   "format_version": 1,
@@ -19,9 +19,12 @@
     ]
    },
    {
-    "type": "cell",
-    "kind": "parity",
-    "count": 4
+    "type": "arrow",
+    "length": [
+     3,
+     null
+    ],
+    "count": 3
    }
   ],
   "limits": {
@@ -33,10 +36,10 @@
   "format": "sudoku-puzzle",
   "format_version": 1,
   "meta": {
-   "title": "generated 9x9 4 parity, 23 givens",
-   "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nOdd-Even: A digit in a grey circle is odd; a digit in a grey square is even.",
-   "type": "Odd-Even Sudoku",
-   "generated_from": "sha256:d241899358736a6b80f2afcf2e88f9430dc326c3aaed56adac193abca48538d0"
+   "title": "generated 9x9 3 arrow, 18 givens",
+   "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nArrow: Digits along an arrow sum to the number in its circle.",
+   "type": "Arrow Sudoku",
+   "generated_from": "sha256:92eab80f34ddc0885e4d077c7727681f46b06cb91bfa617340f76f9c8a2f1240"
   },
   "board": {
    "rows": 9,
@@ -44,29 +47,44 @@
   },
   "digits": 9,
   "givens": [
+   6,
+   3,
+   9,
+   0,
+   5,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
    0,
    3,
+   0,
+   7,
+   0,
+   0,
+   0,
+   1,
+   0,
+   0,
+   0,
+   0,
+   0,
    0,
    0,
    5,
    0,
    0,
    0,
-   8,
-   0,
-   0,
-   8,
-   3,
    0,
    0,
    0,
    0,
    0,
-   1,
    0,
    2,
    0,
-   4,
    0,
    0,
    0,
@@ -75,50 +93,35 @@
    0,
    0,
    0,
-   1,
    0,
    0,
-   0,
-   7,
-   2,
-   9,
-   0,
-   7,
-   3,
-   0,
-   0,
-   0,
-   6,
-   0,
-   6,
-   1,
    5,
-   9,
+   0,
+   0,
    0,
    0,
    0,
    3,
-   3,
-   0,
-   0,
-   0,
-   0,
-   0,
-   8,
-   0,
-   9,
    0,
    0,
    0,
    0,
    0,
    0,
+   7,
+   0,
+   0,
+   2,
+   5,
    0,
    0,
    0,
+   6,
    0,
+   1,
    0,
-   0,
+   1,
+   7,
    0,
    0,
    0,
@@ -219,39 +222,50 @@
     "origin": "r1c1"
    },
    {
-    "type": "cell",
-    "kind": "even",
-    "cells": [
-     "r8c6"
+    "type": "arrow",
+    "bulb": [
+     "r5c6"
+    ],
+    "lines": [
+     [
+      "r5c5",
+      "r4c5",
+      "r4c4"
+     ]
     ]
    },
    {
-    "type": "cell",
-    "kind": "even",
-    "cells": [
-     "r8c7"
+    "type": "arrow",
+    "bulb": [
+     "r6c8"
+    ],
+    "lines": [
+     [
+      "r5c8",
+      "r5c7",
+      "r4c7"
+     ]
     ]
    },
    {
-    "type": "cell",
-    "kind": "even",
-    "cells": [
-     "r9c8"
-    ]
-   },
-   {
-    "type": "cell",
-    "kind": "odd",
-    "cells": [
-     "r9c7"
+    "type": "arrow",
+    "bulb": [
+     "r4c8"
+    ],
+    "lines": [
+     [
+      "r3c8",
+      "r2c8",
+      "r2c9"
+     ]
     ]
    }
   ]
  },
  "card": {
-  "band": "Expert",
-  "difficulty": 10.3,
-  "time": 24.5,
+  "band": "Easy",
+  "difficulty": 8.3,
+  "time": 27.6,
   "contains": [
    {
     "code": "HSI",
@@ -260,56 +274,47 @@
     "band": 0
    },
    {
-    "code": "NSI",
-    "chip": "NSI",
-    "name": "Naked Single",
-    "band": 1
+    "code": "LSI",
+    "chip": "LSI",
+    "name": "Line / dot read without notes",
+    "band": 0
+   },
+   {
+    "code": "CSI",
+    "chip": "CSI",
+    "name": "Last cell of a cage / line",
+    "band": 0
    },
    {
     "code": "PPR",
     "chip": "PPR",
     "name": "Pointing / Box-Line Reduction",
     "band": 1,
-    "uses": 11
+    "uses": 4
    },
    {
-    "code": "NPR",
-    "chip": "NPR",
-    "name": "Naked Pair",
-    "band": 2,
-    "uses": 3
+    "code": "MSI",
+    "chip": "MSI",
+    "name": "Notes in the head",
+    "band": 1,
+    "uses": 5
    },
    {
-    "code": "YWG",
-    "chip": "YWG",
-    "name": "Y-Wing",
-    "band": 4,
-    "uses": 2
-   },
-   {
-    "code": "WXZ",
-    "chip": "WXZ",
-    "name": "WXYZ-Wing",
-    "band": 4,
-    "uses": 1
-   },
-   {
-    "code": "CRP",
-    "chip": "CRP",
-    "name": "Chute Remote Pairs",
-    "band": 4,
-    "uses": 1
-   },
-   {
-    "code": "AIC",
-    "chip": "AIC/CAS",
-    "name": "Alternating Inference Chain",
-    "band": 5,
-    "alternatives": [
-     "CAS"
-    ],
-    "uses": 7
+    "code": "ARW",
+    "chip": "ARW",
+    "name": "Arrow sums",
+    "band": 1,
+    "uses": 4
    }
   ]
+ },
+ "info": {
+  "seconds": 8.9,
+  "attempts": 1,
+  "found": null,
+  "givens": 18,
+  "elements": {
+   "arrow": 3
+  }
  }
 }

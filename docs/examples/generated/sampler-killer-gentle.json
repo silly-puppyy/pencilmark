@@ -1,0 +1,378 @@
+{
+ "title": "Killer, difficulty 5 to 7.5",
+ "shows": "",
+ "spec": {
+  "format": "sudoku-spec",
+  "format_version": 1,
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "rules": [
+   {
+    "type": "box_grid",
+    "origin": "r1c1",
+    "box": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "cage",
+    "count": [
+     4,
+     null
+    ]
+   }
+  ],
+  "where": {
+   "difficulty": [
+    5,
+    7.5
+   ]
+  },
+  "limits": {
+   "time": 300,
+   "seed": 1
+  }
+ },
+ "puzzle": {
+  "format": "sudoku-puzzle",
+  "format_version": 1,
+  "meta": {
+   "title": "generated 9x9 14 cage, 13 givens",
+   "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nKiller: Digits in a cage sum to its small clue and don't repeat within the cage.",
+   "type": "Killer Sudoku",
+   "generated_from": "sha256:73f81d6b70a7ffc80b4e6b121a89f57a15b3e4ef060aa76e0e3e3409b5f3a952"
+  },
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "givens": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   4,
+   0,
+   0,
+   5,
+   0,
+   0,
+   0,
+   0,
+   0,
+   1,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   9,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   5,
+   0,
+   7,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   4,
+   0,
+   1,
+   0,
+   0,
+   0,
+   7,
+   9,
+   0,
+   0,
+   0,
+   0,
+   7,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   3,
+   5,
+   0,
+   0
+  ],
+  "solution": [
+   6,
+   3,
+   9,
+   2,
+   5,
+   1,
+   7,
+   4,
+   8,
+   4,
+   5,
+   8,
+   3,
+   6,
+   7,
+   9,
+   1,
+   2,
+   1,
+   7,
+   2,
+   8,
+   4,
+   9,
+   3,
+   6,
+   5,
+   5,
+   8,
+   3,
+   4,
+   1,
+   6,
+   2,
+   9,
+   7,
+   2,
+   9,
+   4,
+   7,
+   3,
+   8,
+   1,
+   5,
+   6,
+   7,
+   6,
+   1,
+   5,
+   9,
+   2,
+   4,
+   8,
+   3,
+   3,
+   4,
+   6,
+   1,
+   2,
+   5,
+   8,
+   7,
+   9,
+   8,
+   2,
+   5,
+   9,
+   7,
+   4,
+   6,
+   3,
+   1,
+   9,
+   1,
+   7,
+   6,
+   8,
+   3,
+   5,
+   2,
+   4
+  ],
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "origin": "r1c1"
+   },
+   {
+    "type": "cage",
+    "sum": 7,
+    "cells": [
+     "r8c6",
+     "r9c6"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 10,
+    "cells": [
+     "r1c4",
+     "r1c5",
+     "r2c4"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 5,
+    "cells": [
+     "r3c3",
+     "r4c3"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 30,
+    "cells": [
+     "r8c4",
+     "r9c3",
+     "r9c4",
+     "r9c5"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 3,
+    "cells": [
+     "r7c4",
+     "r7c5"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 9,
+    "cells": [
+     "r2c1",
+     "r2c2"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 4,
+    "cells": [
+     "r4c5",
+     "r5c5"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 17,
+    "cells": [
+     "r4c2",
+     "r5c2"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 8,
+    "cells": [
+     "r3c1",
+     "r3c2"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 10,
+    "cells": [
+     "r9c1",
+     "r9c2"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 6,
+    "cells": [
+     "r8c8",
+     "r8c9",
+     "r9c8"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 3,
+    "cells": [
+     "r4c7",
+     "r5c7"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 29,
+    "cells": [
+     "r5c8",
+     "r6c8",
+     "r7c8",
+     "r7c9"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 6,
+    "cells": [
+     "r6c6",
+     "r6c7"
+    ]
+   }
+  ]
+ },
+ "card": {
+  "band": "Easy",
+  "difficulty": 5.3,
+  "time": 13.7,
+  "contains": [
+   {
+    "code": "HSI",
+    "chip": "HSI",
+    "name": "Hidden Single",
+    "band": 0
+   },
+   {
+    "code": "MSI",
+    "chip": "MSI",
+    "name": "Pair / triple in the head",
+    "band": 1,
+    "uses": 9
+   }
+  ]
+ },
+ "info": {
+  "seconds": 135.5,
+  "attempts": 1,
+  "found": null,
+  "givens": 13,
+  "elements": {
+   "cage": 14
+  }
+ }
+}

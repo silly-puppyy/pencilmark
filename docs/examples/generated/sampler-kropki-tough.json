@@ -1,0 +1,432 @@
+{
+ "title": "Kropki, difficulty 10.5 to 13",
+ "shows": "",
+ "spec": {
+  "format": "sudoku-spec",
+  "format_version": 1,
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "rules": [
+   {
+    "type": "box_grid",
+    "origin": "r1c1",
+    "box": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "count": [
+     4,
+     null
+    ]
+   }
+  ],
+  "where": {
+   "difficulty": [
+    10.5,
+    13
+   ]
+  },
+  "limits": {
+   "time": 300,
+   "seed": 3
+  }
+ },
+ "puzzle": {
+  "format": "sudoku-puzzle",
+  "format_version": 1,
+  "meta": {
+   "title": "generated 9x9 13 kropki, 11 givens",
+   "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nKropki: Digits separated by a white dot are consecutive; digits separated by a black dot are in a 1:2 ratio.",
+   "type": "Kropki Sudoku",
+   "generated_from": "sha256:1038d77476a39105cd0873c58613997a11daf6f54db77cc567088a909471ed6e"
+  },
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "givens": [
+   0,
+   1,
+   0,
+   0,
+   0,
+   0,
+   3,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   9,
+   0,
+   8,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   4,
+   0,
+   0,
+   0,
+   0,
+   0,
+   6,
+   2,
+   0,
+   0,
+   0,
+   0,
+   0,
+   7,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   8,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   2,
+   5,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "solution": [
+   2,
+   1,
+   4,
+   8,
+   7,
+   9,
+   3,
+   5,
+   6,
+   6,
+   7,
+   3,
+   1,
+   2,
+   5,
+   9,
+   4,
+   8,
+   5,
+   8,
+   9,
+   4,
+   3,
+   6,
+   2,
+   7,
+   1,
+   7,
+   4,
+   8,
+   5,
+   9,
+   3,
+   1,
+   6,
+   2,
+   1,
+   9,
+   6,
+   2,
+   4,
+   7,
+   5,
+   8,
+   3,
+   3,
+   5,
+   2,
+   6,
+   8,
+   1,
+   7,
+   9,
+   4,
+   4,
+   6,
+   1,
+   7,
+   5,
+   2,
+   8,
+   3,
+   9,
+   8,
+   3,
+   7,
+   9,
+   1,
+   4,
+   6,
+   2,
+   5,
+   9,
+   2,
+   5,
+   3,
+   6,
+   8,
+   4,
+   1,
+   7
+  ],
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "origin": "r1c1"
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "color": "black",
+    "cells": [
+     "r5c5",
+     "r6c5"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "color": "black",
+    "cells": [
+     "r9c4",
+     "r9c5"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "color": "white",
+    "cells": [
+     "r2c5",
+     "r3c5"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "color": "white",
+    "cells": [
+     "r5c9",
+     "r6c9"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "color": "white",
+    "cells": [
+     "r2c1",
+     "r3c1"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "color": "black",
+    "cells": [
+     "r6c3",
+     "r7c3"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "color": "black",
+    "cells": [
+     "r8c8",
+     "r9c8"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "color": "black",
+    "cells": [
+     "r3c6",
+     "r4c6"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "color": "black",
+    "cells": [
+     "r4c2",
+     "r4c3"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "color": "white",
+    "cells": [
+     "r1c8",
+     "r2c8"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "color": "black",
+    "cells": [
+     "r3c7",
+     "r4c7"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "color": "black",
+    "cells": [
+     "r1c3",
+     "r1c4"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "color": "black",
+    "cells": [
+     "r7c2",
+     "r8c2"
+    ]
+   }
+  ]
+ },
+ "card": {
+  "band": "Very Hard",
+  "difficulty": 10.9,
+  "time": 34.6,
+  "contains": [
+   {
+    "code": "HSI",
+    "chip": "HSI",
+    "name": "Hidden Single",
+    "band": 0
+   },
+   {
+    "code": "LSI",
+    "chip": "LSI",
+    "name": "Line / dot read without notes",
+    "band": 0
+   },
+   {
+    "code": "NSI",
+    "chip": "NSI",
+    "name": "Naked Single",
+    "band": 1
+   },
+   {
+    "code": "PPR",
+    "chip": "PPR",
+    "name": "Pointing / Box-Line Reduction",
+    "band": 1,
+    "uses": 10
+   },
+   {
+    "code": "MSI",
+    "chip": "MSI",
+    "name": "Notes in the head",
+    "band": 1,
+    "uses": 5
+   },
+   {
+    "code": "HPR",
+    "chip": "HPR/NQD",
+    "name": "Hidden Pair",
+    "band": 2,
+    "alternatives": [
+     "NQD"
+    ],
+    "uses": 1
+   },
+   {
+    "code": "RUL",
+    "chip": "RUL",
+    "name": "Two rules together",
+    "band": 2,
+    "uses": 11
+   },
+   {
+    "code": "XCL",
+    "chip": "XCL/FRK",
+    "name": "Grouped X-Chain",
+    "band": 4,
+    "alternatives": [
+     "FRK"
+    ],
+    "uses": 3
+   },
+   {
+    "code": "BAN",
+    "chip": "BAN",
+    "name": "Band set theory with cages",
+    "band": 4,
+    "uses": 2
+   }
+  ]
+ },
+ "info": {
+  "seconds": 37.6,
+  "attempts": 1,
+  "found": null,
+  "givens": 11,
+  "elements": {
+   "kropki_black": 9,
+   "kropki_white": 4
+  }
+ }
+}

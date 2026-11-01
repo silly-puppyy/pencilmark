@@ -1,6 +1,6 @@
 {
  "title": "An 8×8 with at most six dots",
- "shows": "an 8×8 board and the element cap (where.elements)",
+ "shows": "an 8×8 board and the element cap (`where.elements`)",
  "spec": {
   "format": "sudoku-spec",
   "format_version": 1,
@@ -321,5 +321,15 @@
     "uses": 1
    }
   ]
+ },
+ "info": {
+  "seconds": 11.6,
+  "attempts": 1,
+  "found": null,
+  "givens": 14,
+  "elements": {
+   "kropki_black": 1,
+   "kropki_white": 5
+  }
  }
 }

@@ -1,0 +1,464 @@
+{
+ "title": "Killer with German whispers and two givens",
+ "shows": "",
+ "spec": {
+  "format": "sudoku-spec",
+  "format_version": 1,
+  "meta": {
+   "title": "Killer with German whispers and two givens",
+   "description": "Cages and whisper lines, exactly two givens, Hard."
+  },
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "givens": {
+   "count": 2
+  },
+  "rules": [
+   {
+    "type": "box_grid",
+    "origin": "r1c1",
+    "box": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "cage",
+    "count": [
+     1,
+     null
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "count": [
+     1,
+     null
+    ],
+    "value": 5
+   }
+  ],
+  "where": {
+   "band": "Hard"
+  },
+  "limits": {
+   "results": 1,
+   "time": 900,
+   "seed": 3
+  },
+  "fields": [
+   "difficulty",
+   "band",
+   "contains",
+   "issues"
+  ]
+ },
+ "puzzle": {
+  "format": "sudoku-puzzle",
+  "format_version": 1,
+  "meta": {
+   "title": "Killer with German whispers and two givens",
+   "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nKiller: Digits in a cage sum to its small clue and don't repeat within the cage.\nGerman Whispers: Adjacent digits on a whisper line differ by at least 5.",
+   "type": "Variant Sudoku",
+   "description": "Cages and whisper lines, exactly two givens, Hard.",
+   "generated_from": "sha256:d1a66f054c698ed9b83521df2906696d727d4aff9edc39a48f43851f28077ed8"
+  },
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "givens": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   7,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   9,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "solution": [
+   7,
+   8,
+   3,
+   2,
+   6,
+   5,
+   1,
+   9,
+   4,
+   6,
+   5,
+   2,
+   9,
+   4,
+   1,
+   7,
+   3,
+   8,
+   9,
+   1,
+   4,
+   7,
+   3,
+   8,
+   2,
+   5,
+   6,
+   2,
+   6,
+   1,
+   5,
+   9,
+   4,
+   8,
+   7,
+   3,
+   5,
+   3,
+   7,
+   8,
+   1,
+   2,
+   6,
+   4,
+   9,
+   4,
+   9,
+   8,
+   6,
+   7,
+   3,
+   5,
+   1,
+   2,
+   1,
+   2,
+   9,
+   4,
+   8,
+   7,
+   3,
+   6,
+   5,
+   8,
+   7,
+   6,
+   3,
+   5,
+   9,
+   4,
+   2,
+   1,
+   3,
+   4,
+   5,
+   1,
+   2,
+   6,
+   9,
+   8,
+   7
+  ],
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "origin": "r1c1"
+   },
+   {
+    "type": "cage",
+    "sum": 13,
+    "cells": [
+     "r3c2",
+     "r3c3",
+     "r4c1",
+     "r4c2"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 8,
+    "cells": [
+     "r6c9",
+     "r7c9",
+     "r8c9"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 34,
+    "cells": [
+     "r6c3",
+     "r7c3",
+     "r7c4",
+     "r8c2",
+     "r8c3"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 15,
+    "cells": [
+     "r5c1",
+     "r5c2",
+     "r6c1",
+     "r7c1",
+     "r7c2"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 29,
+    "cells": [
+     "r7c5",
+     "r7c6",
+     "r8c5",
+     "r8c6"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 14,
+    "cells": [
+     "r5c4",
+     "r6c4"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 7,
+    "cells": [
+     "r7c7",
+     "r8c7"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 8,
+    "cells": [
+     "r9c5",
+     "r9c6"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "value": 5,
+    "cells": [
+     "r5c8",
+     "r5c9",
+     "r4c9"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "value": 5,
+    "cells": [
+     "r6c8",
+     "r7c8"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "value": 5,
+    "cells": [
+     "r6c5",
+     "r5c5",
+     "r4c5",
+     "r3c5",
+     "r3c6",
+     "r2c6",
+     "r2c7"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "value": 5,
+    "cells": [
+     "r1c7",
+     "r1c8",
+     "r2c8",
+     "r2c9"
+    ]
+   }
+  ]
+ },
+ "card": {
+  "band": "Hard",
+  "difficulty": 13.2,
+  "time": null,
+  "contains": [
+   {
+    "code": "HSI",
+    "chip": "HSI",
+    "name": "Hidden Single",
+    "band": 0
+   },
+   {
+    "code": "LSI",
+    "chip": "LSI",
+    "name": "Line / dot read without notes",
+    "band": 0
+   },
+   {
+    "code": "CSI",
+    "chip": "CSI",
+    "name": "Last cell of a cage / line",
+    "band": 0
+   },
+   {
+    "code": "CFX",
+    "chip": "CFX",
+    "name": "Clue Facts",
+    "band": 0,
+    "uses": 1
+   },
+   {
+    "code": "NSI",
+    "chip": "NSI",
+    "name": "Naked Single",
+    "band": 1
+   },
+   {
+    "code": "PPR",
+    "chip": "PPR",
+    "name": "Pointing / Box-Line Reduction",
+    "band": 1,
+    "uses": 20
+   },
+   {
+    "code": "CGC",
+    "chip": "CGC",
+    "name": "Killer cage combinations",
+    "band": 1,
+    "uses": 16
+   },
+   {
+    "code": "LNR",
+    "chip": "LNR",
+    "name": "Line ranges (thermo / whisper bounds)",
+    "band": 1,
+    "uses": 9
+   },
+   {
+    "code": "DGC",
+    "chip": "DGC",
+    "name": "Digit counting",
+    "band": 2,
+    "uses": 16
+   },
+   {
+    "code": "RUL",
+    "chip": "RUL",
+    "name": "Two rules together",
+    "band": 2,
+    "uses": 30
+   },
+   {
+    "code": "SKY",
+    "chip": "SKY/SCL",
+    "name": "Skyscraper",
+    "band": 3,
+    "alternatives": [
+     "SCL"
+    ],
+    "uses": 1
+   }
+  ]
+ },
+ "info": {
+  "seconds": 880.6,
+  "attempts": 96,
+  "found": null,
+  "givens": 2,
+  "elements": {
+   "cage": 8,
+   "whisper": 4
+  }
+ }
+}

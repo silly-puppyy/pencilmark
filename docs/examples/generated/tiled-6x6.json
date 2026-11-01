@@ -1,6 +1,6 @@
 {
  "title": "A 6×6 killer tiled by cages",
- "shows": "the cage template with count \"tile\"",
+ "shows": "the count `\"tile\"`: cages cover the whole board",
  "spec": {
   "format": "sudoku-spec",
   "format_version": 1,
@@ -249,5 +249,14 @@
     "band": 0
    }
   ]
+ },
+ "info": {
+  "seconds": 4.1,
+  "attempts": 7,
+  "found": null,
+  "givens": 0,
+  "elements": {
+   "cage": 12
+  }
  }
 }

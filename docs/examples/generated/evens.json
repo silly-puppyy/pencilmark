@@ -1,0 +1,564 @@
+{
+ "title": "Every even cell shaded",
+ "shows": "the count `\"max\"` on a cell template: every even cell is marked, and the run keeps the result with the fewest givens",
+ "spec": {
+  "format": "sudoku-spec",
+  "format_version": 1,
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "rules": [
+   {
+    "type": "box_grid",
+    "origin": "r1c1",
+    "box": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "count": "max"
+   }
+  ],
+  "limits": {
+   "time": 300,
+   "seed": 1
+  }
+ },
+ "puzzle": {
+  "format": "sudoku-puzzle",
+  "format_version": 1,
+  "meta": {
+   "title": "generated 9x9 36 parity, 10 givens",
+   "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nOdd-Even: A digit in a grey square is even.",
+   "type": "Odd-Even Sudoku",
+   "generated_from": "sha256:8cfa1a55ab354e7217951b2969345b4539b1f6d1a91f896905cddd72d0be9a26"
+  },
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "givens": [
+   0,
+   6,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   3,
+   0,
+   0,
+   9,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   3,
+   0,
+   0,
+   0,
+   0,
+   9,
+   5,
+   0,
+   2,
+   0,
+   0,
+   0,
+   0,
+   0,
+   4,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   1,
+   6,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "solution": [
+   8,
+   6,
+   3,
+   9,
+   7,
+   1,
+   2,
+   4,
+   5,
+   4,
+   1,
+   5,
+   3,
+   8,
+   2,
+   9,
+   7,
+   6,
+   7,
+   2,
+   9,
+   6,
+   5,
+   4,
+   3,
+   1,
+   8,
+   9,
+   7,
+   4,
+   2,
+   1,
+   6,
+   8,
+   5,
+   3,
+   6,
+   3,
+   1,
+   8,
+   9,
+   5,
+   7,
+   2,
+   4,
+   5,
+   8,
+   2,
+   7,
+   4,
+   3,
+   1,
+   6,
+   9,
+   3,
+   9,
+   6,
+   4,
+   2,
+   7,
+   5,
+   8,
+   1,
+   2,
+   5,
+   8,
+   1,
+   6,
+   9,
+   4,
+   3,
+   7,
+   1,
+   4,
+   7,
+   5,
+   3,
+   8,
+   6,
+   9,
+   2
+  ],
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "origin": "r1c1"
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r7c4"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r8c3"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r1c7"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r4c7"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r6c8"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r5c8"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r1c8"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r7c5"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r8c1"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r8c7"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r9c2"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r2c5"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r9c9"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r6c2"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r8c5"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r6c3"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r7c3"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r9c7"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r9c6"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r2c1"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r4c3"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r5c9"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r7c8"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r2c9"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r4c4"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r3c2"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r6c5"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r3c4"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r2c6"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r5c1"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r4c6"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r1c1"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r1c2"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r3c6"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r3c9"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r5c4"
+    ]
+   }
+  ]
+ },
+ "card": {
+  "band": "Hard",
+  "difficulty": 7.7,
+  "time": 22.9,
+  "contains": [
+   {
+    "code": "HSI",
+    "chip": "HSI",
+    "name": "Hidden Single",
+    "band": 0
+   },
+   {
+    "code": "PPR",
+    "chip": "PPR",
+    "name": "Pointing / Box-Line Reduction",
+    "band": 1,
+    "uses": 8
+   },
+   {
+    "code": "MSI",
+    "chip": "MSI",
+    "name": "Pair / triple in the head",
+    "band": 1,
+    "uses": 7
+   },
+   {
+    "code": "HPR",
+    "chip": "HPR/NPR/NQD/NTR/HTR",
+    "name": "Hidden Pair",
+    "band": 2,
+    "alternatives": [
+     "NPR",
+     "NQD",
+     "NTR",
+     "HTR"
+    ],
+    "uses": 4
+   },
+   {
+    "code": "HQD",
+    "chip": "HQD/NPR/NQD/NTR/HTR",
+    "name": "Hidden Quad",
+    "band": 2,
+    "alternatives": [
+     "NPR",
+     "NQD",
+     "NTR",
+     "HTR"
+    ],
+    "uses": 5
+   },
+   {
+    "code": "XWG",
+    "chip": "XWG",
+    "name": "X-Wing",
+    "band": 3,
+    "uses": 1
+   },
+   {
+    "code": "SKY",
+    "chip": "SKY/KTE",
+    "name": "Skyscraper (in the head)",
+    "band": 3,
+    "alternatives": [
+     "KTE"
+    ],
+    "uses": 2
+   },
+   {
+    "code": "SCL",
+    "chip": "SCL/MCH",
+    "name": "Simple Colouring",
+    "band": 3,
+    "alternatives": [
+     "MCH"
+    ],
+    "uses": 1
+   }
+  ]
+ },
+ "info": {
+  "seconds": 300.3,
+  "attempts": 164,
+  "found": 232,
+  "givens": 10,
+  "elements": {
+   "even": 36
+  }
+ }
+}

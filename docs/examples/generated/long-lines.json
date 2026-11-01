@@ -1,6 +1,6 @@
 {
- "title": "Whispers and renbans together",
- "shows": "two templates, a count range and \"auto\"",
+ "title": "Long whispers and renbans",
+ "shows": "lengths on two templates at once: whispers of 7 cells or more, renbans of at least 5 (\"auto\": as many as needed)",
  "spec": {
   "format": "sudoku-spec",
   "format_version": 1,
@@ -21,14 +21,19 @@
    {
     "type": "line",
     "kind": "whisper",
-    "count": [
-     2,
-     4
-    ]
+    "length": [
+     7,
+     null
+    ],
+    "count": 2
    },
    {
     "type": "line",
     "kind": "renban",
+    "length": [
+     5,
+     null
+    ],
     "count": "auto"
    }
   ],
@@ -41,10 +46,10 @@
   "format": "sudoku-puzzle",
   "format_version": 1,
   "meta": {
-   "title": "generated 9x9 4 renban, 4 whisper, 12 givens",
+   "title": "generated 9x9 5 renban, 2 whisper, 5 givens",
    "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nGerman Whispers: Adjacent digits on a whisper line differ by at least 5.\nRenban: A renban line holds a set of consecutive digits in any order, without repeats.",
    "type": "Variant Sudoku",
-   "generated_from": "sha256:bce1d8e6b323e3f3239b80e93838278cbd736ac6ae66af5e6ec573d7a1f3880e"
+   "generated_from": "sha256:73a80d1d3d82820e052f887248fba8384bdbc5ac7d935df35612b5e715f0e76d"
   },
   "board": {
    "rows": 9,
@@ -52,170 +57,170 @@
   },
   "digits": 9,
   "givens": [
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   7,
-   0,
-   8,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   6,
-   0,
-   0,
-   0,
-   0,
-   4,
-   1,
-   0,
-   0,
-   9,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   7,
-   6,
-   0,
-   0,
-   0,
-   0,
-   4,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   1,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
    5,
-   2,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   7,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   3,
+   6,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   1,
+   0,
+   0,
+   0,
    0
   ],
   "solution": [
-   6,
-   3,
-   9,
-   2,
    5,
+   8,
+   3,
+   6,
+   2,
    1,
+   4,
+   7,
+   9,
+   6,
+   1,
+   9,
+   5,
    7,
    4,
    8,
-   4,
-   5,
-   8,
+   2,
    3,
-   6,
-   7,
-   9,
-   1,
    2,
-   1,
-   7,
-   2,
-   8,
-   4,
-   9,
-   3,
-   6,
-   5,
-   5,
-   8,
-   3,
-   4,
-   1,
-   6,
-   2,
-   9,
-   7,
-   2,
-   9,
-   4,
-   7,
-   3,
-   8,
-   1,
-   5,
-   6,
-   7,
-   6,
-   1,
-   5,
-   9,
-   2,
-   4,
-   8,
-   3,
-   3,
-   4,
-   6,
-   1,
-   2,
-   5,
-   8,
-   7,
-   9,
-   8,
-   2,
-   5,
-   9,
    7,
    4,
-   6,
-   3,
-   1,
-   9,
-   1,
-   7,
-   6,
    8,
+   9,
    3,
    5,
+   1,
+   6,
+   9,
+   3,
+   7,
+   4,
+   5,
+   6,
    2,
-   4
+   8,
+   1,
+   8,
+   6,
+   2,
+   1,
+   3,
+   7,
+   9,
+   5,
+   4,
+   1,
+   4,
+   5,
+   2,
+   8,
+   9,
+   3,
+   6,
+   7,
+   7,
+   2,
+   6,
+   9,
+   4,
+   5,
+   1,
+   3,
+   8,
+   4,
+   5,
+   1,
+   3,
+   6,
+   8,
+   7,
+   9,
+   2,
+   3,
+   9,
+   8,
+   7,
+   1,
+   2,
+   6,
+   4,
+   5
   ],
   "rules": [
    {
@@ -231,88 +236,105 @@
     "kind": "whisper",
     "value": 5,
     "cells": [
-     "r3c4",
-     "r2c4",
-     "r2c3",
-     "r3c3",
+     "r4c1",
+     "r3c1",
      "r3c2",
-     "r3c1"
-    ]
-   },
-   {
-    "type": "line",
-    "kind": "whisper",
-    "value": 5,
-    "cells": [
-     "r7c5",
-     "r6c5",
-     "r6c6",
-     "r5c6"
-    ]
-   },
-   {
-    "type": "line",
-    "kind": "whisper",
-    "value": 5,
-    "cells": [
-     "r5c2",
-     "r5c1",
-     "r6c1"
-    ]
-   },
-   {
-    "type": "line",
-    "kind": "whisper",
-    "value": 5,
-    "cells": [
-     "r4c3",
-     "r4c2"
-    ]
-   },
-   {
-    "type": "line",
-    "kind": "renban",
-    "cells": [
-     "r1c5",
-     "r2c5",
-     "r2c6"
-    ]
-   },
-   {
-    "type": "line",
-    "kind": "renban",
-    "cells": [
      "r2c2",
-     "r2c1",
-     "r1c1"
+     "r1c2",
+     "r1c3",
+     "r2c3",
+     "r3c3"
     ]
    },
    {
     "type": "line",
-    "kind": "renban",
+    "kind": "whisper",
+    "value": 5,
     "cells": [
-     "r8c8",
-     "r8c7",
-     "r9c7",
-     "r9c8",
-     "r9c9"
-    ]
-   },
-   {
-    "type": "line",
-    "kind": "renban",
-    "cells": [
-     "r4c9",
+     "r3c8",
      "r3c9",
-     "r3c8"
+     "r4c9",
+     "r4c8",
+     "r4c7",
+     "r5c7",
+     "r6c7",
+     "r6c6"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "renban",
+    "cells": [
+     "r7c3",
+     "r6c3",
+     "r6c4",
+     "r6c5",
+     "r7c5",
+     "r7c4",
+     "r8c4",
+     "r9c4",
+     "r9c5"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "renban",
+    "cells": [
+     "r2c4",
+     "r1c4",
+     "r1c5",
+     "r1c6",
+     "r2c6",
+     "r3c6"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "renban",
+    "cells": [
+     "r9c1",
+     "r9c2",
+     "r8c2",
+     "r8c1",
+     "r7c1",
+     "r6c1",
+     "r5c1",
+     "r5c2",
+     "r5c3"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "renban",
+    "cells": [
+     "r9c8",
+     "r9c7",
+     "r8c7",
+     "r8c8",
+     "r7c8",
+     "r7c7",
+     "r7c6",
+     "r8c6",
+     "r9c6"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "renban",
+    "cells": [
+     "r7c9",
+     "r6c9",
+     "r5c9",
+     "r5c8",
+     "r6c8"
     ]
    }
   ]
  },
  "card": {
-  "band": "Medium",
-  "difficulty": 11.8,
-  "time": 42.6,
+  "band": "Expert",
+  "difficulty": 16.2,
+  "time": 69.0,
   "contains": [
    {
     "code": "HSI",
@@ -324,6 +346,12 @@
     "code": "LSI",
     "chip": "LSI",
     "name": "Line / dot read without notes",
+    "band": 0
+   },
+   {
+    "code": "CSI",
+    "chip": "CSI",
+    "name": "Last cell of a cage / line",
     "band": 0
    },
    {
@@ -347,40 +375,78 @@
     "uses": 14
    },
    {
-    "code": "MSI",
-    "chip": "MSI",
-    "name": "Notes in the head",
+    "code": "PWC",
+    "chip": "PWC",
+    "name": "Pair rules (dots, whispers, anti-knight...)",
     "band": 1,
-    "uses": 3
+    "uses": 5
    },
    {
     "code": "LNR",
-    "chip": "LNR/LNS",
+    "chip": "LNR",
     "name": "Line ranges (thermo / whisper bounds)",
     "band": 1,
-    "alternatives": [
-     "LNS"
-    ],
-    "uses": 12
+    "uses": 10
    },
    {
     "code": "NPR",
-    "chip": "NPR/DGC/HQD",
+    "chip": "NPR",
     "name": "Naked Pair",
     "band": 2,
-    "alternatives": [
-     "DGC",
-     "HQD"
-    ],
-    "uses": 2
+    "uses": 1
+   },
+   {
+    "code": "DGC",
+    "chip": "DGC",
+    "name": "Digit counting",
+    "band": 2,
+    "uses": 15
    },
    {
     "code": "RUL",
     "chip": "RUL",
     "name": "Two rules together",
     "band": 2,
-    "uses": 15
+    "uses": 19
+   },
+   {
+    "code": "ERE",
+    "chip": "ERE",
+    "name": "Empty Rectangle",
+    "band": 4,
+    "uses": 1
+   },
+   {
+    "code": "FRK",
+    "chip": "FRK",
+    "name": "Finned Franken Swordfish",
+    "band": 4,
+    "uses": 2
+   },
+   {
+    "code": "BAN",
+    "chip": "BAN",
+    "name": "Band set theory with cages",
+    "band": 4,
+    "uses": 27
+   },
+   {
+    "code": "CAS",
+    "chip": "CAS",
+    "name": "Case analysis",
+    "band": 5,
+    "uses": 25
    }
   ]
+ },
+ "info": {
+  "seconds": 384.9,
+  "attempts": 2,
+  "found": null,
+  "givens": 5,
+  "elements": {
+   "renban": 5,
+   "whisper": 2
+  }
  }
 }

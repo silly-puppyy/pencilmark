@@ -1,0 +1,598 @@
+{
+ "title": "Nine variants on one 9×9",
+ "shows": "",
+ "spec": {
+  "format": "sudoku-spec",
+  "format_version": 1,
+  "meta": {
+   "title": "Nine variants on one 9x9",
+   "description": "At least one cage, thermo, whisper, renban, between line, arrow, kropki dot, XV clue and odd / even cell, each needed by the solve."
+  },
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "rules": [
+   {
+    "type": "box_grid",
+    "origin": "r1c1",
+    "box": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "cage",
+    "count": [
+     1,
+     null
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "thermo",
+    "count": [
+     1,
+     null
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "count": [
+     1,
+     null
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "renban",
+    "count": [
+     1,
+     null
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "between",
+    "count": [
+     1,
+     null
+    ]
+   },
+   {
+    "type": "arrow",
+    "count": [
+     1,
+     null
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "count": [
+     1,
+     null
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "count": [
+     1,
+     null
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "parity",
+    "count": [
+     1,
+     null
+    ]
+   }
+  ],
+  "where": {
+   "band": "Hard",
+   "elements": {
+    "max": 20
+   }
+  },
+  "limits": {
+   "time": 1800,
+   "seed": 9
+  }
+ },
+ "puzzle": {
+  "format": "sudoku-puzzle",
+  "format_version": 1,
+  "meta": {
+   "title": "Nine variants on one 9x9",
+   "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nKiller: Digits in a cage sum to its small clue and don't repeat within the cage.\nArrow: Digits along an arrow sum to the number in its circle.\nThermo: Digits strictly increase along a thermometer from the bulb.\nGerman Whispers: Adjacent digits on a whisper line differ by at least 5.\nRenban: A renban line holds a set of consecutive digits in any order, without repeats.\nBetween Lines: Digits on a between line lie strictly between the digits in its end circles.\nKropki: Digits separated by a black dot are in a 1:2 ratio.\nXV: Digits separated by an X sum to 10.\nOdd-Even: A digit in a grey circle is odd; a digit in a grey square is even.",
+   "type": "Variant Sudoku",
+   "description": "At least one cage, thermo, whisper, renban, between line, arrow, kropki dot, XV clue and odd / even cell, each needed by the solve.",
+   "generated_from": "sha256:b9a1644154672ab7b48fdd6f4ec7db8e1a62a7a0e08bc60aa3d4fef764cc7068"
+  },
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "givens": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   7,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   8,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   1,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "solution": [
+   5,
+   1,
+   3,
+   2,
+   7,
+   8,
+   6,
+   4,
+   9,
+   6,
+   7,
+   9,
+   3,
+   4,
+   1,
+   2,
+   5,
+   8,
+   2,
+   4,
+   8,
+   5,
+   6,
+   9,
+   1,
+   3,
+   7,
+   1,
+   8,
+   2,
+   6,
+   3,
+   4,
+   9,
+   7,
+   5,
+   3,
+   5,
+   7,
+   1,
+   9,
+   2,
+   4,
+   8,
+   6,
+   9,
+   6,
+   4,
+   7,
+   8,
+   5,
+   3,
+   1,
+   2,
+   4,
+   2,
+   6,
+   8,
+   1,
+   7,
+   5,
+   9,
+   3,
+   8,
+   9,
+   5,
+   4,
+   2,
+   3,
+   7,
+   6,
+   1,
+   7,
+   3,
+   1,
+   9,
+   5,
+   6,
+   8,
+   2,
+   4
+  ],
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "origin": "r1c1"
+   },
+   {
+    "type": "cage",
+    "sum": 6,
+    "cells": [
+     "r1c2",
+     "r1c3",
+     "r1c4"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r9c6"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r6c2"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r7c2"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "odd",
+    "cells": [
+     "r4c9"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r3c8",
+     "r4c8"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "color": "black",
+    "cells": [
+     "r7c1",
+     "r8c1"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "xv",
+    "letter": "X",
+    "cells": [
+     "r2c5",
+     "r3c5"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "thermo",
+    "cells": [
+     "r2c4",
+     "r3c4",
+     "r3c3",
+     "r2c3"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "value": 5,
+    "cells": [
+     "r1c6",
+     "r2c6",
+     "r3c6",
+     "r4c6",
+     "r4c7",
+     "r5c7"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "renban",
+    "cells": [
+     "r3c1",
+     "r4c1",
+     "r5c1"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "between",
+    "cells": [
+     "r9c1",
+     "r9c2",
+     "r9c3"
+    ]
+   },
+   {
+    "type": "arrow",
+    "bulb": [
+     "r5c8"
+    ],
+    "lines": [
+     [
+      "r5c9",
+      "r6c9"
+     ]
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "renban",
+    "cells": [
+     "r6c4",
+     "r7c4",
+     "r7c3",
+     "r8c3"
+    ]
+   },
+   {
+    "type": "arrow",
+    "bulb": [
+     "r9c9"
+    ],
+    "lines": [
+     [
+      "r8c9",
+      "r7c9"
+     ]
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "renban",
+    "cells": [
+     "r6c5",
+     "r5c5"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "thermo",
+    "cells": [
+     "r8c5",
+     "r8c6",
+     "r7c6"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "value": 5,
+    "cells": [
+     "r4c4",
+     "r5c4",
+     "r5c3"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "renban",
+    "cells": [
+     "r2c1",
+     "r2c2",
+     "r3c2",
+     "r4c2",
+     "r5c2"
+    ]
+   }
+  ]
+ },
+ "card": {
+  "band": "Hard",
+  "difficulty": 13.6,
+  "time": 57.3,
+  "contains": [
+   {
+    "code": "HSI",
+    "chip": "HSI",
+    "name": "Hidden Single",
+    "band": 0
+   },
+   {
+    "code": "LSI",
+    "chip": "LSI",
+    "name": "Line / dot read without notes",
+    "band": 0
+   },
+   {
+    "code": "CSI",
+    "chip": "CSI",
+    "name": "Last cell of a cage / line",
+    "band": 0
+   },
+   {
+    "code": "CFX",
+    "chip": "CFX",
+    "name": "Clue Facts",
+    "band": 0,
+    "uses": 1
+   },
+   {
+    "code": "NSI",
+    "chip": "NSI",
+    "name": "Naked Single",
+    "band": 1
+   },
+   {
+    "code": "PPR",
+    "chip": "PPR",
+    "name": "Pointing / Box-Line Reduction",
+    "band": 1,
+    "uses": 19
+   },
+   {
+    "code": "CGC",
+    "chip": "CGC",
+    "name": "Killer cage combinations",
+    "band": 1,
+    "uses": 1
+   },
+   {
+    "code": "ARW",
+    "chip": "ARW",
+    "name": "Arrow sums",
+    "band": 1,
+    "uses": 5
+   },
+   {
+    "code": "PWC",
+    "chip": "PWC",
+    "name": "Pair rules (dots, whispers, anti-knight...)",
+    "band": 1,
+    "uses": 28
+   },
+   {
+    "code": "LNR",
+    "chip": "LNR",
+    "name": "Line ranges (thermo / whisper bounds)",
+    "band": 1,
+    "uses": 9
+   },
+   {
+    "code": "HQD",
+    "chip": "HQD/IOM",
+    "name": "Hidden Quad",
+    "band": 2,
+    "alternatives": [
+     "IOM"
+    ],
+    "uses": 3
+   },
+   {
+    "code": "CBL",
+    "chip": "CBL",
+    "name": "Must-contain digits (cage / line)",
+    "band": 2,
+    "uses": 7
+   },
+   {
+    "code": "RUL",
+    "chip": "RUL",
+    "name": "Two rules together",
+    "band": 2,
+    "uses": 23
+   },
+   {
+    "code": "SKY",
+    "chip": "SKY",
+    "name": "Skyscraper",
+    "band": 3,
+    "uses": 1
+   }
+  ]
+ },
+ "info": {
+  "seconds": 366.3,
+  "attempts": 4,
+  "found": null,
+  "givens": 3,
+  "elements": {
+   "arrow": 2,
+   "between": 1,
+   "cage": 1,
+   "even": 3,
+   "kropki_black": 1,
+   "odd": 1,
+   "renban": 4,
+   "thermo": 2,
+   "whisper": 2,
+   "x": 2
+  }
+ }
+}
