@@ -1,6 +1,6 @@
-// Sections after Diataxis (get started, how-to guides, reference, explanation, plus contributing). Sections and the
-// rule families carry an icon in the sidebar (static/img/icons/<name>.svg); pages carry theirs only on the card pages
-// (a pm-ico-<name> class without pm-ico, read by theme/DocCard). Each section opens on a card page listing its pages.
+// Sections after Diataxis (get started, how-to guides, reference, explanation, plus contributing). Only the sections
+// carry an icon in the sidebar (static/img/icons/<name>.svg); pages carry theirs on the card pages (a pm-ico-<name>
+// class without pm-ico, read by theme/DocCard). Each section opens on a card page listing its pages.
 const section = (label, slug, description, items, collapsed = true, icon = slug.split('/')[1]) => ({
   type: 'category', label, collapsed, className: `pm-ico pm-ico-${icon}`,
   link: {type: 'generated-index', slug, description}, items,
@@ -40,24 +40,27 @@ module.exports = {
       ]),
     ]),
     section('Formats', '/formats/', 'The three formats: a puzzle, its grade card, and a request to the generator.', [
-      {type: 'doc', id: 'formats/puzzle-format', className: 'pm-ico-puzzle-format', label: 'Puzzle format'},
-      {type: 'category', label: 'Rule families', collapsed: true, className: 'pm-ico pm-ico-rules',
-        description: 'Every rule type of the puzzle format, family by family.', link: {type: 'generated-index', slug: '/formats/rules/',
-        description: 'Every rule type of the puzzle format, family by family, with what it means and how it is drawn.'}, items: [
-        {type: 'doc', id: 'formats/rules/houses-and-regions', className: 'pm-ico pm-ico-houses', label: 'Houses and regions'},
-        {type: 'doc', id: 'formats/rules/cages-and-sums', className: 'pm-ico pm-ico-cages', label: 'Cages and sums'},
-        {type: 'doc', id: 'formats/rules/lines-and-arrows', className: 'pm-ico pm-ico-lines', label: 'Lines and arrows'},
-        {type: 'doc', id: 'formats/rules/edges-and-corners', className: 'pm-ico pm-ico-edges', label: 'Edges and corners'},
-        {type: 'doc', id: 'formats/rules/outside-clues', className: 'pm-ico pm-ico-outside', label: 'Outside clues'},
-        {type: 'doc', id: 'formats/rules/whole-board-rules', className: 'pm-ico pm-ico-board', label: 'Whole-board rules'},
-        {type: 'doc', id: 'formats/rules/cell-clues', className: 'pm-ico pm-ico-cells', label: 'Cell clues'},
-        {type: 'doc', id: 'formats/rules/other', className: 'pm-ico pm-ico-other', label: 'Other rules'},
-        {type: 'doc', id: 'formats/rules/examples', label: 'Examples'},
-        {type: 'doc', id: 'formats/rules/quick-reference', label: 'Quick reference'},
+      {type: 'category', label: 'Puzzle format', collapsed: true, className: 'pm-ico-puzzle-format',
+        description: 'The sudoku-puzzle file: the format, every rule family, complete examples and a quick reference.',
+        link: {type: 'doc', id: 'formats/puzzle-format'}, items: [
+        {type: 'category', label: 'Rule families', collapsed: true, className: 'pm-ico-rules',
+          description: 'Every rule type of the puzzle format, family by family.', link: {type: 'generated-index', slug: '/formats/rules/',
+          description: 'Every rule type of the puzzle format, family by family, with what it means and how it is drawn.'}, items: [
+          page('formats/rules/houses-and-regions', 'houses', 'Houses and regions'),
+          page('formats/rules/cages-and-sums', 'cages', 'Cages and sums'),
+          page('formats/rules/lines-and-arrows', 'lines', 'Lines and arrows'),
+          page('formats/rules/edges-and-corners', 'edges', 'Edges and corners'),
+          page('formats/rules/outside-clues', 'outside', 'Outside clues'),
+          page('formats/rules/whole-board-rules', 'board', 'Whole-board rules'),
+          page('formats/rules/cell-clues', 'cells', 'Cell clues'),
+          page('formats/rules/other', 'other', 'Other rules'),
+        ]},
+        {type: 'doc', id: 'formats/examples', label: 'Examples'},
+        {type: 'doc', id: 'formats/quick-reference', label: 'Quick reference'},
       ]},
-      {type: 'doc', id: 'formats/grade-card', className: 'pm-ico-grade-card', label: 'Grade card'},
-      {type: 'doc', id: 'formats/generator-spec', className: 'pm-ico-generator-spec', label: 'Generator spec'},
-      {type: 'doc', id: 'formats/other-formats', className: 'pm-ico-other-formats', label: 'Other formats'},
+      page('formats/grade-card', 'grade-card', 'Grade card'),
+      page('formats/generator-spec', 'generator-spec', 'Generator spec'),
+      page('formats/other-formats', 'other-formats', 'Other formats'),
     ]),
     section('Library', '/library/', 'The Python library: its API, the variant names it gives, and how it draws puzzles.', [
       {type: 'doc', id: 'library/python-api', className: 'pm-ico-python-api', label: 'Python API'},

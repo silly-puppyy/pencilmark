@@ -54,10 +54,12 @@ module.exports = async function createConfig() {
     }],
   ],
   themeConfig: {
-    // link previews and search: the social card (static/img/social-card.png) and page keywords
-    image: 'img/social-card.png',
+    // link previews (Discord, Slack, ...): the small icon beside the text, in the logo's colour; search: page keywords.
+    // The wide banner is for the GitHub README only.
+    image: 'img/icon-256.png',
     metadata: [{name: 'keywords', content: 'sudoku, sudoku difficulty, sudoku grader, variant sudoku, killer sudoku, ' +
-      'sudoku solver, sudoku generator, solve time, python'}],
+      'sudoku solver, sudoku generator, solve time, python'},
+      {name: 'twitter:card', content: 'summary'}, {name: 'theme-color', content: '#d2b48c'}],
     colorMode: {respectPrefersColorScheme: true},
     navbar: {
       title: 'pencilmark',
@@ -68,18 +70,20 @@ module.exports = async function createConfig() {
         {to: '/formats/grade-card/', label: 'Grade card', position: 'left'},
         {to: '/library/python-api/', label: 'Python API', position: 'left'},
         {href: 'https://pypi.org/project/pencilmark/', position: 'right', className: 'pm-nav-icon pm-nav-pypi',
-         'aria-label': 'pencilmark on PyPI', title: 'PyPI'},
-        {href: GH, position: 'right', className: 'pm-nav-icon pm-nav-github', 'aria-label': 'GitHub repository',
-         title: 'GitHub'},
+         label: 'PyPI', title: 'pencilmark on PyPI'},
+        {href: GH, position: 'right', className: 'pm-nav-icon pm-nav-github', label: 'GitHub', title: 'GitHub repository'},
         {type: 'custom-graphicsToggle', position: 'right'},  // last: right before the theme switch
       ],
     },
     footer: {
       style: 'dark',
       links: [
-        {title: 'Docs', items: [{label: 'Usage', to: '/start/usage/'}, {label: 'Puzzle format', to: '/formats/puzzle-format/'},
-                                {label: 'Grade card', to: '/formats/grade-card/'}, {label: 'Generator spec', to: '/formats/generator-spec/'},
-                                {label: 'Drawing and style', to: '/library/drawing-style/'}, {label: 'Engine', to: '/library/engine-mapping/'}]},
+        {title: 'Docs', items: [{label: 'Get started', to: '/start/'}, {label: 'Guides', to: '/guides/'},
+                                {label: 'Formats', to: '/formats/'}, {label: 'Library', to: '/library/'},
+                                {label: 'How the grades work', to: '/grades/'}, {label: 'Code reference', to: '/reference/'},
+                                {label: 'Contributing', to: '/dev/'}]},
+        {title: 'Formats', items: [{label: 'Puzzle format', to: '/formats/puzzle-format/'}, {label: 'Grade card', to: '/formats/grade-card/'},
+                                   {label: 'Generator spec', to: '/formats/generator-spec/'}]},
         {title: 'Schemas', items: [{label: 'sudoku-puzzle', href: 'pathname:///pencilmark/schema/sudoku-puzzle-1.json'},
                                    {label: 'sudoku-grade', href: 'pathname:///pencilmark/schema/sudoku-grade-1.json'}]},
         {title: 'Project', items: [{label: 'GitHub', href: GH}, {label: 'PyPI', href: 'https://pypi.org/project/pencilmark/'}]},

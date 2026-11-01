@@ -42,14 +42,12 @@ body {{ margin: 0; width: 1280px; height: 400px; background: {t["bg"]}; font-fam
 .name {{ display: flex; align-items: center; gap: 18px; margin-bottom: 22px; }}
 .name span {{ font-size: 64px; font-weight: 700; color: {t["ink"]}; letter-spacing: -1px; }}
 .tag {{ font-size: 28px; line-height: 1.3; color: {t["text"]}; max-width: 560px; }}
-.sub {{ margin-top: 20px; font-size: 20px; color: {t["accent"]}; }}
 .boards {{ display: flex; gap: 0; margin-right: -10px; }}
 .b {{ margin-left: -36px; filter: drop-shadow(0 6px 14px rgba(0,0,0,{0.45 if dark else 0.14})); }}
 .b svg {{ width: 230px; height: auto; display: block; }}
 </style></head><body>
 <div><div class="name"><img src="{logo}" width="72"><span>pencilmark</span></div>
-<div class="tag">Human-like difficulty grader, solver and generator for classic and variant sudoku</div>
-<div class="sub">Difficulty &middot; solve time &middot; band &middot; techniques &middot; explanations</div></div>
+<div class="tag">Human-like difficulty grader, solver and generator for classic and variant sudoku</div></div>
 <div class="boards">{boards}</div>
 </body></html>"""
 

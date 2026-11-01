@@ -19,9 +19,9 @@ FAVICONS = {
     "wikipedia": "https://en.wikipedia.org/favicon.ico",
     "sudokucom": "https://sudoku.com/apple-touch-icon-57x57.png",
     "sudokucoach": "https://sudoku.coach/img/favicons/favicon-32x32.png",
-    "krazydad": "https://files.krazydad.com/favicon-32x32.png",
     "sudokuvariants": "https://sudokuvariants.com/favicon.png",
     "logicmasters": "https://logic-masters.de/favicon.ico",
+    "sudopedia": "https://sudopedia.sudocue.net/resources/assets/sudologo.gif?b9220",
     "artisanalsudoku": "https://substackcdn.com/image/fetch/$s_!-ZRo!,f_auto,q_auto:good,fl_progressive:steep/"
     "https%3A%2F%2Fbucketeer-e05bbc84-baa3-437e-9518-adb32be77984.s3.amazonaws.com%2Fpublic%2Fimages%2F"
     "5db097c2-4913-46cb-8612-1148c6cb8a65%2Ffavicon-32x32.png",
@@ -35,11 +35,16 @@ def fetch(url):
         return r.read()
 
 
-def favicon(data):
+TRANSPARENT = {"sudokucoach"}  # icons that keep their own transparency (legible on both themes as they are)
+
+
+def favicon(data, keep_alpha=False):
     im = Image.open(io.BytesIO(data))
     if im.info.get("sizes"):
         im.size = max(im.info["sizes"])  # an .ico holds several sizes: take the largest
     im = im.convert("RGBA")
+    if keep_alpha:
+        return im
     white = Image.new("RGBA", im.size, (255, 255, 255, 255))  # on white: dark-mode pages keep transparent icons legible
     white.alpha_composite(im)
     return white
@@ -64,7 +69,7 @@ def hodoku(data):
 
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
-    icons = {name: favicon(fetch(url)) for name, url in FAVICONS.items()}
+    icons = {name: favicon(fetch(url), keep_alpha=name in TRANSPARENT) for name, url in FAVICONS.items()}
     icons["hodoku"] = hodoku(fetch(HODOKU_HEAD))
     for name, im in icons.items():
         im.resize((64, 64), Image.LANCZOS).save(
