@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- A malformed SudokuPad, f-puzzles or penpa payload is a `DecodeError` saying so ("malformed f-puzzles data (KeyError:
+  'cells')"); a missing key or a value of the wrong type raised KeyError, TypeError, AttributeError or IndexError from
+  the translator (over half of 3,000 mutated f-puzzles payloads).
 - The generator keeps to `limits.time`: an attempt still digging when the time is up is given up (a 2 s request on a
   thermo puzzle ran 130 s). The returned puzzle's card is graded in full; it was capped at `grade_seconds` and could
   come back with band Unknown and no difficulty.

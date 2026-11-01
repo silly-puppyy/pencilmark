@@ -20,7 +20,7 @@ from __future__ import annotations
 import re
 import urllib.parse
 
-from ._common import DecodeError, Http, to_puzzle_json, unsupported_from_reason
+from ._common import DecodeError, Http, reads, to_puzzle_json, unsupported_from_reason
 
 HTTP = Http(min_gap=1.0)
 
@@ -88,6 +88,7 @@ def fetch(short_link, http=None):
     return decode(target)
 
 
+@reads("f-puzzles")
 def translate(x, rules_text=None, reading=None, infer=False, fetch=True):
     """-> (engine Puzzle (not finalized), info). rules_text fills a missing 'ruleset' (it is read for negative
     constraints and line keywords). Raises UnsupportedPuzzle / DecodeError."""
@@ -107,6 +108,7 @@ def translate(x, rules_text=None, reading=None, infer=False, fetch=True):
     return p, info
 
 
+@reads("f-puzzles")
 def to_puzzle(x, rules_text=None, reading=None, infer=False, fetch=True, url=None):
     """f-puzzles link / payload / dict -> puzzle JSON dict (title, author, rules_text, source, embedded solution)."""
     from ._fpuz_translate import solution_of

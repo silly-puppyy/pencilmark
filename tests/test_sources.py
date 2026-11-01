@@ -103,3 +103,12 @@ def test_links_accepted_everywhere():
     assert pencilmark.to_export(url)["meta"]["source"] == url  # the link's metadata is kept
     with pytest.raises(ValueError, match="not a puzzle link"):
         pencilmark.solve("https://example.com/puzzle")
+
+
+def test_malformed_fpuzzles_is_a_decode_error():
+    """found by mutating f-puzzles payloads: a missing key or a value of the wrong type raised KeyError / TypeError /
+    AttributeError / IndexError from the translator; the readers now say the data is malformed"""
+    for broken in ({"killercage": [{"value": "10"}]}, {"thermometer": [{"lines": 5}]}, {"odd": ["R1C1"]}):
+        d = dict(fpuzzles_json(CLASSIC), **broken)
+        with pytest.raises(sources.DecodeError, match="malformed f-puzzles"):
+            FP.to_puzzle(fpuzzles_url(d), rules_text="Normal sudoku rules apply.")

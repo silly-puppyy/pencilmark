@@ -23,7 +23,7 @@ import json
 import re
 import urllib.parse
 
-from ._common import DecodeError, FetchError, Http, UnsupportedPuzzle, to_puzzle_json, unsupported_from_reason
+from ._common import DecodeError, FetchError, Http, UnsupportedPuzzle, reads, to_puzzle_json, unsupported_from_reason
 
 API = "https://sudokupad.app/api/puzzle/"
 HOSTS = re.compile(r"(?:^|\.)(?:sudokupad\.app|crackingthecryptic\.com)$", re.I)
@@ -281,6 +281,7 @@ def _rules_fallback(sp, page_text):
     return (md or {}).get("rules") if isinstance(md, dict) else None
 
 
+@reads("SudokuPad")
 def translate(x, page_text=None, reading=None, infer=False, fetch=True):
     """-> (engine Puzzle (not finalized), info dict). Raises UnsupportedPuzzle / DecodeError."""
     sp = decode(x, fetch=fetch)
@@ -317,6 +318,7 @@ def metadata(sp):
     return {k: (v.strip() if isinstance(v, str) else v) for k, v in out.items()}
 
 
+@reads("SudokuPad")
 def to_puzzle(x, page_text=None, reading=None, infer=False, fetch=True, url=None):
     """SudokuPad link / payload / decoded dict -> puzzle JSON dict (pencilmark.puzzle_json format) with title, author,
     rules_text, source (link) and the embedded solution when it has one digit per cell."""

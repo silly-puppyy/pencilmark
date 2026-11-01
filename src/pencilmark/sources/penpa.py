@@ -36,7 +36,7 @@ import urllib.parse
 import zlib
 from collections import Counter, defaultdict
 
-from ._common import DecodeError, UnsupportedPuzzle, to_puzzle_json
+from ._common import DecodeError, UnsupportedPuzzle, reads, to_puzzle_json
 
 COMPRESS_SUB = [
     ["z", "zZ"],
@@ -282,6 +282,7 @@ def _nonempty(v):
     return bool(v) and not (isinstance(v, list) and all(not x for x in v))
 
 
+@reads("penpa")
 def translate(x, rules_text=None):
     """-> (engine Puzzle, info, decoded). rules_text: the rules from the page that links the puzzle (used together
     with the rules stored in the link). A rules text is required (hidden rules cannot be excluded otherwise); killer
@@ -588,6 +589,7 @@ def translate(x, rules_text=None):
     return p, info, d
 
 
+@reads("penpa")
 def to_puzzle(x, rules_text=None, url=None):
     """penpa link / p= value / decoded dict -> puzzle JSON dict (title, author, rules_text, source, a= solution)."""
     p, info, d = translate(x, rules_text=rules_text)

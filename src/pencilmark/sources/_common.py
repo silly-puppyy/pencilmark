@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import gzip
 import os
 import threading
@@ -26,6 +27,23 @@ class SourceError(Exception):
 
 class DecodeError(SourceError):
     """The link / payload could not be recognised or decoded."""
+
+
+def reads(source):
+    """decorator for a reader: a crash on malformed data (a missing key, a value of the wrong type, a short list) becomes a
+    DecodeError naming the source and the problem"""
+
+    def wrap(fn):
+        @functools.wraps(fn)
+        def inner(*args, **kwargs):
+            try:
+                return fn(*args, **kwargs)
+            except (TypeError, AttributeError, KeyError, IndexError) as e:
+                raise DecodeError(f"malformed {source} data ({type(e).__name__}: {e})") from e
+
+        return inner
+
+    return wrap
 
 
 class FetchError(SourceError):
