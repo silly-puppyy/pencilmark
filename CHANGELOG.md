@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Chains through a group of cells are explained when the group ends the chain too (they fell back to a generic
+  sentence: "one of r2c5, r8c5 is 9" now states that end), and grouped chains are named as their step (Grouped
+  X-Chain, Empty Rectangle) instead of "Alternating Inference Chain" (6 steps in the private corpus).
 - Generator spec: templates take shape limits, `size` and `sum` for cages and `length` for lines and arrows (a number
   or `[min, max]`); a template's count may be `"max"` (as many as fit), and `where.difficulty` may be `"max"` or
   `"min"` (the hardest or easiest puzzle found). These searches use the whole `limits.time` and return the best

@@ -256,7 +256,17 @@ def _chain_text(nm, p, path, als_cells=None):
     return out
 
 
+def _is(nm, n, true=True):
+    """an end of a chain as a statement: "r1c2 is 5" / "r1c2 is NOT 5"; a group: "one of r1c2,r1c3 is 5" / "neither ..." """
+    if n[0] == "grp":
+        cells = nm.cells(list(n[1]))
+        return f"one of {cells} is {n[2]}" if true else f"none of {cells} is {n[2]}"
+    return f"{nm.cell(n[0])} is {n[1]}" if true else f"{nm.cell(n[0])} is NOT {n[1]}"
+
+
 def _clash(nm, p, t, end):
+    if end[0] == "grp":
+        return f"it sees every cell of {nm.cells(list(end[1]))}"
     (c, d), (ec, ed) = t, end
     if c == ec:
         return f"it is itself the {ed} end" if d != ed else "it is an end"
@@ -266,6 +276,7 @@ def _clash(nm, p, t, end):
 
 
 _PATTERN_NAMES = {p.engine_code: p.explain_name for p in R.patterns() if p.explain_name}  # data/patterns.csv
+_STEP_NAMES = {p.engine_code: p.step_name for p in R.patterns() if p.step_name}
 
 
 def _chain_links(path):
@@ -317,7 +328,7 @@ def _chains_for(p, st, elims, kind):
 
 
 def _chain_conclusion(nm, p, path, done):
-    (sc, sd), (ec, ed) = path[0][0], path[-1][0]
+    (s, e), sd, ed = (path[0][0], path[-1][0]), path[0][0][-1], path[-1][0][-1]
     tg = sorted({c for c, _ in done})
     ds = sorted({d for _, d in done})
     if sd == ed and ds == [sd]:
@@ -328,8 +339,7 @@ def _chain_conclusion(nm, p, path, done):
     return (
         "Each removed candidate clashes with both ends: "
         + "; ".join(
-            f"{nm.cell(c)} can't be {d} ({_clash(nm, p, (c, d), (sc, sd))} and {_clash(nm, p, (c, d), (ec, ed))})"
-            for c, d in done
+            f"{nm.cell(c)} can't be {d} ({_clash(nm, p, (c, d), s)} and {_clash(nm, p, (c, d), e)})" for c, d in done
         )
         + "."
     )
@@ -402,31 +412,32 @@ def _h_chain(ctx):
         return _generic(ctx)
     links, cells, blocks, lines = [], [], [], []
     for k, (path, done) in enumerate(chains):
-        (sc, sd), (ec, ed) = path[0][0], path[-1][0]
-        both = f"{nm.cell(sc)} is {sd} or {nm.cell(ec)} is {ed}"
+        both = f"{_is(nm, path[0][0])} or {_is(nm, path[-1][0])}"
         lead = "Start from the idea that" if k == 0 else "A second chain does the rest: suppose"
         blocks.append(
-            f"{lead} {nm.cell(sc)} is NOT {sd}: {', '.join(_chain_text(nm, p, path, alsc))}. So at least one "
+            f"{lead} {_is(nm, path[0][0], False)}: {', '.join(_chain_text(nm, p, path, alsc))}. So at least one "
             f"end is true: {both}. {_chain_conclusion(nm, p, path, done)}"
         )
         links += _chain_links(path)
         cells += [c for n in path for c in _node_cells(n[0], alsc)]
         lines += _chain_lines(p, path)
-    (sc, sd), (ec, ed) = chains[0][0][0][0], chains[0][0][-1][0]
+    s0, e0 = chains[0][0][0][0], chains[0][0][-1][0]
     key = chain_shape(p, st, chains[0][0])
     if key in ("aic", "x_chain", "xy_chain") and ctx.code in _CODE_KEY:
         key = _CODE_KEY[ctx.code] if _CODE_KEY[ctx.code] not in ("aic",) else key
     ptype = None
     if key in ("aic", "als_chain"):
-        same_cell = any(t[0] in (sc, ec) for t in ctx.elims)
+        same_cell = any(t[0] in _node_cells(s0, alsc) + _node_cells(e0, alsc) for t in ctx.elims)
         ptype = (
             "type 2: the ends are different digits and the target shares a cell with one end"
-            if same_cell or sd != ed
+            if same_cell or s0[-1] != e0[-1]
             else "type 1: both ends are the same digit"
         )
     pname = CATALOG[key][0] if key in CATALOG else pname
+    if any(n[0][0] == "grp" for n in chains[0][0]) and ctx.code in _STEP_NAMES:  # Grouped X-Chain, Empty Rectangle
+        pname = _STEP_NAMES[ctx.code]
     note = SHAPE_NOTES.get(key, "")
-    short = f"{fmt_elims(nm, ctx.elims)}: {pname} -- either {nm.cell(sc)} is {sd} or {nm.cell(ec)} is {ed}"
+    short = f"{fmt_elims(nm, ctx.elims)}: {pname} -- either {_is(nm, s0)} or {_is(nm, e0)}"
     teach = (
         " ".join(blocks)
         + (f" (Not shown: {fmt_elims(nm, left)}.)" if left else "")
@@ -487,7 +498,7 @@ def _engine_path(ctx, trim=True):
         path = [(path[1][0], None, None)] + path[2:]
     while trim and len(path) > 2 and path[-1][1] == "weak":
         path = path[:-1]
-    if len(path) < 2 or path[0][0][0] in ("als", "grp") or path[-1][0][0] in ("als", "grp"):
+    if len(path) < 2 or path[0][0][0] == "als" or path[-1][0][0] == "als":  # a group may end it, an ALS not
         return None
     ctx.used_engine = True
     return path
@@ -521,7 +532,13 @@ def _ends_cover(p, st, path, t):
     a, z = path[0][0], path[-1][0]
     if a[0] == "als" or z[0] == "als":
         return True
-    return t not in (a, z) and _weak(p, st, a, t) and _weak(p, st, z, t)
+
+    def sees(n):  # t clashes with the end; a group end: with every cell of it
+        if n[0] == "grp":
+            return t[0] not in n[1] and all(_weak(p, st, (c, n[2]), t) for c in n[1])
+        return t != n and _weak(p, st, n, t)
+
+    return sees(a) and sees(z)
 
 
 def _als_cells(ctx, als_id):

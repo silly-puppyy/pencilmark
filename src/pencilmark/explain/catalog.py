@@ -674,6 +674,8 @@ def chain_shape(p, st, path, place=False):
         return "als_chain"
     if place:
         return "nice_loop"
+    if any(n[0][0] == "grp" for n in path):  # grouped nodes: the named shapes are single-cell patterns
+        return "x_chain" if len({n[0][-1] for n in path}) == 1 else "aic"
     links = [(path[i - 1][0], path[i][0], path[i][1], path[i][2]) for i in range(1, len(path))]
     if any(lk[2] == "equal" for lk in links):
         return "x_chain" if len({n[0][1] for n in path}) == 1 else "aic"
