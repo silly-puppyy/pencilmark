@@ -15,9 +15,23 @@ BOX = {4: [2, 2], 6: [2, 3], 8: [2, 4], 9: [3, 3]}
 LINES = ["thermo", "whisper", "renban", "between"]
 
 
+LAYOUTS = ["samurai", "twodoku", "butterfly", "sohei", "windmill"]
+
+
 def request(rng):
     D = rng.choice([4, 6, 6, 8, 9, 9, 9])
     rules = [{"type": "box_grid", "origin": "r1c1", "box": BOX[D]}]
+    layout = rng.choice(LAYOUTS) if rng.random() < 0.25 else None
+    if layout:  # a multi-grid layout, maybe with diagonals on one grid and floors per grid
+        from pencilmark import puzzle_json as PJ
+
+        D, origins = 9, PJ._layouts()[layout]
+        rules = [{"type": "box_grid", "origin": f"r{r + 1}c{c + 1}", "box": [3, 3]} for r, c in origins]
+        if rng.random() < 0.4:
+            r0, c0 = rng.choice(origins)
+            rules.append(
+                {"type": "region", "kind": "diagonal", "cells": [f"r{r0 + i + 1}c{c0 + i + 1}" for i in range(9)]}
+            )
     used = set()
     for _ in range(rng.randint(1, 3)):
         k = rng.choice(["cage", "line", "arrow", "kropki", "xv", "cell"])
@@ -52,7 +66,11 @@ def request(rng):
         "rules": rules,
         "limits": {"time": 25, "seed": rng.randint(1, 99)},
     }
-    if rng.random() < 0.3:
+    if layout:
+        s["board"] = {"rows": max(r for r, _ in origins) + 9, "cols": max(c for _, c in origins) + 9}
+        if rng.random() < 0.5:
+            s["givens"] = {"grids": [[rng.randint(0, 30), None] for _ in origins]}
+    elif rng.random() < 0.3:
         s["givens"] = {"count": rng.choice([[0, 10], [5, None]])}
     if rng.random() < 0.3:
         s["where"] = rng.choice([{"band": "Easy"}, {"difficulty": "min"}, {"difficulty": [3, 8]}])
@@ -71,7 +89,17 @@ def check(s, r):
         out.append(f"givens {giv} outside {gc}")
     if r["info"].get("unique_verified") is False:
         out.append("not unique")
-    for t in s["rules"][1:]:
+    C = p["board"]["cols"]
+    grids = sorted(tuple(int(x) - 1 for x in t["origin"][1:].split("c")) for t in s["rules"] if t["type"] == "box_grid")
+    for (r0, c0), lim in zip(grids, (s.get("givens") or {}).get("grids") or []):
+        lo, hi = (lim, lim) if isinstance(lim, int) else lim
+        n = sum(1 for r in range(9) for c in range(9) if p["givens"][(r0 + r) * C + c0 + c])
+        if n < (lo or 0) or (hi is not None and n > hi):
+            out.append(f"grid at r{r0 + 1}c{c0 + 1}: {n} givens outside {lim}")
+    for t in s["rules"]:
+        if "cells" in t and t["type"] != "box_grid" and t not in p["rules"]:
+            out.append(f"locked {t['type']} {t.get('kind')} missing from the result")
+    for t in [x for x in s["rules"] if "count" in x]:
 
         def mine(x):
             if t["type"] == "cell":
