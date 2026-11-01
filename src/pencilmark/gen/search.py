@@ -32,8 +32,8 @@ def dig(
 ):
     """givens-digging with elements added on demand.
 
-    1. `seeds` {kind: count} elements are placed first (disjoint) and their cells, then their peers, are emptied first,
-       so they tend to end up required;
+    1. `seeds` {kind: count} elements are placed first (disjoint), then the `most` classes are packed; their cells, then
+       their peers, are emptied first, so they tend to end up required;
     2. the remaining givens are removed in random order (whole symmetry orbits at a time) down to `min_givens`; when a
        removal breaks solvability (chk: band-capped logic), the most informative element of `kinds` through that cell
        that restores it is added (if any), else the givens stay;
@@ -42,7 +42,7 @@ def dig(
     classes (kropki_black, x, odd, ...); caps {class: max} limits how many of a class are added. dense: 2-cell / 1-cell
     classes seeded with EVERY instance true in the solution before digging (few-givens targets); pruning then removes the
     ones the puzzle doesn't need. shape {kind: limits}: the templates' length / sum limits (elements.fits). most: classes
-    packed into the grid first, as many disjoint ones as a few random packings find, and never pruned. deadline: stop
+    packed into the grid after the seeds, as many disjoint ones as a few random packings find, and never pruned. deadline: stop
     digging then (time.time()), keeping the givens still in place."""
     fixed = dict(fixed or {})
     sol = sol or b.solution(rng)
@@ -52,7 +52,19 @@ def dig(
     room = lambda e: all(
         sum(1 for x in els if EL.in_class(x, k)) < m for k, m in caps.items() if m is not None and EL.in_class(e, k)
     )
-    for kind in most:
+    for kind, cnt in (seeds or {}).items():
+        for _ in range(cnt):
+            for _try in range(40):
+                g_ = [
+                    e
+                    for e in EL.grow(b, EL.base_kind(kind), sol, rng.randrange(b.N), used, rng, n=8, shape=shape)
+                    if used.isdisjoint(e[1]) and EL.in_class(e, kind)
+                ]
+                if g_:
+                    els.append(g_[0])
+                    used |= set(g_[0][1])
+                    break
+    for kind in most:  # after the other classes' minimums, so they still find room
         best = []
         for _pack in range(12):
             got, u = [], set(used)
@@ -72,18 +84,6 @@ def dig(
                 best = got
         els += best
         used |= {c for e in best for c in e[1]}
-    for kind, cnt in (seeds or {}).items():
-        for _ in range(cnt):
-            for _try in range(40):
-                g_ = [
-                    e
-                    for e in EL.grow(b, EL.base_kind(kind), sol, rng.randrange(b.N), used, rng, n=8, shape=shape)
-                    if used.isdisjoint(e[1]) and EL.in_class(e, kind)
-                ]
-                if g_:
-                    els.append(g_[0])
-                    used |= set(g_[0][1])
-                    break
     for kind in dense:
         bk = EL.base_kind(kind)
         if bk not in ("kropki", "xv", "parity"):

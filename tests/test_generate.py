@@ -232,3 +232,14 @@ def test_shape_round_trip_and_refusals():
         with pytest.raises(pencilmark.NotSupportedError):
             SF.spec_to_gen(spec(rules=[bad]))
     assert GA.feasibility(SF.spec_to_gen(spec(rules=[{"type": "cage", "count": 2, "size": [12, None]}])))
+
+
+def test_max_leaves_room_for_required_classes():
+    """a "max" class is packed after the other classes' minimums: every cell marked odd or even would leave no room for
+    the two whispers asked for (every attempt was pruned before)"""
+    rules = [
+        {"type": "cell", "kind": "parity", "count": "max"},
+        {"type": "line", "kind": "whisper", "count": 2, "value": 3},
+    ]
+    r = run(spec(6, rules=rules, givens={"count": [0, 10]}, seed=41, time_limit=6))
+    assert sum(1 for x in r["puzzle"]["rules"] if x["type"] == "line") == 2
