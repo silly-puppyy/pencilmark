@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import defaultdict
 
 from .. import solver as S
-from .base import _J, CONCEPTS, _cap, _generic, _join, _result, fmt_elims
+from .base import _J, CONCEPTS, _cap, _generic, _join, _result, fmt_elims, rel_label
 from .chains import _h_chain
 
 # ================================================== techniques 68-82 (engine records) ==
@@ -811,7 +811,7 @@ def _h_class_colour(ctx):
         "have it",
     }.get(xm.get("why"), "")
     J = _J(ctx, base_cells=pc)
-    return _result(
+    res = _result(
         ctx,
         J,
         f"{head}: {a.split()[0]} / {b.split()[0]} colouring",
@@ -819,6 +819,123 @@ def _h_class_colour(ctx):
         bool(pc),
         extra_cells=pc,
     )
+    cc = (ctx.raw_engine or {}).get("class_colouring")
+    if cc and cc.get("links"):
+        res["substeps"] = _class_substeps(ctx, cc, a, b, xm.get("kind", 0))
+    return res
+
+
+# why a rule link joins two digits of different classes (or the same class), by the rule's display name; our wording
+_CLASS_WHY = {
+    (0, "German whisper"): "Neighbours on a German whisper differ by at least 5, so a low digit always sits next to a "
+    "high one (5 can't be on the line).",
+    (1, "white dot"): "A white dot joins two consecutive digits: one odd, one even.",
+    (1, "V"): "Two digits that sum to 5 are one odd and one even.",
+    (1, "X"): "Two digits that sum to 10 are both odd or both even.",
+}
+
+
+def _kind_digits(x):
+    """'low (1–4)' -> 'low digits (1–4)'; 'odd' -> 'odd digits'"""
+    w = x.split(" ", 1)
+    return f"{w[0]} digits {w[1]}" if len(w) == 2 else f"{x} digits"
+
+
+def _class_substeps(ctx, cc, a, b, kind):
+    """the colouring as sub-steps: the legend, the cell that fixes the colours (or the house count), each rule link in
+    turn (runs along one rule merged), then the result; colour names from the named palette"""
+    nm = ctx.nm
+    sides, orient = cc["sides"], cc["orientation"]
+    if orient is None or orient < 0:  # which colour is which is still open
+        names, legend_text = (
+            ("green", "purple"),
+            (f"Colour these cells green and purple: one colour is {a}, the other {b}; which is which is still open."),
+        )
+        legend = {"green": f"{a} or {b}", "purple": "the other kind"}
+    else:
+        names = ("blue", "yellow") if orient == 0 else ("yellow", "blue")  # side 0 / side 1
+        legend_text = f"Colour {_kind_digits(a)} blue and {_kind_digits(b)} yellow."
+        legend = {"blue": a, "yellow": b}
+    col = lambda c: names[sides[c]]
+    ids = iter(range(1, 10**6))
+    ann = lambda c: {"id": next(ids), "cell": nm.cell(c), "colour": col(c)}
+    out = [{"text": legend_text, "legend": legend}]
+    start = cc.get("anchor")
+    if start is not None:
+        out.append(
+            {
+                "text": f"{_cap(nm.cell(start))} can only hold {legend[col(start)]} digits, so it is {col(start)}.",
+                "annotations": [ann(start)],
+            }
+        )
+    elif cc.get("houses"):
+        hs = " and ".join(
+            nm.unit(ctx.gi(h["name"])) if ctx.gi(h["name"]) is not None else h["name"] for h in cc["houses"]
+        )
+        D = nm.p.D
+        quota = (
+            f"{D // 2} low and {D // 2} high digits" if kind == 0 else f"{(D + 1) // 2} odd and {D // 2} even digits"
+        )
+        out.append(
+            {
+                "text": f"Counting decides which is which: {hs} can hold only so many digits of each kind.",
+                "why": f"A house holds each digit once: {quota}.",
+            }
+        )
+    adj = defaultdict(list)
+    for lk in cc["links"]:
+        x, y = lk["cells"]
+        adj[x].append(y)
+        adj[y].append(x)
+    if start is None:
+        start = min(sides, key=lambda c: nm.p.coords[c])
+        out.append({"text": f"Start with {nm.cell(start)}: {col(start)}.", "annotations": [ann(start)]})
+    seen, queue, runs = {start}, [start], []
+    while queue:
+        x = queue.pop(0)
+        for y in sorted(adj[x], key=lambda c: nm.p.coords[c]):
+            if y in seen:
+                continue
+            seen.add(y)
+            queue.append(y)
+            rule = rel_label(nm.p, x, y) or "rule"
+            if runs and runs[-1]["rule"] == rule and runs[-1]["cells"][-1] == x:
+                runs[-1]["cells"].append(y)
+            else:
+                runs.append({"rule": rule, "from": x, "cells": [y]})
+    for r in runs:
+        x, cs, rule = r["from"], r["cells"], r["rule"]
+        if len(cs) == 1:
+            text = f"{_cap(nm.cell(cs[0]))} is joined to {nm.cell(x)} ({col(x)}) by the {rule}, so it is {col(cs[0])}."
+        else:
+            text = (
+                f"Follow the {rule} from {nm.cell(x)} ({col(x)}): "
+                + ", ".join(f"{nm.cell(c)} {col(c)}" for c in cs)
+                + "."
+            )
+        stp = {"text": text, "annotations": [ann(c) for c in cs]}
+        same = sides[x] == sides[cs[0]]
+        why = _CLASS_WHY.get((kind, rule.split(" / ")[0]))
+        if why is None:
+            k1, k2 = (a.split()[0], b.split()[0])
+            why = (
+                f"With the digits still possible here, the {rule} always joins two digits of the same kind."
+                if same
+                else f"With the digits still possible here, the {rule} always joins a {k1} digit to a {k2} one."
+            )
+        if not any(o.get("why") == why for o in out):  # each reason once
+            stp["why"] = why
+        out.append(stp)
+    if ctx.elims:
+        out.append(
+            {
+                "text": f"So {fmt_elims(nm, ctx.elims)}.",
+                "annotations": [
+                    {"id": next(ids), "candidate": f"{nm.cell(c)}#{d}", "colour": "red"} for c, d in sorted(ctx.elims)
+                ],
+            }
+        )
+    return out
 
 
 def _h_empty_rect(ctx):

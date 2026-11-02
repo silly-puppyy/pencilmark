@@ -1289,6 +1289,7 @@ void Solver::class_colour(MoveBuf& out) {
         };
         bool bad = false;
         std::vector<int> nlinks(N, 0);
+        std::vector<std::array<int, 3>> tree;  // links that joined two colour groups (explanations)
         for (int c = 0; c < N && !bad; ++c) {
             const uint32_t mc = mask(c);
             if (mc & ~(S.a | S.b)) continue;
@@ -1317,6 +1318,7 @@ void Solver::class_colour(MoveBuf& out) {
                 par[rb] = rc;
                 sd[rb] = sd[c] ^ sd[b] ^ w;
                 ++nlinks[rc];
+                tree.push_back({c, b, w});
             }
         }
         if (bad) continue;
@@ -1335,11 +1337,13 @@ void Solver::class_colour(MoveBuf& out) {
             for (int c : cs) inC[c] = 1;
             // orientation o: side 0 holds class A (o == 0) or B (o == 1)
             bool feas[2] = {true, true};
-            int why = 0, houses_used = 0;
+            int why = 0, houses_used = 0, anchor = -1;
+            std::vector<int> used_h;
             for (int c : cs) {
                 const int k = cls(c);
                 if (k < 0) continue;
                 feas[sd[c] == 0 ? 1 - k : k] = false;  // side of c must be class k
+                if (anchor < 0) anchor = c;
             }
             if (!feas[0] && !feas[1]) continue;
             struct HC { int hi, outA, outB, n0, n1; };
@@ -1365,6 +1369,7 @@ void Solver::class_colour(MoveBuf& out) {
                     if (h.outA + cA > capA || h.outB + cB > capB) {
                         feas[o] = false;
                         ++houses_used;
+                        used_h.push_back(h.hi);
                         break;
                     }
                 }
@@ -1388,6 +1393,7 @@ void Solver::class_colour(MoveBuf& out) {
                         const int c0 = k == 0 ? h.n0 : h.n1, c1 = k == 0 ? h.n1 : h.n0;
                         if (out_k + std::min(c0, c1) < cap) continue;
                         ++houses_used;
+                        used_h.push_back(h.hi);
                         const uint32_t X = k == 0 ? S.a : S.b;
                         for (int c : p.groups[h.hi].cells)
                             if (!vals[c] && !inC[c] && cls(c) < 0)
@@ -1411,6 +1417,18 @@ void Solver::class_colour(MoveBuf& out) {
             m.code = 10001 + 10 * S.kind + why;
             pm_long xm[XM_N] = {S.kind, why, (pm_long)cs.size(), links[r], houses_used, 0, 0, 0, 0, 0};
             std::copy(xm, xm + XM_N, m.xm);
+            {  // the colouring for explanations: orientation (side 0 holds class A when 0), anchor / houses, links, sides
+                std::vector<int> rec{S.kind, why, feas[0] != feas[1] ? (feas[0] ? 0 : 1) : -1, why == 0 ? anchor : -1};
+                rec.push_back((int)used_h.size());
+                rec.insert(rec.end(), used_h.begin(), used_h.end());
+                std::vector<int> te;
+                for (auto& e : tree)
+                    if (find(e[0]) == r) te.insert(te.end(), {e[0], e[1], e[2]});
+                rec.push_back((int)te.size() / 3);
+                rec.insert(rec.end(), te.begin(), te.end());
+                for (int c : cs) rec.insert(rec.end(), {c, sd[c]});
+                add_expl(out, m, EX_CLASS, rec);
+            }
         }
     }
 }

@@ -654,6 +654,8 @@ def explain(step, puzzle, state):
         "derived": out.get("derived", True),
         "verified": bool(out["verified"]),
     }
+    if out.get("substeps"):
+        res["substeps"] = out["substeps"]
     if "error" in out:
         res["error"] = out["error"]
     return res

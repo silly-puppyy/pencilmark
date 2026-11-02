@@ -1,0 +1,55 @@
+"""The `substeps` explanation level (docs/formats/grade-card.md 5): only on request, and the class-colouring builder
+tells a colouring as standalone sentences with a legend, one reason per rule and annotations that fit the schema."""
+
+import json
+from pathlib import Path
+from types import SimpleNamespace
+
+import pytest
+
+import pencilmark
+from pencilmark import export
+from pencilmark.explain import records as R
+from pencilmark.explain.base import Namer
+
+SCHEMA = Path(__file__).parents[1] / "docs" / "sudoku-grade.schema.json"
+
+
+def test_levels_on_request_only():
+    assert "substeps" not in export.explain_levels(True)
+    assert export.explain_levels(["short", "substeps"]) == ["short", "substeps"]
+
+
+def _whisper_row():
+    d = pencilmark.from_string("." * 81)
+    d["rules"].append({"type": "line", "kind": "whisper", "cells": ["r1c3", "r1c4", "r1c5", "r1c6", "r1c7"]})
+    p = pencilmark.load(d)
+    p.finalize()
+    return p
+
+
+def test_class_colouring_substeps():
+    p = _whisper_row()
+    nm = Namer(p)
+    cells = [2, 3, 4, 5, 6]  # r1c3 .. r1c7, alternating along the whisper
+    row1 = next(g.name for g in p.groups if set(cells) <= set(g.cells) and len(g.cells) == 9)
+    cc = {
+        "sides": {c: i % 2 for i, c in enumerate(cells)},
+        "orientation": 0,  # side 0 holds the low digits
+        "anchor": None,
+        "houses": [{"name": row1}],
+        "links": [{"cells": [a, b], "opposite": True} for a, b in zip(cells, cells[1:])],
+    }
+    ctx = SimpleNamespace(nm=nm, p=p, gi=lambda name: nm.gidx.get(name), elims=[(2, 6), (3, 1)])
+    sub = R._class_substeps(ctx, cc, "low (1–4)", "high (6–9)", 0)
+    assert sub[0]["legend"] == {"blue": "low (1–4)", "yellow": "high (6–9)"}
+    follow = [s for s in sub if s["text"].startswith("Follow the German whisper")]
+    assert len(follow) == 1 and len(follow[0]["annotations"]) == 4  # the run along the line is one sub-step
+    assert sum("German whisper differ" in s.get("why", "") for s in sub) == 1  # each reason once
+    assert sub[-1]["text"].startswith("So ") and {a["colour"] for a in sub[-1]["annotations"]} == {"red"}
+    ids = [a["id"] for s in sub for a in s.get("annotations", [])]
+    assert ids == sorted(set(ids))  # unique, increasing
+    jsonschema = pytest.importorskip("jsonschema")
+    schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+    item = schema["properties"]["steps"]["items"]["properties"]["explanation"]["properties"]["substeps"]
+    jsonschema.Draft202012Validator(item).validate(sub)

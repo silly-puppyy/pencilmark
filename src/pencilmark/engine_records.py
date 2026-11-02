@@ -401,6 +401,22 @@ def _explain(p, m, nm, pats, exs, info=None):
                 }
                 for k in range(0, n - 1, 2)
             ]
+        elif tag == 16 and n >= 6:  # class colouring: split, reason, orientation, anchor / houses, links, sides
+            kind, why, orient, anchor, nh = data[:5]
+            houses = data[5 : 5 + nh]
+            ne = data[5 + nh]
+            k0 = 6 + nh
+            links = [data[k0 + 3 * i : k0 + 3 * i + 3] for i in range(ne)]
+            rest = data[k0 + 3 * ne :]
+            out["class_colouring"] = {
+                "split": "low/high" if kind == 0 else "odd/even",
+                "why": why,
+                "orientation": orient,  # side 0 holds the first class (low / odd) when 0, the second when 1; -1 open
+                "anchor": anchor if anchor >= 0 else None,
+                "houses": [_group(p, g, info) for g in houses],
+                "links": [{"cells": [a, b], "opposite": bool(w), "relation": _relkinds(p, a, b)} for a, b, w in links],
+                "sides": {rest[k]: rest[k + 1] for k in range(0, len(rest) - 1, 2)},
+            }
         elif tag == 13 and n >= 2:
             mode, v = data[:2]
             hs = [_group(p, g, info) for g in data[2:]]

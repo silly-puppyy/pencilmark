@@ -134,6 +134,33 @@ cell in reading order comes before the next region's; and, when requested, `expl
 
 `notation` is always present for a step; `short` and `teach` are left out of a step the explainer could not reconstruct.
 
+A fourth level, `substeps`, is returned only when asked for by name (`explain=["short", "substeps"]`; `explain=True`
+gives the three text levels). It tells the step as a list of sub-steps, each a standalone sentence with optional
+extras, in the tradition of Sudoku Explainer's and Andrew Stuart's hint pages:
+
+```json
+"substeps": [
+  {"text": "Colour low digits (1–4) blue and high digits (6–9) yellow.",
+   "legend": {"blue": "low (1–4)", "yellow": "high (6–9)"}},
+  {"text": "Follow the German whisper from r1c3 (blue): r1c4 yellow, r1c5 blue.",
+   "why": "Neighbours on a German whisper differ by at least 5, so a low digit always sits next to a high one (5 can't be on the line).",
+   "annotations": [{"id": 1, "cell": "r1c4", "colour": "yellow"}, {"id": 2, "cell": "r1c5", "colour": "blue"}]},
+  {"text": "So r1c4 ≠ 1,2,3.",
+   "annotations": [{"id": 3, "candidate": "r1c4#1", "colour": "red"}]}
+]
+```
+
+| Key | Meaning |
+|---|---|
+| `text` | One sentence that reads on its own, without any drawing. |
+| `why` | Optional: the rule fact behind the sentence (given once per step). |
+| `legend` | Optional: what a colour name stands for; it holds for the rest of the solve. |
+| `annotations` | Optional drawing elements, each with an integer `id`: colour a `cell` or a `candidate` (`colour`), show a `digit` (`"r5c6=7"`), or an `arrow` between two cells or candidates (`line`: `strong`, `weak` or `plain`). A later element on the same target replaces the earlier one. |
+
+Colours are names from a named palette (`yellow`, `blue`, `green`, `purple`, `orange`, `pink`, `cyan`, `grey`; `red`
+for removals); each renderer picks its own shade for each name. Steps whose technique has no sub-step form yet leave
+`substeps` out; so far: low / high and odd / even colouring.
+
 ## 6. Implementing a subset
 
 Only `format`, `format_version` and `grader` are required; every other key is present only when it was asked for

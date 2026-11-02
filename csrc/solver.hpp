@@ -172,7 +172,8 @@ enum {
     EX_RULE = 12,    ///< [constraint index...]      rule units (DigitCount)
     EX_LOCK = 13,    ///< [mode, digit, group...]    houses of a combination lock
     EX_GNODE = 14,   ///< [node id (<= -1000000), digit, cells...]  grouped chain node
-    EX_DOMINO = 15   // [a, b, ...]                relation dominoes (cell pairs)
+    EX_DOMINO = 15,  ///< [a, b, ...]                relation dominoes (cell pairs)
+    EX_CLASS = 16    // [kind, why, orient, anchor, nh, houses..., ne, (a, b, opposite) x ne, (cell, side)...]  class colouring
 };
 /// reason kinds (EX_REASON)
 enum {

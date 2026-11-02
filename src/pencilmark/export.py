@@ -210,6 +210,7 @@ OPTIONAL_FIELDS = (
     "symmetry",
 )  # + time_mean / time_pNN
 EXPLAIN_LEVELS = ("notation", "short", "teach")  # terse to verbose: solvers' notation, one plain line, a short lesson
+EXTRA_LEVELS = ("substeps",)  # only on request (not part of explain=True): the step as sub-steps with annotations
 
 
 def _time_model():
@@ -267,16 +268,18 @@ def card_fields(fields=None, steps=False, se=False):
 
 
 def explain_levels(explain):
-    """explain= option -> the step explanation levels: None / False = none, True = all, "notation" / "short" / "teach" or a list"""
+    """explain= option -> the step explanation levels: None / False = none, True = the three text levels, "notation" /
+    "short" / "teach" / "substeps" or a list"""
     if not explain:
         return []
     if explain is True:
         return list(EXPLAIN_LEVELS)
     lv = [explain] if isinstance(explain, str) else list(explain)
-    bad = [x for x in lv if x not in EXPLAIN_LEVELS]
+    known = EXPLAIN_LEVELS + EXTRA_LEVELS
+    bad = [x for x in lv if x not in known]
     if bad:
-        raise ValueError(f"unknown explanation level(s) {bad}; known: {list(EXPLAIN_LEVELS)}")
-    return [x for x in EXPLAIN_LEVELS if x in lv]
+        raise ValueError(f"unknown explanation level(s) {bad}; known: {list(known)}")
+    return [x for x in known if x in lv]
 
 
 RULE_NOUN = {

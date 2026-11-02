@@ -829,6 +829,7 @@ def explain_steps(p, P, steps):
                     "short": e.get("short"),
                     "teach": e.get("teach"),
                     "notation": step_notation(p, st, e.get("justification")),
+                    "substeps": e.get("substeps"),
                 }
         except Exception:
             ex = None
@@ -859,6 +860,7 @@ def explain_steps(p, P, steps):
                         "short": e.get("short"),
                         "teach": e.get("teach"),
                         "notation": step_notation(p, st, e.get("justification")),
+                        "substeps": e.get("substeps"),
                     }
                     break
             except Exception:
