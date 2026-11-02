@@ -435,7 +435,7 @@ def generate(spec, log=None):
             '"format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9, "rules": [{"type": "box_grid", '
             '"origin": "r1c1", "box": [3, 3]}], "where": {"band": "Hard"}}'
         )
-    where = doc.get("where") or {}
+    where = doc.get("where") if isinstance(doc.get("where"), dict) else {}  # a malformed where fails in spec_to_gen
     aimed = where.get("band") is not None or where.get("difficulty") is not None
     try:
         r = _generate(SF.spec_to_gen(doc), log)
