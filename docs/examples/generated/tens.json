@@ -422,7 +422,7 @@
  },
  "card": {
   "band": "Very Hard",
-  "difficulty": 13.1,
+  "difficulty": 11.9,
   "time": 59.0,
   "contains": [
    {
@@ -506,15 +506,15 @@
   ]
  },
  "info": {
-  "seconds": 426.5,
+  "seconds": 437.2,
   "attempts": 2,
-  "found": 5,
+  "found": 6,
   "givens": 1,
   "elements": {
    "cage": 24
   },
   "rejected": {
-   "publishing check: unusual": 2
+   "publishing check: unusual": 1
   }
  }
 }

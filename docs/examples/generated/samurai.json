@@ -1008,7 +1008,7 @@
  },
  "card": {
   "band": "Hard",
-  "difficulty": 4.6,
+  "difficulty": 4.9,
   "time": 46.8,
   "contains": [
    {
@@ -1038,7 +1038,7 @@
   ]
  },
  "info": {
-  "seconds": 3.2,
+  "seconds": 3.4,
   "attempts": 1,
   "found": null,
   "givens": 108,

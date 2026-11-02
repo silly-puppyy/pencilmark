@@ -353,7 +353,7 @@
  },
  "card": {
   "band": "Medium",
-  "difficulty": 11.2,
+  "difficulty": 9.8,
   "time": 41.2,
   "contains": [
    {
@@ -411,7 +411,7 @@
   ]
  },
  "info": {
-  "seconds": 520.1,
+  "seconds": 373.9,
   "attempts": 5,
   "found": null,
   "givens": 6,

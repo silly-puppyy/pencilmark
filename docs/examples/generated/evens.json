@@ -475,7 +475,7 @@
  },
  "card": {
   "band": "Hard",
-  "difficulty": 7.7,
+  "difficulty": 7.5,
   "time": 22.9,
   "contains": [
    {
@@ -554,15 +554,15 @@
   ]
  },
  "info": {
-  "seconds": 300.5,
+  "seconds": 300.3,
   "attempts": 164,
-  "found": 211,
+  "found": 207,
   "givens": 10,
   "elements": {
    "even": 36
   },
   "rejected": {
-   "publishing check: unusual": 27
+   "publishing check: unusual": 25
   }
  }
 }

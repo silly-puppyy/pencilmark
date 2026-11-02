@@ -227,7 +227,7 @@
  },
  "card": {
   "band": "Hard",
-  "difficulty": 5.3,
+  "difficulty": 5.4,
   "time": 10.6,
   "contains": [
    {
@@ -260,11 +260,11 @@
  "info": {
   "seconds": 300.0,
   "attempts": 1619,
-  "found": 17,
+  "found": 16,
   "givens": 24,
   "elements": {},
   "rejected": {
-   "band too low (logic pre-check)": 2983,
+   "band too low (logic pre-check)": 2942,
    "publishing check: unusual": 1
   }
  }

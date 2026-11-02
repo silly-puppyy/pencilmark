@@ -266,7 +266,7 @@
  },
  "card": {
   "band": "Easy",
-  "difficulty": 5.0,
+  "difficulty": 5.3,
   "time": 12.0,
   "contains": [
    {
@@ -293,7 +293,7 @@
   ]
  },
  "info": {
-  "seconds": 61.0,
+  "seconds": 61.2,
   "attempts": 5,
   "found": null,
   "givens": 13,

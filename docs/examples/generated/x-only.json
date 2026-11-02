@@ -446,7 +446,7 @@
  },
  "card": {
   "band": "Medium",
-  "difficulty": 8.7,
+  "difficulty": 7.6,
   "time": 29.6,
   "contains": [
    {
@@ -508,15 +508,15 @@
   ]
  },
  "info": {
-  "seconds": 302.1,
+  "seconds": 302.8,
   "attempts": 35,
-  "found": 27,
+  "found": 25,
   "givens": 9,
   "elements": {
    "x": 24
   },
   "rejected": {
-   "publishing check: barely_used": 9,
+   "publishing check: barely_used": 8,
    "publishing check: unusual": 2,
    "publishing check: barely_used/unusual": 1
   }

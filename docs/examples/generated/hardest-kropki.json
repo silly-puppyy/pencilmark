@@ -94,42 +94,42 @@
    0
   ],
   "solution": [
+   2,
+   3,
+   1,
+   5,
+   6,
+   4,
    4,
    5,
-   3,
    6,
+   3,
+   2,
+   1,
+   3,
    1,
    2,
    6,
-   1,
-   2,
-   5,
    4,
-   3,
-   1,
-   2,
+   5,
    6,
    4,
+   5,
+   2,
+   1,
    3,
    5,
-   5,
-   3,
+   2,
    4,
    1,
-   2,
-   6,
    3,
    6,
    1,
-   2,
-   5,
-   4,
-   2,
-   4,
-   5,
-   3,
    6,
-   1
+   3,
+   4,
+   5,
+   2
   ],
   "rules": [
    {
@@ -145,8 +145,17 @@
     "kind": "kropki",
     "color": "white",
     "cells": [
-     "r1c3",
-     "r2c3"
+     "r1c4",
+     "r1c5"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "color": "black",
+    "cells": [
+     "r2c3",
+     "r2c4"
     ]
    },
    {
@@ -154,23 +163,14 @@
     "kind": "kropki",
     "color": "white",
     "cells": [
-     "r1c5",
-     "r1c6"
+     "r2c4",
+     "r2c5"
     ]
    },
    {
     "type": "edge",
     "kind": "kropki",
-    "color": "white",
-    "cells": [
-     "r2c2",
-     "r2c3"
-    ]
-   },
-   {
-    "type": "edge",
-    "kind": "kropki",
-    "color": "white",
+    "color": "black",
     "cells": [
      "r2c4",
      "r3c4"
@@ -182,7 +182,7 @@
     "color": "white",
     "cells": [
      "r2c5",
-     "r3c5"
+     "r2c6"
     ]
    },
    {
@@ -190,8 +190,8 @@
     "kind": "kropki",
     "color": "white",
     "cells": [
-     "r3c1",
-     "r3c2"
+     "r3c2",
+     "r3c3"
     ]
    },
    {
@@ -199,17 +199,17 @@
     "kind": "kropki",
     "color": "white",
     "cells": [
-     "r3c5",
-     "r4c5"
+     "r4c1",
+     "r5c1"
     ]
    },
    {
     "type": "edge",
     "kind": "kropki",
-    "color": "white",
+    "color": "black",
     "cells": [
      "r4c2",
-     "r4c3"
+     "r5c2"
     ]
    },
    {
@@ -224,19 +224,10 @@
    {
     "type": "edge",
     "kind": "kropki",
-    "color": "white",
+    "color": "black",
     "cells": [
-     "r5c5",
-     "r5c6"
-    ]
-   },
-   {
-    "type": "edge",
-    "kind": "kropki",
-    "color": "white",
-    "cells": [
-     "r5c5",
-     "r6c5"
+     "r5c2",
+     "r5c3"
     ]
    },
    {
@@ -244,16 +235,16 @@
     "kind": "kropki",
     "color": "black",
     "cells": [
-     "r6c1",
-     "r6c2"
+     "r6c2",
+     "r6c3"
     ]
    }
   ]
  },
  "card": {
   "band": "Expert",
-  "difficulty": 14.4,
-  "time": 24.5,
+  "difficulty": 14.2,
+  "time": 26.0,
   "contains": [
    {
     "code": "HSI",
@@ -283,40 +274,39 @@
     "uses": 11
    },
    {
-    "code": "LNR",
-    "chip": "LNR/CSH",
-    "name": "Line ranges (thermo / whisper bounds)",
-    "band": 1,
-    "alternatives": [
-     "CSH"
-    ],
-    "uses": 4
-   },
-   {
     "code": "NPR",
-    "chip": "NPR/HQD",
+    "chip": "NPR/EQD/HQD",
     "name": "Naked Pair",
     "band": 2,
     "alternatives": [
+     "EQD",
      "HQD"
     ],
-    "uses": 1
+    "uses": 3
+   },
+   {
+    "code": "HPR",
+    "chip": "HPR/EQD/NQD",
+    "name": "Hidden Pair",
+    "band": 2,
+    "alternatives": [
+     "EQD",
+     "NQD"
+    ],
+    "uses": 2
    },
    {
     "code": "RUL",
     "chip": "RUL",
     "name": "Two rules together",
     "band": 2,
-    "uses": 23
+    "uses": 20
    },
    {
-    "code": "KTE",
-    "chip": "KTE/SCL",
-    "name": "2-String Kite",
+    "code": "SCL",
+    "chip": "SCL",
+    "name": "Simple Colouring",
     "band": 3,
-    "alternatives": [
-     "SCL"
-    ],
     "uses": 1
    },
    {
@@ -327,25 +317,43 @@
     "uses": 8
    },
    {
+    "code": "CAL",
+    "chip": "CAL",
+    "name": "Equal-digit colouring",
+    "band": 4,
+    "uses": 2
+   },
+   {
+    "code": "AIC",
+    "chip": "AIC/ALS",
+    "name": "Alternating Inference Chain",
+    "band": 5,
+    "alternatives": [
+     "ALS"
+    ],
+    "uses": 2
+   },
+   {
     "code": "CAS",
     "chip": "CAS",
     "name": "Case analysis",
     "band": 5,
-    "uses": 3
+    "uses": 4
    }
   ]
  },
  "info": {
-  "seconds": 602.5,
-  "attempts": 17,
-  "found": 61,
+  "seconds": 613.8,
+  "attempts": 15,
+  "found": 54,
   "givens": 0,
   "elements": {
-   "kropki_black": 1,
-   "kropki_white": 11
+   "kropki_black": 5,
+   "kropki_white": 6
   },
   "rejected": {
-   "construction failed": 19
+   "construction failed": 19,
+   "publishing check: unusual": 7
   }
  }
 }

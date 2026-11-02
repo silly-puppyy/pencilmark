@@ -248,7 +248,7 @@
  },
  "card": {
   "band": "Expert",
-  "difficulty": 12.7,
+  "difficulty": 11.7,
   "time": 35.6,
   "contains": [
    {
@@ -301,7 +301,7 @@
   ]
  },
  "info": {
-  "seconds": 29.1,
+  "seconds": 31.8,
   "attempts": 2,
   "found": null,
   "givens": 13,
