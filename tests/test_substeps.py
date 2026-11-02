@@ -83,3 +83,18 @@ def test_simple_colouring_substeps():
     assert set(sub[0]["legend"]) == {"blue", "yellow"}
     cols = [a["colour"] for x in sub[1:-1] for a in x["annotations"] if "candidate" in a]
     assert set(cols) <= {"blue", "yellow"} and {a["colour"] for a in sub[-1]["annotations"]} == {"red"}
+
+
+def test_killer_combination_substeps():
+    doc = json.loads(
+        (Path(__file__).parents[1] / "docs/examples/learning/killer-3-combinations.json").read_text("utf-8")
+    )
+    card = pencilmark.rate(doc.get("puzzle", doc), fields=["steps"], explain=["substeps"])
+    told = [
+        s["explanation"]["substeps"]
+        for s in card["steps"]
+        if s["code"] == "CGC" and "substeps" in s.get("explanation", {})
+    ]
+    assert told
+    for sub in told:
+        assert {a["colour"] for a in sub[-1]["annotations"]} == {"red"} and sub[-1]["text"].startswith("So ")

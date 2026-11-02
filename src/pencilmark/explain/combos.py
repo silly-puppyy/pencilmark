@@ -303,7 +303,18 @@ def _h_combo(ctx):
             f"{nm.cell(c)} must be {rule.total} - {sum(d for _, d in known)} = {total}. Every other "
             f"candidate in {nm.cell(c)} goes: {nm.digits(sorted(d for _, d in ctx.elims))}."
         )
-        return _result(ctx, J, short, teach, ok, lines=lines)
+        r = _result(ctx, J, short, teach, ok, lines=lines)
+        if ok:
+            r["substeps"] = [
+                {
+                    "text": f"{_cap(rule.label)} already holds {nm.digits([d for _, d in known], 'and')}, so its last "
+                    f"cell {nm.cell(c)} must be {rule.total} - {sum(d for _, d in known)} = {total}.",
+                    "why": "The digits in a cage add up to its total.",
+                    "annotations": [{"id": 1, "cell": nm.cell(c), "colour": "cyan"}],
+                },
+                _red_step(nm, ctx.elims, 2),
+            ]
+        return r
     if kind in ("cage", "sum", "little_killer"):
         total = rule.total - sum(d for _, d in known)
         combos = _combo_sets(res, len(rule.cells))
@@ -317,7 +328,23 @@ def _h_combo(ctx):
             f"{head}. With the notes available, {_combo_phrase(combos)}. {reasons} "
             f"Always list a cage's possible digit sets first -- small and large totals have very few."
         )
-        return _result(ctx, J, short, teach, ok, lines=lines)
+        r = _result(ctx, J, short, teach, ok, lines=lines)
+        if ok:
+            ids = iter(range(1, 10**6))
+            r["substeps"] = [
+                {
+                    "text": f"{head}.",
+                    "annotations": [{"id": next(ids), "cell": nm.cell(c), "colour": "cyan"} for c in emp],
+                },
+                {
+                    "text": f"With the notes available, {_combo_phrase(combos)}.",
+                    "why": "Digits in a cage don't repeat and add up to its total, so only a few digit sets fit.",
+                },
+            ]
+            if reasons.strip():
+                r["substeps"].append({"text": reasons.strip()})
+            r["substeps"].append(_red_step(nm, ctx.elims, next(ids)))
+        return r
     if kind == "arrow":
         circ, line = rule.con["circle"], rule.con["line"]
         lo = sum(min(digits_of(dom[rule.cells.index(c)])) for c in line)
@@ -344,6 +371,17 @@ def _h_combo(ctx):
     short = f"{fmt_elims(nm, ctx.elims)}: {rule.label.split(' (')[0]}"
     teach = f"Check {rule.label} against the notes. {_generic_rule_reason(ctx, rule, res, emp)} {CONCEPTS[ctx.tech][1]}"
     return _result(ctx, J, short, teach, ok, lines=lines)
+
+
+def _red_step(nm, elims, first_id):
+    """the closing sub-step: the removals, each candidate coloured red"""
+    return {
+        "text": f"So {fmt_elims(nm, elims)}.",
+        "annotations": [
+            {"id": first_id + i, "candidate": f"{nm.cell(c)}#{d}", "colour": "red"}
+            for i, (c, d) in enumerate(sorted(elims))
+        ],
+    }
 
 
 def _rest_sums(p, st, rule, emp, c, d):
