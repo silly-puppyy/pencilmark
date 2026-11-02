@@ -5,10 +5,13 @@ All functions take a Board, a random.Random and return (solution, givens {cell: 
 
 from __future__ import annotations
 
+import logging
 import time
 
 from . import elements as EL
 from .checks import Oracle
+
+_log = logging.getLogger(__name__)
 
 
 def dig(
@@ -285,7 +288,7 @@ def partition(b, rng, chk, n_givens=0, min_els=0, cover=True):
     return sol, givens, els
 
 
-def cage_count(b, n_cages, rng, time_limit=30.0, deadline=None, log=None):
+def cage_count(b, n_cages, rng, time_limit=30.0, deadline=None):
     """killer with EXACTLY n_cages cages and no givens: tile with 2-cell cages, then merge neighbouring cages (distinct
     digits) in batches while the puzzle stays UNIQUE (CP-SAT oracle with a counterexample cache; a failed batch is
     bisected). No human-solvability cap: the card grades whatever results."""
@@ -369,8 +372,7 @@ def cage_count(b, n_cages, rng, time_limit=30.0, deadline=None, log=None):
         else:
             stall, els = 0, new_
             batch = min(16, batch * 2)
-        if log:
-            log(f"  {len(els)} cages (CP-SAT calls {orc.calls}, cache rejections {orc.hits})")
+        _log.debug("%d cages (CP-SAT calls %d, cache rejections %d)", len(els), orc.calls, orc.hits)
     if len(els) != n_cages or any(len(e[1]) == 1 for e in els):
         return None
     return sol, {}, els

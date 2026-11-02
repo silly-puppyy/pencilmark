@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import math
 import random
 import time
@@ -18,6 +19,8 @@ from . import elements as EL
 from . import search as SR
 from .board import BOXES, Board, grid_log2
 from .checks import Checker, band_techs, code_techs, params
+
+_log = logging.getLogger(__name__)
 
 BANDS = list(E2.BANDS)  # "Very Easy" .. "Extreme"
 CLASSIC_MIN_GIVENS = {4: 4, 6: 8, 9: 17}  # known minimum clue counts for a unique classic
@@ -413,7 +416,7 @@ NO_TARGET = (
 )
 
 
-def generate(spec, log=None):
+def generate(spec):
     """generate one puzzle meeting a sudoku-spec request (docs/formats/generator-spec.md; a dict, JSON text or a path). Returns
     {"puzzle": sudoku-puzzle (with solution; meta.generated_from = the spec's fingerprint), "card": sudoku-grade card,
     "info": {...}}. Raises NotSupportedError for a part of the spec the generator does not run, GenerationFailed when no
@@ -438,7 +441,7 @@ def generate(spec, log=None):
     where = doc.get("where") if isinstance(doc.get("where"), dict) else {}  # a malformed where fails in spec_to_gen
     aimed = where.get("band") is not None or where.get("difficulty") is not None
     try:
-        r = _generate(SF.spec_to_gen(doc), log)
+        r = _generate(SF.spec_to_gen(doc))
     except GenerationFailed as e:
         if aimed:
             raise
@@ -461,7 +464,7 @@ def generate(spec, log=None):
     return {"puzzle": puzzle, "card": card, "info": r["info"]}
 
 
-def _generate(spec, log=None):
+def _generate(spec):
     """generate one puzzle meeting an internal Spec (or its dict). Returns {"puzzle": puzzle JSON (with solution),
     "card", "info"} or raises GenerationFailed with the reason."""
     s = Spec.from_any(spec)
@@ -503,6 +506,7 @@ def _generate(spec, log=None):
 
     def reject(why):
         stats["rejected"][why] = stats["rejected"].get(why, 0) + 1
+        _log.debug("attempt %d: %s", stats["attempts"], why)
 
     def build(sol, givens, els):
         nk = {}
@@ -634,8 +638,7 @@ def _generate(spec, log=None):
                 why = None
         if why:
             reject(why)
-            if log:
-                log(f"attempt {stats['attempts']}: {why} ({card.get('band')} {card.get('difficulty')})")
+            _log.debug("attempt %d: graded %s %s", stats["attempts"], card.get("band"), card.get("difficulty"))
             continue
         if (s.max_givens is not None and len(givens) > s.max_givens) or len(givens) < (s.min_givens or 0):
             reject("givens outside the spec (late stage)")  # every stage keeps the bounds; this is the last word
@@ -670,6 +673,13 @@ def _generate(spec, log=None):
             "seed": s.seed,
         }
         if hunt is None:
+            _log.info(
+                "found: %s %s (attempt %d, %.1f s)",
+                card.get("band"),
+                card.get("difficulty"),
+                stats["attempts"],
+                info["seconds"],
+            )
             return {"puzzle": d, "card": card, "info": info}
         if hunt == "count":  # most of the maximised classes, then fewest givens
             score = (sum(1 for e in els if any(EL.in_class(e, k) for k in most)), -len(givens))
@@ -678,8 +688,7 @@ def _generate(spec, log=None):
         stats["found"] = stats.get("found", 0) + 1
         if best is None or score > best[0]:
             best = (score, {"puzzle": d, "card": card, "info": info})
-            if log:
-                log(f"attempt {stats['attempts']}: best so far {score}")
+            _log.info("attempt %d: best so far %s", stats["attempts"], score)
     if best is not None:
         r = best[1]
         if whole:

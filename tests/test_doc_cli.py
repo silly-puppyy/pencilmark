@@ -1,6 +1,7 @@
 """Every self-contained command-line example in the docs (`$ echo '<puzzle>' | pencilmark ...` or `$ printf ...`) prints
 what the page shows. The shown lines must appear in the real output in order; a "..." / "…" line on the page stands for
-lines left out. Slow (about 10 s): marked `slow`, run with `pytest -m slow`.
+lines left out. A command ending in `2>&1` is compared with standard error too, durations ("0.005 s") as any duration.
+Slow (about 10 s): marked `slow`, run with `pytest -m slow`.
 """
 
 import re
@@ -33,7 +34,7 @@ def examples():
 
 
 def norm(lines):
-    return [re.sub(r"\s+", " ", x).strip() for x in lines if x.strip()]
+    return [re.sub(r"\d+\.\d+ s\b", "N s", re.sub(r"\s+", " ", x)).strip() for x in lines if x.strip()]
 
 
 @pytest.mark.slow
@@ -41,11 +42,13 @@ def norm(lines):
 def test_cli_example_output(command, shown):
     # no shell: Windows cmd would pass echo's quotes on, so the piped text is made here as a POSIX shell makes it
     feed, args = command.split("| pencilmark ", 1)
+    merged = args.rstrip().endswith("2>&1")
+    args = args.rstrip().removesuffix("2>&1")
     word, text = shlex.split(feed)
     text = text + "\n" if word == "echo" else text.encode().decode("unicode_escape")
     run = subprocess.run([sys.executable, "-m", "pencilmark", *shlex.split(args)], input=text, capture_output=True,
                          text=True, timeout=300)  # fmt: skip
-    real = norm(run.stdout.split("\n"))
+    real = norm((run.stderr + run.stdout if merged else run.stdout).split("\n"))
     k = 0
     for want in norm(shown):
         if want in ("...", "…"):

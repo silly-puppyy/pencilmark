@@ -20,7 +20,7 @@ from __future__ import annotations
 import re
 import urllib.parse
 
-from ._common import DecodeError, Http, reads, to_puzzle_json, unsupported_from_reason
+from ._common import DecodeError, Http, _read_summary, reads, to_puzzle_json, unsupported_from_reason
 
 HTTP = Http(min_gap=1.0)
 
@@ -114,7 +114,8 @@ def to_puzzle(x, rules_text=None, reading=None, infer=False, fetch=True, url=Non
     from ._fpuz_translate import solution_of
 
     fp = decode(x, fetch=fetch)
-    p, _ = translate(fp, rules_text=rules_text, reading=reading, infer=infer)
+    p, info = translate(fp, rules_text=rules_text, reading=reading, infer=infer)
+    _read_summary("f-puzzles", info)
     src = url or (x if isinstance(x, str) and "://" in x else None)
     meta = {
         "title": fp.get("title"),

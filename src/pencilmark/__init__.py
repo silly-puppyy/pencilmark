@@ -7,6 +7,8 @@ Example:
 
 __version__ = "1.1.0"
 
+import logging
+
 from .api import (
     FormatError,
     GenerationFailed,
@@ -32,3 +34,6 @@ from .api import (
     to_string,
     validate,
 )
+
+# the "pencilmark" logger is silent unless the application configures logging (docs: Logging)
+logging.getLogger(__name__).addHandler(logging.NullHandler())

@@ -114,3 +114,19 @@ def test_cli_errors_are_one_line(tmp_path):
         r = subprocess.run([sys.executable, "-m", "pencilmark", *args], capture_output=True, text=True)
         assert r.returncode == 1 and "Traceback" not in r.stderr, (args, r.stderr)
         assert r.stderr.startswith(f"pencilmark {args[0]}: "), r.stderr
+
+
+def test_cli_log():
+    """--log debug writes the stage timings to standard error and leaves the output as it was; without it, nothing"""
+    r = subprocess.run(
+        [sys.executable, "-m", "pencilmark", "rate", "-", "--log", "debug"],
+        input=CLASSIC + "\n",
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=300,
+    )
+    assert r.returncode == 0, r.stderr
+    assert r.stdout.splitlines() == run(["rate", "-"], CLASSIC + "\n")
+    assert "pencilmark.cpsat_verify: uniqueness: 1 solution(s)" in r.stderr
+    assert "pencilmark.export: band route:" in r.stderr

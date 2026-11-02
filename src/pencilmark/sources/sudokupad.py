@@ -23,7 +23,16 @@ import json
 import re
 import urllib.parse
 
-from ._common import DecodeError, FetchError, Http, UnsupportedPuzzle, reads, to_puzzle_json, unsupported_from_reason
+from ._common import (
+    DecodeError,
+    FetchError,
+    Http,
+    UnsupportedPuzzle,
+    _read_summary,
+    reads,
+    to_puzzle_json,
+    unsupported_from_reason,
+)
 
 API = "https://sudokupad.app/api/puzzle/"
 HOSTS = re.compile(r"(?:^|\.)(?:sudokupad\.app|crackingthecryptic\.com)$", re.I)
@@ -324,6 +333,7 @@ def to_puzzle(x, page_text=None, reading=None, infer=False, fetch=True, url=None
     rules_text, source (link) and the embedded solution when it has one digit per cell."""
     sp = decode(x, fetch=fetch)
     p, info = translate(sp, page_text=page_text, reading=reading, infer=infer)
+    _read_summary("f-puzzles (in SudokuPad)" if sp["format"] == "fpuzzles" else "SudokuPad", info)
     md = metadata(sp)
     src = url or (x if isinstance(x, str) and "://" in x else (sp.get("url") if isinstance(sp, dict) else None))
     meta = {

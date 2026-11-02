@@ -123,6 +123,31 @@ in `docs/examples/specs/`.
 What each field means, and how the techniques in `contains` are listed: [Grade card](../formats/grade-card.md). Where
 other sites' difficulty labels fall on pencilmark's scale: [Benchmark](../grades/benchmark.mdx#other-sites-labels-on-this-scale).
 
+## Logging
+
+pencilmark writes what it is doing to the standard Python logger `pencilmark`, which is silent until you switch it on.
+On the command line every command takes `--log info` or `--log debug`, written to standard error:
+
+```
+$ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9.......' | pencilmark rate - --log debug 2>&1
+pencilmark.cpsat_verify: uniqueness: 1 solution(s), by the C++ search, 0.005 s
+pencilmark.export: band route: 0.007 s
+pencilmark.export: card: 0.013 s
+pencilmark.export: technique list and alternatives: 0.027 s
+pencilmark.export: graded in 0.048 s: Hard 5.7
+Hard	5.7	10.7	X-Wing
+```
+
+| Level | What it shows |
+|---|---|
+| `info` | pages fetched, what a reader read from a link, a reading it inferred, a time limit reached, the generator's result |
+| `debug` | also the stage timings above, each uniqueness check, each generator attempt and why it was rejected, and the meaning a reader gave each line colour (and why) |
+
+In Python, configure it as any other logger, for example `logging.basicConfig()` and
+`logging.getLogger("pencilmark").setLevel("DEBUG")`. Logger names follow the modules (`pencilmark.gen`,
+`pencilmark.sources`, …), so one part can be switched on alone. With `rate_many(jobs=N)` on Windows and macOS the
+worker processes start without your configuration (the command line's `-j` passes `--log` on).
+
 ## Speed
 
 Most puzzles take under a second (median 0.49 s on the benchmark, classics 0.04 s); a few very hard variants take

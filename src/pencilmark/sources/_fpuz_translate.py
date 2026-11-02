@@ -10,9 +10,12 @@ sandwichsum, quadruple, minimum, maximum. Generic 'line'/'cage'/'circle'
 """
 
 import itertools
+import logging
 import re
 
 from .. import model as M
+
+_log = logging.getLogger(__name__)
 
 BOX = {4: (2, 2), 5: None, 6: (2, 3), 7: None, 8: (2, 4), 9: (3, 3), 10: (2, 5), 12: (3, 4), 16: (4, 4)}
 UNSUPPORTED = ("fogofwar", "foglight", "columnindexer", "rowindexer", "boxindexer", "nabner")
@@ -450,12 +453,15 @@ def infer_lines(fp, node_limit=2_000_000, max_combos=60):
         p.finalize()
         sols = _verified_solutions(p, limit=2, node_limit=node_limit)
         if len(sols) == 1 and (emb is None or list(sols[0]) == emb):
+            _log.info("inferred line reading %s", reading)
             info = dict(info)
             info["line_reading"] = reading
             info.pop("line", None)
             for k in combo:
                 info[k] = True
             return p, info
+        _log.debug("line reading %s: %s", reading, "no unique solution" if len(sols) != 1 else "another solution")
+    _log.info("none of the %d line readings tried has a unique solution", min(tried, max_combos))
     return None, "no line reading with a unique solution"
 
 

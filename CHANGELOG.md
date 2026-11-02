@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Logging: pencilmark writes to the standard Python logger `pencilmark` (silent until switched on): pages fetched,
+  what a reader read from a link and the readings it inferred, time limits reached and the generator's result at
+  INFO; stage timings, uniqueness checks, each generator attempt and why it was rejected, and the meaning a reader
+  gave each line colour at DEBUG. Every command takes `--log info` or `--log debug` (to standard error, also from
+  `-j` workers). `pencilmark.gen.api.generate` no longer takes a `log=` callback (its attempts are now DEBUG
+  records); `pencilmark.generate` never had one.
 - Custom rules (format: `"type": "custom"`, no longer reserved; docs/formats/rules/custom.mdx): a rule written in the
   file as an expression over named cells, `{"type": "custom", "cells": {"c": [...]}, "holds": "2 * max(c) == sum(c)"}`,
   with scopes for every pair of neighbours, every h x w window or every cell with its neighbours, and `each` for a list

@@ -23,6 +23,7 @@ grade (format "sudoku-grade", format_version 1):
 from __future__ import annotations
 
 import functools
+import logging
 import math
 import time
 from collections import Counter
@@ -34,6 +35,7 @@ from . import solver as S
 from .rules.edge import EDGE
 
 GRADER_NAME, GRADER_VERSION = "pencilmark", __version__  # on every card: a grade is only meaningful with its engine
+_log = logging.getLogger(__name__)
 FORMAT_VERSION = 1  # of both formats; bumped only on a breaking change (additive fields don't bump it)
 BANDS = R.BANDS
 SITES = {
@@ -575,6 +577,7 @@ def grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expla
         alternatives=alternatives,
     )
     if expired:
+        _log.info("time limit reached before the difficulty route finished: band Unknown")
         for k in list(g):
             if k in ("difficulty", "time", "band_index", "time_dist", "time_mean") or k.startswith("time_p"):
                 g[k] = None
@@ -585,6 +588,7 @@ def grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expla
         fields is not None and "elapsed" in fields
     ):  # wall-clock seconds of this grading call (rate() adds the uniqueness proof)
         g["elapsed"] = round(time.perf_counter() - t0, 3)
+    _log.debug("graded in %.3f s: %s %s", time.perf_counter() - t0, g.get("band"), g.get("difficulty"))
     return g
 
 
@@ -621,8 +625,14 @@ def _grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expl
     checks = bool(
         want & {"issues", "reject", "warning"}
     )  # publishing checks read the shortest list's required techniques: list first
+
+    def stage(name, t):
+        _log.debug("%s: %.3f s%s", name, time.perf_counter() - t, " (time limit reached)" if hit() else "")
+
     try:
+        t = time.perf_counter()
         base = BP.band_path(p, P)  # the band (first route; shrinking keeps it)
+        stage("band route", t)
 
         def make_card(route):
             req_b = list(dict.fromkeys(st["technique"] for st in route["steps"] if st["band"] > 0))
@@ -634,17 +644,23 @@ def _grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expl
                 return {}  # max_seconds passed inside the card route
 
         if card is None and not checks:  # 1) band + difficulty / time first: they get the time they need
+            t = time.perf_counter()
             card = make_card(base)
             expired = hit()
+            stage("card", t)
         if need_list and not expired:  # 2) the shortest technique list in the time that is left (truncates)
+            t = time.perf_counter()
             bp = BP.contents(p, P, alternatives=alternatives, deadline=t_end, base=base)
             if hit():
                 bp_cut[0] = True
+            stage("technique list" + (" and alternatives" if alternatives else ""), t)
         else:
             bp = dict(base, removed=[], alternatives={})
         if card is None:  # publishing checks: the card after the list (they read its techniques)
+            t = time.perf_counter()
             card = make_card(bp)
             expired = hit()
+            stage("card with publishing checks", t)
     finally:
         if own:
             CB._C.set_deadline(0.0)

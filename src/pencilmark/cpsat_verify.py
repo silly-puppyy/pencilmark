@@ -11,8 +11,12 @@ gets the full NODE_LIMIT. CP-SAT is independent of the engine's propagation.
 Pair relations are encoded generically as allowed-pair tables from model.RELATIONS, so any relation kind works.
 """
 
+import logging
+import time
+
 from . import model as M
 
+_log = logging.getLogger(__name__)
 NODE_LIMIT = 20_000_000
 QUICK_NODES = 100_000  # the C++ search's share before CP-SAT, when OR-Tools is installed (about 0.3 s)
 
@@ -383,20 +387,34 @@ def decide(p, limit=2, node_limit=NODE_LIMIT, time_limit=60.0):
     """-> (solutions, decided). decided False: neither search could finish (solutions may be partial)."""
     if not hasattr(p, "groups_of"):
         p.finalize()
+    t = time.perf_counter()
+    sols, decided, by = _decide(p, limit, node_limit, time_limit)
+    _log.debug(
+        "uniqueness: %d solution(s)%s, by %s, %.3f s",
+        len(sols),
+        "" if decided else " (undecided)",
+        by,
+        time.perf_counter() - t,
+    )
+    return sols, decided
+
+
+def _decide(p, limit, node_limit, time_limit):
+    """decide() and the search that settled it"""
     ortools = have_ortools()
     first = min(node_limit, QUICK_NODES) if ortools else node_limit
     sols, complete = _engine(p, limit, first)
     if complete or len(sols) >= limit:
-        return sols, True
+        return sols, True, "the C++ search"
     if ortools:
         s = cpsat_solutions(p, limit=limit, time_limit=time_limit)
         if s is not None:
-            return s, True
+            return s, True, "CP-SAT"
         if first < node_limit:  # a rule CP-SAT does not model, or its time ran out: the full C++ search
             sols, complete = _engine(p, limit, node_limit)
             if complete or len(sols) >= limit:
-                return sols, True
-    return sols, False
+                return sols, True, "the full C++ search"
+    return sols, False, "neither search"
 
 
 VERIFY_HINT = 'install OR-Tools for the CP-SAT checker: pip install "pencilmark[verify]"'

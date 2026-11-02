@@ -20,6 +20,9 @@
   python -m pencilmark fingerprint [FILE|-]  the content fingerprint ("sha256:...") per puzzle
   python -m pencilmark describe [FILE|-]     variant name and rules per puzzle (JSON)
 Inputs may also be sudokuwiki.org packed strings (S9B..., L9B..., J9B...).
+Every command takes --log info (pages fetched, what a reader read, time limits reached, the generator's result) or
+--log debug (also stage timings, the uniqueness check, each generator attempt and each reading a reader tried), written
+to standard error.
 """
 
 from __future__ import annotations
@@ -187,9 +190,22 @@ def _quality_arg(text):
     return out
 
 
+def _log_to_stderr(level):
+    """--log: the "pencilmark" logger to standard error at this level (once per process: -j workers call it too)"""
+    import logging
+
+    log = logging.getLogger("pencilmark")
+    if level and not any(isinstance(h, logging.StreamHandler) for h in log.handlers):
+        h = logging.StreamHandler(sys.stderr)
+        h.setFormatter(logging.Formatter("%(name)s: %(message)s"))
+        log.addHandler(h)
+        log.setLevel(level.upper())
+
+
 def _rate_one(args):
     """one input line -> its output text (runs in a worker process with -j)."""
     k, obj, a = args
+    _log_to_stderr(a.log)
     from . import cpsat_verify as V
     from .export import grade
 
@@ -373,8 +389,12 @@ def main(argv=None):
     ap = argparse.ArgumentParser(
         prog="python -m pencilmark", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument(
+        "--log", choices=("info", "debug"), help="write the pencilmark log to standard error at this level"
+    )
     sub = ap.add_subparsers(dest="cmd", required=True)
-    r = sub.add_parser("rate")
+    r = sub.add_parser("rate", parents=[common])
     r.add_argument("file", nargs="?")
     r.add_argument("--format", default=None)
     r.add_argument("--json", action="store_true")
@@ -430,14 +450,14 @@ def main(argv=None):
         help="cap the whole call (opt-in; the card then says completed and may differ run to run)",
     )
     r.set_defaults(fn=cmd_rate)
-    s = sub.add_parser("solve")
+    s = sub.add_parser("solve", parents=[common])
     s.add_argument("file", nargs="?")
     s.set_defaults(fn=cmd_solve)
-    c = sub.add_parser("count")
+    c = sub.add_parser("count", parents=[common])
     c.add_argument("file", nargs="?")
     c.add_argument("--limit", type=int, default=1000, help="stop counting here (prints >=N)")
     c.set_defaults(fn=cmd_count)
-    g = sub.add_parser("generate")
+    g = sub.add_parser("generate", parents=[common])
     g.add_argument(
         "spec", nargs="?", help="a sudoku-spec file (docs/formats/generator-spec.md), or - for standard input"
     )
@@ -445,21 +465,22 @@ def main(argv=None):
     g.add_argument("--time", type=float, help="override limits.time (seconds)")
     g.add_argument("--result", action="store_true", help='print {"puzzle", "card", "info"} as one JSON line')
     g.set_defaults(fn=cmd_generate)
-    j = sub.add_parser("json")
+    j = sub.add_parser("json", parents=[common])
     j.add_argument("file", nargs="?")
     j.set_defaults(fn=cmd_json)
-    e = sub.add_parser("export")
+    e = sub.add_parser("export", parents=[common])
     e.add_argument("file", nargs="?")
     e.add_argument("--pretty", action="store_true")
     e.add_argument("--no-solution", action="store_true", help="do not solve to add the solution")
     e.set_defaults(fn=cmd_export)
-    f = sub.add_parser("fingerprint")
+    f = sub.add_parser("fingerprint", parents=[common])
     f.add_argument("file", nargs="?")
     f.set_defaults(fn=cmd_fingerprint)
-    ds = sub.add_parser("describe")
+    ds = sub.add_parser("describe", parents=[common])
     ds.add_argument("file", nargs="?")
     ds.set_defaults(fn=cmd_describe)
     a = ap.parse_args(argv)
+    _log_to_stderr(a.log)
     from .api import GenerationFailed
     from .exchange import FormatError, NotSupportedError
 

@@ -36,7 +36,7 @@ import urllib.parse
 import zlib
 from collections import Counter, defaultdict
 
-from ._common import DecodeError, UnsupportedPuzzle, reads, to_puzzle_json
+from ._common import DecodeError, UnsupportedPuzzle, _read_summary, reads, to_puzzle_json
 
 COMPRESS_SUB = [
     ["z", "zZ"],
@@ -593,6 +593,7 @@ def translate(x, rules_text=None):
 def to_puzzle(x, rules_text=None, url=None):
     """penpa link / p= value / decoded dict -> puzzle JSON dict (title, author, rules_text, source, a= solution)."""
     p, info, d = translate(x, rules_text=rules_text)
+    _read_summary("Penpa", info)
     D = p.D
     nx0 = d["nx"] + 4
     board = sorted(d["centerlist"]) if d["centerlist"] else None

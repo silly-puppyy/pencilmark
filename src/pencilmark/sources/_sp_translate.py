@@ -21,11 +21,14 @@ family / all.
 """
 
 import colorsys
+import logging
 import math
 import re
 from collections import defaultdict
 
 from .. import model as M
+
+_log = logging.getLogger(__name__)
 
 RULE_WORDS = {
     "slow_thermo": [r"slow[- ]?thermo"],
@@ -699,6 +702,7 @@ def translate(sp, page_text=None, overrides=None):
     ):
         text_mentions = (text_mentions - {"thermo", "slow_thermo"}) | {"slow_thermo"}
     box_of = {c: gi for gi, g in enumerate(p.groups) if g.kind == "box" for c in g.cells}
+    told = set()  # line colours whose meaning is logged (once per colour and reading)
     for cname, hexcol, lc in line_items(P, n):
         if cname == "diagonal":
             ids = [idx(x) for x in lc]
@@ -707,27 +711,33 @@ def translate(sp, page_text=None, overrides=None):
                 used["diagonal"] += 1
             continue
         rule = (overrides or {}).get(cname) or line_rule_from_text(hexcol, cmap)
+        how = "the rules text naming its colour"
         if (
             re.search(r"double arrow", rules.lower())
             and lc[0] in circles
             and lc[-1] in circles
             and rule in (None, "arrow", "thermo", "between")
         ):
-            rule = "double_arrow"
+            rule, how = "double_arrow", "circles at both ends and double arrows in the rules text"
         if rule is None and lc[0] in circles and lc[-1] in circles and "between" in text_mentions:
-            rule = "between"
+            rule, how = "between", "circles at both ends and between lines in the rules text"
         if (
             rule is None
             and len(text_mentions - {"arrow", "thermo"}) == 1
             and not (lc[0] in circles or lc[-1] in circles)
         ):
             rule = next(iter(text_mentions - {"arrow", "thermo"}))  # the only line rule the text names
+            how = "the only line rule in the rules text"
         if rule is None and (lc[0] in circles or lc[-1] in circles):
             rule = "thermo" if "thermo" in rules.lower() else ("arrow" if "arrow" in rules.lower() else None)
+            how = "a circle at one end and the rules text"
         if rule == "thermo" and "slow_thermo" in text_mentions and "thermo" not in text_mentions:
-            rule = "slow_thermo"
+            rule, how = "slow_thermo", how + " (slow)"
         if rule is None and not cmap:
-            rule = DEFAULT_LINE.get(cname)
+            rule, how = DEFAULT_LINE.get(cname), "SudokuPad's default colours (the rules text names none)"
+        if overrides is None and (cname, rule) not in told:  # infer() logs its readings instead
+            told.add((cname, rule))
+            _log.debug("%s line (%s): %s, by %s", cname, hexcol, rule or "unknown", how if rule else "no clue")
         if rule is None:
             unknown.append(f"{cname} line")
             continue
@@ -1483,23 +1493,29 @@ def infer(sp, page_text=None, max_combos=120, node_limit=20_000_000, time_budget
     t_edge = edge_number_rule(rules)
     edge_opts = ([t_edge] if t_edge else []) + [k for k in EDGE_NUMBER_RULES if k != t_edge] if has_edge_num else [None]
     combos = best_first([prior(c) for c in classes] + [edge_opts] + [neg_opts])
+    tried = 0
     for k, combo in enumerate(combos):
         if k >= max_combos or (t_end and found and time.time() > t_end):
             break
+        tried += 1
         ov = dict(zip(classes, combo[: len(classes)]))
         if combo[len(classes)]:
             ov["_edgenum"] = combo[len(classes)]
         ov["_negative"] = sorted(combo[-1])
         p, info = translate(sp, page_text, ov)
         if p is None:
+            _log.debug("reading %s: %s", ov, info)
             continue
         p.finalize()
         if sol is not None and len(sol) == p.N and not satisfies(p, sol):
+            _log.debug("reading %s: breaks the embedded solution", ov)
             continue
         sols = _verified_solutions(p, limit=2, node_limit=node_limit)
         if len(sols) != 1:
+            _log.debug("reading %s: %s solutions", ov, "no" if not sols else "several")
             continue
         if sol is not None and list(sols[0]) != sol[: p.N]:
+            _log.debug("reading %s: its solution differs from the embedded one", ov)
             continue
         text_agree = (
             sum(1 for c in classes if line_rule_from_text(hex_of[c], cmap) == ov.get(c))
@@ -1510,12 +1526,14 @@ def infer(sp, page_text=None, max_combos=120, node_limit=20_000_000, time_budget
         if sol is not None or text_agree >= best_possible:
             break  # solution-confirmed or as text-consistent as any reading can be: done
     if not found:
+        _log.info("none of the %d readings tried has a unique solution", tried)
         return None, "no reading with a unique solution", None
     found.sort(key=lambda x: (-x[0], -x[1]))
     best = found[0]
     evidence = ("solution" if sol is not None else "unique") + (
         "+text" if best[0] == len(classes) + 1 else (f"+partial text ({len(found)} candidate readings)")
     )
+    _log.info("inferred reading %s (evidence: %s)", best[4], evidence)
     return best[2], best[3], {"evidence": evidence, "reading": best[4]}
 
 

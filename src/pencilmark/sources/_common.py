@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import functools
 import gzip
+import logging
 import os
 import threading
 import time
@@ -19,6 +20,8 @@ USER_AGENT = os.environ.get(
     "contact 347531506+silly-puppyy@users.noreply.github.com)",
 )
 TIMEOUT = 30.0
+
+_log = logging.getLogger(__name__)
 
 
 class SourceError(Exception):
@@ -66,6 +69,13 @@ def unsupported_from_reason(reason, source=""):
     if r.startswith("unsupported: "):
         return UnsupportedPuzzle([x.strip() for x in r[len("unsupported: ") :].split(", ") if x.strip()], source)
     return UnsupportedPuzzle([r], source)
+
+
+def _read_summary(source, info):
+    """log what a reader read: the element counts of its info (internal keys, starting with _, left out)"""
+    if isinstance(info, dict):
+        parts = [k if v is True else f"{k} {v}" for k, v in info.items() if not k.startswith("_") and v]
+        _log.info("%s: read %s", source, ", ".join(parts) or "givens only")
 
 
 class Http:
@@ -117,6 +127,7 @@ class Http:
             )
             try:
                 self.requests += 1
+                _log.info("%s %s", method, url)
                 opener = urllib.request.build_opener() if follow else urllib.request.build_opener(_NoRedirect)
                 with opener.open(req, timeout=self.timeout) as r:
                     if method == "HEAD":
@@ -131,9 +142,13 @@ class Http:
                 last = f"HTTP {e.code} for {url}"
                 if e.code not in (429, 500, 502, 503, 504):
                     break
+                if attempt < self.retries:
+                    _log.warning("%s; retrying", last)
                 time.sleep(min(30.0, 10.0 * (attempt + 1)))
             except (urllib.error.URLError, TimeoutError, OSError) as e:
                 last = f"{type(e).__name__} for {url}: {e}"
+                if attempt < self.retries:
+                    _log.warning("%s; retrying", last)
                 time.sleep(5.0)
         raise FetchError(last)
 
