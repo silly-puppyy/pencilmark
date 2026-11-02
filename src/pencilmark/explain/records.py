@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import defaultdict
 
 from .. import solver as S
-from .base import _J, CONCEPTS, _cap, _generic, _join, _result, fmt_elims, rel_label
+from .base import _J, CONCEPTS, LINE_NAMES, _cap, _generic, _join, _result, fmt_elims, rel_label
 from .chains import _h_chain
 
 # ================================================== techniques 68-82 (engine records) ==
@@ -379,9 +379,29 @@ def _label(ctx, name):
     return f"the {str(name).replace('_', ' ')}"
 
 
-def _rule_label(r):
-    nm_ = r.get("name") or (f"{r.get('kind')} line" if r.get("type") == "line" else r.get("type"))
-    return f"the {str(nm_).replace('_', ' ')}"
+_RULE_NOUN = {"set": "set", "sum": "sum", "cage": "cage", "arrow": "arrow", "table": "rule", "count": "count"}
+
+
+def _rule_label(r, nm=None):
+    """'the renban line r8c1, r8c2 and r9c2' (with a namer and the rule's cells), else 'the renban line' / 'the set'"""
+    if r.get("name"):
+        noun = r["name"]
+    elif r.get("line_kind") or r.get("type") == "line":
+        lk = r.get("line_kind") or r.get("kind")
+        noun = LINE_NAMES.get(lk, f"{lk} line")
+    else:
+        noun = _RULE_NOUN.get(r.get("type"), r.get("type"))
+    cells = r.get("cells") or []
+    if nm is not None and len(cells) == 2 and not r.get("name") and not r.get("line_kind"):
+        lab = rel_label(nm.p, cells[0], cells[1])  # a pair rule: name the clue itself (white dot, X, ...)
+        if lab:
+            return f"the {lab} {nm.cell(cells[0])}-{nm.cell(cells[1])}"
+    where = (
+        f" {nm.cells(sorted(cells, key=lambda c: nm.p.coords[c]))}"
+        if nm is not None and cells and len(cells) <= 6
+        else ""
+    )
+    return f"the {str(noun).replace('_', ' ')}{where}"
 
 
 def _h_rule_intersect(ctx):
@@ -390,10 +410,27 @@ def _h_rule_intersect(ctx):
     pc = eng.get("pattern_cells") or []
     base = eng.get("base") or {}
     names = [_label(ctx, u["name"]) for u in base.get("units") or [] if u and u.get("name")]
-    names += [_rule_label(r) for r in base.get("rules") or []]
+    names += [_rule_label(r, ctx.nm) for r in base.get("rules") or []]
     what = " and ".join(names) if names else "two rules"
     units = _x_units(ctx, [u["name"] for u in base.get("units") or [] if u])
-    if ctx.code == "two houses with their dots":
+    rs = base.get("rules") or []
+    shared = (
+        set(rs[0].get("cells") or []).intersection(*[set(r.get("cells") or []) for r in rs[1:]])
+        if len(rs) > 1
+        else set()
+    )
+    if (
+        len(rs) > 1
+        and shared
+        and all(r.get("line_kind") == "renban" or r.get("kind") == "consecutive" for r in rs)
+        and not base.get("units")
+    ):
+        why = (
+            f"{what} overlap in {ctx.nm.cells(sorted(shared, key=lambda c: ctx.p.coords[c]))}: those cells belong to "
+            f"both runs of consecutive digits, so they hold digits both runs can contain (with runs of the same length "
+            f"overlapping, the shared cells take the middle digits)"
+        )
+    elif ctx.code == "two houses with their dots":
         why = (
             f"{what} overlap, and the pair rules (dots, lines) between their cells leave only a few ways to fill "
             f"the shared cells"
