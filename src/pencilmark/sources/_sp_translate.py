@@ -63,6 +63,8 @@ UNMODELLED_RULES = (
     ("cold / hot arrow", r"\b(?:cold|hot) arrows?\s*:"),
     ("pairrow", r"\bpai?rrows?\s*[:-]|(?:all|not all)(?: possible)? pai?rrows"),
     ("screw", r"region sum screws?\s*:"),
+    # a puzzle-wide unknown: the digits sorted into sets the solver finds ("sort the digits 1-9 into three sets of three")
+    ("digit sets", r"(?:sort|divide|split|partition|separate)s? the digits[^.]{0,40}\binto\b[^.]{0,40}\bsets?\b"),
     ("diagonal kropki", r"diagonal kropki(?: dots?)?\s*:|diagonally connected by an? (?:black|white)"),
 )
 
