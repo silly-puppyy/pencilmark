@@ -763,6 +763,18 @@ def _h_region(ctx):
     elif ctx.tech == S.REGION_EXIT:
         why = f"The region of {nm.cells(pc)} still needs cells and has one way out, so it takes that cell"
         title = "region exit"
+    elif ctx.tech == S.REGION_DIGIT:
+        why = (
+            f"The region of {nm.cells(pc)} must hold every digit, and one of its missing digits fits only one cell the "
+            "region can still reach"
+        )
+        title = "region needs a digit"
+    elif ctx.tech == S.POCKET:
+        why = (
+            f"The undecided cells {nm.cells(pc)} form a pocket of fewer than {D} cells: no region fits inside it, and "
+            "only one unfinished region touches it"
+        )
+        title = "pocket counting"
     else:
         why = (
             f"A region holds each digit once: the digit in {nm.cells(pc)} cannot repeat in its region, and a cell "

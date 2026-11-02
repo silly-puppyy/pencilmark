@@ -47,6 +47,8 @@ REX,Region Exclusion,,101,,-,region_exclusion,
 RRE,Region Cannot Reach,,102,,-,region_reach,
 RDE,Dead End,,103,,-,dead_end,
 RXT,Region Exit,,104,,-,region_exit,
+RDG,Region Needs a Digit,,105,,-,region_digit,
+RPK,Pocket Counting,,106,,-,pocket_counting,
 XWG,X-Wing,Hard,1,SKY FXW FRK SWF,3.2,x_wing,"an X-Wing is a Skyscraper whose ends line up, a finless finned X-Wing, a Franken X-Wing using two lines, a Swordfish with a degenerate third line"
 SKY,Skyscraper,Hard,2.1,TUR,6.5,skyscraper,"Skyscraper, 2-String Kite and Empty Rectangle are 3-link single-digit chains (Turbot Fish)"
 KTE,2-String Kite,Hard,2.2,TUR,6.5,two_string_kite,a 3-link single-digit chain (Turbot Fish)

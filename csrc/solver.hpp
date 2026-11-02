@@ -85,6 +85,8 @@ enum Tech {
     REGION_REACH = 105,   ///< regions to find: a cell the region cannot reach with its remaining cells is not in it
     DEAD_END = 106,       ///< regions to find: a cell must share its region with a neighbour (no one-cell region)
     REGION_EXIT = 107,    ///< regions to find: a region short of cells with one way out takes that cell
+    REGION_DIGIT = 108,   ///< regions to find: a region's missing digit fits one cell it can reach: that cell joins it
+    POCKET = 109,         ///< regions to find: a pocket too small for a new region, touching one unfinished region, joins it
     MENTAL_NOTES = 84,    ///< single after notes logic done in the head (subset / pointing / combination on the mental view)    // line consistency on 3-cell windows (local scan of a long line)  // both options of a 2-way choice lead to the same placement / elimination  // short chain (<= 5 links) on the no-notes mental view, leading to a single  // bounded case split: bivalue cell, contradiction within a few direct rounds
     N_TECH = 128
 };
@@ -631,6 +633,8 @@ public:
     void region_reach(MoveBuf& out);  ///< cells out of a region's reach (component, distance budget) leave it
     void dead_end(MoveBuf& out);      ///< a cell takes only labels some neighbour can take
     void region_exit(MoveBuf& out);   ///< a short region with a single free neighbouring cell takes it
+    void region_digit(MoveBuf& out);  ///< a region's missing digit with one reachable place: that cell joins the region
+    void pocket(MoveBuf& out);        ///< pocket counting: a small pocket bordered by one unfinished region joins it
     /// facts read off the clues alone (relations on an empty grid; with line shape): fires once as one step
     void clue_facts(MoveBuf& out);
     /// relation dominoes: a digit every allowed pair uses leaves common houses; two dominoes locking four digits

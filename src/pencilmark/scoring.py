@@ -115,6 +115,8 @@ DEFAULT_PARAMS = {
         S.DEAD_END: 2.0,
         S.REGION_EXIT: 2.2,
         S.REGION_REACH: 2.6,
+        S.REGION_DIGIT: 3.0,
+        S.POCKET: 3.0,
         S.DOMINO: 2.2,
         S.COLOUR_ALGEBRA: 5.4,
         S.N_WING: 6.2,

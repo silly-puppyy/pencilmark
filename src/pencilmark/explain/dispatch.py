@@ -225,6 +225,21 @@ _X_HANDLERS = {
         "intersections+combos",
         ("Region exit", "A region still short of cells with a single way out must take it."),
     ),
+    "REGION_DIGIT": (
+        _h_region,
+        "region_digit",
+        "intersections+combos",
+        (
+            "Region needs a digit",
+            "A region holds every digit: a missing one with a single reachable place puts it there.",
+        ),
+    ),
+    "POCKET": (
+        _h_region,
+        "pocket_counting",
+        "intersections+combos",
+        ("Pocket counting", "A pocket too small for a region of its own belongs to the unfinished region around it."),
+    ),
     "REGION_EXCL": (
         _h_region,
         "region_exclusion",

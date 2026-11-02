@@ -12,7 +12,9 @@
   region and equal digits split regions; region size cap: a region with all its cells is closed, the cells left for
   it take it), plus region cannot reach (cells beyond a region's remaining cells, or in a pocket too small for a
   region), dead end (a cell shares its region with a neighbour) and region exit (a region short of cells with one
-  way out takes it); more from the Cracking the Cryptic solves come next, so the routes still lean on the search
+  way out takes it), region needs a digit (a missing digit with one reachable place) and pocket counting (a pocket
+  too small for a region of its own joins the one unfinished region around it); more from the Cracking the Cryptic
+  solves come next, so the routes still lean on the search
   fallback where those would apply (CC Newbie: Extreme, with one trial step). Prices are provisional until calibration. The SudokuPad reader reads chaos construction
   when the rules say so and the file draws no regions: drawn borders become `region_border`, and statements such as
   "digits along a thermometer belong to the same region" become `same_region` / `region_border` for that element

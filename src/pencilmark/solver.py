@@ -83,6 +83,8 @@ REGION_EXCL = 104  # a placed digit leaves its region's other cells; equal digit
 REGION_REACH = 105  # a cell out of a region's reach with its remaining cells is not in it
 DEAD_END = 106  # a cell shares its region with a neighbour (no one-cell region)
 REGION_EXIT = 107  # a region short of cells with one way out takes that cell
+REGION_DIGIT = 108  # a region's missing digit fits one cell it can reach: that cell joins it
+POCKET = 109  # pocket counting: a pocket too small for a new region, touching one unfinished region, joins it
 CLASS_COLOUR = 100  # class colouring (C++ only): low / high or odd / even links between cells, sides fixed by known cells / house counts
 # names and flags: the technique registry (data/techniques.csv); the constants above mirror csrc/solver.hpp enum Tech,
 # and tests/test_registry.py checks all three agree

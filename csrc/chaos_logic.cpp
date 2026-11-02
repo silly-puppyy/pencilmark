@@ -202,4 +202,86 @@ void Solver::region_exit(MoveBuf& out) {
         }
 }
 
+// "orange has to have a five in it": a region holds every digit; when its missing digit d fits only one cell the region
+// can still reach (within its remaining cells), that cell is in the region and holds d
+void Solver::region_digit(MoveBuf& out) {
+    if (!has_regions() || disabled[REGION_DIGIT]) return;
+    const int D = p.D;
+    std::vector<int> dist(p.N, -1);
+    for (const auto& A : p.chaos)
+        for (int k = 1; k <= D; ++k) {
+            const uint32_t kb = bit(k);
+            auto may = [&](int c) { return lab[c] == k || (!lab[c] && (lcand[c] & kb)); };
+            std::vector<int> known;
+            uint32_t have = 0;
+            for (int c : A) {
+                dist[c] = -1;
+                if (lab[c] == k) known.push_back(c), have |= vals[c] ? bit(vals[c]) : 0;
+            }
+            if (known.empty() || (int)known.size() >= D) continue;
+            std::vector<int> q = known;
+            for (int c : known) dist[c] = 0;
+            for (size_t h = 0; h < q.size(); ++h)
+                for (int nb : p.chaos_nbr[q[h]])
+                    if (dist[nb] < 0 && may(nb)) dist[nb] = dist[q[h]] + 1, q.push_back(nb);
+            const int budget = D - (int)known.size();
+            for (int d = 1; d <= D; ++d) {
+                if (have & bit(d)) continue;
+                int where = -1, n = 0;
+                for (int c : A) {
+                    const bool reach = lab[c] == k || (dist[c] > 0 && dist[c] <= budget);
+                    if (reach && (vals[c] == d || (!vals[c] && (cand[c] & bit(d))))) where = c, ++n;
+                }
+                if (n != 1 || lab[where] == k) continue;
+                Move& m = new_move(out, REGION_DIGIT, 1.0, 1);
+                m.lpc = where;
+                m.lpv = k;
+                for (uint32_t o = lcand[where] & ~kb; o; o &= o - 1) add_lel(out, m, where, lowdigit(o));
+                if (!vals[where]) m.pc = where, m.pv = d;
+                set_pattern(out, m, known);
+                m.code = 7151;
+            }
+        }
+}
+
+// pocket counting: the undecided cells form pockets (connected through undecided cells); a pocket of fewer than D cells
+// cannot hold a region of its own, so its cells belong to the unfinished regions around it; with one such region, the
+// whole pocket is that region's
+void Solver::pocket(MoveBuf& out) {
+    if (!has_regions() || disabled[POCKET]) return;
+    const int D = p.D;
+    std::vector<int> comp(p.N, -1), count(D + 1, 0);
+    for (const auto& A : p.chaos) {
+        std::fill(count.begin(), count.end(), 0);
+        for (int c : A)
+            if (lab[c]) ++count[lab[c]];
+        for (int c : A) comp[c] = -1;
+        for (int s0 : A) {
+            if (lab[s0] || comp[s0] >= 0) continue;
+            std::vector<int> cells{s0};
+            comp[s0] = s0;
+            uint32_t around = 0;  // unfinished regions touching the pocket
+            for (size_t h = 0; h < cells.size(); ++h)
+                for (int nb : p.chaos_nbr[cells[h]]) {
+                    if (lab[nb]) {
+                        if (count[lab[nb]] < D) around |= bit(lab[nb]);
+                    } else if (comp[nb] < 0) {
+                        comp[nb] = s0, cells.push_back(nb);
+                    }
+                }
+            if ((int)cells.size() >= D || popc(around) != 1) continue;
+            const int k = lowdigit(around);
+            Move& m = new_move(out, POCKET, 1.0, (int)cells.size());
+            for (int c : cells)
+                for (uint32_t o = lcand[c] & ~bit(k); o; o &= o - 1) add_lel(out, m, c, lowdigit(o));
+            if (!m.lel_n) {
+                out.moves.pop_back();
+                continue;
+            }
+            set_pattern(out, m, cells);
+            m.code = 7161;
+        }
+    }
+}
+
 }  // namespace cs

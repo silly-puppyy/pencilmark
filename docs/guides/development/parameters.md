@@ -115,6 +115,8 @@ changing a shipped value is a deliberate commit with a golden rewrite.
 | `route.price.DeadEnd` | 2 | ″ |
 | `route.price.RegionExit` | 2.2 | ″ |
 | `route.price.RegionReach` | 2.6 | ″ |
+| `route.price.RegionDigit` | 3 | ″ |
+| `route.price.PocketCounting` | 3 | ″ |
 | `route.K` | list of 9 | Engine parameters (data/params.json): the step-price model and the scan / note costs, fitted on human solve times; they also price the time effort and the band route's tie-breaks. |
 | `route.gamma` | -0.6291 | ″ |
 | `route.alpha` | 1 | ″ |
