@@ -477,8 +477,59 @@ def _h_wing(ctx):
                         ]
                     )
                 J = _J(ctx, digits=[z], base_cells=[piv, w1, w2], z=z, cover_cells=tgc)
-                return _result(ctx, J, short, teach, True)
+                r = _result(ctx, J, short, teach, True)
+                r["substeps"] = _wing_substeps(nm, st, piv, w1, w2, x, y, z, xyz, ctx.elims)
+                return r
     return _generic(ctx)
+
+
+def _wing_substeps(nm, st, piv, w1, w2, x, y, z, xyz, elims):
+    """XY-Wing / XYZ-Wing as sub-steps: pivot (cyan) and wings (green), what each pivot digit forces, the removals"""
+    ids = iter(range(1, 10**6))
+    cell = lambda c, col: {"id": next(ids), "cell": nm.cell(c), "colour": col}
+    wx = w1 if st.cand[w1] & bit(x) else w2
+    wy = w2 if wx == w1 else w1
+    out = [
+        {
+            "text": f"{_cap(nm.cell(piv))} {nm.cset(st.cand[piv])} sees {nm.cell(wx)} {nm.cset(st.cand[wx])} and "
+            f"{nm.cell(wy)} {nm.cset(st.cand[wy])}.",
+            "annotations": [cell(piv, "cyan"), cell(wx, "green"), cell(wy, "green")],
+        }
+    ]
+    arrow = lambda a, da, b, db: {
+        "id": next(ids),
+        "arrow": [f"{nm.cell(a)}#{da}", f"{nm.cell(b)}#{db}"],
+        "line": "plain",
+    }
+    why = "A cell holds one digit, and cells that see each other can't share one."
+    out.append(
+        {
+            "text": f"If {nm.cell(piv)} is {x}, then {nm.cell(wx)} is {z}.",
+            "why": why,
+            "annotations": [arrow(piv, x, wx, z)],
+        }
+    )
+    out.append({"text": f"If {nm.cell(piv)} is {y}, then {nm.cell(wy)} is {z}.", "annotations": [arrow(piv, y, wy, z)]})
+    tg = sorted({c for c, _ in elims})
+    if xyz:
+        last = (
+            f"If {nm.cell(piv)} is {z}, it is the {z} itself: so one of the three cells is {z}, and "
+            f"{nm.cells(tg)}, which see{'s' if len(tg) == 1 else ''} all three, can't be {z}."
+        )
+    else:
+        last = (
+            f"Either way one wing is {z}, and {nm.cells(tg)} see{'s' if len(tg) == 1 else ''} both wings, so "
+            f"{'it' if len(tg) == 1 else 'they'} can't be {z}."
+        )
+    out.append(
+        {
+            "text": last,
+            "annotations": [
+                {"id": next(ids), "candidate": f"{nm.cell(c)}#{d}", "colour": "red"} for c, d in sorted(elims)
+            ],
+        }
+    )
+    return out
 
 
 # ------------------------------------------------------------- colouring ----

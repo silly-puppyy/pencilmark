@@ -137,3 +137,15 @@ def test_line_rule_substeps_and_facts():
     )
     assert sub[0]["text"].startswith("Read ") and sub[0]["why"] in RULE_FACTS.values()
     assert {a["colour"] for a in sub[-1]["annotations"]} == {"red"}
+
+
+def test_wing_substeps():
+    card = pencilmark.rate(
+        "053070008000000003001300000060800009040090060200007010000004600500000000700050290",
+        fields=["steps"],
+        explain=["substeps"],
+    )
+    sub = next(s["explanation"]["substeps"] for s in card["steps"] if s["code"] == "YWG")
+    assert [a["colour"] for a in sub[0]["annotations"]] == ["cyan", "green", "green"]
+    assert all(a["line"] == "plain" for x in sub[1:3] for a in x["annotations"])
+    assert {a["colour"] for a in sub[-1]["annotations"]} == {"red"}

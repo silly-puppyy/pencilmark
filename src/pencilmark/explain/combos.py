@@ -590,6 +590,18 @@ def _line_reasons(ctx, rule, res):
                         f"{nm.digits(digits_of(dom[j]))} -- none pairs with {nm.digits(ds)}"
                     )
                     break
+            if txt is None and len(nbs) == 2 and cells[nbs[1]] in p.peers[cells[nbs[0]]]:
+                qa, qb = cells[nbs[0]], cells[nbs[1]]
+                seg = []
+                for d in ds:  # both neighbours could only take the same single digit, but they see each other
+                    pa = [w for w in digits_of(dom[nbs[0]]) if not _rel_ex(p, c, qa, d) & bit(w)]
+                    pb = [w for w in digits_of(dom[nbs[1]]) if not _rel_ex(p, c, qb, d) & bit(w)]
+                    if len(pa) == 1 and pa == pb:
+                        seg.append(
+                            f"{d} would force both {nm.cell(qa)} and {nm.cell(qb)} to be {pa[0]}, but they see each other"
+                        )
+                if len(seg) == len(ds):
+                    txt = f"At {nm.cell(c)}: " + "; ".join(seg)
         if txt is None:
             generic[tuple(ds)].append(c)
             continue
