@@ -610,7 +610,7 @@ bool Solver::direct_locks() {
     };
     std::vector<int> emp, poss, common, targets;
     std::vector<std::pair<int, uint32_t>> rms;
-    std::vector<uint64_t> cr(W);
+    std::vector<uint64_t> cr(W), hp(W);
     for (int bi : p.houses) {
         const Group& B = p.groups[bi];
         emp.clear();
@@ -638,17 +638,20 @@ bool Solver::direct_locks() {
                 for (int c : targets) add_lock(c, {ident, B.shape, b, tgt});
             }
             for (int gen = 1; gen >= 0; --gen) {
-                const std::vector<int>& L0 = gen ? p.rel[poss[0]] : p.neq[poss[0]];
-                if (L0.empty()) continue;
-                const uint64_t* b0 = gen ? p.relb(poss[0]) : p.neqb(poss[0]);
+                const bool mix = !gen && P.neq_peers;  // as relation_pointing (notes_view.cpp)
+                bool any_link = false;
+                for (int c : poss) any_link = any_link || !(gen ? p.rel[c] : p.neq[c]).empty();
+                if (mix ? !any_link : (gen ? p.rel[poss[0]] : p.neq[poss[0]]).empty()) continue;
+                const uint64_t* b0 = gen ? p.relb(poss[0]) : mix ? p.peers(poss[0]) : p.neqb(poss[0]);
                 for (int w = 0; w < W; ++w) cr[w] = b0[w];
                 for (size_t i = 1; i < poss.size(); ++i) {
-                    const uint64_t* bc = gen ? p.relb(poss[i]) : p.neqb(poss[i]);
+                    const uint64_t* bc = gen ? p.relb(poss[i]) : mix ? p.peers(poss[i]) : p.neqb(poss[i]);
                     for (int w = 0; w < W; ++w) cr[w] &= bc[w];
                 }
+                if (mix) house_common(p, poss, hp);
                 rms.clear();
                 for (int x = 0; x < p.N; ++x) {
-                    if (!tbit(cr.data(), x)) continue;
+                    if (!tbit(cr.data(), x) || (mix && tbit(hp.data(), x))) continue;
                     if (vals[x] || std::find(poss.begin(), poss.end(), x) != poss.end()) continue;
                     uint32_t rm = p.full;
                     if (gen) {

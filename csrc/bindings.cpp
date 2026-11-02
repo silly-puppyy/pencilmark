@@ -49,6 +49,7 @@ static Params params_from(const py::dict& P) {
     if (P.contains("forcing_fallback") && !P["forcing_fallback"].is_none()) pr.fc_fallback = P["forcing_fallback"].cast<pm_long>();
     if (P.contains("exhaust_fallback") && !P["exhaust_fallback"].is_none()) pr.exhaust_fallback = P["exhaust_fallback"].cast<int>();
     if (P.contains("fish_max_n") && !P["fish_max_n"].is_none()) pr.fish_max_n = P["fish_max_n"].cast<int>();
+    if (P.contains("neq_peers") && !P["neq_peers"].is_none()) pr.neq_peers = P["neq_peers"].cast<int>();
     if (P.contains("refute_rounds") && !P["refute_rounds"].is_none()) pr.refute_rounds = P["refute_rounds"].cast<int>();
     if (P.contains("band_escalate") && !P["band_escalate"].is_none()) pr.band_escalate = P["band_escalate"].cast<int>();
     if (P.contains("band_wide_cells") && !P["band_wide_cells"].is_none()) pr.band_wide_cells = P["band_wide_cells"].cast<int>();

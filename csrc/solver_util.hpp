@@ -3,6 +3,7 @@
 /// nary_moves.cpp): k-combinations, innie / outie region records, move descriptors, eliminations. Internal linkage: each
 /// file that includes this header gets its own copy.
 #pragma once
+#include <algorithm>
 #include <cstdint>
 #include <vector>
 
@@ -42,6 +43,18 @@ void region_expl(MoveBuf& out, Move& m, const InnieSet& s) {
     r.insert(r.end(), s.cages.begin(), s.cages.end());
     r.insert(r.end(), s.cells.begin(), s.cells.end());
     add_expl(out, m, EX_REGION, r);
+}
+/// cells that every one of `cells` sees through a shared house (all-different group); out has p.W words
+inline void house_common(const Puzzle& p, const std::vector<int>& cells, std::vector<uint64_t>& out) {
+    const int W = p.W;
+    std::fill(out.begin(), out.end(), ~0ULL);
+    std::vector<uint64_t> u(W);
+    for (int c : cells) {
+        std::fill(u.begin(), u.end(), 0ULL);
+        for (int gi : p.groups_of[c])
+            for (int w = 0; w < W; ++w) u[w] |= p.group_bits[(size_t)gi * W + w];
+        for (int w = 0; w < W; ++w) out[w] &= u[w];
+    }
 }
 inline void set_meta(Move& m, int a, int b, int c, int d, int e, int f, int g, int h, double sp) {
     m.has_meta = true;

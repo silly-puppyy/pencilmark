@@ -450,7 +450,7 @@ void Solver::coloring(MoveBuf& out) {
 void Solver::relation_pointing(MoveBuf& out) {
     const int W = p.W;
     std::vector<int> poss;
-    std::vector<uint64_t> cr(W);
+    std::vector<uint64_t> cr(W), hp(W);
     for (int bi : p.houses) {
         const Group& B = p.groups[bi];
         for (uint32_t mm = p.full & ~placed_g[bi]; mm; mm &= mm - 1) {
@@ -461,17 +461,22 @@ void Solver::relation_pointing(MoveBuf& out) {
                 if (!vals[c] && (cand[c] & b)) poss.push_back(c);
             if (poss.size() < 2) continue;
             for (int gen = 1; gen >= 0; --gen) {
-                const std::vector<int>& L0 = gen ? p.rel[poss[0]] : p.neq[poss[0]];
-                if (L0.empty()) continue;
-                const uint64_t* b0 = gen ? p.relb(poss[0]) : p.neqb(poss[0]);
+                // neq_peers: "different" links and house peers together (peers() holds both); a target every place
+                // sees by houses alone is locked candidates, not this
+                const bool mix = !gen && P.neq_peers;
+                bool any_link = false;
+                for (int c : poss) any_link = any_link || !(gen ? p.rel[c] : p.neq[c]).empty();
+                if (mix ? !any_link : (gen ? p.rel[poss[0]] : p.neq[poss[0]]).empty()) continue;
+                const uint64_t* b0 = gen ? p.relb(poss[0]) : mix ? p.peers(poss[0]) : p.neqb(poss[0]);
                 for (int w = 0; w < W; ++w) cr[w] = b0[w];
                 for (size_t i = 1; i < poss.size(); ++i) {
-                    const uint64_t* bc = gen ? p.relb(poss[i]) : p.neqb(poss[i]);
+                    const uint64_t* bc = gen ? p.relb(poss[i]) : mix ? p.peers(poss[i]) : p.neqb(poss[i]);
                     for (int w = 0; w < W; ++w) cr[w] &= bc[w];
                 }
+                if (mix) house_common(p, poss, hp);
                 int mi = -1;
                 for (int x = 0; x < p.N; ++x) {
-                    if (!tbit(cr.data(), x)) continue;
+                    if (!tbit(cr.data(), x) || (mix && tbit(hp.data(), x))) continue;
                     if (vals[x] || std::find(poss.begin(), poss.end(), x) != poss.end()) continue;
                     uint32_t rm = b;
                     if (gen) {
