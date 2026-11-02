@@ -226,7 +226,9 @@ NO_BOXES = re.compile(
 )
 QUAD_TEXT = re.compile(
     r"quadruple|(?:surrounding|touching|around|adjacent to)(?: the| that| this)? (?:four|4) cells|"
-    r"(?:four|4) (?:surrounding|adjacent|touching) cells"
+    r"(?:four|4) (?:surrounding|adjacent|touching) cells|"
+    r"\bquads?\s*:|(?:four|4) cells (?:the|that|this|it) (?:circle )?touch|"  # "Quads: ..." (000RL6, 000QJZ)
+    r"(?:digits?|numbers?) (?:in|inside) (?:a|the) circle[^.]{0,60}\bcells? touching"
 )
 
 
@@ -838,7 +840,7 @@ def translate(sp, page_text=None, overrides=None):
             # neighbours along the line share a parity (the same rule as "all odd or all even", in 2-cell instances: the
             # engine reads small rules as digit tables, which propagate as the cells fill)
             name = lambda i: f"r{p.coords[i][0] + 1}c{p.coords[i][1] + 1}"
-            PJ.add_named_rule(
+            PJ.add_named(
                 p,
                 {
                     "type": "custom",
@@ -1292,10 +1294,12 @@ def quadruples(P, n, p, used, unknown, idx, inside):
         rx, ry = round(cx), round(cy)
         if abs(cx - rx) < 0.3 and abs(cy - ry) < 0.3 and 0 < rx < n and 0 < ry < n:
             txt = re.sub(r"[\s,]", "", str(lay["text"]))
-            if txt.isdigit():
-                corner[(rx, ry)] += txt
+            corner[(rx, ry)] += txt if txt.isdigit() else "?"  # letters for digits (f3hfvcu3xz) were dropped silently
     D = n
     for (rx, ry), digs in corner.items():
+        if not digs.isdigit():
+            unknown.append("quadruple clue")
+            continue
         need = [int(ch) for ch in digs]
         if len(need) > 4 or any(not 1 <= d <= D for d in need):
             unknown.append("quadruple clue")

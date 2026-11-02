@@ -427,24 +427,6 @@ def from_json(obj) -> M.Puzzle:
 NAMED_RULES = {"global_entropy", "quadruple", "rossini", "vudoku", "increasing", "isomorphic", "custom"}
 
 
-def add_named_rule(p, rule):
-    """apply a custom rule (rules/custom.py) to an engine Puzzle a reader is building, remembered by name so writers keep
-    the rule, not its expansion (a reader's mechanic with no rule family: a same-parity line)"""
-    from .exchange.board import Board
-    from .rules import custom as CU
-
-    compiled = CU.compile_rule(rule, Board(p.coords, p.D), p.D)
-    cells = set(p.coords)
-    width, height = max(c for _, c in p.coords) + 1, max(r for r, _ in p.coords) + 1
-    shape = ["".join("#" if (y, x) in cells else "." for x in range(width)) for y in range(height)]
-    q = from_json({"digits": p.D, "shape": shape, "regions": [], "rules": compiled})
-    if list(q.coords) != list(p.coords):
-        raise ValueError("add_named_rule: the puzzle's cells are not in reading order")
-    p.relations += q.relations
-    p.constraints += q.constraints
-    _remember(p, rule, q.relations, q.constraints)
-
-
 def _remember(p, rule, rels, cons):
     for c in cons:
         c["_named"] = True  # expansion of a named rule: written back as the rule (underscore keys never reach C++)
@@ -473,7 +455,9 @@ def add_named(p, rule):
     build Puzzles directly)."""
     coords = list(p.coords)
     cname = lambda i: f"r{coords[i][0] + 1}c{coords[i][1] + 1}" if isinstance(i, int) else i
-    r = {k: ([cname(x) for x in v] if k in CELL_KEYS else v) for k, v in rule.items()}
+    r = {
+        k: ([cname(x) for x in v] if k in CELL_KEYS and isinstance(v, list) else v) for k, v in rule.items()
+    }  # custom: names
     width = max(c for _, c in coords) + 1
     height = max(rr for rr, _ in coords) + 1
     shape = ["".join("#" if (y, x) in set(coords) else "." for x in range(width)) for y in range(height)]

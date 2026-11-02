@@ -234,6 +234,9 @@ def test_sudokupad_misreads_fixed():
     from pencilmark.sources import sudokupad
 
     assert [SP.color_name(c) for c in ("#F", "#0", "#999")] == ["white", "black", "grey"]
+    for quads in ("quads: the digits inside a circle must appear in the cells touching the circle",
+                  "a digit in a circle must appear in one of the four cells the circle touches"):  # fmt: skip
+        assert SP.QUAD_TEXT.search(quads), quads  # 000RL6, 000QJZ: the circle quadruples were not read
     dots = [{"center": [1.0, 0.5], "width": 0.33, "rounded": True, "c2": "#F", "c1": "#0"},
             {"center": [1.0, 2.5], "width": 0.33, "rounded": True, "c2": "#0", "color": "#F"}]  # fmt: skip
     p, _ = SP.translate(sudokupad.decode(_sp4(overlays=dots)), "White dots: consecutive. Black dots: ratio 1:2.")
