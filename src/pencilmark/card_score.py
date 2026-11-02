@@ -63,7 +63,8 @@ def refute_lr_cell(p):
     if not bs:
         return 0.0
     model = GM.default()
-    route = dict(model.route, refute_rounds=int(model.score.get("refute_rounds", 0)))  # rounds: independent of cell order
+    # rounds: independent of cell order
+    route = dict(model.route, refute_rounds=int(model.score.get("refute_rounds", 0)))
     pr = _CB._C.refute_profile(_CB.to_cpuzzle(p), list(p.givens.items()), route, [int(x) for x in bs[0]], 400)
     s = sum((math.log(C / R) if R else math.log(max(C, 1)) + 2) for C, R, d, dp, rel in pr)
     return math.log1p(s / max(p.N - len(p.givens), 1))
