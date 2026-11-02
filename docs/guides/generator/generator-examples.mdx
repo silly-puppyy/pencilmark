@@ -193,6 +193,27 @@ Shows the smallest board; 90° symmetry (it needs square boxes).
 
 4 givens. **Very Easy**, difficulty 0.2, about 0.7 min. Contains: Hidden Single. Generated in 0 s, 1 attempt (time limit 180 s).
 
+### A sampler of the newer rule kinds
+
+Shows outside clues, corner clues, a newer line kind and a locked rule in one request: sandwiches, quadruples, a palindrome and anti-knight, aimed at Medium.
+
+```json
+{"board": {"rows": 9, "cols": 9},
+ "digits": 9,
+ "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]},
+  {"type": "neighbours", "kind": "antiknight"},
+  {"type": "sandwich", "count": [2, 4]},
+  {"type": "contains", "count": [1, 3]},
+  {"type": "line", "kind": "palindrome", "count": 1}],
+ "where": {"band": "Medium"},
+ "quality": {},
+ "limits": {"time": 600, "seed": 1}}
+```
+
+<Swatch name="generated-newer-kinds" />
+
+3 quadruples, 3 sandwich clues, 1 palindrome, 3 givens. **Medium**, difficulty 10.4, about 53.1 min. Contains: Hidden Single, Line / dot read without notes, Pointing / Box-Line Reduction, Pair rules (dots, whispers, anti-knight...), Allowed combinations of a rule, Sandwich sums, Digit counting, Naked Quad, Two rules together. Generated in 216 s, 15 attempts (time limit 600 s); the publishing checks refused 14 other candidates (barely_used, barely_used/unusual).
+
 ### An 8×8 with at most six dots
 
 Shows an 8×8 board and the element cap (`where.elements`).

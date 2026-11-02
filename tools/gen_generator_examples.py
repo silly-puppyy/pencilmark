@@ -159,6 +159,21 @@ CURIOSITIES = {
         "the smallest board; 90° symmetry (it needs square boxes)",
         spec(4, symmetry={"kind": "rot90"}),
     ),
+    "newer-kinds": (
+        "A sampler of the newer rule kinds",
+        "outside clues, corner clues, a newer line kind and a locked rule in one request: sandwiches, quadruples, a "
+        "palindrome and anti-knight, aimed at Medium",
+        spec(
+            rules=[
+                {"type": "neighbours", "kind": "antiknight"},
+                {"type": "sandwich", "count": [2, 4]},
+                {"type": "contains", "count": [1, 3]},
+                {"type": "line", "kind": "palindrome", "count": 1},
+            ],
+            where={"band": "Medium"},
+            time=600,
+        ),
+    ),
     "kropki-8x8-capped": (
         "An 8×8 with at most six dots",
         "an 8×8 board and the element cap (`where.elements`)",

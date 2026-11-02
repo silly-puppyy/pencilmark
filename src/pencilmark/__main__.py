@@ -426,7 +426,9 @@ def main(argv=None):
         default=None,
         help='issue checks, e.g. "trivial.limit=0.5,trial.severity=reject,tedious.severity=off" (docs/formats/grade-card.md 4)',
     )
-    r.add_argument("--explain", default=None, help="step explanation levels, comma-separated: notation, short, teach")
+    r.add_argument(
+        "--explain", default=None, help="step explanation levels, comma-separated: notation, short, teach, substeps"
+    )
     r.add_argument(
         "-v",
         "--verbose",

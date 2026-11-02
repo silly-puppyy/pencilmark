@@ -154,7 +154,8 @@ def rate(
     allow_guessing : bool
         Guess where no technique applies (band "Unknown") instead of proving by full search (Trial and error, Extreme).
     explain : str, list of str or bool, optional
-        Explanation levels for the steps: "notation", "short", "teach", or True for all of them.
+        Explanation levels for the steps: "notation", "short", "teach", or True for all three; "substeps" (only by
+        name) tells each step as sub-steps with reasons and drawing annotations (docs/formats/grade-card.md 5).
     quality : dict, optional
         Settings of the issue checks, e.g. {"trivial": {"limit": 0.5}, "trial": {"severity": "off"}} (docs/formats/grade-card.md 4).
     alternatives : bool

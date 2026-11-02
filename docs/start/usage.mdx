@@ -38,7 +38,7 @@ $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7..
 | Option | Effect |
 |---|---|
 | `--report` | readable text; `-v` adds the steps in solvers' notation, `-vv` plain sentences, `-vvv` short lessons |
-| `--json` | the full card as one JSON line; `--steps` adds the steps, `--explain notation,short,teach` their explanations |
+| `--json` | the full card as one JSON line; `--steps` adds the steps, `--explain notation,short,teach` their explanations (`substeps`: each step as sub-steps with reasons and drawing annotations) |
 | `--fields difficulty,band,...` | only these card fields ([Grade card](../formats/grade-card.md) lists them) |
 | `--format '%b\|%d\|%m'` | your own columns (below) |
 | `-j N` | grade N puzzles at a time; the output keeps the input order |
@@ -73,7 +73,9 @@ card = pencilmark.rate("....4.8.3.6...8..29.86.5..1235.........7..2.........96..
 card["band"], card["difficulty"], card["time"], card["contains"]
 ```
 
-`rate` takes the same options as the command line: `fields=[...]`, `max_seconds=60`, `explain="short"`,
+`rate` takes the same options as the command line: `fields=[...]`, `max_seconds=60`, `explain="short"` (or
+`explain=["short", "substeps"]` for steps told as sub-steps, each with its reason and drawing annotations; see
+[the grade card](../formats/grade-card.md#5-steps)),
 `mode="computer"` (the default is `"human"`), `allow_guessing=True`, `se=True` for a Sudoku Explainer-style rating,
 `quality={...}`. `rate_many(puzzles, jobs=4)` grades a list in parallel and keeps its order; a puzzle that fails gives
 `{"error": ...}` in its place.

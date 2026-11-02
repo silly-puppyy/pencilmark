@@ -38,7 +38,7 @@ PAGES = {
         "Explanations",
         "The step explanations: one handler per technique, on a replayed grid.",
         ["explain/__init__", "explain/base", "explain/dispatch", "explain/grid", "explain/catalog", "explain/singles",
-         "explain/combos", "explain/notes", "explain/chains", "explain/trial", "explain/records"],
+         "explain/combos", "explain/notes", "explain/chains", "explain/trial", "explain/records", "explain/facts"],
     ),
     "generator": (
         "The generator",
