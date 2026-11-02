@@ -157,10 +157,10 @@ extras, in the tradition of Sudoku Explainer's and Andrew Stuart's hint pages:
 | `legend` | Optional: what a colour name stands for; it holds for the rest of the solve. |
 | `annotations` | Optional drawing elements, each with an integer `id`: colour a `cell` or a `candidate` (`colour`), show a `digit` (`"r5c6=7"`), or an `arrow` between two cells or candidates (`line`: `strong`, `weak` or `plain`). A later element on the same target replaces the earlier one. |
 
-Colours are names from a named palette (`yellow`, `blue`, `green`, `purple`, `orange`, `pink`, `cyan`, `grey`; `red`
-for removals); each renderer picks its own shade for each name. Steps whose technique has no sub-step form yet leave
+Colours are names from a named palette (`yellow`, `blue`, `green`, `purple`, `orange`, `pink`, `cyan`, `grey`, `brown`;
+`red` for removals); each renderer picks its own shade for each name. Steps whose technique has no sub-step form yet leave
 `substeps` out; so far: locked candidates (pointing, claiming), naked and hidden subsets, line rules (thermo, whispers, renban, ...), low / high and odd / even colouring,
-simple colouring, killer cage combinations, fish (X-Wing, Swordfish, Jellyfish, finned), XY- and XYZ-Wings, and single chains (X-Chain, XY-Chain, AIC and the
+simple colouring, regions to find (each region keeps one colour for the whole solve), killer cage combinations, fish (X-Wing, Swordfish, Jellyfish, finned), XY- and XYZ-Wings, and single chains (X-Chain, XY-Chain, AIC and the
 short chains such as Skyscraper and 2-String Kite; strong links drawn as `strong` arrows, weak ones as `weak`).
 
 ## 6. Implementing a subset

@@ -149,3 +149,42 @@ def test_wing_substeps():
     assert [a["colour"] for a in sub[0]["annotations"]] == ["cyan", "green", "green"]
     assert all(a["line"] == "plain" for x in sub[1:3] for a in x["annotations"])
     assert {a["colour"] for a in sub[-1]["annotations"]} == {"red"}
+
+
+CHAOS_DEMO = {
+    "format": "sudoku-puzzle",
+    "format_version": 1,
+    "board": {"rows": 5, "cols": 5},
+    "digits": 5,
+    "givens": [0, 0, 3, 0, 0, 0, 0, 4, 3, 2, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 4, 0, 5, 0],
+    "rules": [
+        {"type": "chaos", "origin": "r1c1"},
+        {"type": "region_border", "cells": ["r2c2", "r3c2"]},
+        {"type": "region_border", "cells": ["r2c5", "r3c5"]},
+        {"type": "region_border", "cells": ["r4c3", "r4c4"]},
+        {"type": "region_border", "cells": ["r1c4", "r2c4"]},
+        {"type": "region_border", "cells": ["r1c1", "r1c2"]},
+        {"type": "region_border", "cells": ["r2c2", "r2c3"]},
+        {"type": "region_border", "cells": ["r1c3", "r2c3"]},
+        {"type": "region_border", "cells": ["r2c1", "r2c2"]},
+        {"type": "region_border", "cells": ["r5c3", "r5c4"]},
+        {"type": "region_border", "cells": ["r4c1", "r4c2"]},
+        {"type": "region_border", "cells": ["r3c4", "r3c5"]},
+    ],
+}  # a unique 5x5 / 6x6 regions-to-find puzzle from a random layout (generated for this test)
+
+
+def test_region_substeps_keep_their_colours():
+    card = pencilmark.rate(CHAOS_DEMO, fields=["steps"], explain=["short", "substeps"])
+    colour_of = {}
+    joins = 0
+    for s in card["steps"]:
+        if "region" not in s:
+            continue
+        sub = s["explanation"]["substeps"]
+        k = int(s["region"].split("@")[1])
+        cols = {a["colour"] for a in sub[0]["annotations"]}
+        assert len(cols) == 1
+        assert colour_of.setdefault(k, cols.pop()) == next(iter({a["colour"] for a in sub[0]["annotations"]}))
+        joins += any(x["text"].startswith("So ") and "joins" in x["text"] for x in sub)
+    assert colour_of and joins

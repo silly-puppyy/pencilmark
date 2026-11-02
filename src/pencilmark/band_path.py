@@ -760,6 +760,49 @@ def step_notation(p, st, just=None):
     return f"{name}: {pat + ' => ' if pat else ''}{res}"
 
 
+REGION_COLOURS = ("yellow", "green", "blue", "purple", "orange", "pink", "cyan", "grey", "brown")
+
+
+def _region_substeps(p, st, ex, lab, region_colour):
+    """regions to find: the step as sub-steps; each region keeps one colour for the whole solve (a legend the first
+    time), every cell known to be in the step's region drawn in it; updates lab (cell -> label) in place"""
+    from .explain.base import Namer
+
+    nm = Namer(p)
+    text = ex.get("short") or ""
+    if not text or text.startswith(":"):  # no digit result: the reason (teach's first sentence) reads on its own
+        text = (ex.get("teach") or ex.get("notation") or "").split(". So ")[0]
+    sub = {"text": text[:1].upper() + text[1:] + ("" if text.endswith(".") else ".")}
+    if st.get("lplace"):
+        c, k = st["lplace"]
+        lab[c] = k
+        if k not in region_colour:
+            region_colour[k] = REGION_COLOURS[len(region_colour) % len(REGION_COLOURS)]
+            sub["legend"] = {region_colour[k]: f"region {k}"}
+        cells = sorted((x for x, kk in lab.items() if kk == k), key=lambda x: p.coords[x])
+        sub["annotations"] = [
+            {"id": i + 1, "cell": nm.cell(x), "colour": region_colour[k]} for i, x in enumerate(cells)
+        ]
+    out = [sub]
+    placed = st["lplace"][0] if st.get("lplace") else None
+    if placed is not None:
+        k = st["lplace"][1]
+        out.append({"text": f"So {nm.cell(placed)} joins the {region_colour[k]} region."})
+    if st.get("lelims"):
+        by = {}
+        for c, k in st["lelims"]:
+            if c != placed:  # the placed cell's other labels go with it
+                by.setdefault(k, []).append(c)
+        parts = []
+        for k, cs in sorted(by.items()):
+            cs = sorted(cs, key=lambda x: p.coords[x])
+            where = f"the {region_colour[k]} region" if k in region_colour else f"region {k}"
+            parts.append(f"{nm.cells(cs)} {'is' if len(cs) == 1 else 'are'} not in {where}")
+        if parts:
+            out.append({"text": "So " + "; ".join(parts) + "."})
+    return out
+
+
 def explain_steps(p, P, steps):
     """teaching text for band-path steps: rebuild each position, let the engine find that technique's moves there
     (one short solve with only that technique), take the move with exactly the same placement / eliminations and
@@ -780,6 +823,7 @@ def explain_steps(p, P, steps):
             for x in p.peer_list[c]:
                 cand[x] &= ~(1 << (vals[c] - 1))
     out = []
+    lab, region_colour = {}, {}  # regions to find: cell -> region label known so far; label -> colour name (fixed)
     for st in steps:
         q = copy.copy(p)
         q.givens = {c: v for c, v in enumerate(vals) if v}
@@ -867,6 +911,8 @@ def explain_steps(p, P, steps):
                 ex = None
         if ex is None:
             ex = {"notation": step_notation(p, st)}  # the notation needs no pattern: technique and result
+        if st.get("lplace") or st.get("lelims"):
+            ex["substeps"] = _region_substeps(p, st, ex, lab, region_colour)
         out.append(ex)
         if st["place"]:
             c, d = st["place"]

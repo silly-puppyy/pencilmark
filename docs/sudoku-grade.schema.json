@@ -298,7 +298,7 @@
                },
                "colour": {
                 "type": "string",
-                "description": "a colour name of the named palette (yellow, blue, green, purple, orange, pink, cyan, grey, red); each renderer picks its own shade"
+                "description": "a colour name of the named palette (yellow, blue, green, purple, orange, pink, cyan, grey, brown, red); each renderer picks its own shade"
                }
               }
              },
@@ -321,7 +321,7 @@
                },
                "colour": {
                 "type": "string",
-                "description": "a colour name of the named palette (yellow, blue, green, purple, orange, pink, cyan, grey, red); each renderer picks its own shade"
+                "description": "a colour name of the named palette (yellow, blue, green, purple, orange, pink, cyan, grey, brown, red); each renderer picks its own shade"
                }
               }
              },
