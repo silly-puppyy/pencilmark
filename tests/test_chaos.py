@@ -91,3 +91,16 @@ def test_graded_with_region_steps():
 
     steps, solved = CB.solve(pencilmark.load(d), pencilmark.api._params("human"), max_steps=100)
     assert solved and all(SOL[c] != v for s in steps for c, v in (s.move.elim or ()))
+
+
+def test_region_steps_on_the_card():
+    """region effects appear in the steps as region / region_eliminations and the card fits the card schema"""
+    import json
+    from pathlib import Path
+
+    jsonschema = pytest.importorskip("jsonschema")
+    givens = [v if k not in (3, 5, 10, 15) else 0 for k, v in enumerate(SOL)]
+    d = doc([{"type": "chaos", "origin": "r1c1"}] + [{"type": "region_border", "cells": b} for b in QUADRANTS], givens)
+    card = pencilmark.rate(d, fields=["band", "steps"])
+    schema = json.loads((Path(__file__).parents[1] / "docs" / "sudoku-grade.schema.json").read_text(encoding="utf-8"))
+    assert not list(jsonschema.Draft202012Validator(schema).iter_errors(card))

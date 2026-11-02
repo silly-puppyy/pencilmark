@@ -536,6 +536,10 @@ def _f_steps(c):
             r["placement"] = f"{cn(st['place'][0])}={st['place'][1]}"
         if st["elims"]:
             r["eliminations"] = [f"{cn(x)}#{d}" for x, d in st["elims"]]
+        if st.get("lplace"):  # regions to find: the cell is in region k / not in region k
+            r["region"] = f"{cn(st['lplace'][0])}@{st['lplace'][1]}"
+        if st.get("lelims"):
+            r["region_eliminations"] = [f"{cn(x)}@!{k}" for x, k in st["lelims"]]
         if levels and expl[i]:
             r["explanation"] = {x: expl[i][x] for x in levels if expl[i].get(x)}
         rows.append(r)

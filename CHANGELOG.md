@@ -15,7 +15,8 @@
   way out takes it), region needs a digit (a missing digit with one reachable place) and pocket counting (a pocket
   too small for a region of its own joins the one unfinished region around it); more from the Cracking the Cryptic
   solves come next, so the routes still lean on the search
-  fallback where those would apply (CC Newbie: Extreme, with one trial step). Prices are provisional until calibration. The SudokuPad reader reads chaos construction
+  fallback where those would apply (CC Newbie: Extreme, with one trial step). Prices are provisional until calibration.
+  Card steps show the region effects: `region` (`"r4c5@3"`) and `region_eliminations` (`["r4c5@!3"]`). The SudokuPad reader reads chaos construction
   when the rules say so and the file draws no regions: drawn borders become `region_border`, and statements such as
   "digits along a thermometer belong to the same region" become `same_region` / `region_border` for that element
   kind. Of the 467 cached logic-masters chaos puzzles most are still refused or have another solution: they add
