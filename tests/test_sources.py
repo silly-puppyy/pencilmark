@@ -288,3 +288,14 @@ def test_default_line_colour_needs_the_rules_to_describe_it():
     assert p is None and "cyan line" in why
     p, info = SP.translate(_sp4(lines=line("#f067f0ff")), "Digits on a pink line form a consecutive set in any order.")
     assert info.get("renban")
+
+
+def test_whole_grid_region_means_no_boxes():
+    """a SudokuPad region over the whole grid draws no boxes: rows and columns only (Spiraling Circles, 000O94, read
+    it as one 81-cell region and had no solution); describe reads the rules without searching for the solution"""
+    from pencilmark.sources import _sp_translate as SP
+
+    sp = _sp4()
+    sp["puzzle"]["regions"] = [[[r, c] for r in range(4) for c in range(4)]]
+    p, _ = SP.translate(sp, "Place the digits 1-4 once each into every row and column.")
+    assert sorted({g.kind for g in p.groups}) == ["col", "row"]

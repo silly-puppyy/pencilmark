@@ -573,6 +573,9 @@ def translate(sp, page_text=None, overrides=None):
     if n < 4 or any(len(row) != n for row in cells):
         return None, "non-square grid"
     regions = [reg for reg in (P.get("regions") or []) if reg]
+    whole = any(len({tuple(x) for x in reg if x}) == n * n for reg in regions)
+    if whole:  # one region over the whole grid: no boxes, rows and columns only (Spiraling Circles, 000O94)
+        regions = []
     p = M.Puzzle(D=n, coords=M._grid_coords(n))
     for r in range(n):
         p.groups.append(M.Group(f"r{r + 1}", tuple(r * n + c for c in range(n)), "row", True))
@@ -588,7 +591,7 @@ def translate(sp, page_text=None, overrides=None):
             boxes.append(tuple(left))
     for k, cs in enumerate(boxes):
         p.groups.append(M.Group(f"b{k + 1}", cs, "box", len(cs) == n))
-    if not regions and NO_BOXES.search(rules.lower()):
+    if not regions and (whole or NO_BOXES.search(rules.lower())):
         pass  # rows and columns only ("Latin square"): no implied boxes
     elif not regions:  # SudokuPad implies standard boxes when none are drawn
         bh, bw = {4: (2, 2), 6: (2, 3), 8: (2, 4), 9: (3, 3), 12: (3, 4), 16: (4, 4)}.get(n, (0, 0))
