@@ -165,3 +165,17 @@ def test_sudokupad_uncoloured_dot_follows_the_rules():
     ):
         p, _ = SP.translate(sp, text)
         assert any(r[0] == want for r in p.relations), (text, p.relations)
+
+
+def test_fpuzzles_outside_text_clues():
+    """numbers written as plain text outside an f-puzzles grid are the outside clue family the rules name (an x-sums
+    puzzle read as a classic without clues: not unique)"""
+    from pencilmark.sources import _fpuz_translate as FT
+
+    fp = {"size": 9, "ruleset": "X-Sums: numbers outside the grid give the sum of the first X digits.",
+          "text": [{"cells": ["R0C2"], "value": "24"}, {"cells": ["R5C10"], "value": "11"}, {"cells": ["R5C5"], "value": "3"}]}  # fmt: skip
+    out = FT.normalise(fp)
+    assert out["_xsum"] == [{"cell": "R0C2", "value": "24"}, {"cell": "R5C10", "value": "11"}]
+    assert [t["cells"] for t in out["text"]] == [["R5C5"]]  # inside the grid: left alone
+    two = FT.normalise(dict(fp, ruleset="Sandwich sums and skyscrapers"))
+    assert not two.get("_xsum") and not two.get("sandwichsum")  # two families named: ambiguous, left alone

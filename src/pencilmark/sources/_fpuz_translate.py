@@ -43,6 +43,14 @@ def rc(name, n):
     return int(m.group(1)) - 1, int(m.group(2)) - 1
 
 
+# outside clue families written as plain text outside the grid (f-puzzles 'text'), told apart by the rules text
+OUTSIDE_TEXT = (
+    ("sandwichsum", r"sandwich|between the 1 and the 9"),
+    ("_xsum", r"\bx-?sums?\b|sum of the first x\b"),
+    ("_skyscraper", r"skyscraper"),
+)
+
+
 def normalise(fp):
     """Lexicon pass over elements whose meaning lives in the rules text (returns a shallow copy):
     hidden 'msgcorrect' cages (the success message) are dropped; numeric generic cages become killer cages when
@@ -73,8 +81,16 @@ def normalise(fp):
     fp["cage"] = cages
     xv, ineq, rest = list(fp.get("xv") or []), list(fp.get("_ineq") or []), []
     xv_text = re.search(r"\bxv\b|sum (?:to|of) (?:5|five)|\bv\b[^.]{0,40}\b5\b|\bx\b[^.]{0,40}\b10\b", text)
+    n = int(fp.get("size") or 9)
+    families = [k for k, pat in OUTSIDE_TEXT if re.search(pat, text)]
+    outside = families[0] if len(families) == 1 else None  # numbers outside the grid mean the one clue family named
     for t in fp.get("text") or []:
         v, cs = str(t.get("value", "")).strip(), t.get("cells") or []
+        if len(cs) == 1 and outside and v.isdigit():
+            r, c = rc(cs[0], 99)
+            if (r in (-1, n)) != (c in (-1, n)) and -1 <= r <= n and -1 <= c <= n:
+                fp[outside] = list(fp.get(outside) or []) + [{"cell": cs[0], "value": v}]
+                continue
         if len(cs) == 2:
             (r1, c1), (r2, c2) = rc(cs[0], 99), rc(cs[1], 99)
             if abs(r1 - r2) + abs(c1 - c2) == 1:
@@ -334,15 +350,17 @@ def translate(fp, line_kinds=None):
         p.constraints.append(
             {"type": "little_killer", "cells": [ix(x) for x in lk["cells"]], "total": int(lk["value"])}
         )
-    for sw in fp.get("sandwichsum") or []:
-        if not str(sw.get("value", "")).strip().isdigit():
-            continue
-        r, c = rc(sw["cell"], n)
-        if r < 0 or r >= n:  # column clue (above or below)
-            cells = [rr * n + c for rr in (range(n) if r < 0 else range(n - 1, -1, -1))]
-        else:  # row clue (left or right)
-            cells = [r * n + cc for cc in (range(n) if c < 0 else range(n - 1, -1, -1))]
-        p.constraints.append({"type": "sandwich", "cells": cells, "total": int(sw["value"])})
+    for key, typ, field in (("sandwichsum", "sandwich", "total"), ("_xsum", "xsum", "total"),
+                            ("_skyscraper", "skyscraper", "count")):  # fmt: skip
+        for sw in fp.get(key) or []:
+            if not str(sw.get("value", "")).strip().isdigit():
+                continue
+            r, c = rc(sw["cell"], n)
+            if r < 0 or r >= n:  # column clue (above or below), read from the clue inwards
+                cells = [rr * n + c for rr in (range(n) if r < 0 else range(n - 1, -1, -1))]
+            else:  # row clue (left or right)
+                cells = [r * n + cc for cc in (range(n) if c < 0 else range(n - 1, -1, -1))]
+            p.constraints.append({"type": typ, "cells": cells, field: int(sw["value"])})
     for q in fp.get("quadruple") or []:
         cells = [ix(x) for x in q["cells"]]
         if not all(str(v).strip().isdigit() for v in q.get("values", [])):
