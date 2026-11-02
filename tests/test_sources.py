@@ -299,3 +299,16 @@ def test_whole_grid_region_means_no_boxes():
     sp["puzzle"]["regions"] = [[[r, c] for r in range(4) for c in range(4)]]
     p, _ = SP.translate(sp, "Place the digits 1-4 once each into every row and column.")
     assert sorted({g.kind for g in p.groups}) == ["col", "row"]
+
+
+def test_off_centre_cell_text_is_refused():
+    """small text in a cell's corner is a clue no reading handles (run sums, 000V90, read as nothing at all): refused,
+    not dropped; text centred in a cell, and a digit by a cell corner when the rules speak of quadruples, are not"""
+    from pencilmark.sources import _sp_translate as SP
+
+    corner = [{"center": [1.83, 1.83], "width": 0, "height": 0.46, "rounded": True, "text": "44"}]
+    p, why = SP.translate(_sp4(overlays=corner), "Normal sudoku rules apply.")
+    assert p is None and "cell text '44'" in why
+    centred = [{"center": [1.5, 1.5], "width": 0, "height": 0.46, "text": "4"}]
+    p, _ = SP.translate(_sp4(overlays=centred), "Normal sudoku rules apply.")
+    assert p is not None

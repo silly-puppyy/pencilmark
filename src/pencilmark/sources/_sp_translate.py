@@ -696,6 +696,13 @@ def translate(sp, page_text=None, overrides=None):
         on_edge = abs(cx - round(cx)) < 0.05 or abs(cy - round(cy)) < 0.05
         if lay.get("rounded") and w >= 0.6 and not on_edge and inside(cell_of((cx, cy))):
             circles[cell_of((cx, cy))] = color_name(lay.get("backgroundColor") or lay.get("borderColor"))
+        elif txt and not on_edge and w < 0.6 and inside(cell_of((cx, cy))):
+            # text inside a cell away from its centre is a clue of some kind (run sums in a corner, 000V90): no reading
+            # handles it, so refuse rather than drop it; near a cell corner it may be a quadruple digit (quadruples())
+            centred = abs(cx - math.floor(cx) - 0.5) < 0.15 and abs(cy - math.floor(cy) - 0.5) < 0.15
+            near_corner = abs(cx - round(cx)) < 0.3 and abs(cy - round(cy)) < 0.3
+            if not centred and not (near_corner and QUAD_TEXT.search(rules.lower())):
+                unknown.append(f"cell text {txt!r}")
         elif on_edge and w < 0.5 and not (abs(cx - round(cx)) < 0.05 and abs(cy - round(cy)) < 0.05):
             # edge marker between two cells: kropki dot or XV letter
             a = (int(math.floor(cx - 0.01)), int(math.floor(cy - 0.01)))

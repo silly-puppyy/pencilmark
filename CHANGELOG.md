@@ -15,7 +15,10 @@
   by 5 or more" for a green whisper): a rule the engine does not know, drawn cyan, read as a region sum. On 1,500
   random cached SudokuPad puzzles this refuses 32 readings, all misread (no solution or several), and keeps every
   reading that was right; on the top 500, 3 misreads refused, none graded lost. A SudokuPad region covering the whole
-  grid means no boxes (it read as one region of every cell, which has no solution).
+  grid means no boxes (it read as one region of every cell, which has no solution). Text inside a cell away from its
+  centre (a corner clue such as a run sum, a maze marker) is refused instead of dropped: no reading handles it. On
+  1,500 random cached SudokuPad puzzles this refuses 19 misread puzzles and 1 read right (lines labelled "GW" / "RN"
+  in their cells); on the top 500, 22 misread path puzzles, none graded lost.
 - `describe` no longer searches for the solution of a puzzle it is given as anything but a sudoku-puzzle file: it read
   the rules through `to_export`, which solves to add the solution (a hard Latin square took minutes; now 17 ms).
 - Readers refuse puzzles whose rules define a mechanic the engine does not model, instead of reading its elements as
