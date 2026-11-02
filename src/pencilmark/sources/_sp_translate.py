@@ -131,6 +131,7 @@ DEFAULT_LINE = {
 
 def color_name(hexcol):
     h = str(hexcol or "#000").lstrip("#")  # a colour typed without "#" (777777) can arrive as a JSON number
+    alpha = int(h[3] * 2, 16) / 255 if len(h) == 4 else int(h[6:8], 16) / 255 if len(h) == 8 else 1.0
     if len(h) in (3, 4):
         h = "".join(ch * 2 for ch in h[:3])
     h = h[:6]
@@ -143,7 +144,7 @@ def color_name(hexcol):
     if light > 0.92:
         return "white"
     if light < 0.12:
-        return "black"
+        return "grey" if alpha < 0.6 else "black"  # mostly transparent black (#0003) is drawn grey
     if sat < 0.18:
         return "grey"
     if hue < 15 or hue >= 345:
@@ -280,7 +281,13 @@ def rule_flags(rules):
     return {
         "negative_markers": neg,
         "antiknight": bool(re.search(r"anti[- ]?knight|knight'?s move", t)),
-        "antiking": bool(re.search(r"anti[- ]?king|king'?s move|diagonally adjacent cells", t)),
+        "antiking": bool(
+            re.search(
+                r"anti[- ]?king|king'?s move|diagonally adjacent cells|\bno[- ]touch\b"
+                r"|(?:equal|identical|same) digits?[^.]{0,30}(?:can ?not|may not|must not|never) touch[^.]{0,20}diagonal",
+                t,
+            )
+        ),
         "nonconsec": bool(
             re.search(
                 r"non-?consecutive|orthogonally adjacent cells (?:can ?not|may not|must not) (?:contain|be) consecutive",
@@ -1191,13 +1198,15 @@ def parity_shapes(P, n, p, rules, used, idx, inside):
             continue
         shp = [s_ for s_ in ("circle", "square") if re.search(rf"\b{s_}s?\b", sent)]
         par = [s_ for s_ in ("odd", "even") if re.search(rf"\b{s_}\b", sent)]
-        if len(shp) != 1 or len(par) != 1:
-            continue
         cols = {{"gray": "grey"}.get(c, c) for c in COLOR_WORDS if re.search(rf"\b{c}\b", sent)} & {
             s_[1] for s_ in shapes
         }
+        if not shp and cols and re.search(r"\bcells?\b", sent):  # 'digits in grey cells are odd': any shape, by colour
+            shp = ["circle", "square"]
+        if not shp or len(par) != 1 or (len(shp) > 1 and not cols):
+            continue
         for kind, col, c in shapes:
-            if kind == shp[0] and (not cols or col in cols):
+            if kind in shp and (not cols or col in cols):
                 p.domains[c] &= odd if par[0] == "odd" else p.full & ~odd
                 used[par[0] + "_" + kind] += 1
 

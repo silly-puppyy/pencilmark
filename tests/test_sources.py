@@ -137,3 +137,15 @@ def test_sudokupad_numbers_and_nulls_in_real_files():
     except sources.UnsupportedPuzzle:  # the grey line may not be read; the point is that nothing crashes
         return
     assert pj["numbers"].startswith("1234")
+
+
+def test_sudokupad_rules_text_readings():
+    """found on the 500 most-solved LMD sudokus (2026-11-02): "equal digits must not touch diagonally" is anti-king;
+    a mostly transparent black (#0003) is drawn grey, so "digits in grey cells are odd" finds the cells"""
+    from pencilmark.sources import _sp_translate as SP
+
+    assert SP.rule_flags("Equal digits must not touch each other diagonally.")["antiking"]
+    assert SP.rule_flags("No Touch Sudoku: normal rules apply.")["antiking"]
+    assert not SP.rule_flags("Digits on a diagonal must not repeat.")["antiking"]
+    assert SP.color_name("#0003") == "grey" and SP.color_name("#000") == "black"
+    assert SP.color_name("#000000cc") == "black"  # mostly opaque stays black

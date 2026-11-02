@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- SudokuPad reading: "equal digits must not touch diagonally" and "no touch" are read as anti-king, and a mostly
+  transparent black (`#0003`) counts as grey, so rules such as "digits in grey cells are odd" find their cells. Found
+  on the 500 most-solved logic-masters sudokus (2 more of them read and graded).
 - Format docs: the `count` rule's restriction is that an `each` / `counts` rule's cells must not also form a house; it
   read as if no counted cell could be in any house, which would forbid counting circles on a normal grid.
 - The generator places every line kind the engine grades: besides thermo, whisper, renban and between, now slow
