@@ -151,8 +151,11 @@ def test_strict_refusal():
     bad["rules"].append({"type": "thermo", "cells": ["r1c1", "r1c2"]})
     _refuses(bad, "unknown rule type")
     bad = copy.deepcopy(d)
-    bad["rules"].append({"type": "custom", "rule": "x"})
-    _refuses(bad, "reserved")
+    bad["rules"].append({"type": "custom", "rule": "x"})  # custom rules exist since 1.2: a wrong key is refused as such
+    _refuses(bad, "unknown key 'rule'")
+    bad = copy.deepcopy(d)
+    bad["rules"].append({"type": "custom", "holds": "sum(c) =="})
+    _refuses(bad, "custom rule: unexpected")
     bad = copy.deepcopy(d)
     bad["rules"].append({"type": "com.example:foo"})
     _refuses(bad, "vendor")

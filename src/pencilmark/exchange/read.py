@@ -204,6 +204,14 @@ class _ReadCtx:
             if k == "exclude":
                 return [{"type": "exclude", "digit": v, "cells": list(r["cells"])} for v in r["values"]]
             return self.lowhigh(i, r, done)
+        if t == "custom":  # the rule language: compiled where the puzzle is built (puzzle_json), kept by name
+            from ..rules import custom as CU
+
+            try:
+                CU.compile_rule(r, self.B, self.D)  # too large for a table: refused here, with its reason
+            except CU.LangError as e:
+                raise NotSupportedError(f"custom rule: {e}") from None
+            return [{k: v for k, v in r.items() if k not in ("id", "label", "style")}]
         if t == "contains":
             return [{"type": "quadruple", "cells": list(r["cells"]), "digits": list(r["digits"])}]
         if t == "appears":

@@ -8,7 +8,7 @@ import Swatch from '@site/src/components/Swatch';
 
 # Other rules
 
-This page covers the remaining rule families (6.13), vendor rules (6.15), what is not a rule (6.16) and reserved names (6.17).
+This page covers the remaining rule families (6.13), vendor rules (6.15), what is not a rule (6.16) and reserved names (6.17); custom rules (6.18) have [their own page](custom.mdx).
 
 ## 6.13 Other families
 
@@ -53,10 +53,7 @@ and `decorations` only.
 
 ## 6.17 Reserved
 
-- `"type": "custom"`: reserved for a future rule language (rules defined in the file itself); every format_version 1
-  reader refuses it with a message saying so. Until then, a mechanic without a rule family cannot be written in the
-  format.
 - `"type": "table"` and the operator `allowed` (explicit lists of allowed digit tuples): reserved and refused. Such
-  lists make files large and cannot be drawn; the custom rule type is meant to replace them.
+  lists make files large and cannot be drawn; [custom rules (6.18)](custom.mdx) replace them.
 - `digits` as an object (`{"values": [0, …, 8], "symbols": {…}}`, with an `empty` sentinel) for digit sets other
   than 1..D, and digit-selection puzzles: reserved; refused in format_version 1.

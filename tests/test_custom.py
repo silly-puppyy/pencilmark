@@ -1,0 +1,256 @@
+"""The custom rule language (pencilmark.rules.custom, docs/formats/rules/custom.mdx): the language itself, then rules in
+puzzle files (validation, reading, grading, writing back)."""
+
+import pytest
+
+from pencilmark.rules.custom import ABSENT, Env, LangError, canonical, check, describe, evaluate, holds, parse
+
+ROW = [f"r1c{c}" for c in range(1, 10)]
+
+
+def grid_of(digits, cells=ROW):
+    return dict(zip(cells, digits))
+
+
+def test_design_examples():
+    g = grid_of([5, 3, 2, 9, 1, 4, 6, 7, 8])
+    cells = {"c": ROW[:3], "ray": ROW}
+    assert holds("2*max(c) == sum(c)", cells, g)  # 2 * 5 == 5 + 3 + 2
+    assert holds("count(x for x in c if odd(x)) == 2", cells, g)  # 5, 3
+    assert holds("let s = sum(c); s in {10, 15, 20}", cells, g)
+    assert holds("sum(upto(ray, x => x == 9)) == 19", cells, g)  # 5 + 3 + 2 + 9
+    assert holds("len(seen(ray)) == 2", cells, g)  # 5, 9
+    assert holds("ray[ray[2]] == 2", cells, g)  # ray[3]
+    assert holds("sum(take(ray[1], ray)) == 20", cells, g)  # x-sum: the first 5 digits
+    assert holds("len(take_while(ray, x => x <= 5)) == 3", cells, g)  # watchtower-style: 5, 3, 2 then 9 blocks
+
+
+def test_single_cell_is_a_number_and_positions():
+    g = grid_of([5, 3, 2, 9, 1, 4, 6, 7, 8])
+    cells = {"o": ["r1c4"], "c": ROW}
+    assert holds("o == 9 and o == max(c)", cells, g)  # no o[1]
+    assert holds("count(x for x in c if x == col(x)) == 0", cells, g)
+    assert holds("box(r1c4) == 2 and row(o) == 1", cells, g)
+    assert evaluate(parse("box(r4c5)"), Env({}, {"r4c5": 1}, (2, 3))) == 4  # 6 x 6: boxes of 2 rows by 3 columns
+
+
+def test_absent_values():
+    g = grid_of([1, 2, 3])
+    cells = {"L": ROW[:3]}
+    assert not holds("L[4] == 3", cells, g)
+    assert not holds("L[4] != 3", cells, g)  # a comparison with absent is false, != too
+    assert holds("not defined(L[4]) and defined(L[3])", cells, g)
+    assert holds("(L[4] ?? 0) == 0", cells, g)
+    assert holds("count(i for i in {1..3} if abs(L[i] - (L[i + 1] ?? 99)) == 1) == 2", cells, g)
+    assert not holds("1 / (L[1] - 1) > 0", cells, g)  # division by zero is absent
+    assert not holds("sum(upto(L, x => x == 9)) == 6", cells, g)  # no 9: the clue cannot be read
+
+
+def test_numbers_are_exact():
+    g = grid_of([1, 2, 3, 4])
+    cells = {"L": ROW[:4]}
+    assert holds("median(L) * 2 == 5", cells, g)  # 2.5
+    assert holds("7 div 2 == 3 and -7 mod 3 == 2 and 2 ** 3 == 8", cells, g)
+    assert holds("prime(concat([L[1], L[3]]))", cells, g)  # 13
+    assert holds("min(L[1], L[4]) == 1 and max(L) == 4", cells, g)
+
+
+def test_booleans_are_values():
+    g = grid_of([2, 4, 5])
+    cells = {"L": ROW[:3]}
+    assert holds("odd(L[1]) == odd(L[2])", cells, g)
+    assert holds("num(odd(L[3])) + num(even(L[3])) == 1", cells, g)
+    assert holds("(if L[1] < L[2] then L[2] else L[1]) == 4", cells, g)
+    assert holds("count([odd(x) for x in L]) == 1", cells, g)  # a list of conditions counts the true ones
+
+
+def test_several_bindings():
+    g = grid_of([1, 6, 3, 8])
+    assert holds("let a = L[1], b = a + L[2]; b == 7", {"L": ROW[:4]}, g)
+
+
+def test_helper_functions_and_lambdas():
+    g = grid_of([1, 6, 3, 8])
+    cells = {"L": ROW[:4]}
+    assert holds("let close(a, b) = abs(a - b) <= 2; close(L[1], L[3]) and not close(L[1], L[2])", cells, g)
+    assert holds("all([(x mod 2 == 0) or x < 4 for x in L])", cells, g)
+    assert holds("position(L, x => x > 5) == 2", cells, g)
+
+
+def test_survey_rules():
+    """rules from the 1,000-puzzle validation, in the revised syntax"""
+    g = grid_of([2, 1, 3, 4])  # the first digit (2) says where the 1 is
+    # 000OZL: one digit equals the sum of the other three
+    assert holds("any(2 * x == sum(c) for x in c)", {"c": ROW[:4]}, grid_of([6, 1, 2, 3]))
+    # distinct cage sums
+    cells = {"cages": [ROW[:2], ROW[2:4]]}
+    assert holds("count_distinct([sum(k) for k in cages]) == len(cages)", cells, grid_of([1, 2, 4, 5]))
+    # look-and-say little killer: "25" = two 5s on the diagonal
+    assert holds("count(x for x in d if x == 5) == 2", {"d": ROW[:4]}, grid_of([5, 1, 5, 2]))
+    # 159 indexing: the digit in column 1 gives the position of the 1 in its row
+    assert holds("row1[row1[1]] == 1", {"row1": ROW[:4]}, g)
+    # parity stripe: alternating parity for the first n cells, n = the first digit
+    stripe = "let n = ray[1]; all(odd(ray[i]) != odd(ray[i + 1]) for i in {1..n - 1})"
+    assert holds(stripe, {"ray": ROW[:4]}, grid_of([3, 2, 5, 6]))
+
+
+def test_canonical_form_round_trips():
+    for src in [
+        "2*max(c)==sum(c)",
+        "count(x for x in c if odd(x))  ==  2",
+        "let s = sum(c); s in {10, 15, 20}",
+        "a - (b - c) == (a - b) - c",
+        "-x ** 2 == 0 - (x ** 2)",
+        "not (a == b) or c in {1..4}",
+        "sum(take(ray[1], ray)) == 20",
+        "(a, b) => abs(a - b) != 4",
+        "if a then b else c",
+    ]:
+        once = canonical(src)
+        assert canonical(once) == once and parse(once) == parse(src), (src, once)
+    assert canonical("2*max(c)==sum(c)") == "2 * max(c) == sum(c)"
+    assert canonical("(a-b)-c") == "a - b - c" and canonical("a-(b-c)") == "a - (b - c)"
+
+
+def test_check_refuses_malformed_rules():
+    names = {"c", "ray"}
+    assert check(parse("sum(c) == 10"), names) == "bool"
+    for bad, why in [
+        ("sum(d) == 1", "unknown name"),
+        ("total(c) == 1", "unknown function"),
+        ("sum(c, 2) == 1", "argument"),
+        ("odd(c[1]) + 1 == 2", r"num\(b\)"),
+        ("sum(c) and true", "conditions"),
+        ("all(x for x in c if odd(x))", "condition per element"),
+    ]:
+        with pytest.raises(LangError, match=why):
+            check(parse(bad), names)
+    for bad in ("1 < 2 < 3", "sum(c == ", "c[1..]", "let x = 1 x"):
+        with pytest.raises(LangError):
+            parse(bad)
+
+
+def test_describe_reads_the_rule():
+    assert describe("2 * max(c) == sum(c)") == "2 times the largest of c equals the sum of c"
+    assert describe("count(x for x in c if odd(x)) == 2") == "the number of the x in c with x is odd equals 2"
+    assert describe("abs(a - b) >= 5") == "the difference between a and b is at least 5"
+    assert describe("all(odd(x) for x in c)") == "for every x in c: x is odd"
+    assert describe("(a + b) * c == 9") == "(a plus b) times c equals 9"
+    assert describe("L[i + 1] == 3") == "cell (i plus 1) of L equals 3"
+    assert "up to the first cell where" in describe("sum(upto(ray, x => x == 9)) == 15")
+
+
+def test_absent_is_a_singleton():
+    assert repr(ABSENT) == "ABSENT"
+
+
+def test_whole_rules_with_scopes():
+    from pencilmark.rules.custom import rule_holds
+
+    g = {f"r{r}c{c}": v for r, row in enumerate([[1, 2], [3, 4]], 1) for c, v in enumerate(row, 1)}
+    # no two orthogonal neighbours differ by 2: 1-3 (r1c1, r2c1) and 2-4 do -> false; excepting those pairs -> true
+    rule = {"type": "custom", "holds": "(a, b) => abs(a - b) != 2", "scope": {"pairs": "orthogonal"}}
+    assert not rule_holds(rule, g, (2, 2))
+    rule["scope"]["except"] = [["r1c1", "r2c1"], ["r1c2", "r2c2"]]
+    assert rule_holds(rule, g, (2, 2))
+    # every 2 x 2 window holds two odd and two even digits
+    win = {"type": "custom", "holds": "w => count(x for x in w if odd(x)) == 2", "scope": {"windows": [2, 2]}}
+    assert rule_holds(win, g, (2, 2))
+    # each cell with its king neighbours: the 4 sees 1, 2, 3 (all smaller)
+    nb = {"type": "custom", "cells": {"t": ["r2c2"]}, "holds": "(x, N) => all(y < x for y in N)",
+          "scope": {"cells": "t", "neighbours": "king"}}  # fmt: skip
+    assert rule_holds(nb, g, (2, 2))
+    # "each": distinct sums over every cage of a list
+    each = {
+        "type": "custom",
+        "cells": {"cg": [["r1c1", "r1c2"], ["r2c1", "r2c2"]]},
+        "each": "cg",
+        "holds": "sum(cg) >= 3",
+    }
+    assert rule_holds(each, g, (2, 2))
+
+
+def test_describe_rule():
+    from pencilmark.rules.custom import describe_rule
+
+    pair = {"holds": "(a, b) => abs(a - b) != 4", "scope": {"pairs": "orthogonal"}}
+    assert (
+        describe_rule(pair)
+        == "For every pair of orthogonal neighbours a, b: the difference between a and b differs from 4."
+    )
+    nb = {"holds": "(x, N) => any(abs(x - y) == 1 for y in N)", "scope": {"cells": "u", "neighbours": "orthogonal"}}
+    assert describe_rule(nb).startswith("For every cell x of u, with N its orthogonal neighbours: for some y in N")
+    assert describe_rule({"cells": {"c": ["r1c1"]}, "holds": "c == 5"}) == "C equals 5."
+
+
+# ---------------------------------------------------------------------------------------------------- in puzzle files
+import copy  # noqa: E402
+
+import pencilmark  # noqa: E402
+
+GRID = "....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9......."
+
+
+def _doc_with(*rules):
+    doc = pencilmark.to_export(GRID)
+    doc["rules"] += [copy.deepcopy(r) for r in rules]
+    return doc
+
+
+def test_custom_rules_read_grade_and_round_trip():
+    sol = pencilmark.to_export(GRID)["solution"]
+    total = sol[0] + sol[1] + sol[9]  # r1c1, r1c2, r2c1
+    cage = {"type": "custom", "cells": {"c": ["r1c1", "r1c2", "r2c1"]}, "holds": f"sum(c)=={total}", "label": "sum"}
+    pairs = {"type": "custom", "holds": "(a, b) => a != b", "scope": {"pairs": "orthogonal"}}
+    doc = _doc_with(cage, pairs)
+    pencilmark.validate(doc)
+    card = pencilmark.rate(doc)
+    assert card["band"] in ("Hard", "Medium", "Easy") and card["difficulty"] > 0
+    out = pencilmark.to_export(doc)
+    rules = [r for r in out["rules"] if r["type"] == "custom"]
+    assert rules[0]["holds"] == f"sum(c) == {total}" and rules[0]["label"] == "sum"  # canonical spelling, label kept
+    assert rules[1]["scope"] == {"pairs": "orthogonal"}
+    assert pencilmark.fingerprint(doc) == pencilmark.fingerprint(out)
+    respelled = _doc_with(dict(cage, holds=f"sum( c ) == {total}"), pairs)
+    assert pencilmark.fingerprint(respelled) == pencilmark.fingerprint(doc)  # spelling does not change the puzzle
+
+
+def test_custom_rule_that_contradicts_the_solution_has_none():
+    doc = _doc_with({"type": "custom", "cells": {"c": ["r1c1", "r1c2"]}, "holds": "sum(c) == 99"})
+    with pytest.raises(pencilmark.NoSolution):
+        pencilmark.solve(doc)
+
+
+def test_malformed_custom_rules_are_format_errors():
+    for rule, why in [
+        ({"type": "custom", "holds": "sum(c) == 3"}, "unknown name"),
+        ({"type": "custom", "cells": {"c": ["r1c1", "r10c1"]}, "holds": "sum(c) == 3"}, "does not exist"),
+        ({"type": "custom", "cells": {"c": ["r1c1"]}, "holds": "c + 1"}, "condition"),
+        ({"type": "custom", "holds": "abs(1) == 1", "scope": {"pairs": "orthogonal"}}, "predicate"),
+        ({"type": "custom", "holds": "(a, b) => a != b", "scope": {"pairs": "sideways"}}, "scope pairs"),
+        ({"type": "custom", "cells": {"c": ["r1c1"]}, "holds": "c == 1", "each": "c"}, "each"),
+    ]:
+        with pytest.raises(pencilmark.FormatError, match=why):
+            pencilmark.validate(_doc_with(rule))
+
+
+def test_custom_rule_too_large_for_a_table_is_not_supported_yet():
+    row = [f"r1c{c}" for c in range(1, 10)]
+    doc = _doc_with({"type": "custom", "cells": {"r": row}, "holds": "sum(r) == 45"})
+    pencilmark.validate(doc)  # a valid file
+    with pytest.raises(pencilmark.NotSupportedError, match="more than 5"):
+        pencilmark.load(doc)
+
+
+def test_compile_matches_known_families():
+    """a custom rule compiles to the same allowed digits as the family it imitates"""
+    from pencilmark.exchange.board import Board
+    from pencilmark.rules.custom import compile_rule
+
+    B = Board([(r, c) for r in range(9) for c in range(9)], 9)
+    [x] = compile_rule({"cells": {"p": ["r1c1", "r1c2"]}, "holds": "sum(p) == 10"}, B, 9)
+    assert sorted(map(tuple, x["allowed"])) == [(a, 10 - a) for a in range(1, 10)]
+    [cage] = compile_rule({"cells": {"c": ["r1c1", "r2c1", "r3c1"]}, "holds": "sum(c) == 7 and all_different(c)"}, B, 9)
+    assert {tuple(sorted(a)) for a in cage["allowed"]} == {(1, 2, 4)} and len(cage["allowed"]) == 6
+    rel = compile_rule({"holds": "(a, b) => abs(a - b) != 1", "scope": {"pairs": "orthogonal"}}, B, 9)
+    assert len(rel) == 1 and rel[0]["rel"] == "allowed" and len(rel[0]["cells"]) == 144  # one shared relation

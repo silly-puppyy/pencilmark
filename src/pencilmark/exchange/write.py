@@ -455,6 +455,10 @@ class _Writer:
         nm = lambda xs: [B.name(x) if isinstance(x, int) else x.lower() for x in xs]
         if t == "global_entropy":
             return [{"type": "global_entropy"}]
+        if t == "custom":  # written back as read, the expression in its canonical spelling
+            from .canonical import _holds
+
+            return [dict(rule, holds=_holds(rule["holds"]))]
         if t == "quadruple":
             return [{"type": "contains", "digits": [int(v) for v in rule["digits"]], "cells": nm(rule["cells"])}]
         if t == "vudoku":

@@ -54,6 +54,7 @@ module.exports = {
           page('formats/rules/whole-board-rules', 'board', 'Whole-board rules'),
           page('formats/rules/cell-clues', 'cells', 'Cell clues'),
           page('formats/rules/other', 'other', 'Other rules'),
+          page('formats/rules/custom', 'custom', 'Custom rules'),
         ]},
         {type: 'doc', id: 'formats/examples', label: 'Examples'},
         {type: 'doc', id: 'formats/quick-reference', label: 'Quick reference'},

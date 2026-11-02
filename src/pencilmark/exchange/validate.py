@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 from ..rules.cell import CELL
 from ..rules.edge import EDGE, NEG_SELECTOR, edge_value_ok
 from ..rules.line import LINE
@@ -237,10 +239,7 @@ def _validate_rule(r, B):
     if not isinstance(t, str):
         raise FormatError(f"a rule type must be a string, not {t!r}")
     if t == "custom":
-        raise FormatError(
-            '"type": "custom" is reserved for a future rule language (custom rules written in the file); '
-            "format_version 1 readers refuse it"
-        )
+        return _validate_custom(r, B)
     if t == "table" and not _RESERVED_OK[0]:
         raise FormatError('"type": "table" ' + RESERVED_MSG)
     if isinstance(t, str) and ":" in t:
@@ -465,6 +464,64 @@ def _validate_rule(r, B):
                 raise FormatError("negative cell low / high need split (others take none)")
         if "area" in r:
             area_cells(B, r["area"])
+
+
+def _validate_custom(r, B):
+    """a custom rule (docs/formats/rules/custom.mdx, since pencilmark 1.2): known keys, existing cells, a well-formed
+    scope, and an expression that parses and type-checks (a predicate when scoped, a condition otherwise)"""
+    from ..rules import custom as CU
+
+    for k in r:
+        if k not in {"type", "holds", "cells", "scope", "each"} | COMMON:
+            raise FormatError(f"unknown key {k!r}")
+    if not isinstance(r.get("holds"), str):
+        raise FormatError('custom rule: "holds" must be an expression (text)')
+    cells = r.get("cells", {})
+    if not isinstance(cells, dict):
+        raise FormatError('custom rule: "cells" must be an object of named cell lists')
+    for name, v in cells.items():
+        if not re.fullmatch(r"[A-Za-z_]\w*", name) or name in CU.KEYWORDS:
+            raise FormatError(f"custom rule: {name!r} is not a usable name")
+        items = v if isinstance(v, list) else None
+        if items is None or not items:
+            raise FormatError(f"custom rule: cells {name!r} must be a non-empty list")
+        for x in items:
+            for c in x if isinstance(x, list) else [x]:
+                if not isinstance(c, str):
+                    raise FormatError(f"custom rule: cells {name!r} holds {c!r}, not a cell name")
+                B.idx(c)
+    each = r.get("each")
+    if each is not None and not (isinstance(cells.get(each), list) and all(isinstance(x, list) for x in cells[each])):
+        raise FormatError(f'custom rule: "each" must name a list of cell lists in "cells", got {each!r}')
+    scope = r.get("scope")
+    if scope is not None:
+        kinds = [k for k in ("pairs", "windows", "neighbours") if k in (scope if isinstance(scope, dict) else {})]
+        if not isinstance(scope, dict) or len(kinds) != 1 or set(scope) - {"pairs", "windows", "neighbours", "cells",
+                                                                            "within", "except"}:  # fmt: skip
+            raise FormatError(
+                'custom rule: "scope" takes one of pairs / windows / neighbours (+ cells, within, except)'
+            )
+        kind = kinds[0]
+        if kind in ("pairs", "neighbours") and scope[kind] not in CU.STEPS:
+            raise FormatError(f"custom rule: scope {kind} {scope[kind]!r}; known: {sorted(CU.STEPS)}")
+        if kind == "windows" and not (isinstance(scope["windows"], list) and len(scope["windows"]) == 2
+                                      and all(isinstance(x, int) and x >= 1 for x in scope["windows"])):  # fmt: skip
+            raise FormatError("custom rule: scope windows takes [height, width]")
+        if "cells" in scope and scope["cells"] not in cells:
+            raise FormatError(f"custom rule: scope cells {scope['cells']!r} is not a name in cells")
+        if scope.get("within") not in (None, "box"):
+            raise FormatError('custom rule: scope within takes "box"')
+        for x in scope.get("except", []):
+            for c in x if isinstance(x, list) else [x]:
+                B.idx(c)
+    try:
+        top = CU.check(CU.parse(r["holds"]), set(cells))
+    except CU.LangError as e:
+        raise FormatError(f"custom rule: {e}") from None
+    if scope is not None and top not in ("fn", "any"):
+        raise FormatError("custom rule: a scoped rule's holds is a predicate, e.g. (a, b) => abs(a - b) != 4")
+    if scope is None and top not in ("bool", "any"):
+        raise FormatError("custom rule: holds must be a condition (true / false)")
 
 
 def _check_op(r, where="rule"):

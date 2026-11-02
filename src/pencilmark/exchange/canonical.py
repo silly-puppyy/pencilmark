@@ -77,6 +77,7 @@ def canonical(doc):
         out["board"] = _order(out["board"], ["rows", "cols"])
     if "rules" in out:
         out["rules"] = [_order(r, RULE_ORDER) for r in out["rules"]]
+        out["rules"] = [dict(r, holds=_holds(r["holds"])) if r.get("type") == "custom" else r for r in out["rules"]]
     if "candidates" in out:
 
         def rc(k):
@@ -127,6 +128,16 @@ def _rc(name):
     return parse_cell(name)
 
 
+def _holds(text):
+    """a custom rule's expression in its canonical spelling (rules/custom.py); unchanged if it does not parse"""
+    from ..rules import custom as CU
+
+    try:
+        return CU.canonical(text)
+    except CU.LangError:
+        return text
+
+
 def _norm_rule(r, D):
     """spelling-free form of one rule for the fingerprint: cell sets sorted, symmetric pairs sorted"""
     r = {k: v for k, v in r.items() if k not in ("id", "label", "style")}
@@ -140,6 +151,8 @@ def _norm_rule(r, D):
     ):
         if "cells" in r:
             r["cells"] = srt(r["cells"])
+    if t == "custom":
+        r["holds"] = _holds(r["holds"])
     if t == "equal_sum":
         r["segments"] = sorted((srt(x) for x in r["segments"]), key=lambda x: [_rc(c) for c in x])
     if "except" in r:

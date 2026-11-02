@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Custom rules (format: `"type": "custom"`, no longer reserved; docs/formats/rules/custom.mdx): a rule written in the
+  file as an expression over named cells, `{"type": "custom", "cells": {"c": [...]}, "holds": "2 * max(c) == sum(c)"}`,
+  with scopes for every pair of neighbours, every h x w window or every cell with its neighbours, and `each` for a list
+  of cell tuples. Readers parse and type-check the expression and name the problem; writers keep the rule, the
+  expression in its canonical spelling (also what `fingerprint` reads); `describe` renders it in words. pencilmark
+  grades custom rules through its generic rule reading; a rule over more than 5 cells outside a scope is not supported
+  yet. Grammar validated on 1,000 logic-masters puzzles (docs/research in the source repository).
 - Difficulty: the search-effort part of the card counts a refutation's length in propagation rounds (all singles of a
   round placed together) instead of single placements, so a puzzle and its transpose or relabelling grade the same
   (98% identical on 786 development puzzles transposed, was 67%; the largest move 0.6, was 1.1). Its weight and the

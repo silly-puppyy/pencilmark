@@ -389,6 +389,16 @@ def from_json(obj) -> M.Puzzle:
                 win = [(r_, c_), (r_, c_ + 1), (r_ + 1, c_), (r_ + 1, c_ + 1)]
                 if all(x in cid for x in win):
                     p.constraints.append({"type": "table", "cells": [cid[x] for x in win], "allowed": allowed})
+        elif t == "custom":  # the rule language (rules/custom.py): pair relations / digit tables, kept by name
+            from .exchange.board import Board
+            from .rules import custom as CU
+
+            compiled = CU.compile_rule(r, Board(coords, D), D)
+            width, height = max(c for _, c in coords) + 1, max(rr for rr, _ in coords) + 1
+            shape = ["".join("#" if (y, x) in cid else "." for x in range(width)) for y in range(height)]
+            q = from_json({"digits": D, "shape": shape, "regions": [], "rules": compiled})
+            p.relations += q.relations
+            p.constraints += q.constraints
         elif t == "quadruple":  # the listed digits (repeats allowed) all appear in these cells
             cs = [ci(x) for x in r["cells"]]
             need = [int(v) for v in r["digits"]]
@@ -412,9 +422,9 @@ def from_json(obj) -> M.Puzzle:
 
 
 # well-known rules that expand into engine relations / tables when read; the puzzle remembers them so they are written back
-# by name, not as their expansion (a global-entropy puzzle was 64 copies of a 2,916-row table). One-off rules
-# belong to the planned custom rule language, not here.
-NAMED_RULES = {"global_entropy", "quadruple", "rossini", "vudoku", "increasing", "isomorphic"}
+# by name, not as their expansion (a global-entropy puzzle was 64 copies of a 2,916-row table). One-off rules are
+# custom rules (the rule language), also kept by name.
+NAMED_RULES = {"global_entropy", "quadruple", "rossini", "vudoku", "increasing", "isomorphic", "custom"}
 
 
 def _remember(p, rule, rels, cons):

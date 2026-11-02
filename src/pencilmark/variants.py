@@ -363,6 +363,20 @@ family(
     lambda rs, c: "Neighbouring cells follow the marked pair rule" + _scope(rs[0]) + ".",
 )
 family("Relation", _t("relation"), "Linked pairs of cells follow the marked pair rule.")
+
+
+def _custom_text(r):
+    """a custom rule in words: the description of its expression, after the author's label when it has one"""
+    from .rules.custom import LangError, describe_rule
+
+    try:
+        text = describe_rule(r)
+    except LangError:
+        text = "See the setter's rules."
+    return f"{r['label']}: {text}" if r.get("label") else text
+
+
+family("Custom Rules", _t("custom"), lambda rs, c: " ".join(_custom_text(r) for r in rs))
 family(
     "Custom",
     lambda r: r["type"] == "table" or ":" in r["type"],

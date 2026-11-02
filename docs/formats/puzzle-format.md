@@ -182,7 +182,7 @@ these holds:
 3. A rule `type` it does not know, or a `kind` it does not know for a known type.
 4. A vendor rule type (`"com.example:foo"`: reverse-DNS namespace, colon, name) it does not implement. Core type names
    never contain a colon.
-5. `"type": "custom"` (reserved, [Reserved names (6.17)](rules/other.mdx#617-reserved)).
+5. A [custom rule (6.18)](rules/custom.mdx) whose expression does not parse or type-check.
 6. A structural check fails: `len(givens) != R*C`; `solution` or `candidates` disagree in shape; a cell name refers to
    a missing cell; an edge pair is not orthogonally adjacent; a corner set is not a 2×2 block; an outside clue's
    cells are not collinear and contiguous, or the position next to `cells[0]` on `side` is a cell; an arrow shaft
