@@ -53,7 +53,7 @@ Command line:
 
 ```
 $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9.......' | pencilmark rate - --report
-#1  Hard  -  difficulty 5.9  -  time 10.7 min
+#1  Hard  -  difficulty 5.7  -  time 10.7 min
    contains: Naked Pair (or Hidden Pair), X-Wing (or 2-String Kite / Simple Colouring / Short chain in the head)
 
 pencilmark rate puzzles.txt --json        # full card per line (python -m pencilmark works too)

@@ -99,20 +99,20 @@ when it needs only singles, so a Very Easy request comes back at about 4-5, the 
 puzzles. For a gentle puzzle, add a range, and the publishing checks (`"quality": {}`, recommended):
 
 ```json
-"where": {"band": "Very Easy", "difficulty": [2.8, 3.8]}, "quality": {}
+"where": {"band": "Very Easy", "difficulty": [3.2, 4.0]}, "quality": {}
 ```
 
 The middle half of published puzzles per band (development set: 6,452 puzzles from seven sources with human data):
 
 | Band | Classic 9×9 | Variants |
 |---|---|---|
-| Very Easy | up to 3.8 | up to 4.9 |
-| Easy | 4.5 to 5.9 | 4.8 to 7.5 |
-| Medium | 6.3 to 7.4 | 8.8 to 11.0 |
-| Hard | 5.3 to 6.7 | 5.9 to 8.4 |
-| Very Hard | 7.1 to 8.2 | 10.6 to 13.4 |
-| Expert | 8.2 to 10.9 | 10.8 to 13.6 |
-| Extreme | (too few) | 13.7 and above |
+| Very Easy | up to 4.3 | up to 5.2 |
+| Easy | 4.8 to 5.9 | 5.1 to 7.3 |
+| Medium | 6.3 to 7.0 | 8.2 to 10.0 |
+| Hard | 5.5 to 6.5 | 5.9 to 7.7 |
+| Very Hard | 6.8 to 7.5 | 9.7 to 12.6 |
+| Expert | 7.6 to 9.9 | 9.8 to 12.8 |
+| Extreme | (too few) | 14.4 and above |
 
 A band says which techniques a puzzle needs and the difficulty how hard its steps are to find, so a Hard puzzle (one
 X-Wing) is often quicker than a long Medium. For classics, Andrew Stuart's sudokuwiki.org grades read directly on

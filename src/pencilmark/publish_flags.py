@@ -47,14 +47,14 @@ QUALITY = {
     "unusual": None,
 }
 # difficulty of published puzzles per band: (10th, 90th percentile), classic 9x9 and variants apart. Measured
-# 2026-11-01 on the development set (7,253 puzzles with human data from seven sources, 6,452 graded; never the frozen
+# 2026-11-02 (round counting, 1.2) on the development set (7,253 puzzles with human data from seven sources, 6,452 graded; never the frozen
 # benchmark); a band with fewer than 20 puzzles has no range. docs/guides/generator/generate.md shows the middle halves.
 # Very Easy has no floor and Extreme no ceiling (nothing is too easy or too hard for them)
 TYPICAL = {
-    "classic": {"Very Easy": (None, 4.2), "Easy": (3.9, 6.6), "Medium": (6.0, 7.8), "Hard": (4.7, 7.3),
-                "Very Hard": (7.0, 9.0), "Expert": (7.1, 12.3)},
-    "variant": {"Very Easy": (None, 5.4), "Easy": (4.0, 8.8), "Medium": (6.8, 12.1), "Hard": (4.3, 10.2),
-                "Very Hard": (8.8, 14.5), "Expert": (9.3, 14.4), "Extreme": (12.3, None)},
+    "classic": {"Very Easy": (None, 4.6), "Easy": (4.4, 6.4), "Medium": (6.0, 7.2), "Hard": (5.1, 7.0),
+                "Very Hard": (6.7, 8.3), "Expert": (7.0, 11.1)},
+    "variant": {"Very Easy": (None, 5.6), "Easy": (4.4, 8.3), "Medium": (6.5, 11.1), "Hard": (4.6, 9.6),
+                "Very Hard": (8.0, 13.9), "Expert": (8.4, 14.2), "Extreme": (13.2, None)},
 }  # fmt: skip
 SEVERITIES = ("reject", "warning", "off")
 

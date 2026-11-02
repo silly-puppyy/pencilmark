@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Difficulty: the search-effort part of the card counts a refutation's length in propagation rounds (all singles of a
+  round placed together) instead of single placements, so a puzzle and its transpose or relabelling grade the same
+  (98% identical on 786 development puzzles transposed, was 67%; the largest move 0.6, was 1.1). Its weight and the
+  score map are refitted (Andrew Stuart's ratings: fed MAE 0.505, was 0.508; hard set 0.82, was 1.03); ranking against
+  human data is unchanged to slightly better (development set: fed +0.02, logic-masters +0.01, sudoku.today -0.01).
+  Difficulty values change (easy puzzles a little higher, hard ones a little lower; bands are unchanged), and the
+  `unusual` ranges and the typical-difficulty table are recomputed on the new scale.
 - A generator request without `where.band` or `where.difficulty` keeps the broadest search and says so: the result's
   `info.warnings` (and a failure message) suggests a band or difficulty range, since the untargeted search uses every
   technique up to Extreme and can be slow on sparse variants. The command line prints it as a note.

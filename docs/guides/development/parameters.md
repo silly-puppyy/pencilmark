@@ -147,11 +147,12 @@ changing a shipped value is a deliberate commit with a golden rewrite.
 | `score.enum_w` | 0.1 | Weight of the cage-enumeration term (validated on two sources). |
 | `score.stat` | per_cell | How step values combine: the average per empty cell. |
 | `score.beta_time` | 3.807 | The same exponent for the time effort (time fit). |
-| `score.refute_w` | 2 | Weight of the technique-free search effort. |
+| `score.refute_w` | 4 | Weight of the technique-free search effort. |
 | `score.map.form` | A * w * softplus((r - r0) / w) | The smooth difficulty map: softplus slope A, knee r0 and width w; below 2 a gentler square-root rule. |
-| `score.map.A` | 0.8258 | ″ |
-| `score.map.r0` | 2.117 | ″ |
-| `score.map.w` | 0.3 | ″ |
+| `score.map.A` | 0.6895 | ″ |
+| `score.map.r0` | 0.5497 | ″ |
+| `score.map.w` | 0.4535 | ″ |
+| `score.refute_rounds` | 1 | Card-score configuration (data/card_score.json). |
 
 ## Time model (time)
 
