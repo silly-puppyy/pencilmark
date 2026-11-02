@@ -22,6 +22,7 @@ from .base import (
     fmt_elims,
     rel_label,
 )
+from .facts import RULE_FACTS
 from .grid import Rule, _rule_dom, enum_rule
 from .singles import _con_json, _rule_from_move
 
@@ -293,7 +294,16 @@ def _h_combo(ctx):
         elif kind in ("thermo", "slow_thermo"):
             short = f"{fmt_elims(nm, ctx.elims)}: thermo counting"
         teach = f"Read {rule.label}. {why} " + _line_tip(kind)
-        return _result(ctx, J, short, teach, ok, lines=lines)
+        r = _result(ctx, J, short, teach, ok, lines=lines)
+        if ok and why.strip():
+            first = {
+                "text": f"Read {rule.label}.",
+                "annotations": [{"id": i + 1, "cell": nm.cell(c), "colour": "cyan"} for i, c in enumerate(rule.cells)],
+            }
+            if kind in RULE_FACTS:
+                first["why"] = RULE_FACTS[kind]
+            r["substeps"] = [first, {"text": why.strip()}, _red_step(nm, ctx.elims, len(rule.cells) + 1)]
+        return r
     if kind in ("cage", "sum", "little_killer") and len(emp) == 1:
         total = rule.total - sum(d for _, d in known)
         c = emp[0]
@@ -338,7 +348,7 @@ def _h_combo(ctx):
                 },
                 {
                     "text": f"With the notes available, {_combo_phrase(combos)}.",
-                    "why": "Digits in a cage don't repeat and add up to its total, so only a few digit sets fit.",
+                    "why": RULE_FACTS["cage"],
                 },
             ]
             if reasons.strip():

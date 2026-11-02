@@ -123,3 +123,17 @@ def test_locked_and_subset_substeps():
         sub = got[code]
         assert {a["colour"] for a in sub[0]["annotations"]} == {"blue"}
         assert {a["colour"] for a in sub[-1]["annotations"]} == {"red"} and any("why" in x for x in sub)
+
+
+def test_line_rule_substeps_and_facts():
+    from pencilmark.explain.facts import RULE_FACTS
+
+    doc = json.loads((Path(__file__).parents[1] / "docs/examples/generated/hardest-kropki.json").read_text("utf-8"))
+    card = pencilmark.rate(doc.get("puzzle", doc), fields=["steps"], explain=["substeps"])
+    sub = next(
+        s["explanation"]["substeps"]
+        for s in card["steps"]
+        if s["code"] == "LNR" and "substeps" in s.get("explanation", {})
+    )
+    assert sub[0]["text"].startswith("Read ") and sub[0]["why"] in RULE_FACTS.values()
+    assert {a["colour"] for a in sub[-1]["annotations"]} == {"red"}
