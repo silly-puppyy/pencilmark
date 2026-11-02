@@ -32,6 +32,7 @@ from .records import (
     _h_mental_notes,
     _h_nishio,
     _h_pattern_named,
+    _h_region,
     _h_rule_intersect,
     _h_snyder,
     _h_sum_algebra,
@@ -199,6 +200,18 @@ _X_HANDLERS = {
             "Rules that always join a low and a high digit (or an odd and an even one) colour cells in two classes; a "
             "known cell or a house's count fixes which colour is which.",
         ),
+    ),
+    "REGION_CAP": (
+        _h_region,
+        "region_size_cap",
+        "intersections+combos",
+        ("Region size", "A region to find holds exactly as many cells as digits: once they are known it is closed."),
+    ),
+    "REGION_EXCL": (
+        _h_region,
+        "region_exclusion",
+        "singles",
+        ("Region exclusion", "A digit appears once in a region: equal digits lie in different regions."),
     ),
     "WEIGHTED_SUMS": (
         _h_weighted_sums,

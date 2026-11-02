@@ -7,8 +7,15 @@
   borders between neighbours, and cells known to share a region. Readers, writers, `fingerprint` and `describe`
   handle them; `solve` and `count_solutions` check them: the engine's exhaustive search carries a region label per
   cell (D cells per label, each digit once per label, connected, canonical labels), agreeing with a CP-SAT model of
-  the same rules on 699 of 699 random small puzzles. The grader does not grade them yet (`rate` raises
-  NotSupportedError): the region techniques come next.
+  the same rules on 699 of 699 random small puzzles. The grader grades them: the solver keeps a region label per
+  cell between steps, and two region techniques are in (region exclusion: a digit leaves the other cells of its
+  region and equal digits split regions; region size cap: a region with all its cells is closed, the cells left for
+  it take it); more from the Cracking the Cryptic solves come next, so the routes still lean on the search fallback
+  where those would apply (CC Newbie: Extreme, with one trial step). The SudokuPad reader reads chaos construction
+  when the rules say so and the file draws no regions: drawn borders become `region_border`, and statements such as
+  "digits along a thermometer belong to the same region" become `same_region` / `region_border` for that element
+  kind. Of the 467 cached logic-masters chaos puzzles most are still refused or have another solution: they add
+  rules of their own that read the regions (run sums, counting views), which format_version 1 cannot state.
 - Reader fixes from the 500 most-solved logic-masters sudokus (6 more read and graded, 123; each now unique and
   matching its embedded solution; none lost): SudokuPad's newer files write a dot's fill as `c2` and
   greys as one digit (`#F` white, `#0` black), so white dots no longer read as black; a "same parity" line (all odd

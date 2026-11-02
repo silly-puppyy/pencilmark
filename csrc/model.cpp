@@ -202,6 +202,9 @@ void Puzzle::finalize() {
         q->domains = domains;
         q->relations = relations;
         q->nary_specs = nary_specs;
+        q->chaos = chaos;  // regions to find travel with every copy the solver may use
+        q->region_border = region_border;
+        q->same_region = same_region;
         q->exact_shapes = true;
         q->finalize();
         canonical = q;
@@ -607,6 +610,9 @@ void Puzzle::build_implied() {
     q->domains = domains;
     q->relations = relations;
     q->nary_specs = nary_specs;
+    q->chaos = chaos;
+    q->region_border = region_border;
+    q->same_region = same_region;
     q->is_derived = true;
     q->exact_shapes = exact_shapes;
     q->base_G = G;

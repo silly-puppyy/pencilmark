@@ -183,11 +183,6 @@ def rate(
     want = card_fields(fields, steps=steps, se=se)
     quality_limits(quality)
     p = load(puzzle)
-    if V.has_chaos(p):  # before the uniqueness proof: grading regions to find is not in the engine yet
-        raise NotSupportedError(
-            "regions to find (chaos construction): the grader does not grade them yet; validate, describe, solve and "
-            "count work"
-        )
     import time
 
     from . import cbackend as CB

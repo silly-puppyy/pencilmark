@@ -77,6 +77,12 @@ CLUE_FACTS = (
     101  # facts read off the clues alone (C++ only): relations on an empty grid (no 5 on a whisper, thermo ranges)
 )
 CLUE_SHAPE = 102  # clue facts with the line shape (C++ only): partners in one house needing more digits than allowed
+REGION_CAP = (
+    103  # regions to find (C++ only): a region with D known cells is sealed; D cells that may take a region take it
+)
+REGION_EXCL = (
+    104  # regions to find (C++ only): a placed digit leaves its region's other cells; equal digits split regions
+)
 CLASS_COLOUR = 100  # class colouring (C++ only): low / high or odd / even links between cells, sides fixed by known cells / house counts
 # names and flags: the technique registry (data/techniques.csv); the constants above mirror csrc/solver.hpp enum Tech,
 # and tests/test_registry.py checks all three agree

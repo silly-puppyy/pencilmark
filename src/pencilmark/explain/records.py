@@ -735,6 +735,30 @@ def _h_clue_facts(ctx):
     return _result(ctx, J, f"{head}: {title}", f"{why}. So {goal}.", bool(pc), extra_cells=pc)
 
 
+def _h_region(ctx):
+    """RegionSizeCap / RegionExclusion (regions to find): a region with all its cells known is sealed, the cells
+    still able to join a region fill it, and a digit leaves the other cells of its region (equal digits split
+    regions). Regions are named by their first cell in reading order."""
+    nm = ctx.nm
+    pc = (ctx.raw_engine or {}).get("pattern_cells") or _changed_cells(ctx)
+    head, goal = _x_head(ctx)
+    D = nm.p.D
+    if ctx.tech == S.REGION_CAP:
+        why = (
+            f"A region holds exactly {D} cells: with {nm.cells(pc)} its cells are settled, so no other cell joins it"
+            f" (or the cells that can still join it are exactly the ones it needs)"
+        )
+        title = "region size"
+    else:
+        why = (
+            f"A region holds each digit once: the digit in {nm.cells(pc)} cannot repeat in its region, and a cell "
+            "holding the same digit belongs to another region"
+        )
+        title = "region exclusion"
+    J = _J(ctx, base_cells=pc)
+    return _result(ctx, J, f"{head}: {title}", f"{why}. So {goal}.", bool(pc), extra_cells=pc)
+
+
 def _h_class_colour(ctx):
     """ClassColouring: rule links that always join a low and a high digit (or an odd and an even one) colour cells in
     two classes; a known cell or a house's count of each class fixes the colours."""

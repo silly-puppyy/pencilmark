@@ -374,7 +374,7 @@ static uint64_t params_key(const py::dict& params) {
 static py::tuple py_solve(const Puzzle& p, const std::vector<std::pair<int, int>>& givens, const py::dict& params,
                           const std::vector<int>& disabled, const py::object& solution, bool allow_direct,
                           int max_steps, bool assume_unique, bool all_tiers, bool explain,
-                          const py::object& colours, const py::object& cand, bool stats) {
+                          const py::object& colours, const py::object& cand, bool stats, const py::object& labels) {
     Params P = params_from(params);
     const uint64_t phash = params_key(params);
     SolveOptions o;
@@ -394,6 +394,13 @@ static py::tuple py_solve(const Puzzle& p, const std::vector<std::pair<int, int>
         py::gil_scoped_release rel;
         Solver s(p, P, o);
         if ((int)cd.size() == p.N) s.cand_override = cd;
+        if (!labels.is_none()) {  // a mid-solve state's region labels (chaos): (labels, label candidates)
+            py::gil_scoped_acquire acq;
+            py::tuple lt = labels.cast<py::tuple>();
+            auto l0 = lt[0].cast<std::vector<int>>();
+            s.lab_override.assign(l0.begin(), l0.end());
+            s.lcand_override = lt[1].cast<std::vector<uint32_t>>();
+        }
         s.lcache = true;
         s.lcache_solve = true;
         s.lcache_params = phash;
@@ -418,9 +425,23 @@ static py::tuple py_solve(const Puzzle& p, const std::vector<std::pair<int, int>
         py::list pats, exs;
         for (int i = 0; i < st.move.pat_n; ++i) pats.append(r.pats[st.move.pat_off + i]);
         for (int i = 0; i < st.move.ex_n; ++i) exs.append(r.ex[st.move.ex_off + i]);
-        steps.append(py::make_tuple(alts, st.chosen, place, el, py::make_tuple(st.move.nk, st.move.na, st.move.nb),
-                                    st.move.d, st.mode, st.n_empty, st.erasures, st.notes_written, xm,
-                                    st.move.code, pats, exs, st.n_cands));
+        auto row = py::make_tuple(alts, st.chosen, place, el, py::make_tuple(st.move.nk, st.move.na, st.move.nb),
+                                  st.move.d, st.mode, st.n_empty, st.erasures, st.notes_written, xm, st.move.code,
+                                  pats, exs, st.n_cands);
+        if (!p.chaos.empty()) {  // regions to find: a 16th element, the step's label effects (placement, eliminations)
+            py::object lp = py::none();
+            if (st.move.lpc >= 0) lp = py::make_tuple(st.move.lpc, st.move.lpv);
+            py::tuple le(st.move.lel_n);
+            for (int i = 0; i < st.move.lel_n; ++i) {
+                const uint32_t e = r.lels[st.move.lel_off + i];
+                le[i] = py::make_tuple((int)(e / 32), (int)(e % 32));
+            }
+            py::list l(row);
+            l.append(py::make_tuple(lp, le));
+            steps.append(py::tuple(l));
+        } else {
+            steps.append(row);
+        }
     }
     if (stats) {  // per strategy / direct stage: (ms, calls, calls that found moves)
         py::dict st;
@@ -450,7 +471,7 @@ static py::list py_refute_profile(const Puzzle& p, const std::vector<std::pair<i
 static py::list py_state_moves(const Puzzle& p, const std::vector<std::pair<int, int>>& givens, const py::dict& params,
                                const std::vector<int>& disabled, const py::object& solution, bool assume_unique,
                                int limit_per_tech, const py::object& written, bool details, const py::object& cand,
-                               const std::vector<int>& skip) {
+                               const std::vector<int>& skip, const py::object& labels) {
     Params P = params_from(params);
     const uint64_t phash = params_key(params);
     SolveOptions o;
@@ -467,6 +488,13 @@ static py::list py_state_moves(const Puzzle& p, const std::vector<std::pair<int,
         Solver s(p, P, o);
         if ((int)wr.size() == p.N) s.written_override = wr;
         if ((int)cd.size() == p.N) s.cand_override = cd;
+        if (!labels.is_none()) {
+            py::gil_scoped_acquire acq;
+            py::tuple lt = labels.cast<py::tuple>();
+            auto l0 = lt[0].cast<std::vector<int>>();
+            s.lab_override.assign(l0.begin(), l0.end());
+            s.lcand_override = lt[1].cast<std::vector<uint32_t>>();
+        }
         s.lcache = true;
         s.lcache_params = phash;
         s.state_moves(givens, b, limit_per_tech);
@@ -480,8 +508,20 @@ static py::list py_state_moves(const Puzzle& p, const std::vector<std::pair<int,
             uint32_t e = b.elims[m.el_off + i];
             el.append(py::make_tuple((int)(e / 32), (int)(e % 32)));
         }
+        py::object labfx = py::none();  // regions to find: the move's label effects, appended last (chaos only)
+        if (!p.chaos.empty()) {
+            py::object lp = py::none();
+            if (m.lpc >= 0) lp = py::make_tuple(m.lpc, m.lpv);
+            py::list le;
+            for (int i = 0; i < m.lel_n; ++i) {
+                const uint32_t e = b.lels[m.lel_off + i];
+                le.append(py::make_tuple((int)(e / 32), (int)(e % 32)));
+            }
+            labfx = py::make_tuple(lp, le);
+        }
         if (!details) {
-            out.append(py::make_tuple(m.tech, m.code, place, el, m.d));
+            if (p.chaos.empty()) out.append(py::make_tuple(m.tech, m.code, place, el, m.d));
+            else out.append(py::make_tuple(m.tech, m.code, place, el, m.d, labfx));
             continue;
         }
         py::tuple xm((size_t)XM_N);
@@ -492,8 +532,12 @@ static py::list py_state_moves(const Puzzle& p, const std::vector<std::pair<int,
         py::object meta = ft.attr("__getitem__")(4);
         py::list exs;  // the move's explanation records (decoded by cbackend._explain, as for solve(explain=True))
         for (int i = 0; i < m.ex_n; ++i) exs.append(b.ex[m.ex_off + i]);
-        out.append(py::make_tuple(m.tech, m.code, place, el, m.d, meta, xm, m.scan, pat, exs,
-                                  py::make_tuple(m.nk, m.na, m.nb)));
+        if (p.chaos.empty())
+            out.append(py::make_tuple(m.tech, m.code, place, el, m.d, meta, xm, m.scan, pat, exs,
+                                      py::make_tuple(m.nk, m.na, m.nb)));
+        else
+            out.append(py::make_tuple(m.tech, m.code, place, el, m.d, meta, xm, m.scan, pat, exs,
+                                      py::make_tuple(m.nk, m.na, m.nb), labfx));
     }
     return out;
 }
@@ -574,7 +618,7 @@ PYBIND11_MODULE(_csolver, m) {
     m.def("solve", &py_solve, py::arg("puzzle"), py::arg("givens"), py::arg("params"), py::arg("disabled"),
           py::arg("solution"), py::arg("allow_direct"), py::arg("max_steps"), py::arg("assume_unique") = true,
           py::arg("all_tiers") = false, py::arg("explain") = false, py::arg("colours") = py::none(),
-          py::arg("cand") = py::none(), py::arg("stats") = false);
+          py::arg("cand") = py::none(), py::arg("stats") = false, py::arg("labels") = py::none());
     m.def("brute_solve", &py_brute, py::arg("puzzle"), py::arg("givens"), py::arg("limit"), py::arg("node_limit"),
           py::arg("start") = py::none(), py::arg("with_status") = false);
     m.def("puzzle_info", &puzzle_info, py::arg("puzzle"), py::arg("disabled") = std::vector<int>());
@@ -592,5 +636,5 @@ PYBIND11_MODULE(_csolver, m) {
     m.def("state_moves", &py_state_moves, py::arg("puzzle"), py::arg("givens"), py::arg("params"),
           py::arg("disabled"), py::arg("solution"), py::arg("assume_unique") = false, py::arg("limit_per_tech") = 0,
           py::arg("written") = py::none(), py::arg("details") = false, py::arg("cand") = py::none(),
-          py::arg("skip") = std::vector<int>());
+          py::arg("skip") = std::vector<int>(), py::arg("labels") = py::none());
 }

@@ -80,6 +80,8 @@ enum Tech {
     CLUE_FACTS = 101,     ///< facts read off the clues alone (relations on an empty grid): no 5 on a whisper, thermo ranges
     CLUE_SHAPE = 102,     ///< clue facts with the line's shape: partners in one house needing more digits than allowed (a whisper 4 between two 9s)
     CLASS_COLOUR = 100,   ///< class colouring: low / high or odd / even links between cells; sides fixed by known cells or house counts
+    REGION_CAP = 103,     ///< regions to find: a region with D known cells is sealed; D cells that may take a region take it
+    REGION_EXCL = 104,    ///< regions to find: a placed digit leaves the other cells of its region; equal digits split regions
     MENTAL_NOTES = 84,    ///< single after notes logic done in the head (subset / pointing / combination on the mental view)    // line consistency on 3-cell windows (local scan of a long line)  // both options of a 2-way choice lead to the same placement / elimination  // short chain (<= 5 links) on the no-notes mental view, leading to a single  // bounded case split: bivalue cell, contradiction within a few direct rounds
     N_TECH = 128
 };
@@ -126,6 +128,10 @@ struct Move {
     double enumv = 0.0;  ///< log1p(max consistent assignments of the SUM rule instances the move touches)
     int pc = -1, pv = 0;  ///< placement
     int el_off = 0, el_n = 0;
+    /// region label effects (chaos construction): a label placed (cell lpc is in region lpv) and label eliminations
+    /// (cell*32 + label in MoveBuf::lels); none on moves of puzzles without regions to find
+    int lpc = -1, lpv = 0;
+    int lel_off = 0, lel_n = 0;
     int nk = NM_NONE, na = 0, nb = -1;  ///< nb: second group / cage (-1 = none)
     double d = 0.0;
     pm_long xm[XM_N] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -188,12 +194,14 @@ struct MoveBuf {
     std::vector<Move> moves;
     std::vector<Cover> covers;
     std::vector<uint32_t> elims;  ///< c*32 + v
+    std::vector<uint32_t> lels;   ///< label eliminations: c*32 + label
     std::vector<int> pats;        ///< pattern cells
     std::vector<int> ex;          ///< explanation records
     void clear() {
         moves.clear();
         covers.clear();
         elims.clear();
+        lels.clear();
         pats.clear();
         ex.clear();
     }
@@ -219,6 +227,8 @@ inline void append_moves(MoveBuf& to, const MoveBuf& from) {
         to.covers.insert(to.covers.end(), from.covers.begin() + a.cov_off, from.covers.begin() + a.cov_off + a.cov_n);
         m.el_off = (int)to.elims.size();
         to.elims.insert(to.elims.end(), from.elims.begin() + a.el_off, from.elims.begin() + a.el_off + a.el_n);
+        m.lel_off = (int)to.lels.size();
+        to.lels.insert(to.lels.end(), from.lels.begin() + a.lel_off, from.lels.begin() + a.lel_off + a.lel_n);
         m.pat_off = (int)to.pats.size();
         to.pats.insert(to.pats.end(), from.pats.begin() + a.pat_off, from.pats.begin() + a.pat_off + a.pat_n);
         m.ex_off = (int)to.ex.size();
@@ -331,6 +341,7 @@ struct SolveResult {
     std::vector<Move> alts;  ///< features only (cov offsets into covers)
     std::vector<Cover> covers;
     std::vector<uint32_t> elims;
+    std::vector<uint32_t> lels;  ///< label eliminations of the chosen moves (chaos)
     bool solved = false;
     std::vector<int> pats, ex;  ///< pattern cells / explanation records of the chosen moves
     struct Stat { double ms = 0; pm_long calls = 0, hits = 0; };
@@ -422,6 +433,14 @@ public:
     std::vector<uint8_t> vals;
     std::vector<uint32_t> cand, placed_g;
     std::vector<char> is_given;  ///< cell was a given (avoidable rectangles)
+    /// regions to find (chaos construction): label per cell (0 not yet known) and label candidates (bits 1..D) for the
+    /// cells of a chaos area; empty for puzzles without regions to find
+    std::vector<uint8_t> lab;
+    std::vector<uint32_t> lcand;
+    bool has_regions() const { return !p.chaos.empty(); }
+    std::vector<uint8_t> lab_override;     ///< a mid-solve state's labels (band_path), applied after the givens
+    std::vector<uint32_t> lcand_override;  ///< ... and label candidates
+    void label_normalize();  ///< canonical label names (label k first appears before k + 1), silently: a naming convention
 
     // ---- techniques (each appends to out) ----
     void direct_moves(MoveBuf& out, bool use_locks, int mental = 0);  ///< mental: 0 off, 2 relations/lines, 3 + subsets
@@ -603,6 +622,9 @@ public:
     void class_count(MoveBuf& out);
     /// class colouring: low / high or odd / even links between cells, sides fixed by known cells or house counts
     void class_colour(MoveBuf& out);
+    // ---- regions to find (chaos_logic.cpp) ----
+    void region_cap(MoveBuf& out);   ///< a region with D known cells is sealed; D cells that may take a label take it
+    void region_excl(MoveBuf& out);  ///< a placed digit leaves its region's other cells; equal digits split regions
     /// facts read off the clues alone (relations on an empty grid; with line shape): fires once as one step
     void clue_facts(MoveBuf& out);
     /// relation dominoes: a digit every allowed pair uses leaves common houses; two dominoes locking four digits

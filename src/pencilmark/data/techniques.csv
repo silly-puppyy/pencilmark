@@ -78,6 +78,8 @@ id,const,name,role,code,display,band,split,family,gate,direct,mental,price_fallb
 92,BAND_LOGIC,BandLogic,logic,BAN,,Very Hard,0,chains,any,0,0,
 94,HUMAN_CASE,CaseAnalysis,logic,CAS,,Expert,0,chains,,0,0,ALS-XZ
 100,CLASS_COLOUR,ClassColouring,logic,CCL,High/low & odd/even colouring,Medium,0,chains,any,0,0,
+103,REGION_CAP,RegionSizeCap,logic,RSC,Region size cap (regions to find),Easy,0,intersections+combos,any,0,0,
+104,REGION_EXCL,RegionExclusion,logic,REX,Region exclusion (equal digits split regions),Very Easy,0,singles,any,0,0,
 52,ALS_XZ,ALS-XZ,logic,ALS,,Expert,0,ALS,,0,0,
 53,ALS_XYWING,ALS-XY-Wing,logic,AXY,,Expert,0,ALS,,0,0,
 54,DEATH_BLOSSOM,DeathBlossom,logic,DEB,,Expert,0,ALS,,0,0,

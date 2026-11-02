@@ -162,6 +162,14 @@ void Solver::canon_dedupe(MoveBuf& b) {
             key.assign(b.elims.begin() + m.el_off, b.elims.begin() + m.el_off + m.el_n);
             std::sort(key.begin(), key.end());
             key.insert(key.begin(), {1u, (uint32_t)m.tech});
+            if (m.lel_n || m.lpc >= 0) {  // regions to find: the label effects belong to the move's identity
+                std::vector<uint32_t> le(b.lels.begin() + m.lel_off, b.lels.begin() + m.lel_off + m.lel_n);
+                std::sort(le.begin(), le.end());
+                key.push_back(0xFFFFFFFFu);
+                key.push_back((uint32_t)(m.lpc + 1));
+                key.push_back((uint32_t)m.lpv);
+                key.insert(key.end(), le.begin(), le.end());
+            }
         }
         auto it = best.find(key);
         if (it == best.end()) {

@@ -565,14 +565,6 @@ def grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expla
     """grade() under max_seconds, stage by stage: the technique list (contains) truncates at the limit as before; the difficulty
     route stops at its own limit (engine deadline) and the card is then band "Unknown" with difficulty / time null, the
     techniques found so far in contains and "stopped": "time limit" (docs/formats/grade-card.md 1)."""
-    from .cpsat_verify import has_chaos
-    from .exchange import NotSupportedError
-
-    if has_chaos(p):
-        raise NotSupportedError(
-            "regions to find (chaos construction): the grader does not grade them yet; validate, describe, solve and "
-            "count work"
-        )
     t0 = time.perf_counter()
     g, expired = _grade(
         p,

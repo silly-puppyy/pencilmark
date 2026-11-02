@@ -193,7 +193,7 @@ static bool strategy_off(const char* name, const Flags& disabled) {
         {"ur", {UNIQUE_RECT}}, {"xur", {UNIQUE_RECT}}, {"bug", {BUG_PLUS1}}, {"gurth", {GURTH}},
         {"pairs", {NPAIR, HPAIR}}, {"triples", {NTRIPLE, HTRIPLE}}, {"quads", {NQUAD, HQUAD}},
         {"digitcount", {DIGIT_COUNT}}, {"equaldigits", {EQUAL_DIGITS}}, {"colouralgebra", {COLOUR_ALGEBRA}}, {"classcolour", {CLASS_COLOUR}}, {"cluefacts", {CLUE_FACTS, CLUE_SHAPE}},
-        {"ruleintersect", {RULE_INTERSECT}}, {"shorttrial", {SHORT_TRIAL}}, {"humancase", {HUMAN_CASE}},
+        {"ruleintersect", {RULE_INTERSECT}}, {"regioncap", {REGION_CAP}}, {"regionexcl", {REGION_EXCL}}, {"shorttrial", {SHORT_TRIAL}}, {"humancase", {HUMAN_CASE}},
         {"whatif", {WHAT_IF}}, {"eitherway", {EITHER_WAY}}};
     auto it = TECHS.find(name);
     if (it == TECHS.end()) return false;
@@ -339,6 +339,20 @@ Solver::Solver(const Puzzle& pz, const Params& prm, const SolveOptions& o)
         out.insert(out.end(), moved.begin(), moved.end());
         tiers.swap(out);
     }
+    if (has_regions()) {  // regions to find: region moves come first; uniqueness arguments are unsound while the
+        // regions are unknown (a deadly pattern's cells may lie in different regions)
+        struct Fn : Strategy {
+            const char* n;
+            void (*f)(Solver&, MoveBuf&);
+            Fn(const char* name, void (*fn)(Solver&, MoveBuf&)) : n(name), f(fn) {}
+            const char* name() const override { return n; }
+            void collect(Solver& s, MoveBuf& b) override { f(s, b); }
+        };
+        tiers.insert(tiers.begin(), Tier{std::make_shared<Fn>("regioncap", [](Solver& s, MoveBuf& b) { s.region_cap(b); }),
+                                         std::make_shared<Fn>("regionexcl", [](Solver& s, MoveBuf& b) { s.region_excl(b); })});
+        for (int t : {UNIQUE_RECT, BUG_PLUS1, GURTH}) disabled.set(t, 1);
+        any_disabled = true;
+    }
     canon = !disabled[CANONICAL];
 }
 
@@ -353,6 +367,13 @@ void Solver::init_state(const std::vector<std::pair<int, int>>& givens) {
         place(cv.first, cv.second);
         is_given[cv.first] = 1;
     }
+    lab.assign(has_regions() ? p.N : 0, 0);
+    lcand.assign(has_regions() ? p.N : 0, 0);
+    for (const auto& A : p.chaos)
+        for (int c : A) lcand[c] = p.full;
+    if (has_regions() && (int)lab_override.size() == p.N && (int)lcand_override.size() == p.N)
+        lab = lab_override, lcand = lcand_override;
+    label_normalize();
 }
 
 // _place
@@ -393,6 +414,7 @@ Move& Solver::new_move(MoveBuf& b, int tech, double shape, int extra) {
     m.extra = extra;
     m.cov_off = (int)b.covers.size();
     m.el_off = (int)b.elims.size();
+    m.lel_off = (int)b.lels.size();
     return m;
 }
 // -------------------------------------------------------- killer cages --
@@ -748,6 +770,7 @@ void Solver::collect_all(MoveBuf& b, bool direct_phase) {
         if (!disabled[MENTAL_NOTES]) run("d:mentalnotes", [&] { mental_notes(b); });
         if (!disabled[COLOUR_ALGEBRA]) run("d:colour", [&] { colour_algebra(b, true); });
         if (!disabled[WHAT_IF]) run("d:whatif", [&] { what_if(b, true); });
+        if (has_regions()) run("d:region", [&] { region_cap(b); region_excl(b); });  // no notes needed
         return;
     }
     for (auto& tier : tiers)
@@ -1231,7 +1254,8 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
             // invariant primary key; ties broken by invariant candidate labels,
             // index order only as the very last resort
             auto pkey = [&](const Move& m) {
-                return std::make_tuple(std::llround(m.d * 1e9), m.tech, -(m.el_n + (m.pc >= 0 ? 1 : 0)));
+                return std::make_tuple(std::llround(m.d * 1e9), m.tech,
+                                       -(m.el_n + (m.pc >= 0 ? 1 : 0) + m.lel_n + (m.lpc >= 0 ? 1 : 0)));
             };
             std::vector<int> tied{0};
             for (size_t i = 1; i < buf.moves.size(); ++i) {
@@ -1403,6 +1427,8 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
             for (int i = 0; i < m.cov_n; ++i) out.covers.push_back(buf.covers[m.cov_off + i]);
             a.el_off = 0;
             a.el_n = 0;
+            a.lel_off = 0;
+            a.lel_n = 0;
             out.alts.push_back(a);
         }
         const Move& bm = buf.moves[best];
@@ -1448,6 +1474,17 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
             uint32_t e = buf.elims[bm.el_off + i];
             if (!single_move && (cand[e / 32] & bit((int)(e % 32)))) adv_src[e] = (int)out.steps.size();
             cand[e / 32] &= ~bit((int)(e % 32));
+        }
+        if (has_regions() && (bm.lel_n || bm.lpc >= 0)) {  // region label effects (chaos)
+            st.move.lel_off = (int)out.lels.size();
+            st.move.lel_n = bm.lel_n;
+            for (int i = 0; i < bm.lel_n; ++i) {
+                const uint32_t e = buf.lels[bm.lel_off + i];
+                out.lels.push_back(e);
+                if (!lab[e / 32]) lcand[e / 32] &= ~bit((int)(e % 32));
+            }
+            if (bm.lpc >= 0) lab[bm.lpc] = (uint8_t)bm.lpv, lcand[bm.lpc] = bit(bm.lpv);
+            label_normalize();
         }
         st.erasures = mode == 1 ? erasures : 0;
         out.steps.push_back(st);

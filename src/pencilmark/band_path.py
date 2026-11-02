@@ -172,6 +172,16 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
         if vals[c]:
             for x in p.peer_list[c]:
                 cand[x] &= ~(1 << (vals[c] - 1))
+    # regions to find: label per cell and label candidates (the engine normalises them on every call)
+    chaos = any(c_.get("type") == "chaos" for c_ in getattr(p, "constraints", ()))
+    lab = [0] * N if chaos else None
+    lcand = [0] * N if chaos else None
+    for c_ in getattr(p, "constraints", ()):
+        if c_.get("type") == "chaos":
+            for x in c_["cells"]:
+                lcand[x] = (1 << D) - 1
+    labels = lambda: (lab, lcand) if chaos else None  # noqa: E731
+    lkey = lambda: (tuple(lab), tuple(lcand)) if chaos else ()  # noqa: E731
     q = copy.copy(p)  # the puzzle keeps its own domains; each state's candidates go in as a mask
     cp = getattr(p, "_bp_cpuzzle", None)
     if cp is None:
@@ -192,6 +202,18 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
                 cand[x] &= ~(1 << (d - 1))
         for c, d in m["elim"]:
             cand[c] &= ~(1 << (d - 1))
+        if chaos:  # label effects
+            if m.get("lplace"):
+                c, k = m["lplace"]
+                lab[c], lcand[c] = k, 1 << (k - 1)
+            for c, k in m.get("lelim") or ():
+                if not lab[c]:
+                    lcand[c] &= ~(1 << (k - 1))
+                    if lcand[c] and not lcand[c] & (lcand[c] - 1):
+                        lab[c] = lcand[c].bit_length()
+
+    def acts(m):  # the move changes the state (a digit or a region label)
+        return m["place"] or m["elim"] or (chaos and (m.get("lplace") or m.get("lelim")))
 
     counts = Counter()
     aborted = False
@@ -207,7 +229,7 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
     for stp in prefix:
         steps.append(stp)
         counts[stp["code"]] += 1
-        apply({"place": stp["place"], "elim": stp["elims"]})
+        apply({"place": stp["place"], "elim": stp["elims"], "lplace": stp.get("lplace"), "lelim": stp.get("lelims")})
     for _ in range(max_steps):
         if aborted or all(vals) or (target is not None and vals[target]):
             break
@@ -216,10 +238,12 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
         if allowed0 and rng is None:
             # Very Easy phase in ONE engine call: singles until none are left (90%+ of all steps). The engine
             # orders singles by price, not by study order, so only which single gets which label can differ.
-            key0 = ("b0", tuple(vals), tuple(cand), frozenset(off0)) if _CACHE is not None else None
+            key0 = ("b0", tuple(vals), tuple(cand), frozenset(off0), lkey()) if _CACHE is not None else None
             batch = _CACHE.get(key0) if key0 is not None else None
             if batch is None:
-                st0, _ = CB.solve(q, P, disabled=off0, cpuzzle=cp, cand=mask, max_steps=N + 5, assume_unique=False)
+                st0, _ = CB.solve(
+                    q, P, disabled=off0, cpuzzle=cp, cand=mask, max_steps=N + 5, assume_unique=False, labels=labels()
+                )
                 batch = [
                     {
                         "tech": x.move.feat[0],
@@ -229,6 +253,11 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
                         "elim": [tuple(e) for e in (x.move.elim or ())],
                         "xmeta": getattr(x.move, "xmeta", None),
                         "d": float(x.move.d) if x.move.d is not None else None,
+                        **(
+                            {"lplace": getattr(x.move, "lplace", None), "lelim": list(getattr(x.move, "lelim", ()))}
+                            if chaos
+                            else {}
+                        ),
                     }
                     for x in st0
                     if x.move.feat[0] not in notes and x.move.feat[0] in allowed0
@@ -238,7 +267,7 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
             moved = False
             seg += 1
             for m in batch:
-                if not (m["place"] or m["elim"]):
+                if not acts(m):
                     continue
                 if m["place"] and vals[m["place"][0]]:
                     continue
@@ -260,6 +289,7 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
                         "elims": list(m["elim"]),
                         "seg": seg,
                         "d": m.get("d"),
+                        **({"lplace": m.get("lplace"), "lelims": list(m.get("lelim") or ())} if chaos else {}),
                     }
                 )
                 moved = True
@@ -278,7 +308,9 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
             Pb = dict(P, fish_max_n=2) if capped else P
 
             def listing(skip=()):
-                key = (tuple(vals), tuple(cand), frozenset(allowed), capped, skip) if _CACHE is not None else None
+                key = (
+                    (tuple(vals), tuple(cand), frozenset(allowed), capped, skip, lkey()) if _CACHE is not None else None
+                )
                 mv = _CACHE.get(key) if key is not None else None
                 if mv is None:
                     mv = CB.state_moves(
@@ -290,12 +322,13 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
                         cpuzzle=cp,
                         cand=mask,
                         skip=skip,
+                        labels=labels(),
                     )
                     if key is not None:
                         _CACHE[key] = mv
                 cands = []
                 for m in mv:
-                    if m["tech"] not in allowed or not (m["place"] or m["elim"]):
+                    if m["tech"] not in allowed or not acts(m):
                         continue
                     code, name, mb = classify(m, p)
                     if code in ban_codes:
@@ -326,15 +359,19 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
             # tries forcing chains / dynamic / nested forcing / Nishio / pattern overlay (state_moves never lists them);
             # such a step is an Extreme move. A guess means really stuck -> Unknown.
             # the same state in another contents() route takes the same step: one solver call per state
-            key1 = ("ff", tuple(vals), tuple(cand)) if _CACHE is not None else None
+            key1 = ("ff", tuple(vals), tuple(cand), lkey()) if _CACHE is not None else None
             m = _CACHE.get(key1, False) if key1 is not None else False
             if m is False:
-                st1, _ = CB.solve(q, P, cpuzzle=cp, cand=mask, max_steps=4, assume_unique=False)  # first: maybe notes
+                st1, _ = CB.solve(q, P, cpuzzle=cp, cand=mask, max_steps=4, assume_unique=False, labels=labels())
                 x = next((y for y in st1 if y.move.feat[0] not in notes), None)
                 # guessing off (default): the solver's last resort is a proof by full search (TRIAL), Extreme too
                 stop = (S.GUESS, S.TRIAL) if P.get("allow_guess", False) else (S.GUESS,)
                 m = None
-                if x is not None and x.move.feat[0] not in stop and (x.move.place or x.move.elim):
+                if (
+                    x is not None
+                    and x.move.feat[0] not in stop
+                    and (x.move.place or x.move.elim or (chaos and (x.move.lplace or x.move.lelim)))
+                ):
                     m = {
                         "tech": x.move.feat[0],
                         "name": S.TECH_NAMES.get(x.move.feat[0], "?"),
@@ -343,6 +380,7 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
                         "elim": [tuple(e) for e in (x.move.elim or ())],
                         "xmeta": getattr(x.move, "xmeta", None),
                         "d": float(x.move.d) if x.move.d is not None else None,
+                        **({"lplace": x.move.lplace, "lelim": list(x.move.lelim)} if chaos else {}),
                     }
                 if key1 is not None:
                     _CACHE[key1] = m
@@ -371,6 +409,7 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
                 "elims": [tuple(e) for e in m["elim"]],
                 "seg": seg,
                 "d": m.get("d"),
+                **({"lplace": m.get("lplace"), "lelims": list(m.get("lelim") or ())} if chaos else {}),
             }
         )
     if target is not None:
@@ -475,10 +514,16 @@ def _states(p, steps):
         if vals[c]:
             for x in p.peer_list[c]:
                 cand[x] &= ~(1 << (vals[c] - 1))
+    chaos = [c_["cells"] for c_ in getattr(p, "constraints", ()) if c_.get("type") == "chaos"]
+    lab, lcand = [0] * N, [0] * N  # regions to find: labels travel with each state (q._pm_labels)
+    for cells in chaos:
+        for x in cells:
+            lcand[x] = (1 << D) - 1
     for st in steps:
         q = copy.copy(p)
         q.givens = {c: v for c, v in enumerate(vals) if v}
         q.domains = [cand[c] if not vals[c] else 1 << (vals[c] - 1) for c in range(N)]
+        q._pm_labels = (list(lab), list(lcand)) if chaos else None
         yield q
         if st["place"]:
             c, d = st["place"]
@@ -487,6 +532,15 @@ def _states(p, steps):
                 cand[x] &= ~(1 << (d - 1))
         for c, d in st["elims"]:
             cand[c] &= ~(1 << (d - 1))
+        if chaos:
+            if st.get("lplace"):
+                c, k = st["lplace"]
+                lab[c], lcand[c] = k, 1 << (k - 1)
+            for c, k in st.get("lelims") or ():
+                if not lab[c]:
+                    lcand[c] &= ~(1 << (k - 1))
+                    if lcand[c] and not lcand[c] & (lcand[c] - 1):
+                        lab[c] = lcand[c].bit_length()
 
 
 def contents(p, P, alternatives=True, deadline=None, base=None):
@@ -569,9 +623,10 @@ def _contents(p, P, alternatives, deadline=None, base=None):
                     details=True,
                     cpuzzle=getattr(p, "_bp_cpuzzle", None),
                     cand=q.domains,
+                    labels=getattr(q, "_pm_labels", None),
                 ):
                     c2, _, b2 = classify(m, p)
-                    if b2 == b and c2 != code and (m["place"] or m["elim"]):
+                    if b2 == b and c2 != code and (m["place"] or m["elim"] or m.get("lplace") or m.get("lelim")):
                         seen.add(c2)
             alt0 = None
             for y in sorted(seen, key=lambda c_: (_order(c_), c_)):  # ties by code: deterministic in every process
@@ -780,7 +835,11 @@ def explain_steps(p, P, steps):
         if ex is None and t is not None:
             try:
                 st1, _ = CB.solve(
-                    q, P, disabled=set(S.TECH_NAMES) - {t} - notes, max_steps=81 if st["band"] == 0 else 30
+                    q,
+                    P,
+                    disabled=set(S.TECH_NAMES) - {t} - notes,
+                    max_steps=81 if st["band"] == 0 else 30,
+                    labels=getattr(q, "_pm_labels", None),
                 )
                 for _, step, state in E.replay(q, st1):
                     mv = step.move

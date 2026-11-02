@@ -30,6 +30,8 @@ struct LEntry {
     std::vector<uint8_t> vals;
     std::vector<uint32_t> cand, written;
     std::vector<int> solution, colours;
+    std::vector<uint8_t> lab;      // regions to find: the label state (empty without regions)
+    std::vector<uint32_t> lcand;
     // band logic: the per-solve state its output depends on (its two early-return caps, the escalation pass) and
     // what one call spends of the budget, replayed on a hit
     int band_state;
@@ -104,6 +106,8 @@ void copy_slice(const MoveBuf& b, size_t n0, MoveBuf& to) {
         to.covers.insert(to.covers.end(), b.covers.begin() + a.cov_off, b.covers.begin() + a.cov_off + a.cov_n);
         m.el_off = (int)to.elims.size();
         to.elims.insert(to.elims.end(), b.elims.begin() + a.el_off, b.elims.begin() + a.el_off + a.el_n);
+        m.lel_off = (int)to.lels.size();
+        to.lels.insert(to.lels.end(), b.lels.begin() + a.lel_off, b.lels.begin() + a.lel_off + a.lel_n);
         m.pat_off = (int)to.pats.size();
         to.pats.insert(to.pats.end(), b.pats.begin() + a.pat_off, b.pats.begin() + a.pat_off + a.pat_n);
         m.ex_off = (int)to.ex.size();
@@ -186,6 +190,7 @@ void Solver::collect_strategy(Strategy& s, MoveBuf& b) {
     const pm_long bnow = band ? band_budget_now : 0;
     uint64_t h = std::hash<std::string>()(name) ^ (p.uid * 0x9E3779B97F4A7C15ULL) ^ lcache_params;
     h = mix(mix(mix(h, vals), cand), written_override);
+    if (has_regions()) h = mix(mix(h, lab), lcand);  // regions to find: the listing depends on the labels too
     const size_t n0 = b.moves.size();
     const LEntry* hit = g_lcache.find(
         h,
@@ -193,7 +198,7 @@ void Solver::collect_strategy(Strategy& s, MoveBuf& b) {
             if (e.pz != &p || e.uid != p.uid || e.params != lcache_params || e.canon != canon ||
                 e.assume_unique != opt.assume_unique || e.strat != name || e.vals != vals || e.cand != cand ||
                 e.written != written_override || e.solution != opt.solution || e.colours != opt.colours ||
-                e.band_state != bstate || e.band_now != bnow)
+                e.band_state != bstate || e.band_now != bnow || e.lab != lab || e.lcand != lcand)
                 return false;
             for (const auto& r : e.reads)
                 if (disabled.v[r.first] != r.second) return false;
@@ -212,8 +217,9 @@ void Solver::collect_strategy(Strategy& s, MoveBuf& b) {
     s.collect(*this, b);
     disabled.rec = nullptr;
     if (deadline_passed() || b.moves.size() < n0) return;  // cut short, or it removed moves listed before it
-    LEntry e{&p, p.uid, lcache_params, canon, opt.assume_unique, name, vals, cand, written_override, opt.solution,
-             opt.colours, bstate, bnow, band_spent - spent0, band_total - total0, {}, n0, b.moves.size() - n0, {}};
+    LEntry e{&p,           p.uid, lcache_params, canon, opt.assume_unique, name, vals, cand, written_override, opt.solution,
+             opt.colours,  lab,   lcand,         bstate, bnow, band_spent - spent0, band_total - total0, {}, n0,
+             b.moves.size() - n0, {}};
     for (size_t t = 0; t < rec.size(); ++t)
         if (rec[t]) e.reads.emplace_back((int)t, disabled.v[t]);
     copy_slice(b, n0, e.moves);

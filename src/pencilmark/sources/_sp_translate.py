@@ -67,9 +67,93 @@ UNMODELLED_RULES = (
 )
 
 
-def unmodelled_rules(text):
-    """the mechanics of UNMODELLED_RULES a (lower-case) rules text names, as refusal reasons"""
-    return [f"rule '{label}'" for label, rx in UNMODELLED_RULES if re.search(rx, text)]
+def unmodelled_rules(text, chaos_ok=False):
+    """the mechanics of UNMODELLED_RULES a (lower-case) rules text names, as refusal reasons; chaos_ok: the reader
+    models chaos construction itself (SudokuPad, regions to find)"""
+    return [
+        f"rule '{label}'"
+        for label, rx in UNMODELLED_RULES
+        if re.search(rx, text) and not (chaos_ok and label == "chaos")
+    ]
+
+
+# chaos construction (format 6.3): the rules say the solver finds the regions; read only when the file draws none
+CHAOS_TEXT = re.compile(
+    r"chaos construction|divide the grid into (?:\w+ )?(?:orthogonally[- ])?(?:connected )?regions"
+    r"|regions?[^.]{0,40}(?:must be|are to be|have to be|to be) (?:determined|located|found|deduced) by the solver"
+    r"|the solver (?:must|has to|needs to) (?:determine|locate|find) (?:the )?regions"
+)
+# element kinds whose cells lie in one region / straddle a border, said explicitly ("digits along a thermometer belong
+# to the same region"); counting or seeing rules that merely mention regions are other mechanics and are refused
+REGION_VERB = r"(?:belong to|belongs to|lie in|lies in|are in|is in|stay in|stays in|located in)"
+REGION_KINDS = (
+    ("thermo", r"thermo", ("lt", "le")),
+    ("black", r"black (?:dot|kropki|circle)", ("ratio",)),
+    ("white", r"white (?:dot|kropki|circle)", ("diff",)),
+    ("x", r"\bxs?\b(?! ?-)", ("sum10",)),
+    ("v", r"\bvs?\b", ("sum5",)),
+    ("cage", r"cage", ("cage",)),
+)
+
+
+def region_statements(text):
+    """element kind -> True (its cells share a region) / False (they lie in different regions)"""
+    out = {}
+    for sent in re.split(r"(?<=[.!\n])\s*", (text or "").lower()):
+        if "region" not in sent:
+            continue
+        diff = re.search(
+            rf"{REGION_VERB} (?:two )?different regions|(?:do not|does not|don't|never|cannot|can't) {REGION_VERB} "
+            r"(?:the )?same region|cross(?:es)? a region border|separated by a region border",
+            sent,
+        )
+        same = re.search(rf"{REGION_VERB} (?:the )?(?:same|one|a single) region", sent)
+        if diff or same:
+            for kind, pat, _ in REGION_KINDS:
+                if re.search(pat, sent):
+                    out[kind] = not diff
+    return out
+
+
+def chaos_rules(P, p, n, rules):
+    """the chaos constraint, drawn borders (dark lines along grid lines) and the region statements of the rules text,
+    as engine constraints"""
+    idx = {rc: i for i, rc in enumerate(p.coords)}
+    cons = [{"type": "chaos", "cells": list(range(n * n))}]
+    borders = set()
+    for ln in P.get("lines") or []:
+        wp = [w for w in (ln.get("wayPoints") or []) if w]
+        col = str(ln.get("color", "")).lower()
+        if not wp or color_name(col) != "black" or any(abs(v - round(v)) > 0.01 for w in wp for v in w):
+            continue
+        for (y1, x1), (y2, x2) in zip(wp, wp[1:]):
+            y1, x1, y2, x2 = map(round, (y1, x1, y2, x2))
+            if x1 == x2:
+                for y in range(min(y1, y2), max(y1, y2)):
+                    if (y, x1 - 1) in idx and (y, x1) in idx:
+                        borders.add((idx[(y, x1 - 1)], idx[(y, x1)]))
+            elif y1 == y2:
+                for x in range(min(x1, x2), max(x1, x2)):
+                    if (y1 - 1, x) in idx and (y1, x) in idx:
+                        borders.add((idx[(y1 - 1, x)], idx[(y1, x)]))
+    same = []
+    kinds = {k: rels for k, _, rels in REGION_KINDS}
+    for kind, is_same in region_statements(rules).items():
+        pairs = []
+        for r in p.relations:
+            k = r[0] + (str(r[3]) if r[0] == "sum" and len(r) > 3 else "")
+            if k in kinds[kind]:
+                pairs.append((r[1], r[2]))
+        if "cage" in kinds[kind]:
+            pairs += [(a, b) for g in p.groups if g.kind == "cage" for a, b in zip(g.cells, g.cells[1:])]
+        for a, b in pairs:
+            if is_same:
+                same.append([a, b])
+            elif abs(p.coords[a][0] - p.coords[b][0]) + abs(p.coords[a][1] - p.coords[b][1]) == 1:
+                borders.add((min(a, b), max(a, b)))
+    cons += [{"type": "region_border", "cells": [a, b]} for a, b in sorted(borders)]
+    cons += [{"type": "same_region", "cells": s} for s in same]
+    return cons
 
 
 RULE_WORDS = {
@@ -576,6 +660,7 @@ def translate(sp, page_text=None, overrides=None):
     whole = any(len({tuple(x) for x in reg if x}) == n * n for reg in regions)
     if whole:  # one region over the whole grid: no boxes, rows and columns only (Spiraling Circles, 000O94)
         regions = []
+    chaos = not regions and bool(CHAOS_TEXT.search(rules.lower()))  # regions to find (format 6.3)
     p = M.Puzzle(D=n, coords=M._grid_coords(n))
     for r in range(n):
         p.groups.append(M.Group(f"r{r + 1}", tuple(r * n + c for c in range(n)), "row", True))
@@ -591,7 +676,7 @@ def translate(sp, page_text=None, overrides=None):
             boxes.append(tuple(left))
     for k, cs in enumerate(boxes):
         p.groups.append(M.Group(f"b{k + 1}", cs, "box", len(cs) == n))
-    if not regions and (whole or NO_BOXES.search(rules.lower())):
+    if not regions and (whole or chaos or NO_BOXES.search(rules.lower())):
         pass  # rows and columns only ("Latin square"): no implied boxes
     elif not regions:  # SudokuPad implies standard boxes when none are drawn
         bh, bw = {4: (2, 2), 6: (2, 3), 8: (2, 4), 9: (3, 3), 12: (3, 4), 16: (4, 4)}.get(n, (0, 0))
@@ -973,7 +1058,10 @@ def translate(sp, page_text=None, overrides=None):
     used["_quad_text"] = int(bool(QUAD_TEXT.search(text_rules)))
     quadruples(P, n, p, used, unknown, idx, inside)
     used.pop("_quad_text")
-    unknown += unmodelled_rules(text_rules)
+    unknown += unmodelled_rules(text_rules, chaos_ok=chaos)
+    if chaos:
+        p.constraints += chaos_rules(P, p, n, rules)
+        used["chaos"] += 1
     # rules handled above: the text mentions them, so something must have been built for them
     for kw, key in (
         ("little killer", "little_killer"),

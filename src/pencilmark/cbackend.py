@@ -192,6 +192,9 @@ def code_name(code):
         return "mental subset chain"
     if 6000 <= code < 7000:
         return "named table rule"
+    if 7100 <= code < 7200:  # regions to find (chaos_logic.cpp)
+        return {7101: "region sealed", 7102: "region's last cells", 7111: "region exclusion",
+                7112: "equal digits split regions", 7113: "region exclusion"}.get(code, f"region {code}")  # fmt: skip
     if 4500 <= code < 4600:
         t = code - 4500
         return ("cage/sum" if t == 0 else CTYPES[t] if t < len(CTYPES) else f"rule{t}") + " in the head"
@@ -215,7 +218,7 @@ class CMove(S.Move):
     """pencilmark.solver.Move plus structured metadata of the C++-only
     techniques: xmeta (dict, see XMETA_KEYS), family, code."""
 
-    __slots__ = ("xmeta", "family", "code", "explain")
+    __slots__ = ("xmeta", "family", "code", "explain", "lplace", "lelim")
 
 
 _CPUZZLES = {}  # repr of the make_puzzle arguments -> C++ puzzle; a card builds the same puzzle about 6 times
@@ -355,6 +358,7 @@ def solve(
     explain=False,
     colour_seeds=None,
     cand=None,
+    labels=None,
 ):
     """Run the C++ solver. Returns (steps, solved) with steps as
     pencilmark.solver.Step objects (alts = feature tuples, move.d set).
@@ -380,10 +384,11 @@ def solve(
     ]
     args.append(bool(explain))
     args.append(_colour_list(colour_seeds, puzzle.N))
+    kw = {"labels": (list(labels[0]), list(labels[1]))} if labels is not None else {}  # regions to find: mid-solve
     if cand is not None:
-        raw, solved = _C.solve(*args, cand=[int(x) for x in cand])
+        raw, solved = _C.solve(*args, cand=[int(x) for x in cand], **kw)
     else:
-        raw, solved = _C.solve(*args)
+        raw, solved = _C.solve(*args, **kw)
     info = _C.puzzle_info(cp, disabled) if explain else None
     steps = []
     for row in raw:
@@ -393,6 +398,7 @@ def solve(
         m.feat = alts[chosen]
         m.place = place
         m.elim = el
+        m.lplace, m.lelim = row[15] if len(row) > 15 else (None, ())  # regions to find: label effects
         m.name = _name(puzzle, *nm)
         m.d = d
         tech = m.feat[0]
@@ -456,6 +462,7 @@ def state_moves(
     details=False,
     cand=None,
     skip=(),
+    labels=None,
 ):
     """Every move available at ONE state (puzzle.givens = filled cells; puzzle.domains = the marks / allowed
     digits per cell), across all technique families (direct and notes; tiers not gated -- all_tiers is
@@ -487,6 +494,7 @@ def state_moves(
         bool(assume_unique),
         int(limit_per_tech),
     ]
+    kw = {"labels": (list(labels[0]), list(labels[1]))} if labels is not None else {}  # regions to find: mid-solve
     if cand is not None:  # mid-solve candidates as a mask; cpuzzle keeps the puzzle's own domains (build it once)
         raw = _C.state_moves(
             *args,
@@ -494,15 +502,24 @@ def state_moves(
             bool(details),
             [int(x) for x in cand],
             skip=[int(t) for t in skip],
+            **kw,
         )
     elif written is not None or details:
         raw = _C.state_moves(
-            *args, None if written is None else [int(x) for x in written], bool(details), skip=[int(t) for t in skip]
+            *args,
+            None if written is None else [int(x) for x in written],
+            bool(details),
+            skip=[int(t) for t in skip],
+            **kw,
         )
     else:
-        raw = _C.state_moves(*args, skip=[int(t) for t in skip])
+        raw = _C.state_moves(*args, skip=[int(t) for t in skip], **kw)
+    chaos = any(c.get("type") == "chaos" for c in getattr(puzzle, "constraints", ()))
     out = []
     for r in raw:
+        lfx = None
+        if chaos:  # the label effects come last (regions to find)
+            lfx, r = r[-1], r[:-1]
         t, code, pl, el, d = r[:5]
         m = {
             "tech": t,
@@ -512,6 +529,8 @@ def state_moves(
             "elim": list(el),
             "d": d,
         }
+        if lfx is not None:
+            m["lplace"], m["lelim"] = lfx[0], list(lfx[1])
         if len(r) > 9:  # the engine's explanation records and naming triple (decode with explain_record)
             m["ex"], m["nm"] = list(r[9]), tuple(r[10])
         if len(r) > 5:

@@ -42,6 +42,8 @@ SBD,Min/max sum bounds,,15,,-,sum_bounds,
 NTR,Naked Triple,,21,,3.6,naked_triple,
 HTR,Hidden Triple,,22,,4,hidden_triple,
 CCL,High / Low and Odd / Even Colouring,,99,,-,class_colouring,
+RSC,Region Size Cap,,100,,-,region_size_cap,
+REX,Region Exclusion,,101,,-,region_exclusion,
 XWG,X-Wing,Hard,1,SKY FXW FRK SWF,3.2,x_wing,"an X-Wing is a Skyscraper whose ends line up, a finless finned X-Wing, a Franken X-Wing using two lines, a Swordfish with a degenerate third line"
 SKY,Skyscraper,Hard,2.1,TUR,6.5,skyscraper,"Skyscraper, 2-String Kite and Empty Rectangle are 3-link single-digit chains (Turbot Fish)"
 KTE,2-String Kite,Hard,2.2,TUR,6.5,two_string_kite,a 3-link single-digit chain (Turbot Fish)
