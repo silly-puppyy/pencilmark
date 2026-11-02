@@ -516,11 +516,13 @@ def _h_band_logic(ctx):
     base, cover = eng.get("base") or {}, eng.get("cover") or {}
     hn = [u["name"] for u in base.get("units") or [] if u and u.get("name")]
     cn = [u["name"] for u in cover.get("units") or [] if u and u.get("name")]
-    rn = [_rule_label(r) for r in base.get("rules") or []]
+    rn = list(dict.fromkeys(_rule_label(r, ctx.nm) for r in base.get("rules") or []))
     units = _x_units(ctx, hn + cn)
     region = " and ".join(_label(ctx, n) for n in hn) if hn else "this band"
     rules = [_label(ctx, n) for n in cn] + rn
-    what = (" with " + ", ".join(rules[:6]) + (" ..." if len(rules) > 6 else "")) if rules else ""
+    what = (
+        (" with " + _join(rules[:4]) + (f" and {len(rules) - 4} more rules" if len(rules) > 4 else "")) if rules else ""
+    )
     eq = _band_equation(ctx, hn, cn)
     lv, cases = xm.get("level"), xm.get("cases")
     if lv == 0:
