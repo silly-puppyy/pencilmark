@@ -185,3 +185,29 @@ def test_fpuzzles_outside_text_clues():
     assert [t["cells"] for t in out["text"]] == [["R5C5"]]  # inside the grid: left alone
     two = FT.normalise(dict(fp, ruleset="Sandwich sums and skyscrapers"))
     assert not two.get("_xsum") and not two.get("sandwichsum")  # two families named: ambiguous, left alone
+
+
+def test_unmodelled_rules_refused():
+    """a mechanic the engine does not model, defined in the rules, refuses the puzzle (its cages or arrows would read as
+    killer cages or sums); the same words in a list of the author's series or the solvers' names do not"""
+    from pencilmark.sources._sp_translate import unmodelled_rules
+
+    for text, label in (
+        ("equality cages: cages must have an equal number of low and high digits", "equality cage"),
+        ("look-and-say cages: read the clue out loud", "look-and-say"),
+        ("cells a camel move apart may not contain the same digit", "camel"),
+        ("cold arrows: a blue arrow points toward a cell n distance away", "cold / hot arrow"),
+        ("congruent boxes: the two pairs of coloured boxes are congruent", "congruent"),
+    ):
+        assert unmodelled_rules(text) == [f"rule '{label}'"], text
+    for text in (
+        "all my series: equality cages, equalite cages, shifter lines",
+        "solved by mobiustrip, camellia, ...",
+        "the previous puzzle in the series: shifter lines 118: hot arrows",
+        "white dots: one digit is congruent to one more than the other modulo 9",
+    ):
+        assert unmodelled_rules(text) == [], text
+    fp = fpuzzles_json(CLASSIC)
+    fp["ruleset"] = "Normal sudoku rules apply. Clones: boxes 1 and 5 are clones of each other."
+    with pytest.raises(sources.UnsupportedPuzzle, match="clone"):
+        FP.to_puzzle(fpuzzles_url(fp))

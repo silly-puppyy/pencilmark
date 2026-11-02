@@ -30,6 +30,48 @@ from .. import model as M
 
 _log = logging.getLogger(__name__)
 
+# mechanics the engine does not model, named in a rules text: the reader refuses the puzzle rather than read its elements
+# as something else (an equality cage drawn as a cage would grade as a killer cage). Both readers check these.
+UNMODELLED_RULES = (
+    ("fog", r"fog"),
+    ("chaos", r"chaos"),
+    ("yin", r"yin"),
+    ("modifier", r"modifier"),
+    ("doubler", r"doubler"),
+    ("minesweeper", r"minesweeper"),
+    ("fillomino", r"fillomino"),
+    ("clone", r"clone"),
+    ("loop", r"loop"),
+    ("snake", r"snake"),
+    ("slitherlink", r"slitherlink"),
+    ("star battle", r"star battle"),
+    ("nurikabe", r"nurikabe"),
+    ("cave", r"cave"),
+    ("indexing", r"indexing"),
+    ("ten line", r"ten line"),
+    ("10 line", r"10 line"),
+    # the newer entries want the mechanic defined ("equality cages: ..."), not only named: pages list an author's other
+    # series and the solvers' names (checked on the 28,333 logic-masters sudoku texts)
+    ("look-and-say", r"look[- ]and[- ]say (?:cage|line|clue)"),
+    ("equality cage", r"equa(?:lity|lite) cages?\s*(?::|must|have|contain|are)"),
+    ("rellik", r"\brellik cage"),
+    ("counting cage", r"counting cages?\s*:"),
+    ("congruent", r"\bcongruent (?:boxes|regions|cages)"),
+    ("camel", r"\b(?:anti-?)?camels?\b"),
+    ("pointer", r"\bpointe(?:r|ing) (?:arrows?|thermos?)\s*(?::|constraint)"),
+    ("indexer", r"\bindex(?:er)? line|\bindexers?\b"),
+    ("cold / hot arrow", r"\b(?:cold|hot) arrows?\s*:"),
+    ("pairrow", r"\bpai?rrows?\s*[:-]|(?:all|not all)(?: possible)? pai?rrows"),
+    ("screw", r"region sum screws?\s*:"),
+    ("diagonal kropki", r"diagonal kropki(?: dots?)?\s*:|diagonally connected by an? (?:black|white)"),
+)
+
+
+def unmodelled_rules(text):
+    """the mechanics of UNMODELLED_RULES a (lower-case) rules text names, as refusal reasons"""
+    return [f"rule '{label}'" for label, rx in UNMODELLED_RULES if re.search(rx, text)]
+
+
 RULE_WORDS = {
     "slow_thermo": [r"slow[- ]?thermo"],
     "thermo": [r"thermo"],
@@ -877,27 +919,7 @@ def translate(sp, page_text=None, overrides=None):
     used["_quad_text"] = int(bool(QUAD_TEXT.search(text_rules)))
     quadruples(P, n, p, used, unknown, idx, inside)
     used.pop("_quad_text")
-    for kw in (
-        "fog",
-        "chaos",
-        "yin",
-        "modifier",
-        "doubler",
-        "minesweeper",
-        "fillomino",
-        "clone",
-        "loop",
-        "snake",
-        "slitherlink",
-        "star battle",
-        "nurikabe",
-        "cave",
-        "indexing",
-        "ten line",
-        "10 line",
-    ):
-        if kw in text_rules:
-            unknown.append(f"rule '{kw}'")
+    unknown += unmodelled_rules(text_rules)
     # rules handled above: the text mentions them, so something must have been built for them
     for kw, key in (
         ("little killer", "little_killer"),

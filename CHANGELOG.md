@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Readers refuse puzzles whose rules define a mechanic the engine does not model, instead of reading its elements as
+  something else: equality and EquaLite cages, look-and-say cages, Rellik cages, counting cages (all read as killer
+  cages before), congruent boxes, anti-camel, pointer arrows and thermos, index lines and indexers, cold and hot
+  arrows, pairrows, region-sum screws and diagonal kropki dots. The f-puzzles reader now checks the rules text for
+  these and for the words the SudokuPad reader already refused (clones, modifiers, ...). On the 500 most-solved
+  logic-masters sudokus: 21 misread puzzles (no solution or several) are now refused with the mechanic named; every
+  puzzle graded before still grades. A named mechanic counts only when the rules define it ("equality cages: ..."),
+  not when a page lists the author's other series.
 - Generator: with publishing checks (`quality` in the request), a found puzzle's checks and its full card are one grading
   instead of two (a checked card has the same difficulty, time, band and contents: 138 of 138 development puzzles).
   The same results, faster: the nine-variants example 135 s -> 121 s.

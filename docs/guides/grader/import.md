@@ -66,7 +66,9 @@ robots.txt obeyed and a pause between requests to the same site.
 
 A rule pencilmark cannot map exactly is refused with the list of what it could not read; nothing is dropped silently.
 The error is `pencilmark.sources.UnsupportedPuzzle`, and its message names each element, for example "pink line" or
-"generic line (meaning in rules text)": a line whose meaning only the rules text gives.
+"generic line (meaning in rules text)": a line whose meaning only the rules text gives. A puzzle whose rules define a
+mechanic pencilmark does not model, such as equality cages, clones or fog of war, is refused by name ("rule 'equality
+cage'") even when its elements look like familiar ones, so its cages never grade as killer cages.
 
 For those, `infer=True` lets the reader try the possible meanings of each unexplained element and keep the reading
 under which the puzzle has exactly one solution (and agrees with its embedded solution, when the link has one); the

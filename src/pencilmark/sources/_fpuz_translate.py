@@ -122,6 +122,11 @@ def translate(fp, line_kinds=None):
         if fp.get(k):
             return None, f"unsupported: {k}"
     text0 = (fp.get("ruleset") or "").lower()
+    from . import _sp_translate as ST
+
+    refused = ST.unmodelled_rules(text0)
+    if refused:
+        return None, "unsupported: " + ", ".join(refused)
     circles_counting = bool(fp.get("circle")) and bool(re.search(COUNTING_CIRCLES, text0))
     for k in ("cage", "circle"):
         if fp.get(k) and not (k == "circle" and circles_counting):
