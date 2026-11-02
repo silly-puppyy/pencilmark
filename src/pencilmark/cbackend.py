@@ -194,7 +194,8 @@ def code_name(code):
         return "named table rule"
     if 7100 <= code < 7200:  # regions to find (chaos_logic.cpp)
         return {7101: "region sealed", 7102: "region's last cells", 7111: "region exclusion",
-                7112: "equal digits split regions", 7113: "region exclusion"}.get(code, f"region {code}")  # fmt: skip
+                7112: "equal digits split regions", 7113: "region exclusion", 7121: "region cannot reach",
+                7122: "too small for a region", 7131: "dead end", 7141: "region exit"}.get(code, f"region {code}")  # fmt: skip
     if 4500 <= code < 4600:
         t = code - 4500
         return ("cage/sum" if t == 0 else CTYPES[t] if t < len(CTYPES) else f"rule{t}") + " in the head"

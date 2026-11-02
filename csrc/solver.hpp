@@ -82,6 +82,9 @@ enum Tech {
     CLASS_COLOUR = 100,   ///< class colouring: low / high or odd / even links between cells; sides fixed by known cells or house counts
     REGION_CAP = 103,     ///< regions to find: a region with D known cells is sealed; D cells that may take a region take it
     REGION_EXCL = 104,    ///< regions to find: a placed digit leaves the other cells of its region; equal digits split regions
+    REGION_REACH = 105,   ///< regions to find: a cell the region cannot reach with its remaining cells is not in it
+    DEAD_END = 106,       ///< regions to find: a cell must share its region with a neighbour (no one-cell region)
+    REGION_EXIT = 107,    ///< regions to find: a region short of cells with one way out takes that cell
     MENTAL_NOTES = 84,    ///< single after notes logic done in the head (subset / pointing / combination on the mental view)    // line consistency on 3-cell windows (local scan of a long line)  // both options of a 2-way choice lead to the same placement / elimination  // short chain (<= 5 links) on the no-notes mental view, leading to a single  // bounded case split: bivalue cell, contradiction within a few direct rounds
     N_TECH = 128
 };
@@ -625,6 +628,9 @@ public:
     // ---- regions to find (chaos_logic.cpp) ----
     void region_cap(MoveBuf& out);   ///< a region with D known cells is sealed; D cells that may take a label take it
     void region_excl(MoveBuf& out);  ///< a placed digit leaves its region's other cells; equal digits split regions
+    void region_reach(MoveBuf& out);  ///< cells out of a region's reach (component, distance budget) leave it
+    void dead_end(MoveBuf& out);      ///< a cell takes only labels some neighbour can take
+    void region_exit(MoveBuf& out);   ///< a short region with a single free neighbouring cell takes it
     /// facts read off the clues alone (relations on an empty grid; with line shape): fires once as one step
     void clue_facts(MoveBuf& out);
     /// relation dominoes: a digit every allowed pair uses leaves common houses; two dominoes locking four digits

@@ -193,7 +193,8 @@ static bool strategy_off(const char* name, const Flags& disabled) {
         {"ur", {UNIQUE_RECT}}, {"xur", {UNIQUE_RECT}}, {"bug", {BUG_PLUS1}}, {"gurth", {GURTH}},
         {"pairs", {NPAIR, HPAIR}}, {"triples", {NTRIPLE, HTRIPLE}}, {"quads", {NQUAD, HQUAD}},
         {"digitcount", {DIGIT_COUNT}}, {"equaldigits", {EQUAL_DIGITS}}, {"colouralgebra", {COLOUR_ALGEBRA}}, {"classcolour", {CLASS_COLOUR}}, {"cluefacts", {CLUE_FACTS, CLUE_SHAPE}},
-        {"ruleintersect", {RULE_INTERSECT}}, {"regioncap", {REGION_CAP}}, {"regionexcl", {REGION_EXCL}}, {"shorttrial", {SHORT_TRIAL}}, {"humancase", {HUMAN_CASE}},
+        {"ruleintersect", {RULE_INTERSECT}}, {"regioncap", {REGION_CAP}}, {"regionexcl", {REGION_EXCL}},
+        {"regionreach", {REGION_REACH}}, {"deadend", {DEAD_END}}, {"regionexit", {REGION_EXIT}}, {"shorttrial", {SHORT_TRIAL}}, {"humancase", {HUMAN_CASE}},
         {"whatif", {WHAT_IF}}, {"eitherway", {EITHER_WAY}}};
     auto it = TECHS.find(name);
     if (it == TECHS.end()) return false;
@@ -348,8 +349,12 @@ Solver::Solver(const Puzzle& pz, const Params& prm, const SolveOptions& o)
             const char* name() const override { return n; }
             void collect(Solver& s, MoveBuf& b) override { f(s, b); }
         };
-        tiers.insert(tiers.begin(), Tier{std::make_shared<Fn>("regioncap", [](Solver& s, MoveBuf& b) { s.region_cap(b); }),
-                                         std::make_shared<Fn>("regionexcl", [](Solver& s, MoveBuf& b) { s.region_excl(b); })});
+        tiers.insert(tiers.begin(),
+                     Tier{std::make_shared<Fn>("regioncap", [](Solver& s, MoveBuf& b) { s.region_cap(b); }),
+                          std::make_shared<Fn>("regionexcl", [](Solver& s, MoveBuf& b) { s.region_excl(b); }),
+                          std::make_shared<Fn>("regionreach", [](Solver& s, MoveBuf& b) { s.region_reach(b); }),
+                          std::make_shared<Fn>("deadend", [](Solver& s, MoveBuf& b) { s.dead_end(b); }),
+                          std::make_shared<Fn>("regionexit", [](Solver& s, MoveBuf& b) { s.region_exit(b); })});
         for (int t : {UNIQUE_RECT, BUG_PLUS1, GURTH}) disabled.set(t, 1);
         any_disabled = true;
     }
@@ -770,7 +775,14 @@ void Solver::collect_all(MoveBuf& b, bool direct_phase) {
         if (!disabled[MENTAL_NOTES]) run("d:mentalnotes", [&] { mental_notes(b); });
         if (!disabled[COLOUR_ALGEBRA]) run("d:colour", [&] { colour_algebra(b, true); });
         if (!disabled[WHAT_IF]) run("d:whatif", [&] { what_if(b, true); });
-        if (has_regions()) run("d:region", [&] { region_cap(b); region_excl(b); });  // no notes needed
+        if (has_regions())  // no notes needed
+            run("d:region", [&] {
+                region_cap(b);
+                region_excl(b);
+                region_reach(b);
+                dead_end(b);
+                region_exit(b);
+            });
         return;
     }
     for (auto& tier : tiers)

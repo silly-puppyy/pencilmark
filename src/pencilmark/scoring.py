@@ -110,6 +110,11 @@ DEFAULT_PARAMS = {
         S.SUM_BOUND: 1.5,
         S.CLASS_COUNT: 2.4,
         S.CLASS_COLOUR: 5.0,
+        S.REGION_EXCL: 1.6,  # regions to find: provisional until calibrated on chaos puzzles
+        S.REGION_CAP: 2.0,
+        S.DEAD_END: 2.0,
+        S.REGION_EXIT: 2.2,
+        S.REGION_REACH: 2.6,
         S.DOMINO: 2.2,
         S.COLOUR_ALGEBRA: 5.4,
         S.N_WING: 6.2,

@@ -749,6 +749,20 @@ def _h_region(ctx):
             f" (or the cells that can still join it are exactly the ones it needs)"
         )
         title = "region size"
+    elif ctx.tech == S.REGION_REACH:
+        why = (
+            f"The region of {nm.cells(pc)} needs {D} connected cells and has only so many left: cells it cannot reach "
+            "through cells that may still join it are in other regions"
+            if pc
+            else f"A group of cells cut off from the rest is too small to hold a whole region of {D} cells"
+        )
+        title = "region cannot reach"
+    elif ctx.tech == S.DEAD_END:
+        why = f"No region has one cell, so a cell joins a region that one of its neighbours ({nm.cells(pc)}) can join"
+        title = "dead end"
+    elif ctx.tech == S.REGION_EXIT:
+        why = f"The region of {nm.cells(pc)} still needs cells and has one way out, so it takes that cell"
+        title = "region exit"
     else:
         why = (
             f"A region holds each digit once: the digit in {nm.cells(pc)} cannot repeat in its region, and a cell "

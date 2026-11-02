@@ -77,12 +77,12 @@ CLUE_FACTS = (
     101  # facts read off the clues alone (C++ only): relations on an empty grid (no 5 on a whisper, thermo ranges)
 )
 CLUE_SHAPE = 102  # clue facts with the line shape (C++ only): partners in one house needing more digits than allowed
-REGION_CAP = (
-    103  # regions to find (C++ only): a region with D known cells is sealed; D cells that may take a region take it
-)
-REGION_EXCL = (
-    104  # regions to find (C++ only): a placed digit leaves its region's other cells; equal digits split regions
-)
+# regions to find (C++ only, chaos_logic.cpp)
+REGION_CAP = 103  # a region with D known cells is sealed; D cells that may take a region take it
+REGION_EXCL = 104  # a placed digit leaves its region's other cells; equal digits split regions
+REGION_REACH = 105  # a cell out of a region's reach with its remaining cells is not in it
+DEAD_END = 106  # a cell shares its region with a neighbour (no one-cell region)
+REGION_EXIT = 107  # a region short of cells with one way out takes that cell
 CLASS_COLOUR = 100  # class colouring (C++ only): low / high or odd / even links between cells, sides fixed by known cells / house counts
 # names and flags: the technique registry (data/techniques.csv); the constants above mirror csrc/solver.hpp enum Tech,
 # and tests/test_registry.py checks all three agree

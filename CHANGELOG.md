@@ -10,8 +10,10 @@
   the same rules on 699 of 699 random small puzzles. The grader grades them: the solver keeps a region label per
   cell between steps, and two region techniques are in (region exclusion: a digit leaves the other cells of its
   region and equal digits split regions; region size cap: a region with all its cells is closed, the cells left for
-  it take it); more from the Cracking the Cryptic solves come next, so the routes still lean on the search fallback
-  where those would apply (CC Newbie: Extreme, with one trial step). The SudokuPad reader reads chaos construction
+  it take it), plus region cannot reach (cells beyond a region's remaining cells, or in a pocket too small for a
+  region), dead end (a cell shares its region with a neighbour) and region exit (a region short of cells with one
+  way out takes it); more from the Cracking the Cryptic solves come next, so the routes still lean on the search
+  fallback where those would apply (CC Newbie: Extreme, with one trial step). Prices are provisional until calibration. The SudokuPad reader reads chaos construction
   when the rules say so and the file draws no regions: drawn borders become `region_border`, and statements such as
   "digits along a thermometer belong to the same region" become `same_region` / `region_border` for that element
   kind. Of the 467 cached logic-masters chaos puzzles most are still refused or have another solution: they add

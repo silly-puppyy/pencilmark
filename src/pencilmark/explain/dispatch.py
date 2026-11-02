@@ -207,6 +207,24 @@ _X_HANDLERS = {
         "intersections+combos",
         ("Region size", "A region to find holds exactly as many cells as digits: once they are known it is closed."),
     ),
+    "REGION_REACH": (
+        _h_region,
+        "region_reach",
+        "intersections+combos",
+        ("Region cannot reach", "A region has only so many cells left: cells beyond them are in other regions."),
+    ),
+    "DEAD_END": (
+        _h_region,
+        "dead_end",
+        "singles",
+        ("Dead end", "No region has one cell: a cell takes only a region one of its neighbours can join."),
+    ),
+    "REGION_EXIT": (
+        _h_region,
+        "region_exit",
+        "intersections+combos",
+        ("Region exit", "A region still short of cells with a single way out must take it."),
+    ),
     "REGION_EXCL": (
         _h_region,
         "region_exclusion",

@@ -110,4 +110,96 @@ void Solver::region_excl(MoveBuf& out) {
     }
 }
 
+// "it can't get there": for each region, the cells that may still take its label form components; a region with known
+// cells lies in their component and within (D - known) steps of them, a region with none needs a component of D cells
+void Solver::region_reach(MoveBuf& out) {
+    if (!has_regions() || disabled[REGION_REACH]) return;
+    const int D = p.D;
+    std::vector<int> dist(p.N, -1), stack;
+    for (const auto& A : p.chaos) {
+        for (int k = 1; k <= D; ++k) {
+            const uint32_t kb = bit(k);
+            auto may = [&](int c) { return lab[c] == k || (!lab[c] && (lcand[c] & kb)); };
+            std::vector<int> known;
+            for (int c : A) {
+                dist[c] = -1;
+                if (lab[c] == k) known.push_back(c);
+            }
+            std::vector<int> lose;
+            if (!known.empty()) {  // breadth-first distance from the known cells through cells that may take k
+                std::vector<int> q = known;
+                for (int c : known) dist[c] = 0;
+                for (size_t h = 0; h < q.size(); ++h)
+                    for (int nb : p.chaos_nbr[q[h]])
+                        if (dist[nb] < 0 && may(nb)) dist[nb] = dist[q[h]] + 1, q.push_back(nb);
+                const int budget = D - (int)known.size();
+                for (int c : A)
+                    if (!lab[c] && (lcand[c] & kb) && (dist[c] < 0 || dist[c] > budget)) lose.push_back(c);
+            } else {  // no known cell: a component of fewer than D cells cannot hold the region
+                std::vector<int> comp(p.N, -1);
+                for (int s0 : A) {
+                    if (comp[s0] >= 0 || !may(s0)) continue;
+                    std::vector<int> cells{s0};
+                    comp[s0] = s0;
+                    for (size_t h = 0; h < cells.size(); ++h)
+                        for (int nb : p.chaos_nbr[cells[h]])
+                            if (comp[nb] < 0 && may(nb)) comp[nb] = s0, cells.push_back(nb);
+                    if ((int)cells.size() < D) lose.insert(lose.end(), cells.begin(), cells.end());
+                }
+            }
+            if (lose.empty()) continue;
+            Move& m = new_move(out, REGION_REACH, 1.0, (int)lose.size());
+            for (int c : lose) add_lel(out, m, c, k);
+            set_pattern(out, m, known);
+            m.code = known.empty() ? 7122 : 7121;
+        }
+    }
+}
+
+// "it would have to be its own colour in a one cell region": a cell shares its region with at least one neighbour, so
+// it keeps only the labels some neighbour can take
+void Solver::dead_end(MoveBuf& out) {
+    if (!has_regions() || disabled[DEAD_END] || p.D < 2) return;
+    for (const auto& A : p.chaos)
+        for (int c : A) {
+            if (lab[c]) continue;
+            uint32_t nbm = 0;
+            for (int nb : p.chaos_nbr[c]) nbm |= lab[nb] ? bit(lab[nb]) : lcand[nb];
+            const uint32_t off = lcand[c] & ~nbm;
+            if (!off) continue;
+            Move& m = new_move(out, DEAD_END, 1.0, popc(off));
+            for (uint32_t o = off; o; o &= o - 1) add_lel(out, m, c, lowdigit(o));
+            set_pattern(out, m, p.chaos_nbr[c]);
+            m.code = 7131;
+        }
+}
+
+// "yellow has to get out": a region with fewer than D known cells whose known cells have exactly one neighbouring cell
+// that may still join it takes that cell
+void Solver::region_exit(MoveBuf& out) {
+    if (!has_regions() || disabled[REGION_EXIT]) return;
+    const int D = p.D;
+    for (const auto& A : p.chaos)
+        for (int k = 1; k <= D; ++k) {
+            const uint32_t kb = bit(k);
+            std::vector<int> known;
+            for (int c : A)
+                if (lab[c] == k) known.push_back(c);
+            if (known.empty() || (int)known.size() >= D) continue;
+            // the known cells may be in pieces; the region's frontier is every free neighbour of any known cell
+            int exit = -1, n_exit = 0;
+            std::vector<char> seen(p.N, 0);
+            for (int c : known)
+                for (int nb : p.chaos_nbr[c])
+                    if (!seen[nb] && !lab[nb] && (lcand[nb] & kb)) seen[nb] = 1, exit = nb, ++n_exit;
+            if (n_exit != 1) continue;
+            Move& m = new_move(out, REGION_EXIT, 1.0, 1);
+            m.lpc = exit;
+            m.lpv = k;
+            for (uint32_t o = lcand[exit] & ~kb; o; o &= o - 1) add_lel(out, m, exit, lowdigit(o));
+            set_pattern(out, m, known);
+            m.code = 7141;
+        }
+}
+
 }  // namespace cs
