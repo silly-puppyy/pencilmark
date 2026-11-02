@@ -78,7 +78,7 @@ Cards for many puzzles, in input order.
 
 ### `def describe(puzzle)` {#describe}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L492)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L493)
 
 The variant name and its rules in words, from the rules alone (pencilmark/variants.py).
 
@@ -134,7 +134,7 @@ How many solutions a puzzle has, counting up to a limit.
 
 ### `def generate(spec)` {#generate}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L607)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L608)
 
 One puzzle for a "sudoku-spec" request ([Generator spec](../formats/generator-spec.md)).
 
@@ -173,7 +173,7 @@ Any accepted input -> a finalised engine Puzzle.
 
 ### `def validate(doc)` {#validate}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L468)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L469)
 
 Strict reading checks of a format_version 1 dict ([Puzzle format](../formats/puzzle-format.md) section 4).
 
@@ -191,7 +191,7 @@ Strict reading checks of a format_version 1 dict ([Puzzle format](../formats/puz
 
 ### `def fingerprint(puzzle)` {#fingerprint}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L447)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L448)
 
 Content fingerprint of a puzzle: "sha256:&lt;hex>" of its canonical form.
 
@@ -227,7 +227,7 @@ Canonical: houses and rules with "r1c1" cells, keys in a fixed order. Metadata a
 
 ### `def dumps(doc, pretty=True)` {#dumps}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L427)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L428)
 
 Canonical JSON text of a sudoku-puzzle dict: fixed key order; pretty: one grid row per line, one rule per line.
 
@@ -242,7 +242,7 @@ Canonical JSON text of a sudoku-puzzle dict: fixed key order; pretty: one grid r
 
 ### `def from_string(s, symbols=None)` {#from_string}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L559)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L560)
 
 A puzzle as text -> sudoku-puzzle dict ([Other formats](../formats/other-formats.md)).
 
@@ -259,7 +259,7 @@ Reads plain classic strings (with or without a trailing comment), text grids wit
 
 ### `def to_string(puzzle, form='plain')` {#to_string}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L582)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L583)
 
 A puzzle as text ([Other formats](../formats/other-formats.md)).
 
@@ -278,7 +278,7 @@ A puzzle as text ([Other formats](../formats/other-formats.md)).
 
 ### `def from_ipuz(ipuz)` {#from_ipuz}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L541)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L542)
 
 An ipuz sudoku -> sudoku-puzzle dict ([Other formats](../formats/other-formats.md)).
 
@@ -292,7 +292,7 @@ An ipuz sudoku -> sudoku-puzzle dict ([Other formats](../formats/other-formats.m
 
 ### `def to_ipuz(puzzle)` {#to_ipuz}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L516)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L517)
 
 A puzzle as an ipuz 2 dict ([Other formats](../formats/other-formats.md)).
 
