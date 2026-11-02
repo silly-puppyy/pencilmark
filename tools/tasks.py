@@ -64,7 +64,7 @@ def prepare():
             return 1
     for src, dst, description in COPIES:  # the copies get a description for search results (the sources have none)
         text = re.sub(r"\n<picture>.*?</picture>\n", "", (ROOT / src).read_text(encoding="utf-8"), flags=re.S)  # banner
-        meta = f'description: "{description}"\n' if description else "image: img/banner-light.png\n"  # homepage
+        meta = f'description: "{description}"\n' if description else "image: img/social-dark.png\n"  # homepage
         head = f"---\n{meta}---\n\n"
         (ROOT / dst).write_text(head + text, encoding="utf-8")
     return 0

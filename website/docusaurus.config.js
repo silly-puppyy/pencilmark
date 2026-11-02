@@ -6,6 +6,21 @@ const GH = 'https://github.com/silly-puppyy/pencilmark';
 const VERSION = require('fs').readFileSync(require('path').join(__dirname, '..', 'pyproject.toml'), 'utf8')
   .match(/^version\s*=\s*"([^"]+)"/m)[1];
 
+// the homepage's link preview as a large card (Discord, Slack, X follow twitter:card): a static page has one head, and
+// Markdown front matter cannot set this tag, so the built index.html is edited after the build
+function homeLargeCard() {
+  return {
+    name: 'home-large-card',
+    async postBuild({outDir}) {
+      const fs = require('fs'), f = require('path').join(outDir, 'index.html');
+      const html = fs.readFileSync(f, 'utf8')
+        .replace('name="twitter:card" content="summary"', 'name="twitter:card" content="summary_large_image"')
+        .replace('</head>', '<meta property="og:image:width" content="1280"><meta property="og:image:height" content="640"></head>');
+      fs.writeFileSync(f, html);
+    },
+  };
+}
+
 module.exports = async function createConfig() {
   const remarkMath = (await import('remark-math')).default;
   const rehypeKatex = (await import('rehype-katex')).default;
@@ -29,6 +44,7 @@ module.exports = async function createConfig() {
   headTags: [{tagName: 'script', attributes: {}, innerHTML:
     "try{document.documentElement.dataset.graphics=localStorage.getItem('pm-graphics')==='off'?'off':'on'}" +
     "catch(e){document.documentElement.dataset.graphics='on'}"}],
+  plugins: [homeLargeCard],
   themes: [
     '@docusaurus/theme-mermaid',
     ['@easyops-cn/docusaurus-search-local', {hashed: true, docsDir: '../docs', docsRouteBasePath: '/', indexBlog: false, highlightSearchTermsOnTargetPage: true}],
@@ -58,12 +74,13 @@ module.exports = async function createConfig() {
   ],
   themeConfig: {
     // link previews (Discord, Slack, ...): the small icon beside the text, in the logo's colour; search: page keywords.
-    // The homepage alone shows the wide banner (its front matter, written by tools/tasks.py prepare).
+    // The homepage alone shows the wide banner (its front matter, written by tools/tasks.py prepare) as a large card:
+    // the homeLargeCard plugin below.
     image: 'img/icon-256.png',
     metadata: [{name: 'keywords', content: 'sudoku, sudoku difficulty, sudoku grader, variant sudoku, killer sudoku, ' +
       'sudoku solver, sudoku generator, solve time, python'},
       {name: 'twitter:card', content: 'summary'}, {name: 'theme-color', content: '#d2b48c'}],
-    colorMode: {respectPrefersColorScheme: true},
+    colorMode: {defaultMode: 'dark', respectPrefersColorScheme: false},  // dark first; the switch is remembered
     navbar: {
       title: 'pencilmark',
       logo: {alt: 'pencilmark', src: 'img/favicon.svg'},

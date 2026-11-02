@@ -1,6 +1,8 @@
 """Draw the README banner (website/static/img/banner-light.png and banner-dark.png, 1280 x 400): the logo, the name, the
 tagline and three puzzles the generator made (docs/examples/generated), drawn by tools/render_svg.py. Chromium renders
-the page to PNG, so the text uses the same fonts as the docs site.
+the page to PNG, so the text uses the same fonts as the docs site. social-dark.png (1280 x 640, the 2:1 size link
+previews and GitHub's social preview expect) is the dark banner on a taller page: the docs homepage's link-preview
+image, and the image to upload in the repository's Settings > Social preview.
   python tools/gen_banner.py"""
 
 import json
@@ -28,7 +30,7 @@ def board(name):
     return json.loads((ROOT / "docs" / "examples" / f"{name}.json").read_text(encoding="utf-8"))
 
 
-def page(dark):
+def page(dark, height=400):
     t = THEME[dark]
     logo = (OUT / "favicon.svg").as_uri()
     boards = "".join(
@@ -36,7 +38,7 @@ def page(dark):
         for n, a, y in zip(BOARDS, (-6, 0, 6), (14, -6, 14))
     )
     return f"""<html><head><style>
-body {{ margin: 0; width: 1280px; height: 400px; background: {t["bg"]}; font-family: 'Inter', 'Helvetica Neue', Arial,
+body {{ margin: 0; width: 1280px; height: {height}px; background: {t["bg"]}; font-family: 'Inter', 'Helvetica Neue', Arial,
        sans-serif; display: flex; align-items: center; justify-content: space-between; padding: 0 64px;
        box-sizing: border-box; overflow: hidden; }}
 .name {{ display: flex; align-items: center; gap: 18px; margin-bottom: 22px; }}
@@ -53,11 +55,15 @@ body {{ margin: 0; width: 1280px; height: 400px; background: {t["bg"]}; font-fam
 
 
 def main():
-    for dark, name in ((False, "banner-light.png"), (True, "banner-dark.png")):
+    for dark, name, h in (
+        (False, "banner-light.png", 400),
+        (True, "banner-dark.png", 400),
+        (True, "social-dark.png", 640),
+    ):
         with tempfile.NamedTemporaryFile("w", suffix=".html", delete=False, encoding="utf-8") as f:
-            f.write(page(dark))
+            f.write(page(dark, h))
         subprocess.run(["chromium", "--headless", "--disable-gpu", "--hide-scrollbars", f"--screenshot={OUT / name}",
-                        "--window-size=1280,400", Path(f.name).as_uri()], check=True, capture_output=True)  # fmt: skip
+                        f"--window-size=1280,{h}", Path(f.name).as_uri()], check=True, capture_output=True)  # fmt: skip
         Path(f.name).unlink()
         print("wrote", OUT / name)
 
