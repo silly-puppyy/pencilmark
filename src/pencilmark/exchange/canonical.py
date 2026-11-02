@@ -171,8 +171,9 @@ def semantic_subset(doc):
     D = doc.get("digits")
     B = Board([divmod(k, doc["board"]["cols"]) for k, v in enumerate(doc["givens"]) if v is not None], D)
     HT = ("grid", "box_grid", "box", "row", "column")
-    houses, _ = read_houses([r for r in doc.get("rules", []) if r["type"] in HT], B)
-    B.grid_origins = {r["origin"] for r in doc.get("rules", []) if r["type"] in ("grid", "box_grid")}
+    # a chaos rule states its rows / columns (houses) and stays a rule (its regions to find)
+    houses, _ = read_houses([r for r in doc.get("rules", []) if r["type"] in HT + ("chaos",)], B)
+    B.grid_origins = {r["origin"] for r in doc.get("rules", []) if r["type"] in ("grid", "box_grid", "chaos")}
     rules = [_norm_rule(r, D) for r in resolve_areas(B, doc.get("rules", [])) if r["type"] not in HT]
     hs = {(k, tuple(sorted((B.name(c) for c in cells), key=_rc))) for k, cells, _ in houses}
     rules += [{"type": {"col": "column"}.get(k, k), "cells": list(c)} for k, c in hs]

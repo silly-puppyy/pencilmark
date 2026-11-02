@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Regions to find (chaos construction; format: `"type": "chaos"`, `region_border`, `same_region`;
+  docs/formats/rules/houses-and-regions.mdx 6.3): a grid whose D connected regions of D cells the solver finds, given
+  borders between neighbours, and cells known to share a region. Readers, writers, `fingerprint` and `describe`
+  handle them; `solve` and `count_solutions` check them with CP-SAT (OR-Tools) through a region label per cell. The
+  grader does not grade them yet (`rate` raises NotSupportedError): the region layer and its techniques come next.
 - Reader fixes from the 500 most-solved logic-masters sudokus (6 more read and graded, 123; each now unique and
   matching its embedded solution; none lost): SudokuPad's newer files write a dot's fill as `c2` and
   greys as one digit (`#F` white, `#0` black), so white dots no longer read as black; a "same parity" line (all odd

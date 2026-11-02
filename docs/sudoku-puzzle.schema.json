@@ -138,6 +138,91 @@
    ],
    "additionalProperties": false
   },
+  "rule_chaos": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "chaos"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "origin": {
+     "$ref": "#/$defs/cell"
+    }
+   },
+   "required": [
+    "type",
+    "origin"
+   ],
+   "additionalProperties": false,
+   "description": "a grid whose boxes are to be found: D orthogonally connected regions of D cells, each holding every digit once (docs/formats/rules/houses-and-regions.mdx 6.3)"
+  },
+  "rule_region_border": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "region_border"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "cells": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/cell"
+     },
+     "minItems": 2,
+     "maxItems": 2
+    }
+   },
+   "required": [
+    "type",
+    "cells"
+   ],
+   "additionalProperties": false
+  },
+  "rule_same_region": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "same_region"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "cells": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/cell"
+     },
+     "minItems": 2
+    }
+   },
+   "required": [
+    "type",
+    "cells"
+   ],
+   "additionalProperties": false
+  },
   "rule_box_grid": {
    "type": "object",
    "properties": {
@@ -1480,6 +1565,15 @@
    "oneOf": [
     {
      "$ref": "#/$defs/rule_grid"
+    },
+    {
+     "$ref": "#/$defs/rule_chaos"
+    },
+    {
+     "$ref": "#/$defs/rule_region_border"
+    },
+    {
+     "$ref": "#/$defs/rule_same_region"
     },
     {
      "$ref": "#/$defs/rule_box_grid"

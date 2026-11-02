@@ -377,6 +377,20 @@ def _custom_text(r):
 
 
 family("Custom Rules", _t("custom"), lambda rs, c: " ".join(_custom_text(r) for r in rs))
+
+
+def _chaos_text(rs, c):
+    """regions to find, given borders and cells known to share a region"""
+    D = c["D"]
+    out = [f"Divide the grid into {D} orthogonally connected regions of {D} cells; each region holds 1–{D} once."]
+    if any(r["type"] == "region_border" for r in rs):
+        out.append("Some region borders are given.")
+    if any(r["type"] == "same_region" for r in rs):
+        out.append("Marked cells lie in one region.")
+    return " ".join(out)
+
+
+family("Chaos Construction", lambda r: r["type"] in ("chaos", "region_border", "same_region"), _chaos_text)
 family(
     "Custom",
     lambda r: r["type"] == "table" or ":" in r["type"],
@@ -473,7 +487,7 @@ def describe(puzzle):
     from .exchange import Board, read_houses
 
     B = Board([divmod(k, doc["board"]["cols"]) for k, v in enumerate(doc["givens"]) if v is not None], D)
-    houses, _ = read_houses([r for r in rules if r["type"] in ("grid", "box_grid", "box", "row", "column")], B)
+    houses, _ = read_houses([r for r in rules if r["type"] in ("grid", "box_grid", "box", "row", "column", "chaos")], B)
     hset = {(k, frozenset(B.name(c) for c in cells)) for k, cells, _ in houses}
     origins = []
     for k, cells, _ in houses:

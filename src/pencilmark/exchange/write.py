@@ -175,6 +175,9 @@ class _Writer:
             gi = sorted(k for u in units for k in where[(u[0], frozenset(u[1]))] if k not in used)
             used |= set(gi)
             rule = {"type": "box_grid" if box else "grid", "origin": cell_name(r0, c0)}
+            chaos = [set(c["cells"]) for c in self.p.constraints if c.get("type") == "chaos"]
+            if not box and grid_area(B, r0, c0) in chaos:  # its regions are to be found (6.3)
+                rule["type"] = "chaos"
             if box:
                 rule["box"] = list(box)
             items.append((first, {"rule": rule, "area": grid_area(B, r0, c0), "units": units, "gi": gi}))
@@ -901,6 +904,10 @@ class _Writer:
             return [{"type": "appears", "source": B.name(c["cells"][0]), "cells": nm(c["cells"][1:])}]
         if t == "clone":
             return [{"type": "clone", "regions": [nm(x) for x in c["regions"]]}]
+        if t == "chaos":  # written as the grid rule of its area (write_groups)
+            return []
+        if t in ("region_border", "same_region"):
+            return [{"type": t, "cells": nm(c["cells"])}]
         raise NotSupportedError(f"engine constraint {t!r} has no format_version 1 rule")
 
     def common_group(self, cells):

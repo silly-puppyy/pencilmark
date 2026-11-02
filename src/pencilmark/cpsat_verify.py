@@ -39,7 +39,92 @@ _CON_TYPES = {
     "xsum",
     "skyscraper",
     "sandwich",
+    "chaos",
+    "region_border",
+    "same_region",
 }
+CHAOS_TYPES = ("chaos", "region_border", "same_region")
+
+
+def has_chaos(p):
+    """True if the puzzle has regions to find (docs/formats/rules/houses-and-regions.mdx 6.3)"""
+    return any(c.get("type") == "chaos" for c in getattr(p, "constraints", ()))
+
+
+def _add_chaos(m, x, p):
+    """the regions to find of every chaos constraint: a region label per cell (one Boolean per label); every label
+    covers D cells, holds each digit once and is connected (each cell but the region's first, in reading order, has a
+    neighbour of its region one step closer to it); label k's first cell precedes label k + 1's (symmetry);
+    region_border pairs differ in label, same_region cells share one"""
+    D = p.D
+    lab = {}
+    for con in p.constraints:
+        if con.get("type") != "chaos":
+            continue
+        cells = sorted(con["cells"], key=lambda c: p.coords[c])
+        idx = {p.coords[c]: c for c in cells}
+        L = {c: [m.NewBoolVar("") for _ in range(D)] for c in cells}
+        lab.update(L)
+        dig = {c: [m.NewBoolVar("") for _ in range(D)] for c in cells}
+        for c in cells:
+            m.AddExactlyOne(L[c])
+            m.AddExactlyOne(dig[c])
+            for v in range(D):
+                m.Add(x[c] == v + 1).OnlyEnforceIf(dig[c][v])
+        for k in range(D):
+            m.Add(sum(L[c][k] for c in cells) == D)
+            for v in range(D):
+                both = []
+                for c in cells:
+                    b = m.NewBoolVar("")
+                    m.AddBoolAnd([L[c][k], dig[c][v]]).OnlyEnforceIf(b)
+                    m.AddBoolOr([L[c][k].Not(), dig[c][v].Not()]).OnlyEnforceIf(b.Not())
+                    both.append(b)
+                m.AddExactlyOne(both)
+        first = {c: [m.NewBoolVar("") for _ in range(D)] for c in cells}
+        for k in range(D):
+            m.AddExactlyOne(first[c][k] for c in cells)
+            for i, c in enumerate(cells):
+                m.AddImplication(first[c][k], L[c][k])
+                for c2 in cells[:i]:
+                    m.AddImplication(first[c][k], L[c2][k].Not())
+        order = [m.NewIntVar(0, len(cells) - 1, "") for _ in range(D)]
+        for k in range(D):
+            m.Add(order[k] == sum(i * first[c][k] for i, c in enumerate(cells)))
+            if k:
+                m.Add(order[k - 1] < order[k])
+        dist = {c: m.NewIntVar(0, D - 1, "") for c in cells}
+        for c in cells:
+            r0, c0 = p.coords[c]
+            root = m.NewBoolVar("")
+            m.AddBoolOr([first[c][k] for k in range(D)]).OnlyEnforceIf(root)
+            for k in range(D):
+                m.AddImplication(first[c][k], root)
+            m.Add(dist[c] == 0).OnlyEnforceIf(root)
+            m.Add(dist[c] >= 1).OnlyEnforceIf(root.Not())
+            opts = [root]
+            for dr, dc in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                j = idx.get((r0 + dr, c0 + dc))
+                if j is None:
+                    continue
+                for k in range(D):
+                    o = m.NewBoolVar("")
+                    m.AddImplication(o, L[c][k])
+                    m.AddImplication(o, L[j][k])
+                    m.Add(dist[j] == dist[c] - 1).OnlyEnforceIf(o)
+                    opts.append(o)
+            m.AddBoolOr(opts)
+    for con in p.constraints:
+        t = con.get("type")
+        if t == "region_border":
+            a, b = con["cells"]
+            for k in range(D):
+                m.AddBoolOr([lab[a][k].Not(), lab[b][k].Not()])
+        elif t == "same_region":
+            c0 = con["cells"][0]
+            for c in con["cells"][1:]:
+                for k in range(D):
+                    m.Add(lab[c][k] == lab[c0][k])
 
 
 _HAVE = None
@@ -77,9 +162,12 @@ def supported(p):
 
 
 def _engine(p, limit, node_limit):
-    """the C++ exhaustive search -> (solutions, complete)."""
+    """the C++ exhaustive search -> (solutions, complete). Regions to find (chaos) are not in the engine yet: undecided,
+    so callers fall back to CP-SAT."""
     from . import cbackend as CB
 
+    if has_chaos(p):
+        return [], False
     r = CB.brute_solve(p, limit=limit, node_limit=node_limit)
     return [list(x) for x in r], r.complete
 
@@ -132,8 +220,8 @@ def build_model(p):
         m.AddAllowedAssignments([x[a], x[b]], sorted(allowed))
     for con in p.constraints:
         t = con.get("type")
-        if t in ("line", "clone"):
-            continue  # compiled into relations / n-ary constraints by finalize()
+        if t in ("line", "clone") or t in CHAOS_TYPES:
+            continue  # compiled into relations / n-ary constraints by finalize(); chaos: _add_chaos below
         cells = [x[c] for c in con.get("cells", [])]
         off = int(con.get("offset") or 0)
         if off and t in ("sum", "little_killer", "equal_sum"):
@@ -321,6 +409,8 @@ def build_model(p):
             m.Add(sum(terms) == con["total"])
         else:
             return None, None
+    if has_chaos(p):
+        _add_chaos(m, x, p)
     return m, x
 
 

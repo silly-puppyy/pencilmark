@@ -6,7 +6,8 @@ title: Houses and regions
 
 # Houses and regions
 
-This page covers the rules that say where digits may not repeat: houses (6.1) and regions (6.2).
+This page covers the rules that say where digits may not repeat: houses (6.1), regions (6.2) and regions to find
+(6.3).
 
 ## 6.1 Houses: `grid`, `box_grid`, `box`, `row`, `column`
 
@@ -56,3 +57,26 @@ where the area's boxes are irregular or absent, and `box` / `row` / `column` rul
   kind is a drawing and grouping hint: `diagonal` (a straight diagonal: X-sudoku, argyle lines; cells listed from
   the top), `window` (windoku windows), `disjoint` (same position in every box), `colour` (colour groups), `extra`
   (shaded extra regions: asterisk, centre dot, …), `region` (anything else).
+
+## 6.3 Regions to find: `chaos`, `region_border`, `same_region`
+
+Since pencilmark 1.2.
+
+```json
+{"type": "chaos", "origin": "r1c1"}
+{"type": "region_border", "cells": ["r4c5", "r4c6"]}
+{"type": "same_region", "cells": ["r2c2", "r2c3", "r3c3"]}
+```
+
+- **`chaos`**: a `grid` (its D rows and D columns are houses) whose boxes the solver finds: the area divides into D
+  orthogonally connected regions of D cells, and every region holds each digit once (chaos construction). Every cell
+  of the area MUST exist; the area has no `box` / `box_grid` rules of its own.
+- **`region_border`**: a given border between two orthogonal neighbours: they lie in different regions. A drawn
+  border of several cell edges is one rule per edge.
+- **`same_region`**: the cells lie in one region (a rule such as "every thermometer lies in one region" is written
+  as the thermometer plus `same_region` over its cells).
+- `region_border` and `same_region` cells MUST lie in one `chaos` area.
+
+Rules that read the regions themselves (sums of runs within a region, arrows counting the cells of their region) are
+not in format_version 1. pencilmark 1.2 reads, writes, describes, solves and counts these puzzles (solving and
+counting with OR-Tools); it does not grade them yet.

@@ -253,7 +253,7 @@ else in the format (`value` for a number, `sum` for a sum):
 
 Each rule family has its own page; the quick reference lists every `type` and `kind` with a link.
 
-- [Houses and regions](rules/houses-and-regions.mdx): 6.1 houses, 6.2 `region`
+- [Houses and regions](rules/houses-and-regions.mdx): 6.1 houses, 6.2 `region`, 6.3 regions to find
 - [Cages and sums](rules/cages-and-sums.mdx): 6.3 `cage`, 6.8 `sum`
 - [Lines and arrows](rules/lines-and-arrows.mdx): 6.4 `line`, 6.5 `arrow`
 - [Edges and corners](rules/edges-and-corners.mdx): 6.6 `edge`, 6.7 `corner`

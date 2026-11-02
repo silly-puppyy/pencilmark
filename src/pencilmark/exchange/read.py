@@ -5,7 +5,7 @@ from __future__ import annotations
 from .. import puzzle_json as PJ
 from ..rules.edge import NEG_SELECTOR, edge_relation, negative_relation
 from ..rules.line import line_to_engine
-from .board import _MATHRAX_OK, _NUMBERED_OK, battenburg_table, product_pairs, read_houses
+from .board import _MATHRAX_OK, _NUMBERED_OK, battenburg_table, grid_area, product_pairs, read_houses
 from .common import (
     KING_DIAG,
     KNIGHT,
@@ -18,6 +18,7 @@ from .common import (
     _op_params_to_engine,
     cell_name,
     op_params,
+    parse_cell,
 )
 from .validate import resolve_areas, validate
 
@@ -131,6 +132,11 @@ class _ReadCtx:
         idx = lambda xs: [B.idx(c) for c in xs]
         if t in ("grid", "box_grid", "box", "row", "column", "region", "cage"):
             return []
+        if t == "chaos":  # the rows / columns are houses (read_houses); the regions to find are a constraint
+            r0, c0 = parse_cell(r["origin"])
+            return [{"type": "chaos", "cells": [B.name(x) for x in sorted(grid_area(B, r0, c0))]}]
+        if t in ("region_border", "same_region"):
+            return [{"type": t, "cells": list(r["cells"])}]
         if t == "line":  # rules/line.py
             return line_to_engine(r, D, B, self.pairs_rule)
         if t == "arrow":

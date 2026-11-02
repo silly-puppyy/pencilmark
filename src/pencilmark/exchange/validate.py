@@ -7,7 +7,7 @@ import re
 from ..rules.cell import CELL
 from ..rules.edge import EDGE, NEG_SELECTOR, edge_value_ok
 from ..rules.line import LINE
-from .board import Board, grid_units
+from .board import Board, grid_area, grid_units
 from .common import (
     DIRECTED_OPS,
     FORMAT,
@@ -25,6 +25,9 @@ from .common import (
 COMMON = {"type", "id", "label", "style"}
 RULE_KEYS = {
     "grid": ({"origin"}, set()),
+    "chaos": ({"origin"}, set()),
+    "region_border": ({"cells"}, set()),
+    "same_region": ({"cells"}, set()),
     "box_grid": ({"origin", "box"}, set()),
     "box": ({"cells"}, set()),
     "row": ({"cells"}, set()),
@@ -149,8 +152,26 @@ def validate(doc):
     B.grid_origins = {
         r["origin"]
         for r in doc["rules"]
-        if isinstance(r, dict) and r.get("type") in ("grid", "box_grid") and isinstance(r.get("origin"), str)
+        if isinstance(r, dict) and r.get("type") in ("grid", "box_grid", "chaos") and isinstance(r.get("origin"), str)
     }
+    B.chaos_areas = [
+        grid_area(B, *parse_cell(r["origin"]))
+        for r in doc["rules"]
+        if isinstance(r, dict)
+        and r.get("type") == "chaos"
+        and isinstance(r.get("origin"), str)
+        and grid_units(B, *parse_cell(r["origin"])) is not None
+    ]
+    for r in doc["rules"]:  # a chaos area's boxes are what the solver finds: none may be given (6.3)
+        if not isinstance(r, dict) or r.get("type") not in ("box", "box_grid"):
+            continue
+        cells = (
+            grid_area(B, *parse_cell(r["origin"]))
+            if r["type"] == "box_grid" and isinstance(r.get("origin"), str)
+            else {B.idx(c) for c in r.get("cells", []) if isinstance(c, str)}
+        )
+        if cells and any(cells <= a for a in B.chaos_areas):
+            raise FormatError(f"a {r['type']} rule inside a chaos area (its regions are to be found)")
     for i, r in enumerate(doc["rules"]):
         try:
             _validate_rule(r, B)
@@ -258,7 +279,18 @@ def _validate_rule(r, B):
         raise FormatError(f"a rule kind must be a string, not {kind!r}")
     if t in KINDS and (kind is not None or t not in ("neighbours", "count")) and kind not in KINDS[t]:
         raise FormatError(f"unknown kind {kind!r}")
-    if t in ("grid", "box_grid"):
+    if t in ("region_border", "same_region"):  # 6.3: relations between the regions of a chaos area
+        cs = _cells(B, r["cells"], n=2 if t == "region_border" else None, minlen=2)
+        if len(set(cs)) != len(cs):
+            raise FormatError("cells repeat")
+        if not any(set(cs) <= a for a in getattr(B, "chaos_areas", [])):
+            raise FormatError(f"{t} cells must lie in one chaos area")
+        if t == "region_border":
+            (r1, c1), (r2, c2) = (B.coords[x] for x in cs)
+            if abs(r1 - r2) + abs(c1 - c2) != 1:
+                raise FormatError("a region_border separates two orthogonal neighbours")
+        return
+    if t in ("grid", "box_grid", "chaos"):
         if t == "box_grid":
             bx = r["box"]
             if not (

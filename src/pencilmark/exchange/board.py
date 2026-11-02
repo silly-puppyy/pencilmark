@@ -202,7 +202,7 @@ def read_houses(rules, B):
 
     for r in rules:
         t = r["type"]
-        if t in ("grid", "box_grid"):
+        if t in ("grid", "box_grid", "chaos"):  # chaos: the rows and columns; its regions are to be found (6.3)
             r0, c0 = parse_cell(r["origin"])
             areas.append(grid_area(B, r0, c0))
             for kind, cells in grid_units(B, r0, c0, r.get("box")):

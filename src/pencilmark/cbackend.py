@@ -255,6 +255,8 @@ def _cpuzzle_args(p):
             d = {"type": "line", "kind": d["kind"], "cells": [], "skip": True}  # carried by its n-ary part
         elif d.get("type") == "clone":  # compiled into 'eq' relations; keep the index
             d = {"type": "line", "kind": "palindrome", "cells": [], "skip": True}
+        elif d.get("type") in ("chaos", "region_border", "same_region"):  # not in the engine yet (cpsat_verify)
+            d = {"type": "line", "kind": "palindrome", "cells": [], "skip": True}
         cons.append(d)
     extra = detect_lines(p)
     p._cextra = [f"{d['kind']} line (detected)" for d in extra]

@@ -1,0 +1,66 @@
+"""Regions to find (docs/formats/rules/houses-and-regions.mdx 6.3): read, written back, fingerprinted, described;
+solved and counted through CP-SAT; not graded yet."""
+
+import pytest
+
+import pencilmark
+from pencilmark import cpsat_verify
+from pencilmark.exchange import FormatError, NotSupportedError
+
+
+def doc(rules, givens=None):
+    return {"format": "sudoku-puzzle", "format_version": 1, "board": {"rows": 4, "cols": 4}, "digits": 4,
+            "givens": givens or [0] * 16, "rules": rules}  # fmt: skip
+
+
+CHAOS = [{"type": "chaos", "origin": "r1c1"}, {"type": "region_border", "cells": ["r1c2", "r1c3"]},
+         {"type": "same_region", "cells": ["r1c1", "r2c1", "r3c1"]}]  # fmt: skip
+
+
+def test_read_write_fingerprint_describe():
+    d = doc(CHAOS)
+    pencilmark.validate(d)
+    p = pencilmark.load(d)
+    assert sorted({g.kind for g in p.groups}) == ["col", "row"]  # rows and columns; the regions are to be found
+    out = pencilmark.to_export(p, with_solution=False, describe=False)
+    assert out["rules"] == CHAOS
+    assert pencilmark.fingerprint(out) == pencilmark.fingerprint(d)
+    assert pencilmark.fingerprint(d) != pencilmark.fingerprint(doc([{"type": "grid", "origin": "r1c1"}]))
+    rules = pencilmark.describe(d)["rules"]
+    assert "orthogonally connected regions" in rules["Chaos Construction"]
+
+
+@pytest.mark.parametrize(
+    "rules,msg",
+    [
+        ([{"type": "chaos", "origin": "r1c1"}, {"type": "region_border", "cells": ["r1c1", "r2c2"]}], "orthogonal"),
+        ([{"type": "grid", "origin": "r1c1"}, {"type": "same_region", "cells": ["r1c1", "r1c2"]}], "chaos area"),
+        (
+            [{"type": "chaos", "origin": "r1c1"}, {"type": "box_grid", "origin": "r1c1", "box": [2, 2]}],
+            "inside a chaos",
+        ),
+    ],
+)
+def test_validation(rules, msg):
+    with pytest.raises(FormatError, match=msg):
+        pencilmark.validate(doc(rules))
+
+
+def test_not_graded_and_engine_undecided():
+    d = doc(CHAOS)
+    with pytest.raises(NotSupportedError, match="regions to find"):
+        pencilmark.rate(d)
+    sols, complete = cpsat_verify._engine(pencilmark.load(d), 2, 1000)
+    assert (sols, complete) == ([], False)  # the C++ search does not know regions: never a verdict from it
+
+
+@pytest.mark.skipif(not cpsat_verify.have_ortools(), reason="needs OR-Tools")
+def test_solve_and_count_with_cpsat():
+    # 1 2 | 3 4 / 3 4 | 1 2 / ... with given borders that leave exactly one region layout and digit solution
+    sol = [1, 2, 3, 4, 3, 4, 1, 2, 2, 1, 4, 3, 4, 3, 2, 1]
+    givens = [v if k not in (3, 5, 10, 15) else 0 for k, v in enumerate(sol)]
+    borders = [["r1c2", "r1c3"], ["r2c2", "r2c3"], ["r3c2", "r3c3"], ["r4c2", "r4c3"], ["r2c1", "r3c1"],
+               ["r2c2", "r3c2"], ["r2c3", "r3c3"], ["r2c4", "r3c4"]]  # fmt: skip
+    d = doc([{"type": "chaos", "origin": "r1c1"}] + [{"type": "region_border", "cells": b} for b in borders], givens)
+    assert pencilmark.count_solutions(d, limit=3) == {"count": 1, "exact": True}
+    assert list(pencilmark.solve(d)) == sol or pencilmark.solve(d)["solution"] == sol
