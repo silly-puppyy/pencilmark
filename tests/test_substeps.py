@@ -98,3 +98,14 @@ def test_killer_combination_substeps():
     assert told
     for sub in told:
         assert {a["colour"] for a in sub[-1]["annotations"]} == {"red"} and sub[-1]["text"].startswith("So ")
+
+
+def test_fish_substeps():
+    card = pencilmark.rate(
+        "030020006009006020000050100060400900300000001001007050007090000040800200200040030",
+        fields=["steps"],
+        explain=["substeps"],
+    )
+    sub = next(s["explanation"]["substeps"] for s in card["steps"] if s["code"] == "XWG")
+    assert sub[0]["text"].startswith("Look at the") and {a["colour"] for a in sub[0]["annotations"]} == {"blue"}
+    assert "why" in sub[1] and {a["colour"] for a in sub[-1]["annotations"]} == {"red"}

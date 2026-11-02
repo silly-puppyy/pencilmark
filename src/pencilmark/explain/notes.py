@@ -307,7 +307,53 @@ def _h_fish(ctx):
     if fins and "Franken" in name:
         fkey = "franken_fish"
     r["pattern_key"] = fkey
+    r["substeps"] = _fish_substeps(nm, v, base, cov, U, fins, ctx.elims)
     return r
+
+
+def _fish_substeps(nm, v, base, cov, U, fins, elims):
+    """a fish as sub-steps: the digit's places in the base houses (blue), all inside the cover houses, the fins
+    (orange) if any, the removals (red)"""
+    ids = iter(range(1, 10**6))
+    bn, cn = _join([nm.unit(h) for h in base]), _join([nm.unit(h) for h in cov])
+    corner = "; ".join(f"{nm.unit(h)}: {nm.cells([c for c in U if c in nm.p.groups[h].cells], 'or')}" for h in base)
+    out = [
+        {
+            "text": f"Look at the {v}s in {bn}: {corner}.",
+            "annotations": [
+                {"id": next(ids), "candidate": f"{nm.cell(c)}#{v}", "colour": "blue"}
+                for c in sorted(U)
+                if c not in fins
+            ],
+        },
+        {
+            "text": f"Apart from {'the fins' if len(fins) > 1 else 'the fin'}, they all lie in {cn}."
+            if fins
+            else f"They all lie in {cn}.",
+            "why": f"Each of {bn} needs a {v}, and those {v}s can only go in {cn}; so they are the {v}s of {cn}, "
+            f"and no other cell there can be {v}.",
+        },
+    ]
+    if fins:
+        out.append(
+            {
+                "text": f"Either {'a fin' if len(fins) > 1 else 'the fin'} ({nm.cells(sorted(fins))}) is the {v}, or the "
+                f"fish works; only cells that the fish clears and that see {'every fin' if len(fins) > 1 else 'the fin'} "
+                f"lose {v} either way.",
+                "annotations": [
+                    {"id": next(ids), "candidate": f"{nm.cell(c)}#{v}", "colour": "orange"} for c in sorted(fins)
+                ],
+            }
+        )
+    out.append(
+        {
+            "text": f"So {fmt_elims(nm, elims)}.",
+            "annotations": [
+                {"id": next(ids), "candidate": f"{nm.cell(c)}#{d}", "colour": "red"} for c, d in sorted(elims)
+            ],
+        }
+    )
+    return out
 
 
 def _engine_fish(ctx, v):
