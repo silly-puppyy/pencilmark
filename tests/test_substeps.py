@@ -61,7 +61,8 @@ def test_chain_substeps_end_to_end():
         fields=["steps"],
         explain=["short", "substeps"],
     )
-    told = [s for s in card["steps"] if s.get("explanation", {}).get("substeps")]
+    chains = {"XCL", "KTE", "SKY", "XYC", "AIC", "TUR"}  # X-Chain, 2-String Kite, Skyscraper, XY-Chain, AIC, Turbot
+    told = [s for s in card["steps"] if s["code"] in chains and s.get("explanation", {}).get("substeps")]
     assert told, "the X-Chains of this route are told as sub-steps"
     jsonschema = pytest.importorskip("jsonschema")
     schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
@@ -109,3 +110,16 @@ def test_fish_substeps():
     sub = next(s["explanation"]["substeps"] for s in card["steps"] if s["code"] == "XWG")
     assert sub[0]["text"].startswith("Look at the") and {a["colour"] for a in sub[0]["annotations"]} == {"blue"}
     assert "why" in sub[1] and {a["colour"] for a in sub[-1]["annotations"]} == {"red"}
+
+
+def test_locked_and_subset_substeps():
+    card = pencilmark.rate(
+        "400500060000008300025700080003000000000213000000000500070002410009800000010007005",
+        fields=["steps"],
+        explain=["substeps"],
+    )
+    got = {s["code"]: s["explanation"]["substeps"] for s in card["steps"] if "substeps" in s.get("explanation", {})}
+    for code in ("PPR", "HPR", "NTR"):
+        sub = got[code]
+        assert {a["colour"] for a in sub[0]["annotations"]} == {"blue"}
+        assert {a["colour"] for a in sub[-1]["annotations"]} == {"red"} and any("why" in x for x in sub)

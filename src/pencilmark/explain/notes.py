@@ -76,7 +76,23 @@ def _h_locked(ctx):
             ]
         )
     J = _J(ctx, digits=[v], base_units=[bi], cover_units=[ai], base_cells=poss, cover_cells=tg)
-    return _result(ctx, J, short, teach, ok)
+    r = _result(ctx, J, short, teach, ok)
+    if ok:
+        where = f"inside {nm.cage(ai, cells=False)}" if A.kind == "cage" else f"in {ua}"
+        why = (
+            f"A cage can't repeat a digit, so the cage's other cells can't be {v}."
+            if A.kind == "cage"
+            else f"{_cap(ua)} holds one {v}, and {ub}'s {v} is going to be it."
+        )
+        r["substeps"] = _simple_substeps(
+            nm,
+            f"In {ub}, the {v} can only go in {nm.cells(poss, 'or')}.",
+            [(c, v) for c in poss],
+            f"All of them lie {where}.",
+            why,
+            ctx.elims,
+        )
+    return r
 
 
 # ----------------------------------------------------------- notes: subsets --
@@ -174,7 +190,46 @@ def _h_subset(ctx):
             ]
         )
         J = _J(ctx, digits=ds, base_units=[hi], base_cells=list(cells), cover_cells=list(cells))
-    return _result(ctx, J, short, teach, sub_ok)
+    r = _result(ctx, J, short, teach, sub_ok)
+    if sub_ok:
+        marks = [(c, d) for c in nm.sort(cells) for d in ds if st.cand[c] & bit(d)]
+        if naked:
+            first, second = f"In {U}, the cells {cl} hold only {nm.digits(ds, 'and')} between them.", None
+            why = f"{_KW[k]} cells with only {_KW[k].lower()} digits: those digits fill exactly these cells, so no other cell of {U} has them."
+        else:
+            first = f"In {U}, the digits {nm.digits(ds, 'and')} can only go in {nm.cells(cells)}."
+            second = None
+            why = f"{_KW[k]} digits with only {_KW[k].lower()} places: these cells hold exactly these digits, so their other candidates go."
+        r["substeps"] = _simple_substeps(nm, first, marks, second, why, ctx.elims)
+    return r
+
+
+_KW = {2: "Two", 3: "Three", 4: "Four"}
+
+
+def _simple_substeps(nm, first, marks, second, why, elims):
+    """a short pattern as sub-steps: where the digits can go (blue candidates), the consequence with its reason, the
+    removals in red"""
+    ids = iter(range(1, 10**6))
+    out = [
+        {
+            "text": first,
+            "annotations": [{"id": next(ids), "candidate": f"{nm.cell(c)}#{d}", "colour": "blue"} for c, d in marks],
+        }
+    ]
+    if second:
+        out.append({"text": second, "why": why})
+    else:
+        out[0]["why"] = why
+    out.append(
+        {
+            "text": f"So {fmt_elims(nm, elims)}.",
+            "annotations": [
+                {"id": next(ids), "candidate": f"{nm.cell(c)}#{d}", "colour": "red"} for c, d in sorted(elims)
+            ],
+        }
+    )
+    return out
 
 
 # -------------------------------------------------------------- fish --------

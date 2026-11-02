@@ -159,7 +159,8 @@ extras, in the tradition of Sudoku Explainer's and Andrew Stuart's hint pages:
 
 Colours are names from a named palette (`yellow`, `blue`, `green`, `purple`, `orange`, `pink`, `cyan`, `grey`; `red`
 for removals); each renderer picks its own shade for each name. Steps whose technique has no sub-step form yet leave
-`substeps` out; so far: low / high and odd / even colouring, simple colouring, killer cage combinations, fish (X-Wing, Swordfish, Jellyfish, finned), and single chains (X-Chain, XY-Chain, AIC and the
+`substeps` out; so far: locked candidates (pointing, claiming), naked and hidden subsets, low / high and odd / even colouring,
+simple colouring, killer cage combinations, fish (X-Wing, Swordfish, Jellyfish, finned), and single chains (X-Chain, XY-Chain, AIC and the
 short chains such as Skyscraper and 2-String Kite; strong links drawn as `strong` arrows, weak ones as `weak`).
 
 ## 6. Implementing a subset
