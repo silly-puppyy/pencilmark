@@ -273,3 +273,18 @@ def test_fpuzzles_negative_only_the_named_letter():
     p, _ = FT.translate(fp)
     notsum = {r[3] for r in p.relations if r[0] == "notsum"}
     assert notsum == {5}
+
+
+def test_default_line_colour_needs_the_rules_to_describe_it():
+    """a line whose colour the rules do not name takes SudokuPad's default meaning only when the rules describe that
+    meaning: a cyan line under "adjacent digits on an N-cell line differ by at least N" read as a region sum (Quiet
+    Room, 000TBF); "a pink line holds consecutive digits" is still a renban (000QJZ)"""
+    from pencilmark.sources import _sp_translate as SP
+
+    line = lambda col: [{"color": col, "thickness": 9.6, "wayPoints": [[0.5, 0.5], [1.5, 0.5], [2.5, 0.5]]}]
+    p, why = SP.translate(
+        _sp4(lines=line("#b8d1dcff")), "Along a line of N cells, adjacent digits differ by at least N."
+    )
+    assert p is None and "cyan line" in why
+    p, info = SP.translate(_sp4(lines=line("#f067f0ff")), "Digits on a pink line form a consecutive set in any order.")
+    assert info.get("renban")

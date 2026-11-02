@@ -173,6 +173,18 @@ DEFAULT_LINE = {
     "orange": "dutch",
     "red": "parity",
 }
+# what a rules text says when it describes a default meaning without naming it ("a pink line holds consecutive digits");
+# a default colour is used only when the text says this much (a line rule the engine does not know, drawn blue, read
+# as a region sum: Quiet Room, 000TBF)
+DEFAULT_EVIDENCE = {
+    "whisper": r"whisper|(?:least|minimum difference of|difference of) (?:5|five)\b|\b(?:5|five) or (?:more|greater)",
+    "zipper": r"zipper|equal(?:ly)? (?:distance|distant|far)|equidistant|cent(?:re|er)",
+    "renban": r"renban|consecutive",
+    "region_sum": r"region[- ]sum|\bsums?\b|\btotal",
+    "thermo": r"thermo|increase|bulb",
+    "dutch": r"dutch|(?:least|minimum difference of|difference of) (?:4|four)\b|\b(?:4|four) or (?:more|greater)",
+    "parity": r"parity|\bodd\b.{0,40}\beven\b|\beven\b.{0,40}\bodd\b",
+}
 
 
 def color_name(hexcol):
@@ -787,7 +799,7 @@ def translate(sp, page_text=None, overrides=None):
             how = "a circle at one end and the rules text"
         if rule == "thermo" and "slow_thermo" in text_mentions and "thermo" not in text_mentions:
             rule, how = "slow_thermo", how + " (slow)"
-        if rule is None and not cmap:
+        if rule is None and not cmap and re.search(DEFAULT_EVIDENCE.get(DEFAULT_LINE.get(cname), "^$"), rules.lower()):
             rule, how = DEFAULT_LINE.get(cname), "SudokuPad's default colours (the rules text names none)"
         if overrides is None and (cname, rule) not in told:  # infer() logs its readings instead
             told.add((cname, rule))

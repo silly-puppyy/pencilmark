@@ -10,7 +10,11 @@
   grid without any forbids sums of 5 and 10; f-puzzles: "all Vs are given; not all Xs are given" forbids unmarked V
   pairs only (it also forbade sums of 10). Quadruples written as "Quads: ..." or "a digit in a circle must appear in
   one of the four cells the circle touches" are read (2 more, 125); a quadruple whose clue holds letters for the
-  solver to find is refused (the letters were dropped).
+  solver to find is refused (the letters were dropped). A line whose colour the rules do not name takes SudokuPad's
+  default meaning for that colour only when the rules describe that meaning ("consecutive" for a pink renban, "differ
+  by 5 or more" for a green whisper): a rule the engine does not know, drawn cyan, read as a region sum. On 1,500
+  random cached SudokuPad puzzles this refuses 32 readings, all misread (no solution or several), and keeps every
+  reading that was right; on the top 500, 3 misreads refused, none graded lost.
 - Readers refuse puzzles whose rules define a mechanic the engine does not model, instead of reading its elements as
   something else: equality and EquaLite cages, look-and-say cages, Rellik cages, counting cages (all read as killer
   cages before), congruent boxes, anti-camel, pointer arrows and thermos, index lines and indexers, cold and hot
