@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Reader fixes from the 500 most-solved logic-masters sudokus (6 more read and graded, 123; each now unique and
+  matching its embedded solution; none read before changes): SudokuPad's newer files write a dot's fill as `c2` and
+  greys as one digit (`#F` white, `#0` black), so white dots no longer read as black; a "same parity" line (all odd
+  or all even), which has no rule family, becomes a custom rule instead of an alternating parity line; grey
+  thermometers beside grey palindromes are told apart by the bulb in the line's colour; "all X and V are given" on a
+  grid without any forbids sums of 5 and 10; f-puzzles: "all Vs are given; not all Xs are given" forbids unmarked V
+  pairs only (it also forbade sums of 10). Readers can add a custom rule to a puzzle they build
+  (`puzzle_json.add_named_rule`), written back by name.
 - Readers refuse puzzles whose rules define a mechanic the engine does not model, instead of reading its elements as
   something else: equality and EquaLite cages, look-and-say cages, Rellik cages, counting cages (all read as killer
   cages before), congruent boxes, anti-camel, pointer arrows and thermos, index lines and indexers, cold and hot

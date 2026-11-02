@@ -211,3 +211,62 @@ def test_unmodelled_rules_refused():
     fp["ruleset"] = "Normal sudoku rules apply. Clones: boxes 1 and 5 are clones of each other."
     with pytest.raises(sources.UnsupportedPuzzle, match="clone"):
         FP.to_puzzle(fpuzzles_url(fp))
+
+
+def _sp4(**puzzle):
+    """a 4x4 SudokuPad puzzle dict (2x2 boxes) with these elements"""
+    regions = [
+        [[r, c] for r in range(i // 2 * 2, i // 2 * 2 + 2) for c in range(i % 2 * 2, i % 2 * 2 + 2)] for i in range(4)
+    ]
+    return {
+        "format": "scl",
+        "meta": {},
+        "puzzle": dict(cells=[[{} for _ in range(4)] for _ in range(4)], regions=regions, **puzzle),
+    }
+
+
+def test_sudokupad_misreads_fixed():
+    """misreads found on the 500 most-solved LMD sudokus (2026-11-02, each puzzle now unique and matching its embedded
+    solution): newer files' grey shorthand ("#F" white, "#0" black) and c2 fill (000Q6G); a same-parity line, which has
+    no rule family, is a custom rule (000JCK, it read as alternating); grey thermometers beside grey palindromes are
+    told apart by the bulb (000JH3); "all X and V are given" on a grid without one forbids sums of 5 and 10 (000STV)"""
+    from pencilmark.sources import _sp_translate as SP
+    from pencilmark.sources import sudokupad
+
+    assert [SP.color_name(c) for c in ("#F", "#0", "#999")] == ["white", "black", "grey"]
+    dots = [{"center": [1.0, 0.5], "width": 0.33, "rounded": True, "c2": "#F", "c1": "#0"},
+            {"center": [1.0, 2.5], "width": 0.33, "rounded": True, "c2": "#0", "color": "#F"}]  # fmt: skip
+    p, _ = SP.translate(sudokupad.decode(_sp4(overlays=dots)), "White dots: consecutive. Black dots: ratio 1:2.")
+    assert sorted(r[0] for r in p.relations if r[0] in ("diff", "ratio")) == ["diff", "ratio"]
+
+    red = [{"color": "#e6261fff", "thickness": 9.6, "wayPoints": [[0.5, 0.5], [1.5, 0.5], [2.5, 0.5]]}]
+    pj = sudokupad.to_puzzle(_sp4(lines=red), page_text="Parity line: digits on the red line all have the same parity.")
+    assert {"type": "custom", "label": "Same-parity line", "each": "pair",
+            "cells": {"pair": [["r1c1", "r2c1"], ["r2c1", "r3c1"]]}, "holds": "pair[1] mod 2 == pair[2] mod 2"} in pj["rules"]  # fmt: skip
+
+    grey = [{"color": "#cccf", "thickness": 19, "wayPoints": [[0.5, 0.5], [0.5, 1.5]]},
+            {"color": "#aaaf", "thickness": 10, "wayPoints": [[2.5, 0.5], [2.5, 1.5], [3.5, 1.5]]}]  # fmt: skip
+    bulb = [{"center": [0.5, 0.5], "width": 0.8, "height": 0.8, "rounded": True, "backgroundColor": "#cccf"}]
+    p, _ = SP.translate(
+        _sp4(lines=grey, underlays=bulb), "Thermometers increase from the bulb. A gray line is a palindrome."
+    )
+    assert ("lt", 0, 1) in p.relations  # the bulbed grey line: a thermometer
+    assert any(r[0] == "eq" for r in p.relations)  # the other: a palindrome
+
+    p, info = SP.translate(
+        _sp4(overlays=dots[:1]), "Digits separated by a V sum to 5. All X and V are given. White dots: consecutive."
+    )
+    assert info.get("negative_xv") and any(r[0] == "notsum" for r in p.relations)
+
+
+def test_fpuzzles_negative_only_the_named_letter():
+    """ "all Vs are given; not all Xs are given" forbids unmarked pairs summing to 5, not to 10 (Stitched Rainbow,
+    0007UV, had no solution)"""
+    from pencilmark.sources import _fpuz_translate as FT
+
+    fp = fpuzzles_json(CLASSIC)
+    fp["xv"] = [{"cells": ["R1C1", "R1C2"], "value": "X"}]
+    fp["ruleset"] = "X: sum to 10; V: sum to 5. All Vs are given; not all Xs are given."
+    p, _ = FT.translate(fp)
+    notsum = {r[3] for r in p.relations if r[0] == "notsum"}
+    assert notsum == {5}

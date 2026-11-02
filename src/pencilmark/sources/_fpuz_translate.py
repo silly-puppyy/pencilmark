@@ -304,8 +304,8 @@ def translate(fp, line_kinds=None):
         from . import _sp_translate as ST
 
         tn = ST.negative_markers(fp["ruleset"])
-        if tn & {"x", "v"} and fp.get("xv"):
-            neg.add("xv")
+        if fp.get("xv"):  # only the letters the text names ("all Vs are given; not all Xs are given": V only)
+            neg |= tn & {"x", "v"}
         if "white" in tn and fp.get("difference"):
             neg.add("difference")
         if "black" in tn and fp.get("ratio"):
@@ -337,8 +337,10 @@ def translate(fp, line_kinds=None):
                 p.relations.append(("notdiff", x, y, 1))
             if "ratio" in neg:
                 p.relations.append(("notratio", x, y, 2))
-            if "xv" in neg:
-                p.relations += [("notsum", x, y, 10), ("notsum", x, y, 5)]
+            if "xv" in neg or "x" in neg:  # f-puzzles' own negative "xv" covers both letters
+                p.relations.append(("notsum", x, y, 10))
+            if "xv" in neg or "v" in neg:
+                p.relations.append(("notsum", x, y, 5))
     odd = sum(1 << (v - 1) for v in range(1, n + 1, 2))
     for o in fp.get("odd") or []:
         p.domains[ix(o["cell"])] &= odd

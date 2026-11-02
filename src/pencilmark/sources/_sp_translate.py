@@ -84,6 +84,7 @@ RULE_WORDS = {
     "arrow": [r"\barrow"],
     "between": [r"between line"],
     "zipper": [r"zipper"],
+    "same_parity": [r"same parity", r"all (?:be )?odd or (?:must )?all (?:be )?even"],  # before parity: alternating
     "parity": [r"parity line"],
     "modular": [r"modular"],
     "nabner": [r"nabner"],
@@ -176,6 +177,8 @@ DEFAULT_LINE = {
 
 def color_name(hexcol):
     h = str(hexcol or "#000").lstrip("#")  # a colour typed without "#" (777777) can arrive as a JSON number
+    if len(h) in (1, 2):  # newer files' grey shorthand: "#F" white, "#0" black, a second digit the alpha
+        h = h[0] * 3 + h[1:]
     alpha = int(h[3] * 2, 16) / 255 if len(h) == 4 else int(h[6:8], 16) / 255 if len(h) == 8 else 1.0
     if len(h) in (3, 4):
         h = "".join(ch * 2 for ch in h[:3])
@@ -761,6 +764,13 @@ def translate(sp, page_text=None, overrides=None):
             and rule in (None, "arrow", "thermo", "between")
         ):
             rule, how = "double_arrow", "circles at both ends and double arrows in the rules text"
+        bulb = [x for x in (lc[0], lc[-1]) if circles.get(x) == cname]  # a circle in the line's own colour at one end
+        if (
+            rule not in (None, "thermo", "slow_thermo", "arrow", "double_arrow", "between")
+            and len(bulb) == 1
+            and "thermo" in rules.lower()
+        ):  # grey thermometers beside grey palindromes (German Beetles, 000JH3): the bulb tells them apart
+            rule, how = "thermo", f"a bulb in its colour (the rules text gives {cname} lines without one)"
         if rule is None and lc[0] in circles and lc[-1] in circles and "between" in text_mentions:
             rule, how = "between", "circles at both ends and between lines in the rules text"
         if (
@@ -822,6 +832,22 @@ def translate(sp, page_text=None, overrides=None):
                 for j in range(k + 1, min(k + 4, len(ids))):
                     if ids[k] != ids[j]:
                         p.relations.append(("samemod3" if j - k == 3 else "diffmod3", ids[k], ids[j]))
+        elif rule == "same_parity":  # no rule family: a custom rule, kept by name
+            from .. import puzzle_json as PJ
+
+            # neighbours along the line share a parity (the same rule as "all odd or all even", in 2-cell instances: the
+            # engine reads small rules as digit tables, which propagate as the cells fill)
+            name = lambda i: f"r{p.coords[i][0] + 1}c{p.coords[i][1] + 1}"
+            PJ.add_named_rule(
+                p,
+                {
+                    "type": "custom",
+                    "cells": {"pair": [[name(a), name(b)] for a, b in zip(ids, ids[1:])]},
+                    "each": "pair",
+                    "holds": "pair[1] mod 2 == pair[2] mod 2",
+                    "label": "Same-parity line",
+                },
+            )
         elif rule in ("parity", "modular", "zipper"):
             if len(set(ids)) != len(ids):
                 unknown.append(f"self-crossing {rule} line")
@@ -880,10 +906,14 @@ def translate(sp, page_text=None, overrides=None):
         p.relations += [r_ for r_ in q.relations if tuple(sorted(r_[1:3])) not in dotted]
         used["nonconsec"] += 1
     # a negative rule also binds marker types absent from the grid ("all dots are given" with only white
-    # dots drawn -> no 2:1 pairs either), but only within a marker family that is present at all
+    # dots drawn -> no 2:1 pairs either), but only within a marker family that is present at all, or, for X / V, that
+    # the rules define as a rule although none is drawn ("digits separated by a V sum to 5 ... all X and V are given":
+    # no pair sums to 5 or 10; 000STV). Kropki keeps the presence test: series introductions discuss "all possible dots
+    # are given" around plain classics (0001TZ)
     neg = negative_types(flags, overrides)
+    xv_def = re.search(r"\b(?:an? )?[xv]\b[^.\n]{0,30}\bsums? to (?:10|ten|5|five)\b", rules.lower())
     neg &= ({"white", "black"} if used["kropki_white"] or used["kropki_black"] else set()) | (
-        {"x", "v"} if used["xv"] else set()
+        {"x", "v"} if used["xv"] or xv_def else set()
     )
     if neg:
         # a pair carrying any edge marker is exempt from every negative rule
@@ -929,11 +959,11 @@ def translate(sp, page_text=None, overrides=None):
         ("quadruple", "quadruple"),
         ("between line", "between"),
         ("zipper", "zipper"),
-        ("parity line", "parity"),
+        ("parity line", ("parity", "same_parity")),
         ("lockout", "lockout"),
         ("nabner", "nabner"),
     ):
-        if kw in text_rules and not used[key]:
+        if kw in text_rules and not any(used[k] for k in ((key,) if isinstance(key, str) else key)):
             unknown.append(f"rule '{kw}'")
     if P.get("foglight") or P.get("triggereffect"):
         unknown.append("fog of war")

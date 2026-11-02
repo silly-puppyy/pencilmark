@@ -52,6 +52,8 @@ KEYS = {
     "co": "color",
     "c": "color",
     "bc": "backgroundColor",
+    "c2": "backgroundColor",  # newer files: c2 the fill, c1 the border (dots, X / V discs, thermo bulbs; 000Q6G)
+    "c1": "borderColor",
     "bo": "borderColor",
     "wd": "width",
     "w": "width",
@@ -236,10 +238,10 @@ def decode(link_or_payload, fetch=False):
     """Link / payload / already-decoded dict -> {"format", "meta", "puzzle"}. Short links need a request: pass
     fetch=True (or call fetch()); otherwise DecodeError."""
     x = link_or_payload
-    if isinstance(x, dict):
+    if isinstance(x, dict):  # expanded again: a dict decoded before an abbreviation was known (c1, c2) reads the same
         if "puzzle" in x and "format" in x:
-            return x
-        return {"format": "json", "meta": {}, "puzzle": x}
+            return x if x.get("format") == "fpuzzles" else dict(x, puzzle=expand(x["puzzle"]))
+        return {"format": "json", "meta": {}, "puzzle": expand(x)}
     if not isinstance(x, str) or not x.strip():
         raise DecodeError("empty SudokuPad link / payload")
     key = payload_key(x)
