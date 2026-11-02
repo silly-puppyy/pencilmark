@@ -53,3 +53,21 @@ def test_class_colouring_substeps():
     schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
     item = schema["properties"]["steps"]["items"]["properties"]["explanation"]["properties"]["substeps"]
     jsonschema.Draft202012Validator(item).validate(sub)
+
+
+def test_chain_substeps_end_to_end():
+    card = pencilmark.rate(
+        "000000450000301006000020000030800960002030070010005800500907000600580010040000000",
+        fields=["steps"],
+        explain=["short", "substeps"],
+    )
+    told = [s for s in card["steps"] if s.get("explanation", {}).get("substeps")]
+    assert told, "the X-Chains of this route are told as sub-steps"
+    jsonschema = pytest.importorskip("jsonschema")
+    schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+    jsonschema.Draft202012Validator(schema).validate(card)
+    for s in told:
+        sub = s["explanation"]["substeps"]
+        lines = [a["line"] for x in sub for a in x.get("annotations", []) if "arrow" in a]
+        assert lines and lines[0] == "strong" and all(x != y for x, y in zip(lines, lines[1:]))  # alternating
+        assert {a["colour"] for a in sub[-1]["annotations"]} == {"red"}

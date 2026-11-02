@@ -457,7 +457,96 @@ def _h_chain(ctx):
     ok = not left and all(_path_valid(p, st, pth) for pth, _ in chains)
     r = _result(ctx, J, short, teach, ok, chain=_chain_vis(nm, links), lines=lines)
     r["pattern_key"] = key
+    if ok and len(chains) == 1 and not any(n[0][0] == "als" for n in chains[0][0]):
+        r["substeps"] = _chain_substeps(nm, p, chains[0][0], chains[0][1])
     return r
+
+
+def _cands(nm, n):
+    """candidate names of a chain node (a cell or a group of cells)"""
+    return [f"{nm.cell(c)}#{n[-1]}" for c in (n[1] if n[0] == "grp" else [n[0]])]
+
+
+def _link_why(nm, p, n0, n1, src, unit):
+    """the reason behind one link, in plain words"""
+    d0, d1 = n0[-1], n1[-1]
+    c0 = None if n0[0] == "grp" else n0[0]
+    c1 = None if n1[0] == "grp" else n1[0]
+    if src == "bivalue":
+        return (
+            f"{nm.cell(c1)} holds only {d0} or {d1}."
+            if c1 is not None
+            else "A two-candidate cell holds one or the other."
+        )
+    if src == "bilocal":
+        where = nm.unit(unit) if unit is not None else "that house"
+        return f"{d1} has only two places in {where}, so if one isn't {d1}, the other is."
+    if src == "constraint":
+        lab = rules(p)[unit].label if unit is not None else "A cage or line"
+        return f"{_cap(lab)} must contain a {d1}, and has only these two places for it."
+    if src == "relation" and c0 is not None and c1 is not None:
+        return f"The {rel_label(p, c0, c1)} leaves no other option."
+    if src == "equal":
+        return "The two cells hold the same digit."
+    if c0 is not None and c0 == c1:
+        return "A cell holds only one digit."
+    if d0 == d1 and (c0 is None) != (c1 is None):  # a cell and a group
+        one, grp = (n0, n1) if c1 is None else (n1, n0)
+        return f"{nm.cell(one[0])} sees every one of {nm.cells(list(grp[1]))}, so they can't both hold {d1}."
+    if d0 == d1:
+        return f"They see each other, so they can't both be {d1}."
+    if c0 is not None and c1 is not None:
+        return f"The {rel_label(p, c0, c1)} doesn't allow both."
+    return None
+
+
+def _chain_substeps(nm, p, path, done):
+    """an alternating chain as sub-steps: blue = false if the start is false, yellow = then true; solid arrows strong
+    links, dashed arrows weak links; the ends and the removals"""
+    ids = iter(range(1, 10**6))
+    col = lambda i: "blue" if i % 2 == 0 else "yellow"
+    ann = lambda n, i: [{"id": next(ids), "candidate": x, "colour": col(i)} for x in _cands(nm, n)]
+    s0 = path[0][0]
+    out = [
+        {
+            "text": f"Suppose {_is(nm, s0, False)}. Blue marks what is then false, yellow what is then true.",
+            "legend": {"blue": "false if the start is false", "yellow": "true if the start is false"},
+            "annotations": ann(s0, 0),
+        }
+    ]
+    for i in range(1, len(path)):
+        n0, (n1, src, unit) = path[i - 1][0], path[i]
+        strong = src != "weak" if src is not None else i % 2 == 1
+        text = (
+            f"If {_is(nm, n0, False)}, then {_is(nm, n1)}."
+            if strong
+            else f"If {_is(nm, n0)}, then {_is(nm, n1, False)}."
+        )
+        stp = {
+            "text": text,
+            "annotations": ann(n1, i)
+            + [
+                {
+                    "id": next(ids),
+                    "arrow": [_cands(nm, n0)[0], _cands(nm, n1)[0]],
+                    "line": "strong" if strong else "weak",
+                }
+            ],
+        }
+        why = _link_why(nm, p, n0, n1, src, unit)
+        if why and not any(o.get("why") == why for o in out):  # each reason once
+            stp["why"] = why
+        out.append(stp)
+    e0 = path[-1][0]
+    out.append(
+        {
+            "text": f"So {_is(nm, s0)} or {_is(nm, e0)}: at least one end is true. {_chain_conclusion(nm, p, path, done)}",
+            "annotations": [
+                {"id": next(ids), "candidate": f"{nm.cell(c)}#{d}", "colour": "red"} for c, d in sorted(done)
+            ],
+        }
+    )
+    return out
 
 
 _CODE_KEY = {p.engine_code: p.catalog_key for p in R.patterns() if p.catalog_key}  # engine code -> CATALOG key
