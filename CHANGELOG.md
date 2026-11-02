@@ -7,6 +7,7 @@
   on the 500 most-solved logic-masters sudokus (2 more of them read and graded). A kropki dot drawn without a colour
   is white when the rules mention only white dots (it read as black: 2 more). f-puzzles: numbers written as text
   outside the grid are read as the one outside clue family the rules name (sandwich, x-sum or skyscraper: 1 more).
+  "The sum of the digits between 1 and 9" names sandwich clues (the wording wanted "the 1": 1 more).
 - Format docs: the `count` rule's restriction is that an `each` / `counts` rule's cells must not also form a house; it
   read as if no counted cell could be in any house, which would forbid counting circles on a normal grid.
 - The generator places every line kind the engine grades: besides thermo, whisper, renban and between, now slow

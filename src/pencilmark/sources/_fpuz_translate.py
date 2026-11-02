@@ -45,7 +45,7 @@ def rc(name, n):
 
 # outside clue families written as plain text outside the grid (f-puzzles 'text'), told apart by the rules text
 OUTSIDE_TEXT = (
-    ("sandwichsum", r"sandwich|between the 1 and the 9"),
+    ("sandwichsum", r"sandwich|between (?:the )?1 and (?:the )?9"),
     ("_xsum", r"\bx-?sums?\b|sum of the first x\b"),
     ("_skyscraper", r"skyscraper"),
 )

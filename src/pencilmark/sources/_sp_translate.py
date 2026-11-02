@@ -960,7 +960,7 @@ def outside_clues(P, n, p, rules, used, unknown, idx, inside):
     kinds = [
         k
         for k, pat in (
-            ("sandwich", r"sandwich|between the 1 and (?:the )?9"),
+            ("sandwich", r"sandwich|between (?:the )?1 and (?:the )?9"),
             ("xsum", r"\bx-?sums?\b|sum of the first (?:x|n|k)\b"),
             ("skyscraper", r"skyscraper"),
             ("numbered_room", r"numbered rooms?|digit x (?:in|into) the x-?th cell|in the nth cell"),

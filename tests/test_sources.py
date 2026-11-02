@@ -149,6 +149,12 @@ def test_sudokupad_rules_text_readings():
     assert not SP.rule_flags("Digits on a diagonal must not repeat.")["antiking"]
     assert SP.color_name("#0003") == "grey" and SP.color_name("#000") == "black"
     assert SP.color_name("#000000cc") == "black"  # mostly opaque stays black
+    # "the sum of the digits placed between 1 and 9" is a sandwich (the pattern wanted "the 1")
+    from pencilmark.sources import _fpuz_translate as FT
+
+    fp = {"size": 9, "ruleset": "Digits outside the board give the sum of the digits between 1 and 9 in that row.",
+          "text": [{"cells": ["R0C2"], "value": "12"}]}  # fmt: skip
+    assert FT.normalise(fp)["sandwichsum"] == [{"cell": "R0C2", "value": "12"}]
 
 
 def test_sudokupad_uncoloured_dot_follows_the_rules():
