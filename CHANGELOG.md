@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- A generator request without `where.band` or `where.difficulty` keeps the broadest search and says so: the result's
+  `info.warnings` (and a failure message) suggests a band or difficulty range, since the untargeted search uses every
+  technique up to Extreme and can be slow on sparse variants. The command line prints it as a note.
 - SudokuPad reading: "equal digits must not touch diagonally" and "no touch" are read as anti-king, and a mostly
   transparent black (`#0003`) counts as grey, so rules such as "digits in grey cells are odd" find their cells. Found
   on the 500 most-solved logic-masters sudokus (2 more of them read and graded). A kropki dot drawn without a colour

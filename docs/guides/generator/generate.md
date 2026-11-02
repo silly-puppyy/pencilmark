@@ -52,6 +52,9 @@ The run took under a second. The result has three parts:
 - `r["puzzle"]`: a `sudoku-puzzle` with its solution, ready to save as a file;
 - `r["card"]`: its grade card, as `pencilmark.rate` would give it;
 - `r["info"]`: how the run went, for example `{'givens': 28, 'attempts': 9, 'rejected': {'band too low (logic pre-check)': 8}, ...}`.
+  `info.warnings` lists hints about the request: without `where.band` or `where.difficulty` the search is the broadest
+  (every technique, up to Extreme) and can be slow on sparse variants, so it suggests aiming it (the command line prints
+  these as notes).
   The generator tried nine puzzles; eight were too easy.
 
 Change `seed` for a different puzzle. With the same seed and request, the result is the same every time.

@@ -405,6 +405,14 @@ def _check_card(card, tb, td, req, strict):
     return None
 
 
+# a request without where.band / where.difficulty searches as broadly as it can (every technique, up to Extreme): kept
+# as the default (user, 2026-11-02), with this hint in info.warnings and in a failure message
+NO_TARGET = (
+    "no band or difficulty target, so the search is the broadest (every technique, up to Extreme) and can be slow on "
+    "sparse variants: add where.band or where.difficulty to aim it"
+)
+
+
 def generate(spec, log=None):
     """generate one puzzle meeting a sudoku-spec request (docs/formats/generator-spec.md; a dict, JSON text or a path). Returns
     {"puzzle": sudoku-puzzle (with solution; meta.generated_from = the spec's fingerprint), "card": sudoku-grade card,
@@ -427,7 +435,16 @@ def generate(spec, log=None):
             '"format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9, "rules": [{"type": "box_grid", '
             '"origin": "r1c1", "box": [3, 3]}], "where": {"band": "Hard"}}'
         )
-    r = _generate(SF.spec_to_gen(doc), log)
+    where = doc.get("where") or {}
+    aimed = where.get("band") is not None or where.get("difficulty") is not None
+    try:
+        r = _generate(SF.spec_to_gen(doc), log)
+    except GenerationFailed as e:
+        if aimed:
+            raise
+        raise GenerationFailed(f"{e.args[0]}; {NO_TARGET}", *e.args[1:]) from None
+    if not aimed:
+        r["info"]["warnings"] = [NO_TARGET]
     meta = {k: v for k, v in (doc.get("meta") or {}).items() if k != SF.NS}
     meta["generated_from"] = SF.spec_fingerprint(doc)
     p = PJ.from_json(r["puzzle"])  # with the solution the puzzle was dug from: exporting needs no search

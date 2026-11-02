@@ -406,3 +406,11 @@ def test_locked_nonconsecutive():
     r = run(spec(6, rules=[rule], seed=1, time_limit=30))
     sol = r["puzzle"]["solution"]
     assert all(sol[i] + sol[j] != 7 for i, j in pairs)
+
+
+def test_untargeted_request_warns():
+    """no band / difficulty target: the broadest search, with a hint to aim it (user, 2026-11-02)"""
+    r = run(spec(4, seed=1, time_limit=10))
+    assert "where.band" in r["info"]["warnings"][0]
+    r = run(spec(4, where={"band": "Very Easy"}, seed=1, time_limit=10))
+    assert "warnings" not in r["info"]

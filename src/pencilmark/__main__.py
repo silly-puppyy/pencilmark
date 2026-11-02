@@ -317,6 +317,8 @@ def cmd_generate(a):
         print(dumps(r["puzzle"], pretty=True), end="")
         c = r["card"]
         print(f"{c.get('band')}  difficulty {c.get('difficulty')}  time {c.get('time')} min", file=sys.stderr)
+    for w in r["info"].get("warnings") or []:
+        print(f"note: {w}", file=sys.stderr)
 
 
 def cmd_json(a):
