@@ -571,7 +571,7 @@ def grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expla
     if has_chaos(p):
         raise NotSupportedError(
             "regions to find (chaos construction): the grader does not grade them yet; validate, describe, solve and "
-            "count work (solve and count with OR-Tools)"
+            "count work"
         )
     t0 = time.perf_counter()
     g, expired = _grade(

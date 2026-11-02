@@ -186,7 +186,7 @@ def rate(
     if V.has_chaos(p):  # before the uniqueness proof: grading regions to find is not in the engine yet
         raise NotSupportedError(
             "regions to find (chaos construction): the grader does not grade them yet; validate, describe, solve and "
-            "count work (solve and count with OR-Tools)"
+            "count work"
         )
     import time
 

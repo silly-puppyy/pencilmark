@@ -311,7 +311,18 @@ static std::shared_ptr<Puzzle> make_puzzle_raw(int D, const std::vector<std::pai
         }
         p->relations.push_back(std::move(rs));
     }
-    for (auto con : constraints) p->nary_specs.push_back(parse_constraint(con.cast<py::dict>()));
+    for (auto con : constraints) {
+        py::dict d = con.cast<py::dict>();
+        p->nary_specs.push_back(parse_constraint(d));  // a chaos rule is a skipped placeholder (indices stay aligned)
+        if (d.contains("region")) {
+            py::dict r = d["region"].cast<py::dict>();
+            const std::string t = r["type"].cast<std::string>();
+            const std::vector<int> cells = r["cells"].cast<std::vector<int>>();
+            if (t == "chaos") p->chaos.push_back(cells);
+            else if (t == "region_border" && cells.size() == 2) p->region_border.push_back({cells[0], cells[1]});
+            else if (t == "same_region") p->same_region.push_back(cells);
+        }
+    }
     return p;
 }
 

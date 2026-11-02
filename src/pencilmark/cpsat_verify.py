@@ -162,12 +162,9 @@ def supported(p):
 
 
 def _engine(p, limit, node_limit):
-    """the C++ exhaustive search -> (solutions, complete). Regions to find (chaos) are not in the engine yet: undecided,
-    so callers fall back to CP-SAT."""
+    """the C++ exhaustive search -> (solutions, complete)."""
     from . import cbackend as CB
 
-    if has_chaos(p):
-        return [], False
     r = CB.brute_solve(p, limit=limit, node_limit=node_limit)
     return [list(x) for x in r], r.complete
 

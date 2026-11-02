@@ -1,5 +1,5 @@
 """Regions to find (docs/formats/rules/houses-and-regions.mdx 6.3): read, written back, fingerprinted, described;
-solved and counted through CP-SAT; not graded yet."""
+solved and counted by the engine's search (and CP-SAT, which agrees); not graded yet."""
 
 import pytest
 
@@ -46,12 +46,31 @@ def test_validation(rules, msg):
         pencilmark.validate(doc(rules))
 
 
-def test_not_graded_and_engine_undecided():
-    d = doc(CHAOS)
+def test_not_graded():
     with pytest.raises(NotSupportedError, match="regions to find"):
-        pencilmark.rate(d)
-    sols, complete = cpsat_verify._engine(pencilmark.load(d), 2, 1000)
-    assert (sols, complete) == ([], False)  # the C++ search does not know regions: never a verdict from it
+        pencilmark.rate(doc(CHAOS))
+
+
+SOL = [1, 2, 3, 4, 3, 4, 1, 2, 2, 1, 4, 3, 4, 3, 2, 1]
+QUADRANTS = [["r1c2", "r1c3"], ["r2c2", "r2c3"], ["r3c2", "r3c3"], ["r4c2", "r4c3"], ["r2c1", "r3c1"],
+             ["r2c2", "r3c2"], ["r2c3", "r3c3"], ["r2c4", "r3c4"]]  # fmt: skip
+
+
+@pytest.mark.parametrize(
+    "keep,borders,count",
+    [
+        ((3, 5, 10, 15), QUADRANTS, 1),  # the borders fix the regions, 12 givens the digits
+        ((0, 5), QUADRANTS, 24),  # the regions are boxes: the 4 x 4 sudokus with these two givens (CP-SAT: 24)
+        ((3, 5, 10, 15), [], 1),
+    ],
+)
+def test_engine_search(keep, borders, count):
+    """the engine's search alone (no OR-Tools needed) counts regions-to-find puzzles"""
+    givens = [v if (k not in keep if len(keep) == 4 else k in keep) else 0 for k, v in enumerate(SOL)]
+    d = doc([{"type": "chaos", "origin": "r1c1"}] + [{"type": "region_border", "cells": b} for b in borders], givens)
+    sols, complete = cpsat_verify._engine(pencilmark.load(d), 100, 10**6)
+    assert complete and len(sols) == count
+    assert SOL in sols
 
 
 @pytest.mark.skipif(not cpsat_verify.have_ortools(), reason="needs OR-Tools")

@@ -89,6 +89,11 @@ struct Puzzle {
     std::vector<uint32_t> domains;  ///< empty -> all full
     std::vector<RelSpec> relations;
     std::vector<NSpec> nary_specs;  ///< n-ary constraints (grader Puzzle.constraints)
+    /// regions to find (chaos construction, format 6.3): the cells of each chaos area, given borders (pairs in different
+    /// regions) and cell sets in one region. Only the exhaustive search reads them so far (brute_force.cpp).
+    std::vector<std::vector<int>> chaos;
+    std::vector<std::pair<int, int>> region_border;
+    std::vector<std::vector<int>> same_region;
 
     // ---- derived (finalize) ----
     int N = 0, G = 0, W = 1;

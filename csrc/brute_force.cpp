@@ -26,9 +26,177 @@ struct Brute {
     std::vector<std::vector<uint8_t>> vs;
     std::vector<std::vector<uint32_t>> cs;
 
+    // ---- regions to find (chaos, format 6.3): a region label 1..D per cell of a chaos area, beside its digit ----
+    bool chaos_on = false;
+    std::vector<std::vector<int>> areas;     // each chaos area's cells in reading order
+    std::vector<int> area_of;                // area index per cell, -1 outside every chaos area
+    std::vector<std::vector<int>> nbr;       // orthogonal neighbours in the same area
+    std::vector<std::vector<uint8_t>> ls;    // label per cell, per depth (0: not yet known)
+    std::vector<std::vector<uint32_t>> lcs;  // label candidates (bits 1..D), per depth
+
     Brute(const Puzzle& pz, int lim, pm_long nl) : p(pz), limit(lim), node_limit(nl) {
         for (int gi = 0; gi < p.G; ++gi)
             if (p.groups[gi].has_total) cages.push_back(gi);
+        if (!p.chaos.empty()) {
+            chaos_on = true;
+            area_of.assign(p.N, -1);
+            nbr.assign(p.N, {});
+            for (const auto& a : p.chaos) {
+                std::vector<int> cells = a;
+                std::sort(cells.begin(), cells.end(), [&](int x, int y) { return p.coords[x] < p.coords[y]; });
+                for (int c : cells) area_of[c] = (int)areas.size();
+                areas.push_back(cells);
+            }
+            for (int c = 0; c < p.N; ++c) {
+                if (area_of[c] < 0) continue;
+                for (int q : areas[area_of[c]]) {
+                    const int dr = p.coords[c].first - p.coords[q].first, dc = p.coords[c].second - p.coords[q].second;
+                    if (std::abs(dr) + std::abs(dc) == 1) nbr[c].push_back(q);
+                }
+            }
+        }
+    }
+    // label propagation: given borders, same-region sets, canonical labels (label k first appears before label k + 1,
+    // reading order), each (label, digit) pair once, D cells per label, one connected region per label.
+    // -1 contradiction, 1 something changed (labels or digit candidates), 0 nothing
+    int chaos_prop(const uint8_t* vals, uint32_t* cand, uint8_t* lab, uint32_t* lc) {
+        const int D = p.D;
+        bool changed = false;
+        auto lm = [&](int c) -> uint32_t { return lab[c] ? bit(lab[c]) : lc[c]; };
+        auto keep = [&](int c, uint32_t k) -> bool {  // false: no label left
+            if (lab[c]) return (bit(lab[c]) & k) != 0;
+            const uint32_t n = lc[c] & k;
+            if (!n) return false;
+            if (n != lc[c]) {
+                lc[c] = n;
+                changed = true;
+                if (!(n & (n - 1))) lab[c] = (uint8_t)lowdigit(n);
+            }
+            return true;
+        };
+        for (const auto& e : p.region_border) {
+            const int a = e.first, b = e.second;
+            if (lab[a] && lab[b] && lab[a] == lab[b]) return -1;
+            if (lab[a] && !keep(b, ~bit(lab[a]))) return -1;
+            if (lab[b] && !keep(a, ~bit(lab[b]))) return -1;
+        }
+        for (const auto& s : p.same_region) {
+            uint32_t m = p.full;
+            for (int c : s) m &= lm(c);
+            if (!m) return -1;
+            for (int c : s)
+                if (!keep(c, m)) return -1;
+        }
+        std::vector<int> comp(p.N, -1), stack;
+        for (const auto& A : areas) {
+            int maxlab = 0;
+            for (int c : A) {
+                const uint32_t allow = maxlab + 1 >= 32 ? p.full : ((1u << (maxlab + 1)) - 1) & p.full;
+                if (!keep(c, allow)) return -1;
+                maxlab = std::max(maxlab, 32 - __builtin_clz(lm(c)));
+            }
+            for (int a : A) {
+                if (!lab[a] || !vals[a]) continue;
+                for (int b : A) {
+                    if (b == a) continue;
+                    if (vals[b] == vals[a]) {
+                        if (lab[b] == lab[a]) return -1;
+                        if (!keep(b, ~bit(lab[a]))) return -1;
+                    } else if (lab[b] == lab[a] && !vals[b]) {
+                        const uint32_t n = cand[b] & ~bit(vals[a]);
+                        if (!n) return -1;
+                        if (n != cand[b]) cand[b] = n, changed = true;
+                    }
+                }
+            }
+            for (int k = 1; k <= D; ++k) {
+                const uint32_t kb = bit(k);
+                int fixedn = 0, possn = 0;
+                for (int c : A) {
+                    if (lab[c] == k) ++fixedn;
+                    if (lm(c) & kb) ++possn;
+                }
+                if (fixedn > D || possn < D) return -1;
+                if (possn == D) {
+                    for (int c : A)
+                        if ((lm(c) & kb) && !keep(c, kb)) return -1;
+                } else if (fixedn == D) {
+                    for (int c : A)
+                        if (lab[c] != k && !keep(c, ~kb)) return -1;
+                }
+                // connectivity: label k's region lies inside one component of the cells that may take k
+                for (int c : A) comp[c] = -1;
+                int ncomp = 0, fixed_comp = -1;
+                std::vector<int> size_of, has_fixed;
+                for (int s0 : A) {
+                    if (comp[s0] >= 0 || !(lm(s0) & kb)) continue;
+                    int sz = 0, fx = 0;
+                    stack.assign(1, s0);
+                    comp[s0] = ncomp;
+                    while (!stack.empty()) {
+                        const int c = stack.back();
+                        stack.pop_back();
+                        ++sz;
+                        if (lab[c] == k) ++fx;
+                        for (int q : nbr[c])
+                            if (comp[q] < 0 && (lm(q) & kb)) comp[q] = ncomp, stack.push_back(q);
+                    }
+                    size_of.push_back(sz);
+                    has_fixed.push_back(fx);
+                    if (fx) {
+                        if (fixed_comp >= 0) return -1;  // two separate pieces of one region
+                        fixed_comp = ncomp;
+                    }
+                    ++ncomp;
+                }
+                for (int c : A) {
+                    if (comp[c] < 0 || lab[c] == k) continue;
+                    const bool out = fixed_comp >= 0 ? comp[c] != fixed_comp : size_of[comp[c]] < D;
+                    if (out && !keep(c, ~kb)) return -1;
+                }
+                if (fixed_comp >= 0 && size_of[fixed_comp] < D) return -1;
+            }
+        }
+        return changed ? 1 : 0;
+    }
+    // a complete labelling of every chaos area: D connected cells per label, each digit once per label, borders and
+    // same-region sets kept
+    bool chaos_valid(const uint8_t* vals, const uint8_t* lab) {
+        const int D = p.D;
+        for (const auto& e : p.region_border)
+            if (lab[e.first] == lab[e.second]) return false;
+        for (const auto& s : p.same_region)
+            for (int c : s)
+                if (lab[c] != lab[s[0]]) return false;
+        std::vector<int> seen(p.N, 0), stack;
+        for (const auto& A : areas) {
+            for (int k = 1; k <= D; ++k) {
+                uint32_t digits = 0;
+                int n = 0, start = -1;
+                for (int c : A)
+                    if (lab[c] == k) {
+                        ++n;
+                        if (digits & bit(vals[c])) return false;
+                        digits |= bit(vals[c]);
+                        if (start < 0) start = c;
+                    }
+                if (n != D) return false;
+                int reached = 0;
+                stack.assign(1, start);
+                seen[start] = k;
+                while (!stack.empty()) {
+                    const int c = stack.back();
+                    stack.pop_back();
+                    ++reached;
+                    for (int q : nbr[c])
+                        if (lab[q] == k && seen[q] != k) seen[q] = k, stack.push_back(q);
+                }
+                if (reached != D) return false;
+            }
+            for (int c : A)
+                if (!lab[c]) return false;
+        }
+        return true;
     }
     void place(uint8_t* vals, uint32_t* cand, int c, int v) {
         vals[c] = (uint8_t)v;
@@ -360,28 +528,62 @@ struct Brute {
             }
             if (again) goto top;
         }
+        if (chaos_on) {  // regions to find
+            const int r = chaos_prop(vals, cand, ls[depth].data(), lcs[depth].data());
+            if (r < 0) return;
+            if (r > 0) goto top;
+        }
         int c = -1, best = 1 << 30;
         for (int x = 0; x < N; ++x)
             if (!vals[x] && popc(cand[x]) < best) {
                 best = popc(cand[x]);
                 c = x;
             }
-        if (c < 0) {
+        int lcell = -1, lbest = 1 << 30;  // a region label to branch on when it has fewer options than any digit
+        if (chaos_on) {
+            const uint8_t* lab = ls[depth].data();
+            const uint32_t* lc = lcs[depth].data();
+            for (int x = 0; x < N; ++x)
+                if (area_of[x] >= 0 && !lab[x] && popc(lc[x]) < lbest) lbest = popc(lc[x]), lcell = x;
+        }
+        if (c < 0 && lcell < 0) {
             if (!valid(vals)) return;  // a full grid must satisfy every rule
+            if (chaos_on) {
+                if (!chaos_valid(vals, ls[depth].data())) return;
+                for (const auto& s : sols)  // another region layout with the same digits: one solution
+                    if (std::equal(s.begin(), s.end(), vals)) return;
+            }
             sols.emplace_back(vals, vals + N);
             return;
         }
         if ((int)vs.size() <= depth + 1) {
             vs.emplace_back(N);
             cs.emplace_back(N);
+            if (chaos_on) ls.emplace_back(N), lcs.emplace_back(N);
+        }
+        auto copy_down = [&]() {
+            std::copy(vs[depth].begin(), vs[depth].end(), vs[depth + 1].begin());
+            std::copy(cs[depth].begin(), cs[depth].end(), cs[depth + 1].begin());
+            if (chaos_on) {
+                std::copy(ls[depth].begin(), ls[depth].end(), ls[depth + 1].begin());
+                std::copy(lcs[depth].begin(), lcs[depth].end(), lcs[depth + 1].begin());
+            }
+        };
+        if (lcell >= 0 && (c < 0 || lbest < best)) {
+            const uint32_t snapshot = lcs[depth][lcell];
+            for (uint32_t m = snapshot; m; m &= m - 1) {
+                copy_down();
+                ls[depth + 1][lcell] = (uint8_t)lowdigit(m);
+                lcs[depth + 1][lcell] = m & (~m + 1);
+                rec(depth + 1);
+                if ((int)sols.size() >= limit) return;
+            }
+            return;
         }
         uint32_t snapshot = cand[c];
         for (uint32_t dm = snapshot; dm; dm &= dm - 1) {
             int v = lowdigit(dm);
-            vals = vs[depth].data();
-            cand = cs[depth].data();
-            std::copy(vals, vals + N, vs[depth + 1].begin());
-            std::copy(cand, cand + N, cs[depth + 1].begin());
+            copy_down();
             place(vs[depth + 1].data(), cs[depth + 1].data(), c, v);
             rec(depth + 1);
             if ((int)sols.size() >= limit) return;
@@ -399,6 +601,12 @@ std::vector<std::vector<int>> brute_solve(const Puzzle& p, const std::vector<std
     if (memo) b.memo_out.assign(p.nary.size(), {}), b.gac_budget = 1500;
     b.vs.emplace_back(p.N);
     b.cs.emplace_back(p.N);
+    if (b.chaos_on) {
+        b.ls.emplace_back(p.N, 0);
+        b.lcs.emplace_back(p.N, 0);
+        for (int c = 0; c < p.N; ++c)
+            if (b.area_of[c] >= 0) b.lcs[0][c] = p.full;
+    }
     if (start_vals) {
         b.vs[0] = *start_vals;
         b.cs[0] = *start_cand;
