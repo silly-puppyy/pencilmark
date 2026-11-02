@@ -106,8 +106,8 @@ void copy_slice(const MoveBuf& b, size_t n0, MoveBuf& to) {
         to.covers.insert(to.covers.end(), b.covers.begin() + a.cov_off, b.covers.begin() + a.cov_off + a.cov_n);
         m.el_off = (int)to.elims.size();
         to.elims.insert(to.elims.end(), b.elims.begin() + a.el_off, b.elims.begin() + a.el_off + a.el_n);
-        m.lel_off = (int)to.lels.size();
-        to.lels.insert(to.lels.end(), b.lels.begin() + a.lel_off, b.lels.begin() + a.lel_off + a.lel_n);
+        m.aeff_off = (int)to.aeffs.size();
+        to.aeffs.insert(to.aeffs.end(), b.aeffs.begin() + a.aeff_off, b.aeffs.begin() + a.aeff_off + a.aeff_n);
         m.pat_off = (int)to.pats.size();
         to.pats.insert(to.pats.end(), b.pats.begin() + a.pat_off, b.pats.begin() + a.pat_off + a.pat_n);
         m.ex_off = (int)to.ex.size();

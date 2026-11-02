@@ -10,10 +10,8 @@
 namespace cs {
 
 namespace {
-inline void add_lel(MoveBuf& b, Move& m, int c, int k) {
-    b.lels.push_back((uint32_t)(c * 32 + k));
-    ++m.lel_n;
-}
+inline void add_lel(MoveBuf& b, Move& m, int c, int k) { add_aeff(b, m, AE_LABEL_ELIM, c, k); }
+inline void place_label(MoveBuf& b, Move& m, int c, int k) { add_aeff(b, m, AE_LABEL_PLACE, c, k); }
 }  // namespace
 
 // silent upkeep, like a placed digit erasing its peers: canonical names, given borders, same-region sets, and a label
@@ -66,20 +64,18 @@ void Solver::region_cap(MoveBuf& out) {
             }
             if ((int)known.size() == D && !maybe.empty()) {  // sealed: the rest lose the label
                 Move& m = new_move(out, REGION_CAP, 1.0, (int)maybe.size());
-                m.lel_off = (int)out.lels.size();
                 for (int c : maybe) add_lel(out, m, c, k);
                 set_pattern(out, m, known);
                 m.code = 7101;
             } else if ((int)(known.size() + maybe.size()) == D && !maybe.empty()) {  // the only cells left take it
                 Move& m = new_move(out, REGION_CAP, 1.0, (int)maybe.size());
-                m.lel_off = (int)out.lels.size();
                 for (int c : maybe)
                     for (uint32_t o = lcand[c] & ~kb; o; o &= o - 1) add_lel(out, m, c, lowdigit(o));
                 std::vector<int> pat = known;
                 pat.insert(pat.end(), maybe.begin(), maybe.end());
                 set_pattern(out, m, pat);
                 m.code = 7102;
-                if (!m.lel_n) out.moves.pop_back();
+                if (!m.aeff_n) out.moves.pop_back();
             }
         }
     }
@@ -102,7 +98,6 @@ void Solver::region_excl(MoveBuf& out) {
             if (digit_off.empty() && label_off.empty()) continue;
             Move& m = new_move(out, REGION_EXCL, 1.0, (int)(digit_off.size() + label_off.size()));
             for (int b : digit_off) add_elim(out, m, b, d);
-            m.lel_off = (int)out.lels.size();
             for (int b : label_off) add_lel(out, m, b, k);
             set_pattern(out, m, {a});
             m.code = 7110 + (label_off.empty() ? 1 : digit_off.empty() ? 2 : 3);
@@ -194,9 +189,8 @@ void Solver::region_exit(MoveBuf& out) {
                     if (!seen[nb] && !lab[nb] && (lcand[nb] & kb)) seen[nb] = 1, exit = nb, ++n_exit;
             if (n_exit != 1) continue;
             Move& m = new_move(out, REGION_EXIT, 1.0, 1);
-            m.lpc = exit;
-            m.lpv = k;
             for (uint32_t o = lcand[exit] & ~kb; o; o &= o - 1) add_lel(out, m, exit, lowdigit(o));
+            place_label(out, m, exit, k);
             set_pattern(out, m, known);
             m.code = 7141;
         }
@@ -234,9 +228,8 @@ void Solver::region_digit(MoveBuf& out) {
                 }
                 if (n != 1 || lab[where] == k) continue;
                 Move& m = new_move(out, REGION_DIGIT, 1.0, 1);
-                m.lpc = where;
-                m.lpv = k;
                 for (uint32_t o = lcand[where] & ~kb; o; o &= o - 1) add_lel(out, m, where, lowdigit(o));
+                place_label(out, m, where, k);
                 if (!vals[where]) m.pc = where, m.pv = d;
                 set_pattern(out, m, known);
                 m.code = 7151;
@@ -274,7 +267,7 @@ void Solver::pocket(MoveBuf& out) {
             Move& m = new_move(out, POCKET, 1.0, (int)cells.size());
             for (int c : cells)
                 for (uint32_t o = lcand[c] & ~bit(k); o; o &= o - 1) add_lel(out, m, c, lowdigit(o));
-            if (!m.lel_n) {
+            if (!m.aeff_n) {
                 out.moves.pop_back();
                 continue;
             }

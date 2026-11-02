@@ -241,6 +241,15 @@ def to_cpuzzle(p):
     return cp
 
 
+AE_LABEL_PLACE, AE_LABEL_ELIM = 1, 2  # annotation effect kinds (csrc/solver.hpp AEffKind)
+
+
+def _label_fx(aeffs):
+    """(placement, eliminations) of region labels from a move's annotation effects (kind, cell, arg)."""
+    place = next(((c, a) for k, c, a in aeffs if k == AE_LABEL_PLACE), None)
+    return place, [(c, a) for k, c, a in aeffs if k == AE_LABEL_ELIM]
+
+
 def _cpuzzle_args(p):
     """make_puzzle / make_puzzle_raw arguments of a pencilmark.model.Puzzle."""
     if not hasattr(p, "groups_of"):
@@ -400,7 +409,7 @@ def solve(
         m.feat = alts[chosen]
         m.place = place
         m.elim = el
-        m.lplace, m.lelim = row[15] if len(row) > 15 else (None, ())  # regions to find: label effects
+        m.lplace, m.lelim = _label_fx(row[15]) if len(row) > 15 else (None, ())  # annotations: region labels
         m.name = _name(puzzle, *nm)
         m.d = d
         tech = m.feat[0]
@@ -520,7 +529,7 @@ def state_moves(
     out = []
     for r in raw:
         lfx = None
-        if chaos:  # the label effects come last (regions to find)
+        if chaos:  # the annotation effects come last (regions to find)
             lfx, r = r[-1], r[:-1]
         t, code, pl, el, d = r[:5]
         m = {
@@ -532,7 +541,7 @@ def state_moves(
             "d": d,
         }
         if lfx is not None:
-            m["lplace"], m["lelim"] = lfx[0], list(lfx[1])
+            m["lplace"], m["lelim"] = _label_fx(lfx)
         if len(r) > 9:  # the engine's explanation records and naming triple (decode with explain_record)
             m["ex"], m["nm"] = list(r[9]), tuple(r[10])
         if len(r) > 5:

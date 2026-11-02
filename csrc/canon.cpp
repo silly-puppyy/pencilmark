@@ -162,13 +162,11 @@ void Solver::canon_dedupe(MoveBuf& b) {
             key.assign(b.elims.begin() + m.el_off, b.elims.begin() + m.el_off + m.el_n);
             std::sort(key.begin(), key.end());
             key.insert(key.begin(), {1u, (uint32_t)m.tech});
-            if (m.lel_n || m.lpc >= 0) {  // regions to find: the label effects belong to the move's identity
-                std::vector<uint32_t> le(b.lels.begin() + m.lel_off, b.lels.begin() + m.lel_off + m.lel_n);
-                std::sort(le.begin(), le.end());
+            if (m.aeff_n) {  // annotation effects (region labels, ...) belong to the move's identity
+                std::vector<AEff> ae(b.aeffs.begin() + m.aeff_off, b.aeffs.begin() + m.aeff_off + m.aeff_n);
+                std::sort(ae.begin(), ae.end());
                 key.push_back(0xFFFFFFFFu);
-                key.push_back((uint32_t)(m.lpc + 1));
-                key.push_back((uint32_t)m.lpv);
-                key.insert(key.end(), le.begin(), le.end());
+                for (const AEff& e : ae) key.insert(key.end(), {(uint32_t)e.kind, (uint32_t)e.cell, (uint32_t)e.arg});
             }
         }
         auto it = best.find(key);

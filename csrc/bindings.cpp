@@ -428,16 +428,14 @@ static py::tuple py_solve(const Puzzle& p, const std::vector<std::pair<int, int>
         auto row = py::make_tuple(alts, st.chosen, place, el, py::make_tuple(st.move.nk, st.move.na, st.move.nb),
                                   st.move.d, st.mode, st.n_empty, st.erasures, st.notes_written, xm, st.move.code,
                                   pats, exs, st.n_cands);
-        if (!p.chaos.empty()) {  // regions to find: a 16th element, the step's label effects (placement, eliminations)
-            py::object lp = py::none();
-            if (st.move.lpc >= 0) lp = py::make_tuple(st.move.lpc, st.move.lpv);
-            py::tuple le(st.move.lel_n);
-            for (int i = 0; i < st.move.lel_n; ++i) {
-                const uint32_t e = r.lels[st.move.lel_off + i];
-                le[i] = py::make_tuple((int)(e / 32), (int)(e % 32));
+        if (!p.chaos.empty()) {  // annotations: a 16th element, the step's effects as (kind, cell, arg)
+            py::tuple ae(st.move.aeff_n);
+            for (int i = 0; i < st.move.aeff_n; ++i) {
+                const AEff& e = r.aeffs[st.move.aeff_off + i];
+                ae[i] = py::make_tuple(e.kind, e.cell, e.arg);
             }
             py::list l(row);
-            l.append(py::make_tuple(lp, le));
+            l.append(ae);
             steps.append(py::tuple(l));
         } else {
             steps.append(row);
@@ -508,16 +506,14 @@ static py::list py_state_moves(const Puzzle& p, const std::vector<std::pair<int,
             uint32_t e = b.elims[m.el_off + i];
             el.append(py::make_tuple((int)(e / 32), (int)(e % 32)));
         }
-        py::object labfx = py::none();  // regions to find: the move's label effects, appended last (chaos only)
+        py::object labfx = py::none();  // annotations: the move's effects as (kind, cell, arg), appended last
         if (!p.chaos.empty()) {
-            py::object lp = py::none();
-            if (m.lpc >= 0) lp = py::make_tuple(m.lpc, m.lpv);
-            py::list le;
-            for (int i = 0; i < m.lel_n; ++i) {
-                const uint32_t e = b.lels[m.lel_off + i];
-                le.append(py::make_tuple((int)(e / 32), (int)(e % 32)));
+            py::tuple ae(m.aeff_n);
+            for (int i = 0; i < m.aeff_n; ++i) {
+                const AEff& e = b.aeffs[m.aeff_off + i];
+                ae[i] = py::make_tuple(e.kind, e.cell, e.arg);
             }
-            labfx = py::make_tuple(lp, le);
+            labfx = ae;
         }
         if (!details) {
             if (p.chaos.empty()) out.append(py::make_tuple(m.tech, m.code, place, el, m.d));

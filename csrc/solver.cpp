@@ -422,7 +422,7 @@ Move& Solver::new_move(MoveBuf& b, int tech, double shape, int extra) {
     m.extra = extra;
     m.cov_off = (int)b.covers.size();
     m.el_off = (int)b.elims.size();
-    m.lel_off = (int)b.lels.size();
+    m.aeff_off = (int)b.aeffs.size();
     return m;
 }
 // -------------------------------------------------------- killer cages --
@@ -1272,7 +1272,7 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
             // index order only as the very last resort
             auto pkey = [&](const Move& m) {
                 return std::make_tuple(std::llround(m.d * 1e9), m.tech,
-                                       -(m.el_n + (m.pc >= 0 ? 1 : 0) + m.lel_n + (m.lpc >= 0 ? 1 : 0)));
+                                       -(m.el_n + (m.pc >= 0 ? 1 : 0) + m.aeff_n));
             };
             std::vector<int> tied{0};
             for (size_t i = 1; i < buf.moves.size(); ++i) {
@@ -1444,8 +1444,8 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
             for (int i = 0; i < m.cov_n; ++i) out.covers.push_back(buf.covers[m.cov_off + i]);
             a.el_off = 0;
             a.el_n = 0;
-            a.lel_off = 0;
-            a.lel_n = 0;
+            a.aeff_off = 0;
+            a.aeff_n = 0;
             out.alts.push_back(a);
         }
         const Move& bm = buf.moves[best];
@@ -1492,16 +1492,17 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
             if (!single_move && (cand[e / 32] & bit((int)(e % 32)))) adv_src[e] = (int)out.steps.size();
             cand[e / 32] &= ~bit((int)(e % 32));
         }
-        if (has_regions() && (bm.lel_n || bm.lpc >= 0)) {  // region label effects (chaos)
-            st.move.lel_off = (int)out.lels.size();
-            st.move.lel_n = bm.lel_n;
-            for (int i = 0; i < bm.lel_n; ++i) {
-                const uint32_t e = buf.lels[bm.lel_off + i];
-                out.lels.push_back(e);
-                if (!lab[e / 32]) lcand[e / 32] &= ~bit((int)(e % 32));
-            }
-            if (bm.lpc >= 0) lab[bm.lpc] = (uint8_t)bm.lpv, lcand[bm.lpc] = bit(bm.lpv);
-            label_normalize();
+        if (bm.aeff_n) {  // annotation effects: eliminations first, then placements
+            st.move.aeff_off = (int)out.aeffs.size();
+            st.move.aeff_n = bm.aeff_n;
+            for (int i = 0; i < bm.aeff_n; ++i) out.aeffs.push_back(buf.aeffs[bm.aeff_off + i]);
+            for (int pass = 0; pass < 2; ++pass)
+                for (int i = 0; i < bm.aeff_n; ++i) {
+                    const AEff& e = buf.aeffs[bm.aeff_off + i];
+                    if (pass == 0 && e.kind == AE_LABEL_ELIM && !lab[e.cell]) lcand[e.cell] &= ~bit(e.arg);
+                    if (pass == 1 && e.kind == AE_LABEL_PLACE) lab[e.cell] = (uint8_t)e.arg, lcand[e.cell] = bit(e.arg);
+                }
+            if (has_regions()) label_normalize();
         }
         st.erasures = mode == 1 ? erasures : 0;
         out.steps.push_back(st);

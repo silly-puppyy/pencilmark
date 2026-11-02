@@ -100,6 +100,14 @@ enum Kind { K_HOUSE = 0, K_CAGE = 1, K_NEQ = 2, K_NONCONSEC = 3, K_DOMAIN = 4, K
             K_MENTAL = 8 }; ///< mental subset (pair / triple held in mind)
 
 struct Move;
+/// an annotation effect of a move: a persistent mark beyond digits and candidates (kind, cell, argument)
+enum AEffKind { AE_LABEL_PLACE = 1, AE_LABEL_ELIM = 2 };  ///< region label placed / ruled out (arg: the label)
+struct AEff {
+    int kind, cell, arg;
+    bool operator<(const AEff& o) const {
+        return kind != o.kind ? kind < o.kind : cell != o.cell ? cell < o.cell : arg < o.arg;
+    }
+};
 /// true where the move carries a structural meta that is used for pricing (not a synthetic export)
 inline bool priced_meta(const Move& m);
 struct Cover {
@@ -133,10 +141,9 @@ struct Move {
     double enumv = 0.0;  ///< log1p(max consistent assignments of the SUM rule instances the move touches)
     int pc = -1, pv = 0;  ///< placement
     int el_off = 0, el_n = 0;
-    /// region label effects (chaos construction): a label placed (cell lpc is in region lpv) and label eliminations
-    /// (cell*32 + label in MoveBuf::lels); none on moves of puzzles without regions to find
-    int lpc = -1, lpv = 0;
-    int lel_off = 0, lel_n = 0;
+    /// annotation effects (MoveBuf::aeffs): region labels placed / eliminated (chaos construction), later colourings;
+    /// none on moves of puzzles without annotations
+    int aeff_off = 0, aeff_n = 0;
     int nk = NM_NONE, na = 0, nb = -1;  ///< nb: second group / cage (-1 = none)
     double d = 0.0;
     pm_long xm[XM_N] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -199,18 +206,23 @@ struct MoveBuf {
     std::vector<Move> moves;
     std::vector<Cover> covers;
     std::vector<uint32_t> elims;  ///< c*32 + v
-    std::vector<uint32_t> lels;   ///< label eliminations: c*32 + label
+    std::vector<AEff> aeffs;      ///< annotation effects (kind, cell, arg)
     std::vector<int> pats;        ///< pattern cells
     std::vector<int> ex;          ///< explanation records
     void clear() {
         moves.clear();
         covers.clear();
         elims.clear();
-        lels.clear();
+        aeffs.clear();
         pats.clear();
         ex.clear();
     }
 };
+inline void add_aeff(MoveBuf& b, Move& m, int kind, int cell, int arg) {
+    if (!m.aeff_n) m.aeff_off = (int)b.aeffs.size();
+    b.aeffs.push_back(AEff{kind, cell, arg});
+    ++m.aeff_n;
+}
 inline void add_expl(MoveBuf& b, Move& m, int tag, const std::vector<int>& data) {
     if (!m.ex_n) m.ex_off = (int)b.ex.size();
     b.ex.push_back(tag);
@@ -232,8 +244,8 @@ inline void append_moves(MoveBuf& to, const MoveBuf& from) {
         to.covers.insert(to.covers.end(), from.covers.begin() + a.cov_off, from.covers.begin() + a.cov_off + a.cov_n);
         m.el_off = (int)to.elims.size();
         to.elims.insert(to.elims.end(), from.elims.begin() + a.el_off, from.elims.begin() + a.el_off + a.el_n);
-        m.lel_off = (int)to.lels.size();
-        to.lels.insert(to.lels.end(), from.lels.begin() + a.lel_off, from.lels.begin() + a.lel_off + a.lel_n);
+        m.aeff_off = (int)to.aeffs.size();
+        to.aeffs.insert(to.aeffs.end(), from.aeffs.begin() + a.aeff_off, from.aeffs.begin() + a.aeff_off + a.aeff_n);
         m.pat_off = (int)to.pats.size();
         to.pats.insert(to.pats.end(), from.pats.begin() + a.pat_off, from.pats.begin() + a.pat_off + a.pat_n);
         m.ex_off = (int)to.ex.size();
@@ -346,7 +358,7 @@ struct SolveResult {
     std::vector<Move> alts;  ///< features only (cov offsets into covers)
     std::vector<Cover> covers;
     std::vector<uint32_t> elims;
-    std::vector<uint32_t> lels;  ///< label eliminations of the chosen moves (chaos)
+    std::vector<AEff> aeffs;  ///< annotation effects of the chosen moves
     bool solved = false;
     std::vector<int> pats, ex;  ///< pattern cells / explanation records of the chosen moves
     struct Stat { double ms = 0; pm_long calls = 0, hits = 0; };
