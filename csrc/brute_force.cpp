@@ -28,33 +28,17 @@ struct Brute {
 
     // ---- regions to find (chaos, format 6.3): a region label 1..D per cell of a chaos area, beside its digit ----
     bool chaos_on = false;
-    std::vector<std::vector<int>> areas;     // each chaos area's cells in reading order
-    std::vector<int> area_of;                // area index per cell, -1 outside every chaos area
-    std::vector<std::vector<int>> nbr;       // orthogonal neighbours in the same area
+    const std::vector<std::vector<int>>& areas;  // each chaos area's cells in reading order (Puzzle::finalize)
+    const std::vector<int>& area_of;             // area index per cell, -1 outside every chaos area
+    const std::vector<std::vector<int>>& nbr;    // orthogonal neighbours in the same area
     std::vector<std::vector<uint8_t>> ls;    // label per cell, per depth (0: not yet known)
     std::vector<std::vector<uint32_t>> lcs;  // label candidates (bits 1..D), per depth
 
-    Brute(const Puzzle& pz, int lim, pm_long nl) : p(pz), limit(lim), node_limit(nl) {
+    Brute(const Puzzle& pz, int lim, pm_long nl)
+        : p(pz), limit(lim), node_limit(nl), areas(pz.chaos), area_of(pz.chaos_of), nbr(pz.chaos_nbr) {
         for (int gi = 0; gi < p.G; ++gi)
             if (p.groups[gi].has_total) cages.push_back(gi);
-        if (!p.chaos.empty()) {
-            chaos_on = true;
-            area_of.assign(p.N, -1);
-            nbr.assign(p.N, {});
-            for (const auto& a : p.chaos) {
-                std::vector<int> cells = a;
-                std::sort(cells.begin(), cells.end(), [&](int x, int y) { return p.coords[x] < p.coords[y]; });
-                for (int c : cells) area_of[c] = (int)areas.size();
-                areas.push_back(cells);
-            }
-            for (int c = 0; c < p.N; ++c) {
-                if (area_of[c] < 0) continue;
-                for (int q : areas[area_of[c]]) {
-                    const int dr = p.coords[c].first - p.coords[q].first, dc = p.coords[c].second - p.coords[q].second;
-                    if (std::abs(dr) + std::abs(dc) == 1) nbr[c].push_back(q);
-                }
-            }
-        }
+        chaos_on = !p.chaos.empty();
     }
     // label propagation: given borders, same-region sets, canonical labels (label k first appears before label k + 1,
     // reading order), each (label, digit) pair once, D cells per label, one connected region per label.

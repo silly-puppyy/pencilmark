@@ -51,6 +51,19 @@ void Puzzle::finalize() {
     W = (N + 63) / 64;
     full = D >= 32 ? 0xffffffffu : ((1u << D) - 1);
     if ((int)domains.size() != N) domains.assign(N, full);
+    chaos_of.assign(chaos.empty() ? 0 : N, -1);  // regions to find: areas in reading order, neighbours within an area
+    chaos_nbr.assign(chaos.empty() ? 0 : N, {});
+    for (size_t ai = 0; ai < chaos.size(); ++ai) {
+        auto& cells = chaos[ai];
+        std::sort(cells.begin(), cells.end(), [&](int x, int y) { return coords[x] < coords[y]; });
+        for (int c : cells) chaos_of[c] = (int)ai;
+    }
+    for (int c = 0; c < (int)chaos_of.size(); ++c) {
+        if (chaos_of[c] < 0) continue;
+        for (int q : chaos[chaos_of[c]])
+            if (std::abs(coords[c].first - coords[q].first) + std::abs(coords[c].second - coords[q].second) == 1)
+                chaos_nbr[c].push_back(q);
+    }
     for (auto& g : groups) {
         std::vector<std::pair<int, int>> co;
         for (int c : g.cells) co.push_back(coords[c]);

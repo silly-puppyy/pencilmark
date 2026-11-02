@@ -94,6 +94,8 @@ struct Puzzle {
     std::vector<std::vector<int>> chaos;
     std::vector<std::pair<int, int>> region_border;
     std::vector<std::vector<int>> same_region;
+    std::vector<int> chaos_of;                   ///< derived: chaos area per cell (-1 none); chaos areas sorted in reading order
+    std::vector<std::vector<int>> chaos_nbr;     ///< derived: orthogonal neighbours in the same chaos area
 
     // ---- derived (finalize) ----
     int N = 0, G = 0, W = 1;
