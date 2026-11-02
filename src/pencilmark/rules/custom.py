@@ -996,9 +996,7 @@ def rule_holds(rule, grid, box=(3, 3)):
 
 
 # ---------------------------------------------------------------------------------------------------- engine compile
-MAX_TABLE_CELLS = (
-    5  # a digit table over n cells enumerates D ** n fillings (9 ** 5 = 59,049); larger rules wait for C++
-)
+MAX_TABLE_CELLS = 5  # a table over n cells enumerates D ** n fillings (9 ** 5 = 59,049); larger: an expr constraint
 
 
 def _positional(tree):
@@ -1018,9 +1016,26 @@ def _table(test, names, D):
     """digit tuples over the named cells for which test(grid) holds"""
     import itertools
 
-    if len(names) > MAX_TABLE_CELLS:
-        raise LangError(f"a custom rule over {len(names)} cells (more than {MAX_TABLE_CELLS}) is not supported yet")
     return [list(ds) for ds in itertools.product(range(1, D + 1), repeat=len(names)) if test(dict(zip(names, ds)))]
+
+
+def _expr(rule, B):
+    """an unscoped rule as the engine's expression constraint (csrc/expr.cpp): checked once its cells are fixed"""
+    ir, names, lists, nslots = to_ir(rule)
+    pos = [[B.coords[B.idx(n)][0] + 1, B.coords[B.idx(n)][1] + 1] for n in names]
+    return {"type": "expr", "cells": names, "ir": ir, "lists": lists, "nslots": nslots, "pos": pos,
+            "box": list(B_box(B))}  # fmt: skip
+
+
+def _instance(holds_text, args, B, D, test):
+    """one instance of a scoped rule: a digit table when small, else the predicate applied to the instance's cells as
+    an expression constraint (let __f = <predicate>; __f(__a0, __a1, ...))"""
+    names = [n for a in args for n in (a if isinstance(a, list) else [a])]
+    if len(names) <= MAX_TABLE_CELLS:
+        return {"type": "table", "cells": names, "allowed": _table(test, names, D)}
+    cells = {f"__a{i}": (a if isinstance(a, list) else [a]) for i, a in enumerate(args)}
+    call = ", ".join(f"__a{i}" for i in range(len(args)))
+    return _expr({"cells": cells, "holds": f"let __f = {holds_text}; __f({call})"}, B)
 
 
 def compile_rule(rule, B, D):
@@ -1046,6 +1061,8 @@ def compile_rule(rule, B, D):
                     if y not in names:
                         names.append(y)
         names += [n for n in dict.fromkeys(re.findall(r"\br\d+c\d+\b", rule["holds"])) if n not in names]
+        if len(names) > MAX_TABLE_CELLS:
+            return [_expr(rule, B)]
         allowed = _table(lambda g: holds(tree, cells, g), names, D)
         return [{"type": "table", "cells": names, "allowed": allowed}]
     f = evaluate(tree, Env(cells, {}, B_box(B)))
@@ -1077,6 +1094,9 @@ def compile_rule(rule, B, D):
             if tuple(sorted(names)) in skip:
                 continue
             test = lambda g, names=names: call_fn(f, [[Cell(n, g[n]) for n in names]], env) is True
+            if len(names) > MAX_TABLE_CELLS:
+                out.append(_instance(rule["holds"], [names], B, D, test))
+                continue
             if pos or shared is None:
                 allowed = _table(test, names, D)
                 shared = None if pos else allowed
@@ -1098,7 +1118,7 @@ def compile_rule(rule, B, D):
             test = lambda g, names=names: (
                 call_fn(f, [Cell(names[0], g[names[0]]), [Cell(n, g[n]) for n in names[1:]]], env) is True
             )
-            out.append({"type": "table", "cells": names, "allowed": _table(test, names, D)})
+            out.append(_instance(rule["holds"], [names[0], names[1:]], B, D, test))
         return out
     raise LangError(f"unknown scope {sorted(scope)}")
 
@@ -1130,3 +1150,93 @@ def describe_rule(rule):
     if rule.get("each"):
         return f"For every {rule['each']}: {cond}."
     return cond[:1].upper() + cond[1:] + "."
+
+
+# ---------------------------------------------------------------------------------------------------- C++ IR
+# the expression as nested lists of ints for the engine's evaluator (csrc/expr.cpp, NT_EXPR): names resolved to cell
+# variables, cell-list indices and slots (one per binding site), built-ins to ids. Keep in step with csrc/expr.hpp.
+OPS = ("num", "bool", "cells", "cell", "slot", "list", "range", "comp", "let", "letfn", "lambda", "if", "??", "or",
+       "and", "not", "==", "!=", "<", "<=", ">", ">=", "in", "not in", "+", "-", "*", "/", "div", "mod", "**", "neg",
+       "index", "slice", "call", "callfn", "none")  # fmt: skip
+OPCODE = {op: i for i, op in enumerate(OPS)}
+FNS = ("sum", "product", "min", "max", "count", "len", "all", "any", "sort", "reverse", "abs", "odd", "even", "prime",
+       "num", "defined", "all_different", "count_distinct", "concat", "median", "seen", "upto", "take_while", "take",
+       "position", "row", "col", "box")  # fmt: skip
+FNCODE = {f: i for i, f in enumerate(FNS)}
+
+
+def to_ir(rule):
+    """a custom rule (no scope) -> (ir, cell names, cell lists): ir nested lists of ints; cell names the engine variables
+    in order; cell lists the rule's named lists as variable indices (nested for lists of lists)"""
+    tree = parse(rule["holds"])
+    names, lists, list_index = [], [], {}
+
+    def var(c):
+        if c not in names:
+            names.append(c)
+        return names.index(c)
+
+    for k, v in (rule.get("cells") or {}).items():
+        list_index[k] = len(lists)
+        if len(v) == 1 and isinstance(v[0], str):  # a one-cell name is a number, not a list
+            lists.append(var(v[0]))
+        else:
+            lists.append([[var(c) for c in x] if isinstance(x, list) else var(x) for x in v])
+    slots = [0]
+
+    def emit(e, scope):
+        op, a = e.op, e.args
+        code = OPCODE
+        if op == "num":
+            return [code["num"], int(a[0])]
+        if op == "bool":
+            return [code["bool"], 1 if a[0] else 0]
+        if op == "name":
+            n = a[0]
+            if n in scope:
+                return [code["slot"], scope[n]]
+            if n in list_index:
+                return [code["cells"], list_index[n]]
+            if re.fullmatch(r"r\d+c\d+", n):
+                return [code["cell"], var(n)]
+            raise LangError(f"unknown name {n!r}")
+        if op in ("list", "set"):
+            return [code["list"]] + [emit(x, scope) for x in a]
+        if op == "range":
+            return [code["range"], emit(a[0], scope), emit(a[1], scope)]
+        if op == "comp":
+            body, v, src, cond = a
+            s = slots[0] = slots[0] + 1
+            inner = dict(scope, **{v: s})
+            return [code["comp"], s, emit(src, scope), emit(body, inner), emit(cond, inner) if cond else [code["none"]]]
+        if op == "let":
+            s = slots[0] = slots[0] + 1
+            return [code["let"], s, emit(a[1], scope), emit(a[2], dict(scope, **{a[0]: s}))]
+        if op == "letfn":
+            name, params, body, rest = a
+            f = slots[0] = slots[0] + 1
+            ps = []
+            for _ in params:
+                slots[0] += 1
+                ps.append(slots[0])
+            fscope = dict(scope, **{name: f}, **dict(zip(params, ps)))
+            return [code["letfn"], f, ps, emit(body, fscope), emit(rest, dict(scope, **{name: f}))]
+        if op == "lambda":
+            ps = []
+            for _ in a[0]:
+                slots[0] += 1
+                ps.append(slots[0])
+            return [code["lambda"], ps, emit(a[1], dict(scope, **dict(zip(a[0], ps))))]
+        if op == "call":
+            name, args = a
+            if name in scope:
+                return [code["callfn"], scope[name]] + [emit(x, scope) for x in args]
+            if name not in FNCODE:
+                raise LangError(f"unknown function {name!r}")
+            return [code["call"], FNCODE[name]] + [emit(x, scope) for x in args]
+        if op in OPCODE:
+            return [code[op]] + [emit(x, scope) for x in a]
+        raise LangError(f"cannot compile {op}")
+
+    ir = emit(tree, {})
+    return ir, names, lists, slots[0] + 1

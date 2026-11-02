@@ -234,12 +234,15 @@ def test_malformed_custom_rules_are_format_errors():
             pencilmark.validate(_doc_with(rule))
 
 
-def test_custom_rule_too_large_for_a_table_is_not_supported_yet():
-    row = [f"r1c{c}" for c in range(1, 10)]
-    doc = _doc_with({"type": "custom", "cells": {"r": row}, "holds": "sum(r) == 45"})
-    pencilmark.validate(doc)  # a valid file
-    with pytest.raises(pencilmark.NotSupportedError, match="more than 5"):
-        pencilmark.load(doc)
+def test_custom_rule_over_many_cells_uses_the_engine_evaluator():
+    """more than 5 cells: an expression constraint the engine checks (csrc/expr.cpp), not a digit table"""
+    doc = pencilmark.to_export(GRID)
+    sol, row = doc["solution"], [f"r1c{c}" for c in range(1, 10)]
+    doc["rules"].append({"type": "custom", "cells": {"r": row}, "holds": f"sum(take(r[1], r)) == {sum(sol[: sol[0]])}"})
+    assert pencilmark.solve(doc) == sol and pencilmark.rate(doc)["difficulty"] > 0
+    doc["rules"][-1]["holds"] = f"sum(take(r[1], r)) == {sum(sol[: sol[0]]) + 1}"
+    with pytest.raises(pencilmark.NoSolution):
+        pencilmark.solve(doc)
 
 
 def test_compile_matches_known_families():
@@ -254,3 +257,69 @@ def test_compile_matches_known_families():
     assert {tuple(sorted(a)) for a in cage["allowed"]} == {(1, 2, 4)} and len(cage["allowed"]) == 6
     rel = compile_rule({"holds": "(a, b) => abs(a - b) != 1", "scope": {"pairs": "orthogonal"}}, B, 9)
     assert len(rel) == 1 and rel[0]["rel"] == "allowed" and len(rel[0]["cells"]) == 144  # one shared relation
+
+
+EXPRESSIONS = [
+    "2 * max(c) == sum(c)",
+    "count(x for x in c if odd(x)) == 2",
+    "let s = sum(c); s in {10, 15, 20}",
+    "sum(upto(c, x => x == 9)) == 12",
+    "len(seen(c)) == 3",
+    "c[c[1]] == 5",
+    "sum(take(c[1], c)) > 10",
+    "len(take_while(c, x => x <= 5)) == 2",
+    "median(c) * 2 == 9",
+    "7 div 2 == 3 and -7 mod 3 == 2 and 2 ** 3 == 8",
+    "prime(concat([c[1], c[2]]))",
+    "min(c[1], c[4]) == 1 or max(c) == 9",
+    "odd(c[1]) == odd(c[2])",
+    "num(odd(c[3])) + num(even(c[3])) == 1",
+    "(if c[1] < c[2] then c[2] else c[1]) == 4",
+    "count([odd(x) for x in c]) == 3",
+    "let close(a, b) = abs(a - b) <= 2; close(c[1], c[3]) and not close(c[1], c[2])",
+    "all([(x mod 2 == 0) or x < 4 for x in c])",
+    "position(c, x => x > 5) == 2",
+    "c[7] != 3",
+    "not defined(c[7]) and defined(c[3])",
+    "(c[7] ?? 0) == 0",
+    "count(i for i in {1..len(c)} if abs(c[i] - (c[i + 1] ?? 99)) == 1) >= 1",
+    "1 / (c[1] - c[2]) > 0",
+    "sum(c[2..4]) == 15",
+    "all_different(c)",
+    "count_distinct(c) == 4",
+    "sort(c)[1] == min(c)",
+    "reverse(c)[1] == c[len(c)]",
+    "any(2 * x == sum(c) for x in c)",
+    "product(c) mod 7 == 0",
+    "sum(x * x for x in c) > 100",
+    "let a = c[1], b = a + c[2]; b == 10",
+    "abs(sum(c[1..2]) - sum(c[3..4])) <= 1",
+    "c[1] / c[2] == 2 or c[2] / c[1] == 2",
+    "let f(n) = if n <= 1 then 1 else n * f(n - 1); f(c[1]) > 100",
+    "row(c[2]) + col(c[2]) == 3 and box(c[5]) == 2",
+    "sum(upto(c, x => x == 10)) == 1 or true",
+    "median([c[1], c[2]]) == (c[1] + c[2]) / 2",
+    "c[0] == 1 or c[3 / 2] == 1 or len(c[3..2]) == 0",
+]
+
+
+def test_cpp_evaluator_matches_the_reference():
+    """the engine's evaluator (csrc/expr.cpp) gives the Python reference's answer on every expression and filling"""
+    import random
+
+    from pencilmark import cbackend as CB
+    from pencilmark.exchange.board import Board
+    from pencilmark.rules.custom import _expr, holds
+
+    B = Board([(r, c) for r in range(9) for c in range(9)], 9)
+    names = ["r1c1", "r1c2", "r1c3", "r1c4", "r1c5"]
+    rng = random.Random(1)
+    for src in EXPRESSIONS:
+        rule = {"cells": {"c": names}, "holds": src}
+        spec = _expr(rule, B)
+        assert spec["cells"] == names, src
+        spec["cells"] = list(range(len(names)))  # engine indices, as the puzzle reader passes them
+        for _ in range(200):
+            digits = [rng.randint(1, 9) for _ in names]
+            want = holds(src, {"c": names}, dict(zip(names, digits)))
+            assert CB._C.expr_holds(spec, digits) == want, (src, digits)

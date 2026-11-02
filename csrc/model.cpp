@@ -786,6 +786,7 @@ void Puzzle::build_nary() {
         k.named = s.named;
         k.offset = s.offset;
         k.bounds_only = s.bounds_only;
+        k.expr = s.expr;
         if (s.bounds_only && !s.segs.empty()) {  // parts: segs (pairwise distinct cell sets)
             k.part.assign(k.nv(), -1);
             for (size_t sg = 0; sg < s.segs.size(); ++sg)

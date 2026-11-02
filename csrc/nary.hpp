@@ -11,6 +11,7 @@
 /// consistent assignments, the intersection of their digit sets ("must
 /// contain") and whether that digit set is unique.
 #pragma once
+#include "expr.hpp"
 #include <string>
 #include "portable.hpp"
 #include <cstdint>
@@ -42,7 +43,8 @@ enum NType {
     /// distinct count ("count different" rule): the cells hold exactly `total` different digits
     NT_DISTINCT = 15,
     /// contains ("contains" rule): the digit of position 0 appears in at least one later position
-    NT_CONTAINS = 16
+    NT_CONTAINS = 16,
+    NT_EXPR = 17  ///< a custom rule: an expression over the cells (expr.hpp), checked once all are fixed
 };
 // engine line kinds, the one table: id and name. The ids are frozen (puzzle hashes, line move codes 4000 + 10 * kind and
 // explanation records use them): new kinds are appended only. pencilmark/model.py LINE_KINDS lists the same names in the
@@ -89,6 +91,7 @@ struct NSpec {
     int offset = 0;           ///< equal_sum: segment sums of (digit - offset)
     bool bounds_only = false; ///< sum: derived (BandLogic) -- brute force propagates bounds only
     std::vector<int> seg_sign;  ///< bounds_only: +1 / -1 per segment (outie cells subtracted); empty = all +1
+    std::shared_ptr<const ExprProgram> expr;  ///< NT_EXPR: the custom rule's program (a = its cells, in variable order)
 };
 
 struct NConstraint {
@@ -123,6 +126,7 @@ struct NConstraint {
     std::vector<const uint32_t*> rel;  ///< nv*nv: rel_ex(var i -> var j) or null
     std::vector<int> order;        ///< DFS order (vars)
     double shape = 1.0;
+    std::shared_ptr<const ExprProgram> expr;  ///< NT_EXPR
     /// number of distinct cells (variables) of the constraint
     int nv() const { return (int)vars.size(); }
 };

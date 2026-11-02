@@ -38,6 +38,7 @@ CTYPES = (
     "digit_set",
     "distinct_count",
     "contains",
+    "expr",
 )
 # forcing chains: level (0 static / 1 dynamic / 2 nested), options, unit (0 cell / 1 unit),
 # surviving branches, propagation steps over all branches, contradicting branches

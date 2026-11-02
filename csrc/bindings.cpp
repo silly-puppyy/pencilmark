@@ -114,6 +114,46 @@ static Params params_from(const py::dict& P) {
     return pr;
 }
 
+// a custom rule's program (rules/custom.py to_ir): nested int lists -> ExprNode / ExprList
+static ExprNode parse_expr(const py::handle& h) {
+    py::list l = h.cast<py::list>();
+    ExprNode n;
+    n.op = l[0].cast<int>();
+    size_t i = 1;
+    switch (n.op) {
+        case X_NUM: case X_BOOL: case X_CELLS: case X_CELL: case X_SLOT:
+            n.v = l[1].cast<long long>();
+            return n;
+        case X_COMP: case X_LET: case X_CALL: case X_CALLFN:
+            n.v = l[1].cast<long long>();
+            i = 2;
+            break;
+        case X_LETFN:
+            n.v = l[1].cast<long long>();
+            n.params = l[2].cast<std::vector<int>>();
+            i = 3;
+            break;
+        case X_LAMBDA:
+            n.params = l[1].cast<std::vector<int>>();
+            i = 2;
+            break;
+        default:
+            break;
+    }
+    for (; i < l.size(); ++i) n.kids.push_back(parse_expr(l[i]));
+    return n;
+}
+
+static ExprList parse_expr_list(const py::handle& h) {
+    ExprList L;
+    if (py::isinstance<py::int_>(h)) {
+        L.var = h.cast<int>();
+        return L;
+    }
+    for (auto x : h.cast<py::list>()) L.items.push_back(parse_expr_list(x));
+    return L;
+}
+
 static NSpec parse_constraint(const py::dict& d) {
     NSpec s;
     std::string t = d["type"].cast<std::string>();
@@ -190,6 +230,21 @@ static NSpec parse_constraint(const py::dict& d) {
         s.type = NT_DISTINCT;
         s.a = cells("cells");
         s.total = d["count"].cast<int>();
+    } else if (t == "expr") {  // a custom rule: {"cells", "ir", "lists", "nslots", "pos": [[row, col], ...], "box"}
+        s.type = NT_EXPR;
+        s.a = cells("cells");
+        auto prog = std::make_shared<ExprProgram>();
+        prog->root = parse_expr(d["ir"]);
+        for (auto x : d["lists"].cast<py::list>()) prog->lists.push_back(parse_expr_list(x));
+        prog->nslots = d["nslots"].cast<int>();
+        for (auto rc : d["pos"].cast<py::list>()) {
+            auto p = rc.cast<std::vector<int>>();
+            prog->row.push_back(p[0]);
+            prog->col.push_back(p[1]);
+        }
+        auto box = d["box"].cast<std::vector<int>>();
+        prog->box_h = box[0], prog->box_w = box[1];
+        s.expr = prog;
     } else if (t == "contains") {  // {"cells": [source, target, ...]}: the source digit appears among the targets
         s.type = NT_CONTAINS;
         s.a = cells("cells");
@@ -512,6 +567,15 @@ PYBIND11_MODULE(_csolver, m) {
     m.def("brute_solve", &py_brute, py::arg("puzzle"), py::arg("givens"), py::arg("limit"), py::arg("node_limit"),
           py::arg("start") = py::none(), py::arg("with_status") = false);
     m.def("puzzle_info", &puzzle_info, py::arg("puzzle"), py::arg("disabled") = std::vector<int>());
+    m.def(
+        "expr_holds",
+        [](const py::dict& spec, const std::vector<int>& digits) {
+            NSpec s = parse_constraint(spec);  // {"type": "expr", ...} as rules/custom._expr builds it
+            return expr_holds(*s.expr, digits.data());
+        },
+        py::arg("spec"), py::arg("digits"),
+        "does a custom rule's expression constraint hold for these digits (one per cell, in its order)? For tests: the "
+        "C++ evaluator against the Python reference");
     m.def("refute_profile", &py_refute_profile, py::arg("puzzle"), py::arg("givens"), py::arg("params"), py::arg("solution"),
           py::arg("max_stuck") = 400, py::arg("K") = 0);
     m.def("state_moves", &py_state_moves, py::arg("puzzle"), py::arg("givens"), py::arg("params"),
