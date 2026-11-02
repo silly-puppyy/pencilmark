@@ -149,3 +149,19 @@ def test_sudokupad_rules_text_readings():
     assert not SP.rule_flags("Digits on a diagonal must not repeat.")["antiking"]
     assert SP.color_name("#0003") == "grey" and SP.color_name("#000") == "black"
     assert SP.color_name("#000000cc") == "black"  # mostly opaque stays black
+
+
+def test_sudokupad_uncoloured_dot_follows_the_rules():
+    """a kropki dot drawn without a colour is white when the rules mention only white dots (it read as black)"""
+    from pencilmark.sources import _sp_translate as SP
+
+    ov = [{"center": [1.0, 0.5], "width": 0.3, "height": 0.3, "rounded": True}]
+    sp = {"format": "scl", "meta": {}, "puzzle": {"cells": [[{} for _ in range(4)] for _ in range(4)], "overlays": ov,
+                                                   "regions": [[[r, c] for r in range(i // 2 * 2, i // 2 * 2 + 2)
+                                                                for c in range(i % 2 * 2, i % 2 * 2 + 2)] for i in range(4)]}}  # fmt: skip
+    for text, want in (
+        ("Digits separated by a white dot are consecutive.", "diff"),
+        ("Black dots: ratio 1:2.", "ratio"),
+    ):
+        p, _ = SP.translate(sp, text)
+        assert any(r[0] == want for r in p.relations), (text, p.relations)

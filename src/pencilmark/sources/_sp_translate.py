@@ -651,6 +651,13 @@ def translate(sp, page_text=None, overrides=None):
                 used["xv"] += 1
             elif txt == "" and lay.get("rounded"):
                 bg = color_name(lay.get("backgroundColor"))
+                low = rules.lower()
+                if (
+                    not lay.get("backgroundColor")
+                    and re.search(r"white (?:dot|circle|kropki)", low)
+                    and not re.search(r"black (?:dot|circle|kropki)", low)
+                ):
+                    bg = "white"  # a dot without a colour where the rules know only white dots (Easy Arrows, 000930)
                 if bg == "white":
                     p.relations.append(("diff", idx(a), idx(b), 1))
                     used["kropki_white"] += 1
