@@ -71,3 +71,15 @@ def test_chain_substeps_end_to_end():
         lines = [a["line"] for x in sub for a in x.get("annotations", []) if "arrow" in a]
         assert lines and lines[0] == "strong" and all(x != y for x, y in zip(lines, lines[1:]))  # alternating
         assert {a["colour"] for a in sub[-1]["annotations"]} == {"red"}
+
+
+def test_simple_colouring_substeps():
+    card = pencilmark.rate(
+        "030020006009006020000050100060400900300000001001007050007090000040800200200040030",
+        fields=["steps"],
+        explain=["substeps"],
+    )
+    sub = next(s["explanation"]["substeps"] for s in card["steps"] if s["code"] == "SCL")
+    assert set(sub[0]["legend"]) == {"blue", "yellow"}
+    cols = [a["colour"] for x in sub[1:-1] for a in x["annotations"] if "candidate" in a]
+    assert set(cols) <= {"blue", "yellow"} and {a["colour"] for a in sub[-1]["annotations"]} == {"red"}

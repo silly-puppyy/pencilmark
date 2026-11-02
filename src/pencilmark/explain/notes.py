@@ -456,8 +456,72 @@ def _h_coloring(ctx):
             )
         J = _J(ctx, digits=[v], base_cells=g[0], cover_cells=g[1], links=links)
         chain = [[nm.cell(lk["a"][0]), nm.cell(lk["b"][0]), v, "strong"] for lk in links]
-        return _result(ctx, J, short, teach, True, chain=chain)
+        res = _result(ctx, J, short, teach, True, chain=chain)
+        res["substeps"] = _colouring_substeps(nm, v, comp, adj, via, wrap, tg, ctx.elims)
+        return res
     return _generic(ctx)
+
+
+def _colouring_substeps(nm, v, comp, adj, via, wrap, tg, elims):
+    """simple colouring as sub-steps: the legend, each conjugate pair in turn (the next cell takes the other colour),
+    then the clash (wrap) or the cells that see both colours (trap), the removals in red"""
+    names = ("blue", "yellow")
+    ids = iter(range(1, 10**6))
+    ann = lambda c: {"id": next(ids), "candidate": f"{nm.cell(c)}#{v}", "colour": names[comp[c]]}
+    start = min(comp, key=lambda c: nm.p.coords[c])
+    out = [
+        {
+            "text": f"Colour the {v}s that are one of only two places in a house, alternating blue and yellow, "
+            f"starting with {nm.cell(start)}.",
+            "legend": {
+                "blue": f"all of these are {v}, or none are",
+                "yellow": f"the other colour: one colour holds the {v}s",
+            },
+            "annotations": [ann(start)],
+        }
+    ]
+    seen, queue = {start}, [start]
+    why = f"If one of a house's only two places for {v} isn't {v}, the other is; so the two take different colours."
+    while queue:
+        x = queue.pop(0)
+        for y in sorted(adj[x], key=lambda c: nm.p.coords[c]):
+            if y in seen:
+                continue
+            seen.add(y)
+            queue.append(y)
+            hi = via.get(frozenset((x, y)))
+            where = nm.unit(hi) if hi is not None else "a house"
+            stp = {
+                "text": f"{v} has only two places in {where}: {nm.cell(x)} and {nm.cell(y)}, so {nm.cell(y)} is "
+                f"{names[comp[y]]}.",
+                "annotations": [
+                    ann(y),
+                    {"id": next(ids), "arrow": [f"{nm.cell(x)}#{v}", f"{nm.cell(y)}#{v}"], "line": "strong"},
+                ],
+            }
+            if len(out) == 1:
+                stp["why"] = why
+            out.append(stp)
+    red = [{"id": next(ids), "candidate": f"{nm.cell(c)}#{d}", "colour": "red"} for c, d in sorted(elims)]
+    if wrap:
+        side, a, b = wrap
+        out.append(
+            {
+                "text": f"{_cap(nm.cell(a))} and {nm.cell(b)} are both {names[side]} and see each other, so {names[side]} "
+                f"is false: no {names[side]} cell is {v}.",
+                "why": f"Two cells that see each other can't both be {v}.",
+                "annotations": red,
+            }
+        )
+    else:
+        out.append(
+            {
+                "text": f"{_subj(nm, tg)} {'sees' if len(tg) == 1 else 'see'} a blue {v} and a yellow {v}; one of them "
+                f"is a {v}, so {fmt_elims(nm, elims)}.",
+                "annotations": red,
+            }
+        )
+    return out
 
 
 # ----------------------------------------------------------- pair relations --
