@@ -79,8 +79,11 @@ pencilmark reads and writes these headers:
 | `L9B`, `L6C` | Killer 9×9, 6×6 | + `cage` rules (L6C: `+` cages only) |
 | `M9B` | Killer Jigsaw | `box` and `cage` rules |
 
-Anything else (other puzzle types or versions, placed digits or candidates, 6×6 killer operators other than `+`) is
-refused when read. `to_string(puzzle, "sudokuwiki")` picks the header from the structure and refuses puzzles none of
+In the non-killer forms each cell is Andrew Stuart's board-state code (as sudokuwiki.org writes it): a given digit d, a
+placed digit d + 9 (d + 6 on 6×6; read as a given), the candidate mask + 18 (bit i is digit i + 1; read as that cell's
+`candidates`), or 0 (nothing stored), so one string can carry a mid-solve board with its candidates; `to_string` writes
+a puzzle's `candidates` the same way. Anything else (other puzzle types or versions, candidates or placed digits in the
+killer forms, 6×6 killer operators other than `+`) is refused when read. `to_string(puzzle, "sudokuwiki")` picks the header from the structure and refuses puzzles none of
 these headers can express (a 6×6 jigsaw or X, killer-X, killer-windoku, anything above 9×9).
 
 ## ipuz

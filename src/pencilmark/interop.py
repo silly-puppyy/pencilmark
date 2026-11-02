@@ -9,7 +9,10 @@
     from_ipuz(ipuz) -> sudoku-puzzle dict       the reverse (boxes, zones, cages); a to_ipuz file returns its embedded puzzle
 
 The sudokuwiki encodings are checked against sudokuwiki.org's solver; the decoder reads exactly what the encoder writes
-and refuses anything else (placed digits in plain forms, candidate masks, 6x6 killer operators other than '+').
+and refuses anything else (candidates and placed digits in killer forms, 6x6 killer operators other than '+'). In the
+non-killer forms a cell is Andrew Stuart's board-state code (sudokuwiki.org makePackedStringVB): a given digit d, a
+placed digit d + D (read as a given), candidate mask m + 18 (bit i = digit i + 1; read as the cell's candidates), or 0
+(nothing stored, an empty cell), so one string carries a whole mid-solve board.
 """
 
 from __future__ import annotations
@@ -33,11 +36,13 @@ def _b36(n, width):
     return s.rjust(width, "0")
 
 
-def _doc(D, givens, rules, meta=None):
+def _doc(D, givens, rules, meta=None, candidates=None):
     d = {"format": FORMAT, "format_version": FORMAT_VERSION}
     if meta:
         d["meta"] = meta
     d.update({"board": {"rows": D, "cols": D}, "digits": D, "givens": givens, "rules": rules})
+    if candidates:
+        d["candidates"] = candidates
     return d
 
 
@@ -192,8 +197,8 @@ def _from_sudokuwiki(kind, D, ver, body):
     full = (1 << D) - 1
     killer = kind in ("L", "M")
     empty = full + 18 if not (kind == "L" and D == 6) else 75  # the encoder's empty-cell values (S6B 81, L6C 75)
-    givens, box_lab, col, clue = [], [], [], []
-    for v in vals:
+    givens, box_lab, col, clue, cands = [], [], [], [], {}
+    for i, v in enumerate(vals):
         if kind in ("S", "X", "W", "C"):
             n = v
         elif kind == "J":
@@ -212,14 +217,19 @@ def _from_sudokuwiki(kind, D, ver, body):
             n, clue_, col_ = v & 127, (v >> 7) & 2047, (v >> 18) + 1
             clue.append(clue_)
             col.append(col_)
-        if n == empty:
+        if n == empty or (not killer and n == 0):
             givens.append(0)
-        elif not killer and 1 <= n <= D:
-            givens.append(n)
+        elif not killer and 1 <= n <= 2 * D:  # a given, or a placed digit (+ D)
+            givens.append(n - D if n > D else n)
+        elif not killer and 18 < n < full + 18:  # candidate mask + 18 (the full mask is an empty cell)
+            givens.append(0)
+            cands[cell_name(*divmod(i, D))] = [d + 1 for d in range(D) if (n - 18) >> d & 1]
         elif killer and D < n <= 2 * D:
             givens.append(n - D)
         else:
-            raise NotSupportedError(f"sudokuwiki cell value {n} (placed digit or candidate mask) is not supported")
+            raise NotSupportedError(
+                f"sudokuwiki cell value {n} (candidates or placed digits in a killer form) is not supported"
+            )
     rules = []
     if kind in ("J", "M"):
         rules.append({"type": "grid", "origin": "r1c1"})
@@ -256,7 +266,7 @@ def _from_sudokuwiki(kind, D, ver, body):
             rules.append({"type": "region", "kind": "disjoint", "cells": [nm(i) for i in groups[ch]]})
     if killer:
         rules += _cages_from_colours(D, col, clue, kind == "L" and D == 6)
-    return _doc(D, givens, rules, meta={"source": "sudokuwiki.org"})
+    return _doc(D, givens, rules, meta={"source": "sudokuwiki.org"}, candidates=cands)
 
 
 def _cages_from_colours(D, col, clue, ops):
@@ -313,7 +323,7 @@ def to_string(puzzle, form="plain"):
     kind, info = analyse(p)
     if form == "plain":
         D = p.D
-        if kind not in ("classic", "classic6") and not (kind is None and _plain_ok(p)):
+        if (kind not in ("classic", "classic6") or info.get("masks")) and not (kind is None and _plain_ok(p)):
             raise NotSupportedError(
                 f"plain strings carry only classic sudoku with standard boxes ({info.get('why') or kind})"
             )
@@ -339,8 +349,8 @@ def to_string(puzzle, form="plain"):
 
 def is_classic9(p):
     """a classic 9 x 9 sudoku: standard rows, columns and boxes, nothing else (what Sudoku Explainer rates)"""
-    kind, _ = analyse(p)
-    return kind == "classic" or (kind is None and p.D == 9 and _plain_ok(p))
+    kind, info = analyse(p)
+    return (kind == "classic" and not info.get("masks")) or (kind is None and p.D == 9 and _plain_ok(p))
 
 
 def _plain_ok(p):
@@ -379,8 +389,9 @@ def analyse(p):
         return None, {"why": "extra rules (relations / constraints)"}
     to_rc = lambda i: p.coords[i][0] * D + p.coords[i][1]
     givens = {to_rc(i): v for i, v in p.givens.items()}
-    if p.domains and any(m != p.full for i, m in enumerate(p.domains) if i not in p.givens and m not in (None, 0)):
-        return None, {"why": "restricted domains"}
+    masks = {
+        to_rc(i): m for i, m in enumerate(p.domains or ()) if i not in p.givens and m not in (None, 0) and m != p.full
+    }  # given candidates: written as candidate masks (non-killer forms only)
     cages, houses = [], set()
     for g in p.groups:
         cells = frozenset(to_rc(i) for i in g.cells)
@@ -408,6 +419,7 @@ def analyse(p):
             transposed = True
             rest = {frozenset(map(T, s)) for s in rest}
             givens = {T(c): v for c, v in givens.items()}
+            masks = {T(c): m for c, m in masks.items()}
             cages = [(t, sorted(map(T, cs))) for t, cs in cages]
     if std <= rest:
         extra = rest - std
@@ -433,7 +445,9 @@ def analyse(p):
     )
     winall = _sets(WINDOKU_COL, 81) if D == 9 else set()
     colour = _sets(COLOUR_COL, 81) if D == 9 else set()
-    info = {"boxes": boxlab, "cages": cages, "givens": givens, "D": D, "transposed": transposed}
+    info = {"boxes": boxlab, "cages": cages, "givens": givens, "masks": masks, "D": D, "transposed": transposed}
+    if cages and masks:
+        return None, dict(info, why="candidates in a killer")
     if cages:
         if extra:
             return None, dict(info, why="killer + extra regions")
@@ -456,10 +470,15 @@ def analyse(p):
     return None, dict(info, why=f"extra regions {len(extra)}")
 
 
+def _cell_code(info, i):
+    """Andrew Stuart's cell code: a given digit, or the candidate mask + 18 (all digits for an unrestricted cell)"""
+    if i in info["givens"]:
+        return info["givens"][i]
+    return info["masks"].get(i, (1 << info["D"]) - 1) + 18
+
+
 def _plain_packed(info, prefix):
-    D = info["D"]
-    empty = (1 << D) - 1 + 18
-    return prefix + "".join(_b36(info["givens"][i], 2) if i in info["givens"] else _b36(empty, 2) for i in range(D * D))
+    return prefix + "".join(_b36(_cell_code(info, i), 2) for i in range(info["D"] ** 2))
 
 
 def _colouring(cages, D):
@@ -484,8 +503,7 @@ def _colouring(cages, D):
 def _enc_jigsaw(info):
     s = "J9B"
     for i in range(81):
-        n = info["givens"][i] if i in info["givens"] else 511 + 18
-        s += _b36(((int(info["boxes"][i]) - 1) << 10) + n, 3)
+        s += _b36(((int(info["boxes"][i]) - 1) << 10) + _cell_code(info, i), 3)
     return s
 
 

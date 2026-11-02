@@ -374,13 +374,24 @@ def test_sudokuwiki_round_trip():
         raise AssertionError("a 4x4 killer has no sudokuwiki form")
 
 
+def test_sudokuwiki_board_state():
+    # Andrew Stuart's cell codes: given 5, placed 3 (3 + 9), candidates {1, 2} (mask 3 + 18), nothing stored (0)
+    b = lambda n: I._b36(n, 2)
+    s = "S9B" + b(5) + b(12) + b(21) + b(0) + b(511 + 18) * 77
+    d = pencilmark.from_string(s)
+    assert d["givens"][:5] == [5, 3, 0, 0, 0] and d["candidates"] == {"r1c3": [1, 2]}
+    again = pencilmark.to_string(d, "sudokuwiki")
+    assert again == "S9B" + b(5) + b(3) + b(21) + b(529) * 78  # placed digits come back as givens
+    assert pencilmark.from_string(again)["candidates"] == {"r1c3": [1, 2]}
+
+
 def test_sudokuwiki_refusals():
-    s = "S9B" + "zz" * 81
+    s = "S9B" + "zz" * 81  # beyond the largest candidate mask
     try:
         pencilmark.from_string(s)
     except pencilmark.NotSupportedError:
         return
-    raise AssertionError("candidate masks must be refused")
+    raise AssertionError("cell values above the candidate masks must be refused")
 
 
 # ------------------------------------------------------------------------------------------------------------------- ipuz
