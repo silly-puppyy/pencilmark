@@ -2,6 +2,9 @@
 const {tomorrowVars} = require('./src/prism-tomorrow');
 
 const GH = 'https://github.com/silly-puppyy/pencilmark';
+// the package version (pyproject.toml), shown in the navbar
+const VERSION = require('fs').readFileSync(require('path').join(__dirname, '..', 'pyproject.toml'), 'utf8')
+  .match(/^version\s*=\s*"([^"]+)"/m)[1];
 
 module.exports = async function createConfig() {
   const remarkMath = (await import('remark-math')).default;
@@ -55,7 +58,7 @@ module.exports = async function createConfig() {
   ],
   themeConfig: {
     // link previews (Discord, Slack, ...): the small icon beside the text, in the logo's colour; search: page keywords.
-    // The wide banner is for the GitHub README only.
+    // The homepage alone shows the wide banner (its front matter, written by tools/tasks.py prepare).
     image: 'img/icon-256.png',
     metadata: [{name: 'keywords', content: 'sudoku, sudoku difficulty, sudoku grader, variant sudoku, killer sudoku, ' +
       'sudoku solver, sudoku generator, solve time, python'},
@@ -69,6 +72,7 @@ module.exports = async function createConfig() {
         {to: '/formats/puzzle-format/', label: 'Puzzle format', position: 'left'},
         {to: '/formats/grade-card/', label: 'Grade card', position: 'left'},
         {to: '/library/python-api/', label: 'Python API', position: 'left'},
+        {href: `${GH}/releases/tag/v${VERSION}`, label: `v${VERSION}`, position: 'right', title: 'Release notes'},
         {href: 'https://pypi.org/project/pencilmark/', position: 'right', className: 'pm-nav-icon pm-nav-pypi',
          label: 'PyPI', title: 'pencilmark on PyPI'},
         {href: GH, position: 'right', className: 'pm-nav-icon pm-nav-github', label: 'GitHub', title: 'GitHub repository'},

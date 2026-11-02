@@ -22,7 +22,7 @@ PY = sys.executable
 FIXTURES = ["test_line_matrix", "test_edge_matrix", "test_cell_matrix", "test_rule_matrix", "test_input_matrix"]
 GENERATORS = ["gen_api_md", "gen_reference_md", "gen_cpp_reference", "gen_techniques_md", "gen_parameters_md",
               "gen_palette_md", "gen_swatches"]  # fmt: skip
-COPIES = [("README.md", "docs/index.md", None),
+COPIES = [("README.md", "docs/index.md", None),  # the homepage: its link previews show the wide banner (image below)
           ("ARCHITECTURE.md", "docs/guides/development/architecture.md", "How a card is computed in the code, and which file holds each part."),
           ("CONTRIBUTING.md", "docs/dev/contributing.md", "How to set up, prove a change, and the style pencilmark's code and docs follow.")]  # fmt: skip
 
@@ -64,7 +64,8 @@ def prepare():
             return 1
     for src, dst, description in COPIES:  # the copies get a description for search results (the sources have none)
         text = re.sub(r"\n<picture>.*?</picture>\n", "", (ROOT / src).read_text(encoding="utf-8"), flags=re.S)  # banner
-        head = f'---\ndescription: "{description}"\n---\n\n' if description else ""
+        meta = f'description: "{description}"\n' if description else "image: img/banner-light.png\n"  # homepage
+        head = f"---\n{meta}---\n\n"
         (ROOT / dst).write_text(head + text, encoding="utf-8")
     return 0
 
