@@ -359,7 +359,8 @@ def test_outside_clues():
     from pencilmark.gen import elements as EL
 
     for t, D in (({"type": "sandwich"}, 6), ({"type": "skyscraper"}, 6), ({"type": "sum", "kind": "little_killer"}, 4)):
-        r = run(spec(D, rules=[dict(t, count=[2, None])], seed=1, time_limit=60))
+        # 120 s: one attempt took about 20 s on Linux and ran out of 60 s on the Windows runner (about 2-3x slower)
+        r = run(spec(D, rules=[dict(t, count=[2, None])], seed=1, time_limit=120), budget=300)
         clues = [x for x in r["puzzle"]["rules"] if x["type"] == t["type"] and x.get("kind") == t.get("kind")]
         assert len(clues) >= 2, t
         sol = r["puzzle"]["solution"]
