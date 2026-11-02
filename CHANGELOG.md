@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Generator: with publishing checks (`quality` in the request), a found puzzle's checks and its full card are one grading
+  instead of two (a checked card has the same difficulty, time, band and contents: 138 of 138 development puzzles).
+  The same results, faster: the nine-variants example 135 s -> 121 s.
 - Logging: pencilmark writes to the standard Python logger `pencilmark` (silent until switched on): pages fetched,
   what a reader read from a link and the readings it inferred, time limits reached and the generator's result at
   INFO; stage timings, uniqueness checks, each generator attempt and why it was rejected, and the meaning a reader

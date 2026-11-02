@@ -643,11 +643,17 @@ def _generate(spec):
         if (s.max_givens is not None and len(givens) > s.max_givens) or len(givens) < (s.min_givens or 0):
             reject("givens outside the spec (late stage)")  # every stage keeps the bounds; this is the last word
             continue
-        if s.quality is not None:  # the publishing checks, after the cheaper targets
+        whole = not screen_alts or screen_fields is not None  # the result's card is made in full (once, for a search)
+        whole = whole or card.get("completed") is False  # the result's card is complete: no grade_seconds cap
+        # the publishing checks, after the cheaper targets; when the result's full card is made anyway, they are part of
+        # it (one grading instead of two: a checked card has the same difficulty, time, band and contains)
+        merged = s.quality is not None and whole and hunt is None
+        if s.quality is not None:
             p_ = PJ.from_json(d)
             p_.finalize()
-            qc = E2.grade(p_, dict(P, quality=s.quality), with_steps=False, max_seconds=s.grade_seconds,
-                          fields=["issues", "reject"])  # fmt: skip
+            qc = E2.grade(p_, dict(P, quality=s.quality), with_steps=False,
+                          max_seconds=None if merged else s.grade_seconds, alternatives=merged or screen_alts,
+                          fields=sorted(E2.card_fields(None) | {"issues", "reject"}) if merged else ["issues", "reject"])  # fmt: skip
             if qc.get("reject"):
                 codes = "/".join(sorted({i["code"] for i in qc.get("issues") or [] if i.get("severity") == "reject"}))
                 reject(f"publishing check: {codes}")
@@ -656,9 +662,9 @@ def _generate(spec):
         if verified is False:
             reject("not unique (CP-SAT)")
             continue
-        whole = not screen_alts or screen_fields is not None  # the result's card is made in full (once, for a search)
-        whole = whole or card.get("completed") is False  # the result's card is complete: no grade_seconds cap
-        if whole and hunt is None:
+        if merged:
+            card = {k: v for k, v in qc.items() if k not in ("issues", "reject")}
+        elif whole and hunt is None:
             card = grade(d, alternatives=True, fields=None, cap=None)
         info = {
             "mode": mode,
