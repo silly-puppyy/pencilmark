@@ -48,8 +48,13 @@ UNMODELLED_RULES = (
     ("nurikabe", r"nurikabe"),
     ("cave", r"cave"),
     ("indexing", r"indexing"),
-    ("ten line", r"ten line"),
-    ("10 line", r"10 line"),
+    ("ten line", r"ten[- ]line"),
+    ("10 line", r"10[- ]line"),
+    ("broken zipper", r"broken zipper"),
+    (
+        "anti line",
+        r"\banti[- ](?:renban|german whisper|whisper|palindrom|thermo|zipper|region[- ]sum|entropic|modular|parity)",
+    ),
     # the newer entries want the mechanic defined ("equality cages: ..."), not only named: pages list an author's other
     # series and the solvers' names (checked on the 28,333 logic-masters sudoku texts)
     ("look-and-say", r"look[- ]and[- ]say (?:cage|line|clue)"),
@@ -175,7 +180,7 @@ RULE_WORDS = {
     "modular": [r"modular"],
     "nabner": [r"nabner"],
     "lockout": [r"lockout"],
-    "ten": [r"10 line", r"ten line"],
+    "ten": [r"10[- ]line", r"ten[- ]line"],
 }
 COLOR_WORDS = [
     "green",
@@ -345,14 +350,43 @@ def diff_rule(sent):
 RULE_DESCRIPTIONS = {
     "renban": [r"set of (?:non-repeating,? )?consecutive", r"consecutive set",
                r"\b(?:are|be|contains?|form) (?:an? )?(?:non-repeating,? )?consecutive (?:digits|numbers|values|sequence)"],
-    "region_sum": [r"segments? (?:that |which )?(?:each )?(?:sum|add)s? (?:up )?to the same", r"(?:same|equal) sums?",
+    "region_sum": [r"segments? (?:that |which )?(?:each )?(?:sum|add)s? (?:up )?to the same", r"(?:same|equal) (?:sums?|totals?)",
                    r"sum (?:of the digits )?(?:on|along) (?:a|the|each) [a-z ]{0,20}line is (?:equal|the same)",
                    r"is (?:equal|the same) in (?:every|each) box"],
     "thermo": [r"increase from the bulb", r"from the bulb end"],
-    "between": [r"(?:numerically|strictly) between", r"between the (?:two )?(?:digits|circles|numbers) (?:in|at) "],
+    "between": [r"(?:numerically|strictly) between", r"between the (?:two )?(?:digits|circles|numbers) (?:in|at) ",
+                r"between (?:the )?(?:two )?(?:attached )?circles"],
     "palindrome": [r"reads? the same (?:forwards?|in both)", r"same (?:forwards?|from either end)"],
-    "zipper": [r"equidistant from the (?:centre|center)", r"same distance from the (?:centre|center)"],
+    "zipper": [r"equidistant from the (?:centre|center)", r"(?:same|equal) distance from the (?:centre|center)"],
 }  # fmt: skip
+
+
+# a region sum stated per box ("the same total in each 3x3 box the line visits"): a line that leaves a box and comes back
+# then has one total for both visits, which the segment rule (box borders divide the line) does not model
+RS_PER_BOX = re.compile(
+    r"(?:in|within) each (?:3x3 )?box|each (?:3x3 )?box (?:it|the line|they|that it) (?:visits|passes)"
+)
+
+
+def _described(sent):
+    """line rules one sentence describes without naming them: only a sentence about a line or thread, and a region sum
+    only with the boxes in it ("lines of the same colour sum to the same total" is another rule)"""
+    if not re.search(r"\b(?:lines?|threads?)\b", sent):
+        return []
+    got = [k for k, pats in RULE_DESCRIPTIONS.items() if any(re.search(p, sent) for p in pats)]
+    return [k for k in got if k != "region_sum" or re.search(r"\bbox(?:es)?\b|3x3", sent)]
+
+
+def described_line_rules(rules):
+    """line rules the text describes without naming them, from sentences about a line or thread that name no colour
+    (a puzzle with one line colour); empty when any line sentence names a colour"""
+    out = set()
+    for sent in re.split(r"(?<=[.\n])\s*", (rules or "").lower()):
+        if re.search(r"\b(?:lines?|threads?)\b", sent) and any(re.search(rf"\b{c}", sent) for c in COLOR_WORDS):
+            return set()
+        if not any(re.search(p, sent) for pats in RULE_WORDS.values() for p in pats):
+            out |= set(_described(sent))
+    return out
 
 
 def rules_color_map(rules):
@@ -361,8 +395,8 @@ def rules_color_map(rules):
     text = (rules or "").lower()
     for sent in re.split(r"(?<=[.\n])\s*", text):
         rules_here = [k for k, pats in RULE_WORDS.items() if any(re.search(p, sent) for p in pats)]
-        if not rules_here and re.search(r"\b(?:lines?|threads?)\b", sent):
-            rules_here = [k for k, pats in RULE_DESCRIPTIONS.items() if any(re.search(p, sent) for p in pats)]
+        if not rules_here:
+            rules_here = _described(sent)
         cols = [c for c in COLOR_WORDS if re.search(rf"\b{c}", sent)]
         dk = diff_rule(sent) if (not rules_here or set(rules_here) & {"whisper", "dutch"}) else None
         if (rules_here or dk) and cols:
@@ -874,6 +908,8 @@ def translate(sp, page_text=None, overrides=None):
         SLOW_ALL.search(rules.lower()) and not re.search(r"(?:normal|regular|standard) thermo", rules.lower())
     ):
         text_mentions = (text_mentions - {"thermo", "slow_thermo"}) | {"slow_thermo"}
+    if len({cn for cn, _, _ in line_items(P, n)} - {"diagonal"}) == 1:
+        text_mentions |= described_line_rules(rules)  # "digits on a line form a consecutive set", one line colour
     box_of = {c: gi for gi, g in enumerate(p.groups) if g.kind == "box" for c in g.cells}
     told = set()  # line colours whose meaning is logged (once per colour and reading)
     for cname, hexcol, lc in line_items(P, n):
@@ -924,6 +960,7 @@ def translate(sp, page_text=None, overrides=None):
         if rule == "ignore":
             continue
         ids = [idx(x) for x in lc]
+        loop = len(ids) > 2 and ids[0] == ids[-1]
         if rule in ("renban", "region_sum") and len(set(ids)) != len(ids):
             ids = list(dict.fromkeys(ids))  # closed loop: the start cell is drawn twice, counted once
         if rule in ("thermo", "slow_thermo"):
@@ -947,6 +984,11 @@ def translate(sp, page_text=None, overrides=None):
                     segs.append(cur)
                     cur = [c]
             segs.append(cur)
+            if loop and len(segs) > 1 and box_of.get(segs[0][0]) == box_of.get(segs[-1][-1]):
+                segs[0] = segs.pop() + segs[0]  # a loop's last and first segments join through the closing edge
+            if len({box_of.get(sg[0]) for sg in segs}) < len(segs) and RS_PER_BOX.search(rules.lower()):
+                unknown.append("region sum line re-entering a box (sum per box)")  # one total per box, not per segment
+                continue
             if len(segs) > 1:
                 p.constraints.append({"type": "equal_sum", "segments": segs})
         elif rule == "palindrome":
@@ -985,7 +1027,10 @@ def translate(sp, page_text=None, overrides=None):
             if not (lc[0] in circles and lc[-1] in circles) or len(set(ids)) != len(ids):
                 unknown.append("between line without end circles")
                 continue
-            p.constraints.append({"type": "line", "kind": "between", "cells": ids})
+            stops = [k for k, x in enumerate(lc) if x in circles]  # a line through several circles: one between line
+            for i, j in zip(stops, stops[1:]):  # per stretch from circle to circle
+                if j > i + 1:
+                    p.constraints.append({"type": "line", "kind": "between", "cells": ids[i : j + 1]})
         elif rule == "nabner":
             u = list(dict.fromkeys(ids))
             for i_ in range(len(u)):

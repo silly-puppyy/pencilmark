@@ -132,7 +132,9 @@ def translate(fp, line_kinds=None):
         if fp.get(k) and not (k == "circle" and circles_counting):
             return None, f"unsupported: generic {k} (meaning in rules text)"
     if fp.get("line") and line_kinds is None:
-        return None, "unsupported: generic line (meaning in rules text)"
+        line_kinds = text_line_reading(fp)
+        if line_kinds is None:
+            return None, "unsupported: generic line (meaning in rules text)"
     unknown = [
         k
         for k, v in fp.items()
@@ -429,6 +431,36 @@ LINE_WORDS = [
     ("slow_thermo", r"slow thermo"),
     ("kropki_chain", r"\bnope\b"),
 ]
+
+
+# rule keys of the SudokuPad reader -> generic f-puzzles line kinds (thermos and arrows need a bulb / circle: not read)
+TEXT_LINE_KINDS = {"whisper": "whisper", "dutch": "dutch_whisper", "renban": "renban", "region_sum": "region_sum",
+                   "palindrome": "palindrome", "entropic": "entropic", "parity": "parity", "modular": "modular",
+                   "zipper": "zipper", "between": "between"}  # fmt: skip
+
+
+def text_line_reading(fp):
+    """{colour: kind} for generic lines from the rules text: each colour the text names, or the one line rule a
+    single-colour puzzle's text names or describes -> None when a colour stays unread"""
+    from . import _sp_translate as ST
+
+    text = fp.get("ruleset") or ""
+    colours = sorted({_colour(it) for it in fp.get("line") or []})
+    cmap = ST.rules_color_map(text)
+    named = {k for k, pats in ST.RULE_WORDS.items() if any(re.search(p, text.lower()) for p in pats)}
+    dk = ST.diff_rule(text.lower())
+    only = (named | ST.described_line_rules(text) | ({dk} if dk else set())) - {"ten"}
+    if cmap:  # the text gives its lines colours: an unnamed colour is not the one rule
+        only = set()
+    reading = {}
+    for c in colours:
+        rk = ST.line_rule_from_text(c, cmap) if c.startswith("#") else None
+        if rk is None and len(colours) == 1 and len(only) == 1:
+            rk = next(iter(only))
+        if TEXT_LINE_KINDS.get(rk) is None:
+            return None
+        reading[c] = TEXT_LINE_KINDS[rk]
+    return reading
 
 
 def _colour(item):

@@ -91,6 +91,23 @@ def test_fpuzzles_lockout_written_back():
     assert pencilmark.fingerprint(doc)
 
 
+def test_fpuzzles_generic_line_from_rules_text():
+    """generic f-puzzles lines take their meaning from the rules text as SudokuPad lines do: by colour, or the one line
+    rule a single-colour puzzle's text describes; a line rule left unread stays refused"""
+    from pencilmark.sources import _fpuz_translate as FT
+
+    line = lambda col: {"lines": [["R1C1", "R1C2", "R1C3"]], "outlineC": col}
+    fp = {"line": [line("#c060f0"), line("#67f067")]}
+    fp["ruleset"] = (
+        "A purple line holds a set of consecutive digits. Adjacent digits on a green line differ by at least 5."
+    )
+    assert FT.text_line_reading(fp) == {"#c060f0": "renban", "#67f067": "whisper"}
+    one = {"line": [line("#a0a0a0")], "ruleset": "Digits on a line may not repeat and form a consecutive set."}
+    assert FT.text_line_reading(one) == {"#a0a0a0": "renban"}
+    one["ruleset"] = "Every triple of adjacent digits on a line has one digit the sum of the other two."
+    assert FT.text_line_reading(one) is None
+
+
 def test_user_agent_contact():
     assert "347531506+silly-puppyy@users.noreply.github.com" in sources.USER_AGENT
 
@@ -303,6 +320,38 @@ def test_line_colour_from_described_rule():
     }
     assert SP.rules_color_map("Digits in a cage form a consecutive set. Red circles are odd.") == {}
     assert SP.rules_color_map("The sum of any three consecutive digits along a red line is divisible by 3.") == {}
+    assert (
+        SP.rules_color_map("Digits on lines of the same colour sum to the same total.") == {}
+    )  # no boxes: not a region sum
+    assert SP.unmodelled_rules("anti renban: digits on a purple line must not all be consecutive.")
+    assert SP.unmodelled_rules("on a broken zipper, no pairs the same distance from the centre have the same sum")
+
+
+def test_region_sum_loop_and_per_box_wording():
+    """a closed region-sum loop's last and first segments are one segment (CTC brC06xfMLyc read as no solution); a
+    line re-entering a box under "the same total in each box the line visits" is refused (one total per box)"""
+    from pencilmark.sources import _sp_translate as SP
+
+    wp = [[0.5, 1.5], [0.5, 2.5], [1.5, 2.5], [1.5, 1.5], [0.5, 1.5]]  # r1c2 r1c3 r2c3 r2c2, back to r1c2
+    sp = _sp4(lines=[{"color": "#34BBE6", "thickness": 9.6, "wayPoints": wp}])
+    p, _ = SP.translate(sp, "Box borders divide a blue line into segments with the same sum.")
+    assert [sorted(sg) for c in p.constraints if c["type"] == "equal_sum" for sg in c["segments"]] == [[1, 5], [2, 6]]
+    wp = [[0.5, 0.5], [0.5, 2.5], [1.5, 1.5]]  # r1c1 r1c2 | r1c3 | r2c2: box 1 twice
+    sp = _sp4(lines=[{"color": "#34BBE6", "thickness": 9.6, "wayPoints": wp}])
+    p, why = SP.translate(sp, "Digits on a blue line sum to the same total in each box the line visits.")
+    assert p is None and "re-entering a box" in why
+
+
+def test_between_line_through_several_circles():
+    """a between line passing through more than two circles is one between line per stretch from circle to circle
+    (CTC k90bwDVb3bw: 28 stretches; read from its end circles only it had several solutions)"""
+    from pencilmark.sources import _sp_translate as SP
+
+    line = [{"color": "#CFCFCF", "thickness": 9.6, "wayPoints": [[0.5, 0.5], [0.5, 3.5], [1.5, 3.5], [1.5, 0.5]]}]
+    circ = lambda r, c: {"center": [r, c], "width": 0.8, "height": 0.8, "rounded": True, "borderColor": "#000"}
+    sp = _sp4(lines=line, overlays=[circ(0.5, 0.5), circ(0.5, 3.5), circ(1.5, 0.5)])
+    p, _ = SP.translate(sp, "Digits on a line must be strictly between the digits in the connected circles.")
+    assert [c["cells"] for c in p.constraints if c.get("kind") == "between"] == [[0, 1, 2, 3], [3, 7, 6, 5, 4]]
 
 
 def test_whole_grid_region_means_no_boxes():

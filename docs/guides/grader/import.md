@@ -64,6 +64,11 @@ f-puzzles `?load=` links, Penpa+ links and bare SudokuPad payloads are decoded o
 `?id=` links, short-link services and Logic Masters pages are fetched: one request each, identified as pencilmark, with
 robots.txt obeyed and a pause between requests to the same site.
 
+Lines take their meaning from their colour and the rules text: "adjacent digits on a green line differ by at least 5"
+makes green lines German whispers, whether the text names the rule or only describes it ("a purple line contains a set
+of consecutive digits"). In a puzzle with lines of one colour, a rules text that describes one line rule without naming
+a colour gives that rule to every line.
+
 A rule pencilmark cannot map exactly is refused with the list of what it could not read; nothing is dropped silently.
 The error is `pencilmark.sources.UnsupportedPuzzle`, and its message names each element, for example "pink line" or
 "generic line (meaning in rules text)": a line whose meaning only the rules text gives. A puzzle whose rules define a
