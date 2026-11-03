@@ -432,6 +432,14 @@ def translate(fp, line_kinds=None):
         ST.parity_shapes({"underlays": coloured}, n, p, fp.get("ruleset") or "", u, lambda rc_: rc_[0] * n + rc_[1],
                          lambda rc_: 0 <= rc_[0] < n and 0 <= rc_[1] < n)  # fmt: skip
         used.update({k: v for k, v in u.items() if v})
+    from collections import defaultdict
+
+    colour_cells = defaultdict(list)  # rules on caged / coloured cells stated in the text
+    for r_, row in enumerate(fp.get("grid") or []):
+        for c_, cell in enumerate(row or []):
+            if isinstance(cell, dict) and cell.get("c"):
+                colour_cells[ST.color_name(cell["c"])].append(r_ * n + c_)
+    ST.text_cell_rules(p, n, fp.get("ruleset") or "", colour_cells, used)
     if outside_texts:  # read like SudokuPad outside clues, from the payload's wording, else the page's
         from collections import Counter
 

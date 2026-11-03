@@ -815,6 +815,12 @@ def test_lmd_wording_fixes():
           "ruleset": "Red cells are greater than 2."}  # fmt: skip
     p, _ = FT.translate(fp)
     assert p.domains[0] == 0b1100
+    assert {"maze path", "digit subset", "exclusive", "cage sums to find"} <= {k for k, _ in SP.UNMODELLED_RULES}
+    assert "rule 'maze path'" in SP.unmodelled_rules("Both rats must find a path through the maze to the cheese.")
+    fp2 = {"size": 4, "grid": [[{"c": "#FFE060"} if (r, c) in ((0, 0), (3, 3)) else {} for c in range(4)] for r in range(4)],
+           "ruleset": "The cells shaded orange are the same number as one another."}  # fmt: skip
+    p, _ = FT.translate(fp2)
+    assert next(r for r, _ in p.named_rules)["holds"] == "count_distinct(S) == 1"
 
 
 def test_rule_for_every_line():

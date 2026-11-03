@@ -42,10 +42,20 @@ UNMODELLED_RULES = (
         r"|\b(?:colou?r|paint) (?:every|each|all|some)(?: of the)? cells?\b",
     ),
     ("modifier", r"modifier"),
+    ("maze path", r"path through the maze|\brat run\b"),  # a route through walls (path genre): no path layer yet
+    (
+        "digit subset",
+        r"\buses? (?:\w+|\d+) of the digits\b|\btake (?:two|three|four|five|six|seven|eight|\d) \(?(?:different|distinct)?\)? ?digits from",
+    ),
     # a digit used once by all clues of a kind across the grid ("if a cage contained a 1, no other cage can")
     (
         "exclusive",
-        r"(?:can ?not|cannot|may not) (?:have|contain) a repeated digit in the (?:whole |entire )?(?:puzzle|grid)",
+        r"(?:can ?not|cannot|may not) (?:have|contain) a repeated digit in the (?:whole |entire )?(?:puzzle|grid)"
+        r"|(?:may|can|must) contain no repeated digits anywhere in the (?:puzzle|grid)",
+    ),
+    (
+        "cage sums to find",
+        r"sums must (?:be guessed|form a)|(?:cage )?sums (?:are|must be) (?:guessed|determined) by the solver",
     ),
     ("doubler", r"doubler"),
     ("minesweeper", r"minesweeper"),
@@ -1626,6 +1636,13 @@ def translate(sp, page_text=None, overrides=None):
                     # the same digits drawn as a one-cell cage's number: a label, not a cage sum
                     p.groups = [g for g in p.groups if not (g.kind == "cage" and g.cells == (i_,)
                                                             and "".join(sorted(str(g.total))) == shown)]  # fmt: skip
+    colour_cells = defaultdict(list)
+    for lay in P.get("underlays") or []:
+        if isinstance(lay, dict) and "center" in lay and not lay.get("rounded") and (lay.get("width") or 0) >= 0.9:
+            rc_ = cell_of(lay["center"])
+            if inside(rc_):
+                colour_cells[color_name(lay.get("backgroundColor"))].append(idx(rc_))
+    text_cell_rules(p, n, text_rules, colour_cells, used)
     if re.search(
         r"cages must contain either all even (?:numbers|digits), all odd (?:numbers|digits), or exactly half",
         text_rules.lower(),
@@ -1674,6 +1691,31 @@ def plain_sudoku(p, n, used):
         and all(g.kind in ("row", "col") or (g.kind == "box" and frozenset(g.cells) in std) for g in p.groups)
         and all(d == p.full for d in p.domains)
     )
+
+
+def text_cell_rules(p, n, rules, colour_cells, used):
+    """rules on caged or coloured cells stated in the text: "digits in the cage are odd" (a parity clue on caged cells),
+    "the cells shaded orange are the same number" (one digit; the named colour, or the only shading colour)"""
+    t = (rules or "").lower()
+    m = re.search(r"(?:digits|numbers) in (?:the |each |all |every )?cages? (?:are|must be) (?:all )?(odd|even)\b", t)
+    if m:
+        odd_m = sum(1 << (v - 1) for v in range(1, n + 1, 2))
+        cells = sorted({c for g in p.groups if g.kind == "cage" for c in g.cells})
+        if cells:
+            _cell_clue(
+                p, {"type": "parity", "parity": m.group(1)}, cells, odd_m if m.group(1) == "odd" else p.full & ~odd_m
+            )
+            used["cage_parity"] = used.get("cage_parity", 0) + 1
+    m = re.search(r"cells (?:shaded|coloured|colored|marked) (\w+) (?:are|contain) the same (?:number|digit)", t)
+    if m:
+        from .. import puzzle_json as PJ
+
+        want = {"gray": "grey"}.get(m.group(1), m.group(1))
+        same = colour_cells.get(want) or (next(iter(colour_cells.values())) if len(colour_cells) == 1 else [])
+        if len(same) >= 2:
+            PJ.add_named(p, {"type": "custom", "cells": {"S": [f"r{p.coords[c][0] + 1}c{p.coords[c][1] + 1}" for c in same]},
+                             "holds": "count_distinct(S) == 1", "label": f"Same digit in {want} cells"})  # fmt: skip
+            used["same_colour_equal"] = used.get("same_colour_equal", 0) + 1
 
 
 def drawn_in_grid(P, n, inside):

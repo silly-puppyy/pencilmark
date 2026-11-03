@@ -60,7 +60,9 @@
 - Reader fixes from the 500 most-solved Logic Masters sudokus (graded 157 -> 165): "[no negative constraints]" no
   longer adds negatives; "If not, they don't" after a marker rule makes it negative; "at least 5 apart" whispers;
   equal-parity lines; thermos of a single parity; cells greater / less than a digit by colour or shape; f-puzzles
-  coloured cells read by the shape-clue reader when the text gives them a meaning.
+  coloured cells read by the shape-clue reader when the text gives them a meaning; "digits in the cage are odd"; cells
+  of one colour "are the same number"; refused instead of misread: maze paths (RAT RUN), digit subsets chosen by
+  the solver, every clue type exclusive across the puzzle, cage sums to find (graded 165 -> 167).
 - SudokuPad links of the form `sudokupad.app/<author>/<slug>` are fetched (they were refused as not a short id).
 - Speed and robustness: the C++ uniqueness search without OR-Tools stops at a time limit, not only a node limit
   (counting-circle puzzles ran for hours); the trial step retries with a larger search before giving up (two unique
