@@ -374,7 +374,7 @@ def count_solutions(puzzle, limit=1000):
     return {"count": len(sols), "exact": decided and len(sols) < limit}
 
 
-def to_export(puzzle, meta=None, with_solution=True, describe=True, **meta_kw):
+def to_export(puzzle, meta=None, with_solution=True, describe=True, style=True, **meta_kw):
     """The sudoku-puzzle dict of a puzzle (format_version 1, docs/formats/puzzle-format.md).
 
     Canonical: houses and rules with "r1c1" cells, keys in a fixed order. Metadata already in a JSON input is kept.
@@ -389,6 +389,8 @@ def to_export(puzzle, meta=None, with_solution=True, describe=True, **meta_kw):
         Include the solution.
     describe : bool
         Fill an empty meta.type / meta.rules_text from `describe`; never overwrites them.
+    style : bool
+        Keep how the source drew each rule (SudokuPad colours, widths, shapes) as the rule's cosmetic `style`.
     **meta_kw
         Metadata as keywords: title, author, source, id, url, date, rules_text.
 
@@ -416,6 +418,10 @@ def to_export(puzzle, meta=None, with_solution=True, describe=True, **meta_kw):
     m.update(meta or {})
     m.update({k: v for k, v in meta_kw.items() if v not in (None, "")})
     doc = export_puzzle(p, meta=m, solution=sol)
+    if style and getattr(p, "drawn", None):
+        from .sources._sp_style import apply as _apply_style
+
+        doc = _apply_style(doc, p.drawn)
     if describe and not (m.get("type") and m.get("rules_text")):
         from .variants import describe as _describe
         from .variants import rules_text as _rt

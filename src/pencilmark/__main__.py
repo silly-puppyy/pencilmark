@@ -15,7 +15,7 @@
   python -m pencilmark generate [SPEC|-] [--seed N] [--time S] [--result]
                                        a puzzle for a "sudoku-spec" request (docs/formats/generator-spec.md), as a sudoku-puzzle file
   python -m pencilmark json  [FILE|-]      validate + normalise to canonical JSON (adds "hash")
-  python -m pencilmark export [FILE|-] [--pretty] [--no-solution]
+  python -m pencilmark export [FILE|-] [--pretty] [--no-solution] [--no-style]
                                        each puzzle as a "sudoku-puzzle" file (format_version 1, docs/formats/puzzle-format.md), canonical
   python -m pencilmark fingerprint [FILE|-]  the content fingerprint ("sha256:...") per puzzle
   python -m pencilmark describe [FILE|-]     variant name and rules per puzzle (JSON)
@@ -350,11 +350,11 @@ def cmd_json(a):
 
 
 def cmd_export(a):
-    """`export` command: print each input puzzle in the sudoku-puzzle format (--no-solution drops the solution)"""
+    """`export` command: print each input puzzle in the sudoku-puzzle format (--no-solution drops the solution, --no-style the rules' drawing styles)"""
     from .api import dumps, to_export
 
     def one(k, obj):
-        d = to_export(obj, with_solution=not a.no_solution)
+        d = to_export(obj, with_solution=not a.no_solution, style=not a.no_style)
         print(dumps(d, pretty=a.pretty), end="" if a.pretty else "\n", flush=True)
 
     _each(a, one)
@@ -474,6 +474,7 @@ def main(argv=None):
     e.add_argument("file", nargs="?")
     e.add_argument("--pretty", action="store_true")
     e.add_argument("--no-solution", action="store_true", help="do not solve to add the solution")
+    e.add_argument("--no-style", action="store_true", help="leave out how the source drew the rules (colours, shapes)")
     e.set_defaults(fn=cmd_export)
     f = sub.add_parser("fingerprint", parents=[common])
     f.add_argument("file", nargs="?")

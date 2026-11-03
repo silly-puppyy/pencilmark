@@ -147,6 +147,7 @@ def _layout_regions(origins, D=9, bh=3, bw=3):
 # ---------------------------------------------------------------- decode
 KEYS = {"digits", "shape", "box", "layout", "numbers", "solution", "regions", "rules", "candidates", "meta", "title"}
 KEYS |= {"hash", "v"}  # written by `pencilmark json` / by older files; ignored
+KEYS |= {"drawn"}  # how a source drew its elements (sources/_sp_style.py): the rules' styles on export
 
 
 def from_json(obj) -> M.Puzzle:
@@ -423,6 +424,8 @@ def from_json(obj) -> M.Puzzle:
     for (r, a, b), (a2, b2) in zip(marks, ends):
         if r["type"] in NAMED_RULES:
             _remember(p, r, p.relations[a:a2], p.constraints[b:b2])
+    if d.get("drawn"):
+        p.drawn = d["drawn"]
     return p
 
 
@@ -627,6 +630,8 @@ def to_json(p: M.Puzzle, solution=None, meta=None) -> dict:
         rules.append(r)
     if rules:
         out["rules"] = rules
+    if getattr(p, "drawn", None):
+        out["drawn"] = p.drawn
     m = {"title": p.name} if p.name else {}
     m.update({k: v for k, v in (meta or {}).items() if v not in (None, "")})
     if m:

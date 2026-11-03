@@ -518,6 +518,34 @@ def test_one_off_line_rules():
     assert FT.text_line_reading(fp) == {"#cccccc": "dutch_whisper"}
 
 
+def test_drawn_styles():
+    """a SudokuPad puzzle's look goes to its rules' cosmetic style on export (a purple renban stays purple), not with
+    style=False, and never changes the fingerprint"""
+    import pencilmark as pm
+    from pencilmark.sources import sudokupad as SP
+
+    line = {"color": "#C060C0FF", "thickness": 12.8, "wayPoints": [[0.5, 0.5], [0.5, 1.5], [0.5, 2.5]]}
+    dot = {
+        "center": [1, 0.5],
+        "width": 0.3,
+        "height": 0.3,
+        "rounded": True,
+        "backgroundColor": "#FFFFFF",
+        "borderColor": "#000",
+    }
+    sp = _sp4(lines=[line], overlays=[dot])
+    sp["meta"]["rules"] = (
+        "Digits on the line form a set of consecutive digits. Digits separated by a white dot are consecutive."
+    )
+    pj = SP.to_puzzle(sp, fetch=False)
+    doc = pm.to_export(pj, with_solution=False)
+    style = {r.get("kind"): r.get("style") for r in doc["rules"]}
+    assert style["renban"] == {"color": "#c060c0", "width": 0.2}
+    assert style["kropki"] == {"fill": "#ffffff", "color": "#000000", "shape": "circle"}
+    plain = pm.to_export(pj, with_solution=False, style=False)
+    assert not any("style" in r for r in plain["rules"]) and pm.fingerprint(doc) == pm.fingerprint(plain)
+
+
 def test_rule_for_every_line():
     """ "all lines are region sum lines" gives every line that rule; a line whose colour also names another rule has two
     rules and is refused (CTC zkz5Qw2BWx4: orange lines are also Dutch whispers)"""

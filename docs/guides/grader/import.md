@@ -111,3 +111,7 @@ open("killer.json", "w").write(pencilmark.dumps(exp))
 ```
 
 On the command line, `pencilmark export links.txt --pretty` does the same for every line.
+
+A SudokuPad puzzle's look comes along: each rule takes the colour, width or shape of the element that draws it (a
+purple renban line stays purple) as its `style` ([Puzzle format](../../formats/puzzle-format.md) section 7), which
+renderers may use and solvers ignore. `to_export(..., style=False)` leaves it out.

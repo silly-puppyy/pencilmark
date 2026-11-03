@@ -272,7 +272,8 @@ Each rule family has its own page; the quick reference lists every `type` and `k
 Per-rule `style` (optional, never semantic):
 `{"color": "#rrggbb" | palette index, "fill": "#rrggbb" | palette index, "opacity": 0..1, "width": cell units,
 "shape": "circle" | "square" | "diamond", "label_cell": "r1c1", "dash": true}`. The text a rule shows is its
-`label` (section 5); `label_cell` only says where to draw it.
+`label` (section 5); `label_cell` only says where to draw it. pencilmark's SudokuPad reader fills it from the
+element that draws the rule (`to_export(..., style=False)` leaves it out).
 
 Top-level `style`: puzzle-wide hints, such as `{"palette": [...], "cell_size": 64}`. Free-form.
 

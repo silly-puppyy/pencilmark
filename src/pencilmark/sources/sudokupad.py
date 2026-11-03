@@ -330,9 +330,10 @@ def metadata(sp):
 
 
 @reads("SudokuPad")
-def to_puzzle(x, page_text=None, reading=None, infer=False, fetch=True, url=None):
+def to_puzzle(x, page_text=None, reading=None, infer=False, fetch=True, url=None, style=True):
     """SudokuPad link / payload / decoded dict -> puzzle JSON dict (pencilmark.puzzle_json format) with title, author,
-    rules_text, source (link) and the embedded solution when it has one digit per cell."""
+    rules_text, source (link) and the embedded solution when it has one digit per cell. style: keep how the puzzle
+    draws its elements, which export writes as the rules' `style` (cosmetic)."""
     sp = decode(x, fetch=fetch)
     p, info = translate(sp, page_text=page_text, reading=reading, infer=infer)
     _read_summary("f-puzzles (in SudokuPad)" if sp["format"] == "fpuzzles" else "SudokuPad", info)
@@ -350,7 +351,14 @@ def to_puzzle(x, page_text=None, reading=None, infer=False, fetch=True, url=None
         from ._fpuz_translate import solution_of
 
         sol = solution_of(sp["puzzle"]) or sol
-    return to_puzzle_json(p, solution=sol, meta=meta)
+    out = to_puzzle_json(p, solution=sol, meta=meta)
+    if style and sp["format"] != "fpuzzles":
+        from ._sp_style import elements
+
+        drawn = elements(sp)
+        if drawn:
+            out["drawn"] = drawn
+    return out
 
 
 __all__ = [
