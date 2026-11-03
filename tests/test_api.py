@@ -194,6 +194,22 @@ def test_max_seconds_bounds_the_call():
     assert "completed" not in pencilmark.rate(CLASSIC)  # no limit: grading always finishes, the field is left out
 
 
+def test_uniqueness_search_time_bound():
+    """without OR-Tools the C++ uniqueness search is bounded by time_limit, not only nodes (counting-circle puzzles ran
+    for hours under the node limit); it sets its own deadline only when no caller deadline is in force"""
+    from pencilmark import cbackend as CB
+    from pencilmark import cpsat_verify as V
+
+    sols, decided = V.decide(pencilmark.load(CLASSIC), time_limit=5.0)
+    assert decided and len(sols) == 1 and not CB._C.deadline_on()
+    CB._C.set_deadline(100.0)
+    try:
+        V.decide(pencilmark.load(CLASSIC), time_limit=5.0)
+        assert CB._C.deadline_on()  # rate()'s max_seconds stays in force
+    finally:
+        CB._C.set_deadline(0.0)
+
+
 def test_timing_fields():
     c = pencilmark.rate(CLASSIC, fields=["difficulty", "elapsed"])
     assert isinstance(c["elapsed"], float) and 0 <= c["elapsed"] < 30, c

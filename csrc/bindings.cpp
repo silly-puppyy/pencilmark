@@ -607,6 +607,7 @@ PYBIND11_MODULE(_csolver, m) {
     m.def("set_deadline", [](double seconds) { set_deadline(seconds); }, py::arg("seconds"),
           "wall-clock limit for the following solves in this thread (seconds; <= 0 switches it off)");
     m.def("deadline_hit", []() { return g_deadline_hit; }, "True once the deadline set by set_deadline has passed");
+    m.def("deadline_on", []() { return g_deadline_on; }, "True while a deadline set by set_deadline is in force");
     m.def("listing_cache", [](bool on) { listing_cache_enable(on); }, py::arg("on"),
           "state_moves reuses each strategy's moves at a state it listed before (on by default; off: compute every "
           "listing, for tests). Either way the cache is emptied.");

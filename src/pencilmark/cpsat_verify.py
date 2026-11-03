@@ -161,11 +161,19 @@ def supported(p):
     return True
 
 
-def _engine(p, limit, node_limit):
-    """the C++ exhaustive search -> (solutions, complete)."""
+def _engine(p, limit, node_limit, time_limit=None):
+    """the C++ exhaustive search -> (solutions, complete). time_limit bounds it when no caller deadline (rate()'s
+    max_seconds) is in force: nodes of counting rules cost milliseconds, so the node limit alone took hours"""
     from . import cbackend as CB
 
-    r = CB.brute_solve(p, limit=limit, node_limit=node_limit)
+    own = time_limit is not None and hasattr(CB._C, "deadline_on") and not CB._C.deadline_on()
+    if own:
+        CB._C.set_deadline(float(time_limit))
+    try:
+        r = CB.brute_solve(p, limit=limit, node_limit=node_limit)
+    finally:
+        if own:
+            CB._C.set_deadline(0.0)
     return [list(x) for x in r], r.complete
 
 
@@ -450,7 +458,7 @@ def solutions(p, limit=2, time_limit=60.0, workers=1, node_limit=NODE_LIMIT):
         p.finalize()
     if not supported(p):
         return None
-    sols, complete = _engine(p, limit, node_limit)
+    sols, complete = _engine(p, limit, node_limit, time_limit)
     return sols if complete or len(sols) >= limit else None
 
 
@@ -466,7 +474,7 @@ def verified_solutions(p, limit=2, node_limit=NODE_LIMIT, time_limit=60.0):
         s = cpsat_solutions(p, limit=limit, time_limit=time_limit)
         if s is not None:
             return s
-    sols, complete = _engine(p, limit, node_limit)
+    sols, complete = _engine(p, limit, node_limit, time_limit)
     return sols
 
 
@@ -490,7 +498,7 @@ def _decide(p, limit, node_limit, time_limit):
     """decide() and the search that settled it"""
     ortools = have_ortools()
     first = min(node_limit, QUICK_NODES) if ortools else node_limit
-    sols, complete = _engine(p, limit, first)
+    sols, complete = _engine(p, limit, first, time_limit)
     if complete or len(sols) >= limit:
         return sols, True, "the C++ search"
     if ortools:
@@ -498,7 +506,7 @@ def _decide(p, limit, node_limit, time_limit):
         if s is not None:
             return s, True, "CP-SAT"
         if first < node_limit:  # a rule CP-SAT does not model, or its time ran out: the full C++ search
-            sols, complete = _engine(p, limit, node_limit)
+            sols, complete = _engine(p, limit, node_limit, time_limit)
             if complete or len(sols) >= limit:
                 return sols, True, "the full C++ search"
     return sols, False, "neither search"
