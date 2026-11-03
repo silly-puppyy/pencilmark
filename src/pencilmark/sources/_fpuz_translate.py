@@ -133,7 +133,9 @@ def translate(fp, line_kinds=None, join=True):
         fp = dict(fp, ruleset=fp["ruleset"].translate(ST.TYPO_QUOTES))
     text0 = (fp.get("ruleset") or "").lower()
 
-    refused = ST.unmodelled_rules(text0)
+    refused = [
+        u for u in ST.unmodelled_rules(text0) if not (u == "rule 'equality cage'" and ST.EQUALITY_TEXT.search(text0))
+    ]
     outside_texts = []  # numbers left outside the grid: clues for the SudokuPad reader's outside-clue reading
     for t in fp.get("text") or []:
         cs = t.get("cells") or []
@@ -470,6 +472,8 @@ def translate(fp, line_kinds=None, join=True):
         for c_, cell in enumerate(row or []):
             if isinstance(cell, dict) and cell.get("c"):
                 colour_cells[ST.color_name(cell["c"])].append(r_ * n + c_)
+    if ST.EQUALITY_TEXT.search(text0):
+        used["equality_cage"] = ST.equality_cages(p, n)
     unresolved = ST.text_cell_rules(p, n, fp.get("ruleset") or "", colour_cells, used)
     if unresolved:
         return None, "unsupported: " + ", ".join(unresolved)

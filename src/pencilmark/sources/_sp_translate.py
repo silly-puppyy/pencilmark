@@ -46,6 +46,7 @@ UNMODELLED_RULES = (
     # mechanics that place or identify unknown clues / objects (LMD top-2000 misreads, classified)
     ("oil and water letters", r"\boily water\b"),
     ("pick-up sticks", r"\bstick (?:which |that )?lies on top|pick-up sticks"),
+    ("multi-renban", r"multi[- ]?renban"),  # sets of consecutive digits with repeats: not the renban rule
     ("magic square", r"magic square somewhere|somewhere in the grid lies a 3 ?[x×] ?3 magic square"),
     ("unique dominoes", r"every possible domino\b"),
     ("dice", r"\broll a [^.]{0,30}dic?e\b|fold into (?:legitimate )?dice"),
@@ -1623,7 +1624,10 @@ def translate(sp, page_text=None, overrides=None):
     quadruples(P, n, p, used, unknown, idx, inside)
     used.pop("_quad_text")
     used.pop("_quad_neg")
-    unknown += unmodelled_rules(text_rules, chaos_ok=chaos)
+    unknown += [u for u in unmodelled_rules(text_rules, chaos_ok=chaos)
+                if not (u == "rule 'equality cage'" and EQUALITY_TEXT.search(text_rules))]  # fmt: skip
+    if EQUALITY_TEXT.search(text_rules):
+        used["equality_cage"] += equality_cages(p, n)
     if CLONE_TEXT.search(text_rules):  # clones drawn as coloured shapes
         colour_of = {}
         for lay in P.get("underlays") or []:
@@ -1747,6 +1751,30 @@ KNIGHT_FROM = re.compile(
     r"(?:digit|number)s? in the (\w+) cells? (?:may|can|must) not (?:repeat|appear)[^.]{0,40}knight'?s move"
     r"|knight'?s move away from (?:a|an|the) (?!cell\b|same\b|other\b|it\b)\w+"
 )
+
+
+EQUALITY_TEXT = re.compile(
+    r"cages must have an equal number of low [^.]{0,60} and high [^.]{0,60}(?:and|as well as) an equal number of even"
+)
+
+
+def equality_cages(p, n):
+    """equality cages: as many low as high digits and as many even as odd digits in each cage (the middle digit of an
+    odd-sized digit range is neither low nor high, so excluded) -> custom rules, one per cage"""
+    from .. import puzzle_json as PJ
+
+    lo, hi = (n // 2, n // 2 + 1) if n % 2 == 0 else ((n - 1) // 2, (n + 3) // 2)  # 6: 1-3 / 4-6; 9: 1-4 / 6-9
+    holds = (f"count(x for x in K if x <= {lo}) == count(x for x in K if x >= {hi}) and "
+             "count(x for x in K if even(x)) == count(x for x in K if odd(x))")  # fmt: skip
+    if n % 2:
+        holds += f" and all(x != {(n + 1) // 2} for x in K)"
+    k = 0
+    for g in p.groups:
+        if g.kind == "cage":
+            PJ.add_named(p, {"type": "custom", "cells": {"K": [f"r{p.coords[c][0] + 1}c{p.coords[c][1] + 1}" for c in g.cells]},
+                             "holds": holds, "label": "Equality cage"})  # fmt: skip
+            k += 1
+    return k
 
 
 def text_cell_rules(p, n, rules, colour_cells, used):

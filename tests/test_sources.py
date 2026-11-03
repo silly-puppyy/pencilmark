@@ -908,6 +908,20 @@ def test_oil_and_water_and_unmodelled_refusals():
         assert f"rule '{kind}'" in SP.unmodelled_rules(words.lower())
 
 
+def test_equality_cages():
+    """equality cages (as many low as high and as many even as odd digits per cage) are custom rules per cage, with the
+    low / high split of the digit range (6: 1-3 / 4-6; 9: 1-4 / 6-9, never 5); the unmodelled refusal is lifted"""
+    from pencilmark.sources import _sp_translate as SP
+
+    text = ("Equality cages: Cages must have an equal number of low (1,2) and high (3,4) digits AND an equal number of "
+            "even (2,4) and odd (1,3) digits.")  # fmt: skip
+    p, info = SP.translate(_sp4(cages=[{"cells": [[0, 0], [0, 1]]}]), text)
+    assert p is not None and info.get("equality_cage") == 1
+    assert next(r for r, _ in p.named_rules)["holds"].startswith(
+        "count(x for x in K if x <= 2) == count(x for x in K if x >= 3)"
+    )
+
+
 def test_rule_for_every_line():
     """ "all lines are region sum lines" gives every line that rule; a line whose colour also names another rule has two
     rules and is refused (CTC zkz5Qw2BWx4: orange lines are also Dutch whispers)"""
