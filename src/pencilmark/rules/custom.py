@@ -1083,11 +1083,9 @@ def compile_rule(rule, B, D, layers=()):
             f"{', '.join(sorted(used - set(layers)))}() needs a board with "
             + " and ".join(LAYERS[k] for k in sorted(used - set(layers)))
         )
-    if "shaded" in used:  # the engine has no shading layer yet: refused, never dropped
-        raise LangError("shaded() in a rule is not graded yet")
-    if used:  # region(): an expression constraint the search checks with the region labels (never a digit table)
+    if used:  # an expression constraint the search checks with the layers (never a digit table)
         if rule.get("scope") or rule.get("each"):
-            raise LangError("region() is not graded yet in a scoped or each rule")
+            raise LangError(f"{', '.join(sorted(used))}() is not supported yet in a scoped or each rule")
         return [_expr(rule, B)]
     cells = dict(rule.get("cells") or {})
     scope = rule.get("scope") or {}

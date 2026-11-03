@@ -216,8 +216,6 @@ def _engine(p, limit, node_limit, time_limit=None):
     max_seconds) is in force: nodes of counting rules cost milliseconds, so the node limit alone took hours"""
     from . import cbackend as CB
 
-    if has_shading(p):  # the C++ search has no shading layer yet: undecided (CP-SAT decides these)
-        return [], False
     own = time_limit is not None and hasattr(CB._C, "deadline_on") and not CB._C.deadline_on()
     if own:
         CB._C.set_deadline(float(time_limit))

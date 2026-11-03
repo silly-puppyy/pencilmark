@@ -55,9 +55,10 @@ struct Ev {
     const ExprProgram& P;
     const int* dig;
     const int* lab;  ///< region label per variable, or null
+    const int* sh;   ///< colour per variable (1 shaded, 2 unshaded, 0 unknown), or null
     std::vector<Val> slots;
 
-    Ev(const ExprProgram& p, const int* d, const int* l) : P(p), dig(d), lab(l), slots(p.nslots) {}
+    Ev(const ExprProgram& p, const int* d, const int* l, const int* s) : P(p), dig(d), lab(l), sh(s), slots(p.nslots) {}
 
     Val cell(int var) {
         Val v;
@@ -280,8 +281,10 @@ Val Ev::builtin(int id, const std::vector<Val>& a) {
             if (a[0].k != Val::CELL || !lab || lab[a[0].var] <= 0) return Val();
             return Val::num(lab[a[0].var]);
         }
-        case SHADED:  // no shading layer in the engine yet (the Python side refuses such rules)
-            return Val();
+        case SHADED: {  // no shading (or not known yet): absent, so the rule fails and the caller decides later
+            if (a[0].k != Val::CELL || !sh || sh[a[0].var] <= 0) return Val();
+            return Val::boolean(sh[a[0].var] == 1);
+        }
     }
     return Val();
 }
@@ -438,8 +441,8 @@ bool layered_node(const ExprNode& e) {
 
 }  // namespace
 
-bool expr_holds(const ExprProgram& prog, const int* digits, const int* labels) {
-    Ev ev(prog, digits, labels);
+bool expr_holds(const ExprProgram& prog, const int* digits, const int* labels, const int* shading) {
+    Ev ev(prog, digits, labels, shading);
     Val r = ev.eval(prog.root);
     return r.k == Val::BOOL && r.b;
 }

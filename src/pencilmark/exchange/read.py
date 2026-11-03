@@ -216,7 +216,11 @@ class _ReadCtx:
             from ..rules import custom as CU
 
             try:
-                layers = ("region",) if any(x.get("type") == "chaos" for x in self.rules) else ()
+                layers = tuple(
+                    k
+                    for k, t in (("region", "chaos"), ("shaded", "yin_yang"))
+                    if any(x.get("type") == t for x in self.rules)
+                )
                 CU.compile_rule(r, self.B, self.D, layers)  # too large for a table: refused here, with its reason
             except CU.LangError as e:
                 raise NotSupportedError(f"custom rule: {e}") from None

@@ -22,6 +22,7 @@
 #include <mutex>
 #include <string>
 #include <utility>
+#include <array>
 #include <vector>
 
 #include "nary.hpp"
@@ -96,6 +97,12 @@ struct Puzzle {
     std::vector<std::vector<int>> same_region;
     std::vector<int> chaos_of;                   ///< derived: chaos area per cell (-1 none); chaos areas sorted in reading order
     std::vector<std::vector<int>> chaos_nbr;     ///< derived: orthogonal neighbours in the same chaos area
+    /// shading (yin-yang, format 6.19): each colour orthogonally connected, no 2x2 of one colour; given colours per cell
+    /// (1 shaded, 2 unshaded, 0 free). Only the exhaustive search reads it so far (brute_force.cpp).
+    bool shading = false;
+    std::vector<uint8_t> shade_given;
+    std::vector<std::vector<int>> grid_nbr;      ///< derived (shading): orthogonal neighbours on the board
+    std::vector<std::array<int, 4>> windows4;    ///< derived (shading): every 2x2 block of board cells
 
     // ---- derived (finalize) ----
     int N = 0, G = 0, W = 1;

@@ -324,6 +324,13 @@ static std::shared_ptr<Puzzle> make_puzzle_raw(int D, const std::vector<std::pai
             else if (t == "region_border" && cells.size() == 2) p->region_border.push_back({cells[0], cells[1]});
             else if (t == "same_region") p->same_region.push_back(cells);
         }
+        if (d.contains("shading")) {  // yin-yang: given colours
+            py::dict r = d["shading"].cast<py::dict>();
+            p->shading = true;
+            p->shade_given.assign(p->coords.size(), 0);
+            for (int c : r["shaded"].cast<std::vector<int>>()) p->shade_given[c] = 1;
+            for (int c : r["unshaded"].cast<std::vector<int>>()) p->shade_given[c] = 2;
+        }
     }
     return p;
 }

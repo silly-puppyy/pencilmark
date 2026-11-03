@@ -4,11 +4,12 @@
 
 - Shading (format: `"type": "yin_yang"`, optional given `shaded` / `unshaded` cells; whole-board-rules 6.19): shaded
   and unshaded cells each orthogonally connected, no 2x2 of one colour. Readers, writers, `fingerprint` and
-  `describe` handle it; `solve` and `count_solutions` check it with OR-Tools; `rate` refuses it until the engine has
+  `describe` handle it; `solve` and `count_solutions` check it (the exhaustive search carries a colour per cell, agreeing with a
+  CP-SAT model on 700 random small puzzles); `rate` refuses it until the engine has
   a shading layer.
 - Custom rules can read board layers: `region(c)` (regions to find) and `shaded(c)` (shading). `region()` rules are
-  checked on chaos boards (uniqueness, solving, the human route's last resort); `shaded()` waits for the shading
-  layer.
+  checked on chaos boards (uniqueness, solving, the human route's last resort), `shaded()` rules when solving and
+  counting shading puzzles.
 - Card field `trace`: the board (digits and candidates) before the first step and after each step, so a viewer can
   replay a solve with the steps' `substeps` annotations.
 - Rule facts in explanations are worked out for the puzzle's digit range (a whisper on 16x16 has no impossible digit

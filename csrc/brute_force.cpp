@@ -9,6 +9,7 @@
 #include <set>
 #include <tuple>
 #include "portable.hpp"
+#include "expr.hpp"
 #include "solver.hpp"
 #include "solver_util.hpp"
 
@@ -33,12 +34,73 @@ struct Brute {
     const std::vector<std::vector<int>>& nbr;    // orthogonal neighbours in the same area
     std::vector<std::vector<uint8_t>> ls;    // label per cell, per depth (0: not yet known)
     std::vector<std::vector<uint32_t>> lcs;  // label candidates (bits 1..D), per depth
+    // ---- shading (yin-yang, format 6.19): a colour per cell beside its digit (0 unknown, 1 shaded, 2 unshaded) ----
+    bool shade_on = false;
+    std::vector<std::vector<uint8_t>> ss;  // colour per cell, per depth
+    std::vector<int> layered;              // custom rules reading region() / shaded() (indices into p.nary)
 
     Brute(const Puzzle& pz, int lim, pm_long nl)
         : p(pz), limit(lim), node_limit(nl), areas(pz.chaos), area_of(pz.chaos_of), nbr(pz.chaos_nbr) {
         for (int gi = 0; gi < p.G; ++gi)
             if (p.groups[gi].has_total) cages.push_back(gi);
         chaos_on = !p.chaos.empty();
+        shade_on = p.shading;
+        for (size_t ki = 0; ki < p.nary.size(); ++ki)
+            if (p.nary[ki].type == NT_EXPR && p.nary[ki].expr->layered) layered.push_back((int)ki);
+    }
+    // shading propagation: no 2x2 of one colour (three of a colour force the fourth), each colour's known cells
+    // connected through cells that may take it. false: contradiction
+    bool shade_prop(uint8_t* sh) {
+        for (bool again = true; again;) {
+            again = false;
+            for (const auto& w : p.windows4) {
+                int n1 = 0, n2 = 0, unk = -1;
+                for (int c : w) {
+                    if (sh[c] == 1) ++n1;
+                    else if (sh[c] == 2) ++n2;
+                    else unk = c;
+                }
+                if (n1 == 4 || n2 == 4) return false;
+                if (unk >= 0 && (n1 == 3 || n2 == 3)) sh[unk] = n1 == 3 ? 2 : 1, again = true;
+            }
+        }
+        const int N = p.N;
+        std::vector<char> seen(N);
+        std::vector<int> stack;
+        for (int col = 1; col <= 2; ++col) {
+            int start = -1, total = 0;
+            for (int c = 0; c < N; ++c)
+                if (sh[c] == col) ++total, start = start < 0 ? c : start;
+            if (start < 0) continue;
+            std::fill(seen.begin(), seen.end(), 0);
+            stack.assign(1, start);
+            seen[start] = 1;
+            int got = 0;
+            while (!stack.empty()) {
+                const int c = stack.back();
+                stack.pop_back();
+                got += sh[c] == col;
+                for (int q : p.grid_nbr[c])
+                    if (!seen[q] && sh[q] != 3 - col) seen[q] = 1, stack.push_back(q);
+            }
+            if (got < total) return false;
+        }
+        return true;
+    }
+    // custom rules reading region() / shaded(): each one whose cells' digits (and layers) are all known must hold
+    bool layered_ok(const uint8_t* vals, const uint8_t* lab, const uint8_t* sh) {
+        for (int ki : layered) {
+            const NConstraint& k = p.nary[ki];
+            int dg[64], lb[64], sd[64];
+            bool ready = true;
+            for (int i = 0; i < k.nv() && ready; ++i) {
+                const int c = k.vars[i];
+                dg[i] = vals[c], lb[i] = lab ? lab[c] : 0, sd[i] = sh ? sh[c] : 0;
+                ready = dg[i] && (!sh || sd[i]) && (!lab || lb[i] || area_of[c] < 0);
+            }
+            if (ready && !expr_holds(*k.expr, dg, lab ? lb : nullptr, sh ? sd : nullptr)) return false;
+        }
+        return true;
     }
     // label propagation: given borders, same-region sets, canonical labels (label k first appears before label k + 1,
     // reading order), each (label, digit) pair once, D cells per label, one connected region per label.
@@ -517,6 +579,10 @@ struct Brute {
             if (r < 0) return;
             if (r > 0) goto top;
         }
+        if (shade_on && !shade_prop(ss[depth].data())) return;
+        if (!layered.empty() &&
+            !layered_ok(vals, chaos_on ? ls[depth].data() : nullptr, shade_on ? ss[depth].data() : nullptr))
+            return;
         int c = -1, best = 1 << 30;
         for (int x = 0; x < N; ++x)
             if (!vals[x] && popc(cand[x]) < best) {
@@ -530,20 +596,21 @@ struct Brute {
             for (int x = 0; x < N; ++x)
                 if (area_of[x] >= 0 && !lab[x] && popc(lc[x]) < lbest) lbest = popc(lc[x]), lcell = x;
         }
-        if (c < 0 && lcell < 0) {
+        int scell = -1;  // a cell whose colour is still open (shading)
+        if (shade_on)
+            for (int x = 0; x < N && scell < 0; ++x)
+                if (!ss[depth][x]) scell = x;
+        if (c < 0 && lcell < 0 && scell < 0) {
             if (!valid(vals)) return;  // a full grid must satisfy every rule
-            if (chaos_on) {
-                if (!chaos_valid(vals, ls[depth].data())) return;
-                const uint8_t* lab = ls[depth].data();
-                for (const NConstraint& k : p.nary) {  // custom rules reading region(): now digits and labels are known
-                    if (k.type != NT_EXPR || !k.expr->layered) continue;
-                    int dg[64], lb[64];
-                    for (int i = 0; i < k.nv(); ++i) dg[i] = vals[k.vars[i]], lb[i] = lab[k.vars[i]];
-                    if (!expr_holds(*k.expr, dg, lb)) return;
-                }
-                for (const auto& s : sols)  // another region layout with the same digits: one solution
-                    if (std::equal(s.begin(), s.end(), vals)) return;
+            if (chaos_on && !chaos_valid(vals, ls[depth].data())) return;
+            if (shade_on) {  // both colours present (each is connected: shade_prop)
+                bool s1 = false, s2 = false;
+                for (int x = 0; x < N; ++x) s1 |= ss[depth][x] == 1, s2 |= ss[depth][x] == 2;
+                if (!s1 || !s2) return;
             }
+            if (chaos_on || shade_on)  // another region layout / shading with the same digits: one solution
+                for (const auto& s : sols)
+                    if (std::equal(s.begin(), s.end(), vals)) return;
             sols.emplace_back(vals, vals + N);
             return;
         }
@@ -551,6 +618,7 @@ struct Brute {
             vs.emplace_back(N);
             cs.emplace_back(N);
             if (chaos_on) ls.emplace_back(N), lcs.emplace_back(N);
+            if (shade_on) ss.emplace_back(N);
         }
         auto copy_down = [&]() {
             std::copy(vs[depth].begin(), vs[depth].end(), vs[depth + 1].begin());
@@ -559,7 +627,20 @@ struct Brute {
                 std::copy(ls[depth].begin(), ls[depth].end(), ls[depth + 1].begin());
                 std::copy(lcs[depth].begin(), lcs[depth].end(), lcs[depth + 1].begin());
             }
+            if (shade_on) std::copy(ss[depth].begin(), ss[depth].end(), ss[depth + 1].begin());
         };
+        // a colour: once the digits are fixed (one valid shading is enough: the others repeat the same digits), or
+        // earlier when custom rules read the shading and can prune digits with it
+        if (scell >= 0 && lcell < 0 && (c < 0 || (!layered.empty() && best > 2))) {
+            const size_t before = sols.size();
+            for (uint8_t col = 1; col <= 2; ++col) {
+                copy_down();
+                ss[depth + 1][scell] = col;
+                rec(depth + 1);
+                if ((int)sols.size() >= limit || (c < 0 && sols.size() > before)) return;
+            }
+            return;
+        }
         if (lcell >= 0 && (c < 0 || lbest < best)) {
             const uint32_t snapshot = lcs[depth][lcell];
             for (uint32_t m = snapshot; m; m &= m - 1) {
@@ -592,6 +673,7 @@ std::vector<std::vector<int>> brute_solve(const Puzzle& p, const std::vector<std
     if (memo) b.memo_out.assign(p.nary.size(), {}), b.gac_budget = 1500;
     b.vs.emplace_back(p.N);
     b.cs.emplace_back(p.N);
+    if (b.shade_on) b.ss.emplace_back(p.shade_given);
     if (b.chaos_on) {
         b.ls.emplace_back(p.N, 0);
         b.lcs.emplace_back(p.N, 0);

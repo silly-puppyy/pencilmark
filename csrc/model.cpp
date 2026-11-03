@@ -51,6 +51,22 @@ void Puzzle::finalize() {
     W = (N + 63) / 64;
     full = D >= 32 ? 0xffffffffu : ((1u << D) - 1);
     if ((int)domains.size() != N) domains.assign(N, full);
+    if (shading) {  // shading: board neighbours and 2x2 blocks
+        std::map<std::pair<int, int>, int> at;
+        for (int c = 0; c < N; ++c) at[coords[c]] = c;
+        grid_nbr.assign(N, {});
+        windows4.clear();
+        if ((int)shade_given.size() != N) shade_given.assign(N, 0);
+        for (int c = 0; c < N; ++c) {
+            const int r0 = coords[c].first, c0 = coords[c].second;
+            for (auto d : {std::pair<int, int>{1, 0}, {-1, 0}, {0, 1}, {0, -1}}) {
+                auto it = at.find({r0 + d.first, c0 + d.second});
+                if (it != at.end()) grid_nbr[c].push_back(it->second);
+            }
+            auto a = at.find({r0, c0 + 1}), b = at.find({r0 + 1, c0}), d = at.find({r0 + 1, c0 + 1});
+            if (a != at.end() && b != at.end() && d != at.end()) windows4.push_back({c, a->second, b->second, d->second});
+        }
+    }
     chaos_of.assign(chaos.empty() ? 0 : N, -1);  // regions to find: areas in reading order, neighbours within an area
     chaos_nbr.assign(chaos.empty() ? 0 : N, {});
     for (size_t ai = 0; ai < chaos.size(); ++ai) {
