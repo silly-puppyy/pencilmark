@@ -421,6 +421,17 @@ def translate(fp, line_kinds=None):
         if sum(u.values()) < len(shapes):
             return None, "unsupported: generic circle (meaning in rules text)"
         used.update({k: v for k, v in u.items() if v})
+    coloured = [{"center": [r_ + 0.5, c_ + 0.5], "width": 1.0, "height": 1.0, "backgroundColor": cell["c"], "_cell": True}
+                for r_, row in enumerate(fp.get("grid") or []) for c_, cell in enumerate(row or [])
+                if isinstance(cell, dict) and cell.get("c") and not clones]  # fmt: skip
+    if coloured and re.search(r"\bcells?\b[^.]{0,40}\b(?:odd|even|greater|less|larger|smaller)\b", text0):
+        # coloured cells with a meaning in the text ("red cells are greater than 5"): the shape-clue reader
+        from collections import Counter
+
+        u = Counter()
+        ST.parity_shapes({"underlays": coloured}, n, p, fp.get("ruleset") or "", u, lambda rc_: rc_[0] * n + rc_[1],
+                         lambda rc_: 0 <= rc_[0] < n and 0 <= rc_[1] < n)  # fmt: skip
+        used.update({k: v for k, v in u.items() if v})
     if outside_texts:  # read like SudokuPad outside clues, from the payload's wording, else the page's
         from collections import Counter
 

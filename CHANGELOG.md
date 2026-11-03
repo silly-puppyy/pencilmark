@@ -57,6 +57,10 @@
   same parity, one apart, palindrome variants), also when the lines are drawn in several shades; new line
   descriptions: increasing or decreasing, every digit twice, centre sum, three distinct digits on a marked diagonal,
   evenly spaced sequences, more same-parity and entropic wordings.
+- Reader fixes from the 500 most-solved Logic Masters sudokus (graded 157 -> 165): "[no negative constraints]" no
+  longer adds negatives; "If not, they don't" after a marker rule makes it negative; "at least 5 apart" whispers;
+  equal-parity lines; thermos of a single parity; cells greater / less than a digit by colour or shape; f-puzzles
+  coloured cells read by the shape-clue reader when the text gives them a meaning.
 - SudokuPad links of the form `sudokupad.app/<author>/<slug>` are fetched (they were refused as not a short id).
 - Speed and robustness: the C++ uniqueness search without OR-Tools stops at a time limit, not only a node limit
   (counting-circle puzzles ran for hours); the trial step retries with a larger search before giving up (two unique

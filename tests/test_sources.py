@@ -801,6 +801,22 @@ def test_fpuzzles_generic_lines_as_custom_rules():
     assert next(r for r, _ in p.named_rules)["holds"] == "count_distinct(t) == 3"
 
 
+def test_lmd_wording_fixes():
+    """LMD top-500 misreads: "[no negative constraints]" adds none; "If not, they don't" makes the marker negative;
+    "at least 5 apart" is a whisper; equal-parity lines are same-parity lines; thermos of a single parity; f-puzzles
+    coloured cells "greater than 5" """
+    from pencilmark.sources import _fpuz_translate as FT
+    from pencilmark.sources import _sp_translate as SP
+
+    assert SP.negative_markers("Standard kropki and XV rules apply [no negative constraints].") == set()
+    assert SP.negative_markers("If two digits have an X between them, they sum to 10. If not, they don't.") == {"x"}
+    assert SP.diff_rule("adjacent digits on a green line are at least 5 apart") == "whisper"
+    fp = {"size": 4, "grid": [[{"c": "#FFA0A0"} if (r, c) == (0, 0) else {} for c in range(4)] for r in range(4)],
+          "ruleset": "Red cells are greater than 2."}  # fmt: skip
+    p, _ = FT.translate(fp)
+    assert p.domains[0] == 0b1100
+
+
 def test_rule_for_every_line():
     """ "all lines are region sum lines" gives every line that rule; a line whose colour also names another rule has two
     rules and is refused (CTC zkz5Qw2BWx4: orange lines are also Dutch whispers)"""

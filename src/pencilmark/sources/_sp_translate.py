@@ -345,6 +345,7 @@ def color_name(hexcol):
 DIFF_K = re.compile(
     r"differ(?:ence)?s?\b[^.]{0,25}?(at least|>=|≥|a minimum of|more than|greater than)\s*(?:a\s+)?(\d|five|four|three|two|six|seven)\b"
 )
+DIFF_K_APART = re.compile(r"at least (\d|five|four|three|two|six|seven) apart")
 DIFF_K_OR_MORE = re.compile(r"differ(?:ence)?s?\b (?:of|by) (\d|five|four|three|two|six|seven) or (?:more|greater)\b")
 _NUMW = {"two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7}
 SLOW_ALL = re.compile(
@@ -379,7 +380,7 @@ def diff_rule(sent):
     """'adjacent digits differ by at least K' -> whisper key (K=5 whisper, K=4 dutch, else 'whisperK'), or None."""
     m = DIFF_K.search(sent)
     if not m:
-        m = DIFF_K_OR_MORE.search(sent)  # "a difference of 4 or more"
+        m = DIFF_K_OR_MORE.search(sent) or DIFF_K_APART.search(sent)  # "a difference of 4 or more", "at least 5 apart"
         if not m:
             return None
         k = int(m.group(1)) if m.group(1).isdigit() else _NUMW[m.group(1)]
@@ -522,7 +523,11 @@ def custom_line(p, rule, ids):
             PJ.add_named(p, {"type": "custom", "cells": {"t": runs}, "each": "t", "holds": holds, "label": label})
 
 
+THERMO_PARITY = re.compile(
+    r"(?:each|every) therm\w* (?:contains|has|is made of) (?:digits|numbers) of (?:a single|one|the same) parity"
+)
 LINE_VARIANTS = {  # a line rule the text modifies: (the rule as read, wording) -> the custom rule
+    "same_parity": (("parity",), r"(?:equal|same)[- ]parity lines?"),
     "almost_palindrome": (("palindrome",), r"palindrome[^.]{0,80}except for (?:a|one) single pair"),
     "consecutive_palindrome": (
         ("palindrome", "zipper"),
@@ -734,8 +739,16 @@ def negative_markers(rules):
     t = (rules or "").lower().replace("’", "'")
     neg = set()
     pending = False  # "there is a negative constraint, but it only applies to the V"
+    prev = ""
     for clause in re.split(r"[.!;\n]|,?\s+but\s+|\(", t):
         c = clause.strip()
+        if re.search(r"\bno negative constraints?\b|\bwithout (?:any )?negative constraints?\b", c):
+            continue  # "[no negative constraints]": the opposite of a negative constraint
+        if re.fullmatch(r"if not,? (?:they|it) (?:don't|do not|doesn't|does not)(?: \w+)?", c):
+            neg |= _marker_types(prev)  # "If two digits have an X between them, they sum to 10. If not, they don't."
+            continue
+        if c:
+            prev = c
         if pending and c:
             pending = False
             if re.search(r"\bonly\b|\bappl", c):
@@ -1367,6 +1380,9 @@ def translate(sp, page_text=None, overrides=None):
             ids = list(dict.fromkeys(ids))  # closed loop: the start cell is drawn twice, counted once
         if rule in ("thermo", "slow_thermo"):
             thermo_cells += [c_ for c_ in ids if c_ not in thermo_cells]
+            if THERMO_PARITY.search(rules.lower()):  # "each thermometer contains digits of a single parity"
+                custom_line(p, "same_parity", ids)
+                used["thermo_parity"] += 1
             if lc[-1] in circles and lc[0] not in circles:
                 ids = ids[::-1]
             p.relations += [("lt" if rule == "thermo" else "le", a, b) for a, b in zip(ids, ids[1:])]
@@ -2290,7 +2306,13 @@ def parity_shapes(P, n, p, rules, used, idx, inside):
         if inside(rc) and idx(rc) not in taken:
             shapes.append(
                 (
-                    "circle" if lay.get("rounded") else "diamond" if lay.get("angle") == 45 else "square",
+                    "cell"
+                    if lay.get("_cell")
+                    else "circle"
+                    if lay.get("rounded")
+                    else "diamond"
+                    if lay.get("angle") == 45
+                    else "square",
                     color_name(lay.get("backgroundColor") or lay.get("borderColor")),
                     idx(rc),
                 )
@@ -2311,6 +2333,24 @@ def parity_shapes(P, n, p, rules, used, idx, inside):
         dset = re.search(r"\{\s*(\d(?:\s*,\s*\d)+)\s*\}", sent) or re.search(
             r"\b(\d'?s(?:,? (?:and |or )?\d'?s)+) (?:are|is) (?:marked|shown|placed|drawn) (?:with|in|by)", sent
         )  # "1s, 2s, and 3s are marked with circles"
+        gt = re.search(
+            r"\b(?:are|must be|contain (?:digits|numbers)) (greater|larger|higher|bigger|less|smaller|lower) than (\d)",
+            sent,
+        )
+        if gt and not dset:  # "red cells are greater than 5": a digit set by colour or shape
+            k_ = int(gt.group(2))
+            ds_ = [
+                v
+                for v in range(1, n + 1)
+                if (v > k_ if gt.group(1) in ("greater", "larger", "higher", "bigger") else v < k_)
+            ]
+            col_ = {{"gray": "grey"}.get(c, c) for c in COLOR_WORDS if re.search(rf"\b{c}\b", sent)}
+            got = [c for kind, col, c in shapes if (not shp or kind in shp) and (not col_ or col in col_)]
+            if ds_ and got and (shp or col_):
+                _cell_clue(p, {"type": "digit_class", "digits": "".join(map(str, ds_))}, got,
+                           sum(1 << (v - 1) for v in ds_))  # fmt: skip
+                used["digit_set_cells"] += len(got)
+                continue
         if shp and dset and len(shp) == 1:  # "blue squares contain numbers from {4, 5, 6}"
             ds = [int(x) for x in re.findall(r"\d", dset.group(1))]
             col_ = {{"gray": "grey"}.get(c, c) for c in COLOR_WORDS if re.search(rf"\b{c}\b", sent)}
@@ -2325,7 +2365,7 @@ def parity_shapes(P, n, p, rules, used, idx, inside):
             s_[1] for s_ in shapes
         }
         if not shp and cols and re.search(r"\bcells?\b", sent):  # 'digits in grey cells are odd': any shape, by colour
-            shp = ["circle", "square"]
+            shp = ["circle", "square", "cell"]
         if not shp or len(par) != 1 or (len(shp) > 1 and not cols):
             continue
         for kind in shp:
