@@ -340,7 +340,7 @@ def translate(fp, line_kinds=None, join=True):
                 continue
             if kind == "between":
                 p.constraints.append({"type": "between", "cells": cells})
-            elif kind in ST.LINE_CUSTOM or kind in ("same_parity", "consecutive_line"):
+            elif kind in ST.LINE_CUSTOM or kind in ("same_parity", "consecutive_line", "shifter"):
                 ST.custom_line(p, kind, cells)
             elif kind == "renban":
                 linesum_parts.setdefault(kind, []).append(cells)  # a set rule: touching segments are one line
@@ -626,7 +626,7 @@ def _text_line_reading(fp, text):
         if rk == "ignore":  # the text says these lines have no effect
             reading[c] = "ignore"
             continue
-        if rk in ST.LINE_CUSTOM or rk in ("same_parity", "consecutive_line"):
+        if rk in ST.LINE_CUSTOM or rk in ("same_parity", "consecutive_line", "shifter"):
             reading[c] = rk  # custom-rule lines, applied by ST.custom_line
             continue
         if TEXT_LINE_KINDS.get(rk) is None:

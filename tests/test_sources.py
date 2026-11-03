@@ -922,6 +922,25 @@ def test_equality_cages():
     )
 
 
+def test_shifter_lines_and_dots():
+    """shifter lines: within a box neighbours share parity and polarity, across a box border exactly one changes, never
+    the middle digit; shifter dots: exactly one shared; a dot of another colour that no reading takes is refused; the
+    rule needs its definition ("Shifter lines: ..."), not a mention in a list of series"""
+    from pencilmark.sources import _sp_translate as SP
+
+    line = {"color": "#F5D000", "thickness": 9.6, "wayPoints": [[0.5, 0.5], [0.5, 1.5], [0.5, 2.5]]}
+    text = "Shifter lines: adjacent digits within the same box share parity and polarity."
+    p, _ = SP.translate(_sp4(lines=[line]), text)
+    holds = [r["holds"] for r, _ in p.named_rules]
+    assert holds[0].startswith("a mod 2 == b mod 2") and holds[1].startswith("num(a mod 2 == b mod 2) +")
+    dot = {"center": [1, 0.5], "width": 0.3, "rounded": True, "backgroundColor": "#FFD700"}
+    p, _ = SP.translate(_sp4(overlays=[dot]), "Shifter dots: digits on either side share parity or polarity, not both.")
+    assert next(r for r, _ in p.named_rules)["label"] == "Shifter dot"
+    p, why = SP.translate(_sp4(overlays=[dot]), "Normal sudoku rules apply.")
+    assert p is None and "yellow dot" in why
+    assert "shifter" not in SP.rule_flags("All my series: Equality Cages, Shifter Lines, Shifter Dots.")
+
+
 def test_rule_for_every_line():
     """ "all lines are region sum lines" gives every line that rule; a line whose colour also names another rule has two
     rules and is refused (CTC zkz5Qw2BWx4: orange lines are also Dutch whispers)"""

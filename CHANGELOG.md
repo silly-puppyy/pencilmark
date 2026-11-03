@@ -81,7 +81,9 @@
   "All possible dots are given" adds negatives only for the dot kinds the text mentions.
   Equality cages (as many low as high and as many even as odd digits per cage) as custom rules; multi-renban lines
   refused.
-  2,000 most-solved Logic Masters sudokus: 802 -> 875 graded.
+  Shifter lines and shifter dots (parity and polarity rules) as custom rules; edge dots of a colour no reading takes
+  are refused instead of dropped.
+  2,000 most-solved Logic Masters sudokus: 802 -> 877 graded.
 - SudokuPad links of the form `sudokupad.app/<author>/<slug>` are fetched (they were refused as not a short id).
 - Speed and robustness: the C++ uniqueness search without OR-Tools stops at a time limit, not only a node limit
   (counting-circle puzzles ran for hours); the trial step retries with a larger search before giving up (two unique

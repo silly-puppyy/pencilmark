@@ -198,6 +198,9 @@ def chaos_rules(P, p, n, rules):
 
 
 RULE_WORDS = {
+    "shifter": [
+        r"shifter lines?\s*:"
+    ],  # the rule's definition ("Shifter lines: ..."), not a list of the setter's series
     "slow_thermo": [r"slow[- ]?thermo"],
     "thermo": [r"thermo"],
     "whisper": [r"german whisper", r"whisper"],
@@ -544,6 +547,19 @@ def custom_line(p, rule, ids):
     from .. import puzzle_json as PJ
 
     name = lambda i: f"r{p.coords[i][0] + 1}c{p.coords[i][1] + 1}"
+    if rule == "shifter":
+        # shifter line: within a box neighbours share parity and polarity (low / high); across a box border exactly one
+        # of the two changes; the middle digit (5 on 9x9) never on the line
+        box = {c: gi for gi, g in enumerate(p.groups) if g.kind == "box" for c in g.cells}
+        mid = (p.D + 1) // 2 if p.D % 2 else None
+        low = lambda v: f"num({v} < {mid})" if mid else f"num({v} <= {p.D // 2})"
+        same = f"a mod 2 == b mod 2 and {low('a')} == {low('b')}"
+        cross = f"num(a mod 2 == b mod 2) + num({low('a')} == {low('b')}) == 1"
+        no_mid = f" and a != {mid} and b != {mid}" if mid else ""
+        for a, b in zip(ids, ids[1:]):
+            PJ.add_named(p, {"type": "custom", "cells": {"a": [name(a)], "b": [name(b)]},
+                             "holds": (same if box.get(a) == box.get(b) else cross) + no_mid, "label": "Shifter line"})  # fmt: skip
+        return
     if rule == "consecutive_line":
         p.relations += [("diff", a, b, 1) for a, b in zip(ids, ids[1:])]
     elif rule.startswith("linesum"):
@@ -1305,6 +1321,19 @@ def translate(sp, page_text=None, overrides=None):
                 elif bg in ("black", "grey"):
                     p.relations.append(("ratio", idx(a), idx(b), 2))
                     used["kropki_black"] += 1
+                elif re.search(r"shifter dots?\s*:", low):  # one of parity / polarity shared, never both; never 5
+                    from .. import puzzle_json as PJ
+
+                    nm = lambda i: f"r{p.coords[i][0] + 1}c{p.coords[i][1] + 1}"
+                    mid = (n + 1) // 2 if n % 2 else None
+                    lo_ = (lambda v: f"num({v} < {mid})") if mid else (lambda v: f"num({v} <= {n // 2})")
+                    holds = f"num(a mod 2 == b mod 2) + num({lo_('a')} == {lo_('b')}) == 1"
+                    holds += f" and a != {mid} and b != {mid}" if mid else ""
+                    PJ.add_named(p, {"type": "custom", "cells": {"a": [nm(idx(a))], "b": [nm(idx(b))]}, "holds": holds,
+                                     "label": "Shifter dot"})  # fmt: skip
+                    used["shifter_dot"] += 1
+                else:  # a dot of another colour: its meaning is in the text, which no reading took
+                    unknown.append(f"{bg} dot")
             elif re.fullmatch(r"\d{1,2}", txt):
                 kind = (overrides or {}).get("_edgenum") or edge_number_rule(rules)
                 low_ = rules.lower()
@@ -1524,7 +1553,7 @@ def translate(sp, page_text=None, overrides=None):
             p.constraints.append({"type": "line", "kind": "lockout", "cells": ids, "k": k_})  # compiled by finalize
         elif rule == "consecutive_line":  # neighbours along the line differ by 1 (repeats allowed off the houses)
             p.relations += [("diff", a, b, 1) for a, b in zip(ids, ids[1:])]
-        elif rule.startswith("linesum"):  # "numbers on blue lines sum to 20"
+        elif rule.startswith("linesum") or rule == "shifter":  # "numbers on blue lines sum to 20"; shifter lines
             custom_line(p, rule, ids)
         elif rule in LINE_CUSTOM:  # no rule family: custom rules over each run of cells along the line
             from .. import puzzle_json as PJ
