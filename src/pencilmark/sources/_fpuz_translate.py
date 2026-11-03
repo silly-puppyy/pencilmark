@@ -121,8 +121,11 @@ def translate(fp, line_kinds=None):
     for k in UNSUPPORTED:
         if fp.get(k):
             return None, f"unsupported: {k}"
-    text0 = (fp.get("ruleset") or "").lower()
     from . import _sp_translate as ST
+
+    if fp.get("ruleset"):  # "king’s move": the patterns spell apostrophes plainly
+        fp = dict(fp, ruleset=fp["ruleset"].translate(ST.TYPO_QUOTES))
+    text0 = (fp.get("ruleset") or "").lower()
 
     refused = ST.unmodelled_rules(text0)
     if refused:

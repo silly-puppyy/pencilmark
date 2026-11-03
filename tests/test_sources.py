@@ -163,6 +163,11 @@ def test_sudokupad_rules_text_readings():
 
     assert SP.rule_flags("Equal digits must not touch each other diagonally.")["antiking"]
     assert SP.rule_flags("No Touch Sudoku: normal rules apply.")["antiking"]
+    # typographic apostrophes (GMPuzzles: "a chess king’s move") and "increase or stay the same" (slow thermometers)
+    assert SP.rule_flags("cells sharing a corner differ (a chess king\u2019s move)".translate(SP.TYPO_QUOTES))[
+        "antiking"
+    ]
+    assert SP.SLOW_ALL.search("numbers must either increase or stay the same from the bulb")
     assert not SP.rule_flags("Digits on a diagonal must not repeat.")["antiking"]
     assert SP.color_name("#0003") == "grey" and SP.color_name("#000") == "black"
     assert SP.color_name("#000000cc") == "black"  # mostly opaque stays black

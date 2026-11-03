@@ -343,7 +343,9 @@ DIFF_K = re.compile(
 _NUMW = {"two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7}
 SLOW_ALL = re.compile(
     r"slow[- ]?thermo|never decrease|(?:can|may) (?:also )?repeat (?:on|along|in) (?:a |the |each )?thermo"
+    r"|increase or stay the same"
 )
+TYPO_QUOTES = str.maketrans({"\u2018": "'", "\u2019": "'", "\u201c": '"', "\u201d": '"'})
 NO_BOXES = re.compile(
     r"(?:once|exactly once)(?: each)? in (?:every|each) row and (?:every |each )?column(?![^.]{0,40}(?:box|region|cage|block|nonet))"
     r"|no (?:3x3 )?box(?:es)?\b|(?:there are )?no boxes|without boxes"
@@ -801,6 +803,7 @@ def translate(sp, page_text=None, overrides=None):
     P = sp["puzzle"]
     meta = sp.get("meta", {})
     rules = (meta.get("rules") or "") + "\n" + (page_text or "")
+    rules = rules.translate(TYPO_QUOTES)  # "king’s move": the patterns spell apostrophes plainly
     if not rules.strip():
         return None, "no rules text"
     cells = P.get("cells") or []
