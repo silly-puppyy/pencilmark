@@ -624,6 +624,7 @@ bool Solver::exhaust(MoveBuf& out) {
         sol = opt.solution;
     } else {
         auto sols = brute_solve(p, {}, 1, 2000000, &vals, &cand);
+        if (sols.empty()) sols = brute_solve(p, {}, 1, 20000000, &vals, &cand);  // as the refutations below
         if (sols.empty()) return false;
         sol = sols[0];
     }
@@ -636,7 +637,11 @@ bool Solver::exhaust(MoveBuf& out) {
         if (pa != pb) return pa < pb;
         return canon ? cell_label[a] < cell_label[b] : a < b;
     });
+    // every candidate with the regular budget first; only when none is refuted, once more with the uniqueness check's
+    // (some killer states need ~10x more nodes: a unique puzzle ended Unknown with a guess)
+    for (const pm_long budget : {pm_long(2000000), pm_long(20000000)})
     for (int c : order) {
+        if (deadline_passed()) return false;
         for (uint32_t mm = cand[c]; mm; mm &= mm - 1) {
             const int v = lowdigit(mm);
             if (v == sol[c]) continue;
@@ -644,7 +649,7 @@ bool Solver::exhaust(MoveBuf& out) {
             cc[c] = bit(v);
             bool complete = true;
             pm_long nodes = 0;
-            auto sols = brute_solve(p, {}, 1, 2000000, &vals, &cc, &complete, &nodes);
+            auto sols = brute_solve(p, {}, 1, budget, &vals, &cc, &complete, &nodes);
             if (!sols.empty() || !complete) continue;  // not refuted (another solution, or the search ran out)
             MoveBuf g;                       // priced as the guess on this cell would be (expected refutation work)
             const bool priced = guess(g) && !g.moves.empty() && g.moves[0].has_meta;
