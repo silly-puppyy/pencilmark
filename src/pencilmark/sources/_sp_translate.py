@@ -400,6 +400,55 @@ RULE_DESCRIPTIONS = {
 }  # fmt: skip
 
 
+# arrows whose text changes the rule (GAS): kind -> (wording, keep the sum rule too, condition on circle c and line L)
+ARROW_CUSTOM = {
+    "even_arrow": (r"count of even (?:numbers|digits) along the (?:path of (?:each|the) )?arrow", False,
+                   "c == count(y for y in {L} if even(y))"),
+    "overflowing_arrow": (r"sum of all but one of the (?:numbers|digits) along", False, "any(sum({L}) - y == c for y in {L})"),
+    "less_than_arrow": (r"(?:numbers|digits) along the path of each arrow must be strictly less than the (?:number|digit) in "
+                        r"the circle", False, "all(y < c for y in {L})"),
+    "le_arrow": (r"sum of the (?:numbers|digits) along the path of each arrow must be less than or equal to", False,
+                 "sum({L}) <= c"),
+    "off_by_one_arrow": (r"must be one less than or one more than the (?:number|digit) in the circle", False,
+                         "abs(sum({L}) - c) == 1"),
+    "average_arrow": (r"circled cell is equal to the average of (?:all )?(?:the )?(?:numbers|digits) along the arrow", False,
+                      "c * len({L}) == sum({L})"),
+    "repeating_arrow": (r"at least one of the (?:numbers|digits) along the path in each arrow must be repeated", True,
+                        "count_distinct({L}) < len({L})"),
+    "alternating_parity_arrow": (r"along each arrow shape, the (?:numbers|digits) \(including the circled cell\) "
+                                 r"alternate in parity", True,
+                                 "all(S[i] mod 2 != S[i + 1] mod 2 for i in {{1..{n}}})"),
+}  # fmt: skip
+
+
+def arrow_variants(p, rules, used, unknown):
+    """arrows the text redefines (or adds to): custom rules over each arrow's circle c and line L"""
+    t = (rules or "").lower()
+    got = [k for k, v in ARROW_CUSTOM.items() if re.search(v[0], t)]
+    arrows = [c_ for c_ in p.constraints if c_.get("type") == "arrow"]
+    if len(got) != 1 or not arrows:
+        return
+    from .. import puzzle_json as PJ
+
+    variant = got[0]
+    keep, holds = ARROW_CUSTOM[variant][1:]
+    name = lambda i: f"r{p.coords[i][0] + 1}c{p.coords[i][1] + 1}"
+    for a in arrows:
+        if len(a["circle"]) != 1:
+            unknown.append(f"{variant} with a pill")
+            return
+    if not keep:
+        p.constraints = [c_ for c_ in p.constraints if c_.get("type") != "arrow"]
+    for a in arrows:
+        L = [name(i) for i in a["line"]]
+        cells = {"c": [name(a["circle"][0])], "L": L}
+        if "S[" in holds:  # the circle and the line as one sequence
+            cells["S"] = cells["c"] + L
+        PJ.add_named(p, {"type": "custom", "cells": cells,
+                         "holds": holds.format(L="[L]" if len(L) == 1 else "L", n=len(L))})  # fmt: skip
+    used[variant] += 1
+
+
 # custom line rules: (cells per instance, 0 for the whole line; the condition on instance t; label)
 LINE_CUSTOM = {
     "sequence": (3, "t[2] - t[1] == t[3] - t[2]", "Sequence line"),
@@ -1391,6 +1440,7 @@ def translate(sp, page_text=None, overrides=None):
             unknown.append(f"rule '{kw}'")
     if P.get("foglight") or P.get("triggereffect"):
         unknown.append("fog of war")
+    arrow_variants(p, rules, used, unknown)
     if not unknown and plain_sudoku(p, n, used) and drawn_in_grid(P, n, inside) >= 3:
         unknown.append("drawn elements no rule reads")  # read as a plain sudoku, the drawing silently dropped
     if unknown:

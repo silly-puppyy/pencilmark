@@ -624,6 +624,22 @@ def test_marked_cell_clues():
     assert marks["arrow"] == [((0, 0), (1, 1))]
 
 
+def test_arrow_variants():
+    """arrows whose text changes the rule become custom rules over the circle c and the line L (the sum rule dropped);
+    a text that adds a condition keeps the sum rule beside it"""
+    from pencilmark.sources import _sp_translate as SP
+
+    circle = {"center": [0.5, 0.5], "width": 0.8, "height": 0.8, "rounded": True, "borderColor": "#000000"}
+    arrow = {"color": "#000000", "thickness": 2, "wayPoints": [[0.5, 0.5], [0.5, 2.5]], "headLength": 0.3}
+    text = "The number in the circled cell is equal to the average of all numbers along the arrow."
+    p, info = SP.translate(_sp4(underlays=[circle], arrows=[arrow]), text)
+    assert info.get("average_arrow") and not any(c["type"] == "arrow" for c in p.constraints)
+    assert next(r for r, _ in p.named_rules)["holds"] == "c * len(L) == sum(L)"
+    text = "Arrow sums apply. At least one of the numbers along the path in each arrow must be repeated."
+    p, _ = SP.translate(_sp4(underlays=[circle], arrows=[arrow]), text)
+    assert any(c["type"] == "arrow" for c in p.constraints) and p.named_rules
+
+
 def test_rule_for_every_line():
     """ "all lines are region sum lines" gives every line that rule; a line whose colour also names another rule has two
     rules and is refused (CTC zkz5Qw2BWx4: orange lines are also Dutch whispers)"""
