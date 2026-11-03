@@ -27,10 +27,12 @@ The engine is written in C++ ([pybind11](https://github.com/pybind/pybind11)). R
 
 ```
 pip install pencilmark
-pip install "pencilmark[verify]"      # optional: OR-Tools CP-SAT as a fallback uniqueness checker
+pip install "pencilmark[verify]"      # recommended for variants: OR-Tools proves uniqueness where the engine's search runs out
 ```
 
-Python 3.10 or newer. Building from source needs a C++17 compiler.
+Python 3.10 or newer. Building from source needs a C++17 compiler. Classics never need the `verify` extra; for hard
+variants it often decides what the engine's own search cannot within its limits (in a screen of 1,351 Cracking the
+Cryptic puzzles, 38 of the 53 that stayed undecided without it).
 
 ## Quick start
 

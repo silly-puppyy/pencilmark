@@ -86,6 +86,10 @@ puzzle = sources.load("https://sudokupad.app/…", infer=True)   # a puzzle JSON
 card = pencilmark.rate(puzzle)
 ```
 
+Hard variants from these sites sometimes end in `pencilmark.Undecided`: the engine's search could not prove the
+puzzle unique within its limits. Installing the `verify` extra (`pip install "pencilmark[verify]"`) adds OR-Tools,
+which settles most of them.
+
 ## ipuz files
 
 ```

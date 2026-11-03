@@ -14,7 +14,9 @@ In ten minutes you will install pencilmark, grade one classic sudoku and read wh
 pip install pencilmark
 ```
 
-The package includes its C++ engine, so there is nothing else to build.
+The package includes its C++ engine, so there is nothing else to build. If you will grade variants, add the `verify`
+extra (`pip install "pencilmark[verify]"`): OR-Tools then proves uniqueness for hard variant puzzles where the engine's
+own search runs out of time, which otherwise end in `Undecided`.
 
 ## 2. Grade a puzzle from the command line
 
