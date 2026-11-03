@@ -534,6 +534,13 @@ struct Brute {
             if (!valid(vals)) return;  // a full grid must satisfy every rule
             if (chaos_on) {
                 if (!chaos_valid(vals, ls[depth].data())) return;
+                const uint8_t* lab = ls[depth].data();
+                for (const NConstraint& k : p.nary) {  // custom rules reading region(): now digits and labels are known
+                    if (k.type != NT_EXPR || !k.expr->layered) continue;
+                    int dg[64], lb[64];
+                    for (int i = 0; i < k.nv(); ++i) dg[i] = vals[k.vars[i]], lb[i] = lab[k.vars[i]];
+                    if (!expr_holds(*k.expr, dg, lb)) return;
+                }
                 for (const auto& s : sols)  // another region layout with the same digits: one solution
                     if (std::equal(s.begin(), s.end(), vals)) return;
             }

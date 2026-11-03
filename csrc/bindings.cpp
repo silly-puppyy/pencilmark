@@ -236,6 +236,7 @@ static NSpec parse_constraint(const py::dict& d) {
         s.a = cells("cells");
         auto prog = std::make_shared<ExprProgram>();
         prog->root = parse_expr(d["ir"]);
+        prog->layered = expr_layered(prog->root);
         for (auto x : d["lists"].cast<py::list>()) prog->lists.push_back(parse_expr_list(x));
         prog->nslots = d["nslots"].cast<int>();
         for (auto rc : d["pos"].cast<py::list>()) {

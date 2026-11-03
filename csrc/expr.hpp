@@ -35,9 +35,13 @@ struct ExprProgram {
     std::vector<int> row, col;    ///< per variable: 1-based position (row / col / box built-ins)
     int box_h = 3, box_w = 3;
     int nslots = 1;
+    bool layered = false;         ///< reads region(): decided only with the region labels (a full chaos solution)
 };
 
-/// does the rule hold for these digits (one per variable of the constraint, in variable order)?
-bool expr_holds(const ExprProgram& prog, const int* digits);
+/// does the rule hold for these digits (one per variable of the constraint, in variable order)? labels: each
+/// variable's region label (1..D, regions to find), or null when the rule reads no layer
+bool expr_holds(const ExprProgram& prog, const int* digits, const int* labels = nullptr);
+/// does the program call region() (or another layer built-in)?
+bool expr_layered(const ExprNode& e);
 
 }  // namespace cs

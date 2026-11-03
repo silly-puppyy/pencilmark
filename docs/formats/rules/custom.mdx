@@ -50,8 +50,11 @@ before), `upto(L, p)` (the prefix through the first element meeting p), `take_wh
 
 Board layers: `region(c)` is the number of the region a cell is in, on a board whose regions are found by the solver
 (chaos construction, 6.3; regions numbered by their first cell in reading order); `shaded(c)` is true when a cell is
-shaded, on a board with shading. A rule that uses either on a board without that layer is refused. pencilmark does
-not load puzzles with such rules yet: they are refused with `NotSupportedError`, never read without the rule.
+shaded, on a board with shading. A rule that uses either on a board without that layer is refused. pencilmark checks
+`region()` rules once a cell's digits and regions are known (uniqueness, solving, and the last resort of the human
+route); no named technique reasons with them yet, so such puzzles tend to grade high. `shaded()` waits for the shading
+layer: puzzles using it are refused with `NotSupportedError`, never read without the rule. Rules with `region()` are
+unscoped (no `scope` or `each`).
 
 Values are exact (`7 / 2` is 3.5; `div` and `mod` are floor division and a non-negative remainder). An index beyond a
 list, or a division by zero, is absent: arithmetic with it is absent and a comparison with it is false (`!=` too), so

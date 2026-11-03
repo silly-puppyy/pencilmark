@@ -214,7 +214,8 @@ class _ReadCtx:
             from ..rules import custom as CU
 
             try:
-                CU.compile_rule(r, self.B, self.D)  # too large for a table: refused here, with its reason
+                layers = ("region",) if any(x.get("type") == "chaos" for x in self.rules) else ()
+                CU.compile_rule(r, self.B, self.D, layers)  # too large for a table: refused here, with its reason
             except CU.LangError as e:
                 raise NotSupportedError(f"custom rule: {e}") from None
             return [{k: v for k, v in r.items() if k not in ("id", "label", "style")}]

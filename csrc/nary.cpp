@@ -311,6 +311,7 @@ struct Enum {
                 return m + (fresh ? 1 : 0) <= k.total && k.total <= upper;
             }
             case NT_EXPR: {  // a custom rule: no partial reading; decided once every cell is fixed
+                if (k.expr->layered) return true;  // reads region labels: checked on a full chaos solution (brute force)
                 int dg[64];
                 for (int i = 0; i < nv; ++i) {
                     if (__builtin_popcount(d[i]) != 1) return true;

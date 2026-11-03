@@ -393,7 +393,8 @@ def from_json(obj) -> M.Puzzle:
             from .exchange.board import Board
             from .rules import custom as CU
 
-            compiled = CU.compile_rule(r, Board(coords, D), D)
+            layers = ("region",) if any(x.get("type") == "chaos" for x in d.get("rules") or []) else ()
+            compiled = CU.compile_rule(r, Board(coords, D), D, layers)
             width, height = max(c for _, c in coords) + 1, max(rr for rr, _ in coords) + 1
             shape = ["".join("#" if (y, x) in cid else "." for x in range(width)) for y in range(height)]
             q = from_json({"digits": D, "shape": shape, "regions": [], "rules": compiled})

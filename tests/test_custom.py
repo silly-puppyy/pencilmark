@@ -326,8 +326,9 @@ def test_cpp_evaluator_matches_the_reference():
 
 
 def test_board_layers():
-    """region(c) and shaded(c) read the board's layers; without the layer the rule is refused, and puzzles using them
-    are refused at load (not graded yet), never read without the rule"""
+    """region(c) and shaded(c) read the board's layers; without the layer the rule is refused. On a regions-to-find
+    board the search checks region() once digits and region labels are known; shaded() is refused (no shading layer
+    yet), never read without the rule"""
     cells, grid = {"a": "r1c1", "b": "r1c2"}, {"r1c1": 3, "r1c2": 5}
     assert holds("region(a) != region(b)", cells, grid, layers={"region": {"r1c1": 1, "r1c2": 2}})
     assert holds("not shaded(a) or odd(a)", cells, grid, layers={"shaded": {"r1c1": True, "r1c2": False}})
@@ -343,7 +344,15 @@ def test_board_layers():
     sys.path.insert(0, str(Path(__file__).parent))
     from test_substeps import CHAOS_DEMO
 
-    doc = json.loads(json.dumps(CHAOS_DEMO))
-    doc["rules"].append({"type": "custom", "cells": {"a": ["r1c1"], "b": ["r5c5"]}, "holds": "region(a) != region(b)"})
-    with pytest.raises(pencilmark.NotSupportedError, match="not graded yet"):
+    rule = lambda holds: {"type": "custom", "cells": {"a": ["r1c1"], "b": ["r5c5"]}, "holds": holds}
+    doc = json.loads(json.dumps(CHAOS_DEMO))  # regions to find: the search checks region() with the labels
+    assert pencilmark.count_solutions(dict(doc, rules=doc["rules"] + [rule("region(a) != region(b)")]))["count"] == 1
+    assert pencilmark.count_solutions(dict(doc, rules=doc["rules"] + [rule("region(a) == region(b)")]))["count"] == 0
+    plain = {"format": "sudoku-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
+             "givens": [0] * 81, "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]},
+                       rule("region(a) != region(b)")]}  # fmt: skip
+    with pytest.raises(pencilmark.NotSupportedError, match="regions to find"):
+        pencilmark.load(plain)
+    doc["rules"] = doc["rules"] + [dict(rule("x"), holds="not shaded(a) or odd(a)")]
+    with pytest.raises(pencilmark.NotSupportedError, match="shading"):
         pencilmark.load(doc)

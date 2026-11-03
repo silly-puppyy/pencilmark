@@ -1072,13 +1072,23 @@ def _instance(holds_text, args, B, D, test):
     return _expr({"cells": cells, "holds": f"let __f = {holds_text}; __f({call})"}, B)
 
 
-def compile_rule(rule, B, D):
+def compile_rule(rule, B, D, layers=()):
     """a custom rule -> internal puzzle rules for the engine: {"type": "pairs", "rel": "allowed", ...} for pair scopes,
     {"type": "table", "cells", "allowed"} otherwise. B: the board helper (exchange.board.Board). Raises LangError when
     the rule is malformed or too large for a table."""
     tree = parse(rule["holds"])
-    if _layered(tree):  # the engine has no layer values inside rules yet: refused, never dropped
-        raise LangError(f"{', '.join(sorted(_layered(tree)))}() in a rule is not graded yet")
+    used = _layered(tree)
+    if used - set(layers):
+        raise LangError(
+            f"{', '.join(sorted(used - set(layers)))}() needs a board with "
+            + " and ".join(LAYERS[k] for k in sorted(used - set(layers)))
+        )
+    if "shaded" in used:  # the engine has no shading layer yet: refused, never dropped
+        raise LangError("shaded() in a rule is not graded yet")
+    if used:  # region(): an expression constraint the search checks with the region labels (never a digit table)
+        if rule.get("scope") or rule.get("each"):
+            raise LangError("region() is not graded yet in a scoped or each rule")
+        return [_expr(rule, B)]
     cells = dict(rule.get("cells") or {})
     scope = rule.get("scope") or {}
     skip = {tuple(sorted(x)) for x in scope.get("except", [])}

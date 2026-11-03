@@ -54,9 +54,10 @@ inline int cmp(const Val& a, const Val& b) {
 struct Ev {
     const ExprProgram& P;
     const int* dig;
+    const int* lab;  ///< region label per variable, or null
     std::vector<Val> slots;
 
-    Ev(const ExprProgram& p, const int* d) : P(p), dig(d), slots(p.nslots) {}
+    Ev(const ExprProgram& p, const int* d, const int* l) : P(p), dig(d), lab(l), slots(p.nslots) {}
 
     Val cell(int var) {
         Val v;
@@ -120,12 +121,15 @@ bool is_prime(const Val& v) {
     return true;
 }
 
+// built-in ids: the order of custom.FNS
+enum Builtin { SUM, PRODUCT, MIN, MAX, COUNT, LEN, ALL, ANY, SORT, REVERSE, ABS, ODD, EVEN, PRIME, NUMF, DEFINED,
+               ALL_DIFFERENT, COUNT_DISTINCT, CONCAT, MEDIAN, SEEN, UPTO, TAKE_WHILE, TAKE, POSITION, ROW, COL, BOX,
+               REGION, SHADED };
+
 Val Ev::builtin(int id, const std::vector<Val>& a) {
-    enum { SUM, PRODUCT, MIN, MAX, COUNT, LEN, ALL, ANY, SORT, REVERSE, ABS, ODD, EVEN, PRIME, NUMF, DEFINED,
-           ALL_DIFFERENT, COUNT_DISTINCT, CONCAT, MEDIAN, SEEN, UPTO, TAKE_WHILE, TAKE, POSITION, ROW, COL, BOX };
     static const bool BOOLEAN[] = {false, false, false, false, false, false, true,  true,  false, false,
                                    false, true,  true,  true,  false, true,  true,  false, false, false,
-                                   false, false, false, false, false, false, false, false};
+                                   false, false, false, false, false, false, false, false, false, true};
     if (id != DEFINED)
         for (const Val& x : a)
             if (x.absent()) return BOOLEAN[id] ? Val::boolean(false) : Val();  // an absent argument
@@ -272,6 +276,12 @@ Val Ev::builtin(int id, const std::vector<Val>& a) {
             if (id == COL) return Val::num(c);
             return Val::num((r - 1) / P.box_h * P.box_h + (c - 1) / P.box_w + 1);
         }
+        case REGION: {  // no labels (or no label yet): absent, so comparisons with it fail and the caller decides later
+            if (a[0].k != Val::CELL || !lab || lab[a[0].var] <= 0) return Val();
+            return Val::num(lab[a[0].var]);
+        }
+        case SHADED:  // no shading layer in the engine yet (the Python side refuses such rules)
+            return Val();
     }
     return Val();
 }
@@ -419,12 +429,21 @@ Val Ev::eval(const ExprNode& e) {
     return Val();
 }
 
+bool layered_node(const ExprNode& e) {
+    if (e.op == X_CALL && (e.v == REGION || e.v == SHADED)) return true;
+    for (const ExprNode& k : e.kids)
+        if (layered_node(k)) return true;
+    return false;
+}
+
 }  // namespace
 
-bool expr_holds(const ExprProgram& prog, const int* digits) {
-    Ev ev(prog, digits);
+bool expr_holds(const ExprProgram& prog, const int* digits, const int* labels) {
+    Ev ev(prog, digits, labels);
     Val r = ev.eval(prog.root);
     return r.k == Val::BOOL && r.b;
 }
+
+bool expr_layered(const ExprNode& e) { return layered_node(e); }
 
 }  // namespace cs
