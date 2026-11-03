@@ -324,6 +324,8 @@ def test_line_colour_from_described_rule():
         SP.rules_color_map("Digits on lines of the same colour sum to the same total.") == {}
     )  # no boxes: not a region sum
     assert SP.unmodelled_rules("anti renban: digits on a purple line must not all be consecutive.")
+    assert not SP.unmodelled_rules("exactly one cage is lying. multiplying the end digits gives the sum.")  # not "yin"
+    assert SP.unmodelled_rules("yin yang: shade some cells so that the shaded cells are connected.")
     assert SP.unmodelled_rules("on a broken zipper, no pairs the same distance from the centre have the same sum")
 
 

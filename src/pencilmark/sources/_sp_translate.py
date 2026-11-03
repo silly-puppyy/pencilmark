@@ -35,7 +35,12 @@ _log = logging.getLogger(__name__)
 UNMODELLED_RULES = (
     ("fog", r"fog"),
     ("chaos", r"chaos"),
-    ("yin", r"yin"),
+    ("yin", r"\byin(?:[- ]?yang)?\b"),  # the word: "yin" also sits in "lying", "multiplying", "saying"
+    (
+        "shading",
+        r"\bshade (?:some|any|all|every|the|exactly|a|certain)? ?(?:of the )?cells\b"
+        r"|\b(?:colou?r|paint) (?:every|each|all|some)(?: of the)? cells?\b",
+    ),
     ("modifier", r"modifier"),
     ("doubler", r"doubler"),
     ("minesweeper", r"minesweeper"),
