@@ -64,6 +64,11 @@
   of one colour "are the same number"; refused instead of misread: maze paths (RAT RUN), digit subsets chosen by
   the solver, every clue type exclusive across the puzzle, cage sums to find; line colours the text calls
   decorative ("have no effect") are ignored (graded 165 -> 169).
+- Lines: whispers with their own threshold ("differ by at least 3", "minimum difference of 5"), fixed line totals
+  ("numbers on blue lines sum to 20"), more decorative wordings, entropic / parity / renban wordings; f-puzzles
+  renban and line-total segments drawn in pieces are joined into one line, or kept separate when that is the reading
+  with the setter's solution; "chess knight jump" is anti-knight; a difference with an upper bound is not a whisper.
+  2,000 most-solved Logic Masters sudokus: 802 -> 834 graded.
 - SudokuPad links of the form `sudokupad.app/<author>/<slug>` are fetched (they were refused as not a short id).
 - Speed and robustness: the C++ uniqueness search without OR-Tools stops at a time limit, not only a node limit
   (counting-circle puzzles ran for hours); the trial step retries with a larger search before giving up (two unique

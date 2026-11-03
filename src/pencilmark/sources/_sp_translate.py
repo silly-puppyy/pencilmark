@@ -355,7 +355,10 @@ def color_name(hexcol):
 DIFF_K = re.compile(
     r"differ(?:ence)?s?\b[^.]{0,25}?(at least|>=|≥|a minimum of|more than|greater than)\s*(?:a\s+)?(\d|five|four|three|two|six|seven)\b"
 )
-DIFF_K_APART = re.compile(r"at least (\d|five|four|three|two|six|seven) apart")
+LINE_SUM = re.compile(r"\blines?\b[^.]{0,30}?\bsums? (?:up )?to (\d{1,2})\b")
+DIFF_K_APART = re.compile(
+    r"at least (\d|five|four|three|two|six|seven) apart|minimum difference of (\d|five|four|three|two|six|seven)\b"
+)
 DIFF_K_OR_MORE = re.compile(r"differ(?:ence)?s?\b (?:of|by) (\d|five|four|three|two|six|seven) or (?:more|greater)\b")
 _NUMW = {"two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7}
 SLOW_ALL = re.compile(
@@ -388,12 +391,17 @@ QUAD_TEXT = re.compile(
 
 def diff_rule(sent):
     """'adjacent digits differ by at least K' -> whisper key (K=5 whisper, K=4 dutch, else 'whisperK'), or None."""
+    if re.search(
+        r"\bat most \d", sent
+    ):  # a difference with an upper bound too ("at least 1, and at most 2"): no whisper
+        return None
     m = DIFF_K.search(sent)
     if not m:
         m = DIFF_K_OR_MORE.search(sent) or DIFF_K_APART.search(sent)  # "a difference of 4 or more", "at least 5 apart"
         if not m:
             return None
-        k = int(m.group(1)) if m.group(1).isdigit() else _NUMW[m.group(1)]
+        g = next(x for x in m.groups() if x)
+        k = int(g) if g.isdigit() else _NUMW[g]
         return {5: "whisper", 4: "dutch"}.get(k, f"whisper{k}")
     k = int(m.group(2)) if m.group(2).isdigit() else _NUMW[m.group(2)]
     k += m.group(1) in ("more than", "greater than")
@@ -404,6 +412,7 @@ def diff_rule(sent):
 # sentence about a line or thread, so a cage or dot described the same way does not colour a line
 RULE_DESCRIPTIONS = {
     "renban": [r"set of (?:non-repeating,? )?consecutive", r"consecutive set", r"consecutive and non-repeating",
+               r"\(non-repeating\) consecutive",
                r"\b(?:are|be|contains?|form) (?:an? )?(?:non-repeating,? )?consecutive (?:digits|numbers|values|sequence)"],
     "region_sum": [r"segments? (?:that |which )?(?:each )?(?:sum|add)s? (?:up )?to the same", r"(?:same|equal) (?:sums?|totals?)",
                    r"sum (?:of the digits )?(?:on|along) (?:a|the|each) [a-z ]{0,20}line is (?:equal|the same)",
@@ -420,7 +429,10 @@ RULE_DESCRIPTIONS = {
     "sequence": [r"arithmetic (?:series|sequence|progression)", r"evenly spaced sequence"],
     "monotone": [r"either strictly increase or strictly decrease", r"strictly (?:increasing|increase) or strictly (?:decreasing|decrease)"],
     "three_distinct": [r"(?:(?:contains?|has) only|only (?:contains?|has)) three distinct (?:digits|numbers)"],
-    "entropic": [r"exactly one low (?:digit|number) \(?1,? ?2,? ?3\)?,? one medium (?:digit|number)"],
+    "entropic": [r"exactly one low (?:digit|number) \(?1,? ?2,? ?3\)?,? one medium (?:digit|number)",
+                 r"one low (?:digit|number) \(1-3\),? one (?:middle|medium) (?:digit|number)",
+                 r"one high \(7,? ?8,? ?9\),? one (?:middle|medium) \(4,? ?5,? ?6\)"],
+    "parity": [r"alternate in parity", r"alternating parity"],
     "doubling": [r"every (?:digit|number) that appears (?:along|on) [a-z ]{0,20}line must appear exactly twice"],
     "centre_sum": [r"(?:digit|number) in the cent(?:er|re) (?:position|cell) is the sum of the other"],
     "zigzag": [r"alternate between increasing and decreasing", r"alternately (?:increase|rise) and (?:decrease|fall)"],
@@ -520,6 +532,9 @@ def custom_line(p, rule, ids):
     name = lambda i: f"r{p.coords[i][0] + 1}c{p.coords[i][1] + 1}"
     if rule == "consecutive_line":
         p.relations += [("diff", a, b, 1) for a, b in zip(ids, ids[1:])]
+    elif rule.startswith("linesum"):
+        PJ.add_named(p, {"type": "custom", "cells": {"t": [[name(c_) for c_ in ids]]}, "each": "t",
+                         "holds": f"sum(t) == {int(rule[7:])}", "label": "Line sum"})  # fmt: skip
     elif rule == "same_parity":
         PJ.add_named(p, {"type": "custom", "cells": {"pair": [[name(a), name(b)] for a, b in zip(ids, ids[1:])]},
                          "each": "pair", "holds": "pair[1] mod 2 == pair[2] mod 2", "label": "Same-parity line"})  # fmt: skip
@@ -560,6 +575,9 @@ def _described(sent):
     if not re.search(r"\b(?:lines?|threads?)\b", sent) and not diag:
         return []
     got = [k for k, pats in RULE_DESCRIPTIONS.items() if any(re.search(p, sent) for p in pats)]
+    ls = LINE_SUM.search(sent)
+    if ls and not got and not re.search(r"\bsame\b|\bequal\b|\beach (?:box|region)", sent):
+        got = [f"linesum{int(ls.group(1))}"]  # a fixed total for every line of the sentence
     if diag:  # marked diagonals drawn as lines (f-puzzles): only rules about a diagonal's digit count
         got = [k for k in got if k == "three_distinct"]
     return [k for k in got if k != "region_sum" or re.search(r"\bbox(?:es)?\b|3x3|\bregions?\b", sent)]
@@ -706,7 +724,8 @@ def rules_color_map(rules):
             rules_here = _described(sent)
         cols = [c for c in COLOR_WORDS if re.search(rf"\b{c}", sent)]
         if cols and re.search(
-            r"lines?\b[^.]{0,30}\b(?:have|has) no (?:effect|meaning)|lines?\b[^.]{0,20}\b(?:are|is) (?:purely )?decorative",
+            r"lines?\b[^.]{0,40}\b(?:have|has) no (?:effect|meaning)|lines?\b[^.]{0,20}\b(?:are|is) (?:purely )?(?:decorative|cosmetic)"
+            r"|lines?\b[^.]{0,60}\bdo(?:es)? not affect the puzzle|line\b[^.]{0,30}\bis for [^.]{0,60}\bonly\b|\(\w+ line\) is cosmetic",
             sent,
         ):
             for c in cols:  # "Blue lines have no effect on the puzzle"
@@ -801,7 +820,7 @@ def rule_flags(rules):
     neg = negative_markers(rules)
     return {
         "negative_markers": neg,
-        "antiknight": bool(re.search(r"anti[- ]?knight|knight'?s move", t)),
+        "antiknight": bool(re.search(r"anti[- ]?knight|knight'?s move|(?:chess )?knight(?:'s)? jump", t)),
         "antiking": bool(
             re.search(
                 r"anti[- ]?king|king'?s move|diagonally adjacent cells|\bno[- ]touch\b"
@@ -1407,6 +1426,8 @@ def translate(sp, page_text=None, overrides=None):
             p.relations += [("diffge", a, b, int(rule[7:])) for a, b in zip(ids, ids[1:])]
         elif rule == "whisper":
             p.relations += [("diffge", a, b, 5) for a, b in zip(ids, ids[1:])]
+        elif re.fullmatch(r"whisper\d", rule):  # "differ by at least 3": a whisper with its own threshold
+            p.relations += [("diffge", a, b, int(rule[-1])) for a, b in zip(ids, ids[1:])]
         elif rule == "dutch":
             p.relations += [("diffge", a, b, 4) for a, b in zip(ids, ids[1:])]
         elif rule == "renban":
@@ -1483,6 +1504,8 @@ def translate(sp, page_text=None, overrides=None):
             p.constraints.append({"type": "line", "kind": "lockout", "cells": ids, "k": k_})  # compiled by finalize
         elif rule == "consecutive_line":  # neighbours along the line differ by 1 (repeats allowed off the houses)
             p.relations += [("diff", a, b, 1) for a, b in zip(ids, ids[1:])]
+        elif rule.startswith("linesum"):  # "numbers on blue lines sum to 20"
+            custom_line(p, rule, ids)
         elif rule in LINE_CUSTOM:  # no rule family: custom rules over each run of cells along the line
             from .. import puzzle_json as PJ
 

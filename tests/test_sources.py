@@ -826,6 +826,26 @@ def test_lmd_wording_fixes():
     assert SP.described_line_rules("Digits on lines are consecutive and non-repeating but in any order.") == {"renban"}
 
 
+def test_fpuzzles_line_totals_whisper_thresholds_and_segments():
+    """f-puzzles generic lines: whispers with their own threshold, fixed line totals, renban segments drawn in pieces
+    joined into one line (unless the separate reading is the one with the setter's solution); a difference with an
+    upper bound is no whisper; "chess knight jump" is anti-knight"""
+    from pencilmark.sources import _fpuz_translate as FT
+    from pencilmark.sources import _sp_translate as SP
+
+    line = lambda cells, col="#CCCCCC": {"lines": [cells], "outlineC": col, "width": 0.4}
+    base = {"size": 4, "grid": [[{} for _ in range(4)] for _ in range(4)]}
+    p, _ = FT.translate(dict(base, ruleset="Whisper: adjacent digits along the grey line must differ by at least 2.",
+                             line=[line(["R1C1", "R1C2"])]))  # fmt: skip
+    assert [c.get("k") for c in p.constraints if c.get("kind") == "whisper"] == [2]
+    p, info = FT.translate(dict(base, ruleset="Numbers on blue lines sum to 7.",
+                                line=[line(["R1C1", "R1C2"], "#87A1FF"), line(["R1C2", "R2C2"], "#87A1FF")]))  # fmt: skip
+    assert info.get("_joined") and [r["holds"] for r, _ in p.named_rules] == ["sum(t) == 7"]
+    assert next(r for r, _ in p.named_rules)["cells"]["t"] == [["r1c1", "r1c2", "r2c2"]]
+    assert SP.diff_rule("digits along each line have a difference of at least 1, and at most 2") is None
+    assert SP.rule_flags("Cells separated by a chess knight jump cannot contain the same digit.")["antiknight"]
+
+
 def test_rule_for_every_line():
     """ "all lines are region sum lines" gives every line that rule; a line whose colour also names another rule has two
     rules and is refused (CTC zkz5Qw2BWx4: orange lines are also Dutch whispers)"""

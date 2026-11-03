@@ -105,6 +105,10 @@ def translate(x, rules_text=None, reading=None, infer=False, fetch=True):
         p, info = FT.infer_lines(fp)
     else:
         p, info = FT.translate(fp)
+        if p is not None and info.get("_joined") and not FT.joined_or_separate(fp):
+            p, info = FT.translate(fp, join=False)  # touching segments are separate lines here
+    if isinstance(info, dict):
+        info.pop("_joined", None)
     if p is None:
         raise unsupported_from_reason(info, "f-puzzles")
     return p, info

@@ -116,8 +116,9 @@ def normalise(fp):
     return fp
 
 
-def translate(fp, line_kinds=None):
-    """line_kinds: {colour: kind} reading for generic 'line' entries (see infer_lines)."""
+def translate(fp, line_kinds=None, join=True):
+    """line_kinds: {colour: kind} reading for generic 'line' entries (see infer_lines). join: same-colour segments of a
+    set rule (renban, line total) that share a cell are one line (info "_joined" when that merged any)."""
     fp = normalise(fp) if "_ineq" not in fp else fp
     n = fp.get("size", 9)
     ix = lambda name: (lambda r, c: r * n + c)(*rc(name, n))
@@ -245,7 +246,9 @@ def translate(fp, line_kinds=None):
                 cells = tuple(r * n + c for r in range(n) for c in range(n) if r % bh == i and c % bw == j)
                 p.groups.append(M.Group(f"dj{i}{j}", cells, "extra", True))
     text = (fp.get("ruleset") or "").lower()
-    knight = fp.get("antiknight") or bool(re.search(r"anti[- ]?knight|knight'?s move", text))
+    knight = fp.get("antiknight") or bool(
+        re.search(r"anti[- ]?knight|knight'?s move|(?:chess )?knight(?:'s)? jump", text)
+    )
     king = fp.get("antiking") or bool(re.search(r"anti[- ]?king|king'?s move", text))
     if fp.get("nonconsecutive") is None and re.search(r"non[- ]?consecutive", text) and not fp.get("difference"):
         fp = dict(fp, nonconsecutive=True)
@@ -319,18 +322,43 @@ def translate(fp, line_kinds=None):
                     con["k"] = int(item["value"])
                 p.constraints.append(con)
                 used[key] = used.get(key, 0) + 1
+    linesum_parts = {}
     for item in fp.get("line") or []:
         kind = (line_kinds or {}).get(_colour(item))
         for line in item.get("lines", []):
             cells = [ix(x) for x in line]
             if kind == "ignore":
                 continue
+            if kind and re.fullmatch(r"whisper\d", kind):
+                p.constraints.append({"type": "line", "kind": "whisper", "cells": cells, "k": int(kind[-1])})
+                continue
+            if kind and kind.startswith("linesum"):
+                linesum_parts.setdefault(kind, []).append(cells)  # joined below: one drawn line may be several segments
+                continue
             if kind == "between":
                 p.constraints.append({"type": "between", "cells": cells})
             elif kind in ST.LINE_CUSTOM or kind in ("same_parity", "consecutive_line"):
                 ST.custom_line(p, kind, cells)
+            elif kind == "renban":
+                linesum_parts.setdefault(kind, []).append(cells)  # a set rule: touching segments are one line
             elif kind:
                 p.constraints.append({"type": "line", "kind": kind, "cells": cells})
+    for (
+        kind,
+        parts,
+    ) in linesum_parts.items():  # set rules (renban, line totals): segments meeting at a cell are one line
+        groups = []
+        for cells in parts:
+            hit = [g for g in groups if g & set(cells)] if join else []
+            merged = set(cells).union(*hit) if hit else set(cells)
+            groups = [g for g in groups if g not in hit] + [merged]
+        if len(groups) < len(parts):
+            used["_joined"] = True
+        for g in groups:
+            if kind == "renban":
+                p.constraints.append({"type": "line", "kind": "renban", "cells": sorted(g)})
+            else:
+                ST.custom_line(p, kind, sorted(g))
     for item in fp.get("betweenline") or []:
         for line in item.get("lines", []):
             p.constraints.append({"type": "between", "cells": [ix(x) for x in line]})
@@ -577,6 +605,9 @@ def _text_line_reading(fp, text):
         for var_, (from_, pat_) in ST.LINE_VARIANTS.items():
             if rk in from_ and re.search(pat_, text.lower()):
                 rk = var_
+        if rk and (re.fullmatch(r"whisper\d", rk) or rk.startswith("linesum")):  # whisper threshold / line total
+            reading[c] = rk
+            continue
         if rk == "ignore":  # the text says these lines have no effect
             reading[c] = "ignore"
             continue
@@ -591,6 +622,23 @@ def _text_line_reading(fp, text):
 
 def _colour(item):
     return str(item.get("outlineC") or item.get("color") or "?").lower()
+
+
+def joined_or_separate(fp, node_limit=2_000_000):
+    """touching segments of a set rule: one line drawn in pieces, or separate lines that meet? -> the reading (joined
+    first) with a unique solution, matching the embedded one when there is one; joined when neither decides"""
+    emb = solution_of(fp)
+    wrong = False
+    for join in (True, False):
+        q, _ = translate(fp, join=join)
+        if q is None:
+            continue
+        q.finalize()
+        sols = _verified_solutions(q, limit=2, node_limit=node_limit)
+        if len(sols) == 1 and (emb is None or list(sols[0]) == emb):
+            return join
+        wrong = wrong or (join and emb is not None and len(sols) == 1)  # joined contradicts the setter's solution
+    return not wrong
 
 
 def infer_lines(fp, node_limit=2_000_000, max_combos=60):
