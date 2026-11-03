@@ -451,7 +451,7 @@ def cpsat_solutions(p, limit=2, time_limit=60.0, workers=1):
 def solutions(p, limit=2, time_limit=60.0, workers=1, node_limit=NODE_LIMIT):
     """up to `limit` solutions, or None if undecided. With OR-Tools: CP-SAT (None if a rule can't be expressed or the
     time limit is hit). Without: the engine's exhaustive search on the rules CP-SAT models (None for others, or if
-    the node limit is hit), so both installs reach the same verdicts."""
+    the node or time limit is hit), so both installs reach the same verdicts."""
     if have_ortools():
         return cpsat_solutions(p, limit=limit, time_limit=time_limit, workers=workers)
     if not hasattr(p, "groups_of"):
@@ -469,7 +469,7 @@ def count(p, limit=2, time_limit=60.0):
 
 def verified_solutions(p, limit=2, node_limit=NODE_LIMIT, time_limit=60.0):
     """Drop-in for cbackend.brute_solve(p, limit, node_limit) when verifying a translation: CP-SAT first when OR-Tools
-    is installed, then the engine's exhaustive search (possibly partial if it hits the node limit)."""
+    is installed, then the engine's exhaustive search (possibly partial if it hits the node or time limit)."""
     if have_ortools():
         s = cpsat_solutions(p, limit=limit, time_limit=time_limit)
         if s is not None:

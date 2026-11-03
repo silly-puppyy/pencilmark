@@ -27,7 +27,7 @@ Everything below is importable from `pencilmark` directly (`pencilmark.rate`, `p
 | def [`to_ipuz`](#to_ipuz) | A puzzle as an ipuz 2 dict ([Other formats](../formats/other-formats.md)). |
 | class [`NotUnique`](#NotUnique) | the puzzle has more than one solution |
 | class [`NoSolution`](#NoSolution) | the puzzle has no solution |
-| class [`Undecided`](#Undecided) | the exhaustive search hit its node limit and OR-Tools (pip install "pencilmark[verify]") is not available |
+| class [`Undecided`](#Undecided) | the exhaustive search hit its node or time limit and OR-Tools (pip install "pencilmark[verify]") is not… |
 
 ## Grading
 
@@ -98,7 +98,7 @@ The variant name and its rules in words, from the rules alone (pencilmark/varian
 
 The unique solution of a puzzle.
 
-Uses the engine's exhaustive C++ search; CP-SAT (OR-Tools, optional) only when that search hits its node limit.
+Uses the engine's exhaustive C++ search; CP-SAT (OR-Tools, optional) only when that search hits its node or time limit.
 
 **Parameters**
 
@@ -113,7 +113,7 @@ Uses the engine's exhaustive C++ search; CP-SAT (OR-Tools, optional) only when t
 
 - *NotUnique* — More than one solution.
 - *NoSolution* — No solution.
-- *Undecided* — The search hit its node limit and OR-Tools is not installed.
+- *Undecided* — The search hit its node or time limit and OR-Tools is not installed.
 
 ### `def count_solutions(puzzle, limit=1000)` {#count_solutions}
 
@@ -128,7 +128,7 @@ How many solutions a puzzle has, counting up to a limit.
 
 **Returns**
 
-- *dict* — {"count": n, "exact": bool}. exact is false when there are at least n: the count reached `limit`, or the search hit its node limit without OR-Tools installed.
+- *dict* — {"count": n, "exact": bool}. exact is false when there are at least n: the count reached `limit`, or the search hit its node or time limit without OR-Tools installed.
 
 ## Generating
 
@@ -328,4 +328,4 @@ the puzzle has no solution
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L295)
 
-the exhaustive search hit its node limit and OR-Tools (pip install "pencilmark[verify]") is not available
+the exhaustive search hit its node or time limit and OR-Tools (pip install "pencilmark[verify]") is not available

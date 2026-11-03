@@ -10,7 +10,7 @@ pip install -e ".[test]"                      # builds the C++ engine and instal
 python -m pytest -q -n auto tests             # the quick suite: about 10 seconds
 ```
 
-`pip install -e ".[test,verify]"` adds OR-Tools, which the uniqueness check falls back on when the engine's search hits its node limit. After a change to
+`pip install -e ".[test,verify]"` adds OR-Tools, which the uniqueness check falls back on when the engine's search hits its node or time limit. After a change to
 `csrc/`, run `pip install -e .` again to rebuild the engine.
 
 ## Where things live

@@ -293,13 +293,13 @@ def rate_many(
 
 
 class Undecided(RuntimeError):
-    """the exhaustive search hit its node limit and OR-Tools (pip install "pencilmark[verify]") is not available"""
+    """the exhaustive search hit its node or time limit and OR-Tools (pip install "pencilmark[verify]") is not available"""
 
 
 def solve(puzzle, info=False):
     """The unique solution of a puzzle.
 
-    Uses the engine's exhaustive C++ search; CP-SAT (OR-Tools, optional) only when that search hits its node limit.
+    Uses the engine's exhaustive C++ search; CP-SAT (OR-Tools, optional) only when that search hits its node or time limit.
 
     Parameters
     ----------
@@ -320,7 +320,7 @@ def solve(puzzle, info=False):
     NoSolution
         No solution.
     Undecided
-        The search hit its node limit and OR-Tools is not installed.
+        The search hit its node or time limit and OR-Tools is not installed.
     """
     import time
 
@@ -356,7 +356,7 @@ def count_solutions(puzzle, limit=1000):
     -------
     dict
         {"count": n, "exact": bool}. exact is false when there are at least n: the count reached `limit`, or the search
-        hit its node limit without OR-Tools installed.
+        hit its node or time limit without OR-Tools installed.
     """
     from . import cpsat_verify as V
 

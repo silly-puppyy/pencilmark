@@ -89,7 +89,7 @@ n = pencilmark.count_solutions(puzzle)
 
 `solve` returns the unique solution as a list of digits, or raises `NotUnique` or `NoSolution`.
 `count_solutions` returns `{"count": 1, "exact": True}` for a proper puzzle. `count_solutions(puzzle, limit=1000)` counts up to `limit`; `exact` is
-false when it stopped there. Both use the engine's exhaustive search; when that search hits its node limit,
+false when it stopped there. Both use the engine's exhaustive search; when that search hits its node or time limit,
 [OR-Tools](https://developers.google.com/optimization) [CP-SAT](https://developers.google.com/optimization/cp/cp_solver)
 takes over if installed (`pip install "pencilmark[verify]"`), otherwise `solve` raises `Undecided`.
 
