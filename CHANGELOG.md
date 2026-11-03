@@ -32,7 +32,8 @@
   rule's cosmetic `style`, for named and custom rules alike; `to_export(..., style=False)` leaves it out.
 - Speed and robustness: the C++ uniqueness search without OR-Tools stops at a time limit, not only a node limit
   (counting-circle puzzles ran for hours); the trial step retries with a larger search before giving up (two unique
-  killers ended Unknown) and keeps its result per position (one killer: 558 -> 316 s).
+  killers ended Unknown) and keeps its result per position (one killer: 558 -> 316 s); a custom rule with a `neighbours`
+  scope shares one digit table per neighbour count unless it reads positions (9x9: 15.6 -> 0.5 s to load).
 - Docs: the `verify` extra (OR-Tools) is recommended for variants; the benchmark page lists Cracking the Cryptic solve
   times as an outside check (327 puzzles, rank correlation 0.57).
 

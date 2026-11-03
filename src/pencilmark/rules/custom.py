@@ -1150,6 +1150,7 @@ def compile_rule(rule, B, D, layers=()):
         bh, bw = B_box(B)
         steps = STEPS[scope["neighbours"]]
         targets = cells[scope["cells"]] if scope.get("cells") else [B.name(i) for i in range(len(B.coords))]
+        shared_nb = {}
         for name in targets if isinstance(targets, list) else [targets]:
             r, c = B.coords[B.idx(name)]
             nb = [(r + s * dr, c + s * dc) for dr, dc in steps for s in (1, -1)]
@@ -1162,6 +1163,11 @@ def compile_rule(rule, B, D, layers=()):
             test = lambda g, names=names: (
                 call_fn(f, [Cell(names[0], g[names[0]]), [Cell(n, g[n]) for n in names[1:]]], env) is True
             )
+            if len(names) <= MAX_TABLE_CELLS and not pos:  # the table depends only on how many neighbours a cell has
+                if len(names) not in shared_nb:
+                    shared_nb[len(names)] = _table(test, names, D)
+                out.append({"type": "table", "cells": names, "allowed": shared_nb[len(names)]})
+                continue
             out.append(_instance(rule["holds"], [names[0], names[1:]], B, D, test))
         return out
     raise LangError(f"unknown scope {sorted(scope)}")
