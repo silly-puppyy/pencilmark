@@ -368,10 +368,10 @@ def translate(fp, line_kinds=None):
             if "xv" in neg or "v" in neg:
                 p.relations.append(("notsum", x, y, 5))
     odd = sum(1 << (v - 1) for v in range(1, n + 1, 2))
-    for o in fp.get("odd") or []:
-        p.domains[ix(o["cell"])] &= odd
-    for e in fp.get("even") or []:
-        p.domains[ix(e["cell"])] &= p.full & ~odd
+    for key, mask in (("odd", odd), ("even", p.full & ~odd)):  # kept as cell rules, not as given candidates
+        cells = [ix(o["cell"]) for o in fp.get(key) or []]
+        if cells:
+            ST._cell_clue(p, {"type": "parity", "parity": key}, cells, mask)
     for key, rel in (("maximum", "lt"), ("minimum", "gt")):
         same = {ix(m["cell"]) for m in fp.get(key) or []}  # fortress: two grey cells side by side are not compared
         for m in fp.get(key) or []:

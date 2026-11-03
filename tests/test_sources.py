@@ -731,6 +731,24 @@ def test_sudokupad_author_slug_links():
     assert asked == [sudokupad.API + "clover/dec-4-2023-equal-sudoku"]
 
 
+def test_shape_clues_are_written_as_cell_rules():
+    """parity / digit-set shapes are written as cell rules (with the shapes' shared look), not as given candidates; the
+    same for f-puzzles odd / even cells"""
+    import pencilmark as pm
+    from pencilmark.sources import sudokupad
+
+    sq = lambda r, c: {"center": [r + 0.5, c + 0.5], "width": 0.8, "height": 0.8, "backgroundColor": "#0003"}
+    sp = _sp4(underlays=[sq(0, 0), sq(1, 1)])
+    sp["meta"]["rules"] = "Cells with a square contain an even number."
+    doc = pm.to_export(sudokupad.to_puzzle(sp, fetch=False), with_solution=False)
+    cell = [r for r in doc["rules"] if r["type"] == "cell"]
+    assert "candidates" not in doc and cell[0]["kind"] == "even" and cell[0]["cells"] == ["r1c1", "r2c2"]
+    assert cell[0]["style"]["shape"] == "square"
+    fp = {"size": 4, "grid": [[{} for _ in range(4)] for _ in range(4)], "odd": [{"cell": "R1C1"}]}
+    doc = pm.to_export(FP.to_puzzle(fp, fetch=False), with_solution=False)
+    assert "candidates" not in doc and any(r.get("kind") == "odd" for r in doc["rules"])
+
+
 def test_rule_for_every_line():
     """ "all lines are region sum lines" gives every line that rule; a line whose colour also names another rule has two
     rules and is refused (CTC zkz5Qw2BWx4: orange lines are also Dutch whispers)"""

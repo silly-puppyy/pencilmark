@@ -107,6 +107,12 @@ def apply(doc, drawn):
         looks.setdefault(frozenset(el["cells"]), set()).add(json.dumps(el["style"], sort_keys=True))
     rules = []
     for r in doc.get("rules") or []:
-        got = looks.get(frozenset(_rule_cells(r, set()))) if "style" not in r else None
+        cells = _rule_cells(r, set())
+        got = looks.get(frozenset(cells)) if "style" not in r else None
+        if got is None and "style" not in r and len(cells) > 1 and r.get("type") == "cell":
+            # a clue drawn as one shape per cell (circles of a parity clue): the look they all share
+            each = [looks.get(frozenset([c])) for c in cells]
+            if all(x and len(x) == 1 for x in each) and len({next(iter(x)) for x in each}) == 1:
+                got = each[0]
         rules.append({**r, "style": json.loads(next(iter(got)))} if got and len(got) == 1 else r)
     return {**doc, "rules": rules} if rules else doc

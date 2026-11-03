@@ -45,6 +45,8 @@
   them misread before).
 - Styles: a SudokuPad puzzle's look (line colours and widths, cage colours, dot and shape fills) is exported as each
   rule's cosmetic `style`, for named and custom rules alike; `to_export(..., style=False)` leaves it out.
+- Readers write parity and digit-set shapes (SudokuPad) and f-puzzles odd / even cells as `cell` rules, not as
+  given candidates; a cell rule drawn as one shape per cell takes the shapes' shared look as its style.
 - SudokuPad links of the form `sudokupad.app/<author>/<slug>` are fetched (they were refused as not a short id).
 - Speed and robustness: the C++ uniqueness search without OR-Tools stops at a time limit, not only a node limit
   (counting-circle puzzles ran for hours); the trial step retries with a larger search before giving up (two unique

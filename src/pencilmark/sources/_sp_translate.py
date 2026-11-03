@@ -2276,10 +2276,10 @@ def parity_shapes(P, n, p, rules, used, idx, inside):
             ds = [int(x) for x in re.findall(r"\d", dset.group(1))]
             col_ = {{"gray": "grey"}.get(c, c) for c in COLOR_WORDS if re.search(rf"\b{c}\b", sent)}
             m_ = sum(1 << (v - 1) for v in ds if 1 <= v <= n)
-            for kind, col, c in shapes:
-                if kind == shp[0] and (not col_ or col in col_):
-                    p.domains[c] &= m_
-                    used["digit_set_" + kind] += 1
+            got = [c for kind, col, c in shapes if kind == shp[0] and (not col_ or col in col_)]
+            if got:
+                _cell_clue(p, {"type": "digit_class", "digits": "".join(map(str, ds))}, got, m_)
+                used["digit_set_" + shp[0]] += len(got)
             continue
         par = [s_ for s_ in ("odd", "even") if re.search(rf"\b{s_}\b", sent)]
         cols = {{"gray": "grey"}.get(c, c) for c in COLOR_WORDS if re.search(rf"\b{c}\b", sent)} & {
@@ -2289,10 +2289,19 @@ def parity_shapes(P, n, p, rules, used, idx, inside):
             shp = ["circle", "square"]
         if not shp or len(par) != 1 or (len(shp) > 1 and not cols):
             continue
-        for kind, col, c in shapes:
-            if kind in shp and (not cols or col in cols):
-                p.domains[c] &= odd if par[0] == "odd" else p.full & ~odd
-                used[par[0] + "_" + kind] += 1
+        for kind in shp:
+            got = [c for k_, col, c in shapes if k_ == kind and (not cols or col in cols)]
+            if got:
+                _cell_clue(p, {"type": "parity", "parity": par[0]}, got, odd if par[0] == "odd" else p.full & ~odd)
+                used[par[0] + "_" + kind] += len(got)
+
+
+def _cell_clue(p, rule, cells, mask):
+    """a graphical cell clue (parity, digit class): the cells' candidates narrowed and the clue kept as a rule, so it
+    is written as a cell rule, not as given candidates"""
+    for c in cells:
+        p.domains[c] &= mask
+    p.cell_clues = getattr(p, "cell_clues", []) + [(dict(rule, cells=list(cells)), {c: mask for c in cells})]
 
 
 def quadruples(P, n, p, used, unknown, idx, inside):
