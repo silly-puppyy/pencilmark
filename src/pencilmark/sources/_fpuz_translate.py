@@ -21,7 +21,8 @@ BOX = {4: (2, 2), 5: None, 6: (2, 3), 7: None, 8: (2, 4), 9: (3, 3), 10: (2, 5),
 UNSUPPORTED = ("fogofwar", "foglight", "columnindexer", "rowindexer", "boxindexer", "nabner")
 COUNTING_CIRCLES = (
     r"counting circle|digit in a circle.{0,40}(appears|number of)|number in a circle.{0,60}circles|"
-    r"(circled|circle) digits?.{0,40}(how many|exactly that many|number of)"
+    r"(circled|circle) digits?.{0,40}(how many|exactly that many|number of)|"
+    r"number of times (?:a )?digits? appears? in (?:a )?circles?"
 )
 DECORATIVE = (
     "text",

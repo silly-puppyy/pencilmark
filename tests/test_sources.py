@@ -844,6 +844,14 @@ def test_fpuzzles_line_totals_whisper_thresholds_and_segments():
     assert next(r for r, _ in p.named_rules)["cells"]["t"] == [["r1c1", "r1c2", "r2c2"]]
     assert SP.diff_rule("digits along each line have a difference of at least 1, and at most 2") is None
     assert SP.rule_flags("Cells separated by a chess knight jump cannot contain the same digit.")["antiknight"]
+    assert (
+        SP.diff_rule("digits along a pink line must differ in value from their neighbors on the line by at least 6")
+        == "whisper6"
+    )
+    assert SP.QUAD_TEXT.search("digits in circles must appear in a cell touching the circle")
+    cages = [{"cells": [[0, 0], [0, 1]], "value": 5}, {"cells": [[1, 0], [1, 1]]}]
+    p, _ = SP.translate(_sp4(cages=cages), "Every cage has the same sum.")
+    assert [g.total for g in p.groups if g.kind == "cage"] == [5, 5]
 
 
 def test_rule_for_every_line():

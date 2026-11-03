@@ -45,7 +45,8 @@ UNMODELLED_RULES = (
     ("maze path", r"path through the maze|\brat run\b"),  # a route through walls (path genre): no path layer yet
     (
         "digit subset",
-        r"\buses? (?:\w+|\d+) of the digits\b|\btake (?:two|three|four|five|six|seven|eight|\d) \(?(?:different|distinct)?\)? ?digits from",
+        r"\buses? (?:\w+|\d+) of the digits\b|\btake (?:two|three|four|five|six|seven|eight|\d) \(?(?:different|distinct)?\)? ?digits from"
+        r"|digit in each (?:row|column|box|house)?[^.]{0,30}does not fit",
     ),
     # a digit used once by all clues of a kind across the grid ("if a cage contained a 1, no other cage can")
     (
@@ -353,14 +354,14 @@ def color_name(hexcol):
 
 # lexicon: phrasings for supported mechanics that never use the rule's name
 DIFF_K = re.compile(
-    r"differ(?:ence)?s?\b[^.]{0,25}?(at least|>=|≥|a minimum of|more than|greater than)\s*(?:a\s+)?(\d|five|four|three|two|six|seven)\b"
+    r"differ(?:ence)?s?\b[^.]{0,50}?(at least|>=|≥|a minimum of|more than|greater than)\s*(?:a\s+)?(\d|five|four|three|two|six|seven|eight)\b"
 )
 LINE_SUM = re.compile(r"\blines?\b[^.]{0,30}?\bsums? (?:up )?to (\d{1,2})\b")
 DIFF_K_APART = re.compile(
     r"at least (\d|five|four|three|two|six|seven) apart|minimum difference of (\d|five|four|three|two|six|seven)\b"
 )
 DIFF_K_OR_MORE = re.compile(r"differ(?:ence)?s?\b (?:of|by) (\d|five|four|three|two|six|seven) or (?:more|greater)\b")
-_NUMW = {"two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7}
+_NUMW = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8}
 SLOW_ALL = re.compile(
     r"slow[- ]?thermo|never decrease|(?:can|may) (?:also )?repeat (?:on|along|in) (?:a |the |each )?thermo"
     r"|increase or stay the same"
@@ -383,9 +384,9 @@ QUAD_NEG = re.compile(
 )
 QUAD_TEXT = re.compile(
     r"quadruple|(?:surrounding|touching|around|adjacent to)(?: the| that| this)? (?:four|4) cells|"
-    r"(?:four|4) (?:surrounding|adjacent|touching) cells|"
+    r"(?:four|4) (?:surrounding|adjacent|touching) cells|(?:four|4) cells (?:surrounding|around) the circle|"
     r"\bquads?\s*:|(?:four|4) cells (?:the|that|this|it) (?:circle )?touch|"  # "Quads: ..." (000RL6, 000QJZ)
-    r"(?:digits?|numbers?) (?:in|inside) (?:a|the) circle[^.]{0,60}\bcells? touching"
+    r"(?:digits?|numbers?) (?:in|inside) (?:a|the) circle[^.]{0,60}\bcells? touching|in a cell touching the circle"
 )
 
 
@@ -414,7 +415,7 @@ RULE_DESCRIPTIONS = {
     "renban": [r"set of (?:non-repeating,? )?consecutive", r"consecutive set", r"consecutive and non-repeating",
                r"\(non-repeating\) consecutive",
                r"\b(?:are|be|contains?|form) (?:an? )?(?:non-repeating,? )?consecutive (?:digits|numbers|values|sequence)"],
-    "region_sum": [r"segments? (?:that |which )?(?:each )?(?:sum|add)s? (?:up )?to the same", r"(?:same|equal) (?:sums?|totals?)",
+    "region_sum": [r"segments? (?:that |which )?(?:each )?(?:sum|add)s? (?:up )?to the same", r"segments with the same sum", r"(?:same|equal) (?:sums?|totals?)",
                    r"sum (?:of the digits )?(?:on|along) (?:a|the|each) [a-z ]{0,20}line is (?:equal|the same)",
                    r"is (?:equal|the same) in (?:every|each) box"],
     "thermo": [r"increase from the bulb", r"from the bulb end"],
@@ -1577,7 +1578,8 @@ def translate(sp, page_text=None, overrides=None):
     # counting circles: every digit in a circle appears in exactly that many circles (circles not used by lines)
     if circles and re.search(
         r"counting circle|(?:digit|number) in a circle.{0,60}(?:circles|number of)|"
-        r"circled digits?.{0,40}(?:how many|exactly that many|number of)",
+        r"circled digits?.{0,40}(?:how many|exactly that many|number of)|(?:digit|number) in a ring.{0,40}how many rings|"
+        r"number of times (?:a )?digits? appears? in (?:a )?circles?",
         text_rules,
     ):
         on_lines = {
@@ -1736,6 +1738,22 @@ def text_cell_rules(p, n, rules, colour_cells, used):
                 p, {"type": "parity", "parity": m.group(1)}, cells, odd_m if m.group(1) == "odd" else p.full & ~odd_m
             )
             used["cage_parity"] = used.get("cage_parity", 0) + 1
+    if re.search(
+        r"(?:all (?:the )?(?:killer )?cages|every (?:killer )?cage) (?:must )?(?:have|has|sums? to) the same (?:sum|total)",
+        t,
+    ):
+        from .. import puzzle_json as PJ
+
+        totals = {g.total for g in p.groups if g.kind == "cage" and g.total is not None}
+        if len(totals) == 1:  # a cage shows the common total: every cage has it (exact, and fast for the search)
+            k = next(iter(totals))
+            p.groups = [M.Group(g.name, g.cells, g.kind, g.complete, k) if g.kind == "cage" else g for g in p.groups]
+            used["equal_cage_sums"] = used.get("equal_cage_sums", 0) + 1
+        cages = [[f"r{p.coords[c][0] + 1}c{p.coords[c][1] + 1}" for c in g.cells] for g in p.groups if g.kind == "cage"]
+        if len(totals) != 1 and len(cages) >= 2:  # "All killer cages must have the same sum", no total shown
+            PJ.add_named(p, {"type": "custom", "cells": {"K": cages}, "holds": "count_distinct(sum(k) for k in K) == 1",
+                             "label": "Equal cage sums"})  # fmt: skip
+            used["equal_cage_sums"] = used.get("equal_cage_sums", 0) + 1
     m = re.search(r"cells (?:shaded|coloured|colored|marked) (\w+) (?:are|contain) the same (?:number|digit)", t)
     if m:
         from .. import puzzle_json as PJ

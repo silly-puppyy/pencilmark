@@ -68,7 +68,10 @@
   ("numbers on blue lines sum to 20"), more decorative wordings, entropic / parity / renban wordings; f-puzzles
   renban and line-total segments drawn in pieces are joined into one line, or kept separate when that is the reading
   with the setter's solution; "chess knight jump" is anti-knight; a difference with an upper bound is not a whisper.
-  2,000 most-solved Logic Masters sudokus: 802 -> 834 graded.
+  More wordings: equal cage sums ("every cage has the same sum": the shown total for every cage, else a custom
+  rule), counting rings, region-sum "segments with the same sum", quadruple "a cell touching the circle", longer
+  whisper sentences and thresholds in words; refused: "one digit in each row that does not fit".
+  2,000 most-solved Logic Masters sudokus: 802 -> 841 graded.
 - SudokuPad links of the form `sudokupad.app/<author>/<slug>` are fetched (they were refused as not a short id).
 - Speed and robustness: the C++ uniqueness search without OR-Tools stops at a time limit, not only a node limit
   (counting-circle puzzles ran for hours); the trial step retries with a larger search before giving up (two unique
