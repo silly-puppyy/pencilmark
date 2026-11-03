@@ -1390,9 +1390,46 @@ def translate(sp, page_text=None, overrides=None):
             unknown.append(f"rule '{kw}'")
     if P.get("foglight") or P.get("triggereffect"):
         unknown.append("fog of war")
+    if not unknown and plain_sudoku(p, n, used) and drawn_in_grid(P, n, inside) >= 3:
+        unknown.append("drawn elements no rule reads")  # read as a plain sudoku, the drawing silently dropped
     if unknown:
         return None, "unsupported: " + ", ".join(sorted(set(unknown)))
     return p, {k: v for k, v in used.items() if v}
+
+
+def plain_sudoku(p, n, used):
+    """nothing read beyond rows, columns, standard boxes and givens (irregular regions count as read: they are often
+    drawn as shading)"""
+    from ..puzzle_json import BOXES
+
+    std = {frozenset(g.cells) for g in M.standard(n, *BOXES[n]).groups if g.kind == "box"} if n in BOXES else set()
+    return (
+        not any(used.values())
+        and not p.relations
+        and not p.constraints
+        and all(g.kind in ("row", "col") or (g.kind == "box" and frozenset(g.cells) in std) for g in p.groups)
+        and all(d == p.full for d in p.domains)
+    )
+
+
+def drawn_in_grid(P, n, inside):
+    """shapes (cell-sized or smaller, without text) and lines drawn inside the grid"""
+    k = 0
+    for lay in (P.get("underlays") or []) + (P.get("overlays") or []):
+        if (
+            isinstance(lay, dict)
+            and "center" in lay
+            and not _text_of(lay).strip()
+            and lay.get("class") != "board-position"
+        ):
+            w = lay.get("width") or 0
+            if 0.2 <= w <= 1.0 and inside(cell_of(lay["center"])):
+                k += 1
+    for ln in (P.get("lines") or []) + (P.get("arrows") or []):
+        wp = ln.get("wayPoints") if isinstance(ln, dict) else None
+        if wp and len(wp) >= 2 and all(inside(cell_of(pt)) for pt in wp):
+            k += 1
+    return k
 
 
 def _text_of(lay):
@@ -1921,18 +1958,30 @@ def parity_shapes(P, n, p, rules, used, idx, inside):
         if inside(rc) and idx(rc) not in taken:
             shapes.append(
                 (
-                    "circle" if lay.get("rounded") else "square",
+                    "circle" if lay.get("rounded") else "diamond" if lay.get("angle") == 45 else "square",
                     color_name(lay.get("backgroundColor") or lay.get("borderColor")),
                     idx(rc),
                 )
             )
-    if not shapes or len(shapes) > n * n // 3:
+    if not shapes or len(shapes) > n * n // 2:
         return
     odd = sum(1 << (v - 1) for v in range(1, n + 1, 2))
-    for sent in re.split(r"(?<=[.\n;])\s*", t):
+    # clauses: sentences, then ", (and)" outside braces ("orange circles contain {1, 2, 3}, blue squares {4, 5, 6}")
+    clauses = [c_ for sent in re.split(r"(?<=[.\n;])\s*", t) for c_ in re.split(r",\s*(?:and\s+)?(?![^{]*\})", sent)]
+    for sent in clauses:
         if re.search(r"count|number of|how many|sum|total|lots", sent):
             continue
-        shp = [s_ for s_ in ("circle", "square") if re.search(rf"\b{s_}s?\b", sent)]
+        shp = [s_ for s_ in ("circle", "square", "diamond") if re.search(rf"\b{s_}s?\b", sent)]
+        dset = re.search(r"\{\s*(\d(?:\s*,\s*\d)+)\s*\}", sent)
+        if shp and dset and len(shp) == 1:  # "blue squares contain numbers from {4, 5, 6}"
+            ds = [int(x) for x in re.findall(r"\d", dset.group(1))]
+            col_ = {{"gray": "grey"}.get(c, c) for c in COLOR_WORDS if re.search(rf"\b{c}\b", sent)}
+            m_ = sum(1 << (v - 1) for v in ds if 1 <= v <= n)
+            for kind, col, c in shapes:
+                if kind == shp[0] and (not col_ or col in col_):
+                    p.domains[c] &= m_
+                    used["digit_set_" + kind] += 1
+            continue
         par = [s_ for s_ in ("odd", "even") if re.search(rf"\b{s_}\b", sent)]
         cols = {{"gray": "grey"}.get(c, c) for c in COLOR_WORDS if re.search(rf"\b{c}\b", sent)} & {
             s_[1] for s_ in shapes

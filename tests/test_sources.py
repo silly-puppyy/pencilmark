@@ -587,6 +587,21 @@ def test_one_off_global_rules():
     assert [r["scope"] for r in pj["rules"] if r["type"] == "custom"] == [{"pairs": "orthogonal"}]
 
 
+def test_shape_digit_sets_and_unread_drawings():
+    """shapes with digit sets by colour ("orange circles contain numbers from {1, 2, 3}, blue squares ... {4, 5, 6}");
+    a puzzle that reads as plain sudoku while it draws shapes or lines in the grid is refused, not misread"""
+    from pencilmark.sources import _sp_translate as SP
+
+    shape = lambda r, c, col, rounded: {"center": [r + 0.5, c + 0.5], "width": 0.8, "height": 0.8,
+                                        "rounded": rounded, "backgroundColor": col}  # fmt: skip
+    sp = _sp4(underlays=[shape(0, 0, "#FFA500", True), shape(1, 1, "#4A90E2", False)])
+    p, _ = SP.translate(sp, "Orange circles contain numbers from {1, 2}, and blue squares contain numbers from {3, 4}.")
+    assert p.domains[0] == 0b0011 and p.domains[5] == 0b1100
+    sp = _sp4(underlays=[shape(0, c, "#FFA500", True) for c in range(3)])
+    p, why = SP.translate(sp, "Normal sudoku rules apply.")
+    assert p is None and "drawn elements no rule reads" in why
+
+
 def test_rule_for_every_line():
     """ "all lines are region sum lines" gives every line that rule; a line whose colour also names another rule has two
     rules and is refused (CTC zkz5Qw2BWx4: orange lines are also Dutch whispers)"""
