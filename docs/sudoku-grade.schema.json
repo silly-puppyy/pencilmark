@@ -385,6 +385,40 @@
     }
    }
   },
+  "trace": {
+   "type": "array",
+   "description": "the route's positions: before step 1, then after each step (grade-card.md 6)",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "digits",
+     "candidates"
+    ],
+    "properties": {
+     "digits": {
+      "type": "array",
+      "items": {
+       "type": "integer",
+       "minimum": 0
+      }
+     },
+     "candidates": {
+      "type": "object",
+      "propertyNames": {
+       "pattern": "^r[0-9]+c[0-9]+$"
+      },
+      "additionalProperties": {
+       "type": "array",
+       "items": {
+        "type": "integer",
+        "minimum": 1
+       }
+      }
+     }
+    }
+   }
+  },
   "describe": {
    "type": [
     "object",

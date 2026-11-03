@@ -150,7 +150,8 @@ def rate(
     fields : list of str, optional
         The top-level fields to return. Default: difficulty, time, band, contains. Optional: band_index, issues, reject,
         warning (publishing checks), time_mean, time_pNN (any percentile 1-99, e.g. time_p80), time_dist, elapsed (wall
-        seconds of the call), se, steps, describe, symmetry. format, format_version and grader are always present.
+        seconds of the call), se, steps, trace (the board before and after each step), describe, symmetry. format,
+        format_version and grader are always present.
     allow_guessing : bool
         Guess where no technique applies (band "Unknown") instead of proving by full search (Trial and error, Extreme).
     explain : str, list of str or bool, optional

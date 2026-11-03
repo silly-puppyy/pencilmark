@@ -206,6 +206,7 @@ OPTIONAL_FIELDS = (
     "warning",
     "se",
     "steps",
+    "trace",
     "describe",
     "symmetry",
 )  # + time_mean / time_pNN
@@ -550,6 +551,23 @@ def _f_steps(c):
     return {"steps": rows}
 
 
+def _f_trace(c):
+    """the route's positions: before its first step, then after each (docs/formats/grade-card.md 6), as the puzzle file
+    writes digits and pencil marks"""
+    from . import band_path as BP
+
+    p = c.p
+    cn = lambda x: f"r{p.coords[x][0] + 1}c{p.coords[x][1] + 1}"
+    digits = lambda m: [d for d in range(1, p.D + 1) if m >> (d - 1) & 1]
+    order = sorted(range(p.N), key=lambda x: p.coords[x])
+    return {
+        "trace": [
+            {"digits": [vals[x] for x in order], "candidates": {cn(x): digits(cand[x]) for x in order if not vals[x]}}
+            for vals, cand in BP.positions(p, c.bp["steps"])
+        ]
+    }
+
+
 # the card-field registry (docs/formats/grade-card.md 2): field -> builder, in the card's key order. "time_*" stands for time_mean and
 # every time_pNN asked for; "issues" also builds reject / warning. format, format_version, grader (always), elapsed
 # (rate) and completed (max_seconds) are set outside it.
@@ -566,6 +584,7 @@ FIELDS = [
     ("symmetry", lambda c: {"symmetry": symmetry_of(c.p)}),
     ("se", _f_se),
     ("steps", _f_steps),
+    ("trace", _f_trace),
 ]
 
 

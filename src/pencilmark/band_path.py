@@ -832,14 +832,8 @@ def explain_steps(p, P, steps):
     P = dict(P or {}, search="human")
     notes = set(S.NOTE_TECHS)
     rev = {v: k for k, v in S.TECH_NAMES.items()}
-    N, D = p.N, p.D
-    vals = [p.givens.get(c, 0) for c in range(N)]
-    dom = getattr(p, "domains", None)
-    cand = [0 if vals[c] else (dom[c] if dom else (1 << D) - 1) for c in range(N)]
-    for c in range(N):
-        if vals[c]:
-            for x in p.peer_list[c]:
-                cand[x] &= ~(1 << (vals[c] - 1))
+    N = p.N
+    vals, cand = start_position(p)
     out = []
     lab, region_colour = {}, {}  # regions to find: cell -> region label known so far; label -> colour name (fixed)
     for st in steps:
@@ -932,11 +926,40 @@ def explain_steps(p, P, steps):
         if st.get("lplace") or st.get("lelims"):
             ex["substeps"] = _region_substeps(p, st, ex, lab, region_colour)
         out.append(ex)
-        if st["place"]:
-            c, d = st["place"]
-            vals[c], cand[c] = d, 0
+        apply_step(p, vals, cand, st)
+    return out
+
+
+def start_position(p):
+    """the route's first position: the givens placed, every other cell its domain minus its peers' givens -> (vals,
+    cand), cand a digit bit mask per cell (0 for placed cells)"""
+    vals = [p.givens.get(c, 0) for c in range(p.N)]
+    dom = getattr(p, "domains", None)
+    cand = [0 if vals[c] else (dom[c] if dom else (1 << p.D) - 1) for c in range(p.N)]
+    for c in range(p.N):
+        if vals[c]:
             for x in p.peer_list[c]:
-                cand[x] &= ~(1 << (d - 1))
-        for c, d in st["elims"]:
-            cand[c] &= ~(1 << (d - 1))
+                cand[x] &= ~(1 << (vals[c] - 1))
+    return vals, cand
+
+
+def apply_step(p, vals, cand, st):
+    """one route step on (vals, cand) in place: its placement (clearing the digit from the cell's peers), then its
+    eliminations"""
+    if st["place"]:
+        c, d = st["place"]
+        vals[c], cand[c] = d, 0
+        for x in p.peer_list[c]:
+            cand[x] &= ~(1 << (d - 1))
+    for c, d in st["elims"]:
+        cand[c] &= ~(1 << (d - 1))
+
+
+def positions(p, steps):
+    """the positions of a route: before its first step, then after each step -> [(vals, cand)] of len(steps) + 1"""
+    vals, cand = start_position(p)
+    out = [(list(vals), list(cand))]
+    for st in steps:
+        apply_step(p, vals, cand, st)
+        out.append((list(vals), list(cand)))
     return out

@@ -47,6 +47,7 @@ A card exists only for a puzzle with exactly one solution. For any other puzzle,
 | `warning` | optional | boolean | True when any issue has severity `warning`. |
 | `se` | optional | `{"er", "ep", "ed", "scale"}` or null | Sudoku Explainer-style ratings of the route on the classic SE scale (`scale` is `"classic"`). Null for anything but classic 9×9 sudoku (standard rows, columns and boxes, no other rule), where SE's scale is not defined. |
 | `steps` | optional | list | The step-by-step route (section 5). |
+| `trace` | optional | list | The route's positions: the board before the first step and after each step (section 6). |
 | `describe` | optional | object | The `describe()` output ([How variants are named](../library/variant-naming.md)). |
 | `symmetry` | optional | list | Symmetries of the givens pattern, entries as in the generator spec (`{"kind", "axis"?, "of": "givens"}`). |
 
@@ -164,7 +165,24 @@ Colours are names from a named palette (`yellow`, `blue`, `green`, `purple`, `or
 simple colouring, regions to find (each region keeps one colour for the whole solve), killer cage combinations, fish (X-Wing, Swordfish, Jellyfish, finned), XY- and XYZ-Wings, and single chains (X-Chain, XY-Chain, AIC and the
 short chains such as Skyscraper and 2-String Kite; strong links drawn as `strong` arrows, weak ones as `weak`).
 
-## 6. Implementing a subset
+## 6. `trace`
+
+The positions of the route that `steps` lists, so a viewer can show the board at any step: `trace[0]` is the
+position before step 1 and `trace[n]` the position after step n (one more entry than `steps`). Each position is
+written as the puzzle file writes a board:
+
+```json
+{"digits": [0, 0, 0, 0, 4, 0, 8, 0, 3, …], "candidates": {"r1c1": [1, 5, 7], "r1c2": [1, 2, 5, 7], …}}
+```
+
+- `digits`: one entry per cell in reading order, the placed digit or 0 (givens and digits placed so far).
+- `candidates`: every empty cell's remaining candidates, ascending, keys in reading order.
+
+The first position is each empty cell's possible digits less those its peers' givens rule out; a step's placement
+then clears its digit from the cell's peers and its eliminations remove candidates. Steps that only add a pencil mark
+or a region label leave the digits and candidates unchanged. Drawing for a step is in its `substeps` (section 5).
+
+## 7. Implementing a subset
 
 Only `format`, `format_version` and `grader` are required; every other key is present only when it was asked for
 (section 2). A producer MAY therefore emit just the headline numbers, for example `difficulty`, `time` and `band`, and a

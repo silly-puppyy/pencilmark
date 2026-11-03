@@ -210,6 +210,29 @@ def test_uniqueness_search_time_bound():
         CB._C.set_deadline(0.0)
 
 
+def test_trace_positions():
+    """trace (grade-card.md 6): one position before each step and after the last, as the puzzle file writes a board;
+    each step's eliminations are gone in the next position and the last position is the solution"""
+    card = pencilmark.rate(CLASSIC, fields=["steps", "trace"])
+    steps, trace = card["steps"], card["trace"]
+    assert len(trace) == len(steps) + 1
+    givens = [int(ch) if ch.isdigit() else 0 for ch in CLASSIC]
+    assert trace[0]["digits"] == givens and len(trace[0]["candidates"]) == givens.count(0)
+    for i, s in enumerate(steps):
+        after = trace[i + 1]
+        for e in s.get("eliminations", []):
+            cell, d = e.split("#")
+            assert int(d) not in after["candidates"].get(cell, [])
+        if "placement" in s:
+            cell, d = s["placement"].split("=")
+            r, c = map(int, cell[1:].split("c"))
+            assert after["digits"][(r - 1) * 9 + c - 1] == int(d) and cell not in after["candidates"]
+    assert trace[-1]["digits"] == pencilmark.solve(CLASSIC) and trace[-1]["candidates"] == {}
+    jsonschema = pytest.importorskip("jsonschema")
+    schema = json.loads((ROOT / "docs" / "sudoku-grade.schema.json").read_text(encoding="utf-8"))
+    jsonschema.Draft202012Validator(schema).validate(card)
+
+
 def test_timing_fields():
     c = pencilmark.rate(CLASSIC, fields=["difficulty", "elapsed"])
     assert isinstance(c["elapsed"], float) and 0 <= c["elapsed"] < 30, c
