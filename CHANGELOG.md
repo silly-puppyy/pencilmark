@@ -86,7 +86,24 @@
   f-puzzles circles with a meaning in the text: anti-quadruples (a pink circle under a quadruple), quadruple digits in
   the circle, pair sums ("cells connected by a pink circle must sum to 11"), decorative circles, counting circles
   in more wordings.
-  2,000 most-solved Logic Masters sudokus: 802 -> 887 graded.
+  Arrows drawn inside one cell point along a ray ("each arrow points to the closest 5", Search Nine, arrow X-sums
+  "the sum of the first N digits in the direction of the arrow"). f-puzzles cages: factor cages ("multiply to the
+  number in the corner") as custom rules; "x + k" cages with one x for all cages (the totals written when the cage
+  sizes force x); cages without a total that the text gives a meaning ("digits in cages do not repeat", a killer's
+  blank cages); "the cages with no sum given have the same sum"; "regions" for cages in sums and repeats. Line
+  colours: a shade the text calls by a neighbouring word (a pinkish line called purple, a dull orange called brown),
+  the one line colour the text does not name taking the one rule it names unseen, "numbers on all other lines";
+  colours of cells ("the gray cell with arrows") no longer read as line colours; a neighbouring word never takes the
+  rule of a colour that is itself drawn. Branching renban lines drawn in pieces are one line. f-puzzles coloured dots
+  and diamonds with their meaning in the text ("green dots: a ratio of 3:1", "orange dots: a difference of 3", "red
+  dots are NOT consecutive"); a dot with a choice of meanings is refused. Dots the text redefines as custom rules
+  (any operation giving 8, a two-digit square in reading direction, one odd and one even), with their negatives;
+  180-degree partners that differ; "in all cases where ... consecutive ..., a circle is placed" is a negative;
+  "2-entropic" lines; "cells that are orthogonally adjacent cannot contain consecutive digits"; more quadruple and
+  cosmetic-thermometer wordings. Misreads fixed: translucent halos over dots read as white dots, quadruple digits read
+  as edge clues, negatives scoped to part of the grid applied everywhere, an "all dots are given" negative for a dot
+  colour the text never defines; "all clues are true or all false" is refused.
+  2,000 most-solved Logic Masters sudokus: 802 -> 912 graded.
 - SudokuPad links of the form `sudokupad.app/<author>/<slug>` are fetched (they were refused as not a short id).
 - Speed and robustness: the C++ uniqueness search without OR-Tools stops at a time limit, not only a node limit
   (counting-circle puzzles ran for hours); the trial step retries with a larger search before giving up (two unique

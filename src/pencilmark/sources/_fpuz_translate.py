@@ -70,13 +70,37 @@ def normalise(fp):
         if not str(c.get("value", "")).startswith("msgcor")
         and not (invisible(c) and not str(c.get("value", "")).strip().isdigit())
     ]
+    val = lambda c: str(c.get("value") or "").strip().lower()
+    corner = r"(?:cages?|regions?)[^.]{0,40}(?:sum|add up|total|multiply)[^.]{0,30}(?:number|clue|total) (?:in|at) the (?:top[- ]left )?corner"
+    blank_ok = bool(
+        re.search(
+            corner + r"|(?:digits|numbers) in (?:a |the )?cages? (?:do not|don't|cannot|can't|may not) repeat", text
+        )
+    )
+    if (  # factor cages: the digits multiply to the clue (a plain cage: no repeats)
+        cages
+        and all(val(c).isdigit() for c in cages)
+        and re.search(r"(?:cages?|regions?)[^.]{0,40}(?:multiply to|product (?:of|is|equals))", text)
+        and not re.search(r"cage[^.]{0,80}(?:sum|add up)", text)
+    ):
+        fp["_prodcage"], cages = cages, []
+    if (  # x + k cages: one unknown x common to all cages
+        cages
+        and all(re.fullmatch(r"x(?: ?\+ ?\d+)?", val(c)) for c in cages)
+        and re.search(r"\bx is the same (?:for|in) (?:all|every|each) cages?", text)
+    ):
+        fp["_xcage"], cages = cages, []
     if (
         cages
-        and all(str(c.get("value", "")).strip().isdigit() for c in cages)
-        and re.search(r"cage[^.]{0,80}(?:sum|add up|total)|killer", text)
+        and all(val(c).isdigit() or (not val(c) and blank_ok) for c in cages)
+        and re.search(r"(?:cage|region)[^.]{0,80}(?:sum|add up|total)|killer", text)
+        and not re.search(r"(?:cages?|regions?)[^.]{0,80}sum to (?:either )?\d", text)
+        or cages
+        and blank_ok
+        and all(not val(c) for c in cages)
     ):
         if re.search(
-            r"(?:may|can|could) repeat (?:in|within) (?:a |the )?cages?|digits in cages may repeat|cages? (?:may|can) contain repeat",
+            r"(?:may|can|could) repeat (?:in|within) (?:a |the )?(?:cages?|regions?)|digits in cages may repeat|cages? (?:may|can) contain repeat",
             text,
         ):
             fp["_sumcage"] = list(fp.get("_sumcage") or []) + cages
@@ -296,8 +320,35 @@ def translate(fp, line_kinds=None, join=True):
             p.constraints.append({"type": "line", "kind": "lockout", "cells": cs, "k": k_})  # compiled by finalize
             used["lockout"] = used.get("lockout", 0) + 1
     for cg in fp.get("_sumcage") or []:
-        p.constraints.append({"type": "sum", "cells": sorted(ix(x) for x in cg["cells"]), "total": int(cg["value"])})
-        used["sumcage"] = used.get("sumcage", 0) + 1
+        if str(cg.get("value") or "").strip().isdigit():  # a blank cage that may repeat: no constraint
+            p.constraints.append(
+                {"type": "sum", "cells": sorted(ix(x) for x in cg["cells"]), "total": int(cg["value"])}
+            )
+            used["sumcage"] = used.get("sumcage", 0) + 1
+    if fp.get("_prodcage") or fp.get("_xcage"):
+        from .. import puzzle_json as PJ
+
+        name = lambda x: "r{}c{}".format(*(v + 1 for v in rc(x, n)))
+    for k, cg in enumerate(fp.get("_prodcage") or []):
+        cells = tuple(sorted(ix(x) for x in cg["cells"]))
+        p.groups.append(M.Group(f"p{k}", cells, "cage", len(cells) == n))
+        PJ.add_named(p, {"type": "custom", "cells": {"K": [name(x) for x in cg["cells"]]},
+                         "holds": f"product(K) == {int(cg['value'])}", "label": "Product cage"})  # fmt: skip
+        used["product_cage"] = used.get("product_cage", 0) + 1
+    if fp.get("_xcage"):  # x + k cages: sum(cage) - k is the same for every cage
+        xs = fp["_xcage"]
+        offs = [int(re.sub(r"\D", "", str(cg["value"])) or 0) for cg in xs]
+        span = lambda m: (m * (m + 1) // 2, m * (2 * n - m + 1) // 2)  # least / greatest sum of m distinct digits
+        lo = max(span(len(cg["cells"]))[0] - o for cg, o in zip(xs, offs))
+        hi = min(span(len(cg["cells"]))[1] - o for cg, o in zip(xs, offs))
+        x_ = lo if lo == hi else None  # the cage sizes force x: the totals follow (exact, and fast for the search)
+        for k, (cg, o) in enumerate(zip(xs, offs)):
+            cells = tuple(sorted(ix(x) for x in cg["cells"]))
+            p.groups.append(M.Group(f"xc{k}", cells, "cage", len(cells) == n, None if x_ is None else x_ + o))
+        PJ.add_named(p, {"type": "custom", "cells": {"K": [[name(x) for x in cg["cells"]] for cg in xs]},
+                         "holds": f"let O = [{', '.join(map(str, offs))}]; count_distinct(sum(K[i]) - O[i] for i in {{1..{len(xs)}}}) == 1",
+                         "label": "Cage sums x + k"})  # fmt: skip
+        used["x_cage"] = 1
     for big, small in fp.get("_ineq") or []:
         p.relations.append(("lt", small[0] * n + small[1], big[0] * n + big[1]))
         used["inequality"] = used.get("inequality", 0) + 1
@@ -382,8 +433,11 @@ def translate(fp, line_kinds=None, join=True):
         tn = ST.negative_markers(fp["ruleset"])
         if fp.get("xv"):  # only the letters the text names ("all Vs are given; not all Xs are given": V only)
             neg |= tn & {"x", "v"}
-        if "white" in tn and fp.get("difference"):
-            neg.add("difference")
+        white_shapes = any(
+            ST.color_name(it.get("baseC") or "") == "white" for k in ("circle", "rectangle") for it in fp.get(k) or []
+        )
+        if "white" in tn and (fp.get("difference") or (circle_rules and not white_shapes)):
+            neg.add("difference")  # all white dots given, none drawn beside the coloured dots read: no consecutive pair
         if "black" in tn and fp.get("ratio"):
             neg.add("ratio")
     marked = {"difference": set(), "ratio": set(), "xv": set()}
@@ -399,7 +453,9 @@ def translate(fp, line_kinds=None, join=True):
         a, b = sorted(ix(x) for x in d["cells"])
         p.relations.append(("sum", a, b, 10 if str(d.get("value")).upper() == "X" else 5))
         marked["xv"].add((a, b))
-    allm = set().union(*marked.values())
+    allm = set().union(*marked.values()) | {
+        tuple(sorted(ix(x) for x in cs)) for _, cs, _ in circle_rules if len(cs) == 2
+    }
     for x in range(n * n):
         r, c = divmod(x, n)
         for y in ([x + 1] if c + 1 < n else []) + ([x + n] if r + 1 < n else []):
@@ -458,8 +514,8 @@ def translate(fp, line_kinds=None, join=True):
             names = [f"r{rc(x, n)[0] + 1}c{rc(x, n)[1] + 1}" for x in cs]
             PJ.add_named(p, {"type": "custom", "cells": {"Q": names}, "label": "Anti-quadruple",
                              "holds": " and ".join(f"all(x != {d} for x in Q)" for d in ds)})  # fmt: skip
-        else:
-            p.relations.append(("sum", min(cells), max(cells), ds[0]))
+        else:  # pair sums, coloured dots (sum / diff / ratio)
+            p.relations.append(("sum" if kind == "pair_sum" else kind, min(cells), max(cells), ds[0]))
         used[kind] = used.get(kind, 0) + 1
     pair_cells = {frozenset(ix(x) for x in cs) for kind, cs, _ in circle_rules if kind == "pair_sum"}
     if pair_cells and re.search(
@@ -635,9 +691,63 @@ def _text_circles(fp, text, n):
             rules.append(("anti_quadruple" if is_anti else "quadruple", cs, [int(x) for x in re.findall(r"\d", v)]))
         elif len(cs) == 2 and pair and not v:
             rules.append(("pair_sum", cs, [int(pair.group(1))]))
+        elif len(cs) == 2 and not v and _dot_meaning(col, text):
+            kind, k = _dot_meaning(col, text)
+            rules.append((kind, cs, [k]))
         else:
             keep.append(it)
-    return dict(fp, circle=keep), rules
+    rects = []
+    for it in fp.get("rectangle") or []:  # diamonds / squares between two cells, coloured like the circles
+        cs, v = it.get("cells") or [], str(it.get("value", "")).strip()
+        m = len(cs) == 2 and not v and _dot_meaning(ST.color_name(it.get("baseC") or ""), text)
+        if m:
+            rules.append((m[0], cs, [m[1]]))
+        else:
+            rects.append(it)
+    return dict(fp, circle=keep, rectangle=rects), rules
+
+
+def _dot_meaning(col, text):
+    """a coloured dot's rule from the sentence naming its colour ("cells joined by green dots have a value ratio of
+    3:1", "orange dots have a value difference of 3") -> (kind, k) or None; None too when the text adds a negative or
+    a uniqueness rule for dots"""
+    if (
+        not col
+        or col in ("white", "black")
+        or re.search(r"(?:only|just) (?:appear|occur|exist) once|can only (?:appear|occur|exist) once", text)
+    ):
+        return None
+    got = None
+    for sent in re.split(r"(?<=[.\n])\s*", text):
+        if not re.search(rf"\b{col}\w* (?:dots?|circles?|ovals?|diamonds?|squares?)\b", sent):
+            continue
+        if re.search(r"(?<!not )\ball (?:possible |the )?[\w/ ,]{0,30}?dots (?:are|have been) (?:given|shown)", sent):
+            return None  # a negative constraint for these dots: not read
+        m = re.search(r"ratio (?:of )?(?:(\d)\s*:\s*1|1\s*:\s*(\d))", sent)
+        d = re.search(r"difference (?:of )?(\d)\b(?! or )", sent)
+        sm = re.search(r"sum (?:to |of )?(\d{1,2})\b", sent)
+        if len(re.findall(r"\bratio\b|\bdifference\b|\bconsecutive\b|\bsum\b|\bdouble\b", sent)) > 1:
+            return None  # "either consecutive or a 1:2 ratio": a choice, no one rule
+        if not re.search(r"\bratio\b|\bdifference\b|\bconsecutive\b|\bsum\b|\bdouble\b", sent):
+            continue  # "not all green / orange dots are given": no meaning here
+        if re.search(r"\bnot consecutive\b|\bnon-?consecutive\b", sent):
+            cands = [("notdiff", 1)]
+            if got and got != cands[0]:
+                return None
+            got = cands[0]
+            continue
+        if re.search(r"\bnot\b|n't\b|\bnever\b|\bcannot\b", sent):
+            return None  # a negated meaning other than "not consecutive": not read
+        cands = [("ratio", int(m.group(1) or m.group(2)))] if m else []
+        cands += [("diff", int(d.group(1)))] if d else []
+        cands += [("diff", 1)] if re.search(r"\bconsecutive\b", sent) and not (m or d) else []
+        cands += [("sum", int(sm.group(1)))] if sm and not (m or d) else []
+        if not cands:  # "not all green / orange dots are given": no rule here
+            continue
+        if len(cands) != 1 or (got and got != cands[0]):
+            return None
+        got = cands[0]
+    return got
 
 
 def _shape_cells(fp, n):
@@ -675,13 +785,26 @@ def _text_line_reading(fp, text):
     cmap = ST.rules_color_map(text)
     named = {k for k, pats in ST.RULE_WORDS.items() if any(re.search(p, text.lower()) for p in pats)}
     dk = ST.diff_rule(text.lower())
+    # rules drawn by their own f-puzzles element (a between line, a thermometer) are not what generic lines mean
+    own = lambda r: any(r.replace("_", "") in k for k, v in fp.items() if v and k != "line" and not k.startswith("_"))
     only = (named | ST.described_line_rules(text) | ({dk} if dk else set())) - {"ten"}
-    if cmap:  # the text gives its lines colours: an unnamed colour is not the one rule
+    if any(
+        not own(r) for r in cmap.values()
+    ):  # the text gives its lines colours: an unnamed colour is not the one rule
         only = set()
     every = ST.every_line_rule(text)
+    drawn = {ST.color_name(c) for c in colours if c.startswith("#")}
+    first = {c: ST.line_rule_from_text(c, cmap, drawn) if c.startswith("#") else None for c in colours}
+    unread = [c for c in colours if first[c] is None]
+    spare = {w for w in cmap if cmap[w] != "ignore" and not any(ST.color_name(c) == w for c in colours)}
+    spare = {cmap[w] for w in spare if not own(cmap[w])} - {first[c] for c in colours}
+    if len(unread) == 1 and len(spare) == 1 and len(colours) > 1 or len(colours) == 1 == len(unread) == len(spare):
+        first[unread[0]] = spare.pop()  # the one line colour the text does not name is the one rule it names unseen
+    others = ST.other_lines_rule(text) if any(v is None for v in first.values()) else None
     reading = {}
     for c in colours:
-        rk = ST.line_rule_from_text(c, cmap) if c.startswith("#") else None
+        named_c = re.search(rf"\b{ST.color_name(c)}", text.lower()) if c.startswith("#") else None
+        rk = first[c] or (others if not named_c else None)  # "all other lines": the colours no sentence names
         if rk is None and len(only) == 1 and (len(colours) == 1 or not cmap):
             rk = next(iter(only))  # the one line rule the text describes (lines drawn in several shades)
         if rk is None and every:

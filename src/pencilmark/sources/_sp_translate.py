@@ -21,6 +21,7 @@ family / all.
 """
 
 import colorsys
+import itertools
 import logging
 import math
 import re
@@ -34,6 +35,7 @@ _log = logging.getLogger(__name__)
 # as something else (an equality cage drawn as a cage would grade as a killer cage). Both readers check these.
 UNMODELLED_RULES = (
     ("fog", r"fog"),
+    ("all clues true or false", r"all (?:the )?clues are (?:equally )?(?:all )?true or (?:all )?false"),
     ("chaos", r"chaos"),
     ("yin", r"\byin(?:[- ]?yang)?\b"),  # the word: "yin" also sits in "lying", "multiplying", "saying"
     (
@@ -331,6 +333,12 @@ def default_evidence(kind, rules):
     return False
 
 
+def _alpha(hexcol):
+    """the opacity of a colour ("#fff5": 0.33; no alpha: 1)"""
+    h = str(hexcol or "").lstrip("#")
+    return int(h[3] * 2, 16) / 255 if len(h) == 4 else int(h[6:8], 16) / 255 if len(h) == 8 else 1.0
+
+
 def color_name(hexcol):
     h = str(hexcol or "#000").lstrip("#")  # a colour typed without "#" (777777) can arrive as a JSON number
     if len(h) in (1, 2):  # newer files' grey shorthand: "#F" white, "#0" black, a second digit the alpha
@@ -368,6 +376,29 @@ def color_name(hexcol):
     return "pink"
 
 
+# dots between two cells that the text redefines: wording -> (pattern, condition on the pair a (left / top), b with the
+# pattern's groups as {0}, wording of the negative or None, label)
+DOT_CUSTOM = {
+    "any_operation": (
+        r"dots?\b[^.]{0,80}binary operations?[^.]{0,140}result in (?:the number )?(\d+)",
+        "a + b == {0} or abs(a - b) == {0} or a * b == {0} or a == {0} * b or b == {0} * a",
+        r"if there is no (?:\w+ )?dot[^.]{0,80}(?:cannot|can't|can not)",
+        "Operation dot",
+    ),
+    "square_pair": (
+        r"dot means that the digits in the two neighbou?ring cells form a (?:double|two)[- ]digit square",
+        "10 * a + b in {{16, 25, 36, 49, 64, 81}}",
+        r"all dots are (?:in the grid|given|shown)",
+        "Square dot",
+    ),
+    "odd_even_pair": (
+        r"cells divided by a \w+ (?:bar|dot|line) contain one even (?:number |digit )?and one odd",
+        "odd(a + b)",
+        None,
+        "Odd / even bar",
+    ),
+}
+
 # lexicon: phrasings for supported mechanics that never use the rule's name
 DIFF_K = re.compile(
     r"differ(?:ence)?s?\b[^.]{0,50}?(at least|>=|≥|a minimum of|more than|greater than)\s*(?:a\s+)?(\d|five|four|three|two|six|seven|eight)\b"
@@ -402,7 +433,8 @@ QUAD_TEXT = re.compile(
     r"quadruple|(?:surrounding|touching|around|adjacent to)(?: the| that| this)? (?:four|4) cells|"
     r"(?:four|4) (?:surrounding|adjacent|touching) cells|(?:four|4) cells (?:surrounding|around) the circle|"
     r"\bquads?\s*:|(?:four|4) cells (?:the|that|this|it) (?:circle )?touch|"  # "Quads: ..." (000RL6, 000QJZ)
-    r"(?:digits?|numbers?) (?:in|inside) (?:a|the) circle[^.]{0,60}\bcells? touching|in a cell touching the circle"
+    r"(?:digits?|numbers?) (?:in|inside) (?:a|the) circle[^.]{0,60}\bcells? touching|in a cell touching the circle|"
+    r"(?:digits?|numbers?) in (?:a|the) circle[^.]{0,40}\b(?:assigned|placed|put) (?:to|in|into) (?:one of )?the (?:surrounding|adjacent|touching) cells"
 )
 
 
@@ -428,7 +460,7 @@ def diff_rule(sent):
 # a line rule described without its name ("a purple line contains a set of consecutive digits"); counted only in a
 # sentence about a line or thread, so a cage or dot described the same way does not colour a line
 RULE_DESCRIPTIONS = {
-    "renban": [r"set of (?:non-repeating,? )?consecutive", r"consecutive set", r"consecutive and non-repeating",
+    "renban": [r"sets? of (?:non-repeating,? )?consecutive", r"arranged into a consecutive (?:sequence|set|run)", r"consecutive set", r"consecutive and non-repeating",
                r"\(non-repeating\) consecutive",
                r"\b(?:are|be|contains?|form) (?:an? )?(?:non-repeating,? )?consecutive (?:digits|numbers|values|sequence)"],
     "region_sum": [r"segments? (?:that |which )?(?:each )?(?:sum|add)s? (?:up )?to the same", r"segments with the same sum", r"(?:same|equal) (?:sums?|totals?)",
@@ -520,6 +552,7 @@ LINE_CUSTOM = {
     "sequence": (3, "t[2] - t[1] == t[3] - t[2]", "Sequence line"),
     "zigzag": (3, "(t[2] - t[1]) * (t[3] - t[2]) < 0", "Alternating line"),
     "same_digit": (0, "count_distinct(t) == 1", "One-digit line"),
+    "entropic2": (5, "count_distinct((x + 1) div 2 for x in t) == 5", "2-entropic line"),  # one of 12, 34, 56, 78, 9
     "monotone": (
         0,
         lambda n: f"all(t[i] < t[i + 1] for i in {{1..{n - 1}}}) or all(t[i] > t[i + 1] for i in {{1..{n - 1}}})",
@@ -583,6 +616,7 @@ THERMO_PARITY = re.compile(
 )
 LINE_VARIANTS = {  # a line rule the text modifies: (the rule as read, wording) -> the custom rule
     "same_parity": (("parity",), r"(?:equal|same)[- ]parity lines?"),
+    "entropic2": (("entropic",), r"\b2-entropic|sets? 12, 34, 56, 78"),
     "almost_palindrome": (("palindrome",), r"palindrome[^.]{0,80}except for (?:a|one) single pair"),
     "consecutive_palindrome": (
         ("palindrome", "zipper"),
@@ -611,6 +645,17 @@ def _described(sent):
     if diag:  # marked diagonals drawn as lines (f-puzzles): only rules about a diagonal's digit count
         got = [k for k in got if k == "three_distinct"]
     return [k for k in got if k != "region_sum" or re.search(r"\bbox(?:es)?\b|3x3|\bregions?\b", sent)]
+
+
+def other_lines_rule(rules):
+    """the line rule a sentence gives the lines no other sentence names ("numbers on all other lines are each a set of
+    ... consecutive numbers"), or None"""
+    for sent in re.split(r"(?<=[.\n])\s*", (rules or "").lower()):
+        if re.search(r"\b(?:all (?:the )?other|the other|the remaining|all remaining) lines\b", sent):
+            got = {k for k, pats in RULE_WORDS.items() if any(re.search(p, sent) for p in pats)} | set(_described(sent))
+            if len(got) == 1:
+                return got.pop()
+    return None
 
 
 def every_line_rule(rules):
@@ -753,9 +798,16 @@ def rules_color_map(rules):
         if not rules_here:
             rules_here = _described(sent)
         cols = [c for c in COLOR_WORDS if re.search(rf"\b{c}", sent)]
+        if not re.search(r"\blines?\b", sent):  # "the gray cell with arrows pointing outward": not a line colour
+            cols = [
+                c
+                for c in cols
+                if not re.search(rf"\b{c}\w* (?:cells?|dots?|circles?|squares?|boxe?s?|cages?|regions?)\b", sent)
+            ]
         if cols and re.search(
             r"lines?\b[^.]{0,40}\b(?:have|has) no (?:effect|meaning)|lines?\b[^.]{0,20}\b(?:are|is) (?:purely )?(?:decorative|cosmetic)"
-            r"|lines?\b[^.]{0,60}\bdo(?:es)? not affect the puzzle|line\b[^.]{0,30}\bis for [^.]{0,60}\bonly\b|\(\w+ line\) is cosmetic",
+            r"|lines?\b[^.]{0,60}\bdo(?:es)? not affect the puzzle|line\b[^.]{0,30}\bis for [^.]{0,60}\bonly\b|\(\w+ line\) is cosmetic"
+            r"|thermo(?:meter)?s?\b[^.]{0,20}\b(?:is|are) (?:purely )?(?:cosmetic|decorative)",
             sent,
         ):
             for c in cols:  # "Blue lines have no effect on the puzzle"
@@ -823,9 +875,13 @@ def negative_markers(rules):
         if c and re.search(r"negative constraint", c) and not _marker_types(c) and not re.search(r"\bno\b", c):
             pending = True
             continue
-        if not c or re.search(
-            r"\bnot\s+(?:all|every|necessar)|\bnot\b.{0,30}\bnecessarily\b|all but one|\bwithin (?:a|each|the) (?:region|box|row|column)",
-            c,
+        if (
+            not c
+            or re.search(
+                r"\bnot\s+(?:all|every|necessar)|\bnot\b.{0,30}\bnecessarily\b|all but one|\bwithin (?:a|each|the) (?:region|box|row|column)"
+                r"|\b(?:inside|within|in) (?:the )?(?:odd|even|\w+[- ]numbered|marked|shaded|gr[ae]y|colou?red|highlighted)\b",  # a part only
+                c,
+            )
         ):
             continue
         affirm = (
@@ -840,6 +896,13 @@ def negative_markers(rules):
         )
         if affirm:
             neg |= _marker_types(c)
+        if re.search(
+            r"\bin (?:all|every) cases? where\b[^.]{0,60}\bconsecutive\b[^.]{0,40}\b(?:circle|dot)s? (?:is|are) (?:placed|drawn|given)",
+            c,
+        ):
+            neg.add(
+                "white"
+            )  # "in all cases where two neighbouring cells contain consecutive digits, a circle is placed"
     if pending:  # a bare "negative constraint(s)" that never says which markers: all of them
         neg |= set(MARKER_TYPES)
     # "all possible dots are given" covers only dot kinds the text talks about (a black-dot puzzle has no white rule)
@@ -866,7 +929,8 @@ def rule_flags(rules):
         ),
         "nonconsec": bool(
             re.search(
-                r"non-?consecutive|orthogonally adjacent cells (?:can ?not|may not|must not) (?:contain|be) consecutive",
+                r"non-?consecutive|orthogonally adjacent cells (?:can ?not|may not|must not) (?:contain|be) consecutive"
+                r"|cells that are orthogonally adjacent (?:can ?not|may not|must not) (?:contain|be) consecutive",
                 t,
             )
         ),
@@ -912,13 +976,16 @@ def hls(hexcol):
     return hue * 360, light, sat
 
 
-def line_rule_from_text(hexcol, cmap):
+def line_rule_from_text(hexcol, cmap, drawn=()):
     """Rule for a line colour: exact colour-class match, else the nearest
-    colour word in the rules text (hue within 40 degrees)."""
+    colour word in the rules text (hue within 40 degrees), else a neighbouring colour word (COLOR_NEAR) that names no
+    drawn colour class (`drawn`: those lines own that word's rule)."""
     cname = color_name(hexcol)
+    hue, light, sat = hls(hexcol)
+    if cname == "orange" and "brown" in cmap and ("orange" not in cmap or (light < 0.55 and sat < 0.75)):
+        return cmap["brown"]  # a dull dark orange is the text's brown
     if cname in cmap:
         return cmap[cname]
-    hue, light, sat = hls(hexcol)
     if cname in ("white", "black", "grey"):
         return None
     best, bd = None, 41
@@ -928,7 +995,22 @@ def line_rule_from_text(hexcol, cmap):
             d = min(d, 360 - d)
             if d < bd:
                 best, bd = rk, d
+    if best is None:  # a shade the text names by a neighbouring word (a pinkish line called purple): one such word only
+        near = [cmap[w] for w in COLOR_NEAR.get(cname, ()) if w in cmap and w not in drawn]
+        if len(set(near)) == 1:
+            best = near[0]
     return best
+
+
+# colour words a drawn colour class is also called by
+COLOR_NEAR = {
+    "pink": ("purple", "magenta", "violet", "red", "salmon"),
+    "purple": ("pink", "magenta", "violet", "lavender"),
+    "red": ("pink", "crimson", "maroon", "salmon"),
+    "orange": ("brown", "peach", "amber", "gold"),
+    "cyan": ("blue", "teal", "turquoise", "aqua"),
+    "blue": ("cyan", "navy", "aqua", "turquoise"),
+}
 
 
 def is_chevron(wp):
@@ -973,6 +1055,23 @@ def inequality_signs(P, n, rules):
                 d = (-d[0], -d[1])
             pair(((wp[0][0] + wp[1][0]) / 2, (wp[0][1] + wp[1][1]) / 2), d)
     return out
+
+
+def join_branches(pieces):
+    """[(colour, cells), ...] of one set rule -> the cell lists of its lines: a piece whose end lies inside another piece
+    of the same colour is a branch of that line (one set); pieces meeting end to end, or crossing, stay separate"""
+    lines = [[col, list(ids)] for col, ids in pieces]
+    merged = True
+    while merged:
+        merged = False
+        for i, j in itertools.permutations(range(len(lines)), 2):
+            (ci, a), (cj, b) = lines[i], lines[j]
+            if ci == cj and (a[0] in b[1:-1] or a[-1] in b[1:-1]):
+                lines[j][1] = b + [x for x in a if x not in b]
+                del lines[i]
+                merged = True
+                break
+    return [ids for _, ids in lines]
 
 
 def line_items(P, n):
@@ -1240,7 +1339,9 @@ def translate(sp, page_text=None, overrides=None):
             own = [x for x in line_cells(wp) if inside(x) and x != start]
             attached.append((stem[0], stem[1][: stem[1].index(start) + 1] + [x for x in own if x not in stem[1]]))
         if len(left) == len(branches):
-            unknown.extend(["arrow without circle"] * len(left))
+            marker_arrows = any(v[1] == "arrow" and re.search(v[0], rules.lower()) for v in MARKED_CUSTOM.values())
+            in_cell = lambda w: len({cell_of(pt) for pt in w}) == 1
+            unknown.extend(["arrow without circle"] * sum(1 for w in left if not (marker_arrows and in_cell(w))))
             break
         branches = left
     for cc, shaft in attached:
@@ -1262,10 +1363,20 @@ def translate(sp, page_text=None, overrides=None):
         if QUAD_TEXT.search(rules.lower())
         else []
     )
-    for lay in (P.get("underlays") or []) + (P.get("overlays") or []):
-        if not isinstance(lay, dict) or "center" not in lay:
-            continue
+    dot_t = next(((k, m) for k, v in DOT_CUSTOM.items() if (m := re.search(v[0], rules.lower()))), None)
+    dot_pairs = []
+    layers = [
+        x for x in (P.get("underlays") or []) + (P.get("overlays") or []) if isinstance(x, dict) and "center" in x
+    ]
+    seen_at = Counter(tuple(round(v, 2) for v in x["center"]) for x in layers)
+    for lay in layers:
         cx, cy = lay["center"]
+        if (
+            not lay.get("borderColor")
+            and _alpha(lay.get("backgroundColor")) < 0.5
+            and seen_at[(round(cx, 2), round(cy, 2))] > 1
+        ):
+            continue  # a translucent halo drawn over another marker (a highlight, 000GSU), not a marker itself
         if (
             quad_corners
             and _text_of(lay).strip()
@@ -1306,6 +1417,8 @@ def translate(sp, page_text=None, overrides=None):
             elif txt.upper() in ("X", "V"):
                 p.relations.append(("sum", idx(a), idx(b), 10 if txt.upper() == "X" else 5))
                 used["xv"] += 1
+            elif txt == "" and dot_t:  # dots the text redefines (DOT_CUSTOM): a custom rule per dotted pair
+                dot_pairs.append((idx(a), idx(b)))
             elif txt == "" and lay.get("rounded"):
                 bg = color_name(lay.get("backgroundColor"))
                 low = rules.lower()
@@ -1386,6 +1499,8 @@ def translate(sp, page_text=None, overrides=None):
     all_lines = every_line_rule(rules)
     box_of = {c: gi for gi, g in enumerate(p.groups) if g.kind == "box" for c in g.cells}
     told = set()  # line colours whose meaning is logged (once per colour and reading)
+    drawn_classes = {ci for ci, _, _ in line_items(P, n)}
+    renban_pieces = []
     for cname, hexcol, lc in line_items(P, n):
         if cname == "offcentre":
             unknown.append("line drawn along grid lines")
@@ -1410,7 +1525,7 @@ def translate(sp, page_text=None, overrides=None):
                 p.groups.append(M.Group(f"d{hexcol}", tuple(ids), "diag", True))
                 used["diagonal"] += 1
             continue
-        rule = (overrides or {}).get(cname) or line_rule_from_text(hexcol, cmap)
+        rule = (overrides or {}).get(cname) or line_rule_from_text(hexcol, cmap, drawn_classes)
         how = "the rules text naming its colour"
         if (
             re.search(r"double arrow", rules.lower())
@@ -1480,7 +1595,7 @@ def translate(sp, page_text=None, overrides=None):
         elif rule == "dutch":
             p.relations += [("diffge", a, b, 4) for a, b in zip(ids, ids[1:])]
         elif rule == "renban":
-            p.constraints.append({"type": "set", "cells": ids, "kind": "consecutive"})
+            renban_pieces.append((hexcol, ids))
         elif rule == "region_sum":
             segs, cur = [], [ids[0]]
             for c in ids[1:]:
@@ -1585,6 +1700,8 @@ def translate(sp, page_text=None, overrides=None):
             unknown.append(f"{rule} line")
             continue
         used[rule] += 1
+    for ids in join_branches(renban_pieces):
+        p.constraints.append({"type": "set", "cells": ids, "kind": "consecutive"})
     # global rules from text
     if flags["antiknight"]:
         M.add_antiknight(p, n)
@@ -1606,11 +1723,41 @@ def translate(sp, page_text=None, overrides=None):
     # the rules define as a rule although none is drawn ("digits separated by a V sum to 5 ... all X and V are given":
     # no pair sums to 5 or 10; 000STV). Kropki keeps the presence test: series introductions discuss "all possible dots
     # are given" around plain classics (0001TZ)
+    if dot_pairs:
+        from .. import puzzle_json as PJ
+
+        nm = lambda i: f"r{p.coords[i][0] + 1}c{p.coords[i][1] + 1}"
+        k_, m_ = dot_t
+        pat, holds, neg_pat, label = DOT_CUSTOM[k_]
+        holds = holds.format(*(m_.groups() or ()))
+        pairs_ = [sorted((x, y)) for x, y in dict.fromkeys(dot_pairs)]
+        PJ.add_named(p, {"type": "custom", "cells": {"P": [[nm(x), nm(y)] for x, y in pairs_]}, "each": "P",
+                         "holds": f"let a = P[1], b = P[2]; {holds}", "label": label})  # fmt: skip
+        if neg_pat and re.search(neg_pat, rules.lower()):  # the negative: no other orthogonal pair meets it
+            PJ.add_named(p, {"type": "custom", "holds": f"(a, b) => not ({holds})", "label": label + " (negative)",
+                             "scope": {"pairs": "orthogonal", "except": [[nm(x), nm(y)] for x, y in pairs_]}})  # fmt: skip
+        used["dot_custom"] += 1
     neg = negative_types(flags, overrides)
     xv_def = re.search(r"\b(?:an? )?[xv]\b[^.\n]{0,30}\bsums? to (?:10|ten|5|five)\b", rules.lower())
     neg &= ({"white", "black"} if used["kropki_white"] or used["kropki_black"] else set()) | (
         {"x", "v"} if used["xv"] or xv_def else set()
     )
+    # ... but a dot colour neither drawn nor defined by the text is not meant ("KROPKI: cells separated by a black dot
+    # are a 1:2 ratio. ALL dots are given!": no white negative; 000MXK)
+    if (
+        "white" in neg
+        and not used["kropki_white"]
+        and not re.search(r"white (?:dot|kropki|circle)|(?:dots?|kropki)\b[^.]{0,40}consecutive", rules.lower())
+    ):
+        neg.discard("white")
+    if (
+        "black" in neg
+        and not used["kropki_black"]
+        and not re.search(
+            r"black (?:dot|kropki|circle)|(?:dots?|kropki)\b[^.]{0,40}(?:ratio|double|twice|half)", rules.lower()
+        )
+    ):
+        neg.discard("black")
     if neg:
         # a pair carrying any edge marker is exempt from every negative rule
         marked = {frozenset(r_[1:3]) for r_ in p.relations if r_[0] in ("diff", "ratio", "sum")}
@@ -1866,6 +2013,22 @@ def text_cell_rules(p, n, rules, colour_cells, used):
             PJ.add_named(p, {"type": "custom", "cells": {"K": cages}, "holds": "count_distinct(sum(k) for k in K) == 1",
                              "label": "Equal cage sums"})  # fmt: skip
             used["equal_cage_sums"] = used.get("equal_cage_sums", 0) + 1
+    if re.search(
+        r"cages (?:with|without) no (?:sum|total)s?(?: given)?,? (?:have|has|must have) the same (?:sum|total)", t
+    ):
+        from .. import puzzle_json as PJ
+
+        bare = [
+            [f"r{p.coords[c][0] + 1}c{p.coords[c][1] + 1}" for c in g.cells]
+            for g in p.groups
+            if g.kind == "cage" and g.total is None
+        ]
+        if len(bare) >= 2:
+            PJ.add_named(p, {"type": "custom", "cells": {"K": bare}, "holds": "count_distinct(sum(k) for k in K) == 1",
+                             "label": "Equal sums of the cages without a total"})  # fmt: skip
+            used["equal_bare_cage_sums"] = 1
+        else:
+            unresolved.append("cages without a total")
     m = re.search(r"cells (?:shaded|coloured|colored|marked) (\w+) (?:are|contain) the same (?:number|digit)", t)
     if m:
         from .. import puzzle_json as PJ
@@ -2225,6 +2388,11 @@ MARKED_CUSTOM = {
     "detection": (r"arrows must appear at least once in the indicated direction", "arrow", "ray", "any(y == x for y in {N})"),
     "elimination": (r"arrows must not appear in any other cell in the indicated direction", "arrow", "ray",
                     "all(y != x for y in {N})"),
+    "search_five": (r"arrow points to the closest (?:5|five)\b", "arrow", "ray", "{N}[x] == 5 and all(y != 5 for y in take(x - 1, {N}))"),
+    "search_nine": (r"(?:every|each) arrow (?:is pointing|points) at (?:the )?(?:number|digit) 9|arrow points to the closest (?:9|nine)\b",
+                    "arrow", "ray", "{N}[x] == 9 and all(y != 9 for y in take(x - 1, {N}))"),
+    "arrow_xsum": (r"sum of the first n (?:digits|numbers) in the direction of the arrow", "arrow", "ray",
+                   "x == sum(take({N}[1], {N}))"),
     "primesweeper": (r"count of cells with prime numbers[^.]{0,40}direction the arrow points", "arrow", "ray",
                      "x == count(y for y in {N} if prime(y))"),
 }  # fmt: skip
@@ -2242,6 +2410,15 @@ def _cell_markers(P, n, inside):
             (cy, cx), w = lay["center"], lay.get("width") or 0
             if 0.6 <= w <= 1.0 and abs(cy % 1 - 0.5) < 0.1 and abs(cx % 1 - 0.5) < 0.1 and inside(cell_of((cy, cx))):
                 out["circle"].append((cell_of((cy, cx)), None))
+    for ar in P.get("arrows") or []:  # an arrow (with a head) drawn inside one cell points from its tail to its tip
+        wp = ar.get("wayPoints") if isinstance(ar, dict) else None
+        if wp and len(wp) >= 2 and len({cell_of(pt) for pt in wp}) == 1 and inside(cell_of(wp[0])):
+            dy, dx = wp[-1][0] - wp[0][0], wp[-1][1] - wp[0][1]
+            if math.hypot(dy, dx) > 0.1:
+                ang = round(math.atan2(dy, dx) / (math.pi / 4)) % 8
+                out["arrow"].append(
+                    (cell_of(wp[0]), [(0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1), (-1, 0), (-1, 1)][ang])
+                )
     for ln in P.get("lines") or []:
         wp = ln.get("wayPoints") if isinstance(ln, dict) else None
         if not wp or len(wp) < 2 or len({cell_of(pt) for pt in wp}) != 1 or not inside(cell_of(wp[0])):
@@ -2410,6 +2587,14 @@ def global_custom(n, p, rules, used=None):
             [nm(r, c), nm(n - 1 - r, n - 1 - c)] for r in range(n) for c in range(n) if (r, c) < (n - 1 - r, n - 1 - c)
         ]
         found.append(("rotational_sum", {"cells": {"d": prs}, "each": "d", "holds": f"d[1] + d[2] == {m.group(1)}"}))
+    if re.search(
+        r"(?:180[- ]?(?:°|degrees?)|rotational(?:ly)?) symmetric(?:al)?[^.]{0,40}(?:cannot|can't|may not|must not) (?:have|contain) the same digit",
+        t,
+    ):
+        prs = [  # "cells that are 180° symmetric to each other cannot have the same digits"
+            [nm(r, c), nm(n - 1 - r, n - 1 - c)] for r in range(n) for c in range(n) if (r, c) < (n - 1 - r, n - 1 - c)
+        ]
+        found.append(("rotational_neq", {"cells": {"d": prs}, "each": "d", "holds": "d[1] != d[2]"}))
     if (
         n == 9
         and re.search(r"\b159\b", t)

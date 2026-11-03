@@ -641,6 +641,95 @@ def test_arrow_variants():
     assert any(c["type"] == "arrow" for c in p.constraints) and p.named_rules
 
 
+def test_in_cell_arrows_cages_and_line_colours():
+    """an arrow drawn inside one cell points along a ray (the closest 5, arrow X-sums); f-puzzles cages: factor cages,
+    x + k cages (x forced by the cage sizes gives the totals), blank cages the text gives a meaning, equal sums of the
+    cages without a total; line colours called by a neighbouring word, a dull orange called brown, the one unnamed
+    colour, "all other lines", a grey cell that is no line colour"""
+    from pencilmark.sources import _fpuz_translate as FT
+    from pencilmark.sources import _sp_translate as SP
+
+    arrow = {"color": "#000000", "thickness": 2, "wayPoints": [[0.3, 0.5], [0.7, 0.5]], "headLength": 0.2}
+    p, _ = SP.translate(_sp4(arrows=[arrow]), "Each arrow points to the closest 5.")
+    rule = next(r for r, _ in p.named_rules)
+    assert rule["cells"] == {"x": ["r1c1"], "N": ["r2c1", "r3c1", "r4c1"]}  # tail at the top, tip below: downwards
+    with pytest.raises(Exception):
+        SP.to_puzzle(_sp4(arrows=[arrow]), page_text="Normal sudoku rules apply.", fetch=False)
+    base = {"size": 4, "grid": [[{} for _ in range(4)] for _ in range(4)]}
+    cage = lambda cells, v=None: {"cells": cells, "value": v, "outlineC": "#000000"} if v else {"cells": cells}
+    p, _ = FT.translate(dict(base, ruleset="Numbers in dashed regions MULTIPLY to the number in the top left corner of the region.",
+                             cage=[cage(["R1C1", "R1C2"], "12")]))  # fmt: skip
+    assert [r["holds"] for r, _ in p.named_rules] == ["product(K) == 12"] and any(g.kind == "cage" for g in p.groups)
+    p, _ = FT.translate(dict(base, ruleset="Digits in cages sum to the number in the top left corner. X is the same for all cages.",
+                             cage=[cage(["R1C1", "R1C2"], "x"), cage(["R3C3", "R3C4"], "x+4")]))  # fmt: skip
+    assert sorted(g.total for g in p.groups if g.kind == "cage") == [3, 7]  # 1 + 2 = x, x + 4 <= 7 (4 + 3): x = 3
+    p, _ = FT.translate(dict(base, ruleset="Digits in cages do not repeat.", cage=[cage(["R1C1", "R2C2"])]))
+    assert [g.cells for g in p.groups if g.kind == "cage"] == [(0, 5)]
+    p, _ = FT.translate(dict(base, ruleset="Digits in cages sum to 6 or 7.", cage=[cage(["R1C1", "R2C2"])]))
+    assert p is None
+    p, _ = FT.translate(dict(base, ruleset="Numbers in cages sum to the number in the top left corner of the cage. "
+                             "The cages with no sum given, have the same sum as one another.",
+                             cage=[cage(["R1C1", "R1C2"]), cage(["R3C3", "R3C4"]), cage(["R2C1", "R2C2"], "3")]))  # fmt: skip
+    assert [r["holds"] for r, _ in p.named_rules] == ["count_distinct(sum(k) for k in K) == 1"]
+    cmap = SP.rules_color_map("Numbers on purple lines are each a set of consecutive numbers. Numbers on brown lines "
+                              "are palindromes. The gray cell with arrows pointing outward is a maximum.")  # fmt: skip
+    assert "grey" not in cmap and SP.line_rule_from_text("#FF99D6", cmap) == "renban"
+    assert SP.line_rule_from_text("#A87A47", cmap) == "palindrome"
+    line = lambda col: {"lines": [["R1C1", "R1C2"]], "outlineC": col}
+    reading = FT._text_line_reading({"line": [line("#FF4444"), line("#FFF888")]},
+                                    "Red lines alternate in parity (odd/even). Grey lines are palindromes.")  # fmt: skip
+    assert reading == {"#ff4444": "parity", "#fff888": "palindrome"}
+    reading = FT._text_line_reading({"line": [line("#75ED68"), line("#C77EFA")]},
+                                    "Numbers on green lines are at least 5 apart. Numbers on all other lines are each "
+                                    "a set of non-repeating, consecutive numbers.")  # fmt: skip
+    assert reading["#c77efa"] == "renban"
+    cmap = SP.rules_color_map("Adjacent digits along a red line alternate in parity.")
+    assert SP.line_rule_from_text("#F067F0", cmap, {"red", "pink"}) is None  # red's rule belongs to the red lines
+    assert SP.join_branches([("p", [1, 2, 3]), ("p", [2, 4, 5]), ("p", [5, 6]), ("q", [3, 7])]) == [
+        [1, 2, 3, 4, 5],
+        [5, 6],
+        [3, 7],
+    ]
+    dot = lambda cells, col: {"cells": cells, "baseC": col, "width": 0.3, "height": 0.3}
+    p, _ = FT.translate(dict(base, ruleset="Cells joined by white dots are consecutive. All white dots are given. "
+                             "Cells joined by green dots have a value ratio of 3:1. Not all green/orange dots are given.",
+                             circle=[dot(["R1C1", "R1C2"], "#00FF00")]))  # fmt: skip
+    assert ("ratio", 0, 1, 3) in p.relations and ("notdiff", 4, 5, 1) in p.relations
+    assert FT._dot_meaning("green", "a pair can only appear once. green dots have a ratio of 3:1.") is None
+    assert FT._dot_meaning("green", "all green dots are given. green dots have a ratio of 3:1.") is None
+    assert FT._dot_meaning("grey", "digits separated by a grey dot are either consecutive or have a 1:2 ratio.") is None
+    assert FT._dot_meaning(
+        "red", "digits separated by a red dot are not consecutive. digits without a dot may or may not be consecutive."
+    ) == ("notdiff", 1)
+    halo = {"center": [0.5, 1], "width": 0.22, "height": 0.22, "rounded": True, "backgroundColor": "#fff5"}
+    black = {"center": [0.5, 1], "width": 0.2, "height": 0.2, "rounded": True, "backgroundColor": "#000000"}
+    p, _ = SP.translate(_sp4(overlays=[black, halo]), "Black dots: a 1:2 ratio.")
+    assert [r[0] for r in p.relations if r[1:3] == (0, 1)] == ["ratio"]  # the translucent halo is no white dot
+    assert SP.negative_markers("All possible dots fully inside odd numbered boxes are given.") == set()
+    p, _ = SP.translate(
+        _sp4(overlays=[black]), "KROPKI: cells separated by a black dot are a 1:2 ratio. ALL dots are given!"
+    )
+    assert not any(r[0] == "notdiff" for r in p.relations) and any(r[0] == "notratio" for r in p.relations)
+    assert SP.LINE_CUSTOM["entropic2"][1] == "count_distinct((x + 1) div 2 for x in t) == 5"
+    assert SP.QUAD_TEXT.search("every digit in a circle has to be assigned to one of the surrounding cells")
+    sq = "A dot means that the digits in the two neighbouring cells form a double digit square number in the reading direction. All dots are in the grid."
+    p, _ = SP.translate(_sp4(overlays=[black]), sq)
+    rules = [r for r, _ in p.named_rules]
+    assert (
+        rules[0]["cells"] == {"P": [["r1c1", "r1c2"]]} and "10 * a + b in {16, 25, 36, 49, 64, 81}" in rules[0]["holds"]
+    )
+    assert rules[1]["scope"] == {"pairs": "orthogonal", "except": [["r1c1", "r1c2"]]}
+    found = SP.global_custom(
+        9, SP.M.standard(9, 3, 3), "Cells that are 180° symmetric to each other cannot have the same digits."
+    )
+    assert found == ["rotational_neq"]
+    t = "In all cases where two neighbouring cells contain consecutive digits, a circle is placed between those cells."
+    assert SP.negative_markers(t) == {"white"}
+    assert SP.rule_flags("Cells that are orthogonally adjacent cannot contain consecutive digits.")["nonconsec"]
+    with pytest.raises(Exception):
+        SP.to_puzzle(_sp4(), page_text="All clues are equally true or false.", fetch=False)
+
+
 def test_redefined_clues():
     """clues whose text changes their meaning: quadruple digits that must NOT appear, cage numbers listing digits in the
     cage (zone), dots that are consecutive or double (faded), diagonals with a count of distinct digits"""
