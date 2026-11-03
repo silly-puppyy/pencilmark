@@ -91,12 +91,14 @@ def fetch(short_link, http=None):
 @reads("f-puzzles")
 def translate(x, rules_text=None, reading=None, infer=False, fetch=True):
     """-> (engine Puzzle (not finalized), info). rules_text fills a missing 'ruleset' (it is read for negative
-    constraints and line keywords). Raises UnsupportedPuzzle / DecodeError."""
+    constraints and line keywords), or gives generic lines a second wording. Raises UnsupportedPuzzle / DecodeError."""
     from . import _fpuz_translate as FT
 
     fp = dict(decode(x, fetch=fetch))
     if rules_text and not fp.get("ruleset"):
         fp["ruleset"] = rules_text
+    elif rules_text and rules_text.strip() != fp["ruleset"].strip():
+        fp["_page_rules"] = rules_text  # a second wording for generic lines the payload's ruleset leaves unread
     if reading:
         p, info = FT.translate(fp, line_kinds=reading)
     elif infer and fp.get("line"):

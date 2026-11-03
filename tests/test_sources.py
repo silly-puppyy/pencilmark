@@ -473,7 +473,9 @@ def test_rossini_and_battenburg():
     from pencilmark.sources import _sp_translate as SP
 
     arrow = {"color": "#000000", "thickness": 2, "wayPoints": [[1.5, -0.88], [1.5, -0.29], [1.44, -0.29]]}
-    p, info = SP.translate(_sp4(lines=[arrow]), "Rossini: the first three digits increase in the direction of the arrow.")
+    p, info = SP.translate(
+        _sp4(lines=[arrow]), "Rossini: the first three digits increase in the direction of the arrow."
+    )
     assert info.get("rossini") and p is not None
     mark = {"center": [2, 2], "width": 0.6, "height": 0.6, "backgroundColor": "#CFCFCF"}
     text = "Battenburg: the four cells around a marker form a checkerboard of odd and even. All clues are given."
@@ -485,6 +487,35 @@ def test_rossini_and_battenburg():
     sum_ = {"text": 20, "center": [2.09, 2], "width": 0, "height": 0, "fontSize": 12}
     p, _ = SP.translate(_sp4(overlays=[mark, sum_]), text + " A number on a marking is the sum of its 4 cells.")
     assert {"type": "sum", "cells": [5, 6, 9, 10], "total": 20} in p.constraints and not p.relations
+
+
+def test_one_off_line_rules():
+    """one-off line rules described in the text are custom rules (sequence, alternating, one-digit lines) or difference
+    pairs (neighbours differ by 1); "along each line" gives every line the rule; "a difference of 4 or more" is a
+    Dutch whisper; an f-puzzles payload's own ruleset falls back to the page's wording for its lines"""
+    from pencilmark.sources import _fpuz_translate as FT
+    from pencilmark.sources import _sp_translate as SP
+
+    line = lambda col: {"color": col, "thickness": 9.6, "wayPoints": [[0.5, 0.5], [0.5, 1.5], [0.5, 2.5]]}
+    seq = "An arithmetic series must be formed along each line."
+    p, _ = SP.translate(_sp4(lines=[line("#AAAAAA"), line("#FF6666")]), seq)
+    custom = [r for r, _ in p.named_rules if r["type"] == "custom"]
+    assert len(custom) == 2 and custom[0]["cells"] == {"t": [["r1c1", "r1c2", "r1c3"]]}
+    p, _ = SP.translate(
+        _sp4(lines=[line("#AAAAAA")]), "Numbers must alternate between increasing and decreasing along the gray lines."
+    )
+    assert [r["label"] for r, _ in p.named_rules if r["type"] == "custom"] == ["Alternating line"]
+    p, _ = SP.translate(
+        _sp4(lines=[line("#AAAAAA")]), "Numbers adjacent to each other along the gray lines must differ by 1."
+    )
+    assert ("diff", 0, 1, 1) in p.relations
+    assert SP.diff_rule("adjoining digits must have a difference of 4 or more") == "dutch"
+    fp = {"size": 4, "grid": [[{} for _ in range(4)] for _ in range(4)], "ruleset": "Lines.",
+          "_page_rules": "Each line contains exactly one distinct number.",
+          "line": [{"lines": [["R1C1", "R2C2"]], "outlineC": "#CCCCCC"}]}  # fmt: skip
+    assert FT.text_line_reading(fp) is None  # no f-puzzles line kind for it: refused, not misread
+    fp["_page_rules"] = "Along each gray line, adjoining digits must have a difference of 4 or more."
+    assert FT.text_line_reading(fp) == {"#cccccc": "dutch_whisper"}
 
 
 def test_rule_for_every_line():

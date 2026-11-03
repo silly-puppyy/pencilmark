@@ -464,10 +464,17 @@ TEXT_LINE_KINDS = {"whisper": "whisper", "dutch": "dutch_whisper", "renban": "re
 
 def text_line_reading(fp):
     """{colour: kind} for generic lines from the rules text: each colour the text names, or the one line rule a
-    single-colour puzzle's text names or describes -> None when a colour stays unread"""
+    single-colour puzzle's text names or describes -> None when a colour stays unread (then the page's wording of the
+    rules, if one was given, is tried)"""
+    reading = _text_line_reading(fp, fp.get("ruleset") or "")
+    if reading is None and fp.get("_page_rules"):
+        reading = _text_line_reading(fp, fp["_page_rules"])
+    return reading
+
+
+def _text_line_reading(fp, text):
     from . import _sp_translate as ST
 
-    text = fp.get("ruleset") or ""
     colours = sorted({_colour(it) for it in fp.get("line") or []})
     cmap = ST.rules_color_map(text)
     named = {k for k, pats in ST.RULE_WORDS.items() if any(re.search(p, text.lower()) for p in pats)}

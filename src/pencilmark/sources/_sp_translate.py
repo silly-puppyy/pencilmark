@@ -42,6 +42,11 @@ UNMODELLED_RULES = (
         r"|\b(?:colou?r|paint) (?:every|each|all|some)(?: of the)? cells?\b",
     ),
     ("modifier", r"modifier"),
+    # a digit used once by all clues of a kind across the grid ("if a cage contained a 1, no other cage can")
+    (
+        "exclusive",
+        r"(?:can ?not|cannot|may not) (?:have|contain) a repeated digit in the (?:whole |entire )?(?:puzzle|grid)",
+    ),
     ("doubler", r"doubler"),
     ("minesweeper", r"minesweeper"),
     ("fillomino", r"fillomino"),
@@ -340,6 +345,7 @@ def color_name(hexcol):
 DIFF_K = re.compile(
     r"differ(?:ence)?s?\b[^.]{0,25}?(at least|>=|≥|a minimum of|more than|greater than)\s*(?:a\s+)?(\d|five|four|three|two|six|seven)\b"
 )
+DIFF_K_OR_MORE = re.compile(r"differ(?:ence)?s?\b (?:of|by) (\d|five|four|three|two|six|seven) or (?:more|greater)\b")
 _NUMW = {"two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7}
 SLOW_ALL = re.compile(
     r"slow[- ]?thermo|never decrease|(?:can|may) (?:also )?repeat (?:on|along|in) (?:a |the |each )?thermo"
@@ -363,7 +369,11 @@ def diff_rule(sent):
     """'adjacent digits differ by at least K' -> whisper key (K=5 whisper, K=4 dutch, else 'whisperK'), or None."""
     m = DIFF_K.search(sent)
     if not m:
-        return None
+        m = DIFF_K_OR_MORE.search(sent)  # "a difference of 4 or more"
+        if not m:
+            return None
+        k = int(m.group(1)) if m.group(1).isdigit() else _NUMW[m.group(1)]
+        return {5: "whisper", 4: "dutch"}.get(k, f"whisper{k}")
     k = int(m.group(2)) if m.group(2).isdigit() else _NUMW[m.group(2)]
     k += m.group(1) in ("more than", "greater than")
     return {5: "whisper", 4: "dutch"}.get(k, f"whisper{k}")
@@ -382,8 +392,20 @@ RULE_DESCRIPTIONS = {
                 r"between (?:the )?(?:two )?(?:attached )?circles"],
     "palindrome": [r"reads? the same (?:forwards?|in both)", r"same (?:forwards?|from either end)"],
     "zipper": [r"equidistant from the (?:centre|center)", r"(?:same|equal) distance from the (?:centre|center)"],
+    # one-off line rules (GAS), kept as custom rules
+    "sequence": [r"arithmetic (?:series|sequence|progression)"],
+    "zigzag": [r"alternate between increasing and decreasing", r"alternately (?:increase|rise) and (?:decrease|fall)"],
+    "consecutive_line": [r"(?:adjacent|neighbou?ring|next to each other|connected)[^.]{0,50}differ by (?:exactly )?(?:1|one)\b"],
+    "same_digit": [r"(?:exactly|only) one distinct (?:number|digit)"],
 }  # fmt: skip
 
+
+# custom line rules: (cells per instance, 0 for the whole line; the condition on instance t; label)
+LINE_CUSTOM = {
+    "sequence": (3, "t[2] - t[1] == t[3] - t[2]", "Sequence line"),
+    "zigzag": (3, "(t[2] - t[1]) * (t[3] - t[2]) < 0", "Alternating line"),
+    "same_digit": (0, "count_distinct(t) == 1", "One-digit line"),
+}
 
 # a region sum stated per box ("the same total in each 3x3 box the line visits"): a line that leaves a box and comes back
 # then has one total for both visits, which the segment rule (box borders divide the line) does not model
@@ -402,9 +424,13 @@ def _described(sent):
 
 
 def every_line_rule(rules):
-    """the line rule a sentence gives every line ("all lines are region sum lines", "every line is a renban"), or None"""
+    """the line rule a sentence gives every line ("all lines are region sum lines", "every line is a renban", "an
+    arithmetic series along each line"), or None"""
     for sent in re.split(r"(?<=[.\n])\s*", (rules or "").lower()):
-        if re.search(r"\b(?:all (?:the )?lines (?:are|act as)|every line (?:is|acts as))\b", sent):
+        if re.search(
+            r"\b(?:all (?:the )?lines (?:are|act as)|every line (?:is|acts as)|(?:along|on) (?:each|every) line)\b",
+            sent,
+        ):
             got = {k for k, pats in RULE_WORDS.items() if any(re.search(p, sent) for p in pats)} | set(_described(sent))
             if len(got) == 1:
                 return got.pop()
@@ -1222,6 +1248,20 @@ def translate(sp, page_text=None, overrides=None):
             m_ = re.search(r"lockout.{0,200}?(?:at least|by|difference of) (\d)", rules.lower(), re.S)
             k_ = int(m_.group(1)) if m_ else 4
             p.constraints.append({"type": "line", "kind": "lockout", "cells": ids, "k": k_})  # compiled by finalize
+        elif rule == "consecutive_line":  # neighbours along the line differ by 1 (repeats allowed off the houses)
+            p.relations += [("diff", a, b, 1) for a, b in zip(ids, ids[1:])]
+        elif rule in LINE_CUSTOM:  # no rule family: custom rules over each run of cells along the line
+            from .. import puzzle_json as PJ
+
+            name = lambda i: f"r{p.coords[i][0] + 1}c{p.coords[i][1] + 1}"
+            k, holds, label = LINE_CUSTOM[rule]
+            runs = (
+                [[name(c_) for c_ in ids[i : i + k]] for i in range(len(ids) - k + 1)]
+                if k
+                else [[name(c_) for c_ in ids]]
+            )
+            if runs:
+                PJ.add_named(p, {"type": "custom", "cells": {"t": runs}, "each": "t", "holds": holds, "label": label})
         elif rule == "double_arrow":  # the two circle digits sum to the line's digits between them
             if len(ids) < 3 or ids[0] == ids[-1]:
                 unknown.append("malformed double arrow")
