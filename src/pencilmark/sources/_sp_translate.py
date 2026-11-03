@@ -821,7 +821,8 @@ def rule_flags(rules):
     neg = negative_markers(rules)
     return {
         "negative_markers": neg,
-        "antiknight": bool(re.search(r"anti[- ]?knight|knight'?s move|(?:chess )?knight(?:'s)? jump", t)),
+        "antiknight": bool(re.search(r"anti[- ]?knight|knight'?s move|(?:chess )?knight(?:'s)? jump", t))
+        and not KNIGHT_FROM.search(t),  # "the digit in the yellow cell ... a knight's move away": not every cell
         "antiking": bool(
             re.search(
                 r"anti[- ]?king|king'?s move|diagonally adjacent cells|\bno[- ]touch\b"
@@ -1674,7 +1675,7 @@ def translate(sp, page_text=None, overrides=None):
             rc_ = cell_of(lay["center"])
             if inside(rc_):
                 colour_cells[color_name(lay.get("backgroundColor"))].append(idx(rc_))
-    text_cell_rules(p, n, text_rules, colour_cells, used)
+    unknown += text_cell_rules(p, n, text_rules, colour_cells, used)
     if re.search(
         r"cages must contain either all even (?:numbers|digits), all odd (?:numbers|digits), or exactly half",
         text_rules.lower(),
@@ -1725,10 +1726,32 @@ def plain_sudoku(p, n, used):
     )
 
 
+KNIGHT_FROM = re.compile(
+    r"(?:digit|number)s? in the (\w+) cells? (?:may|can|must) not (?:repeat|appear)[^.]{0,40}knight'?s move"
+    r"|knight'?s move away from (?:a|an|the) (?!cell\b|same\b|other\b|it\b)\w+"
+)
+
+
 def text_cell_rules(p, n, rules, colour_cells, used):
     """rules on caged or coloured cells stated in the text: "digits in the cage are odd" (a parity clue on caged cells),
     "the cells shaded orange are the same number" (one digit; the named colour, or the only shading colour)"""
     t = (rules or "").lower()
+    unresolved = []
+    m = KNIGHT_FROM.search(t)
+    if m:  # anti-knight from marked cells only
+        want = {"gray": "grey"}.get(m.group(1) or "", m.group(1) or "")
+        cells = colour_cells.get(want) or []
+        if not cells:
+            unresolved.append("anti-knight from marked cells")
+        at = {p.coords[i]: i for i in range(p.N)}
+        for i in cells:
+            r, c = p.coords[i]
+            for dr, dc in ((1, 2), (2, 1), (-1, 2), (-2, 1), (1, -2), (2, -1), (-1, -2), (-2, -1)):
+                q = at.get((r + dr, c + dc))
+                if q is not None:
+                    p.relations.append(("neq", min(i, q), max(i, q)))
+        if cells:
+            used["knight_from_cells"] = used.get("knight_from_cells", 0) + 1
     m = re.search(r"(?:digits|numbers) in (?:the |each |all |every )?cages? (?:are|must be) (?:all )?(odd|even)\b", t)
     if m:
         odd_m = sum(1 << (v - 1) for v in range(1, n + 1, 2))
@@ -1764,6 +1787,7 @@ def text_cell_rules(p, n, rules, colour_cells, used):
             PJ.add_named(p, {"type": "custom", "cells": {"S": [f"r{p.coords[c][0] + 1}c{p.coords[c][1] + 1}" for c in same]},
                              "holds": "count_distinct(S) == 1", "label": f"Same digit in {want} cells"})  # fmt: skip
             used["same_colour_equal"] = used.get("same_colour_equal", 0) + 1
+    return unresolved
 
 
 def drawn_in_grid(P, n, inside):

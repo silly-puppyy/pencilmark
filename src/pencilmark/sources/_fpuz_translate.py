@@ -247,8 +247,9 @@ def translate(fp, line_kinds=None, join=True):
                 cells = tuple(r * n + c for r in range(n) for c in range(n) if r % bh == i and c % bw == j)
                 p.groups.append(M.Group(f"dj{i}{j}", cells, "extra", True))
     text = (fp.get("ruleset") or "").lower()
-    knight = fp.get("antiknight") or bool(
-        re.search(r"anti[- ]?knight|knight'?s move|(?:chess )?knight(?:'s)? jump", text)
+    knight = fp.get("antiknight") or (
+        bool(re.search(r"anti[- ]?knight|knight'?s move|(?:chess )?knight(?:'s)? jump", text))
+        and not ST.KNIGHT_FROM.search(text)  # anti-knight from marked cells only: text_cell_rules
     )
     king = fp.get("antiking") or bool(re.search(r"anti[- ]?king|king'?s move", text))
     if fp.get("nonconsecutive") is None and re.search(r"non[- ]?consecutive", text) and not fp.get("difference"):
@@ -469,7 +470,9 @@ def translate(fp, line_kinds=None, join=True):
         for c_, cell in enumerate(row or []):
             if isinstance(cell, dict) and cell.get("c"):
                 colour_cells[ST.color_name(cell["c"])].append(r_ * n + c_)
-    ST.text_cell_rules(p, n, fp.get("ruleset") or "", colour_cells, used)
+    unresolved = ST.text_cell_rules(p, n, fp.get("ruleset") or "", colour_cells, used)
+    if unresolved:
+        return None, "unsupported: " + ", ".join(unresolved)
     # text-only whole-grid rules, after the cages (some read them): custom ones, then global entropy / Dutch flat mates
     custom = ST.global_custom(n, p, fp.get("ruleset")) or ST.global_custom(n, p, fp.get("_page_rules"))
     used.update(dict.fromkeys(custom, True))

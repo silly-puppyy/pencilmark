@@ -73,7 +73,9 @@
   whisper sentences and thresholds in words; refused: "one digit in each row that does not fit".
   Whole-grid rules from the text: 180-degree pair sums, 159 indexing (columns 1, 5 and 9), caged digits not next to
   a consecutive digit, no repeats around a digit; f-puzzles payloads read global entropy and Dutch flat mates too.
-  2,000 most-solved Logic Masters sudokus: 802 -> 851 graded.
+  Anti-knight stated for marked cells only ("the digit in the yellow cell ... a knight's move away") applies to those
+  cells, not the whole grid (refused when the cells are not found).
+  2,000 most-solved Logic Masters sudokus: 802 -> 863 graded.
 - SudokuPad links of the form `sudokupad.app/<author>/<slug>` are fetched (they were refused as not a short id).
 - Speed and robustness: the C++ uniqueness search without OR-Tools stops at a time limit, not only a node limit
   (counting-circle puzzles ran for hours); the trial step retries with a larger search before giving up (two unique

@@ -876,6 +876,16 @@ def test_more_global_text_rules():
         9, p, "Dutch flat mates: all 5's must have EITHER; a '1' directly above it AND/OR a '9' directly below it.", u
     )
     assert u["dutch_flats"] == 1
+    # anti-knight from a marked cell only, not every cell; from markers no reading knows: refused
+    assert not SP.rule_flags("The digit in the yellow cell may not repeat in any cell that is a knight's move away")[
+        "antiknight"
+    ]
+    p = std()
+    assert SP.text_cell_rules(p, 9, "The digit in the yellow cell may not repeat in any cell a knight's move away.",
+                              {"yellow": [40]}, Counter()) == []  # fmt: skip
+    assert ("neq", 21, 40) in p.relations and len(p.relations) == 8
+    assert SP.text_cell_rules(std(), 9, "No cell a chess knight's move away from a Black Rider can contain the same digit.",
+                              {}, Counter()) == ["anti-knight from marked cells"]  # fmt: skip
 
 
 def test_rule_for_every_line():
