@@ -1570,6 +1570,9 @@
      "$ref": "#/$defs/rule_chaos"
     },
     {
+     "$ref": "#/$defs/rule_yin_yang"
+    },
+    {
      "$ref": "#/$defs/rule_region_border"
     },
     {
@@ -1790,6 +1793,40 @@
     }
    },
    "additionalProperties": false
+  },
+  "rule_yin_yang": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "yin_yang"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "shaded": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/cell"
+     }
+    },
+    "unshaded": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/cell"
+     }
+    }
+   },
+   "required": [
+    "type"
+   ],
+   "additionalProperties": false,
+   "description": "shading: shaded and unshaded cells each orthogonally connected, no 2x2 of one colour; optional given colours (docs/formats/rules/whole-board-rules.mdx 6.19)"
   }
  }
 }

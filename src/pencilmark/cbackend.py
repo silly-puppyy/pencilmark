@@ -269,6 +269,8 @@ def _cpuzzle_args(p):
             d = {"type": "line", "kind": d["kind"], "cells": [], "skip": True}  # carried by its n-ary part
         elif d.get("type") == "clone":  # compiled into 'eq' relations; keep the index
             d = {"type": "line", "kind": "palindrome", "cells": [], "skip": True}
+        elif d.get("type") == "yin_yang":  # shading: not in the engine yet (cpsat_verify decides; rate refuses)
+            d = {"type": "line", "kind": "palindrome", "cells": [], "skip": True}
         elif d.get("type") in ("chaos", "region_border", "same_region"):  # regions to find: read by the exhaustive
             d = {
                 "type": "line",

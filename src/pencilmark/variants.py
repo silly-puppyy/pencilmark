@@ -392,6 +392,15 @@ def _chaos_text(rs, c):
 
 family("Chaos Construction", lambda r: r["type"] in ("chaos", "region_border", "same_region"), _chaos_text)
 family(
+    "Yin Yang",
+    lambda r: r["type"] == "yin_yang",
+    lambda rs, c: (
+        "Shade some cells so that the shaded cells are orthogonally connected, the unshaded cells are "
+        "orthogonally connected, and no 2x2 area is all shaded or all unshaded."
+        + (" Some cells' shading is given." if any(r.get("shaded") or r.get("unshaded") for r in rs) else "")
+    ),
+)
+family(
     "Custom",
     lambda r: r["type"] == "table" or ":" in r["type"],
     lambda rs, c: (rs[0].get("label") or "Custom rule") + ": see the setter's rules.",

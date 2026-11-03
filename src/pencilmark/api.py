@@ -185,6 +185,13 @@ def rate(
     want = card_fields(fields, steps=steps, se=se)
     quality_limits(quality)
     p = load(puzzle)
+    if V.has_shading(p):  # before the uniqueness proof: grading shading is not in the engine yet
+        from .exchange import NotSupportedError
+
+        raise NotSupportedError(
+            "shading (yin-yang): the grader does not grade it yet; validate, describe, solve and count work (solve and "
+            "count with OR-Tools)"
+        )
     import time
 
     from . import cbackend as CB

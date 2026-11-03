@@ -42,8 +42,58 @@ _CON_TYPES = {
     "chaos",
     "region_border",
     "same_region",
+    "yin_yang",
 }
 CHAOS_TYPES = ("chaos", "region_border", "same_region")
+
+
+def has_shading(p):
+    """True if the puzzle has a shading layer (yin-yang, docs/formats/rules/whole-board-rules.mdx)"""
+    return any(c.get("type") == "yin_yang" for c in getattr(p, "constraints", ()))
+
+
+def _add_yin_yang(m, p):
+    """yin-yang: a shading Boolean per cell; no 2x2 of one colour; each colour orthogonally connected (each of its cells
+    but its first, in reading order, has a neighbour of its colour one step closer to that first cell); given shaded /
+    unshaded cells. Digits are untouched (shading couplings are not modelled yet)."""
+    for con in p.constraints:
+        if con.get("type") != "yin_yang":
+            continue
+        cells = sorted(range(p.N), key=lambda c: p.coords[c])
+        idx = {p.coords[c]: c for c in cells}
+        sh = {c: m.NewBoolVar("") for c in cells}
+        for c in con.get("shaded", ()):
+            m.Add(sh[c] == 1)
+        for c in con.get("unshaded", ()):
+            m.Add(sh[c] == 0)
+        for r0, c0 in (p.coords[c] for c in cells):
+            win = [idx.get((r0 + dr, c0 + dc)) for dr in (0, 1) for dc in (0, 1)]
+            if None not in win:
+                m.Add(sum(sh[c] for c in win) >= 1)
+                m.Add(sum(sh[c] for c in win) <= 3)
+        for colour in (1, 0):
+            own = {c: (sh[c] if colour else sh[c].Not()) for c in cells}
+            first = {c: m.NewBoolVar("") for c in cells}
+            m.AddExactlyOne(first.values())
+            for i, c in enumerate(cells):
+                m.AddImplication(first[c], own[c])
+                for c2 in cells[:i]:
+                    m.AddImplication(first[c], own[c2].Not())
+            dist = {c: m.NewIntVar(0, len(cells) - 1, "") for c in cells}
+            for c in cells:
+                r0, c0 = p.coords[c]
+                m.Add(dist[c] == 0).OnlyEnforceIf(first[c])
+                opts = [first[c], own[c].Not()]
+                for dr, dc in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    j = idx.get((r0 + dr, c0 + dc))
+                    if j is None:
+                        continue
+                    o = m.NewBoolVar("")
+                    m.AddImplication(o, own[c])
+                    m.AddImplication(o, own[j])
+                    m.Add(dist[j] == dist[c] - 1).OnlyEnforceIf(o)
+                    opts.append(o)
+                m.AddBoolOr(opts)
 
 
 def has_chaos(p):
@@ -166,6 +216,8 @@ def _engine(p, limit, node_limit, time_limit=None):
     max_seconds) is in force: nodes of counting rules cost milliseconds, so the node limit alone took hours"""
     from . import cbackend as CB
 
+    if has_shading(p):  # the C++ search has no shading layer yet: undecided (CP-SAT decides these)
+        return [], False
     own = time_limit is not None and hasattr(CB._C, "deadline_on") and not CB._C.deadline_on()
     if own:
         CB._C.set_deadline(float(time_limit))
@@ -225,7 +277,7 @@ def build_model(p):
         m.AddAllowedAssignments([x[a], x[b]], sorted(allowed))
     for con in p.constraints:
         t = con.get("type")
-        if t in ("line", "clone") or t in CHAOS_TYPES:
+        if t in ("line", "clone", "yin_yang") or t in CHAOS_TYPES:
             continue  # compiled into relations / n-ary constraints by finalize(); chaos: _add_chaos below
         cells = [x[c] for c in con.get("cells", [])]
         off = int(con.get("offset") or 0)
@@ -416,6 +468,8 @@ def build_model(p):
             return None, None
     if has_chaos(p):
         _add_chaos(m, x, p)
+    if has_shading(p):
+        _add_yin_yang(m, p)
     return m, x
 
 

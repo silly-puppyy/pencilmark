@@ -908,6 +908,12 @@ class _Writer:
             return []
         if t in ("region_border", "same_region"):
             return [{"type": t, "cells": nm(c["cells"])}]
+        if t == "yin_yang":
+            out = {"type": "yin_yang"}
+            for k in ("shaded", "unshaded"):
+                if c.get(k):
+                    out[k] = nm(sorted(c[k], key=lambda x: B.coords[x]))
+            return [out]
         raise NotSupportedError(f"engine constraint {t!r} has no format_version 1 rule")
 
     def common_group(self, cells):

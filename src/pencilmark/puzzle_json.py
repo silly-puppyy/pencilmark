@@ -62,7 +62,7 @@ BOXES = {
     25: (5, 5),
 }
 SIZES = {n * n: n for n in BOXES}
-CELL_KEYS = ("cells", "line", "circle")  # constraint keys holding a cell list
+CELL_KEYS = ("cells", "line", "circle", "shaded", "unshaded")  # constraint keys holding a cell list
 NESTED_KEYS = ("segments", "regions", "houses")  # ... a list of cell lists
 SYMBOLS = "123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 

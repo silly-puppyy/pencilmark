@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+- Shading (format: `"type": "yin_yang"`, optional given `shaded` / `unshaded` cells; whole-board-rules 6.19): shaded
+  and unshaded cells each orthogonally connected, no 2x2 of one colour. Readers, writers, `fingerprint` and
+  `describe` handle it; `solve` and `count_solutions` check it with OR-Tools; `rate` refuses it until the engine has
+  a shading layer.
+- Custom rules can read board layers: `region(c)` (regions to find) and `shaded(c)` (shading). `region()` rules are
+  checked on chaos boards (uniqueness, solving, the human route's last resort); `shaded()` waits for the shading
+  layer.
+- Card field `trace`: the board (digits and candidates) before the first step and after each step, so a viewer can
+  replay a solve with the steps' `substeps` annotations.
+- Rule facts in explanations are worked out for the puzzle's digit range (a whisper on 16x16 has no impossible digit
+  and no low / high alternation; a 6x6 black dot excludes only 5), not written for 9x9.
+- Reader: coloured lines described without their name ("a purple line contains a set of consecutive digits"),
+  generic f-puzzles lines from the rules text, "all lines are X lines", branching arrows, region-sum loops, between
+  lines through several circles; refused instead of misread: anti-line rules, broken zippers, rings drawn along grid
+  lines, default line colours without a positive description, a line with two rules. Screen of 1,351 Cracking the
+  Cryptic puzzles: 281 -> 337 graded.
+- Speed and robustness: the C++ uniqueness search without OR-Tools stops at a time limit, not only a node limit
+  (counting-circle puzzles ran for hours); the trial step retries with a larger search before giving up (two unique
+  killers ended Unknown) and keeps its result per position (one killer: 558 -> 316 s).
+- Docs: the `verify` extra (OR-Tools) is recommended for variants; the benchmark page lists Cracking the Cryptic solve
+  times as an outside check (327 puzzles, rank correlation 0.57).
+
 - Regions to find (chaos construction; format: `"type": "chaos"`, `region_border`, `same_region`;
   docs/formats/rules/houses-and-regions.mdx 6.3): a grid whose D connected regions of D cells the solver finds, given
   borders between neighbours, and cells known to share a region. Readers, writers, `fingerprint` and `describe`

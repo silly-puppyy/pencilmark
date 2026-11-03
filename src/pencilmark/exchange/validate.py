@@ -28,6 +28,7 @@ RULE_KEYS = {
     "chaos": ({"origin"}, set()),
     "region_border": ({"cells"}, set()),
     "same_region": ({"cells"}, set()),
+    "yin_yang": (set(), {"shaded", "unshaded"}),
     "box_grid": ({"origin", "box"}, set()),
     "box": ({"cells"}, set()),
     "row": ({"cells"}, set()),
@@ -172,6 +173,8 @@ def validate(doc):
         )
         if cells and any(cells <= a for a in B.chaos_areas):
             raise FormatError(f"a {r['type']} rule inside a chaos area (its regions are to be found)")
+    if sum(1 for r in doc["rules"] if isinstance(r, dict) and r.get("type") == "yin_yang") > 1:
+        raise FormatError("at most one yin_yang rule (the board's shading)")
     for i, r in enumerate(doc["rules"]):
         try:
             _validate_rule(r, B)
@@ -279,6 +282,12 @@ def _validate_rule(r, B):
         raise FormatError(f"a rule kind must be a string, not {kind!r}")
     if t in KINDS and (kind is not None or t not in ("neighbours", "count")) and kind not in KINDS[t]:
         raise FormatError(f"unknown kind {kind!r}")
+    if t == "yin_yang":  # shading: each colour connected, no 2x2 of one colour; given colours optional
+        sh = _cells(B, r["shaded"], "shaded", minlen=0) if "shaded" in r else []
+        un = _cells(B, r["unshaded"], "unshaded", minlen=0) if "unshaded" in r else []
+        if len(set(sh)) != len(sh) or len(set(un)) != len(un) or set(sh) & set(un):
+            raise FormatError("shaded / unshaded cells repeat or overlap")
+        return
     if t in ("region_border", "same_region"):  # 6.3: relations between the regions of a chaos area
         cs = _cells(B, r["cells"], n=2 if t == "region_border" else None, minlen=2)
         if len(set(cs)) != len(cs):
