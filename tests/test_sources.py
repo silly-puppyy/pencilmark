@@ -564,6 +564,29 @@ def test_one_off_outside_clues():
     assert [r["holds"] for r, _ in p.named_rules] == ["count(i for i in {1..3} if abs(ray[i + 1] - ray[i]) == 1) == 0"]
 
 
+def test_one_off_global_rules():
+    """whole-grid rules stated only in the text become scoped custom rules (encaged digits, no three of a parity in a
+    row, anti-XV, no checkerboard, box triples divisible by three); the reader's puzzle JSON writes them"""
+    from pencilmark.sources import _sp_translate as SP
+    from pencilmark.sources import sudokupad
+
+    kinds = lambda text: SP.global_custom(9, SP.M.standard(9, 3, 3), text)
+    assert kinds("All fours are encaged by odd numbers.") == ["encaged"]
+    assert kinds("There may not exist a run of three or more cells horizontally or vertically in the grid that all "
+                 "contain numbers of the same parity.") == ["no_three_parity", "no_three_parity"]  # fmt: skip
+    assert kinds("No two numbers in adjacent cells can sum to exactly 10 or 5.") == ["anti_xv"]
+    assert kinds("There can be no four cell intersections where the numbers form a checkerboard pattern.") == [
+        "anti_battenburg"
+    ]
+    assert kinds("Each of the three sets of three horizontally adjacent cells must have a sum divisible by three.") == [
+        "box_triples_mod3"
+    ]
+    sp = _sp4()
+    sp["meta"]["rules"] = "No two numbers in adjacent cells can sum to exactly 10 or 5."
+    pj = sudokupad.to_puzzle(sp, fetch=False)
+    assert [r["scope"] for r in pj["rules"] if r["type"] == "custom"] == [{"pairs": "orthogonal"}]
+
+
 def test_rule_for_every_line():
     """ "all lines are region sum lines" gives every line that rule; a line whose colour also names another rule has two
     rules and is refused (CTC zkz5Qw2BWx4: orange lines are also Dutch whispers)"""

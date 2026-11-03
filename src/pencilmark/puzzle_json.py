@@ -515,6 +515,11 @@ def _compiled_extras(p):
     return Counter(q.relations), [json.dumps(c, sort_keys=True, default=list) for c in extra_cons], base
 
 
+def _frozen(x):
+    """a relation as a hashable value (custom pair rules carry their allowed pairs as lists)"""
+    return tuple(_frozen(v) for v in x) if isinstance(x, (list, tuple)) else x
+
+
 def to_json(p: M.Puzzle, solution=None, meta=None) -> dict:
     """Puzzle -> puzzle JSON dict; solution and meta are written when given"""
     D, coords = p.D, list(p.coords)
@@ -581,8 +586,8 @@ def to_json(p: M.Puzzle, solution=None, meta=None) -> dict:
     # rules: relations minus those compiled from lines / clones
     comp, comp_cons, _ = _compiled_extras(p)
     named = getattr(p, "named_rules", [])
-    named_rels = Counter(x for _, rels_ in named for x in rels_)
-    rels = Counter(p.relations) - comp - named_rels
+    named_rels = Counter(_frozen(x) for _, rels_ in named for x in rels_)
+    rels = Counter(map(_frozen, p.relations)) - Counter({_frozen(k): v for k, v in comp.items()}) - named_rels
     rules = list(clue_rules) + [dict(r_) for r_, _ in named]
     ak = {("neq", a, b) for a, b in _pairs(coords, [(1, 2), (2, 1), (1, -2), (2, -1)])}
     akg = {("neq", a, b) for a, b in _pairs(coords, [(1, 1), (1, -1)])}

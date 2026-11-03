@@ -240,6 +240,8 @@ def translate(fp, line_kinds=None):
     if fp.get("nonconsecutive") is None and re.search(r"non[- ]?consecutive", text) and not fp.get("difference"):
         fp = dict(fp, nonconsecutive=True)
     used.update({k: True for k, v in (("antiknight", knight), ("antiking", king)) if v})
+    custom = ST.global_custom(n, p, fp.get("ruleset")) or ST.global_custom(n, p, fp.get("_page_rules"))
+    used.update(dict.fromkeys(custom, True))
     steps = ([(1, 2), (2, 1), (2, -1), (1, -2)] if knight else []) + ([(1, 1), (1, -1)] if king else [])
     for r in range(n):
         for c in range(n):

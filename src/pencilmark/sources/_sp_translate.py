@@ -1334,6 +1334,7 @@ def translate(sp, page_text=None, overrides=None):
             used["counting_circles"] += 1
     parity_shapes(P, n, p, rules, used, idx, inside)
     global_rules(n, p, rules, used)
+    global_custom(n, p, rules, used)
     shaded_regions(P, n, p, rules, used)
     fortress_cells(P, n, p, rules, used, idx, inside)
     battenburg_corners(P, n, p, rules, used, idx)
@@ -1764,6 +1765,63 @@ def shaded_regions(P, n, p, rules, used):
                     add(comp)
 
 
+_DIGIT_WORDS = {w: i + 1 for i, w in enumerate("one two three four five six seven eight nine".split())}
+_DIGIT_WORDS.update(
+    {"ones": 1, "twos": 2, "threes": 3, "fours": 4, "fives": 5, "sixes": 6, "sevens": 7, "eights": 8, "nines": 9}
+)
+
+
+def _box_triples(n):
+    """the three-cell rows and columns inside each 3x3 box (9x9)"""
+    nm = lambda r, c: f"r{r + 1}c{c + 1}"
+    out = []
+    for br in range(0, n, 3):
+        for bc in range(0, n, 3):
+            out += [[nm(br + i, bc + j) for j in range(3)] for i in range(3)]
+            out += [[nm(br + i, bc + j) for i in range(3)] for j in range(3)]
+    return out
+
+
+def global_custom(n, p, rules, used=None):
+    """one-off whole-grid rules (GAS) stated only in the text, as scoped custom rules -> the kinds added"""
+    from .. import puzzle_json as PJ
+
+    t = (rules or "").lower()
+    found = []
+    m = re.search(r"all (\w+) are encaged by (odd|even) (?:numbers|digits)", t)
+    if m and m.group(1) in _DIGIT_WORDS:
+        d, par = _DIGIT_WORDS[m.group(1)], m.group(2)
+        found.append(
+            (
+                "encaged",
+                {
+                    "holds": f"(a, b) => (a != {d} or {par}(b)) and (b != {d} or {par}(a))",
+                    "scope": {"pairs": "orthogonal"},
+                },
+            )
+        )  # as pairs: a neighbours table is 9^5 rows a cell
+    if re.search(
+        r"(?:may not|cannot|can't|must not) (?:exist )?(?:be )?a run of three or more cells[^.]{0,120}same parity", t
+    ):
+        same = "w => not (all(odd(x) for x in w) or all(even(x) for x in w))"
+        found += [("no_three_parity", {"holds": same, "scope": {"windows": [1, 3]}}),
+                  ("no_three_parity", {"holds": same, "scope": {"windows": [3, 1]}})]  # fmt: skip
+    if re.search(r"no two (?:numbers|digits) in adjacent cells can sum to (?:exactly )?10 or 5", t):
+        found.append(("anti_xv", {"holds": "(a, b) => a + b != 10 and a + b != 5", "scope": {"pairs": "orthogonal"}}))
+    if re.search(
+        r"(?:no|cannot be any) four[- ]cell intersections? where the (?:numbers|digits) form a\W{0,2}checkerboard", t
+    ):
+        chk = "w => not (w[1] mod 2 == w[4] mod 2 and w[2] mod 2 == w[3] mod 2 and w[1] mod 2 != w[2] mod 2)"
+        found.append(("anti_battenburg", {"holds": chk, "scope": {"windows": [2, 2]}}))
+    if n == 9 and re.search(r"three (?:horizontally|vertically) adjacent cells[^.]{0,80}divisible by three", t):
+        found.append(("box_triples_mod3", {"cells": {"t": _box_triples(n)}, "each": "t", "holds": "sum(t) mod 3 == 0"}))
+    for kind, rule in found:
+        PJ.add_named(p, {"type": "custom", **rule})
+        if used is not None:
+            used[kind] += 1
+    return [k for k, _ in found]
+
+
 def global_rules(n, p, rules, used):
     """Whole-grid rules stated only in the text.
     Global entropy: every 2x2 area holds a low, a middle and a high digit (thirds of 1..n).
@@ -1771,7 +1829,7 @@ def global_rules(n, p, rules, used):
 
     t = (rules or "").lower()
     if n % 3 == 0 and re.search(
-        r"global entropy|every 2 ?x ?2[^.]{0,80}(?:low|entrop)|each 2 ?x ?2[^.]{0,80}(?:low|entrop)", t
+        r"global entropy|every 2 ?[x×] ?2[^.]{0,140}(?:low|entrop)|each 2 ?[x×] ?2[^.]{0,140}(?:low|entrop)", t
     ):
         from .. import puzzle_json as PJ
 
