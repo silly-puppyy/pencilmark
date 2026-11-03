@@ -548,6 +548,15 @@ def _h_equal_digits(ctx):
         ok &= cs == [B]
     el = {(A, d) for d in digits_of(st.cand[A] & ~st.cand[B])} | {(B, d) for d in digits_of(st.cand[B] & ~st.cand[A])}
     ok &= set(ctx.elims) <= el
+    if not ctx.elims:  # identity layer (params id_layer): kept as a colour class, nothing eliminated yet
+        short = f"{nm.cell(A)} and {nm.cell(B)} must hold the same digit (one colour)"
+        teach = (
+            f"{nm.cell(A)} {nm.cset(st.cand[A])} sits outside {nm.unit(hi)}. Whatever digit it is, {nm.unit(hi)} needs "
+            f"that digit too, and every spot for it there sees {nm.cell(A)} except {nm.cell(B)}. So the two cells hold "
+            f"the same digit: colour them alike and keep the colour for later."
+        )
+        J = _J(ctx, digits=sorted(digits_of(st.cand[A] & st.cand[B])), base_units=[hi], base_cells=[A, B])
+        return _result(ctx, J, short, teach, ok, extra_cells=[A, B])
     short = f"{fmt_elims(nm, ctx.elims)}: {nm.cell(A)} and {nm.cell(B)} must hold the same digit"
     teach = (
         f"{nm.cell(A)} {nm.cset(st.cand[A])} sits outside {nm.unit(hi)}. Take any of its candidates: if "
@@ -559,6 +568,39 @@ def _h_equal_digits(ctx):
     )
     J = _J(ctx, digits=sorted(digits_of(st.cand[A] | st.cand[B])), base_units=[hi], base_cells=[A, B])
     return _result(ctx, J, short, teach, ok, extra_cells=[A, B])
+
+
+def _h_class_single(ctx):
+    """identity layer: only one cell of a house can hold a colour class's digit -> it joins the class"""
+    nm = ctx.nm
+    X, a, hi = ctx.xm.get("cell"), ctx.xm.get("anchor"), ctx.xm.get("house")
+    ms = [c for c in (ctx.engine.get("pattern_cells") or ()) if isinstance(c, int) and c != X]
+    if X is None or a is None or hi is None or not ms:
+        return _generic(ctx)
+    short = f"{nm.cell(X)} has the colour of {nm.cell(a)}: the only place for it in {nm.unit(hi)}"
+    teach = (
+        f"{nm.cells(ms)} hold one digit, whatever it is. {_cap(nm.unit(hi))} needs that digit too, and every other "
+        f"cell there sees one of them or cannot hold it. So {nm.cell(X)} is that digit: it gets the same colour."
+    )
+    J = _J(ctx, base_units=[hi], base_cells=ms + [X])
+    return _result(ctx, J, short, teach, True, extra_cells=ms + [X])
+
+
+def _h_class_propagation(ctx):
+    """identity layer: cells of one colour hold one digit -- what one loses, all lose; one placed places all"""
+    nm = ctx.nm
+    ms = [c for c in (ctx.engine.get("pattern_cells") or ()) if isinstance(c, int)]
+    if not ms:
+        return _generic(ctx)
+    if ctx.place:
+        c, v = ctx.place
+        short = f"{nm.cell(c)} = {v}: same colour as {nm.cells([x for x in ms if x != c])}"
+        teach = f"{nm.cells(ms)} hold one digit; one of them is {v}, so {nm.cell(c)} is {v} too."
+    else:
+        short = f"{fmt_elims(nm, ctx.elims)}: cells of one colour ({nm.cells(ms)})"
+        teach = f"{nm.cells(ms)} hold one digit, so each keeps only the candidates all of them have: {_cant(nm, ctx.elims)}."
+    J = _J(ctx, base_cells=ms, digits=sorted({d for _, d in ctx.elims}) or ([ctx.place[1]] if ctx.place else []))
+    return _result(ctx, J, short, teach, True, extra_cells=ms)
 
 
 def _h_line_scan(ctx):

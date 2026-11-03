@@ -51,6 +51,8 @@ from .singles import (
     _rule_from_move,
 )
 from .trial import (
+    _h_class_propagation,
+    _h_class_single,
     _h_digit_count,
     _h_either_way,
     _h_equal_digits,
@@ -176,6 +178,25 @@ CONCEPTS.setdefault(
 )
 
 _X_HANDLERS = {
+    "CLASS_SINGLE": (
+        _h_class_single,
+        "equal_cells",
+        "intersections+combos",
+        (
+            "Colour class single",
+            "A colour (cells holding one unknown digit) must appear in every house: when only one "
+            "cell of a house can take it, that cell gets the colour.",
+        ),
+    ),
+    "ID_PROPAGATE": (
+        _h_class_propagation,
+        "equal_cells",
+        "singles",
+        (
+            "Colour class propagation",
+            "Cells of one colour hold one digit: a candidate one of them loses, all lose; one placed places them all.",
+        ),
+    ),
     "CLUE_FACTS": (
         _h_clue_facts,
         "clue_facts",

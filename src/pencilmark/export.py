@@ -544,6 +544,8 @@ def _f_steps(c):
             r["region"] = f"{cn(st['lplace'][0])}@{st['lplace'][1]}"
         if st.get("lelims"):
             r["region_eliminations"] = [f"{cn(x)}@!{k}" for x, k in st["lelims"]]
+        if st.get("idjoin"):  # identity layer (params id_layer, experiment): the cell joins the colour class of anchor
+            r["same_digit"] = [f"{cn(x)}={cn(a)}" for x, a in st["idjoin"]]
         told = {x: expl[i][x] for x in levels if expl[i].get(x)} if levels and expl[i] else {}
         if told:  # a step with none of the requested levels (substeps only, for a step told in one go) has none
             r["explanation"] = told

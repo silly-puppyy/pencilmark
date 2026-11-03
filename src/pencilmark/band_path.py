@@ -148,6 +148,30 @@ def variant_gate(p):
 _CACHE = None  # position -> state_moves, shared by the many routes of one contents() call (same openings)
 
 
+def _id_norm(idc, vals):
+    """identity layer (params id_layer): canonical class ids in place, as the engine's id_normalize -- 1 + the class's
+    first cell; a class with every member placed, or a single member, is freed"""
+    cls = {}
+    for c, k in enumerate(idc):
+        if k:
+            cls.setdefault(k, []).append(c)
+    for c in range(len(idc)):
+        idc[c] = 0
+    for ms in cls.values():
+        if len(ms) >= 2 and any(not vals[c] for c in ms):
+            for c in ms:
+                idc[c] = ms[0] + 1
+
+
+def _id_join(idc, vals, c, a):
+    """cell c (with its class) joins the class of cell a"""
+    ks = {k for k in (idc[c], idc[a]) if k}
+    ms = {x for x, k in enumerate(idc) if k in ks} | {c, a}
+    for x in ms:
+        idc[x] = min(ms) + 1
+    _id_norm(idc, vals)
+
+
 def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes=(), guard=None, prefix=(), max_band=6):
     """solve band by band (see module doc). Moves are taken in full-notes mode: each placement clears its peers.
     target = a cell: stop once it is placed, preferring (within the current band) a move that places it -- "what does
@@ -180,8 +204,11 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
         if c_.get("type") == "chaos":
             for x in c_["cells"]:
                 lcand[x] = (1 << D) - 1
-    labels = lambda: (lab, lcand) if chaos else None  # noqa: E731
-    lkey = lambda: (tuple(lab), tuple(lcand)) if chaos else ()  # noqa: E731
+    # identity layer (params id_layer): colour class per cell (0 none), canonical ids as the engine keeps them
+    ids = bool(P.get("id_layer"))
+    idc = [0] * N if ids else None
+    labels = lambda: (lab, lcand, idc) if chaos or ids else None  # noqa: E731
+    lkey = lambda: (tuple(lab or ()), tuple(lcand or ()), tuple(idc or ())) if chaos or ids else ()  # noqa: E731
     q = copy.copy(p)  # the puzzle keeps its own domains; each state's candidates go in as a mask
     cp = getattr(p, "_bp_cpuzzle", None)
     if cp is None:
@@ -211,9 +238,13 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
                     lcand[c] &= ~(1 << (k - 1))
                     if lcand[c] and not lcand[c] & (lcand[c] - 1):
                         lab[c] = lcand[c].bit_length()
+        if ids:  # class joins; a placement may free a class
+            for c, a in m.get("idjoin") or ():
+                _id_join(idc, vals, c, a)
+            _id_norm(idc, vals)
 
-    def acts(m):  # the move changes the state (a digit or a region label)
-        return m["place"] or m["elim"] or (chaos and (m.get("lplace") or m.get("lelim")))
+    def acts(m):  # the move changes the state (a digit, a region label or a colour class)
+        return m["place"] or m["elim"] or (chaos and (m.get("lplace") or m.get("lelim"))) or (ids and m.get("idjoin"))
 
     counts = Counter()
     aborted = False
@@ -229,7 +260,15 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
     for stp in prefix:
         steps.append(stp)
         counts[stp["code"]] += 1
-        apply({"place": stp["place"], "elim": stp["elims"], "lplace": stp.get("lplace"), "lelim": stp.get("lelims")})
+        apply(
+            {
+                "place": stp["place"],
+                "elim": stp["elims"],
+                "lplace": stp.get("lplace"),
+                "lelim": stp.get("lelims"),
+                "idjoin": stp.get("idjoin"),
+            }
+        )
     for _ in range(max_steps):
         if aborted or all(vals) or (target is not None and vals[target]):
             break
@@ -258,6 +297,7 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
                             if chaos
                             else {}
                         ),
+                        **({"idjoin": list(getattr(x.move, "idjoin", None) or ())} if ids else {}),
                     }
                     for x in st0
                     if x.move.feat[0] not in notes and x.move.feat[0] in allowed0
@@ -290,6 +330,7 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
                         "seg": seg,
                         "d": m.get("d"),
                         **({"lplace": m.get("lplace"), "lelims": list(m.get("lelim") or ())} if chaos else {}),
+                        **({"idjoin": list(m.get("idjoin") or ())} if ids else {}),
                     }
                 )
                 moved = True
@@ -370,7 +411,12 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
                 if (
                     x is not None
                     and x.move.feat[0] not in stop
-                    and (x.move.place or x.move.elim or (chaos and (x.move.lplace or x.move.lelim)))
+                    and (
+                        x.move.place
+                        or x.move.elim
+                        or (chaos and (x.move.lplace or x.move.lelim))
+                        or (ids and getattr(x.move, "idjoin", None))
+                    )
                 ):
                     m = {
                         "tech": x.move.feat[0],
@@ -381,6 +427,7 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
                         "xmeta": getattr(x.move, "xmeta", None),
                         "d": float(x.move.d) if x.move.d is not None else None,
                         **({"lplace": x.move.lplace, "lelim": list(x.move.lelim)} if chaos else {}),
+                        **({"idjoin": list(getattr(x.move, "idjoin", None) or ())} if ids else {}),
                     }
                 if key1 is not None:
                     _CACHE[key1] = m
@@ -410,6 +457,7 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
                 "seg": seg,
                 "d": m.get("d"),
                 **({"lplace": m.get("lplace"), "lelims": list(m.get("lelim") or ())} if chaos else {}),
+                **({"idjoin": list(m.get("idjoin") or ())} if ids else {}),
             }
         )
     if target is not None:
@@ -519,11 +567,17 @@ def _states(p, steps):
     for cells in chaos:
         for x in cells:
             lcand[x] = (1 << D) - 1
+    ids = any("idjoin" in st for st in steps)  # identity layer: the route carries its colour classes
+    idc = [0] * N
     for st in steps:
         q = copy.copy(p)
         q.givens = {c: v for c, v in enumerate(vals) if v}
         q.domains = [cand[c] if not vals[c] else 1 << (vals[c] - 1) for c in range(N)]
-        q._pm_labels = (list(lab), list(lcand)) if chaos else None
+        q._pm_labels = (
+            (list(lab) if chaos else None, list(lcand) if chaos else None, list(idc) if ids else None)
+            if chaos or ids
+            else None
+        )
         yield q
         if st["place"]:
             c, d = st["place"]
@@ -541,6 +595,10 @@ def _states(p, steps):
                     lcand[c] &= ~(1 << (k - 1))
                     if lcand[c] and not lcand[c] & (lcand[c] - 1):
                         lab[c] = lcand[c].bit_length()
+        if ids:
+            for c, a in st.get("idjoin") or ():
+                _id_join(idc, vals, c, a)
+            _id_norm(idc, vals)
 
 
 def contents(p, P, alternatives=True, deadline=None, base=None):
@@ -626,7 +684,11 @@ def _contents(p, P, alternatives, deadline=None, base=None):
                     labels=getattr(q, "_pm_labels", None),
                 ):
                     c2, _, b2 = classify(m, p)
-                    if b2 == b and c2 != code and (m["place"] or m["elim"] or m.get("lplace") or m.get("lelim")):
+                    if (
+                        b2 == b
+                        and c2 != code
+                        and (m["place"] or m["elim"] or m.get("lplace") or m.get("lelim") or m.get("idjoin"))
+                    ):
                         seen.add(c2)
             alt0 = None
             for y in sorted(seen, key=lambda c_: (_order(c_), c_)):  # ties by code: deterministic in every process

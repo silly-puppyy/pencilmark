@@ -90,6 +90,8 @@ XMETA_KEYS = {
     S.LINE_CLASS: ("line_kind", "constraint", "line_len", "classes", "n_elims"),
     S.DIGIT_COUNT: ("units", "base_cells", "n_elims", "digit"),
     S.EQUAL_DIGITS: ("cell_a", "cell_b", "house", "candidates"),
+    S.CLASS_SINGLE: ("cell", "anchor", "house", "members", "class_digits"),
+    S.ID_PROPAGATE: ("anchor", "members", "class_digits", "digit"),
     S.LINE_SCAN: ("line_kind", "constraint", "window", "cells"),
     S.LINE_RANGE: ("line_kind", "constraint", "line_len", "cells_changed", "informing", "transitive_depth", "combos"),
     S.UNIQUE_RECT: ("type", "x", "y", "extra_cells", "n_elims"),
@@ -220,7 +222,7 @@ class CMove(S.Move):
     """pencilmark.solver.Move plus structured metadata of the C++-only
     techniques: xmeta (dict, see XMETA_KEYS), family, code."""
 
-    __slots__ = ("xmeta", "family", "code", "explain", "lplace", "lelim")
+    __slots__ = ("xmeta", "family", "code", "explain", "lplace", "lelim", "idjoin")
 
 
 _CPUZZLES = {}  # repr of the make_puzzle arguments -> C++ puzzle; a card builds the same puzzle about 6 times
@@ -241,13 +243,32 @@ def to_cpuzzle(p):
     return cp
 
 
-AE_LABEL_PLACE, AE_LABEL_ELIM = 1, 2  # annotation effect kinds (csrc/solver.hpp AEffKind)
+AE_LABEL_PLACE, AE_LABEL_ELIM, AE_ID_JOIN = 1, 2, 3  # annotation effect kinds (csrc/solver.hpp AEffKind)
 
 
 def _label_fx(aeffs):
     """(placement, eliminations) of region labels from a move's annotation effects (kind, cell, arg)."""
     place = next(((c, a) for k, c, a in aeffs if k == AE_LABEL_PLACE), None)
     return place, [(c, a) for k, c, a in aeffs if k == AE_LABEL_ELIM]
+
+
+def _id_fx(aeffs):
+    """identity layer (params id_layer): the move's class joins [(cell, anchor cell)] -- cell's class merges into the
+    class whose first cell is anchor"""
+    return [(c, a) for k, c, a in aeffs if k == AE_ID_JOIN]
+
+
+def _ann_kw(labels):
+    """engine keywords of a mid-solve annotation state: labels = (region labels, label candidates[, colour classes]);
+    either part may be None"""
+    kw = {}
+    if labels is None:
+        return kw
+    if labels[0] is not None:  # regions to find
+        kw["labels"] = (list(labels[0]), list(labels[1]))
+    if len(labels) > 2 and labels[2] is not None:  # identity layer: class per cell (0 none)
+        kw["idc"] = [int(x) for x in labels[2]]
+    return kw
 
 
 def _cpuzzle_args(p):
@@ -397,7 +418,7 @@ def solve(
     ]
     args.append(bool(explain))
     args.append(_colour_list(colour_seeds, puzzle.N))
-    kw = {"labels": (list(labels[0]), list(labels[1]))} if labels is not None else {}  # regions to find: mid-solve
+    kw = _ann_kw(labels)  # regions to find / colour classes: mid-solve
     if cand is not None:
         raw, solved = _C.solve(*args, cand=[int(x) for x in cand], **kw)
     else:
@@ -412,6 +433,7 @@ def solve(
         m.place = place
         m.elim = el
         m.lplace, m.lelim = _label_fx(row[15]) if len(row) > 15 else (None, ())  # annotations: region labels
+        m.idjoin = _id_fx(row[15]) if len(row) > 15 else []  # ... and colour class joins
         m.name = _name(puzzle, *nm)
         m.d = d
         tech = m.feat[0]
@@ -507,7 +529,7 @@ def state_moves(
         bool(assume_unique),
         int(limit_per_tech),
     ]
-    kw = {"labels": (list(labels[0]), list(labels[1]))} if labels is not None else {}  # regions to find: mid-solve
+    kw = _ann_kw(labels)  # regions to find / colour classes: mid-solve
     if cand is not None:  # mid-solve candidates as a mask; cpuzzle keeps the puzzle's own domains (build it once)
         raw = _C.state_moves(
             *args,
@@ -528,10 +550,11 @@ def state_moves(
     else:
         raw = _C.state_moves(*args, skip=[int(t) for t in skip], **kw)
     chaos = any(c.get("type") == "chaos" for c in getattr(puzzle, "constraints", ()))
+    ann = chaos or bool(sc.p.get("id_layer"))  # regions to find / identity layer: annotation effects
     out = []
     for r in raw:
         lfx = None
-        if chaos:  # the annotation effects come last (regions to find)
+        if ann:  # the annotation effects come last
             lfx, r = r[-1], r[:-1]
         t, code, pl, el, d = r[:5]
         m = {
@@ -543,7 +566,11 @@ def state_moves(
             "d": d,
         }
         if lfx is not None:
-            m["lplace"], m["lelim"] = _label_fx(lfx)
+            if chaos:
+                m["lplace"], m["lelim"] = _label_fx(lfx)
+            ij = _id_fx(lfx)
+            if ij:
+                m["idjoin"] = ij
         if len(r) > 9:  # the engine's explanation records and naming triple (decode with explain_record)
             m["ex"], m["nm"] = list(r[9]), tuple(r[10])
         if len(r) > 5:

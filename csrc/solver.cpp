@@ -362,6 +362,17 @@ Solver::Solver(const Puzzle& pz, const Params& prm, const SolveOptions& o)
         for (int t : {UNIQUE_RECT, BUG_PLUS1, GURTH}) disabled.set(t, 1);
         any_disabled = true;
     }
+    if (id_on()) {  // identity layer: propagation competes with the singles, ClassSingle sits beside EqualDigits
+        for (auto& t : tiers) {
+            bool sg = false, eq = false;
+            for (auto& st : t) {
+                sg |= std::string(st->name()) == "singles";
+                eq |= std::string(st->name()) == "equaldigits";
+            }
+            if (sg) t.push_back(S("idprop", [](Solver& s, MoveBuf& b) { s.id_propagate(b, false); }));
+            if (eq) t.push_back(S("classsingle", [](Solver& s, MoveBuf& b) { s.class_single(b); }));
+        }
+    }
     canon = !disabled[CANONICAL];
 }
 
@@ -383,6 +394,9 @@ void Solver::init_state(const std::vector<std::pair<int, int>>& givens) {
     if (has_regions() && (int)lab_override.size() == p.N && (int)lcand_override.size() == p.N)
         lab = lab_override, lcand = lcand_override;
     label_normalize();
+    idc.assign(id_on() ? p.N : 0, 0);
+    if (id_on() && (int)idc_override.size() == p.N) idc = idc_override;
+    id_normalize();
 }
 
 // _place
@@ -799,6 +813,7 @@ void Solver::collect_all(MoveBuf& b, bool direct_phase) {
             });
         };
         run("d:singles", [&] { direct_moves(b, false); });
+        if (id_on()) run("d:idprop", [&] { id_propagate(b, true); });
         if (p.has_cages || !p.nary.empty()) {
             run("d:innies", [&] { innies(b, false); });
             run("d:nary", [&] { nary_direct(b); });
@@ -1153,7 +1168,10 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
             }
         } else if (mode == 0) {
             entered.push_back(0);
-            timed("d:singles", buf, [&] { direct_moves(buf, false); });
+            timed("d:singles", buf, [&] {
+                direct_moves(buf, false);
+                if (id_on()) id_propagate(buf, true);
+            });
             filter(buf);
             if (buf.moves.empty() && (p.has_cages || !p.nary.empty())) {
                 buf.clear();
@@ -1537,9 +1555,11 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
                     const AEff& e = buf.aeffs[bm.aeff_off + i];
                     if (pass == 0 && e.kind == AE_LABEL_ELIM && !lab[e.cell]) lcand[e.cell] &= ~bit(e.arg);
                     if (pass == 1 && e.kind == AE_LABEL_PLACE) lab[e.cell] = (uint8_t)e.arg, lcand[e.cell] = bit(e.arg);
+                    if (pass == 1 && e.kind == AE_ID_JOIN && id_on()) id_join(e.cell, e.arg);
                 }
             if (has_regions()) label_normalize();
         }
+        if (id_on()) id_normalize();  // a placement may free a class
         st.erasures = mode == 1 ? erasures : 0;
         out.steps.push_back(st);
     }

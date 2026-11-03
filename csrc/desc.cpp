@@ -104,7 +104,7 @@ void Solver::describe(Move& m, const MoveBuf& b) {
     case FULL_HOUSE:
         search = 1;
         break;
-    case NAKED_D: case NAKED_DL: case NAKED_N:
+    case NAKED_D: case NAKED_DL: case NAKED_N: case ID_PROPAGATE:
         search = m.pc >= 0 ? std::max(1, popc(cand[m.pc])) : 1;  // the candidates of the cell
         if (t == NAKED_D || t == NAKED_DL) search = p.D;         // without notes: every digit is checked
         break;
@@ -136,12 +136,12 @@ void Solver::describe(Move& m, const MoveBuf& b) {
     case XYWING: branches = 2, depth = 2, search = (double)ds_bivalue * ds_bivalue; break;
     case XYZWING: branches = 3, depth = 2, search = (double)ds_bivalue * ds_bivalue; break;
     case N_WING: branches = std::max(pm_long(2), xm[0]), depth = 2, search = (double)ds_bivalue * ds_empty; break;
-    case COLORING: case MULTI_COLOR: case MEDUSA: case COLOUR_ALGEBRA: case EQUAL_DIGITS:
+    case COLORING: case MULTI_COLOR: case MEDUSA: case COLOUR_ALGEBRA: case EQUAL_DIGITS: case CLASS_SINGLE:
         branches = 2;
         depth = std::max(1.0, meta(3));
         search = ds_cands;
         if (t == MEDUSA && xm[0] >= 1 && xm[0] <= 3) contra = true;  // a colour that contradicts itself
-        if (t == COLOUR_ALGEBRA || t == EQUAL_DIGITS) branches = 1;
+        if (t == COLOUR_ALGEBRA || t == EQUAL_DIGITS || t == CLASS_SINGLE) branches = 1;
         break;
     case X_CHAIN: case XY_CHAIN: case AIC_CHAIN: case NICE_LOOP: case MENTAL_CHAIN: case REMOTE_PAIRS: case EMPTY_RECT:
     case ALS_AIC:

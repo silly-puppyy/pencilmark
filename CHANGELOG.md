@@ -108,6 +108,10 @@
   `less` relations and pair rules, with the line's colour on one pair only), and a board-sized background fill as a
   `decorations` rect (section 7). Grades unchanged on the gate; a few line-heavy LMD puzzles grade a band easier now
   that the engine sees the whole line.
+- Experimental identity layer behind the parameter `id_layer` (off by default; grades unchanged): cells known to hold
+  one unknown digit are kept as a colour class even when no candidate goes (EqualDigits joins), with ClassSingle (a
+  class's only place in a house) and ClassPropagation (a member loses a digit / is placed -> all members). First
+  increment of docs/research/identity_layer_v2_proposal.md; not yet adopted (accuracy test pending).
 - SudokuPad links of the form `sudokupad.app/<author>/<slug>` are fetched (they were refused as not a short id).
 - Speed and robustness: the C++ uniqueness search without OR-Tools stops at a time limit, not only a node limit
   (counting-circle puzzles ran for hours); the trial step retries with a larger search before giving up (two unique

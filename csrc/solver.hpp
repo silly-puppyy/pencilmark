@@ -87,6 +87,8 @@ enum Tech {
     REGION_EXIT = 107,    ///< regions to find: a region short of cells with one way out takes that cell
     REGION_DIGIT = 108,   ///< regions to find: a region's missing digit fits one cell it can reach: that cell joins it
     POCKET = 109,         ///< regions to find: a pocket too small for a new region, touching one unfinished region, joins it
+    CLASS_SINGLE = 110,   ///< identity layer: in a house only one cell can hold a colour class's digit -> it joins the class
+    ID_PROPAGATE = 111,   ///< identity layer: a class member's lost candidate / placed digit carries to every member
     MENTAL_NOTES = 84,    ///< single after notes logic done in the head (subset / pointing / combination on the mental view)    // line consistency on 3-cell windows (local scan of a long line)  // both options of a 2-way choice lead to the same placement / elimination  // short chain (<= 5 links) on the no-notes mental view, leading to a single  // bounded case split: bivalue cell, contradiction within a few direct rounds
     N_TECH = 128
 };
@@ -101,7 +103,9 @@ enum Kind { K_HOUSE = 0, K_CAGE = 1, K_NEQ = 2, K_NONCONSEC = 3, K_DOMAIN = 4, K
 
 struct Move;
 /// an annotation effect of a move: a persistent mark beyond digits and candidates (kind, cell, argument)
-enum AEffKind { AE_LABEL_PLACE = 1, AE_LABEL_ELIM = 2 };  ///< region label placed / ruled out (arg: the label)
+/// region label placed / ruled out (arg: the label); identity layer (params id_layer): the cell joins the colour class
+/// whose anchor (first cell in reading order) is arg -- its own class, if any, merges into that one
+enum AEffKind { AE_LABEL_PLACE = 1, AE_LABEL_ELIM = 2, AE_ID_JOIN = 3 };
 struct AEff {
     int kind, cell, arg;
     bool operator<(const AEff& o) const {
@@ -329,6 +333,8 @@ struct Params {
     int neq_peers = 0;           ///< params neq_peers: 1 = relation pointing through "different" links (anti-knight, anti-king)
                                  ///< also counts house peers: a cell seeing every place of a digit in a house, some by a
                                  ///< knight's move and some by row / column / box, loses it (experiment, C2b sheet)
+    int id_layer = 0;            ///< params id_layer: 1 = persistent identity classes (cells holding one unknown digit):
+                                 ///< EqualDigits / ClassSingle create them without eliminating, ClassPropagation uses them
     int refute_rounds = 0;       ///< params refute_rounds: 1 = refute_profile counts propagation rounds (all singles of a
                                  ///< round placed together: independent of cell order), 0 = placements (experiment, B1c)
     int fish_max_n = 4;          ///< params fish_max_n: largest finned fish listed (the band path lists Medium with 2: larger
@@ -462,6 +468,19 @@ public:
     std::vector<uint8_t> lab_override;     ///< a mid-solve state's labels (band_path), applied after the givens
     std::vector<uint32_t> lcand_override;  ///< ... and label candidates
     void label_normalize();  ///< canonical label names (label k first appears before k + 1), silently: a naming convention
+    /// identity layer (params id_layer): class per cell (0 none, else 1 + the class's first cell in reading order) for
+    /// cells known to hold one common unknown digit; empty when the layer is off
+    std::vector<int> idc;
+    std::vector<int> idc_override;  ///< a mid-solve state's classes (band_path), applied after the givens
+    bool id_on() const { return P.id_layer > 0; }
+    /// canonical class ids (1 + first member), a class with every member placed (or one member left) freed
+    void id_normalize();
+    /// joins cell c to the class anchored at cell a (normalises)
+    void id_join(int c, int a);
+    int id_live() const;  ///< number of live classes
+    /// the anchor of c's class, or c itself when it has none
+    int id_anchor(int c) const { return idc.empty() || !idc[c] ? c : idc[c] - 1; }
+    static constexpr int ID_CAP = 16;  ///< at most this many live classes
 
     // ---- techniques (each appends to out) ----
     void direct_moves(MoveBuf& out, bool use_locks, int mental = 0);  ///< mental: 0 off, 2 relations/lines, 3 + subsets
@@ -611,6 +630,11 @@ public:
     void digit_count(MoveBuf& out);
     /// two cells forced to hold the same unknown digit (abstract colouring): each keeps the other's candidates
     void equal_digits(MoveBuf& out);
+    /// identity layer: a house where only one cell can hold a class's digit (the others see a member): it joins
+    void class_single(MoveBuf& out);
+    /// identity layer: a member's lost candidate leaves every member; a placed member places the others (direct_view:
+    /// placements only)
+    void id_propagate(MoveBuf& out, bool direct_view);
     /// local scan of a long line: consistency over each window of 3 consecutive cells
     void line_scan(MoveBuf& out);
     /// 3D Medusa: colouring over strong links of several digits; wraps and traps give eliminations

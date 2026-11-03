@@ -174,8 +174,11 @@ void Solver::digit_count(MoveBuf& out) {
 // Abstract colouring: A outside house H; for every candidate d of A the only cell of H
 // that can hold d without seeing A is the same cell B (d not yet placed in H) -> A and B
 // hold the same digit (whatever it is) -> each keeps only the other's candidates.
+// Identity layer (params id_layer): the finding is kept as a colour class even when no candidate goes (AE_ID_JOIN).
 void Solver::equal_digits(MoveBuf& out) {
     if (disabled[EQUAL_DIGITS]) return;
+    const bool ids = id_on();
+    const bool room = ids && id_live() < ID_CAP;  // a new class needs room under the cap
     for (int A = 0; A < p.N; ++A) {
         if (vals[A] || popc(cand[A]) < 2) continue;
         for (int hi : p.houses) {
@@ -195,8 +198,11 @@ void Solver::equal_digits(MoveBuf& out) {
             }
             if (!ok || B < 0) continue;
             uint32_t ea = cand[A] & ~cand[B], eb = cand[B] & ~cand[A];
-            if (!ea && !eb) continue;
+            const int ka = ids ? id_anchor(A) : A, kb = ids ? id_anchor(B) : B;
+            const bool join = ids && ka != kb && (idc[A] || idc[B] || room);
+            if (!ea && !eb && !join) continue;
             Move& m = new_move(out, EQUAL_DIGITS, 1.0, popc(cand[A]));
+            if (join) add_aeff(out, m, AE_ID_JOIN, std::max(ka, kb), std::min(ka, kb));
             for (uint32_t x = ea; x; x &= x - 1) add_elim(out, m, A, lowdigit(x));
             for (uint32_t x = eb; x; x &= x - 1) add_elim(out, m, B, lowdigit(x));
             std::vector<int> pc{A, B};
@@ -207,6 +213,147 @@ void Solver::equal_digits(MoveBuf& out) {
             pm_long xm[XM_N] = {A, B, hi, popc(cand[A]), 0, 0, 0, 0, 0, 0};
             std::copy(xm, xm + XM_N, m.xm);
         }
+    }
+}
+
+// ---- identity layer (params id_layer): persistent colour classes of cells holding one unknown digit ----
+// A class is a set of cells known to hold the same digit, whatever it is; its digits are the intersection of its
+// members' candidates (not stored). Ids are canonical: 1 + the class's first cell in reading order, so the listing
+// cache and band_path's state keys see one name per class.
+
+void Solver::id_normalize() {
+    if (idc.empty()) return;
+    std::map<int, std::vector<int>> cls;  // members in reading order
+    for (int c = 0; c < p.N; ++c)
+        if (idc[c]) cls[idc[c]].push_back(c);
+    std::fill(idc.begin(), idc.end(), 0);
+    for (auto& kv : cls) {
+        const std::vector<int>& ms = kv.second;
+        int open = 0;
+        for (int c : ms) open += !vals[c];
+        if (ms.size() < 2 || !open) continue;  // resolved (every member placed) or a single cell: freed
+        for (int c : ms) idc[c] = ms[0] + 1;
+    }
+}
+
+void Solver::id_join(int c, int a) {
+    if (idc.empty() || c == a) return;
+    const int kc = idc[c], ka = idc[a];
+    int lo = std::min(c, a);
+    for (int x = 0; x < p.N; ++x)
+        if ((kc && idc[x] == kc) || (ka && idc[x] == ka)) lo = std::min(lo, x);
+    const int nk = lo + 1;
+    for (int x = 0; x < p.N; ++x)
+        if ((kc && idc[x] == kc) || (ka && idc[x] == ka)) idc[x] = nk;
+    idc[c] = idc[a] = nk;
+    id_normalize();
+}
+
+int Solver::id_live() const {
+    int n = 0;
+    for (int c = 0; c < (int)idc.size(); ++c) n += idc[c] == c + 1;  // a class counted at its anchor
+    return n;
+}
+
+namespace {
+// the live classes: anchor -> members (reading order)
+std::map<int, std::vector<int>> id_classes(const std::vector<int>& idc) {
+    std::map<int, std::vector<int>> cls;
+    for (int c = 0; c < (int)idc.size(); ++c)
+        if (idc[c]) cls[idc[c] - 1].push_back(c);
+    return cls;
+}
+}  // namespace
+
+// "Only one place for blue in this box": class K (no member placed, none in house H); a cell of H that sees a member
+// cannot hold K's digit, nor can a cell without any of K's digits. K's digit is somewhere in H, so when one cell X is
+// left, X holds it: X joins K.
+void Solver::class_single(MoveBuf& out) {
+    if (!id_on() || disabled[CLASS_SINGLE]) return;
+    const int W = p.W;
+    for (const auto& kv : id_classes(idc)) {
+        const int a = kv.first;
+        const std::vector<int>& ms = kv.second;
+        uint32_t I = p.full;
+        bool any_placed = false;
+        for (int c : ms) {
+            if (vals[c]) any_placed = true;
+            I &= vals[c] ? bit(vals[c]) : cand[c];
+        }
+        if (any_placed || !I) continue;  // a placed member: ClassPropagation's job
+        std::vector<uint64_t> sees(W, 0);
+        for (int c : ms)
+            for (int w = 0; w < W; ++w) sees[w] |= p.peers(c)[w];
+        for (int hi : p.houses) {
+            bool inside = false;
+            for (int c : ms) inside |= tbit(p.gbits(hi), c);
+            if (inside) continue;
+            int X = -1, n = 0;
+            for (int c : p.groups[hi].cells) {
+                if (tbit(sees.data(), c)) continue;
+                if (!((vals[c] ? bit(vals[c]) : cand[c]) & I)) continue;
+                ++n;
+                X = c;
+            }
+            if (n != 1 || vals[X] || id_anchor(X) == a) continue;
+            Move& m = new_move(out, CLASS_SINGLE, 1.0, (int)ms.size());
+            const int x = id_anchor(X);
+            add_aeff(out, m, AE_ID_JOIN, std::max(x, a), std::min(x, a));
+            std::vector<int> pc(ms);
+            pc.push_back(X);
+            set_pattern(out, m, pc);
+            add_expl(out, m, EX_BASE, {hi});
+            m.shape = pspread(pc);
+            meta9(m, (int)ms.size() + 1 + (int)p.groups[hi].cells.size() / 3, 2, popc(I), 1, 1, 0, 0, 1, m.shape);
+            pm_long xm[XM_N] = {X, a, hi, (pm_long)ms.size(), popc(I), 0, 0, 0, 0, 0};
+            std::copy(xm, xm + XM_N, m.xm);
+        }
+    }
+}
+
+// The use of a class: its members hold one digit, so a candidate one member lost leaves them all, and a placed member
+// places the others. Priced as a single (a direct consequence of what is already known).
+void Solver::id_propagate(MoveBuf& out, bool direct_view) {
+    if (!id_on() || disabled[ID_PROPAGATE]) return;
+    for (const auto& kv : id_classes(idc)) {
+        const int a = kv.first;
+        const std::vector<int>& ms = kv.second;
+        uint32_t I = p.full;
+        int pv = 0;
+        for (int c : ms) {
+            if (vals[c]) pv = vals[c];
+            I &= vals[c] ? bit(vals[c]) : cand[c];
+        }
+        if (!I) continue;  // contradiction: not ours to report
+        if (pv) {  // a member is placed: the others take its digit
+            for (int c : ms) {
+                if (vals[c] || !(cand[c] & bit(pv))) continue;
+                Move& m = new_move(out, ID_PROPAGATE, 1.0, (int)ms.size());
+                m.pc = c;
+                m.pv = pv;
+                set_pattern(out, m, ms);
+                meta9(m, 1, 1, 1, 0, 0, 0, 0, direct_view ? 0 : 1, 1.0);
+                pm_long xm[XM_N] = {a, (pm_long)ms.size(), (pm_long)I, pv, 0, 0, 0, 0, 0, 0};
+                std::copy(xm, xm + XM_N, m.xm);
+            }
+            continue;
+        }
+        if (direct_view) continue;  // eliminations need notes
+        std::vector<int> tg;
+        for (int c : ms)
+            if (!vals[c] && (cand[c] & ~I)) tg.push_back(c);
+        if (tg.empty()) continue;
+        Move& m = new_move(out, ID_PROPAGATE, 1.0, (int)ms.size());
+        uint32_t dg = 0;
+        for (int c : tg)
+            for (uint32_t x = cand[c] & ~I; x; x &= x - 1) {
+                add_elim(out, m, c, lowdigit(x));
+                dg |= x & (~x + 1);
+            }
+        set_pattern(out, m, ms);
+        meta9(m, (int)tg.size(), 1, popc(dg), 0, 0, 0, 0, 1, 1.0);
+        pm_long xm[XM_N] = {a, (pm_long)ms.size(), (pm_long)I, 0, 0, 0, 0, 0, 0, 0};
+        std::copy(xm, xm + XM_N, m.xm);
     }
 }
 

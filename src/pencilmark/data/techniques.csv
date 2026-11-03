@@ -85,6 +85,8 @@ id,const,name,role,code,display,band,split,family,gate,direct,mental,price_fallb
 107,REGION_EXIT,RegionExit,logic,RXT,Region exit (a region's only way out),Easy,0,intersections+combos,any,0,0,
 108,REGION_DIGIT,RegionDigit,logic,RDG,Region needs a digit it can reach,Medium,0,intersections+combos,any,0,0,
 109,POCKET,PocketCounting,logic,RPK,Pocket counting (regions to find),Medium,0,intersections+combos,any,0,0,
+110,CLASS_SINGLE,ClassSingle,logic,IDS,,Medium,0,intersections+combos,any,0,0,EqualDigits
+111,ID_PROPAGATE,ClassPropagation,logic,IDP,,Very Easy,0,singles,any,0,0,NakedSingle(notes)
 52,ALS_XZ,ALS-XZ,logic,ALS,,Expert,0,ALS,,0,0,
 53,ALS_XYWING,ALS-XY-Wing,logic,AXY,,Expert,0,ALS,,0,0,
 54,DEATH_BLOSSOM,DeathBlossom,logic,DEB,,Expert,0,ALS,,0,0,

@@ -50,6 +50,7 @@ static Params params_from(const py::dict& P) {
     if (P.contains("exhaust_fallback") && !P["exhaust_fallback"].is_none()) pr.exhaust_fallback = P["exhaust_fallback"].cast<int>();
     if (P.contains("fish_max_n") && !P["fish_max_n"].is_none()) pr.fish_max_n = P["fish_max_n"].cast<int>();
     if (P.contains("neq_peers") && !P["neq_peers"].is_none()) pr.neq_peers = P["neq_peers"].cast<int>();
+    if (P.contains("id_layer") && !P["id_layer"].is_none()) pr.id_layer = P["id_layer"].cast<int>();
     if (P.contains("refute_rounds") && !P["refute_rounds"].is_none()) pr.refute_rounds = P["refute_rounds"].cast<int>();
     if (P.contains("band_escalate") && !P["band_escalate"].is_none()) pr.band_escalate = P["band_escalate"].cast<int>();
     if (P.contains("band_wide_cells") && !P["band_wide_cells"].is_none()) pr.band_wide_cells = P["band_wide_cells"].cast<int>();
@@ -383,7 +384,8 @@ static uint64_t params_key(const py::dict& params) {
 static py::tuple py_solve(const Puzzle& p, const std::vector<std::pair<int, int>>& givens, const py::dict& params,
                           const std::vector<int>& disabled, const py::object& solution, bool allow_direct,
                           int max_steps, bool assume_unique, bool all_tiers, bool explain,
-                          const py::object& colours, const py::object& cand, bool stats, const py::object& labels) {
+                          const py::object& colours, const py::object& cand, bool stats, const py::object& labels,
+                          const py::object& idc) {
     Params P = params_from(params);
     const uint64_t phash = params_key(params);
     SolveOptions o;
@@ -409,6 +411,10 @@ static py::tuple py_solve(const Puzzle& p, const std::vector<std::pair<int, int>
             auto l0 = lt[0].cast<std::vector<int>>();
             s.lab_override.assign(l0.begin(), l0.end());
             s.lcand_override = lt[1].cast<std::vector<uint32_t>>();
+        }
+        if (!idc.is_none()) {  // identity layer: a mid-solve state's colour classes
+            py::gil_scoped_acquire acq;
+            s.idc_override = idc.cast<std::vector<int>>();
         }
         s.lcache = true;
         s.lcache_solve = true;
@@ -437,7 +443,7 @@ static py::tuple py_solve(const Puzzle& p, const std::vector<std::pair<int, int>
         auto row = py::make_tuple(alts, st.chosen, place, el, py::make_tuple(st.move.nk, st.move.na, st.move.nb),
                                   st.move.d, st.mode, st.n_empty, st.erasures, st.notes_written, xm, st.move.code,
                                   pats, exs, st.n_cands);
-        if (!p.chaos.empty()) {  // annotations: a 16th element, the step's effects as (kind, cell, arg)
+        if (!p.chaos.empty() || P.id_layer) {  // annotations: a 16th element, the step's effects as (kind, cell, arg)
             py::tuple ae(st.move.aeff_n);
             for (int i = 0; i < st.move.aeff_n; ++i) {
                 const AEff& e = r.aeffs[st.move.aeff_off + i];
@@ -478,7 +484,7 @@ static py::list py_refute_profile(const Puzzle& p, const std::vector<std::pair<i
 static py::list py_state_moves(const Puzzle& p, const std::vector<std::pair<int, int>>& givens, const py::dict& params,
                                const std::vector<int>& disabled, const py::object& solution, bool assume_unique,
                                int limit_per_tech, const py::object& written, bool details, const py::object& cand,
-                               const std::vector<int>& skip, const py::object& labels) {
+                               const std::vector<int>& skip, const py::object& labels, const py::object& idc) {
     Params P = params_from(params);
     const uint64_t phash = params_key(params);
     SolveOptions o;
@@ -502,6 +508,10 @@ static py::list py_state_moves(const Puzzle& p, const std::vector<std::pair<int,
             s.lab_override.assign(l0.begin(), l0.end());
             s.lcand_override = lt[1].cast<std::vector<uint32_t>>();
         }
+        if (!idc.is_none()) {  // identity layer: a mid-solve state's colour classes
+            py::gil_scoped_acquire acq;
+            s.idc_override = idc.cast<std::vector<int>>();
+        }
         s.lcache = true;
         s.lcache_params = phash;
         s.state_moves(givens, b, limit_per_tech);
@@ -516,7 +526,8 @@ static py::list py_state_moves(const Puzzle& p, const std::vector<std::pair<int,
             el.append(py::make_tuple((int)(e / 32), (int)(e % 32)));
         }
         py::object labfx = py::none();  // annotations: the move's effects as (kind, cell, arg), appended last
-        if (!p.chaos.empty()) {
+        const bool ann = !p.chaos.empty() || P.id_layer;
+        if (ann) {
             py::tuple ae(m.aeff_n);
             for (int i = 0; i < m.aeff_n; ++i) {
                 const AEff& e = b.aeffs[m.aeff_off + i];
@@ -525,7 +536,7 @@ static py::list py_state_moves(const Puzzle& p, const std::vector<std::pair<int,
             labfx = ae;
         }
         if (!details) {
-            if (p.chaos.empty()) out.append(py::make_tuple(m.tech, m.code, place, el, m.d));
+            if (!ann) out.append(py::make_tuple(m.tech, m.code, place, el, m.d));
             else out.append(py::make_tuple(m.tech, m.code, place, el, m.d, labfx));
             continue;
         }
@@ -537,7 +548,7 @@ static py::list py_state_moves(const Puzzle& p, const std::vector<std::pair<int,
         py::object meta = ft.attr("__getitem__")(4);
         py::list exs;  // the move's explanation records (decoded by cbackend._explain, as for solve(explain=True))
         for (int i = 0; i < m.ex_n; ++i) exs.append(b.ex[m.ex_off + i]);
-        if (p.chaos.empty())
+        if (!ann)
             out.append(py::make_tuple(m.tech, m.code, place, el, m.d, meta, xm, m.scan, pat, exs,
                                       py::make_tuple(m.nk, m.na, m.nb)));
         else
@@ -624,7 +635,8 @@ PYBIND11_MODULE(_csolver, m) {
     m.def("solve", &py_solve, py::arg("puzzle"), py::arg("givens"), py::arg("params"), py::arg("disabled"),
           py::arg("solution"), py::arg("allow_direct"), py::arg("max_steps"), py::arg("assume_unique") = true,
           py::arg("all_tiers") = false, py::arg("explain") = false, py::arg("colours") = py::none(),
-          py::arg("cand") = py::none(), py::arg("stats") = false, py::arg("labels") = py::none());
+          py::arg("cand") = py::none(), py::arg("stats") = false, py::arg("labels") = py::none(),
+          py::arg("idc") = py::none());
     m.def("brute_solve", &py_brute, py::arg("puzzle"), py::arg("givens"), py::arg("limit"), py::arg("node_limit"),
           py::arg("start") = py::none(), py::arg("with_status") = false);
     m.def("puzzle_info", &puzzle_info, py::arg("puzzle"), py::arg("disabled") = std::vector<int>());
@@ -642,5 +654,6 @@ PYBIND11_MODULE(_csolver, m) {
     m.def("state_moves", &py_state_moves, py::arg("puzzle"), py::arg("givens"), py::arg("params"),
           py::arg("disabled"), py::arg("solution"), py::arg("assume_unique") = false, py::arg("limit_per_tech") = 0,
           py::arg("written") = py::none(), py::arg("details") = false, py::arg("cand") = py::none(),
-          py::arg("skip") = std::vector<int>(), py::arg("labels") = py::none());
+          py::arg("skip") = std::vector<int>(), py::arg("labels") = py::none(),
+          py::arg("idc") = py::none());
 }
