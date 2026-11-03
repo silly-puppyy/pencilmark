@@ -1,5 +1,6 @@
 #include <tuple>
 #include "portable.hpp"
+#include <map>
 #include <cmath>
 #include <algorithm>
 #include <cstring>
@@ -618,14 +619,52 @@ done:
 // Guessing switched off: the last resort is a proof, not a guess. Take the cell a guess would take (fewest candidates)
 // and refute one of its wrong candidates by full search from the current state (no solution with it = eliminated).
 // Recorded as TRIAL ('Trial and error', band Extreme); the solver never places a value it has not proved.
+// the step's result depends only on the position (and the solution handed in): the band route, the card route and
+// the technique list meet the same stuck states, and on hard killers each search costs minutes, so it is kept per
+// thread by puzzle identity and state. Results cut short by a deadline are not kept.
+static std::map<std::vector<uint32_t>, std::pair<int, int>>& exhaust_cache() {
+    static thread_local std::map<std::vector<uint32_t>, std::pair<int, int>> m;
+    return m;
+}
+
 bool Solver::exhaust(MoveBuf& out) {
+    std::vector<uint32_t> key{(uint32_t)(p.uid & 0xFFFFFFFFu), (uint32_t)(p.uid >> 32), (uint32_t)canon,
+                              (uint32_t)opt.solution.size()};
+    for (int x : opt.solution) key.push_back((uint32_t)x);
+    for (int c = 0; c < p.N; ++c) key.push_back(vals[c] ? (0x80000000u | (uint32_t)vals[c]) : cand[c]);
+    auto emit = [&](int c, int v) {
+        MoveBuf g;  // priced as the guess on this cell would be (expected refutation work)
+        const bool priced = guess(g) && !g.moves.empty() && g.moves[0].has_meta;
+        Move& m = new_move(out, TRIAL, 1.0, -1);
+        if (priced) {
+            m.has_meta = true;
+            std::copy(g.moves[0].meta, g.moves[0].meta + 8, m.meta);
+            std::copy(g.moves[0].xm, g.moves[0].xm + XM_N, m.xm);
+        }
+        add_elim(out, m, c, v);
+        add_expl(out, m, EX_TRIAL, {2, 1, c, v});
+        return true;
+    };
+    auto keep = [&](int c, int v) {
+        if (deadline_passed()) return;
+        if (exhaust_cache().size() >= 2000) exhaust_cache().clear();
+        exhaust_cache()[key] = {c, v};
+    };
+    auto hit = exhaust_cache().find(key);
+    if (hit != exhaust_cache().end()) {
+        if (canon) compute_labels();
+        return hit->second.first >= 0 && emit(hit->second.first, hit->second.second);
+    }
     std::vector<int> sol;
     if (!opt.solution.empty()) {
         sol = opt.solution;
     } else {
         auto sols = brute_solve(p, {}, 1, 2000000, &vals, &cand);
         if (sols.empty()) sols = brute_solve(p, {}, 1, 20000000, &vals, &cand);  // as the refutations below
-        if (sols.empty()) return false;
+        if (sols.empty()) {
+            keep(-1, 0);
+            return false;
+        }
         sol = sols[0];
     }
     if (canon) compute_labels();
@@ -651,19 +690,11 @@ bool Solver::exhaust(MoveBuf& out) {
             pm_long nodes = 0;
             auto sols = brute_solve(p, {}, 1, budget, &vals, &cc, &complete, &nodes);
             if (!sols.empty() || !complete) continue;  // not refuted (another solution, or the search ran out)
-            MoveBuf g;                       // priced as the guess on this cell would be (expected refutation work)
-            const bool priced = guess(g) && !g.moves.empty() && g.moves[0].has_meta;
-            Move& m = new_move(out, TRIAL, 1.0, -1);
-            if (priced) {
-                m.has_meta = true;
-                std::copy(g.moves[0].meta, g.moves[0].meta + 8, m.meta);
-                std::copy(g.moves[0].xm, g.moves[0].xm + XM_N, m.xm);
-            }
-            add_elim(out, m, c, v);
-            add_expl(out, m, EX_TRIAL, {2, 1, c, v});
-            return true;
+            keep(c, v);
+            return emit(c, v);
         }
     }
+    keep(-1, 0);
     return false;
 }
 
