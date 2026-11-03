@@ -37,7 +37,8 @@
   of the sum); clues whose text redefines them (quadruple digits that must not appear, cage numbers listing digits
   in the cage, dots meaning consecutive or double, diagonals with a count of distinct digits; numbered white / black
   dots as difference / ratio by colour; zones listing two of three digits, palindromes with one mismatched pair or
-  with consecutive partners, arrows counting distinct digits, cages all even / all odd / half and half); refused
+  with consecutive partners, arrows counting distinct digits, cages all even / all odd / half and half; given
+  pencil marks as candidates; lines whose digits are all odd or all even); refused
   instead of
   misread: a puzzle that reads
   as plain sudoku while it draws shapes or lines in the grid (15 of 1,500 sampled Logic Masters puzzles, all of

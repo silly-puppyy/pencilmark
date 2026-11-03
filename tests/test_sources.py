@@ -704,6 +704,17 @@ def test_more_redefined_clues():
     assert not [g for g in p.groups if g.kind == "cage"] and len(p.named_rules) == 1
 
 
+def test_given_pencilmarks():
+    """given pencil marks as the only candidates of their cells (the text says so); the same digits drawn as a one-cell
+    cage's number are a label, not a cage sum"""
+    from pencilmark.sources import _sp_translate as SP
+
+    sp = _sp4(cages=[{"cells": [[0, 0]], "value": "12"}])
+    sp["puzzle"]["cells"][0][0] = {"centremarks": [1, 2]}
+    p, _ = SP.translate(sp, "The given pencilmarks represent the only numbers that can appear in those cells.")
+    assert p.domains[0] == 0b0011 and not [g for g in p.groups if g.kind == "cage"]
+
+
 def test_rule_for_every_line():
     """ "all lines are region sum lines" gives every line that rule; a line whose colour also names another rule has two
     rules and is refused (CTC zkz5Qw2BWx4: orange lines are also Dutch whispers)"""

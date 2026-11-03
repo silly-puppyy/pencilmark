@@ -403,6 +403,8 @@ RULE_DESCRIPTIONS = {
     "palindrome": [r"reads? the same (?:forwards?|in both)", r"same (?:forwards?|from either end)"],
     "zipper": [r"equidistant from the (?:centre|center)", r"(?:same|equal) distance from the (?:centre|center)"],
     # one-off line rules (GAS), kept as custom rules
+    "same_parity": [r"all (?:numbers|digits) must be odd or all (?:numbers|digits) must be even",
+                    r"(?:must be|are) (?:either )?all odd or all even"],
     "sequence": [r"arithmetic (?:series|sequence|progression)"],
     "zigzag": [r"alternate between increasing and decreasing", r"alternately (?:increase|rise) and (?:decrease|fall)"],
     "consecutive_line": [r"(?:adjacent|neighbou?ring|next to each other|connected)[^.]{0,50}differ by (?:exactly )?(?:1|one)\b"],
@@ -1553,6 +1555,21 @@ def translate(sp, page_text=None, overrides=None):
     if P.get("foglight") or P.get("triggereffect"):
         unknown.append("fog of war")
     arrow_variants(p, rules, used, unknown)
+    if re.search(
+        r"(?:given )?pencil ?marks? (?:represent|show|are|give) the only (?:numbers|digits|values)", text_rules.lower()
+    ):
+        for r_, row in enumerate(P.get("cells") or []):
+            for c_, cell in enumerate(row or []):
+                marks = (cell or {}).get("centremarks") if isinstance(cell, dict) else None
+                if marks and inside((r_, c_)):
+                    p.domains[idx((r_, c_))] &= sum(
+                        1 << (int(d) - 1) for d in marks if str(d).isdigit() and 1 <= int(d) <= n
+                    )
+                    used["pencilmarks"] += 1
+                    i_, shown = idx((r_, c_)), "".join(sorted(str(d) for d in marks))
+                    # the same digits drawn as a one-cell cage's number: a label, not a cage sum
+                    p.groups = [g for g in p.groups if not (g.kind == "cage" and g.cells == (i_,)
+                                                            and "".join(sorted(str(g.total))) == shown)]  # fmt: skip
     if re.search(
         r"cages must contain either all even (?:numbers|digits), all odd (?:numbers|digits), or exactly half",
         text_rules.lower(),
