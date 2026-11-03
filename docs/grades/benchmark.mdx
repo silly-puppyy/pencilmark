@@ -76,6 +76,25 @@ so most of its gap is noise. On the other three the human signal is clean and th
 
 <AccuracyChart />
 
+## An outside check: Cracking the Cryptic
+
+Not part of the frozen protocol, and never a fitting target. The Cracking the Cryptic solves in Sakana AI's
+[Sudoku-CTC-Reasoning](https://huggingface.co/datasets/SakanaAI/Sudoku-CTC-Reasoning) dataset (MIT) give one expert
+solve time per puzzle: Simon Anthony's or Mark Goodliffe's, from the first to the last action of the recorded solve.
+All 1,351 puzzles were read with pencilmark's own readers; 337 read and graded (the rest use rules pencilmark does not
+model, such as fog of war, loops and shading, or read with several solutions). For the 327 with a usable time (2
+minutes to 4 hours), measured on 2026-11-03:
+
+| | Puzzles | Rank correlation with solve time |
+|---|---|---|
+| `difficulty` | 327 | 0.57 |
+| Simon's solves | 148 | 0.50 |
+| Mark's solves | 177 | 0.49 |
+
+Median solve minutes by band: Easy 15, Medium 25, Hard 21 (18 puzzles), Very Hard 32, Expert 39, Extreme 42.
+One solver per puzzle on one day, so the ceiling is unknown and lower than for the sources above. Among the hardest
+puzzles (Expert and Extreme) the order is weak: more steps there use computer-style search than the hosts' own solves.
+
 ## Compared with other graders (same puzzles)
 
 | Set | Puzzles | pencilmark | Andrew Stuart | Rangsk | HoDoKu | Sudoku Explainer |
