@@ -484,6 +484,37 @@ def add_yin_yang(p, specs, thermo_cells):
             PJ.add_named(p, {"type": "custom", "cells": {"a": [name(c)]}, "holds": holds})
 
 
+CLONE_TEXT = re.compile(r"\bclones?\b|identical digits in identical positions|same numbers in the same positions")
+
+
+def clone_groups(colour_of):
+    """clones drawn as coloured shapes: {(r, c): colour} -> per colour with two or more connected shapes, the shapes'
+    cells in corresponding order ([[cells of shape 1], [cells of shape 2], ...]); None when a colour's shapes differ"""
+    by = defaultdict(set)
+    for rc, col in colour_of.items():
+        by[col].add(rc)
+    out = []
+    for col, cells in by.items():
+        comps, left = [], set(cells)
+        while left:
+            stack, comp = [left.pop()], []
+            while stack:
+                r, c = stack.pop()
+                comp.append((r, c))
+                for q in ((r + 1, c), (r - 1, c), (r, c + 1), (r, c - 1)):
+                    if q in left:
+                        left.remove(q)
+                        stack.append(q)
+            comps.append(sorted(comp))
+        if len(comps) < 2:
+            continue
+        shape = lambda comp: [(r - comp[0][0], c - comp[0][1]) for r, c in comp]
+        if any(shape(x) != shape(comps[0]) for x in comps[1:]):
+            return None
+        out.append(comps)
+    return out
+
+
 def described_line_rules(rules):
     """line rules the text describes without naming them, from sentences about a line or thread that name no colour
     (a puzzle with one line colour); empty when any line sentence names a colour"""
@@ -1265,6 +1296,27 @@ def translate(sp, page_text=None, overrides=None):
     quadruples(P, n, p, used, unknown, idx, inside)
     used.pop("_quad_text")
     unknown += unmodelled_rules(text_rules, chaos_ok=chaos)
+    if CLONE_TEXT.search(text_rules):  # clones drawn as coloured shapes
+        colour_of = {}
+        for lay in P.get("underlays") or []:
+            if not isinstance(lay, dict) or "center" not in lay or lay.get("rounded"):
+                continue
+            col = str(lay.get("backgroundColor") or "")
+            if not col or col.lower().endswith("00") and len(col) == 9 or color_name(col) == "white":
+                continue  # transparent or white: not a clone colour
+            (cy, cx), w, h = lay["center"], lay.get("width", 1) or 1, lay.get("height", 1) or 1
+            for r in range(int(round(cy - h / 2)), int(round(cy + h / 2))):
+                for c in range(int(round(cx - w / 2)), int(round(cx + w / 2))):
+                    if inside((r, c)):
+                        colour_of[(r, c)] = col.lower()
+        groups = clone_groups(colour_of) if colour_of else None
+        if not groups and colour_of:  # clones in different colours ("each coloured shape"): one class
+            groups = clone_groups(dict.fromkeys(colour_of, "any"))
+        if groups:
+            for comps in groups:
+                p.constraints.append({"type": "clone", "regions": [[idx(rc) for rc in comp] for comp in comps]})
+            unknown = [u for u in unknown if u != "rule 'clone'"]
+            used["clone"] += 1
     yy = yin_yang_reading(text_rules)
     if yy is not None:  # shading read: the frame and every coupling sentence understood
         unknown = [u for u in unknown if u not in ("rule 'yin'", "rule 'shading'")]

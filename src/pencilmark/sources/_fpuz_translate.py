@@ -130,6 +130,19 @@ def translate(fp, line_kinds=None):
     text0 = (fp.get("ruleset") or "").lower()
 
     refused = ST.unmodelled_rules(text0)
+    clones = None
+    if ST.CLONE_TEXT.search(text0) and not fp.get("clone"):  # clones drawn as coloured cells
+        colour_of = {
+            (r, c): str(cell["c"]).lower()
+            for r, row in enumerate(fp.get("grid") or [])
+            for c, cell in enumerate(row)
+            if isinstance(cell, dict) and cell.get("c")
+        }
+        clones = ST.clone_groups(colour_of) if colour_of else None
+        if not clones and colour_of:  # clones in different colours: one class
+            clones = ST.clone_groups(dict.fromkeys(colour_of, "any"))
+        if clones:
+            refused = [r_ for r_ in refused if r_ != "rule 'clone'"]
     if refused:
         return None, "unsupported: " + ", ".join(refused)
     circles_counting = bool(fp.get("circle")) and bool(re.search(COUNTING_CIRCLES, text0))
@@ -265,6 +278,9 @@ def translate(fp, line_kinds=None):
     for big, small in fp.get("_ineq") or []:
         p.relations.append(("lt", small[0] * n + small[1], big[0] * n + big[1]))
         used["inequality"] = used.get("inequality", 0) + 1
+    for comps in clones or []:  # clones drawn as coloured cells (clone_groups)
+        p.constraints.append({"type": "clone", "regions": [[r * n + c for r, c in comp] for comp in comps]})
+        used["clone"] = used.get("clone", 0) + 1
     for item in fp.get("clone") or []:  # f-puzzles: {"cells": [...], "cloneCells": [...]} in matching order
         a, b = [ix(x) for x in item.get("cells", [])], [ix(x) for x in item.get("cloneCells", [])]
         if a and len(a) == len(b):

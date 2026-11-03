@@ -450,6 +450,22 @@ def test_fortress_and_native_xsum():
     assert [c["type"] for c in p.constraints] == ["xsum"]
 
 
+def test_clones_from_coloured_shapes():
+    """clones drawn as coloured shapes become clone rules: same-colour shapes matched by translation, cells paired in
+    reading order; shapes that differ stay refused; a payload whose clones use different colours is one class"""
+    from pencilmark.sources import _sp_translate as SP
+
+    two = {(0, 0): "red", (0, 1): "red", (2, 2): "red", (2, 3): "red"}
+    assert SP.clone_groups(two) == [[[(0, 0), (0, 1)], [(2, 2), (2, 3)]]]
+    assert SP.clone_groups({**two, (3, 3): "red"}) is None  # the second shape differs
+    sq = lambda r, c, col: {"center": [r + 0.5, c + 0.5], "width": 1, "height": 1, "backgroundColor": col}
+    sp = _sp4(underlays=[sq(0, 0, "#FFA3A3BF"), sq(0, 1, "#FFA3A3BF"), sq(2, 2, "#FFB3FFBF"), sq(2, 3, "#FFB3FFBF")])
+    p, info = SP.translate(
+        sp, "Each coloured connected shape (clone) must contain the same numbers in the same positions."
+    )
+    assert info.get("clone") and [c["regions"] for c in p.constraints if c["type"] == "clone"] == [[[0, 1], [10, 11]]]
+
+
 def test_rule_for_every_line():
     """ "all lines are region sum lines" gives every line that rule; a line whose colour also names another rule has two
     rules and is refused (CTC zkz5Qw2BWx4: orange lines are also Dutch whispers)"""
