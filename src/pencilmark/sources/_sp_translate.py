@@ -24,7 +24,7 @@ import colorsys
 import logging
 import math
 import re
-from collections import defaultdict
+from collections import Counter, defaultdict
 
 from .. import model as M
 
@@ -357,6 +357,13 @@ NO_BOXES = re.compile(
     r"|no (?:3x3 )?box(?:es)?\b|(?:there are )?no boxes|without boxes"
 )
 BATTENBURG_TEXT = re.compile(r"battenburg|checkerboard")
+FADED_TEXT = re.compile(r"either means[^.]{0,80}differ by (?:1|one)\b[^.]{0,80}ratio of (?:2|two)\b")
+ZONE_TEXT = re.compile(
+    r"(?:numbers|digits) in the (?:top[- ]left (?:corner )?of (?:each|the|a) cage|cage'?s? (?:corner|clue)) must appear in (?:th(?:ose|at|e)|each) cage|\bzone sudoku\b"
+)
+QUAD_NEG = re.compile(
+    r"(?:must not|cannot|can't|may not|do not|don't) appear in (?:any of )?the (?:four|4) (?:surrounding|adjacent)"
+)
 QUAD_TEXT = re.compile(
     r"quadruple|(?:surrounding|touching|around|adjacent to)(?: the| that| this)? (?:four|4) cells|"
     r"(?:four|4) (?:surrounding|adjacent|touching) cells|"
@@ -977,6 +984,16 @@ def translate(sp, page_text=None, overrides=None):
         cs = [idx(tuple(x)) for x in cg["cells"] if inside(tuple(x))]
         v = cg.get("value")
         total = int(v) if isinstance(v, (int, float)) or (isinstance(v, str) and v.isdigit()) else None
+        if cs and total is not None and ZONE_TEXT.search(rules.lower()):  # zone: the cage's number lists digits in it
+            from .. import puzzle_json as PJ
+
+            name = lambda i: f"r{p.coords[i][0] + 1}c{p.coords[i][1] + 1}"
+            need = Counter(int(ch) for ch in str(total))
+            p.groups.append(M.Group(f"k{len(p.groups)}", tuple(sorted(cs)), "cage", len(cs) == n, None))
+            PJ.add_named(p, {"type": "custom", "cells": {"K": [name(c_) for c_ in cs]},
+                             "holds": " and ".join(f"count(x for x in K if x == {d}) >= {k}" for d, k in sorted(need.items()))})  # fmt: skip
+            used["zone"] += 1
+            continue
         if cs:
             p.groups.append(M.Group(f"k{len(p.groups)}", tuple(sorted(cs)), "cage", len(cs) == n, total))
             used["killer"] += 1
@@ -1160,6 +1177,20 @@ def translate(sp, page_text=None, overrides=None):
             continue
         if cname == "diagonal":
             ids = [idx(x) for x in lc]
+            k_ = re.search(
+                r"exactly (\w+) different (?:numbers|digits) (?:will |must )?appear (?:along|on) each (?:marked )?diagonal",
+                rules.lower(),
+            )
+            if k_ and (
+                k_.group(1).isdigit() or k_.group(1) in _DIGIT_WORDS
+            ):  # anti-diagonal: a count of digits, not a house
+                from .. import puzzle_json as PJ
+
+                kk = int(k_.group(1)) if k_.group(1).isdigit() else _DIGIT_WORDS[k_.group(1)]
+                PJ.add_named(p, {"type": "custom", "cells": {"D": [f"r{x[0] + 1}c{x[1] + 1}" for x in lc]},
+                                 "holds": f"count_distinct(D) == {kk}"})  # fmt: skip
+                used["anti_diagonal"] += 1
+                continue
             if re.search(r"diagonal", rules.lower()) and not any(set(g.cells) == set(ids) for g in p.groups):
                 p.groups.append(M.Group(f"d{hexcol}", tuple(ids), "diag", True))
                 used["diagonal"] += 1
@@ -1391,8 +1422,10 @@ def translate(sp, page_text=None, overrides=None):
     marked_cells(P, n, p, rules, used, inside)
     outside_clues(P, n, p, rules, used, unknown, idx, inside)
     used["_quad_text"] = int(bool(QUAD_TEXT.search(text_rules)))
+    used["_quad_neg"] = int(bool(QUAD_NEG.search(text_rules.lower())))
     quadruples(P, n, p, used, unknown, idx, inside)
     used.pop("_quad_text")
+    used.pop("_quad_neg")
     unknown += unmodelled_rules(text_rules, chaos_ok=chaos)
     if CLONE_TEXT.search(text_rules):  # clones drawn as coloured shapes
         colour_of = {}
@@ -1441,6 +1474,21 @@ def translate(sp, page_text=None, overrides=None):
     if P.get("foglight") or P.get("triggereffect"):
         unknown.append("fog of war")
     arrow_variants(p, rules, used, unknown)
+    if FADED_TEXT.search(text_rules.lower()):  # a dot is consecutive OR double, whatever its colour
+        from .. import puzzle_json as PJ
+
+        dots = [
+            r_
+            for r_ in p.relations
+            if r_[:1] == ("diff",) and r_[3:] == (1,) or r_[:1] == ("ratio",) and r_[3:] == (2,)
+        ]
+        p.relations = [r_ for r_ in p.relations if r_ not in dots]
+        name = lambda i: f"r{p.coords[i][0] + 1}c{p.coords[i][1] + 1}"
+        if dots:
+            PJ.add_named(p, {"type": "custom", "cells": {"d": [[name(r_[1]), name(r_[2])] for r_ in dots]}, "each": "d",
+                             "holds": "abs(d[1] - d[2]) == 1 or d[1] == 2 * d[2] or d[2] == 2 * d[1]",
+                             "label": "Faded dot"})  # fmt: skip
+            used["faded_kropki"] += 1
     if not unknown and plain_sudoku(p, n, used) and drawn_in_grid(P, n, inside) >= 3:
         unknown.append("drawn elements no rule reads")  # read as a plain sudoku, the drawing silently dropped
     if unknown:
@@ -2153,6 +2201,12 @@ def quadruples(P, n, p, used, unknown, idx, inside):
         cs = [idx((rx - 1, ry - 1)), idx((rx - 1, ry)), idx((rx, ry - 1)), idx((rx, ry))]
         from .. import puzzle_json as PJ
 
+        if used.get("_quad_neg"):  # exclusion: the circle's digits appear in none of the four cells (custom rule)
+            name = lambda i: f"r{p.coords[i][0] + 1}c{p.coords[i][1] + 1}"
+            PJ.add_named(p, {"type": "custom", "cells": {"Q": [name(c_) for c_ in cs]},
+                             "holds": " and ".join(f"all(x != {d} for x in Q)" for d in need)})  # fmt: skip
+            used["exclusion"] += 1
+            continue
         PJ.add_named(p, {"type": "quadruple", "cells": cs, "digits": need})  # the named rule
         used["quadruple"] += 1
 

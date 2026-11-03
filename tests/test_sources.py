@@ -640,6 +640,28 @@ def test_arrow_variants():
     assert any(c["type"] == "arrow" for c in p.constraints) and p.named_rules
 
 
+def test_redefined_clues():
+    """clues whose text changes their meaning: quadruple digits that must NOT appear, cage numbers listing digits in the
+    cage (zone), dots that are consecutive or double (faded), diagonals with a count of distinct digits"""
+    from pencilmark.sources import _sp_translate as SP
+
+    quad = {"center": [2, 2], "text": "12", "width": 0.5, "height": 0.5, "rounded": True}
+    p, _ = SP.translate(
+        _sp4(overlays=[quad]), "Numbers in white circles must not appear in any of the four surrounding cells."
+    )
+    assert next(r for r, _ in p.named_rules)["holds"] == "all(x != 1 for x in Q) and all(x != 2 for x in Q)"
+    cage = {"cells": [[0, 0], [0, 1]], "value": "12"}
+    p, _ = SP.translate(_sp4(cages=[cage]), "Numbers in the top left of each cage must appear in those cages.")
+    assert next(r for r, _ in p.named_rules)["cells"] == {"K": ["r1c1", "r1c2"]}
+    assert not any(g.total for g in p.groups)
+    dot = {"center": [0.5, 1], "width": 0.32, "rounded": True, "backgroundColor": "#FFFFFF"}
+    text = (
+        "If a circle is given between two cells, it either means that they differ by 1, or that they have a ratio of 2."
+    )
+    p, _ = SP.translate(_sp4(overlays=[dot]), text)
+    assert not p.relations and next(r for r, _ in p.named_rules)["label"] == "Faded dot"
+
+
 def test_rule_for_every_line():
     """ "all lines are region sum lines" gives every line that rule; a line whose colour also names another rule has two
     rules and is refused (CTC zkz5Qw2BWx4: orange lines are also Dutch whispers)"""
