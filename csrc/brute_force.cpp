@@ -38,6 +38,10 @@ struct Brute {
     bool shade_on = false;
     std::vector<std::vector<uint8_t>> ss;  // colour per cell, per depth
     std::vector<int> layered;              // custom rules reading region() / shaded() (indices into p.nary)
+    // one-cell rules reading shaded() ("even digits in a cage are shaded"): allowed digits per colour, so a colour
+    // removes digits and digits that all imply one colour set it
+    struct Coupling { int cell; uint32_t ok[3]; };  // ok[1]: digits allowed shaded, ok[2]: unshaded
+    std::vector<Coupling> couplings;
 
     Brute(const Puzzle& pz, int lim, pm_long nl)
         : p(pz), limit(lim), node_limit(nl), areas(pz.chaos), area_of(pz.chaos_of), nbr(pz.chaos_nbr) {
@@ -47,6 +51,35 @@ struct Brute {
         shade_on = p.shading;
         for (size_t ki = 0; ki < p.nary.size(); ++ki)
             if (p.nary[ki].type == NT_EXPR && p.nary[ki].expr->layered) layered.push_back((int)ki);
+        if (shade_on)
+            for (int ki : layered) {
+                const NConstraint& k = p.nary[ki];
+                if (k.nv() != 1) continue;
+                Coupling cp{k.vars[0], {0, 0, 0}};
+                for (int col = 1; col <= 2; ++col)
+                    for (int v = 1; v <= p.D; ++v) {
+                        int dg = v, lb = 0, sd = col;
+                        if (expr_holds(*k.expr, &dg, &lb, &sd)) cp.ok[col] |= bit(v);
+                    }
+                couplings.push_back(cp);
+            }
+    }
+    // one-cell couplings between a cell's colour and its digit. false: contradiction
+    bool couple(uint8_t* vals, uint32_t* cand, uint8_t* sh, bool& digits_changed) {
+        for (const Coupling& cp : couplings) {
+            const int c = cp.cell;
+            const uint32_t m = vals[c] ? bit(vals[c]) : cand[c];
+            if (sh[c]) {
+                const uint32_t keep = m & cp.ok[sh[c]];
+                if (!keep) return false;
+                if (!vals[c] && keep != cand[c]) cand[c] = keep, digits_changed = true;
+            } else {
+                const bool can1 = (m & cp.ok[1]) != 0, can2 = (m & cp.ok[2]) != 0;
+                if (!can1 && !can2) return false;
+                if (can1 != can2) sh[c] = can1 ? 1 : 2;
+            }
+        }
+        return true;
     }
     // shading propagation: no 2x2 of one colour (three of a colour force the fourth), each colour's known cells
     // connected through cells that may take it. false: contradiction
@@ -579,7 +612,14 @@ struct Brute {
             if (r < 0) return;
             if (r > 0) goto top;
         }
-        if (shade_on && !shade_prop(ss[depth].data())) return;
+        if (shade_on) {
+            bool dch = false;
+            if (!couple(vals, cand, ss[depth].data(), dch) || !shade_prop(ss[depth].data())) return;
+            if (dch) goto top;  // digits narrowed by colours: propagate the digits again
+            bool dch2 = false;  // colours set by the shading rules can narrow digits in turn
+            if (!couple(vals, cand, ss[depth].data(), dch2)) return;
+            if (dch2) goto top;
+        }
         if (!layered.empty() &&
             !layered_ok(vals, chaos_on ? ls[depth].data() : nullptr, shade_on ? ss[depth].data() : nullptr))
             return;
