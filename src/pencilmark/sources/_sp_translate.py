@@ -1134,6 +1134,13 @@ def translate(sp, page_text=None, overrides=None):
                     used["kropki_black"] += 1
             elif re.fullmatch(r"\d{1,2}", txt):
                 kind = (overrides or {}).get("_edgenum") or edge_number_rule(rules)
+                low_ = rules.lower()
+                if (
+                    lay.get("rounded")
+                    and re.search(r"white (?:dot|circle)[^.]{0,80}differen", low_)
+                    and re.search(r"black (?:dot|circle)[^.]{0,80}ratio", low_)
+                ):  # difference / ratio pairs: the dot's colour says which
+                    kind = "ratio" if color_name(lay.get("backgroundColor")) in ("black", "grey") else "diff"
                 k_ = int(txt)
                 if kind == "sum":
                     p.relations.append(("sum", idx(a), idx(b), k_))

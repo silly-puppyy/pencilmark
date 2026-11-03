@@ -33,7 +33,8 @@
   arrow in a cell against the cells it points at: detection, elimination, prime count); arrow variants as custom
   rules (even count, all but one, strictly less, at most, one off, average; repeating and alternating parity on top
   of the sum); clues whose text redefines them (quadruple digits that must not appear, cage numbers listing digits
-  in the cage, dots meaning consecutive or double, diagonals with a count of distinct digits); refused instead of
+  in the cage, dots meaning consecutive or double, diagonals with a count of distinct digits; numbered white / black
+  dots as difference / ratio by colour); refused instead of
   misread: a puzzle that reads
   as plain sudoku while it draws shapes or lines in the grid (15 of 1,500 sampled Logic Masters puzzles, all of
   them misread before).

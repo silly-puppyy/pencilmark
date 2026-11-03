@@ -660,6 +660,12 @@ def test_redefined_clues():
     )
     p, _ = SP.translate(_sp4(overlays=[dot]), text)
     assert not p.relations and next(r for r, _ in p.named_rules)["label"] == "Faded dot"
+    num = lambda bg, t: {"center": [0.5, 1], "width": 0.33, "text": t, "rounded": True, "backgroundColor": bg}
+    text = (
+        "If a white circle is given, the numbers have a difference equal to it. If a black circle is given, the ratio."
+    )
+    p, _ = SP.translate(_sp4(overlays=[num("#000000", 3)]), text)
+    assert p.relations == [("ratio", 0, 1, 3)]
 
 
 def test_rule_for_every_line():
