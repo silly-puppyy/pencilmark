@@ -83,7 +83,10 @@
   refused.
   Shifter lines and shifter dots (parity and polarity rules) as custom rules; edge dots of a colour no reading takes
   are refused instead of dropped.
-  2,000 most-solved Logic Masters sudokus: 802 -> 877 graded.
+  f-puzzles circles with a meaning in the text: anti-quadruples (a pink circle under a quadruple), quadruple digits in
+  the circle, pair sums ("cells connected by a pink circle must sum to 11"), decorative circles, counting circles
+  in more wordings.
+  2,000 most-solved Logic Masters sudokus: 802 -> 887 graded.
 - SudokuPad links of the form `sudokupad.app/<author>/<slug>` are fetched (they were refused as not a short id).
 - Speed and robustness: the C++ uniqueness search without OR-Tools stops at a time limit, not only a node limit
   (counting-circle puzzles ran for hours); the trial step retries with a larger search before giving up (two unique

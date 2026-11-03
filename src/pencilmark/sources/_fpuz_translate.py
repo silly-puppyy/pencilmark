@@ -22,7 +22,8 @@ UNSUPPORTED = ("fogofwar", "foglight", "columnindexer", "rowindexer", "boxindexe
 COUNTING_CIRCLES = (
     r"counting circle|digit in a circle.{0,40}(appears|number of)|number in a circle.{0,60}circles|"
     r"(circled|circle) digits?.{0,40}(how many|exactly that many|number of)|"
-    r"number of times (?:a )?digits? appears? in (?:a )?circles?"
+    r"number of times (?:a )?digits? appears? in (?:a )?circles?|"
+    r"(?:digit|number) (?:in|inside) a circle[^.]{0,40}how many circles"
 )
 DECORATIVE = (
     "text",
@@ -159,6 +160,10 @@ def translate(fp, line_kinds=None, join=True):
     if refused:
         return None, "unsupported: " + ", ".join(refused)
     circles_counting = bool(fp.get("circle")) and bool(re.search(COUNTING_CIRCLES, text0))
+    if fp.get("circle") and not circles_counting:  # circles with a meaning in the text: decorative / quads / pair sums
+        fp, circle_rules = _text_circles(fp, text0, n)
+    else:
+        circle_rules = []
     shape_clues = not circles_counting and _shape_cells(fp, n) is not None  # single-cell circles / squares: shapes
     for k in ("cage", "circle"):
         if fp.get(k) and not (k == "circle" and (circles_counting or shape_clues)):
@@ -443,6 +448,28 @@ def translate(fp, line_kinds=None, join=True):
             else:  # row clue (left or right)
                 cells = [r * n + cc for cc in (range(n) if c < 0 else range(n - 1, -1, -1))]
             p.constraints.append({"type": typ, "cells": cells, field: int(sw["value"])})
+    for kind, cs, ds in circle_rules:
+        from .. import puzzle_json as PJ
+
+        cells = [ix(x) for x in cs]
+        if kind == "quadruple":
+            PJ.add_named(p, {"type": "quadruple", "cells": cells, "digits": ds})
+        elif kind == "anti_quadruple":
+            names = [f"r{rc(x, n)[0] + 1}c{rc(x, n)[1] + 1}" for x in cs]
+            PJ.add_named(p, {"type": "custom", "cells": {"Q": names}, "label": "Anti-quadruple",
+                             "holds": " and ".join(f"all(x != {d} for x in Q)" for d in ds)})  # fmt: skip
+        else:
+            p.relations.append(("sum", min(cells), max(cells), ds[0]))
+        used[kind] = used.get(kind, 0) + 1
+    pair_cells = {frozenset(ix(x) for x in cs) for kind, cs, _ in circle_rules if kind == "pair_sum"}
+    if pair_cells and re.search(
+        r"all (?:possible )?(?:\w+ )?circles are (?:given|shown)", text0 + " " + (fp.get("_page_rules") or "").lower()
+    ):
+        k_ = next(ds[0] for kind, _, ds in circle_rules if kind == "pair_sum")
+        for x in range(n * n):  # the negative: no other orthogonal pair has that sum
+            for y in ([x + 1] if (x + 1) % n else []) + ([x + n] if x + n < n * n else []):
+                if frozenset((x, y)) not in pair_cells:
+                    p.relations.append(("notsum", x, y, k_))
     if shape_clues and (fp.get("circle") or re.search(r"\bsquares?\b", text0)):
         # one-cell circles and squares: the SudokuPad reader's shape clues (parity, digit sets by shape / colour)
         from collections import Counter
@@ -569,6 +596,48 @@ LINE_WORDS = [
 TEXT_LINE_KINDS = {"whisper": "whisper", "dutch": "dutch_whisper", "renban": "renban", "region_sum": "region_sum",
                    "palindrome": "palindrome", "entropic": "entropic", "parity": "parity", "modular": "modular",
                    "zipper": "zipper", "between": "between"}  # fmt: skip
+
+
+def _text_circles(fp, text, n):
+    """f-puzzles circles whose meaning the text gives -> (fp without them, [(kind, cells, digits)]): decorative circles
+    ("the circles have no effect"), quadruple / anti-quadruple circles (four cells, digits; anti = the colour the text
+    names for anti-quadruples, or pink / red), pair-sum circles ("cells connected by a pink circle must sum to 11")"""
+    from . import _sp_translate as ST
+
+    words = text + " " + (fp.get("_page_rules") or "").lower()
+    if re.search(
+        r"\bcircles?\b[^.]{0,60}\b(?:has|have) no effect|\bcircles? (?:is|are) (?:purely )?(?:decorative|cosmetic)",
+        words,
+    ):
+        return dict(fp, circle=[]), []
+    quads = {frozenset(q.get("cells") or []): q for q in fp.get("quadruple") or []}
+    pair = re.search(r"cells? (?:connected|joined|separated) by an? (?:\w+ )?circle must sum to (\d+)", text)
+    anti = re.search(r"anti-?quad\w*[^.]{0,40}\b(\w+) circle", text)
+    keep, rules = [], []
+    for it in fp.get("circle") or []:
+        cs, v = it.get("cells") or [], str(it.get("value", "")).strip()
+        col = ST.color_name(it.get("baseC") or "")
+        if len(cs) == 4 and not v and frozenset(cs) in quads:  # a circle drawn under an f-puzzles quadruple
+            if anti and col in ({anti.group(1)} | {"pink", "red"}) and col != "white":
+                q = quads[frozenset(cs)]
+                rules.append(("anti_quadruple", cs, [int(x) for x in q.get("values") or [] if str(x).isdigit()]))
+                fp = dict(fp, quadruple=[x for x in fp.get("quadruple") or [] if x is not q])
+                continue
+            if col == "white":  # the quadruple's own circle
+                continue
+            # another colour under a quadruple has its own meaning (bipolar, half correct, ...): left unread
+        about = " ".join(x for x in re.split(r"(?<=[.\n])\s*", text) if "circle" in x)  # the sentences on circles
+        standard = re.search(r"quadruple|must (?:appear|be placed)", about) and not re.search(
+            r"exactly (?:one|two|three) of|\bsum\b|\bproduct\b", about
+        )  # the quadruple rule itself, not another rule about the four cells
+        if len(cs) == 4 and re.fullmatch(r"[\d ,]+", v) and ST.QUAD_TEXT.search(text) and standard:
+            is_anti = bool(anti) and col in ({anti.group(1)} | {"pink", "red"}) and col != "white"
+            rules.append(("anti_quadruple" if is_anti else "quadruple", cs, [int(x) for x in re.findall(r"\d", v)]))
+        elif len(cs) == 2 and pair and not v:
+            rules.append(("pair_sum", cs, [int(pair.group(1))]))
+        else:
+            keep.append(it)
+    return dict(fp, circle=keep), rules
 
 
 def _shape_cells(fp, n):

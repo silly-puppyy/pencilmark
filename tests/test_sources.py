@@ -1,6 +1,7 @@
 """Puzzle importers, offline (no network): link detection and payload translation."""
 
 import json
+import re
 import urllib.parse
 
 import lzstring
@@ -939,6 +940,24 @@ def test_shifter_lines_and_dots():
     p, why = SP.translate(_sp4(overlays=[dot]), "Normal sudoku rules apply.")
     assert p is None and "yellow dot" in why
     assert "shifter" not in SP.rule_flags("All my series: Equality Cages, Shifter Lines, Shifter Dots.")
+
+
+def test_fpuzzles_circle_meanings():
+    """f-puzzles circles with a meaning in the text: a pink circle under a quadruple makes it an anti-quadruple;
+    decorative circles are dropped; counting circles worded "how many circles" """
+    from pencilmark.sources import _fpuz_translate as FT
+
+    grid = [[{} for _ in range(4)] for _ in range(4)]
+    cells = ["R1C1", "R1C2", "R2C1", "R2C2"]
+    fp = {"size": 4, "grid": grid, "quadruple": [{"cells": cells, "values": ["1"]}],
+          "circle": [{"cells": cells, "baseC": "#FF000D"}],
+          "ruleset": "Quadruples: digits in the white circle appear in the four surrounding cells. Anti-Quadruples: "
+                     "digits in the small PINK circle cannot appear in one of the four surrounding cells."}  # fmt: skip
+    p, _ = FT.translate(fp)
+    assert next(r for r, _ in p.named_rules)["label"] == "Anti-quadruple"
+    p, _ = FT.translate(dict(fp, quadruple=[], ruleset="The circles have no effect on the puzzle."))
+    assert p is not None
+    assert re.search(FT.COUNTING_CIRCLES, "for a digit in a circle, it indicates exactly how many circles contain it")
 
 
 def test_rule_for_every_line():
