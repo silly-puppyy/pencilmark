@@ -377,6 +377,16 @@ def _described(sent):
     return [k for k in got if k != "region_sum" or re.search(r"\bbox(?:es)?\b|3x3", sent)]
 
 
+def every_line_rule(rules):
+    """the line rule a sentence gives every line ("all lines are region sum lines", "every line is a renban"), or None"""
+    for sent in re.split(r"(?<=[.\n])\s*", (rules or "").lower()):
+        if re.search(r"\b(?:all (?:the )?lines (?:are|act as)|every line (?:is|acts as))\b", sent):
+            got = {k for k, pats in RULE_WORDS.items() if any(re.search(p, sent) for p in pats)} | set(_described(sent))
+            if len(got) == 1:
+                return got.pop()
+    return None
+
+
 def described_line_rules(rules):
     """line rules the text describes without naming them, from sentences about a line or thread that name no colour
     (a puzzle with one line colour); empty when any line sentence names a colour"""
@@ -910,6 +920,7 @@ def translate(sp, page_text=None, overrides=None):
         text_mentions = (text_mentions - {"thermo", "slow_thermo"}) | {"slow_thermo"}
     if len({cn for cn, _, _ in line_items(P, n)} - {"diagonal"}) == 1:
         text_mentions |= described_line_rules(rules)  # "digits on a line form a consecutive set", one line colour
+    all_lines = every_line_rule(rules)
     box_of = {c: gi for gi, g in enumerate(p.groups) if g.kind == "box" for c in g.cells}
     told = set()  # line colours whose meaning is logged (once per colour and reading)
     for cname, hexcol, lc in line_items(P, n):
@@ -951,6 +962,12 @@ def translate(sp, page_text=None, overrides=None):
             rule, how = "slow_thermo", how + " (slow)"
         if rule is None and not cmap and re.search(DEFAULT_EVIDENCE.get(DEFAULT_LINE.get(cname), "^$"), rules.lower()):
             rule, how = DEFAULT_LINE.get(cname), "SudokuPad's default colours (the rules text names none)"
+        if all_lines and cname != "diagonal" and overrides is None:
+            if rule is None:
+                rule, how = all_lines, "the rules text giving every line that rule"
+            elif rule != all_lines:  # "all lines are region sum lines; orange lines are Dutch whispers": two rules
+                unknown.append(f"{cname} line with two rules")
+                continue
         if overrides is None and (cname, rule) not in told:  # infer() logs its readings instead
             told.add((cname, rule))
             _log.debug("%s line (%s): %s, by %s", cname, hexcol, rule or "unknown", how if rule else "no clue")

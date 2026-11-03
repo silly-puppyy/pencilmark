@@ -342,6 +342,21 @@ def test_region_sum_loop_and_per_box_wording():
     assert p is None and "re-entering a box" in why
 
 
+def test_rule_for_every_line():
+    """ "all lines are region sum lines" gives every line that rule; a line whose colour also names another rule has two
+    rules and is refused (CTC zkz5Qw2BWx4: orange lines are also Dutch whispers)"""
+    from pencilmark.sources import _sp_translate as SP
+
+    assert SP.every_line_rule("Numbers can repeat on a line. All lines are region sum lines.") == "region_sum"
+    line = lambda col: {"color": col, "thickness": 9.6, "wayPoints": [[0.5, 0.5], [0.5, 2.5]]}
+    p, _ = SP.translate(_sp4(lines=[line("#34BBE6")]), "All lines are region sum lines.")
+    assert any(c["type"] == "equal_sum" for c in p.constraints)
+    p, why = SP.translate(
+        _sp4(lines=[line("#F5A623")]), "All lines are region sum lines. Orange lines are Dutch whisper lines."
+    )
+    assert p is None and "two rules" in why
+
+
 def test_between_line_through_several_circles():
     """a between line passing through more than two circles is one between line per stretch from circle to circle
     (CTC k90bwDVb3bw: 28 stretches; read from its end circles only it had several solutions)"""
