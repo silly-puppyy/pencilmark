@@ -211,3 +211,4 @@ def test_rule_facts_follow_the_digit_range():
     )
     assert derived("arrow", 9, 2).startswith("With digits 1-9, 9 cannot sit on its 2-cell shaft")
     assert derived("renban", 6, 4) == "A 4-cell renban with digits 1-6 always holds 3 and 4."
+    assert derived("kropki_chain", 6) == "With digits 1-6, 5 never sits on a black dot."

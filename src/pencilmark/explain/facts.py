@@ -11,8 +11,7 @@ RULE_FACTS = {
     "palindrome": "A palindrome line reads the same from both ends, so mirrored cells hold the same digit.",
     "entropic": "Any three neighbouring cells on an entropic line hold one low (1-3), one middle (4-6) and one high (7-9) digit.",
     "modular": "Any three neighbouring cells on a modular line hold digits with different remainders when divided by 3.",
-    "kropki_chain": "A white dot joins two consecutive digits; a black dot joins a digit and its double, so 5, 7 and 9 never "
-    "sit on a black dot.",
+    "kropki_chain": "A white dot joins two consecutive digits; a black dot joins a digit and its double.",
     "region_sum": "A region-sum line has the same total in every box it passes through.",
     "parity": "Neighbours on a parity line alternate between odd and even.",
     "between": "Digits on a between line lie strictly between the two circle digits at its ends.",
@@ -48,6 +47,10 @@ def derived(kind, D, n=None, k=None):
                     parts.append(f"neighbours alternate between low ({_digits(lo)}) and high ({_digits(hi)}) digits")
                 break
         return ("With digits 1-%d, " % D + " and ".join(parts) + ".") if parts else ""
+    if kind == "kropki_chain":
+        never = [d for d in range(1, D + 1) if 2 * d > D and d % 2]
+        verb = "sits" if len(never) == 1 else "sit"
+        return f"With digits 1-{D}, {_digits(never)} never {verb} on a black dot." if never else ""
     if kind == "arrow" and n:
         out = []
         if n >= 2:
