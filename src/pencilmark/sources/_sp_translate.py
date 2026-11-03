@@ -1013,12 +1013,12 @@ def translate(sp, page_text=None, overrides=None):
         cx, cy = lay["center"]
         if (
             quad_corners
-            and str(lay.get("text", "") or "").strip()
+            and _text_of(lay).strip()
             and any(abs(cx - qx) < 0.3 and abs(cy - qy) < 0.3 for qx, qy in quad_corners)
         ):
             continue  # a quadruple clue digit (handled by quadruples())
         w = lay.get("width", 0)
-        txt = str(lay.get("text", "") or "").strip()
+        txt = _text_of(lay).strip()
         on_edge = abs(cx - round(cx)) < 0.05 or abs(cy - round(cy)) < 0.05
         if lay.get("rounded") and w >= 0.6 and not on_edge and inside(cell_of((cx, cy))):
             circles[cell_of((cx, cy))] = color_name(lay.get("backgroundColor") or lay.get("borderColor"))
@@ -1394,6 +1394,12 @@ def translate(sp, page_text=None, overrides=None):
     return p, {k: v for k, v in used.items() if v}
 
 
+def _text_of(lay):
+    """an element's text; a clue 0 stored as the number 0 is "0", not empty"""
+    t = lay.get("text")
+    return "" if t is None or t is False else str(t)
+
+
 def _num(t):
     t = str(t if t is not None else "").strip()
     return int(t) if re.fullmatch(r"\d{1,3}", t) else None
@@ -1401,8 +1407,49 @@ def _num(t):
 
 def _texts(P):
     for lay in (P.get("overlays") or []) + (P.get("underlays") or []):
-        if isinstance(lay, dict) and "center" in lay and str(lay.get("text", "") or "").strip():
+        if isinstance(lay, dict) and "center" in lay and _text_of(lay).strip():
             yield lay
+
+
+def _pairs_adjacent(ds, n, ordered):
+    if len(ds) != 2:
+        return None
+    a, b = ds
+    either = "" if ordered else f" or (ray[i] == {b} and ray[i + 1] == {a})"
+    return [f"any((ray[i] == {a} and ray[i + 1] == {b}){either} for i in {{1..{n - 1}}})"]
+
+
+def _coast(ds, n):
+    if len(ds) != 2:
+        return None
+    a, b = ds
+    return [
+        f"any((ray[j] == {a} and ray[{n + 1} - j] == {b}) or (ray[j] == {b} and ray[{n + 1} - j] == {a}) for j in {{1..3}})"
+    ]
+
+
+# one-off outside clues (GAS) as custom rules over the cells seen from the clue ("ray", from the clue inwards):
+# kind -> (wording, the clue's digits and the row length -> conditions, or None for a clue it cannot read). Digits:
+# each digit of the clue text ("12" is 1 and 2) where `split`, else the clue as one number.
+OUTSIDE_CUSTOM = {
+    "outside": (r"(?:must|will) appear in the first three cells|standard outside sudoku", True,
+                lambda ds, n: [f"any(x == {d} for x in take(3, ray))" for d in ds]),
+    "first_parity": (r"first odd or even (?:value|number|digit)", True,
+                     lambda ds, n: [f"ray[position(ray, x => {'odd' if d % 2 else 'even'}(x))] == {d}" for d in ds]),
+    "neighbours_ordered": (r"immediately adjacent to each other in the given order", True,
+                           lambda ds, n: _pairs_adjacent(ds, n, True)),
+    "neighbours": (r"immediately adjacent to each other", True, lambda ds, n: _pairs_adjacent(ds, n, False)),
+    "coast": (r"first and last three cells in that (?:row|column|row or column) in symmetric", True, _coast),
+    "consecutive_count": (r"number of pairs of adjacent consecutive", False,
+                          lambda ds, n: [f"count(i for i in {{1..{n - 1}}} if abs(ray[i + 1] - ray[i]) == 1) == {ds[0]}"]),
+    "max_min": (r"sum of the largest and (?:the )?smallest numbers? of the first three", False,
+                lambda ds, n: [f"max(take(3, ray)) + min(take(3, ray)) == {ds[0]}"]),
+    "median": (r"\bmedian\b", False, lambda ds, n: [f"median(take(3, ray)) == {ds[0]}"]),
+    "highball": (r"either the first and second (?:numbers|digits) or the second and third", False,
+                 lambda ds, n: [f"ray[1] + ray[2] == {ds[0]} or ray[2] + ray[3] == {ds[0]}"]),
+    "next_to_nine": (r"immediately adjacent to the 9", False,
+                     lambda ds, n: [f"let q = position(ray, x => x == 9); (ray[q - 1] ?? 0) + (ray[q + 1] ?? 0) == {ds[0]}"]),
+}  # fmt: skip
 
 
 def outside_clues(P, n, p, rules, used, unknown, idx, inside):
@@ -1466,6 +1513,8 @@ def outside_clues(P, n, p, rules, used, unknown, idx, inside):
         )
         if re.search(pat, t)
     ]
+    custom = [k for k, (pat, _, _) in OUTSIDE_CUSTOM.items() if re.search(pat, t)]
+    kinds += custom[:1]  # the first that matches: "adjacent ... in the given order" before "adjacent"
     if len(kinds) != 1:
         unknown.append("outside clues" + (" (ambiguous rule)" if kinds else ""))
         return
@@ -1482,6 +1531,25 @@ def outside_clues(P, n, p, rules, used, unknown, idx, inside):
             cells = [idx((r, j)) for j in range(n - 1, -1, -1)]
         else:
             unknown.append("corner outside clue")
+            continue
+        if kind in OUTSIDE_CUSTOM and not (r < -1 or r > n or c < -1 or c > n):
+            from .. import puzzle_json as PJ
+
+            _, split, build = OUTSIDE_CUSTOM[kind]
+            text = " ".join(str(x) for x in txts)
+            ds = (
+                [int(ch) for ch in text if ch.isdigit()]
+                if split
+                else ([vals[0]] if len(vals) == 1 and vals[0] is not None else [])
+            )
+            conds = build(ds, n) if ds and re.fullmatch(r"[\d ]+", text) else None
+            if not conds:
+                unknown.append("outside clue text")
+                continue
+            ray = [f"r{p.coords[i][0] + 1}c{p.coords[i][1] + 1}" for i in cells]
+            for h in conds:
+                PJ.add_named(p, {"type": "custom", "cells": {"ray": ray}, "holds": h})
+            used[kind] += 1
             continue
         if r < -1 or r > n or c < -1 or c > n or len(vals) != 1 or vals[0] is None:
             unknown.append("outside clue text")
@@ -1642,12 +1710,7 @@ def shaded_regions(P, n, p, rules, used):
         return
     by = defaultdict(list)
     for lay in P.get("underlays") or []:
-        if (
-            not isinstance(lay, dict)
-            or "center" not in lay
-            or lay.get("rounded")
-            or str(lay.get("text", "") or "").strip()
-        ):
+        if not isinstance(lay, dict) or "center" not in lay or lay.get("rounded") or _text_of(lay).strip():
             continue
         w, h = lay.get("width", 0) or 0, lay.get("height", 0) or lay.get("width", 0) or 0
         if w < 0.8 or h < 0.8:
@@ -1786,7 +1849,7 @@ def parity_shapes(P, n, p, rules, used, idx, inside):
     taken |= {x for r_ in p.relations for x in r_[1:3] if r_[0] in ("lt", "le", "diffge", "eq", "parity")}
     shapes = []
     for lay in (P.get("underlays") or []) + (P.get("overlays") or []):
-        if not isinstance(lay, dict) or "center" not in lay or str(lay.get("text", "") or "").strip():
+        if not isinstance(lay, dict) or "center" not in lay or _text_of(lay).strip():
             continue
         cx, cy = lay["center"]
         w, h = lay.get("width", 0) or 0, lay.get("height", 0) or lay.get("width", 0) or 0

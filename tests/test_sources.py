@@ -546,6 +546,24 @@ def test_drawn_styles():
     assert not any("style" in r for r in plain["rules"]) and pm.fingerprint(doc) == pm.fingerprint(plain)
 
 
+def test_one_off_outside_clues():
+    """one-off outside clues are custom rules over the cells seen from the clue: a digit string is several digits where
+    the rule takes digits ("12": 1 and 2 in the first three cells), else one number; a clue 0 stored as a number is
+    read, not dropped"""
+    from pencilmark.sources import _sp_translate as SP
+
+    clue = lambda y, x, t: {"center": [y, x], "text": t, "width": 0, "height": 0, "fontSize": 30}
+    p, _ = SP.translate(_sp4(overlays=[clue(-0.5, 0.5, "12")]), "These numbers must appear in the first three cells.")
+    holds = [r["holds"] for r, _ in p.named_rules if r["type"] == "custom"]
+    assert holds == ["any(x == 1 for x in take(3, ray))", "any(x == 2 for x in take(3, ray))"]
+    p, _ = SP.translate(_sp4(overlays=[clue(1.5, 4.5, 2)]), "Each clue is the median of the first three cells.")
+    rule = next(r for r, _ in p.named_rules if r["type"] == "custom")
+    assert rule["cells"]["ray"][0] == "r2c4" and rule["holds"] == "median(take(3, ray)) == 2"
+    text = "Clues outside the grid indicate the number of pairs of adjacent consecutive numbers in that row."
+    p, _ = SP.translate(_sp4(overlays=[clue(0.5, -0.5, 0)]), text)
+    assert [r["holds"] for r, _ in p.named_rules] == ["count(i for i in {1..3} if abs(ray[i + 1] - ray[i]) == 1) == 0"]
+
+
 def test_rule_for_every_line():
     """ "all lines are region sum lines" gives every line that rule; a line whose colour also names another rule has two
     rules and is refused (CTC zkz5Qw2BWx4: orange lines are also Dutch whispers)"""

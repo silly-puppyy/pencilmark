@@ -19,12 +19,14 @@
   lines through several circles; refused instead of misread: anti-line rules, broken zippers, rings drawn along grid
   lines, default line colours without a positive description, a line with two rules. Screen of 1,351 Cracking the
   Cryptic puzzles: 281 -> 337 graded.
-- Reader, from the GMPuzzles GAS series (286 posts with replays: 136 -> 173 graded): skyscrapers and sum frames
+- Reader, from the GMPuzzles GAS series (286 posts with replays: 136 -> 186 graded): skyscrapers and sum frames
   from their wordings, little killers drawn as arrowheads, fortress cells, clones drawn as coloured shapes, Rossini
   arrows, Battenburg markers (with sums on them), f-puzzles' own X-sum clues, typographic quotes in rules texts;
   one-off line rules as custom rules (sequence lines, alternating lines, one-digit lines; lines whose neighbours
   differ by 1); "along each line"; "a difference of 4 or more"; f-puzzles lines read from the page's wording when the
-  payload's own is terser.
+  payload's own is terser; one-off outside clues as custom rules over the cells seen from the clue (outside, first
+  odd / even, neighbours, coast to coast, consecutive count, max + min, median, highball, sum next to nine); a clue 0
+  stored as a number is no longer dropped.
 - Styles: a SudokuPad puzzle's look (line colours and widths, cage colours, dot and shape fills) is exported as each
   rule's cosmetic `style`, for named and custom rules alike; `to_export(..., style=False)` leaves it out.
 - Speed and robustness: the C++ uniqueness search without OR-Tools stops at a time limit, not only a node limit
