@@ -199,7 +199,7 @@ void Solver::equal_digits(MoveBuf& out) {
             if (!ok || B < 0) continue;
             uint32_t ea = cand[A] & ~cand[B], eb = cand[B] & ~cand[A];
             const int ka = ids ? id_anchor(A) : A, kb = ids ? id_anchor(B) : B;
-            const bool join = ids && ka != kb && (idc[A] || idc[B] || room);
+            const bool join = ids && ka != kb && (idc[A] || idc[B] || room) && !id_paired(ka, kb);
             if (!ea && !eb && !join) continue;
             Move& m = new_move(out, EQUAL_DIGITS, 1.0, popc(cand[A]));
             if (join) add_aeff(out, m, AE_ID_JOIN, std::max(ka, kb), std::min(ka, kb));
@@ -221,45 +221,118 @@ void Solver::equal_digits(MoveBuf& out) {
 // members' candidates (not stored). Ids are canonical: 1 + the class's first cell in reading order, so the listing
 // cache and band_path's state keys see one name per class.
 
+// State layout: idc[0, N) = class per cell (0 none, else 1 + the class's anchor), then the class differences (id_neq):
+// pairs of class ids (lo, hi), lo < hi, sorted, flattened. A class lives while it has an open member and either two
+// members or a difference partner; one whose members are all placed lives on while a partner still has an open member
+// (its digit is still to be carried over); a pair lives while both its classes do. Without pairs this is increment 1's
+// rule (two members, one open).
 void Solver::id_normalize() {
     if (idc.empty()) return;
+    const int N = p.N;
     std::map<int, std::vector<int>> cls;  // members in reading order
-    for (int c = 0; c < p.N; ++c)
+    for (int c = 0; c < N; ++c)
         if (idc[c]) cls[idc[c]].push_back(c);
-    std::fill(idc.begin(), idc.end(), 0);
-    for (auto& kv : cls) {
-        const std::vector<int>& ms = kv.second;
-        int open = 0;
-        for (int c : ms) open += !vals[c];
-        if (ms.size() < 2 || !open) continue;  // resolved (every member placed) or a single cell: freed
-        for (int c : ms) idc[c] = ms[0] + 1;
+    std::vector<std::pair<int, int>> prs;
+    for (size_t i = (size_t)N; i + 1 < idc.size(); i += 2)
+        if (idc[i] != idc[i + 1] && cls.count(idc[i]) && cls.count(idc[i + 1])) prs.emplace_back(idc[i], idc[i + 1]);
+    std::map<int, char> alive, open;
+    for (const auto& kv : cls) {
+        char o = 0;
+        for (int c : kv.second) o |= !vals[c];
+        alive[kv.first] = 1, open[kv.first] = o;
     }
+    for (bool ch = true; ch;) {  // largest consistent set: dropping a class can only drop others
+        ch = false;
+        for (const auto& kv : cls) {
+            const int k = kv.first;
+            if (!alive[k]) continue;
+            bool partner = false, popen = false;
+            for (const auto& pr : prs) {
+                const int o = pr.first == k ? pr.second : pr.second == k ? pr.first : 0;
+                if (!o || !alive[o]) continue;
+                partner = true;
+                popen |= open[o] != 0;
+            }
+            if ((kv.second.size() >= 2 || partner) && (open[k] || popen)) continue;
+            alive[k] = 0;
+            ch = true;
+        }
+    }
+    std::fill(idc.begin(), idc.begin() + N, 0);
+    std::map<int, int> ren;
+    for (const auto& kv : cls)
+        if (alive[kv.first]) {
+            ren[kv.first] = kv.second[0] + 1;
+            for (int c : kv.second) idc[c] = kv.second[0] + 1;
+        }
+    std::set<std::pair<int, int>> np;
+    for (const auto& pr : prs)
+        if (alive[pr.first] && alive[pr.second]) {
+            const int a = ren[pr.first], b = ren[pr.second];
+            np.insert({std::min(a, b), std::max(a, b)});
+        }
+    idc.resize(N);
+    for (const auto& pr : np) idc.push_back(pr.first), idc.push_back(pr.second);
 }
 
 void Solver::id_join(int c, int a) {
     if (idc.empty() || c == a) return;
+    const int N = p.N;
     const int kc = idc[c], ka = idc[a];
     int lo = std::min(c, a);
-    for (int x = 0; x < p.N; ++x)
+    for (int x = 0; x < N; ++x)
         if ((kc && idc[x] == kc) || (ka && idc[x] == ka)) lo = std::min(lo, x);
     const int nk = lo + 1;
-    for (int x = 0; x < p.N; ++x)
+    for (size_t x = 0; x < idc.size(); ++x)  // members, and the differences naming either class
         if ((kc && idc[x] == kc) || (ka && idc[x] == ka)) idc[x] = nk;
     idc[c] = idc[a] = nk;
     id_normalize();
 }
 
+void Solver::id_neq(int x, int y) {
+    if (idc.empty() || x == y) return;
+    if (!idc[x]) idc[x] = x + 1;  // a cell without a class becomes a one-member class (it lives through the pair)
+    if (!idc[y]) idc[y] = y + 1;
+    idc.push_back(idc[x]);
+    idc.push_back(idc[y]);
+    id_normalize();
+}
+
 int Solver::id_live() const {
     int n = 0;
-    for (int c = 0; c < (int)idc.size(); ++c) n += idc[c] == c + 1;  // a class counted at its anchor
+    for (int c = 0; c < (int)idc.size() && c < p.N; ++c) n += idc[c] == c + 1;  // a class counted at its anchor
     return n;
+}
+
+std::vector<std::pair<int, int>> Solver::id_pairs() const {
+    std::vector<std::pair<int, int>> out;
+    for (size_t i = (size_t)p.N; i + 1 < idc.size(); i += 2) out.emplace_back(idc[i] - 1, idc[i + 1] - 1);
+    return out;
+}
+
+bool Solver::id_paired(int ka, int kb) const {
+    for (size_t i = (size_t)p.N; i + 1 < idc.size(); i += 2) {
+        const int a = idc[i] - 1, b = idc[i + 1] - 1;
+        if ((a == ka && (kb < 0 || b == kb)) || (b == ka && (kb < 0 || a == kb))) return true;
+    }
+    return false;
+}
+
+uint32_t Solver::id_digits(const std::vector<int>& ms, int* pv) const {
+    uint32_t I = p.full;
+    if (pv) *pv = 0;
+    for (int c : ms) {
+        if (vals[c] && pv) *pv = vals[c];
+        I &= vals[c] ? bit(vals[c]) : cand[c];
+    }
+    return I;
 }
 
 namespace {
 // the live classes: anchor -> members (reading order)
-std::map<int, std::vector<int>> id_classes(const std::vector<int>& idc) {
+std::map<int, std::vector<int>> id_classes(const std::vector<int>& idc, int N) {
     std::map<int, std::vector<int>> cls;
-    for (int c = 0; c < (int)idc.size(); ++c)
+    for (int c = 0; c < (int)idc.size() && c < N; ++c)
         if (idc[c]) cls[idc[c] - 1].push_back(c);
     return cls;
 }
@@ -271,16 +344,12 @@ std::map<int, std::vector<int>> id_classes(const std::vector<int>& idc) {
 void Solver::class_single(MoveBuf& out) {
     if (!id_on() || disabled[CLASS_SINGLE]) return;
     const int W = p.W;
-    for (const auto& kv : id_classes(idc)) {
+    for (const auto& kv : id_classes(idc, p.N)) {
         const int a = kv.first;
         const std::vector<int>& ms = kv.second;
-        uint32_t I = p.full;
-        bool any_placed = false;
-        for (int c : ms) {
-            if (vals[c]) any_placed = true;
-            I &= vals[c] ? bit(vals[c]) : cand[c];
-        }
-        if (any_placed || !I) continue;  // a placed member: ClassPropagation's job
+        int pv = 0;
+        const uint32_t I = id_digits(ms, &pv);
+        if (pv || !I) continue;  // a placed member: ClassPropagation's job
         std::vector<uint64_t> sees(W, 0);
         for (int c : ms)
             for (int w = 0; w < W; ++w) sees[w] |= p.peers(c)[w];
@@ -295,10 +364,11 @@ void Solver::class_single(MoveBuf& out) {
                 ++n;
                 X = c;
             }
-            if (n != 1 || vals[X] || id_anchor(X) == a) continue;
+            if (n != 1 || vals[X] || id_anchor(X) == a || id_paired(id_anchor(X), a)) continue;
             Move& m = new_move(out, CLASS_SINGLE, 1.0, (int)ms.size());
             const int x = id_anchor(X);
             add_aeff(out, m, AE_ID_JOIN, std::max(x, a), std::min(x, a));
+            add_aeff(out, m, AE_ID_USE, a, 0);
             std::vector<int> pc(ms);
             pc.push_back(X);
             set_pattern(out, m, pc);
@@ -312,18 +382,17 @@ void Solver::class_single(MoveBuf& out) {
 }
 
 // The use of a class: its members hold one digit, so a candidate one member lost leaves them all, and a placed member
-// places the others. Priced as a single (a direct consequence of what is already known).
+// places the others. Priced as a single (a direct consequence of what is already known). Across a difference (two
+// classes known to hold different digits): once one class's digit is known (a member placed, or one digit left), the
+// other class's members lose it.
 void Solver::id_propagate(MoveBuf& out, bool direct_view) {
     if (!id_on() || disabled[ID_PROPAGATE]) return;
-    for (const auto& kv : id_classes(idc)) {
+    const auto cls = id_classes(idc, p.N);
+    for (const auto& kv : cls) {
         const int a = kv.first;
         const std::vector<int>& ms = kv.second;
-        uint32_t I = p.full;
         int pv = 0;
-        for (int c : ms) {
-            if (vals[c]) pv = vals[c];
-            I &= vals[c] ? bit(vals[c]) : cand[c];
-        }
+        const uint32_t I = id_digits(ms, &pv);
         if (!I) continue;  // contradiction: not ours to report
         if (pv) {  // a member is placed: the others take its digit
             for (int c : ms) {
@@ -331,9 +400,10 @@ void Solver::id_propagate(MoveBuf& out, bool direct_view) {
                 Move& m = new_move(out, ID_PROPAGATE, 1.0, (int)ms.size());
                 m.pc = c;
                 m.pv = pv;
+                add_aeff(out, m, AE_ID_USE, a, 0);
                 set_pattern(out, m, ms);
                 meta9(m, 1, 1, 1, 0, 0, 0, 0, direct_view ? 0 : 1, 1.0);
-                pm_long xm[XM_N] = {a, (pm_long)ms.size(), (pm_long)I, pv, 0, 0, 0, 0, 0, 0};
+                pm_long xm[XM_N] = {a, (pm_long)ms.size(), (pm_long)I, pv, -1, 0, 0, 0, 0, 0};
                 std::copy(xm, xm + XM_N, m.xm);
             }
             continue;
@@ -350,9 +420,143 @@ void Solver::id_propagate(MoveBuf& out, bool direct_view) {
                 add_elim(out, m, c, lowdigit(x));
                 dg |= x & (~x + 1);
             }
+        add_aeff(out, m, AE_ID_USE, a, 0);
         set_pattern(out, m, ms);
         meta9(m, (int)tg.size(), 1, popc(dg), 0, 0, 0, 0, 1, 1.0);
-        pm_long xm[XM_N] = {a, (pm_long)ms.size(), (pm_long)I, 0, 0, 0, 0, 0, 0, 0};
+        pm_long xm[XM_N] = {a, (pm_long)ms.size(), (pm_long)I, 0, -1, 0, 0, 0, 0, 0};
+        std::copy(xm, xm + XM_N, m.xm);
+    }
+    if (direct_view) return;
+    for (const auto& pr : id_pairs()) {  // differences: a known digit leaves the partner class
+        for (int dir = 0; dir < 2; ++dir) {
+            const int k1 = dir ? pr.second : pr.first, k2 = dir ? pr.first : pr.second;
+            auto i1 = cls.find(k1), i2 = cls.find(k2);
+            if (i1 == cls.end() || i2 == cls.end()) continue;
+            int pv = 0;
+            const uint32_t I1 = id_digits(i1->second, &pv);
+            const int v = pv ? pv : popc(I1) == 1 ? lowdigit(I1) : 0;
+            if (!v) continue;
+            std::vector<int> tg;
+            for (int c : i2->second)
+                if (!vals[c] && (cand[c] & bit(v))) tg.push_back(c);
+            if (tg.empty()) continue;
+            Move& m = new_move(out, ID_PROPAGATE, 1.0, (int)i2->second.size());
+            for (int c : tg) add_elim(out, m, c, v);
+            add_aeff(out, m, AE_ID_USE, k1, 0);
+            add_aeff(out, m, AE_ID_USE, k2, 0);
+            std::vector<int> pc(i1->second);
+            pc.insert(pc.end(), i2->second.begin(), i2->second.end());
+            set_pattern(out, m, pc);
+            meta9(m, (int)tg.size(), 1, 1, 0, 0, 0, 0, 1, 1.0);
+            const pm_long n2 = (pm_long)i2->second.size(), I2 = (pm_long)id_digits(i2->second, nullptr);
+            pm_long xm[XM_N] = {k2, n2, I2, v, k1, 0, 0, 0, 0, 0};
+            std::copy(xm, xm + XM_N, m.xm);
+        }
+    }
+}
+
+// Two-colour classes ("these 3 / 6 cells are blue or grey"): cells holding the same two candidates {a, b} that must
+// differ (same house, or a "different" relation of the puzzle: king, knight, ...) hold a and b in some order. Start:
+// two such cells X, Y (neither in a class with a difference yet) -> class(X) and class(Y) differ (AE_ID_NEQ).
+// Extend: classes K1 != K2 whose digits together are exactly {a, b} are a and b in some order; a cell Z whose
+// candidates are within {a, b} and which sees a member of K1 is not K1's digit, so it is K2's: Z joins K2.
+void Solver::class_pair(MoveBuf& out) {
+    if (!id_on() || disabled[CLASS_PAIR]) return;
+    const int N = p.N, W = p.W;
+    const int live = id_live();
+    for (int X = 0; X < N; ++X) {
+        if (vals[X] || popc(cand[X]) != 2) continue;
+        const int kx = id_anchor(X);
+        if (idc[X] && id_paired(kx, -1)) continue;  // already two-coloured: extended below
+        const uint64_t* px = p.peers(X);
+        for (int Y = X + 1; Y < N; ++Y) {
+            if (vals[Y] || cand[Y] != cand[X] || !tbit(px, Y)) continue;
+            const int ky = id_anchor(Y);
+            if (ky == kx || (idc[Y] && id_paired(ky, -1))) continue;
+            if (live + !idc[X] + !idc[Y] > ID_CAP) continue;  // new classes need room under the cap
+            Move& m = new_move(out, CLASS_PAIR, 1.0, 2);
+            add_aeff(out, m, AE_ID_NEQ, std::max(kx, ky), std::min(kx, ky));
+            std::vector<int> pc{X, Y};
+            set_pattern(out, m, pc);
+            m.shape = pspread(pc);
+            meta9(m, 2, 1, 2, 1, 1, 0, 0, 1, m.shape);
+            pm_long xm[XM_N] = {0, X, Y, -1, (pm_long)cand[X], 0, 0, 0, 0, 0};
+            std::copy(xm, xm + XM_N, m.xm);
+        }
+    }
+    const auto cls = id_classes(idc, N);
+    for (const auto& pr : id_pairs()) {
+        auto i1 = cls.find(pr.first), i2 = cls.find(pr.second);
+        if (i1 == cls.end() || i2 == cls.end()) continue;
+        int pv1 = 0, pv2 = 0;
+        const uint32_t I1 = id_digits(i1->second, &pv1), I2 = id_digits(i2->second, &pv2);
+        const uint32_t U = I1 | I2;
+        if (pv1 || pv2 || !I1 || !I2 || popc(U) != 2) continue;  // a known digit: ClassPropagation's job
+        for (int dir = 0; dir < 2; ++dir) {
+            const auto& K1 = dir ? *i2 : *i1;  // Z sees K1 ...
+            const auto& K2 = dir ? *i1 : *i2;  // ... so Z joins K2
+            std::vector<uint64_t> sees(W, 0);
+            for (int c : K1.second)
+                for (int w = 0; w < W; ++w) sees[w] |= p.peers(c)[w];
+            for (int Z = 0; Z < N; ++Z) {
+                if (vals[Z] || !cand[Z] || (cand[Z] & ~U) || !tbit(sees.data(), Z)) continue;
+                const int kz = id_anchor(Z);
+                if (kz == K1.first || kz == K2.first || id_paired(kz, K2.first)) continue;
+                Move& m = new_move(out, CLASS_PAIR, 1.0, (int)(K1.second.size() + K2.second.size()) + 1);
+                add_aeff(out, m, AE_ID_JOIN, std::max(kz, K2.first), std::min(kz, K2.first));
+                add_aeff(out, m, AE_ID_USE, K1.first, 0);
+                add_aeff(out, m, AE_ID_USE, K2.first, 0);
+                std::vector<int> pc(K1.second);
+                pc.insert(pc.end(), K2.second.begin(), K2.second.end());
+                pc.push_back(Z);
+                set_pattern(out, m, pc);
+                m.shape = pspread(pc);
+                meta9(m, (int)pc.size(), 2, 2, 2, 1, 0, 0, 1, m.shape);
+                pm_long xm[XM_N] = {1, Z, K2.first, K1.first, (pm_long)U, 0, 0, 0, 0, 0};
+                std::copy(xm, xm + XM_N, m.xm);
+            }
+        }
+    }
+}
+
+// Sees both colours: classes K1 != K2 whose digits together are exactly {a, b} hold a and b; a cell outside both that
+// sees a member of each can hold neither.
+void Solver::class_trap(MoveBuf& out) {
+    if (!id_on() || disabled[CLASS_TRAP]) return;
+    const int N = p.N, W = p.W;
+    const auto cls = id_classes(idc, N);
+    for (const auto& pr : id_pairs()) {
+        auto i1 = cls.find(pr.first), i2 = cls.find(pr.second);
+        if (i1 == cls.end() || i2 == cls.end()) continue;
+        int pv1 = 0, pv2 = 0;
+        const uint32_t I1 = id_digits(i1->second, &pv1), I2 = id_digits(i2->second, &pv2);
+        const uint32_t U = I1 | I2;
+        if (pv1 || pv2 || !I1 || !I2 || popc(U) != 2) continue;
+        std::vector<uint64_t> s1(W, 0), s2(W, 0);
+        for (int c : i1->second)
+            for (int w = 0; w < W; ++w) s1[w] |= p.peers(c)[w];
+        for (int c : i2->second)
+            for (int w = 0; w < W; ++w) s2[w] |= p.peers(c)[w];
+        std::vector<int> tg;
+        for (int C = 0; C < N; ++C) {
+            if (vals[C] || !(cand[C] & U) || !tbit(s1.data(), C) || !tbit(s2.data(), C)) continue;
+            const int kc = id_anchor(C);
+            if (kc == i1->first || kc == i2->first) continue;
+            tg.push_back(C);
+        }
+        if (tg.empty()) continue;
+        std::vector<int> pc(i1->second);
+        pc.insert(pc.end(), i2->second.begin(), i2->second.end());
+        const int n = (int)pc.size();
+        Move& m = new_move(out, CLASS_TRAP, 1.0, n);
+        for (int C : tg)
+            for (uint32_t x = cand[C] & U; x; x &= x - 1) add_elim(out, m, C, lowdigit(x));
+        add_aeff(out, m, AE_ID_USE, i1->first, 0);
+        add_aeff(out, m, AE_ID_USE, i2->first, 0);
+        set_pattern(out, m, pc);
+        m.shape = pspread(pc);
+        meta9(m, n, n - 1, 2, n - 1, 1, 0, 0, 1, m.shape);
+        pm_long xm[XM_N] = {i1->first, i2->first, (pm_long)U, (pm_long)tg.size(), 0, 0, 0, 0, 0, 0};
         std::copy(xm, xm + XM_N, m.xm);
     }
 }

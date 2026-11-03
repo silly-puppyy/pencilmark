@@ -529,6 +529,7 @@ def _f_se(c):
 
 def _f_steps(c):
     from . import band_path as BP
+    from . import cbackend as CB
 
     p, bp, levels = c.p, c.bp, c.levels
     cn = lambda x: f"r{p.coords[x][0] + 1}c{p.coords[x][1] + 1}"
@@ -544,8 +545,12 @@ def _f_steps(c):
             r["region"] = f"{cn(st['lplace'][0])}@{st['lplace'][1]}"
         if st.get("lelims"):
             r["region_eliminations"] = [f"{cn(x)}@!{k}" for x, k in st["lelims"]]
-        if st.get("idjoin"):  # identity layer (params id_layer, experiment): the cell joins the colour class of anchor
-            r["same_digit"] = [f"{cn(x)}={cn(a)}" for x, a in st["idjoin"]]
+        if st.get("idfx"):  # identity layer (params id_layer, experiment): the cell joins the colour class of anchor /
+            fx = st["idfx"]  # the two cells' classes hold different digits
+            if any(k == CB.AE_ID_JOIN for k, _, _ in fx):
+                r["same_digit"] = [f"{cn(x)}={cn(a)}" for x, a in CB.id_joins(fx)]
+            if any(k == CB.AE_ID_NEQ for k, _, _ in fx):
+                r["different_digit"] = [f"{cn(x)}!={cn(a)}" for k, x, a in fx if k == CB.AE_ID_NEQ]
         told = {x: expl[i][x] for x in levels if expl[i].get(x)} if levels and expl[i] else {}
         if told:  # a step with none of the requested levels (substeps only, for a step told in one go) has none
             r["explanation"] = told

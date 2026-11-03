@@ -91,7 +91,9 @@ XMETA_KEYS = {
     S.DIGIT_COUNT: ("units", "base_cells", "n_elims", "digit"),
     S.EQUAL_DIGITS: ("cell_a", "cell_b", "house", "candidates"),
     S.CLASS_SINGLE: ("cell", "anchor", "house", "members", "class_digits"),
-    S.ID_PROPAGATE: ("anchor", "members", "class_digits", "digit"),
+    S.ID_PROPAGATE: ("anchor", "members", "class_digits", "digit", "from_anchor"),
+    S.CLASS_PAIR: ("extend", "cell", "anchor", "other_anchor", "pair_digits"),
+    S.CLASS_TRAP: ("anchor", "other_anchor", "pair_digits", "targets"),
     S.LINE_SCAN: ("line_kind", "constraint", "window", "cells"),
     S.LINE_RANGE: ("line_kind", "constraint", "line_len", "cells_changed", "informing", "transitive_depth", "combos"),
     S.UNIQUE_RECT: ("type", "x", "y", "extra_cells", "n_elims"),
@@ -222,7 +224,7 @@ class CMove(S.Move):
     """pencilmark.solver.Move plus structured metadata of the C++-only
     techniques: xmeta (dict, see XMETA_KEYS), family, code."""
 
-    __slots__ = ("xmeta", "family", "code", "explain", "lplace", "lelim", "idjoin")
+    __slots__ = ("xmeta", "family", "code", "explain", "lplace", "lelim", "idfx")
 
 
 _CPUZZLES = {}  # repr of the make_puzzle arguments -> C++ puzzle; a card builds the same puzzle about 6 times
@@ -243,7 +245,7 @@ def to_cpuzzle(p):
     return cp
 
 
-AE_LABEL_PLACE, AE_LABEL_ELIM, AE_ID_JOIN = 1, 2, 3  # annotation effect kinds (csrc/solver.hpp AEffKind)
+AE_LABEL_PLACE, AE_LABEL_ELIM, AE_ID_JOIN, AE_ID_NEQ, AE_ID_USE = 1, 2, 3, 4, 5  # csrc/solver.hpp AEffKind
 
 
 def _label_fx(aeffs):
@@ -253,9 +255,120 @@ def _label_fx(aeffs):
 
 
 def _id_fx(aeffs):
-    """identity layer (params id_layer): the move's class joins [(cell, anchor cell)] -- cell's class merges into the
-    class whose first cell is anchor"""
-    return [(c, a) for k, c, a in aeffs if k == AE_ID_JOIN]
+    """identity layer (params id_layer): the move's identity effects [(kind, cell, arg)]: AE_ID_JOIN cell's class merges
+    into the class whose first cell is arg; AE_ID_NEQ the classes of cell and arg differ; AE_ID_USE the move relies on
+    the class anchored at cell"""
+    return [(k, c, a) for k, c, a in aeffs if k in (AE_ID_JOIN, AE_ID_NEQ, AE_ID_USE)]
+
+
+def id_joins(fx):
+    """the class joins [(cell, anchor)] among identity effects"""
+    return [(c, a) for k, c, a in fx or () if k == AE_ID_JOIN]
+
+
+def id_changes(fx):
+    """the move changes the identity state (a join or a difference, not only a use)"""
+    return any(k in (AE_ID_JOIN, AE_ID_NEQ) for k, _, _ in fx or ())
+
+
+def id_norm(idc, vals):
+    """identity state in place, as the engine's id_normalize (csrc/set_logic.cpp): idc = class per cell (0 none, else 1 +
+    the class's first cell), then the class differences as sorted (lo, hi) class-id pairs, flattened. A class lives
+    while it has an open member and two members or a difference partner; one with every member placed lives on while a
+    partner has an open member; a pair lives while both its classes do."""
+    N = len(vals)
+    cls = {}
+    for c in range(N):
+        if idc[c]:
+            cls.setdefault(idc[c], []).append(c)
+    prs = [(idc[i], idc[i + 1]) for i in range(N, len(idc) - 1, 2)]
+    prs = [(a, b) for a, b in prs if a != b and a in cls and b in cls]
+    opn = {k: any(not vals[c] for c in ms) for k, ms in cls.items()}
+    alive = dict.fromkeys(cls, True)
+    ch = True
+    while ch:
+        ch = False
+        for k, ms in cls.items():
+            if not alive[k]:
+                continue
+            part = [b if a == k else a for a, b in prs if k in (a, b) and alive[b if a == k else a]]
+            if (len(ms) >= 2 or part) and (opn[k] or any(opn[o] for o in part)):
+                continue
+            alive[k] = False
+            ch = True
+    del idc[N:]
+    for c in range(N):
+        idc[c] = 0
+    ren = {}
+    for k, ms in cls.items():
+        if alive[k]:
+            ren[k] = ms[0] + 1
+            for c in ms:
+                idc[c] = ms[0] + 1
+    for a, b in sorted({tuple(sorted((ren[a], ren[b]))) for a, b in prs if alive[a] and alive[b]}):
+        idc += [a, b]
+
+
+def id_apply(idc, vals, fx):
+    """apply a move's identity effects (joins, then differences, as the engine) and normalise"""
+    N = len(vals)
+    for k, c, a in fx or ():
+        if k == AE_ID_JOIN and c != a:
+            ks = {x for x in (idc[c], idc[a]) if x}
+            lo = min([c, a] + [x for x in range(N) if idc[x] in ks])
+            for x in range(len(idc)):
+                if idc[x] in ks:
+                    idc[x] = lo + 1
+            idc[c] = idc[a] = lo + 1
+            id_norm(idc, vals)
+    for k, c, a in fx or ():
+        if k == AE_ID_NEQ and c != a:
+            for x in (c, a):
+                if not idc[x]:
+                    idc[x] = x + 1
+            idc += [idc[c], idc[a]]
+            id_norm(idc, vals)
+    id_norm(idc, vals)
+
+
+def id_held(N, givens, steps):
+    """identity layer route accounting: which steps cost nothing. steps = [(place, elims, idfx)] in route order.
+    A step that only changes the identity state (joins / differences, no placement or elimination) is held when made.
+    A step with a placement or elimination is charged, and so is every held step it relies on, transitively: a step
+    that uses class K (AE_ID_USE) relies on each earlier held join whose cells are now in K, and on each earlier held
+    difference whose two cells are now in two classes it uses. Held steps no charged step relies on were never needed:
+    the route without them is the same proof. Returns a list of bools (True = held and never used: priced 0)."""
+    vals = [0] * N
+    for c, v in givens.items():
+        vals[c] = v
+    idc = [0] * N
+    deps, digit, built = [], [], []  # per step: earlier steps it relies on; places / eliminates; (kind, x, y) it built
+    for place, elims, fx in steps:
+        used = {idc[u] for k, u, _ in fx or () if k == AE_ID_USE and u < N and idc[u]}
+        d = set()
+        if used:
+            for j, bj in enumerate(built):
+                for k, x, y in bj:
+                    if (k == AE_ID_JOIN and idc[x] in used) or (
+                        k == AE_ID_NEQ and idc[x] in used and idc[y] in used and idc[x] != idc[y]
+                    ):
+                        d.add(j)
+        deps.append(d)
+        digit.append(bool(place) or bool(elims))
+        built.append([(k, c, a) for k, c, a in fx or () if k in (AE_ID_JOIN, AE_ID_NEQ)])
+        if place:
+            vals[place[0]] = place[1]
+        id_apply(idc, vals, fx)
+    charged = [False] * len(steps)
+    todo = [i for i in range(len(steps)) if digit[i]]
+    for i in todo:
+        charged[i] = True
+    while todo:
+        for j in deps[todo.pop()]:
+            if not charged[j]:
+                charged[j] = True
+                todo.append(j)
+    return [not charged[i] and bool(built[i]) for i in range(len(steps))]
 
 
 def _ann_kw(labels):
@@ -433,7 +546,7 @@ def solve(
         m.place = place
         m.elim = el
         m.lplace, m.lelim = _label_fx(row[15]) if len(row) > 15 else (None, ())  # annotations: region labels
-        m.idjoin = _id_fx(row[15]) if len(row) > 15 else []  # ... and colour class joins
+        m.idfx = _id_fx(row[15]) if len(row) > 15 else []  # ... and identity effects (colour classes)
         m.name = _name(puzzle, *nm)
         m.d = d
         tech = m.feat[0]
@@ -570,7 +683,7 @@ def state_moves(
                 m["lplace"], m["lelim"] = _label_fx(lfx)
             ij = _id_fx(lfx)
             if ij:
-                m["idjoin"] = ij
+                m["idfx"] = ij
         if len(r) > 9:  # the engine's explanation records and naming triple (decode with explain_record)
             m["ex"], m["nm"] = list(r[9]), tuple(r[10])
         if len(r) > 5:

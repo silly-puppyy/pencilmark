@@ -166,7 +166,9 @@ void Solver::canon_dedupe(MoveBuf& b) {
                 std::vector<AEff> ae(b.aeffs.begin() + m.aeff_off, b.aeffs.begin() + m.aeff_off + m.aeff_n);
                 std::sort(ae.begin(), ae.end());
                 key.push_back(0xFFFFFFFFu);
-                for (const AEff& e : ae) key.insert(key.end(), {(uint32_t)e.kind, (uint32_t)e.cell, (uint32_t)e.arg});
+                for (const AEff& e : ae)  // a class use (identity layer) is bookkeeping, not part of the move
+                    if (e.kind != AE_ID_USE)
+                        key.insert(key.end(), {(uint32_t)e.kind, (uint32_t)e.cell, (uint32_t)e.arg});
             }
         }
         auto it = best.find(key);

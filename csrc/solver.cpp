@@ -370,7 +370,11 @@ Solver::Solver(const Puzzle& pz, const Params& prm, const SolveOptions& o)
                 eq |= std::string(st->name()) == "equaldigits";
             }
             if (sg) t.push_back(S("idprop", [](Solver& s, MoveBuf& b) { s.id_propagate(b, false); }));
-            if (eq) t.push_back(S("classsingle", [](Solver& s, MoveBuf& b) { s.class_single(b); }));
+            if (eq) {
+                t.push_back(S("classsingle", [](Solver& s, MoveBuf& b) { s.class_single(b); }));
+                t.push_back(S("classpair", [](Solver& s, MoveBuf& b) { s.class_pair(b); }));
+                t.push_back(S("classtrap", [](Solver& s, MoveBuf& b) { s.class_trap(b); }));
+            }
         }
     }
     canon = !disabled[CANONICAL];
@@ -395,7 +399,7 @@ void Solver::init_state(const std::vector<std::pair<int, int>>& givens) {
         lab = lab_override, lcand = lcand_override;
     label_normalize();
     idc.assign(id_on() ? p.N : 0, 0);
-    if (id_on() && (int)idc_override.size() == p.N) idc = idc_override;
+    if (id_on() && (int)idc_override.size() >= p.N) idc = idc_override;  // classes, then differences
     id_normalize();
 }
 
@@ -1325,8 +1329,9 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
             // invariant primary key; ties broken by invariant candidate labels,
             // index order only as the very last resort
             auto pkey = [&](const Move& m) {
-                return std::make_tuple(std::llround(m.d * 1e9), m.tech,
-                                       -(m.el_n + (m.pc >= 0 ? 1 : 0) + m.aeff_n));
+                int ae = m.aeff_n;  // identity layer: a class use is bookkeeping, not an effect
+                for (int i = 0; i < m.aeff_n; ++i) ae -= buf.aeffs[m.aeff_off + i].kind == AE_ID_USE;
+                return std::make_tuple(std::llround(m.d * 1e9), m.tech, -(m.el_n + (m.pc >= 0 ? 1 : 0) + ae));
             };
             std::vector<int> tied{0};
             for (size_t i = 1; i < buf.moves.size(); ++i) {
@@ -1556,6 +1561,7 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
                     if (pass == 0 && e.kind == AE_LABEL_ELIM && !lab[e.cell]) lcand[e.cell] &= ~bit(e.arg);
                     if (pass == 1 && e.kind == AE_LABEL_PLACE) lab[e.cell] = (uint8_t)e.arg, lcand[e.cell] = bit(e.arg);
                     if (pass == 1 && e.kind == AE_ID_JOIN && id_on()) id_join(e.cell, e.arg);
+                    if (pass == 1 && e.kind == AE_ID_NEQ && id_on()) id_neq(e.cell, e.arg);
                 }
             if (has_regions()) label_normalize();
         }

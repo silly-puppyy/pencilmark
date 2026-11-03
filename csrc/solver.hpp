@@ -89,6 +89,8 @@ enum Tech {
     POCKET = 109,         ///< regions to find: a pocket too small for a new region, touching one unfinished region, joins it
     CLASS_SINGLE = 110,   ///< identity layer: in a house only one cell can hold a colour class's digit -> it joins the class
     ID_PROPAGATE = 111,   ///< identity layer: a class member's lost candidate / placed digit carries to every member
+    CLASS_PAIR = 112,     ///< identity layer: bivalue cells {a, b} that differ are two classes of opposite colour
+    CLASS_TRAP = 113,     ///< identity layer: a cell seeing both colours of an {a, b} class pair holds neither
     MENTAL_NOTES = 84,    ///< single after notes logic done in the head (subset / pointing / combination on the mental view)    // line consistency on 3-cell windows (local scan of a long line)  // both options of a 2-way choice lead to the same placement / elimination  // short chain (<= 5 links) on the no-notes mental view, leading to a single  // bounded case split: bivalue cell, contradiction within a few direct rounds
     N_TECH = 128
 };
@@ -103,9 +105,11 @@ enum Kind { K_HOUSE = 0, K_CAGE = 1, K_NEQ = 2, K_NONCONSEC = 3, K_DOMAIN = 4, K
 
 struct Move;
 /// an annotation effect of a move: a persistent mark beyond digits and candidates (kind, cell, argument)
-/// region label placed / ruled out (arg: the label); identity layer (params id_layer): the cell joins the colour class
-/// whose anchor (first cell in reading order) is arg -- its own class, if any, merges into that one
-enum AEffKind { AE_LABEL_PLACE = 1, AE_LABEL_ELIM = 2, AE_ID_JOIN = 3 };
+/// region label placed / ruled out (arg: the label); identity layer (params id_layer): AE_ID_JOIN the cell joins the
+/// colour class whose anchor (first cell in reading order) is arg -- its own class, if any, merges into that one;
+/// AE_ID_NEQ the classes of cell and arg hold different digits (a cell without a class becomes one); AE_ID_USE the move
+/// relies on the class anchored at cell (no state change: route accounting charges the joins that built it)
+enum AEffKind { AE_LABEL_PLACE = 1, AE_LABEL_ELIM = 2, AE_ID_JOIN = 3, AE_ID_NEQ = 4, AE_ID_USE = 5 };
 struct AEff {
     int kind, cell, arg;
     bool operator<(const AEff& o) const {
@@ -469,7 +473,8 @@ public:
     std::vector<uint32_t> lcand_override;  ///< ... and label candidates
     void label_normalize();  ///< canonical label names (label k first appears before k + 1), silently: a naming convention
     /// identity layer (params id_layer): class per cell (0 none, else 1 + the class's first cell in reading order) for
-    /// cells known to hold one common unknown digit; empty when the layer is off
+    /// cells known to hold one common unknown digit, followed by the class differences (id_neq): sorted pairs of class
+    /// ids (lo, hi), flattened; empty when the layer is off
     std::vector<int> idc;
     std::vector<int> idc_override;  ///< a mid-solve state's classes (band_path), applied after the givens
     bool id_on() const { return P.id_layer > 0; }
@@ -477,7 +482,15 @@ public:
     void id_normalize();
     /// joins cell c to the class anchored at cell a (normalises)
     void id_join(int c, int a);
+    /// the classes of cells x and y hold different digits (normalises)
+    void id_neq(int x, int y);
     int id_live() const;  ///< number of live classes
+    /// the class differences as anchor pairs
+    std::vector<std::pair<int, int>> id_pairs() const;
+    /// classes anchored at ka and kb are known to differ (kb < 0: ka differs from any class)
+    bool id_paired(int ka, int kb) const;
+    /// the digits a class can hold: the intersection of its members' candidates; pv = a placed member's digit or 0
+    uint32_t id_digits(const std::vector<int>& ms, int* pv) const;
     /// the anchor of c's class, or c itself when it has none
     int id_anchor(int c) const { return idc.empty() || !idc[c] ? c : idc[c] - 1; }
     static constexpr int ID_CAP = 16;  ///< at most this many live classes
@@ -635,6 +648,11 @@ public:
     /// identity layer: a member's lost candidate leaves every member; a placed member places the others (direct_view:
     /// placements only)
     void id_propagate(MoveBuf& out, bool direct_view);
+    /// identity layer: two-colour classes from bivalue cells {a, b} that differ (start), and cells joining the opposite
+    /// colour of a cell they see (extend)
+    void class_pair(MoveBuf& out);
+    /// identity layer: a cell seeing both colours of an {a, b} class pair loses a and b
+    void class_trap(MoveBuf& out);
     /// local scan of a long line: consistency over each window of 3 consecutive cells
     void line_scan(MoveBuf& out);
     /// 3D Medusa: colouring over strong links of several digits; wraps and traps give eliminations

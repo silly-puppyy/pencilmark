@@ -114,7 +114,10 @@
 - Experimental identity layer behind the parameter `id_layer` (off by default; grades unchanged): cells known to hold
   one unknown digit are kept as a colour class even when no candidate goes (EqualDigits joins), with ClassSingle (a
   class's only place in a house) and ClassPropagation (a member loses a digit / is placed -> all members). First
-  increment of docs/research/identity_layer_v2_proposal.md; not yet adopted (accuracy test pending).
+  increment of docs/research/identity_layer_v2_proposal.md; not yet adopted (accuracy test pending). Increment 2:
+  class steps that place or eliminate nothing are free unless a later step uses the class; two-colour classes
+  (ClassPair: two cells with the same two candidates that differ start a pair; ClassTrap: a cell seeing both colours
+  loses both digits).
 - SudokuPad links of the form `sudokupad.app/<author>/<slug>` are fetched (they were refused as not a short id).
 - Speed and robustness: the C++ uniqueness search without OR-Tools stops at a time limit, not only a node limit
   (counting-circle puzzles ran for hours); the trial step retries with a larger search before giving up (two unique

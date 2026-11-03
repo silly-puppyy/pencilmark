@@ -88,6 +88,8 @@ POCKET = 109  # pocket counting: a pocket too small for a new region, touching o
 # identity layer (C++ only, params id_layer): persistent colour classes of cells holding one unknown digit
 CLASS_SINGLE = 110  # in a house only one cell can hold a class's digit (the others see a member): it joins the class
 ID_PROPAGATE = 111  # a class member's lost candidate leaves every member; a placed member places the others
+CLASS_PAIR = 112  # bivalue cells {a, b} that differ: two classes of opposite colour; a cell seeing one joins the other
+CLASS_TRAP = 113  # a cell seeing both colours of an {a, b} class pair holds neither
 CLASS_COLOUR = 100  # class colouring (C++ only): low / high or odd / even links between cells, sides fixed by known cells / house counts
 # names and flags: the technique registry (data/techniques.csv); the constants above mirror csrc/solver.hpp enum Tech,
 # and tests/test_registry.py checks all three agree

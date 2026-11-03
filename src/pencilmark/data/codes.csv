@@ -28,6 +28,7 @@ NPR,Naked Pair,,4,,3,naked_pair,
 HPR,Hidden Pair,,5,,3.4,hidden_pair,
 EQD,Equal cells (same digit),,6,,-,equal_cells,
 IDS,Colour class single (one place for a colour in a house),,6.5,,-,equal_cells,
+IPR,Colour pair (two cells of one digit pair that differ: opposite colours),,6.6,,-,equal_cells,
 DGC,Digit counting,,7,,-,digit_counting,
 NQD,Naked Quad,,7,,5,naked_quad,
 HQD,Hidden Quad,,8,,5.4,hidden_quad,
@@ -55,6 +56,7 @@ XWG,X-Wing,Hard,1,SKY FXW FRK SWF,3.2,x_wing,"an X-Wing is a Skyscraper whose en
 SKY,Skyscraper,Hard,2.1,TUR,6.5,skyscraper,"Skyscraper, 2-String Kite and Empty Rectangle are 3-link single-digit chains (Turbot Fish)"
 KTE,2-String Kite,Hard,2.2,TUR,6.5,two_string_kite,a 3-link single-digit chain (Turbot Fish)
 TUR,Turbot Fish,Hard,2.3,XCL,6.5,skyscraper,a Turbot Fish is a short X-Chain
+IPT,Colour pair trap (a cell sees both colours of a digit pair),,3.9,,-,equal_cells,
 SCL,Simple Colouring,,4,XCL,-,simple_colouring,colour traps and wraps are X-Chains
 MCH,Short chain in the head,,15,,-,chain_without_notes,
 PHI,Phistomefel Ring,Hard,16.5,LOL,-,phistomefel_ring,"a law-of-leftovers instance, but Hard"

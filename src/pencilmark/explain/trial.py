@@ -587,11 +587,22 @@ def _h_class_single(ctx):
 
 
 def _h_class_propagation(ctx):
-    """identity layer: cells of one colour hold one digit -- what one loses, all lose; one placed places all"""
+    """identity layer: cells of one colour hold one digit -- what one loses, all lose; one placed places all; across a
+    difference, a known colour's digit leaves the other colour"""
     nm = ctx.nm
     ms = [c for c in (ctx.engine.get("pattern_cells") or ()) if isinstance(c, int)]
     if not ms:
         return _generic(ctx)
+    src = ctx.xm.get("from_anchor")
+    if src is not None and src >= 0 and ctx.elims and not ctx.place:
+        v = ctx.elims[0][1]
+        short = f"{fmt_elims(nm, ctx.elims)}: the other colour of {nm.cell(src)} is {v}"
+        teach = (
+            f"The colour of {nm.cell(src)} is {v}, and the colour of {nm.cell(ctx.xm.get('anchor', ms[0]))} holds a "
+            f"different digit: {_cant(nm, ctx.elims)}."
+        )
+        J = _J(ctx, base_cells=ms, digits=[v])
+        return _result(ctx, J, short, teach, True, extra_cells=ms)
     if ctx.place:
         c, v = ctx.place
         short = f"{nm.cell(c)} = {v}: same colour as {nm.cells([x for x in ms if x != c])}"
@@ -601,6 +612,56 @@ def _h_class_propagation(ctx):
         teach = f"{nm.cells(ms)} hold one digit, so each keeps only the candidates all of them have: {_cant(nm, ctx.elims)}."
     J = _J(ctx, base_cells=ms, digits=sorted({d for _, d in ctx.elims}) or ([ctx.place[1]] if ctx.place else []))
     return _result(ctx, J, short, teach, True, extra_cells=ms)
+
+
+def _h_class_pair(ctx):
+    """identity layer: two cells of one digit pair that differ get opposite colours; a cell of that pair seeing one
+    colour gets the other"""
+    nm = ctx.nm
+    x = ctx.xm
+    cells = [c for c in (ctx.engine.get("pattern_cells") or ()) if isinstance(c, int)]
+    U = sorted(digits_of(int(x.get("pair_digits") or 0)))
+    pair = "/".join(str(d) for d in U)
+    if not x.get("extend"):
+        X, Y = x.get("cell"), x.get("anchor")
+        if X is None or Y is None:
+            return _generic(ctx)
+        short = f"{nm.cell(X)} and {nm.cell(Y)} hold {pair} in some order: opposite colours"
+        teach = (
+            f"{nm.cell(X)} and {nm.cell(Y)} can only be {pair}, and they must differ. So one is {U[0]} and the other "
+            f"{U[-1]}: colour them in two colours and keep the colours for later."
+        )
+        J = _J(ctx, digits=U, base_cells=[X, Y])
+        return _result(ctx, J, short, teach, True, extra_cells=[X, Y])
+    Z, k2, k1 = x.get("cell"), x.get("anchor"), x.get("other_anchor")
+    if Z is None or k1 is None or k2 is None:
+        return _generic(ctx)
+    short = f"{nm.cell(Z)} gets the colour of {nm.cell(k2)}: it sees the colour of {nm.cell(k1)}"
+    teach = (
+        f"The colours of {nm.cell(k1)} and {nm.cell(k2)} are {pair} in some order. {nm.cell(Z)} can only be {pair} and "
+        f"sees a cell of {nm.cell(k1)}'s colour, so it holds the other one: it gets {nm.cell(k2)}'s colour."
+    )
+    J = _J(ctx, digits=U, base_cells=cells)
+    return _result(ctx, J, short, teach, True, extra_cells=cells)
+
+
+def _h_class_trap(ctx):
+    """identity layer: a cell seeing both colours of a digit pair holds neither digit"""
+    nm = ctx.nm
+    x = ctx.xm
+    cells = [c for c in (ctx.engine.get("pattern_cells") or ()) if isinstance(c, int)]
+    k1, k2 = x.get("anchor"), x.get("other_anchor")
+    U = sorted(digits_of(int(x.get("pair_digits") or 0)))
+    if k1 is None or k2 is None or not U:
+        return _generic(ctx)
+    pair = "/".join(str(d) for d in U)
+    short = f"{fmt_elims(nm, ctx.elims)}: sees both colours of {pair}"
+    teach = (
+        f"The colours of {nm.cell(k1)} and {nm.cell(k2)} hold {pair}, one digit each. A cell seeing a cell of each "
+        f"colour can be neither: {_cant(nm, ctx.elims)}."
+    )
+    J = _J(ctx, digits=U, base_cells=cells)
+    return _result(ctx, J, short, teach, True, extra_cells=cells)
 
 
 def _h_line_scan(ctx):

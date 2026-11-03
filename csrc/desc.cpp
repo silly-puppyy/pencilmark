@@ -137,11 +137,12 @@ void Solver::describe(Move& m, const MoveBuf& b) {
     case XYZWING: branches = 3, depth = 2, search = (double)ds_bivalue * ds_bivalue; break;
     case N_WING: branches = std::max(pm_long(2), xm[0]), depth = 2, search = (double)ds_bivalue * ds_empty; break;
     case COLORING: case MULTI_COLOR: case MEDUSA: case COLOUR_ALGEBRA: case EQUAL_DIGITS: case CLASS_SINGLE:
+    case CLASS_PAIR: case CLASS_TRAP:
         branches = 2;
         depth = std::max(1.0, meta(3));
         search = ds_cands;
         if (t == MEDUSA && xm[0] >= 1 && xm[0] <= 3) contra = true;  // a colour that contradicts itself
-        if (t == COLOUR_ALGEBRA || t == EQUAL_DIGITS || t == CLASS_SINGLE) branches = 1;
+        if (t == COLOUR_ALGEBRA || t == EQUAL_DIGITS || t == CLASS_SINGLE || t == CLASS_PAIR) branches = 1;
         break;
     case X_CHAIN: case XY_CHAIN: case AIC_CHAIN: case NICE_LOOP: case MENTAL_CHAIN: case REMOTE_PAIRS: case EMPTY_RECT:
     case ALS_AIC:

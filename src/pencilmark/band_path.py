@@ -148,30 +148,6 @@ def variant_gate(p):
 _CACHE = None  # position -> state_moves, shared by the many routes of one contents() call (same openings)
 
 
-def _id_norm(idc, vals):
-    """identity layer (params id_layer): canonical class ids in place, as the engine's id_normalize -- 1 + the class's
-    first cell; a class with every member placed, or a single member, is freed"""
-    cls = {}
-    for c, k in enumerate(idc):
-        if k:
-            cls.setdefault(k, []).append(c)
-    for c in range(len(idc)):
-        idc[c] = 0
-    for ms in cls.values():
-        if len(ms) >= 2 and any(not vals[c] for c in ms):
-            for c in ms:
-                idc[c] = ms[0] + 1
-
-
-def _id_join(idc, vals, c, a):
-    """cell c (with its class) joins the class of cell a"""
-    ks = {k for k in (idc[c], idc[a]) if k}
-    ms = {x for x, k in enumerate(idc) if k in ks} | {c, a}
-    for x in ms:
-        idc[x] = min(ms) + 1
-    _id_norm(idc, vals)
-
-
 def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes=(), guard=None, prefix=(), max_band=6):
     """solve band by band (see module doc). Moves are taken in full-notes mode: each placement clears its peers.
     target = a cell: stop once it is placed, preferring (within the current band) a move that places it -- "what does
@@ -238,13 +214,16 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
                     lcand[c] &= ~(1 << (k - 1))
                     if lcand[c] and not lcand[c] & (lcand[c] - 1):
                         lab[c] = lcand[c].bit_length()
-        if ids:  # class joins; a placement may free a class
-            for c, a in m.get("idjoin") or ():
-                _id_join(idc, vals, c, a)
-            _id_norm(idc, vals)
+        if ids:  # class joins and differences; a placement may free a class
+            CB.id_apply(idc, vals, m.get("idfx"))
 
     def acts(m):  # the move changes the state (a digit, a region label or a colour class)
-        return m["place"] or m["elim"] or (chaos and (m.get("lplace") or m.get("lelim"))) or (ids and m.get("idjoin"))
+        return (
+            m["place"]
+            or m["elim"]
+            or (chaos and (m.get("lplace") or m.get("lelim")))
+            or (ids and CB.id_changes(m.get("idfx")))
+        )
 
     counts = Counter()
     aborted = False
@@ -253,6 +232,8 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
     def record(stp):
         nonlocal aborted
         steps.append(stp)
+        if ids and not stp["place"] and not stp["elims"]:  # identity only: held until a later step uses it, so
+            return  # whether it counts is known only at the end (held steps are dropped there; _route_ok judges)
         counts[stp["code"]] += 1
         if guard is not None and not guard(stp, counts):
             aborted = True
@@ -266,7 +247,7 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
                 "elim": stp["elims"],
                 "lplace": stp.get("lplace"),
                 "lelim": stp.get("lelims"),
-                "idjoin": stp.get("idjoin"),
+                "idfx": stp.get("idfx"),
             }
         )
     for _ in range(max_steps):
@@ -297,7 +278,7 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
                             if chaos
                             else {}
                         ),
-                        **({"idjoin": list(getattr(x.move, "idjoin", None) or ())} if ids else {}),
+                        **({"idfx": list(getattr(x.move, "idfx", None) or ())} if ids else {}),
                     }
                     for x in st0
                     if x.move.feat[0] not in notes and x.move.feat[0] in allowed0
@@ -330,7 +311,7 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
                         "seg": seg,
                         "d": m.get("d"),
                         **({"lplace": m.get("lplace"), "lelims": list(m.get("lelim") or ())} if chaos else {}),
-                        **({"idjoin": list(m.get("idjoin") or ())} if ids else {}),
+                        **({"idfx": list(m.get("idfx") or ())} if ids else {}),
                     }
                 )
                 moved = True
@@ -415,7 +396,7 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
                         x.move.place
                         or x.move.elim
                         or (chaos and (x.move.lplace or x.move.lelim))
-                        or (ids and getattr(x.move, "idjoin", None))
+                        or (ids and CB.id_changes(getattr(x.move, "idfx", None)))
                     )
                 ):
                     m = {
@@ -427,7 +408,7 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
                         "xmeta": getattr(x.move, "xmeta", None),
                         "d": float(x.move.d) if x.move.d is not None else None,
                         **({"lplace": x.move.lplace, "lelim": list(x.move.lelim)} if chaos else {}),
-                        **({"idjoin": list(getattr(x.move, "idjoin", None) or ())} if ids else {}),
+                        **({"idfx": list(getattr(x.move, "idfx", None) or ())} if ids else {}),
                     }
                 if key1 is not None:
                     _CACHE[key1] = m
@@ -457,9 +438,13 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
                 "seg": seg,
                 "d": m.get("d"),
                 **({"lplace": m.get("lplace"), "lelims": list(m.get("lelim") or ())} if chaos else {}),
-                **({"idjoin": list(m.get("idjoin") or ())} if ids else {}),
+                **({"idfx": list(m.get("idfx") or ())} if ids else {}),
             }
         )
+    if ids and steps:  # identity layer: identity-only steps no later step relied on cost nothing -- dropped, the
+        # route without them is the same proof (cbackend.id_held)
+        held = CB.id_held(N, p.givens, [(st["place"], st["elims"], st.get("idfx")) for st in steps])
+        steps[:] = [st for st, h in zip(steps, held) if not h]
     if target is not None:
         top = max((s_["band"] for s_ in steps), default=0)
         return {
@@ -567,7 +552,7 @@ def _states(p, steps):
     for cells in chaos:
         for x in cells:
             lcand[x] = (1 << D) - 1
-    ids = any("idjoin" in st for st in steps)  # identity layer: the route carries its colour classes
+    ids = any("idfx" in st for st in steps)  # identity layer: the route carries its colour classes
     idc = [0] * N
     for st in steps:
         q = copy.copy(p)
@@ -596,9 +581,7 @@ def _states(p, steps):
                     if lcand[c] and not lcand[c] & (lcand[c] - 1):
                         lab[c] = lcand[c].bit_length()
         if ids:
-            for c, a in st.get("idjoin") or ():
-                _id_join(idc, vals, c, a)
-            _id_norm(idc, vals)
+            CB.id_apply(idc, vals, st.get("idfx"))
 
 
 def contents(p, P, alternatives=True, deadline=None, base=None):
@@ -687,7 +670,9 @@ def _contents(p, P, alternatives, deadline=None, base=None):
                     if (
                         b2 == b
                         and c2 != code
-                        and (m["place"] or m["elim"] or m.get("lplace") or m.get("lelim") or m.get("idjoin"))
+                        and (
+                            m["place"] or m["elim"] or m.get("lplace") or m.get("lelim") or CB.id_changes(m.get("idfx"))
+                        )
                     ):
                         seen.add(c2)
             alt0 = None

@@ -35,7 +35,13 @@ def _record(p, st):
         GM.default().route
     )  # grid-size factor of the shipped engine params (the same alpha in both price sets)
     out, cells_ = [], []
-    for s in st:
+    fx = [getattr(s.move, "idfx", None) for s in st]
+    held = (  # identity layer: identity-only steps no later step relied on cost nothing (cbackend.id_held)
+        CB.id_held(p.N, p.givens, [(s.move.place, s.move.elim, f) for s, f in zip(st, fx)]) if any(fx) else ()
+    )
+    for i, s in enumerate(st):
+        if held and held[i]:
+            continue
         t = s.move.feat[0]
         nm = "notes" if t in S.NOTE_TECHS else S.TECH_NAMES[t]
         # ABSOLUTE candidate density, Andrew Stuart's C / 727 * 20 on every grid size: human times across sizes favour it

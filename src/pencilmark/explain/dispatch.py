@@ -51,8 +51,10 @@ from .singles import (
     _rule_from_move,
 )
 from .trial import (
+    _h_class_pair,
     _h_class_propagation,
     _h_class_single,
+    _h_class_trap,
     _h_digit_count,
     _h_either_way,
     _h_equal_digits,
@@ -195,6 +197,25 @@ _X_HANDLERS = {
         (
             "Colour class propagation",
             "Cells of one colour hold one digit: a candidate one of them loses, all lose; one placed places them all.",
+        ),
+    ),
+    "CLASS_PAIR": (
+        _h_class_pair,
+        "equal_cells",
+        "intersections+combos",
+        (
+            "Colour pair",
+            "Two cells that can only be the same two digits and must differ hold them in some order: give them two "
+            "colours. A cell of that pair seeing one colour gets the other.",
+        ),
+    ),
+    "CLASS_TRAP": (
+        _h_class_trap,
+        "equal_cells",
+        "chains",
+        (
+            "Colour pair trap",
+            "Two colours hold the two digits of a pair, one each: a cell that sees both colours can be neither.",
         ),
     ),
     "CLUE_FACTS": (
