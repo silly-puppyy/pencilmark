@@ -270,12 +270,28 @@ DEFAULT_LINE = {
 DEFAULT_EVIDENCE = {
     "whisper": r"whisper|(?:least|minimum difference of|difference of) (?:5|five)\b|\b(?:5|five) or (?:more|greater)",
     "zipper": r"zipper|equal(?:ly)? (?:distance|distant|far)|equidistant|cent(?:re|er)",
-    "renban": r"renban|consecutive",
-    "region_sum": r"region[- ]sum|\bsums?\b|\btotal",
-    "thermo": r"thermo|increase|bulb",
+    "renban": r"renban|(?<!non)(?<!non-)consecutive",
+    "region_sum": r"region[- ]sum|\bsegments?\b.*\b(?:sums?|totals?|value)\b|(?:\bsums?\b|\btotal).*\b(?:box|region)|\b(?:box|region).*(?:\bsums?\b|\btotal)",
+    "thermo": r"thermo|bulb",
     "dutch": r"dutch|(?:least|minimum difference of|difference of) (?:4|four)\b|\b(?:4|four) or (?:more|greater)",
     "parity": r"parity|\bodd\b.{0,40}\beven\b|\beven\b.{0,40}\bodd\b",
 }
+
+
+def default_evidence(kind, rules):
+    """the rules text describes a default-colour meaning: a sentence about a line (or naming the rule) that matches
+    DEFAULT_EVIDENCE and says it positively ("nor can it contain any consecutive digits" is no renban)"""
+    rx = DEFAULT_EVIDENCE.get(kind)
+    if rx is None:
+        return False
+    for sent in re.split(r"(?<=[.\n;])\s*", (rules or "").lower()):
+        if (
+            re.search(rx, sent)
+            and re.search(r"\b(?:lines?|threads?|thermo\w*|renban|whispers?|zipper|region[- ]sum)\b", sent)
+            and not re.search(r"\b(?:not|no|nor|never|cannot)\b|n't\b", sent)
+        ):
+            return True
+    return False
 
 
 def color_name(hexcol):
@@ -370,11 +386,11 @@ RS_PER_BOX = re.compile(
 
 def _described(sent):
     """line rules one sentence describes without naming them: only a sentence about a line or thread, and a region sum
-    only with the boxes in it ("lines of the same colour sum to the same total" is another rule)"""
+    only with the boxes or regions in it ("lines of the same colour sum to the same total" is another rule)"""
     if not re.search(r"\b(?:lines?|threads?)\b", sent):
         return []
     got = [k for k, pats in RULE_DESCRIPTIONS.items() if any(re.search(p, sent) for p in pats)]
-    return [k for k in got if k != "region_sum" or re.search(r"\bbox(?:es)?\b|3x3", sent)]
+    return [k for k in got if k != "region_sum" or re.search(r"\bbox(?:es)?\b|3x3|\bregions?\b", sent)]
 
 
 def every_line_rule(rules):
@@ -613,7 +629,7 @@ def line_items(P, n):
     decoration: lines drawn along grid lines (all waypoints on cell corners),
     and white/near-white lines that trace another line (the hollow centre of a
     'hollow' line). Full-length corner-to-corner diagonals come back with
-    class 'diagonal'."""
+    class 'diagonal'; lines drawn mostly along grid lines (not on corners only) with class 'offcentre' (refused)."""
     raw = []
     for ln in P.get("lines") or []:
         if not isinstance(ln, dict):
@@ -632,8 +648,12 @@ def line_items(P, n):
         lc = [x for x in line_cells(wp) if 0 <= x[0] < n and 0 <= x[1] < n]
         if len(lc) < 2:
             continue
+        on_grid = sum(min(x % 1, -x % 1) < 0.1 or min(y % 1, -y % 1) < 0.1 for x, y in wp)
+        if 2 * on_grid > len(wp):  # mostly on grid lines (rings drawn around clues): no cells it is read along; lines
+            raw.append(("offcentre", ln.get("color"), lc))  # offset inside their cells (overlapping renbans) are lines
+            continue
         raw.append((color_name(ln.get("color")), ln.get("color"), lc))
-    coloured = [set(lc) for cn, _, lc in raw if cn not in ("white", "diagonal")]
+    coloured = [set(lc) for cn, _, lc in raw if cn not in ("white", "diagonal", "offcentre")]
     out = []
     for cn, hx, lc in raw:
         if cn == "white" and any(set(lc) <= cs for cs in coloured):
@@ -918,12 +938,15 @@ def translate(sp, page_text=None, overrides=None):
         SLOW_ALL.search(rules.lower()) and not re.search(r"(?:normal|regular|standard) thermo", rules.lower())
     ):
         text_mentions = (text_mentions - {"thermo", "slow_thermo"}) | {"slow_thermo"}
-    if len({cn for cn, _, _ in line_items(P, n)} - {"diagonal"}) == 1:
+    if len({cn for cn, _, _ in line_items(P, n)} - {"diagonal", "offcentre"}) == 1:
         text_mentions |= described_line_rules(rules)  # "digits on a line form a consecutive set", one line colour
     all_lines = every_line_rule(rules)
     box_of = {c: gi for gi, g in enumerate(p.groups) if g.kind == "box" for c in g.cells}
     told = set()  # line colours whose meaning is logged (once per colour and reading)
     for cname, hexcol, lc in line_items(P, n):
+        if cname == "offcentre":
+            unknown.append("line drawn along grid lines")
+            continue
         if cname == "diagonal":
             ids = [idx(x) for x in lc]
             if re.search(r"diagonal", rules.lower()) and not any(set(g.cells) == set(ids) for g in p.groups):
@@ -960,7 +983,7 @@ def translate(sp, page_text=None, overrides=None):
             how = "a circle at one end and the rules text"
         if rule == "thermo" and "slow_thermo" in text_mentions and "thermo" not in text_mentions:
             rule, how = "slow_thermo", how + " (slow)"
-        if rule is None and not cmap and re.search(DEFAULT_EVIDENCE.get(DEFAULT_LINE.get(cname), "^$"), rules.lower()):
+        if rule is None and not cmap and default_evidence(DEFAULT_LINE.get(cname), rules):
             rule, how = DEFAULT_LINE.get(cname), "SudokuPad's default colours (the rules text names none)"
         if all_lines and cname != "diagonal" and overrides is None:
             if rule is None:

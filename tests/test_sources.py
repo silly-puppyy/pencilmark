@@ -342,6 +342,41 @@ def test_region_sum_loop_and_per_box_wording():
     assert p is None and "re-entering a box" in why
 
 
+def test_default_colours_need_a_positive_description():
+    """SudokuPad's default line colours count only when a sentence about a line says the meaning positively (CTC
+    misreads: "nor can it contain any consecutive digits" as renban, "increase from one end to the other" as a
+    thermometer with a bulb, "digits along a line sum to the product of ..." as a region sum); rings drawn along grid
+    lines around clues are not lines (eXAb7nRcveM), lines drawn offset inside their cells are (Overlap)"""
+    from pencilmark.sources import _sp_translate as SP
+
+    assert not SP.default_evidence(
+        "renban", "A purple line cannot repeat a digit; nor can it contain any consecutive digits."
+    )
+    assert SP.default_evidence("renban", "Digits on a line form a consecutive set.")
+    assert not SP.default_evidence("thermo", "The digits on a line must increase from one end to the other.")
+    assert not SP.default_evidence("region_sum", "Digits along a line sum to the product of the digits at its ends.")
+    assert SP.default_evidence(
+        "region_sum", "Region borders divide blue lines into segments. Each segment of a line sums to one value."
+    )
+    ring = [
+        [0.75, 2.5],
+        [1, 2.75],
+        [2, 2.75],
+        [2.75, 2],
+        [2.75, 1],
+        [2, 0.25],
+        [1, 0.25],
+        [0.25, 1],
+        [0.25, 2],
+        [0.75, 2.5],
+    ]
+    offset = [[0.3, 0.3], [0.3, 2.7]]
+    items = SP.line_items(
+        {"lines": [{"color": "#2ecbff", "wayPoints": ring}, {"color": "#f067f0", "wayPoints": offset}]}, 4
+    )
+    assert [it[0] for it in items] == ["offcentre", "pink"]
+
+
 def test_rule_for_every_line():
     """ "all lines are region sum lines" gives every line that rule; a line whose colour also names another rule has two
     rules and is refused (CTC zkz5Qw2BWx4: orange lines are also Dutch whispers)"""
