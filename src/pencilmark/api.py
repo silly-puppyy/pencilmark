@@ -63,7 +63,17 @@ class GenerationFailed(RuntimeError):
         self.reason, self.stats = reason, stats or {}
 
 
-_PARAMS = (None, None)  # (grader model, its engine params)
+_PARAMS = (None, None)  # ((grader model, its settings), its engine params)
+
+
+def _model_key(m):
+    """the model and its current settings: an in-place change to its route / price params (an experiment's arm) is a
+    new key, so the engine params are rebuilt instead of reused from the previous arm"""
+    return (
+        m,
+        repr(sorted((getattr(m, "route", None) or {}).items())),
+        repr(sorted((getattr(m, "price", None) or {}).items())),
+    )
 
 
 def _params(mode):
@@ -73,10 +83,11 @@ def _params(mode):
     if mode not in ("human", "computer"):
         raise ValueError(f"unknown mode {mode!r}; known: 'human', 'computer'")
 
-    if _PARAMS[0] is not GM.default():  # the shipped model, or the one grader_model.use() put in place
-        from .__main__ import _params as load_params
+    key = _model_key(GM.default())
+    if _PARAMS[0] is None or _PARAMS[0][0] is not key[0] or _PARAMS[0][1:] != key[1:]:  # the shipped model, the one
+        from .__main__ import _params as load_params  # grader_model.use() put in place, or changed settings
 
-        _PARAMS = (GM.default(), load_params())
+        _PARAMS = (key, load_params())
     return dict(_PARAMS[1], search="computer" if mode == "computer" else "human")
 
 

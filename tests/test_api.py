@@ -387,3 +387,23 @@ def test_to_export_uses_a_known_solution(monkeypatch):
     monkeypatch.setattr(api, "solve", undecided)
     assert pencilmark.to_export(p)["solution"] == list(want)
     assert "solution" not in pencilmark.to_export(CLASSIC)
+
+
+def test_params_follow_in_place_setting_changes():
+    """an experiment that changes the grader model's route / price settings in place between two rate() calls gets the
+    new engine params for the second call (they were cached per model object, so both arms ran on the first arm's
+    route params)"""
+    from pencilmark import api
+    from pencilmark import grader_model as GM
+
+    m = GM.default()
+    old = m.route.get("id_layer", 0)
+    try:
+        m.route["id_layer"] = 0
+        a = api._params("human")
+        m.route["id_layer"] = 1
+        b = api._params("human")
+        assert a.get("id_layer", 0) != b.get("id_layer", 0) or a != b
+    finally:
+        m.route["id_layer"] = old
+        api._PARAMS = (None, None)

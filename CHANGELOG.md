@@ -108,6 +108,9 @@
   `less` relations and pair rules, with the line's colour on one pair only), and a board-sized background fill as a
   `decorations` rect (section 7). Grades unchanged on the gate; a few line-heavy LMD puzzles grade a band easier now
   that the engine sees the whole line.
+- The engine params cache follows in-place changes to the grader model's route / price settings: an experiment that
+  switches a parameter between two `rate` calls in one process now gets the new route params for the second (both
+  arms used to run on the first arm's route params; only pricing changed).
 - Experimental identity layer behind the parameter `id_layer` (off by default; grades unchanged): cells known to hold
   one unknown digit are kept as a colour class even when no candidate goes (EqualDigits joins), with ClassSingle (a
   class's only place in a house) and ClassPropagation (a member loses a digit / is placed -> all members). First
