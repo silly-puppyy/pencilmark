@@ -825,6 +825,11 @@ def negative_markers(rules):
             neg |= _marker_types(c)
     if pending:  # a bare "negative constraint(s)" that never says which markers: all of them
         neg |= set(MARKER_TYPES)
+    # "all possible dots are given" covers only dot kinds the text talks about (a black-dot puzzle has no white rule)
+    if "white" in neg and not re.search(r"\bwhite\b|consecutive|differ by (?:1|one)\b", t):
+        neg.discard("white")
+    if "black" in neg and not re.search(r"\bblack\b|ratio|double|1 ?: ?2|2 ?: ?1", t):
+        neg.discard("black")
     return neg
 
 
@@ -1592,7 +1597,7 @@ def translate(sp, page_text=None, overrides=None):
     if circles and re.search(
         r"counting circle|(?:digit|number) in a circle.{0,60}(?:circles|number of)|"
         r"circled digits?.{0,40}(?:how many|exactly that many|number of)|(?:digit|number) in a ring.{0,40}how many rings|"
-        r"number of times (?:a )?digits? appears? in (?:a )?circles?",
+        r"number of times (?:a )?digits? appears? in (?:a )?circles?|(?:digit|number) n in a circle[^.]{0,40}\bappears? exactly n times",
         text_rules,
     ):
         on_lines = {
@@ -1788,7 +1793,8 @@ def text_cell_rules(p, n, rules, colour_cells, used):
             )
             used["cage_parity"] = used.get("cage_parity", 0) + 1
     if re.search(
-        r"(?:all (?:the )?(?:killer )?cages|every (?:killer )?cage) (?:must )?(?:have|has|sums? to) the same (?:sum|total)",
+        r"(?:all (?:the )?(?:killer )?cages|every (?:killer )?cage) (?:must )?(?:have|has|sums? to) the same (?:sum|total)"
+        r"|sum of the (?:numbers|digits) in all (?:the )?cages (?:are|is) the same",
         t,
     ):
         from .. import puzzle_json as PJ

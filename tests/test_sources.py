@@ -810,6 +810,10 @@ def test_lmd_wording_fixes():
 
     assert SP.negative_markers("Standard kropki and XV rules apply [no negative constraints].") == set()
     assert SP.negative_markers("If two digits have an X between them, they sum to 10. If not, they don't.") == {"x"}
+    # "all possible dots are given" in a black-dot-only text: no white negative
+    assert SP.negative_markers("cells separated by a black dot have a 1:2 ratio. all possible dots are given.") == {
+        "black"
+    }
     assert SP.diff_rule("adjacent digits on a green line are at least 5 apart") == "whisper"
     fp = {"size": 4, "grid": [[{"c": "#FFA0A0"} if (r, c) == (0, 0) else {} for c in range(4)] for r in range(4)],
           "ruleset": "Red cells are greater than 2."}  # fmt: skip

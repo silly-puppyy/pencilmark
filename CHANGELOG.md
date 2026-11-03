@@ -78,7 +78,8 @@
   Oil and water cages (each cage row one parity, even rows above odd) as custom rules; refused instead of misread:
   pick-up sticks, a magic square somewhere, every domino once, dice, letters for digits, clues or objects the
   solver must place.
-  2,000 most-solved Logic Masters sudokus: 802 -> 866 graded.
+  "All possible dots are given" adds negatives only for the dot kinds the text mentions.
+  2,000 most-solved Logic Masters sudokus: 802 -> 869 graded.
 - SudokuPad links of the form `sudokupad.app/<author>/<slug>` are fetched (they were refused as not a short id).
 - Speed and robustness: the C++ uniqueness search without OR-Tools stops at a time limit, not only a node limit
   (counting-circle puzzles ran for hours); the trial step retries with a larger search before giving up (two unique
