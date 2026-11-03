@@ -43,6 +43,7 @@ _CON_TYPES = {
     "region_border",
     "same_region",
     "yin_yang",
+    "expr",
 }
 CHAOS_TYPES = ("chaos", "region_border", "same_region")
 
@@ -52,16 +53,17 @@ def has_shading(p):
     return any(c.get("type") == "yin_yang" for c in getattr(p, "constraints", ()))
 
 
-def _add_yin_yang(m, p):
+def _add_yin_yang(m, p, shading):
     """yin-yang: a shading Boolean per cell; no 2x2 of one colour; each colour orthogonally connected (each of its cells
     but its first, in reading order, has a neighbour of its colour one step closer to that first cell); given shaded /
-    unshaded cells. Digits are untouched (shading couplings are not modelled yet)."""
+    unshaded cells. shading (dict) receives the Boolean per cell, for custom rules reading shaded()."""
     for con in p.constraints:
         if con.get("type") != "yin_yang":
             continue
         cells = sorted(range(p.N), key=lambda c: p.coords[c])
         idx = {p.coords[c]: c for c in cells}
         sh = {c: m.NewBoolVar("") for c in cells}
+        shading.update(sh)
         for c in con.get("shaded", ()):
             m.Add(sh[c] == 1)
         for c in con.get("unshaded", ()):
@@ -177,6 +179,213 @@ def _add_chaos(m, x, p):
                     m.Add(lab[c][k] == lab[c0][k])
 
 
+class _Unmodelled(Exception):
+    """a custom rule uses a part of the language the CP-SAT model does not encode"""
+
+
+class _Cell:  # a cell of the rule (its variable index), until it is used as a number or by shaded()
+    __slots__ = ("var",)
+
+    def __init__(self, var):
+        self.var = var
+
+
+class _Item:  # an element of a comprehension: its value, and the condition it exists under (None: always)
+    __slots__ = ("value", "cond")
+
+    def __init__(self, value, cond):
+        self.value, self.cond = value, cond
+
+
+class _ExprCP:
+    """a custom rule's expression (its IR, custom.to_ir) as CP-SAT constraints: constants, linear expressions and
+    Booleans; comprehensions over cell lists (with an optional condition), if-then-else, comparisons, and / or / not,
+    + - and products with a constant, sum, count, len, abs, odd, even, num, all, any, shaded(). Anything else raises
+    _Unmodelled (the model is then unsupported and the C++ search decides)."""
+
+    BIG = 10_000
+
+    def __init__(self, m, con, x, shading):
+        from .rules import custom as CU
+
+        self.m, self.x, self.sh, self.CU = m, x, shading, CU
+        self.cells, self.lists, self.ir = con["cells"], con["lists"], con["ir"]
+        self.op = {i: o for o, i in CU.OPCODE.items()}
+        self.fn = {i: f for f, i in CU.FNCODE.items()}
+
+    def holds(self):
+        v = self.ev(self.ir, {})
+        if isinstance(v, bool):
+            return int(v)
+        return v
+
+    # values: int, bool, a CP-SAT linear expression / Boolean, _Cell, or a list of values / _Item
+    def num(self, v):
+        if isinstance(v, _Cell):
+            return self.x[self.cells[v.var]]
+        if isinstance(v, bool):
+            return int(v)
+        return v
+
+    def boolean(self, v):
+        if isinstance(v, bool):
+            return v
+        if isinstance(v, (int, _Cell, list)):
+            raise _Unmodelled("a number where a condition is needed")
+        return v
+
+    def compare(self, o, a, b):
+        a, b = self.num(a), self.num(b)
+        if isinstance(a, int) and isinstance(b, int):
+            return {"==": a == b, "!=": a != b, "<": a < b, "<=": a <= b, ">": a > b, ">=": a >= b}[o]
+        t = self.m.NewBoolVar("")
+        yes = {"==": a == b, "!=": a != b, "<": a < b, "<=": a <= b, ">": a > b, ">=": a >= b}[o]
+        no = {"==": a != b, "!=": a == b, "<": a >= b, "<=": a > b, ">": a <= b, ">=": a < b}[o]
+        self.m.Add(yes).OnlyEnforceIf(t)
+        self.m.Add(no).OnlyEnforceIf(t.Not())
+        return t
+
+    def ite(self, c, a, b):
+        c = self.boolean(c)
+        if isinstance(c, bool):
+            return a if c else b
+        a, b = self.num(a), self.num(b)
+        v = self.m.NewIntVar(-self.BIG, self.BIG, "")
+        self.m.Add(v == a).OnlyEnforceIf(c)
+        self.m.Add(v == b).OnlyEnforceIf(c.Not())
+        return v
+
+    def logic(self, o, vals):
+        vals = [self.boolean(v) for v in vals]
+        if o == "not":
+            v = vals[0]
+            return (not v) if isinstance(v, bool) else v.Not()
+        const = [v for v in vals if isinstance(v, bool)]
+        if o == "and" and False in const or o == "or" and True in const:
+            return o == "or"
+        vs = [v for v in vals if not isinstance(v, bool)]
+        if not vs:
+            return o == "and"
+        t = self.m.NewBoolVar("")
+        if o == "and":
+            self.m.AddBoolAnd(vs).OnlyEnforceIf(t)
+            self.m.AddBoolOr([v.Not() for v in vs]).OnlyEnforceIf(t.Not())
+        else:
+            self.m.AddBoolOr(vs).OnlyEnforceIf(t)
+            self.m.AddBoolAnd([v.Not() for v in vs]).OnlyEnforceIf(t.Not())
+        return t
+
+    def items(self, v):  # a list value -> [_Item]
+        if isinstance(v, list):
+            return [it if isinstance(it, _Item) else _Item(it, None) for it in v]
+        if isinstance(v, _Cell):
+            return [_Item(v, None)]
+        raise _Unmodelled("a list was expected")
+
+    def ev(self, e, scope):
+        o = self.op[e[0]]
+        a = e[1:]
+        if o == "num":
+            return a[0]
+        if o == "bool":
+            return bool(a[0])
+        if o == "cell":
+            return _Cell(a[0])
+        if o == "cells":
+            L = self.lists[a[0]]
+            nest = lambda y: [nest(z) for z in y] if isinstance(y, list) else _Cell(y)
+            return nest(L)
+        if o == "slot":
+            if a[0] not in scope:
+                raise _Unmodelled("a function value")
+            return scope[a[0]]
+        if o == "list":
+            return [self.ev(y, scope) for y in a]
+        if o == "comp":
+            slot, src, body, cond = a
+            out = []
+            for item in self.items(self.ev(src, scope)):
+                it, c0 = item.value, item.cond
+                inner = {**scope, slot: it}
+                c = None if self.op[cond[0]] == "none" else self.boolean(self.ev(cond, inner))
+                if c is False:
+                    continue
+                c = None if c is True else c
+                if c0 is not None:
+                    c = c0 if c is None else self.logic("and", [c0, c])
+                out.append(_Item(self.ev(body, inner), c))
+            return out
+        if o == "let":
+            return self.ev(a[2], {**scope, a[0]: self.ev(a[1], scope)})
+        if o == "if":
+            return self.ite(self.ev(a[0], scope), self.ev(a[1], scope), self.ev(a[2], scope))
+        if o in ("and", "or", "not"):
+            return self.logic(o, [self.ev(y, scope) for y in a])
+        if o in ("==", "!=", "<", "<=", ">", ">="):
+            return self.compare(o, self.ev(a[0], scope), self.ev(a[1], scope))
+        if o in ("+", "-"):
+            l, r = self.num(self.ev(a[0], scope)), self.num(self.ev(a[1], scope))
+            return l + r if o == "+" else l - r
+        if o == "neg":
+            return -self.num(self.ev(a[0], scope))
+        if o == "*":
+            l, r = self.num(self.ev(a[0], scope)), self.num(self.ev(a[1], scope))
+            if not (isinstance(l, int) or isinstance(r, int)):
+                raise _Unmodelled("a product of two unknowns")
+            return l * r
+        if o == "call":
+            return self.call(self.fn[a[0]], [self.ev(y, scope) for y in a[1:]])
+        raise _Unmodelled(o)
+
+    def call(self, f, args):
+        if f == "shaded":
+            v = args[0]
+            if not isinstance(v, _Cell) or self.cells[v.var] not in self.sh:
+                raise _Unmodelled("shaded() without shading")
+            return self.sh[self.cells[v.var]]
+        if f in ("sum", "count", "len"):
+            total = 0
+            for item in self.items(args[0]):
+                val, c = item.value, item.cond
+                term = 1 if f in ("count", "len") else self.num(val)
+                if f == "count":
+                    term = int(self.boolean(val)) if isinstance(self.boolean(val), bool) else self.boolean(val)
+                if c is not None:
+                    term = self.ite(c, term, 0)
+                total = total + term
+            return total
+        if f in ("all", "any"):
+            vals = []
+            for item in self.items(args[0]):
+                val, c = item.value, item.cond
+                b = self.boolean(val)
+                if c is not None:  # all: c -> b ; any: c and b
+                    b = self.logic("or", [self.logic("not", [c]), b]) if f == "all" else self.logic("and", [c, b])
+                vals.append(b)
+            return self.logic("and" if f == "all" else "or", vals) if vals else f == "all"
+        if f in ("odd", "even"):
+            v = self.num(args[0])
+            if isinstance(v, int):
+                return (v % 2 == 1) == (f == "odd")
+            r = self.m.NewIntVar(0, 1, "")
+            q = self.m.NewIntVar(-self.BIG, self.BIG, "")
+            self.m.Add(v == 2 * q + r)
+            return self.compare("==", r, 1 if f == "odd" else 0)
+        if f == "abs":
+            v = self.num(args[0])
+            if isinstance(v, int):
+                return abs(v)
+            t = self.m.NewIntVar(0, self.BIG, "")
+            w = self.m.NewIntVar(-self.BIG, self.BIG, "")
+            self.m.Add(w == v)
+            self.m.AddAbsEquality(t, w)
+            return t
+        if f == "num":
+            b = self.boolean(args[0])
+            return int(b) if isinstance(b, bool) else b
+        raise _Unmodelled(f)
+
+
 _HAVE = None
 
 
@@ -275,7 +484,7 @@ def build_model(p):
         m.AddAllowedAssignments([x[a], x[b]], sorted(allowed))
     for con in p.constraints:
         t = con.get("type")
-        if t in ("line", "clone", "yin_yang") or t in CHAOS_TYPES:
+        if t in ("line", "clone", "yin_yang", "expr") or t in CHAOS_TYPES:
             continue  # compiled into relations / n-ary constraints by finalize(); chaos: _add_chaos below
         cells = [x[c] for c in con.get("cells", [])]
         off = int(con.get("offset") or 0)
@@ -466,8 +675,15 @@ def build_model(p):
             return None, None
     if has_chaos(p):
         _add_chaos(m, x, p)
+    shading = {}
     if has_shading(p):
-        _add_yin_yang(m, p)
+        _add_yin_yang(m, p, shading)
+    for con in p.constraints:
+        if con.get("type") == "expr":
+            try:
+                m.Add(_ExprCP(m, con, x, shading).holds() == 1)
+            except _Unmodelled:
+                return None, None
     return m, x
 
 
