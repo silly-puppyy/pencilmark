@@ -290,6 +290,21 @@ def test_default_line_colour_needs_the_rules_to_describe_it():
     assert info.get("renban")
 
 
+def test_line_colour_from_described_rule():
+    """CTC rules often describe a line without naming it (screen of 1,351 CTC puzzles, 2026-11-03): "a purple line
+    contains a set of consecutive digits" is a renban, "box borders divide a blue line into segments with the same sum"
+    a region sum; the same words about a cage colour no line"""
+    from pencilmark.sources import _sp_translate as SP
+
+    got = SP.rules_color_map("A purple line contains a set of consecutive digits in any order.")
+    assert got == {"purple": "renban"}
+    assert SP.rules_color_map("Box borders divide a blue line into segments with the same sum.") == {
+        "blue": "region_sum"
+    }
+    assert SP.rules_color_map("Digits in a cage form a consecutive set. Red circles are odd.") == {}
+    assert SP.rules_color_map("The sum of any three consecutive digits along a red line is divisible by 3.") == {}
+
+
 def test_whole_grid_region_means_no_boxes():
     """a SudokuPad region over the whole grid draws no boxes: rows and columns only (Spiraling Circles, 000O94, read
     it as one 81-cell region and had no solution); describe reads the rules without searching for the solution"""

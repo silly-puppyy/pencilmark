@@ -340,12 +340,29 @@ def diff_rule(sent):
     return {5: "whisper", 4: "dutch"}.get(k, f"whisper{k}")
 
 
+# a line rule described without its name ("a purple line contains a set of consecutive digits"); counted only in a
+# sentence about a line or thread, so a cage or dot described the same way does not colour a line
+RULE_DESCRIPTIONS = {
+    "renban": [r"set of (?:non-repeating,? )?consecutive", r"consecutive set",
+               r"\b(?:are|be|contains?|form) (?:an? )?(?:non-repeating,? )?consecutive (?:digits|numbers|values|sequence)"],
+    "region_sum": [r"segments? (?:that |which )?(?:each )?(?:sum|add)s? (?:up )?to the same", r"(?:same|equal) sums?",
+                   r"sum (?:of the digits )?(?:on|along) (?:a|the|each) [a-z ]{0,20}line is (?:equal|the same)",
+                   r"is (?:equal|the same) in (?:every|each) box"],
+    "thermo": [r"increase from the bulb", r"from the bulb end"],
+    "between": [r"(?:numerically|strictly) between", r"between the (?:two )?(?:digits|circles|numbers) (?:in|at) "],
+    "palindrome": [r"reads? the same (?:forwards?|in both)", r"same (?:forwards?|from either end)"],
+    "zipper": [r"equidistant from the (?:centre|center)", r"same distance from the (?:centre|center)"],
+}  # fmt: skip
+
+
 def rules_color_map(rules):
     """colour word -> rule key, from sentences mentioning both."""
     out = {}
     text = (rules or "").lower()
     for sent in re.split(r"(?<=[.\n])\s*", text):
         rules_here = [k for k, pats in RULE_WORDS.items() if any(re.search(p, sent) for p in pats)]
+        if not rules_here and re.search(r"\b(?:lines?|threads?)\b", sent):
+            rules_here = [k for k, pats in RULE_DESCRIPTIONS.items() if any(re.search(p, sent) for p in pats)]
         cols = [c for c in COLOR_WORDS if re.search(rf"\b{c}", sent)]
         dk = diff_rule(sent) if (not rules_here or set(rules_here) & {"whisper", "dutch"}) else None
         if (rules_here or dk) and cols:
