@@ -668,6 +668,20 @@ def test_redefined_clues():
     assert p.relations == [("ratio", 0, 1, 3)]
 
 
+def test_numbers_beside_edge_circles():
+    """a number drawn just off an edge circle is that circle's number (one numbered dot, not a dot and a stray text);
+    "the greater number" between two cells is max(a, b)"""
+    from pencilmark.sources import _sp_translate as SP
+
+    dot = {"center": [1, 0.5], "width": 0.5, "rounded": True, "backgroundColor": "#F"}
+    num = {"center": [1.14, 0.5], "text": 3, "width": 0, "height": 0}
+    text = "Number clues given between pairs of cells indicate the greater number in those two cells."
+    p, _ = SP.translate(_sp4(overlays=[dot, num]), text)
+    assert not p.relations and next(r for r, _ in p.named_rules)["holds"] == "max(a, b) == 3"
+    p, _ = SP.translate(_sp4(overlays=[dot, num]), "Numbers between two cells give the difference of the values.")
+    assert p.relations == [("diff", 0, 4, 3)]
+
+
 def test_rule_for_every_line():
     """ "all lines are region sum lines" gives every line that rule; a line whose colour also names another rule has two
     rules and is refused (CTC zkz5Qw2BWx4: orange lines are also Dutch whispers)"""

@@ -881,7 +881,10 @@ M.RELATIONS.setdefault("prod", lambda v, w, k: v * w == k)
 def edge_number_rule(rules):
     """Meaning of numbers on cell borders from the rules text (None = unknown)."""
     t = rules.lower()
+    if re.search(r"\b(?:tens|units|ones|last) digit of", t):  # a digit of the product / sum: no plain reading
+        return None
     for kind, pat in (
+        ("max", r"(?:indicate|is|gives?) the greater (?:number|digit|value)"),
         ("diff", r"differ|difference"),
         ("ratio", r"ratio|times|multiple|double"),
         ("prod", r"product|multipl"),
@@ -909,11 +912,34 @@ def without_nulls(P):
     }
 
 
+def numbers_on_circles(P):
+    """a number drawn just off an edge circle (its baseline shifted by up to 0.2 cell) is that circle's number: moved
+    onto it and merged with it, so the pair reads as one numbered dot, not a dot plus a stray cell text"""
+    ov = list(P.get("overlays") or [])
+    circles = [o for o in ov if isinstance(o, dict) and o.get("rounded") and "center" in o and not _text_of(o).strip()]
+    near = lambda v: abs(v - round(v)) < 0.05
+    drop = set()
+    for o in ov:
+        if not (isinstance(o, dict) and "center" in o and re.fullmatch(r"\d{1,2}", _text_of(o).strip())):
+            continue
+        (y, x) = o["center"]
+        mid = lambda v: abs(v - math.floor(v) - 0.5) < 0.05
+        if near(y) and mid(x) or mid(y) and near(x):
+            continue  # at an edge's midpoint already
+        for c in circles:
+            cy, cx = c["center"]
+            if (near(cy) != near(cx)) and abs(cy - y) <= 0.2 and abs(cx - x) <= 0.2 and id(c) not in drop:
+                o.update(center=[cy, cx], rounded=True, backgroundColor=c.get("backgroundColor"))
+                drop.add(id(c))
+                break
+    return dict(P, overlays=[o for o in ov if id(o) not in drop]) if drop else P
+
+
 def translate(sp, page_text=None, overrides=None):
     """sp: decoded dict from sudokupad.fetch; page_text: the puzzle page's
     rules (e.g. the Logic Masters text) when the SudokuPad file has none.
     Returns (Puzzle, info) or (None, reason)."""
-    sp = dict(sp, puzzle=without_nulls(sp["puzzle"]))
+    sp = dict(sp, puzzle=numbers_on_circles(without_nulls(sp["puzzle"])))
     P = sp["puzzle"]
     meta = sp.get("meta", {})
     rules = (meta.get("rules") or "") + "\n" + (page_text or "")
@@ -1150,6 +1176,12 @@ def translate(sp, page_text=None, overrides=None):
                     p.relations.append(("ratio", idx(a), idx(b), k_))
                 elif kind == "prod":
                     p.relations.append(("prod", idx(a), idx(b), k_))
+                elif kind == "max":  # the greater of the two digits: a custom rule (no rule family)
+                    from .. import puzzle_json as PJ
+
+                    nm = lambda i: f"r{p.coords[i][0] + 1}c{p.coords[i][1] + 1}"
+                    PJ.add_named(p, {"type": "custom", "cells": {"a": [nm(idx(a))], "b": [nm(idx(b))]},
+                                     "holds": f"max(a, b) == {k_}"})  # fmt: skip
                 else:
                     unknown.append(f"edge number {txt!r}")
                     continue
@@ -1591,6 +1623,12 @@ OUTSIDE_CUSTOM = {
     "median": (r"\bmedian\b", False, lambda ds, n: [f"median(take(3, ray)) == {ds[0]}"]),
     "highball": (r"either the first and second (?:numbers|digits) or the second and third", False,
                  lambda ds, n: [f"ray[1] + ray[2] == {ds[0]} or ray[2] + ray[3] == {ds[0]}"]),
+    "position_max": (r"position of the largest (?:number|digit) in the first three cells", False,
+                     lambda ds, n: [f"position(take(3, ray), x => x == max(take(3, ray))) == {ds[0]}"]),
+    "interval_sum": (r"sum of the (?:numbers|digits) from position a to position b", False,
+                     lambda ds, n: [f"let a = min(ray[1], ray[2]), b = max(ray[1], ray[2]); sum(ray[a..b]) == {ds[0]}"]),
+    "sum_before_nine": (r"sum of all (?:numbers|digits) that appear before the 9", False,
+                        lambda ds, n: [f"sum(take(position(ray, x => x == 9) - 1, ray)) == {ds[0]}"]),
     "next_to_nine": (r"immediately adjacent to the 9", False,
                      lambda ds, n: [f"let q = position(ray, x => x == 9); (ray[q - 1] ?? 0) + (ray[q + 1] ?? 0) == {ds[0]}"]),
 }  # fmt: skip
@@ -1647,7 +1685,11 @@ def outside_clues(P, n, p, rules, used, unknown, idx, inside):
             ("sandwich", r"sandwich|between (?:the )?1 and (?:the )?9"),
             ("xsum", r"\bx-?sums?\b|sum of the first (?:x|n|k)\b"),
             ("skyscraper", r"skyscraper|buildings? (?:can be )?\W?seen|taller buildings block"),
-            ("frame", r"sum of the (?:values|digits|numbers) in the first (?:three|3|two|2|four|4) cells"),
+            (
+                "frame",
+                r"sum of the (?:values|digits|numbers) in the first (?:three|3|two|2|four|4) cells"
+                r"|sum of the first (?:three|3|two|2|four|4) (?:numbers|digits) seen",
+            ),
             ("numbered_room", r"numbered rooms?|digit x (?:in|into) the x-?th cell|in the nth cell"),
             (
                 "first_seen",
@@ -1719,7 +1761,7 @@ def outside_clues(P, n, p, rules, used, unknown, idx, inside):
             continue
         if kind == "frame":  # sum frame: the first k cells seen from the clue
             k = {"two": 2, "2": 2, "three": 3, "3": 3, "four": 4, "4": 4}[
-                re.search(r"first (three|3|two|2|four|4) cells", t).group(1)
+                re.search(r"first (three|3|two|2|four|4) (?:cells|numbers|digits)", t).group(1)
             ]
             p.constraints.append({"type": "sum", "cells": cells[:k], "total": vals[0]})
             used["sum_frame"] += 1

@@ -25,7 +25,9 @@
   one-off line rules as custom rules (sequence lines, alternating lines, one-digit lines; lines whose neighbours
   differ by 1); "along each line"; "a difference of 4 or more"; f-puzzles lines read from the page's wording when the
   payload's own is terser; one-off outside clues as custom rules over the cells seen from the clue (outside, first
-  odd / even, neighbours, coast to coast, consecutive count, max + min, median, highball, sum next to nine); a clue 0
+  odd / even, neighbours, coast to coast, consecutive count, max + min, median, highball, sum next to nine, position
+  of the largest, interval sums, sum before the nine); numbers drawn just beside an edge circle read as that dot's
+  number; "the greater number" between two cells; a clue 0
   stored as a number is no longer dropped; one-off whole-grid rules as scoped custom rules (encaged digits, no three
   of a parity in a row, anti-XV, no checkerboard, box triples divisible by three), for f-puzzles payloads too;
   shapes with digit sets by colour (circles / squares / diamonds); clues on marked cells as custom rules (a circled
