@@ -357,9 +357,12 @@ NO_BOXES = re.compile(
     r"|no (?:3x3 )?box(?:es)?\b|(?:there are )?no boxes|without boxes"
 )
 BATTENBURG_TEXT = re.compile(r"battenburg|checkerboard")
-FADED_TEXT = re.compile(r"either means[^.]{0,80}differ by (?:1|one)\b[^.]{0,80}ratio of (?:2|two)\b")
+FADED_TEXT = re.compile(r"either\b[^.]{0,80}differ by (?:1|one)\b[^.]{0,100}ratio of (?:2|two)\b")
+LIAR_ZONE = re.compile(r"each cage must contain (two|2) of the (three|3) (?:numbers|digits) given")
 ZONE_TEXT = re.compile(
-    r"(?:numbers|digits) in the (?:top[- ]left (?:corner )?of (?:each|the|a) cage|cage'?s? (?:corner|clue)) must appear in (?:th(?:ose|at|e)|each) cage|\bzone sudoku\b"
+    r"(?:numbers|digits) (?:given )?in the (?:top|upper)[- ]left (?:corner )?of (?:each|the|a) cage must appear in"
+    r"|(?:numbers|digits) in the cage'?s? (?:corner|clue) must appear in (?:th(?:ose|at|e)|each) cage|\bzone sudoku\b"
+    r"|each cage must contain (?:two|2) of the (?:three|3) (?:numbers|digits) given"
 )
 QUAD_NEG = re.compile(
     r"(?:must not|cannot|can't|may not|do not|don't) appear in (?:any of )?the (?:four|4) (?:surrounding|adjacent)"
@@ -420,6 +423,8 @@ ARROW_CUSTOM = {
                          "abs(sum({L}) - c) == 1"),
     "average_arrow": (r"circled cell is equal to the average of (?:all )?(?:the )?(?:numbers|digits) along the arrow", False,
                       "c * len({L}) == sum({L})"),
+    "distinct_arrow": (r"(?:number in the bulb of an arrow|numbers in bulbs) indicates? (?:the number of|how many) unique "
+                       r"(?:numbers|values|digits) (?:that )?appear along", False, "c == count_distinct({L})"),
     "repeating_arrow": (r"at least one of the (?:numbers|digits) along the path in each arrow must be repeated", True,
                         "count_distinct({L}) < len({L})"),
     "alternating_parity_arrow": (r"along each arrow shape, the (?:numbers|digits) \(including the circled cell\) "
@@ -446,6 +451,12 @@ def arrow_variants(p, rules, used, unknown):
             return
     if not keep:
         p.constraints = [c_ for c_ in p.constraints if c_.get("type") != "arrow"]
+    if re.search(r"all arrows coming from (?:that|the|a) bulb", t):  # one rule per bulb over all its arrows
+        merged = {}
+        for a in arrows:
+            m_ = merged.setdefault(a["circle"][0], {"circle": a["circle"], "line": []})
+            m_["line"] += [x for x in a["line"] if x not in m_["line"]]
+        arrows = list(merged.values())
     for a in arrows:
         L = [name(i) for i in a["line"]]
         cells = {"c": [name(a["circle"][0])], "L": L}
@@ -461,6 +472,24 @@ LINE_CUSTOM = {
     "sequence": (3, "t[2] - t[1] == t[3] - t[2]", "Sequence line"),
     "zigzag": (3, "(t[2] - t[1]) * (t[3] - t[2]) < 0", "Alternating line"),
     "same_digit": (0, "count_distinct(t) == 1", "One-digit line"),
+    "almost_palindrome": (
+        0,
+        lambda n: f"count(i for i in {{1..{n // 2}}} if t[i] != t[{n + 1} - i]) == 1",
+        "Almost palindrome",
+    ),
+    "consecutive_palindrome": (
+        0,
+        lambda n: f"all(abs(t[i] - t[{n + 1} - i]) == 1 for i in {{1..{n // 2}}})",
+        "Consecutive palindrome",
+    ),
+}
+LINE_VARIANTS = {  # a line rule the text modifies: (the rule as read, wording) -> the custom rule
+    "almost_palindrome": (("palindrome",), r"palindrome[^.]{0,80}except for (?:a|one) single pair"),
+    "consecutive_palindrome": (
+        ("palindrome", "zipper"),
+        r"equidistant from the cent(?:er|re) of (?:a|the|each) line must "
+        r"be (?:1|one) away",
+    ),
 }
 
 # a region sum stated per box ("the same total in each 3x3 box the line visits"): a line that leaves a box and comes back
@@ -1015,6 +1044,13 @@ def translate(sp, page_text=None, overrides=None):
 
             name = lambda i: f"r{p.coords[i][0] + 1}c{p.coords[i][1] + 1}"
             need = Counter(int(ch) for ch in str(total))
+            if LIAR_ZONE.search(rules.lower()):  # two of the three listed digits appear in the cage
+                ds_ = sorted(need)
+                p.groups.append(M.Group(f"k{len(p.groups)}", tuple(sorted(cs)), "cage", len(cs) == n, None))
+                PJ.add_named(p, {"type": "custom", "cells": {"K": [name(c_) for c_ in cs]},
+                                 "holds": f"count(d for d in {ds_} if any(x == d for x in K)) == 2"})  # fmt: skip
+                used["liar_zone"] += 1
+                continue
             p.groups.append(M.Group(f"k{len(p.groups)}", tuple(sorted(cs)), "cage", len(cs) == n, None))
             PJ.add_named(p, {"type": "custom", "cells": {"K": [name(c_) for c_ in cs]},
                              "holds": " and ".join(f"count(x for x in K if x == {d}) >= {k}" for d, k in sorted(need.items()))})  # fmt: skip
@@ -1280,6 +1316,9 @@ def translate(sp, page_text=None, overrides=None):
             continue
         if rule == "ignore":
             continue
+        for var_, (from_, pat_) in LINE_VARIANTS.items():
+            if rule in from_ and re.search(pat_, rules.lower()):
+                rule = var_
         ids = [idx(x) for x in lc]
         loop = len(ids) > 2 and ids[0] == ids[-1]
         if rule in ("renban", "region_sum") and len(set(ids)) != len(ids):
@@ -1374,6 +1413,7 @@ def translate(sp, page_text=None, overrides=None):
 
             name = lambda i: f"r{p.coords[i][0] + 1}c{p.coords[i][1] + 1}"
             k, holds, label = LINE_CUSTOM[rule]
+            holds = holds(len(ids)) if callable(holds) else holds
             runs = (
                 [[name(c_) for c_ in ids[i : i + k]] for i in range(len(ids) - k + 1)]
                 if k
@@ -1513,6 +1553,19 @@ def translate(sp, page_text=None, overrides=None):
     if P.get("foglight") or P.get("triggereffect"):
         unknown.append("fog of war")
     arrow_variants(p, rules, used, unknown)
+    if re.search(
+        r"cages must contain either all even (?:numbers|digits), all odd (?:numbers|digits), or exactly half",
+        text_rules.lower(),
+    ):
+        from .. import puzzle_json as PJ
+
+        cages = [g for g in p.groups if g.kind == "cage" and g.total is None]
+        p.groups = [g for g in p.groups if g not in cages]  # areas for the rule: digits may repeat in them
+        for g in cages:
+            K = [f"r{p.coords[c_][0] + 1}c{p.coords[c_][1] + 1}" for c_ in g.cells]
+            PJ.add_named(p, {"type": "custom", "cells": {"K": K}, "holds":
+                             "let e = count(x for x in K if even(x)); e == 0 or e == len(K) or 2 * e == len(K)"})  # fmt: skip
+            used["full_or_half"] += 1
     if FADED_TEXT.search(text_rules.lower()):  # a dot is consecutive OR double, whatever its colour
         from .. import puzzle_json as PJ
 

@@ -682,6 +682,28 @@ def test_numbers_beside_edge_circles():
     assert p.relations == [("diff", 0, 4, 3)]
 
 
+def test_more_redefined_clues():
+    """palindromes with one mismatched pair or consecutive partners, zones listing two of three digits, cages that are
+    all even / all odd / half and half (areas where digits may repeat)"""
+    from pencilmark.sources import _sp_translate as SP
+
+    line = {"color": "#AAAAAA", "thickness": 9.6, "wayPoints": [[0.5, 0.5], [0.5, 3.5]]}
+    p, _ = SP.translate(
+        _sp4(lines=[line]),
+        "The numbers along each gray line form a palindrome, except for a single pair of non-matching numbers.",
+    )
+    assert next(r for r, _ in p.named_rules)["holds"] == "count(i for i in {1..2} if t[i] != t[5 - i]) == 1"
+    cage = {"cells": [[0, 0], [0, 1]], "value": "123"}
+    p, _ = SP.translate(
+        _sp4(cages=[cage]), "Each cage must contain two of the three numbers given in the upper-left corner."
+    )
+    assert "== 2" in next(r for r, _ in p.named_rules)["holds"]
+    big = {"cells": [[0, c] for c in range(4)] + [[1, 0]]}
+    text = "Cages must contain either all even numbers, all odd numbers, or exactly half even and half odd numbers."
+    p, _ = SP.translate(_sp4(cages=[big]), text)
+    assert not [g for g in p.groups if g.kind == "cage"] and len(p.named_rules) == 1
+
+
 def test_rule_for_every_line():
     """ "all lines are region sum lines" gives every line that rule; a line whose colour also names another rule has two
     rules and is refused (CTC zkz5Qw2BWx4: orange lines are also Dutch whispers)"""
