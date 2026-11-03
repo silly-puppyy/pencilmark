@@ -431,6 +431,25 @@ def test_outside_clue_wordings_and_arrowheads():
     assert [(c["type"], c["cells"]) for c in p.constraints] == [("little_killer", [1, 6, 11])]  # r1c2 r2c3 r3c4
 
 
+def test_fortress_and_native_xsum():
+    """fortress: grey cells exceed their white neighbours only (f-puzzles 'maximum' cells side by side read with no
+    solution); SudokuPad grey squares are fortress cells when the text says so; f-puzzles' own xsum key is read"""
+    from pencilmark.sources import _fpuz_translate as FT
+    from pencilmark.sources import _sp_translate as SP
+
+    fp = {"size": 4, "grid": [[{} for _ in range(4)] for _ in range(4)], "ruleset": "Fortress.",
+          "maximum": [{"cell": "R1C1"}, {"cell": "R1C2"}]}  # fmt: skip
+    p, _ = FT.translate(fp)
+    assert ("lt", 0, 1) not in p.relations and ("lt", 1, 0) not in p.relations and ("lt", 4, 0) in p.relations
+    grey = [{"center": [0.5, 0.5], "width": 1, "height": 1, "backgroundColor": "#cccccc"}]
+    p, info = SP.translate(_sp4(underlays=grey), "A number in a gray cell must be larger than any adjacent white cell.")
+    assert info.get("fortress") and {("lt", 1, 0), ("lt", 4, 0)} <= set(p.relations)
+    fp = {"size": 4, "grid": [[{} for _ in range(4)] for _ in range(4)], "ruleset": "X-sums.",
+          "xsum": [{"cell": "R0C1", "value": "4"}]}  # fmt: skip
+    p, _ = FT.translate(fp)
+    assert [c["type"] for c in p.constraints] == ["xsum"]
+
+
 def test_rule_for_every_line():
     """ "all lines are region sum lines" gives every line that rule; a line whose colour also names another rule has two
     rules and is refused (CTC zkz5Qw2BWx4: orange lines are also Dutch whispers)"""

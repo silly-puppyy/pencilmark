@@ -1259,6 +1259,7 @@ def translate(sp, page_text=None, overrides=None):
     parity_shapes(P, n, p, rules, used, idx, inside)
     global_rules(n, p, rules, used)
     shaded_regions(P, n, p, rules, used)
+    fortress_cells(P, n, p, rules, used, idx, inside)
     outside_clues(P, n, p, rules, used, unknown, idx, inside)
     used["_quad_text"] = int(bool(QUAD_TEXT.search(text_rules)))
     quadruples(P, n, p, used, unknown, idx, inside)
@@ -1425,6 +1426,35 @@ REGION_TEXT = re.compile(
     r"extra regions?|windoku|hyper[- ]?sudoku|\bnrc\b|asterisk|cent(?:er|re) dot|girandola|argyle|"
     r"(?:shaded|grey|gray|coloured|colored|marked|highlighted) (?:regions?|areas?|boxes|cells? (?:form|contain|is a))"
 )
+
+
+FORTRESS_TEXT = re.compile(
+    r"fortress|(?:gr[ae]y|shaded) cells? (?:must be|is|are) (?:larger|greater|bigger|higher) than"
+    r"|number in a gr[ae]y cell must be (?:larger|greater)"
+)
+
+
+def fortress_cells(P, n, p, rules, used, idx, inside):
+    """Fortress: a digit in a grey cell is greater than the digits in its orthogonally adjacent white cells (grey
+    square underlays, when the rules text says so); grey neighbours are not compared"""
+    if not FORTRESS_TEXT.search((rules or "").lower()):
+        return
+    grey = set()
+    for lay in P.get("underlays") or []:
+        if not isinstance(lay, dict) or "center" not in lay or lay.get("rounded"):
+            continue
+        if min(lay.get("width", 0) or 0, lay.get("height", 0) or 0) < 0.8:
+            continue
+        if color_name(lay.get("backgroundColor") or lay.get("color") or "") == "grey" and inside(
+            cell_of(lay["center"])
+        ):
+            grey.add(cell_of(lay["center"]))
+    for r, c in grey:
+        for q in ((r - 1, c), (r + 1, c), (r, c - 1), (r, c + 1)):
+            if inside(q) and q not in grey:
+                p.relations.append(("lt", idx(q), idx((r, c))))
+    if grey:
+        used["fortress"] += 1
 
 
 def shaded_regions(P, n, p, rules, used):

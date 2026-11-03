@@ -88,6 +88,8 @@ def normalise(fp):
     families = [k for k, pat in OUTSIDE_TEXT if re.search(pat, text)]
     outside = families[0] if len(families) == 1 else None  # numbers outside the grid mean the one clue family named
     for t in fp.get("text") or []:
+        if t.get("fromConstraint"):  # the drawing of a constraint listed under its own key (an X-sum's number)
+            continue
         v, cs = str(t.get("value", "")).strip(), t.get("cells") or []
         if len(cs) == 1 and outside and v.isdigit():
             r, c = rc(cs[0], 99)
@@ -167,6 +169,7 @@ def translate(fp, line_kinds=None):
             "nonconsecutive",
             "littlekillersum",
             "sandwichsum",
+            "xsum",
             "quadruple",
             "minimum",
             "maximum",
@@ -352,11 +355,12 @@ def translate(fp, line_kinds=None):
     for e in fp.get("even") or []:
         p.domains[ix(e["cell"])] &= p.full & ~odd
     for key, rel in (("maximum", "lt"), ("minimum", "gt")):
+        same = {ix(m["cell"]) for m in fp.get(key) or []}  # fortress: two grey cells side by side are not compared
         for m in fp.get(key) or []:
             x = ix(m["cell"])
             r, c = divmod(x, n)
             for rr, cc in ((r - 1, c), (r + 1, c), (r, c - 1), (r, c + 1)):
-                if 0 <= rr < n and 0 <= cc < n:
+                if 0 <= rr < n and 0 <= cc < n and rr * n + cc not in same:
                     y = rr * n + cc
                     p.relations.append(("lt", y, x) if key == "maximum" else ("lt", x, y))
     for lk in fp.get("littlekillersum") or []:
@@ -365,7 +369,7 @@ def translate(fp, line_kinds=None):
         p.constraints.append(
             {"type": "little_killer", "cells": [ix(x) for x in lk["cells"]], "total": int(lk["value"])}
         )
-    for key, typ, field in (("sandwichsum", "sandwich", "total"), ("_xsum", "xsum", "total"),
+    for key, typ, field in (("sandwichsum", "sandwich", "total"), ("_xsum", "xsum", "total"), ("xsum", "xsum", "total"),
                             ("_skyscraper", "skyscraper", "count")):  # fmt: skip
         for sw in fp.get(key) or []:
             if not str(sw.get("value", "")).strip().isdigit():
