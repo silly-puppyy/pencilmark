@@ -2290,7 +2290,47 @@ def global_custom(n, p, rules, used=None):
         found.append(("anti_battenburg", {"holds": chk, "scope": {"windows": [2, 2]}}))
     if n == 9 and re.search(r"three (?:horizontally|vertically) adjacent cells[^.]{0,80}divisible by three", t):
         found.append(("box_triples_mod3", {"cells": {"t": _box_triples(n)}, "each": "t", "holds": "sum(t) mod 3 == 0"}))
+    nm = lambda r, c: f"r{r + 1}c{c + 1}"
+    m = re.search(r"180[- ]degrees?[^.]{0,60}\bsum to (\d+)", t)
+    if m:  # "cells 180 degree rotation apart sum to 10"
+        prs = [
+            [nm(r, c), nm(n - 1 - r, n - 1 - c)] for r in range(n) for c in range(n) if (r, c) < (n - 1 - r, n - 1 - c)
+        ]
+        found.append(("rotational_sum", {"cells": {"d": prs}, "each": "d", "holds": f"d[1] + d[2] == {m.group(1)}"}))
+    if (
+        n == 9
+        and re.search(r"\b159\b", t)
+        and re.search(r"columns? 1,? 5,? and 9|column 1 (?:indicates|gives|shows)", t)
+    ):
+        # 159: the digit in column 1 / 5 / 9 of a row is the column of the 1 / 5 / 9 in that row
+        rows = [[nm(r, c) for c in range(n)] for r in range(n)]
+        found.append(
+            ("159", {"cells": {"R": rows}, "each": "R", "holds": "R[R[1]] == 1 and R[R[5]] == 5 and R[R[9]] == 9"})
+        )
+    if re.search(
+        r"(?:digits?|cells?) (?:inside|in) a cage can ?not be orthogonally adjacent (?:with|to) a consecutive digit", t
+    ):
+        caged = {c for g in p.groups if g.kind == "cage" for c in g.cells}
+        at = {p.coords[i]: i for i in range(p.N)}
+        for i in sorted(caged):  # a caged digit and its orthogonal neighbours are not consecutive
+            r, c = p.coords[i]
+            for q in (at.get((r, c + 1)), at.get((r + 1, c)), at.get((r, c - 1)), at.get((r - 1, c))):
+                if q is not None and (q not in caged or q > i):
+                    p.relations.append(("nonconsec", min(i, q), max(i, q)))
+        found.append(("cage_nonconsecutive", None))
+    m = re.search(
+        r"(?:digits|numbers) may not repeat in any 3 ?x ?3 area centred on (?:a|an) (\d)|centered on (?:a|an) (\d)", t
+    )
+    if m and re.search(r"may not repeat in any 3 ?x ?3 area", t):
+        d = int(m.group(1) or m.group(2))
+        found.append(
+            ("no_repeat_around", {"holds": f"(x, N) => x != {d} or all_different(N)", "scope": {"neighbours": "king"}})
+        )
     for kind, rule in found:
+        if rule is None:
+            if used is not None:
+                used[kind] += 1
+            continue
         PJ.add_named(p, {"type": "custom", **rule})
         if used is not None:
             used[kind] += 1
@@ -2314,7 +2354,7 @@ def global_rules(n, p, rules, used):
     if re.search(
         r"dutch flat|flat ?mate", t
     ):  # the sentence with every / above / below: its first three digits = A, B, C
-        for sent in re.split(r"(?<=[.!;\n])\s*", t):
+        for sent in re.split(r"(?<=[.!\n])\s*", t):  # not at ';': "All 5's must have EITHER; a '1' directly above"
             if re.search(r"\b(?:every|each|all)\b", sent) and "above" in sent and "below" in sent:
                 ds = re.findall(r"\d", sent)
                 if len(ds) >= 3:

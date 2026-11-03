@@ -71,7 +71,9 @@
   More wordings: equal cage sums ("every cage has the same sum": the shown total for every cage, else a custom
   rule), counting rings, region-sum "segments with the same sum", quadruple "a cell touching the circle", longer
   whisper sentences and thresholds in words; refused: "one digit in each row that does not fit".
-  2,000 most-solved Logic Masters sudokus: 802 -> 841 graded.
+  Whole-grid rules from the text: 180-degree pair sums, 159 indexing (columns 1, 5 and 9), caged digits not next to
+  a consecutive digit, no repeats around a digit; f-puzzles payloads read global entropy and Dutch flat mates too.
+  2,000 most-solved Logic Masters sudokus: 802 -> 851 graded.
 - SudokuPad links of the form `sudokupad.app/<author>/<slug>` are fetched (they were refused as not a short id).
 - Speed and robustness: the C++ uniqueness search without OR-Tools stops at a time limit, not only a node limit
   (counting-circle puzzles ran for hours); the trial step retries with a larger search before giving up (two unique

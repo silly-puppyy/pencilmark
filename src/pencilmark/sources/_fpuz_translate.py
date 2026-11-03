@@ -254,8 +254,7 @@ def translate(fp, line_kinds=None, join=True):
     if fp.get("nonconsecutive") is None and re.search(r"non[- ]?consecutive", text) and not fp.get("difference"):
         fp = dict(fp, nonconsecutive=True)
     used.update({k: True for k, v in (("antiknight", knight), ("antiking", king)) if v})
-    custom = ST.global_custom(n, p, fp.get("ruleset")) or ST.global_custom(n, p, fp.get("_page_rules"))
-    used.update(dict.fromkeys(custom, True))
+
     steps = ([(1, 2), (2, 1), (2, -1), (1, -2)] if knight else []) + ([(1, 1), (1, -1)] if king else [])
     for r in range(n):
         for c in range(n):
@@ -471,6 +470,14 @@ def translate(fp, line_kinds=None, join=True):
             if isinstance(cell, dict) and cell.get("c"):
                 colour_cells[ST.color_name(cell["c"])].append(r_ * n + c_)
     ST.text_cell_rules(p, n, fp.get("ruleset") or "", colour_cells, used)
+    # text-only whole-grid rules, after the cages (some read them): custom ones, then global entropy / Dutch flat mates
+    custom = ST.global_custom(n, p, fp.get("ruleset")) or ST.global_custom(n, p, fp.get("_page_rules"))
+    used.update(dict.fromkeys(custom, True))
+    from collections import Counter
+
+    gu = Counter()
+    ST.global_rules(n, p, " ".join(x for x in (fp.get("ruleset"), fp.get("_page_rules")) if x), gu)
+    used.update({k: v for k, v in gu.items() if v})
     if outside_texts:  # read like SudokuPad outside clues, from the payload's wording, else the page's
         from collections import Counter
 

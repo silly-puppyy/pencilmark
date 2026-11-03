@@ -854,6 +854,30 @@ def test_fpuzzles_line_totals_whisper_thresholds_and_segments():
     assert [g.total for g in p.groups if g.kind == "cage"] == [5, 5]
 
 
+def test_more_global_text_rules():
+    """whole-grid rules from the text: 180-degree pair sums, 159 indexing, caged digits not next to a consecutive
+    digit, no repeats around a digit; Dutch flat mates across a ';'"""
+    from pencilmark.sources import _sp_translate as SP
+
+    std = lambda: SP.M.standard(9, 3, 3)
+    assert SP.global_custom(9, std(), "Cells 180 degree rotation apart sum to 10.") == ["rotational_sum"]
+    assert SP.global_custom(9, std(), "159: digits in columns 1, 5 and 9 index the columns of 1, 5 and 9.") == ["159"]
+    assert SP.global_custom(9, std(), "159: digits in red cells index columns.") == []  # other indexer cells: not this
+    assert SP.global_custom(9, std(), "Digits may not repeat in any 3x3 area centered on a 9.") == ["no_repeat_around"]
+    p = std()
+    p.groups.append(SP.M.Group("k", (0, 1), "cage", False, None))
+    SP.global_custom(9, p, "Digits inside a cage can not be orthogonally adjacent with a consecutive digit.")
+    assert ("nonconsec", 0, 1) in p.relations and ("nonconsec", 0, 9) in p.relations
+    p = std()
+    from collections import Counter
+
+    u = Counter()
+    SP.global_rules(
+        9, p, "Dutch flat mates: all 5's must have EITHER; a '1' directly above it AND/OR a '9' directly below it.", u
+    )
+    assert u["dutch_flats"] == 1
+
+
 def test_rule_for_every_line():
     """ "all lines are region sum lines" gives every line that rule; a line whose colour also names another rule has two
     rules and is refused (CTC zkz5Qw2BWx4: orange lines are also Dutch whispers)"""
