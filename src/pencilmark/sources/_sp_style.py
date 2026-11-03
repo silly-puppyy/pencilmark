@@ -14,6 +14,8 @@ _CELL = re.compile(r"r(\d+)c(\d+)")
 def _colour(c):
     """SudokuPad colour ('#rgb', '#rgba', '#rrggbb', '#rrggbbaa') -> ('#rrggbb', opacity below 1 or None)"""
     h = c.strip().lstrip("#") if isinstance(c, str) else ""
+    if re.fullmatch(r"[0-9a-fA-F]{1,2}", h):  # newer files' grey shorthand: "#F" white, "#0" black, a 2nd digit = alpha
+        h = h[0] * 6 + (h[1] * 2 if len(h) == 2 else "")
     if not re.fullmatch(r"[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8}", h):
         return None, None
     if len(h) <= 4:
@@ -76,6 +78,14 @@ def elements(sp):
                 continue
             fill, op = _colour(sh.get("backgroundColor"))
             col, _ = _colour(sh.get("borderColor"))
+            h, w = sh.get("height") or sh.get("width") or 0, sh.get("width") or 0
+            if min(h, w) >= n - 0.5:  # a board-sized fill: the background (artwork, section 7 decorations)
+                if fill and op != 0:
+                    style = {k: v for k, v in {"fill": fill, "opacity": op}.items() if v is not None}
+                    out.append(
+                        {"decoration": {"kind": "rect", "center": list(sh["center"]), "size": [h, w], "style": style}}
+                    )
+                continue
             square = abs((sh.get("width") or 0) - (sh.get("height") or 0)) < 0.01
             shape = (
                 "circle"
@@ -102,8 +112,10 @@ def _rule_cells(v, acc):
 
 def apply(doc, drawn):
     """the sudoku-puzzle document with `style` on each rule whose cells one drawn look matches"""
-    looks = {}
+    looks, decorations = {}, [el["decoration"] for el in drawn or [] if "decoration" in el]
     for el in drawn or []:
+        if "cells" not in el:
+            continue
         looks.setdefault(frozenset(el["cells"]), set()).add(json.dumps(el["style"], sort_keys=True))
     rules = []
     for r in doc.get("rules") or []:
@@ -115,4 +127,5 @@ def apply(doc, drawn):
             if all(x and len(x) == 1 for x in each) and len({next(iter(x)) for x in each}) == 1:
                 got = each[0]
         rules.append({**r, "style": json.loads(next(iter(got)))} if got and len(got) == 1 else r)
-    return {**doc, "rules": rules} if rules else doc
+    doc = {**doc, "rules": rules} if rules else doc
+    return {**doc, "decorations": (doc.get("decorations") or []) + decorations} if decorations else doc

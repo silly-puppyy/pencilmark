@@ -276,7 +276,7 @@ def test_sudokupad_misreads_fixed():
     p, _ = SP.translate(
         _sp4(lines=grey, underlays=bulb), "Thermometers increase from the bulb. A gray line is a palindrome."
     )
-    assert ("lt", 0, 1) in p.relations  # the bulbed grey line: a thermometer
+    assert {"type": "line", "kind": "thermo", "cells": [0, 1]} in p.constraints  # the bulbed grey line: a thermometer
     assert any(r[0] == "eq" for r in p.relations)  # the other: a palindrome
 
     p, info = SP.translate(
@@ -545,6 +545,23 @@ def test_drawn_styles():
     assert style["kropki"] == {"fill": "#ffffff", "color": "#000000", "shape": "circle"}
     plain = pm.to_export(pj, with_solution=False, style=False)
     assert not any("style" in r for r in plain["rules"]) and pm.fingerprint(doc) == pm.fingerprint(plain)
+    # a SudokuPad thermometer stays a thermo line (with its colour), a board-sized fill is the background decoration
+    thermo = {"color": "#a29b65ff", "thickness": 16, "wayPoints": [[0.5, 0.5], [1.5, 1.5], [1.5, 2.5]]}
+    bulb = {"center": [0.5, 0.5], "width": 0.7, "height": 0.7, "rounded": True, "backgroundColor": "#a29b65ff"}
+    bg = {"center": [2, 2], "width": 4, "height": 4, "backgroundColor": "#d3f2844f"}
+    sp = _sp4(lines=[thermo], underlays=[bg, bulb])
+    sp["meta"]["rules"] = "Along a thermometer, digits increase from the bulb."
+    doc = pm.to_export(SP.to_puzzle(sp, fetch=False), with_solution=False)
+    assert {
+        "type": "line",
+        "kind": "thermo",
+        "cells": ["r1c1", "r2c2", "r2c3"],
+        "style": {"color": "#a29b65", "width": 0.25},
+    } in doc["rules"]
+    assert doc["decorations"] == [
+        {"kind": "rect", "center": [2, 2], "size": [4, 4], "style": {"fill": "#d3f284", "opacity": 0.31}}
+    ]
+    pm.validate(doc)
 
 
 def test_one_off_outside_clues():

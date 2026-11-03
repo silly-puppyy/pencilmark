@@ -104,6 +104,10 @@
   as edge clues, negatives scoped to part of the grid applied everywhere, an "all dots are given" negative for a dot
   colour the text never defines; "all clues are true or all false" is refused.
   2,000 most-solved Logic Masters sudokus: 802 -> 912 graded.
+- Export keeps SudokuPad thermometers and whispers as `line` rules (they were written as chains of `greater` edges /
+  `less` relations and pair rules, with the line's colour on one pair only), and a board-sized background fill as a
+  `decorations` rect (section 7). Grades unchanged on the gate; a few line-heavy LMD puzzles grade a band easier now
+  that the engine sees the whole line.
 - SudokuPad links of the form `sudokupad.app/<author>/<slug>` are fetched (they were refused as not a short id).
 - Speed and robustness: the C++ uniqueness search without OR-Tools stops at a time limit, not only a node limit
   (counting-circle puzzles ran for hours); the trial step retries with a larger search before giving up (two unique

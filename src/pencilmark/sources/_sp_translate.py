@@ -1585,15 +1585,13 @@ def translate(sp, page_text=None, overrides=None):
                 used["thermo_parity"] += 1
             if lc[-1] in circles and lc[0] not in circles:
                 ids = ids[::-1]
-            p.relations += [("lt" if rule == "thermo" else "le", a, b) for a, b in zip(ids, ids[1:])]
-        elif rule.startswith("whisper") and rule[7:].isdigit():
-            p.relations += [("diffge", a, b, int(rule[7:])) for a, b in zip(ids, ids[1:])]
+            p.constraints.append({"type": "line", "kind": rule, "cells": ids})  # compiled by finalize (lt / le pairs)
+        elif rule.startswith("whisper") and rule[7:].isdigit():  # "differ by at least 3": its own threshold
+            p.constraints.append({"type": "line", "kind": "whisper", "cells": ids, "k": int(rule[7:])})
         elif rule == "whisper":
-            p.relations += [("diffge", a, b, 5) for a, b in zip(ids, ids[1:])]
-        elif re.fullmatch(r"whisper\d", rule):  # "differ by at least 3": a whisper with its own threshold
-            p.relations += [("diffge", a, b, int(rule[-1])) for a, b in zip(ids, ids[1:])]
+            p.constraints.append({"type": "line", "kind": "whisper", "cells": ids})
         elif rule == "dutch":
-            p.relations += [("diffge", a, b, 4) for a, b in zip(ids, ids[1:])]
+            p.constraints.append({"type": "line", "kind": "dutch_whisper", "cells": ids})
         elif rule == "renban":
             renban_pieces.append((hexcol, ids))
         elif rule == "region_sum":
