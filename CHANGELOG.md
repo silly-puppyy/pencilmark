@@ -19,7 +19,7 @@
   lines through several circles; refused instead of misread: anti-line rules, broken zippers, rings drawn along grid
   lines, default line colours without a positive description, a line with two rules. Screen of 1,351 Cracking the
   Cryptic puzzles: 281 -> 337 graded.
-- Reader, from the GMPuzzles GAS series (286 posts with replays: 136 -> 197 graded): skyscrapers and sum frames
+- Reader, from the GMPuzzles GAS series (286 posts with replays: 136 -> 206 graded): skyscrapers and sum frames
   from their wordings, little killers drawn as arrowheads, fortress cells, clones drawn as coloured shapes, Rossini
   arrows, Battenburg markers (with sums on them), f-puzzles' own X-sum clues, typographic quotes in rules texts;
   one-off line rules as custom rules (sequence lines, alternating lines, one-digit lines; lines whose neighbours
@@ -28,7 +28,9 @@
   odd / even, neighbours, coast to coast, consecutive count, max + min, median, highball, sum next to nine); a clue 0
   stored as a number is no longer dropped; one-off whole-grid rules as scoped custom rules (encaged digits, no three
   of a parity in a row, anti-XV, no checkerboard, box triples divisible by three), for f-puzzles payloads too;
-  shapes with digit sets by colour (circles / squares / diamonds); refused instead of misread: a puzzle that reads
+  shapes with digit sets by colour (circles / squares / diamonds); clues on marked cells as custom rules (a circled
+  digit against its neighbours: sum, distinct count, same-parity count; an X against its diagonal neighbours; a small
+  arrow in a cell against the cells it points at: detection, elimination, prime count); refused instead of misread: a puzzle that reads
   as plain sudoku while it draws shapes or lines in the grid (15 of 1,500 sampled Logic Masters puzzles, all of
   them misread before).
 - Styles: a SudokuPad puzzle's look (line colours and widths, cage colours, dot and shape fills) is exported as each

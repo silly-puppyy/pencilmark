@@ -1339,6 +1339,7 @@ def translate(sp, page_text=None, overrides=None):
     fortress_cells(P, n, p, rules, used, idx, inside)
     battenburg_corners(P, n, p, rules, used, idx)
     rossini_arrows(P, n, p, rules, used)
+    marked_cells(P, n, p, rules, used, inside)
     outside_clues(P, n, p, rules, used, unknown, idx, inside)
     used["_quad_text"] = int(bool(QUAD_TEXT.search(text_rules)))
     quadruples(P, n, p, used, unknown, idx, inside)
@@ -1738,6 +1739,87 @@ def rossini_arrows(P, n, p, rules, used):
     every = bool(re.search(r"all (?:possible )?[a-z ]{0,20}(?:arrows|clues) (?:have been|are) given", t))
     PJ.add_named(p, {"type": "rossini", "arrows": arrows, "all_given": every and not _NO_INVERSE.search(t)})
     used["rossini"] += 1
+
+
+# one-off clues on marked cells (GAS): the marked cell's digit x against the cells N around it, as custom rules.
+# kind -> (wording, marker, which cells: "orth" / "king" / "diag" neighbours or "ray" in the arrow's direction,
+# condition; {N} is N, or [N] when N is a single cell)
+MARKED_CUSTOM = {
+    "sum_adjacent": (r"circled number[^.]{0,40}equal the sum of (?:all )?(?:the )?orthogonally adjacent", "circle", "orth",
+                     "x == sum({N})"),
+    "circle_distinct": (r"number in each circle indicates how many (?:unique|different) values appear in the (?:8|eight) "
+                        r"surrounding", "circle", "king", "x == count_distinct({N})"),
+    "parity_sweeper": (r"circled number indicates the total count of surrounding cells[^.]{0,40}same parity", "circle",
+                       "king", "x == count(y for y in {N} if y mod 2 == x mod 2)"),
+    "x_distinct": (r"marked with an x indicate how many different (?:numbers|digits) are in the four cells diagonally",
+                   "x", "diag", "x == count_distinct({N})"),
+    "detection": (r"arrows must appear at least once in the indicated direction", "arrow", "ray", "any(y == x for y in {N})"),
+    "elimination": (r"arrows must not appear in any other cell in the indicated direction", "arrow", "ray",
+                    "all(y != x for y in {N})"),
+    "primesweeper": (r"count of cells with prime numbers[^.]{0,40}direction the arrow points", "arrow", "ray",
+                     "x == count(y for y in {N} if prime(y))"),
+}  # fmt: skip
+_STEPS = {"orth": [(0, 1), (1, 0), (0, -1), (-1, 0)], "diag": [(1, 1), (1, -1), (-1, 1), (-1, -1)]}
+_STEPS["king"] = _STEPS["orth"] + _STEPS["diag"]
+
+
+def _cell_markers(P, n, inside):
+    """{"circle" | "arrow" | "x": [(cell, direction or None)]}: white circles centred in cells, and small drawings
+    inside one cell: an X (points out in three or more quadrants) or an arrow (pointing at its farthest point; a closed
+    outline at its head)"""
+    out = defaultdict(list)
+    for lay in (P.get("underlays") or []) + (P.get("overlays") or []):
+        if isinstance(lay, dict) and lay.get("rounded") and "center" in lay and not _text_of(lay).strip():
+            (cy, cx), w = lay["center"], lay.get("width") or 0
+            if 0.6 <= w <= 1.0 and abs(cy % 1 - 0.5) < 0.1 and abs(cx % 1 - 0.5) < 0.1 and inside(cell_of((cy, cx))):
+                out["circle"].append((cell_of((cy, cx)), None))
+    for ln in P.get("lines") or []:
+        wp = ln.get("wayPoints") if isinstance(ln, dict) else None
+        if not wp or len(wp) < 2 or len({cell_of(pt) for pt in wp}) != 1 or not inside(cell_of(wp[0])):
+            continue
+        r, c = cell_of(wp[0])
+        off = [(y - r - 0.5, x - c - 0.5) for y, x in wp]
+        far = [(dy, dx) for dy, dx in off if math.hypot(dy, dx) > 0.25]
+        if not far:
+            continue
+        closed = len(wp) >= 6 and math.dist(wp[0], wp[-1]) < 1e-6
+        if closed:  # a filled arrow outline: the head is the vertex between the two longest edges (the head's sides)
+            pts = off[:-1]
+            edge = lambda i: math.dist(pts[i], pts[(i + 1) % len(pts)])
+            dy, dx = pts[max(range(len(pts)), key=lambda i: edge(i - 1) + edge(i))]
+        elif len({(dy > 0, dx > 0) for dy, dx in far}) >= 3:
+            out["x"].append(((r, c), None))
+            continue
+        else:
+            dy, dx = max(off, key=lambda v: math.hypot(*v))
+        ang = round(math.atan2(dy, dx) / (math.pi / 4)) % 8
+        out["arrow"].append(((r, c), [(0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1), (-1, 0), (-1, 1)][ang]))
+    return out
+
+
+def marked_cells(P, n, p, rules, used, inside):
+    t = (rules or "").lower()
+    kinds = [k for k, v in MARKED_CUSTOM.items() if re.search(v[0], t)]
+    if len(kinds) != 1:
+        return
+    from .. import puzzle_json as PJ
+
+    kind = kinds[0]
+    _, marker, which, holds = MARKED_CUSTOM[kind]
+    name = lambda rc: f"r{rc[0] + 1}c{rc[1] + 1}"
+    for (r, c), d in _cell_markers(P, n, inside).get(marker, []):
+        if which == "ray":
+            N, (y, x) = [], (r + d[0], c + d[1])
+            while inside((y, x)):
+                N.append(name((y, x)))
+                y, x = y + d[0], x + d[1]
+        else:
+            N = [name((r + dy, c + dx)) for dy, dx in _STEPS[which] if inside((r + dy, c + dx))]
+        if not N:
+            continue
+        PJ.add_named(p, {"type": "custom", "cells": {"x": [name((r, c))], "N": N},
+                         "holds": holds.format(N="[N]" if len(N) == 1 else "N")})  # fmt: skip
+        used[kind] += 1
 
 
 def shaded_regions(P, n, p, rules, used):

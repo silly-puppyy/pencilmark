@@ -602,6 +602,28 @@ def test_shape_digit_sets_and_unread_drawings():
     assert p is None and "drawn elements no rule reads" in why
 
 
+def test_marked_cell_clues():
+    """one-off clues on marked cells: a circled cell against its neighbours, a small arrow inside a cell against the
+    cells in its direction (an open arrowhead or a closed outline), as custom rules"""
+    from pencilmark.sources import _sp_translate as SP
+
+    circle = {"center": [1.5, 1.5], "width": 0.886, "rounded": 1, "backgroundColor": "#F", "borderColor": "#0"}
+    p, _ = SP.translate(
+        _sp4(underlays=[circle]), "A circled number in a cell must equal the sum of all orthogonally adjacent numbers."
+    )
+    rule = next(r for r, _ in p.named_rules)
+    assert rule["holds"] == "x == sum(N)" and rule["cells"] == {"x": ["r2c2"], "N": ["r2c3", "r3c2", "r2c1", "r1c2"]}
+    head = {"color": "#0", "thickness": 4, "wayPoints": [[0.72, 0.72], [0.85, 0.85], [0.88, 0.81], [0.89, 0.89]]}
+    p, _ = SP.translate(
+        _sp4(lines=[head]), "Numbers in gray arrows must appear at least once in the indicated direction."
+    )
+    assert next(r for r, _ in p.named_rules)["cells"]["N"] == ["r2c2", "r3c3", "r4c4"]
+    outline = [[0.23, 0.23], [0.37, 0.09], [0.64, 0.36], [0.78, 0.22], [0.78, 0.78], [0.22, 0.78], [0.36, 0.64],
+               [0.09, 0.37], [0.23, 0.23]]  # fmt: skip
+    marks = SP._cell_markers({"lines": [{"wayPoints": outline}]}, 4, lambda rc: 0 <= min(rc) and max(rc) < 4)
+    assert marks["arrow"] == [((0, 0), (1, 1))]
+
+
 def test_rule_for_every_line():
     """ "all lines are region sum lines" gives every line that rule; a line whose colour also names another rule has two
     rules and is refused (CTC zkz5Qw2BWx4: orange lines are also Dutch whispers)"""
