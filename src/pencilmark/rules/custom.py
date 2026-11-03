@@ -357,11 +357,12 @@ def is_prime(n):
 class Env:
     """names: cell lists ({name: [cell names] or lists of lists}), the grid ({cell name: digit}) and the box shape"""
 
-    def __init__(self, cells, grid, box=(3, 3), parent=None, local=None):
+    def __init__(self, cells, grid, box=(3, 3), parent=None, local=None, layers=None):
         self.cells, self.grid, self.box, self.parent, self.local = cells, grid, box, parent, local or {}
+        self.layers = layers or {}  # board layers beside the digits: {"region": {cell: label}, "shaded": {cell: bool}}
 
     def child(self, **binds):
-        return Env(self.cells, self.grid, self.box, self, binds)
+        return Env(self.cells, self.grid, self.box, self, binds, self.layers)
 
     def lookup(self, name):
         e = self
@@ -554,6 +555,22 @@ def _pos(env, x, k):
 for _k in ("row", "col", "box"):
     BUILTINS[_k] = lambda env, x, _k=_k: _pos(env, x, _k)
 
+LAYERS = {"region": "regions to find (chaos)", "shaded": "shading"}  # function -> the board layer it reads
+
+
+def _layer(env, x, k):
+    """a board layer's value at a cell: region(c) its region's number, shaded(c) whether it is shaded"""
+    if not isinstance(x, Cell):
+        raise LangError(f"{k}() takes a cell")
+    if k not in env.layers:
+        raise LangError(f"{k}() needs a puzzle with {LAYERS[k]}")
+    v = env.layers[k][x.name]
+    return bool(v) if k == "shaded" else Fraction(v)
+
+
+for _k in LAYERS:
+    BUILTINS[_k] = lambda env, x, _k=_k: _layer(env, x, _k)
+
 
 def evaluate(e, env):
     op, a = e.op, e.args
@@ -676,10 +693,10 @@ def evaluate(e, env):
     raise LangError(f"unknown construct {op}")
 
 
-def holds(expr, cells, grid, box=(3, 3)):
-    """does the rule hold for this filling? (expr: text or a parsed tree)"""
+def holds(expr, cells, grid, box=(3, 3), layers=None):
+    """does the rule hold for this filling? (expr: text or a parsed tree; layers: Env.layers)"""
     tree = parse(expr) if isinstance(expr, str) else expr
-    v = evaluate(tree, Env(cells, grid, box))
+    v = evaluate(tree, Env(cells, grid, box, layers=layers))
     if not isinstance(v, bool):
         raise LangError("a rule must be a condition (true / false)")
     return v
@@ -689,8 +706,8 @@ def holds(expr, cells, grid, box=(3, 3)):
 ARITY = {"sum": 1, "product": 1, "count": 1, "len": 1, "all": 1, "any": 1, "sort": 1, "reverse": 1, "median": 1,
          "abs": 1, "odd": 1, "even": 1, "prime": 1, "num": 1, "defined": 1, "all_different": 1, "count_distinct": 1,
          "concat": 1, "seen": 1, "upto": 2, "take_while": 2, "take": 2, "position": 2, "row": 1, "col": 1, "box": 1,
-         "min": (1, 2), "max": (1, 2)}  # fmt: skip
-BOOL_FNS = {"all", "any", "odd", "even", "prime", "defined", "all_different"}
+         "region": 1, "shaded": 1, "min": (1, 2), "max": (1, 2)}  # fmt: skip
+BOOL_FNS = {"all", "any", "odd", "even", "prime", "defined", "all_different", "shaded"}
 LIST_FNS = {"sort", "reverse", "seen", "upto", "take_while", "take"}
 
 
@@ -859,7 +876,8 @@ FN_WORDS = {"sum": "the sum of {0}", "product": "the product of {0}", "min": "th
             "defined": "{0} exists", "all": "all of {0} hold", "any": "at least one of {0} holds",
             "upto": "{0} up to the first cell where {1}", "take_while": "{0} as long as {1}",
             "take": "the first {0} of {1}", "position": "the position in {0} of the first cell where {1}",
-            "row": "the row of {0}", "col": "the column of {0}", "box": "the box of {0}", "num": "1 if {0}, else 0"}  # fmt: skip
+            "row": "the row of {0}", "col": "the column of {0}", "box": "the box of {0}", "num": "1 if {0}, else 0",
+            "region": "the region of {0}", "shaded": "{0} is shaded"}  # fmt: skip
 
 
 def describe(e):
@@ -945,19 +963,21 @@ def _name(r, c):
     return f"r{r}c{c}"
 
 
-def rule_holds(rule, grid, box=(3, 3)):
+def rule_holds(rule, grid, box=(3, 3), layers=None):
     """does a custom rule {"type": "custom", "cells": {...}, "holds": "...", "scope"?, "each"?} hold for a filled grid?
     scope: {"pairs": kind} (holds is a predicate (a, b)), {"windows": [h, w]} (a predicate over the window's cells in
     reading order), {"cells": name, "neighbours": kind, "within": "box"?} (a predicate (x, N)); each with "except" (cell
     lists to skip). "each": name -> the rule holds for every tuple of that list of lists, bound to the name."""
     cells, tree = dict(rule.get("cells") or {}), parse(rule["holds"])
     scope, skip = rule.get("scope"), {tuple(sorted(x)) for x in (rule.get("scope") or {}).get("except", [])}
-    env = Env(cells, grid, box)
+    env = Env(cells, grid, box, layers=layers)
     if rule.get("each"):
         name = rule["each"]
-        return all(rule_holds(dict(rule, each=None, cells=dict(cells, **{name: t})), grid, box) for t in cells[name])
+        return all(
+            rule_holds(dict(rule, each=None, cells=dict(cells, **{name: t})), grid, box, layers) for t in cells[name]
+        )
     if not scope:
-        return holds(tree, cells, grid, box)
+        return holds(tree, cells, grid, box, layers)
     f = evaluate(tree, env)
     if not (isinstance(f, tuple) and f[0] == "fn"):
         raise LangError("a scoped rule's holds is a predicate: (a, b) => ..., (x, N) => ... or (w) => ...")
@@ -1012,6 +1032,20 @@ def _positional(tree):
     )
 
 
+def _layered(tree):
+    """the board layers an expression reads (region(), shaded())"""
+    if not isinstance(tree, N):
+        return set()
+    out = {tree.args[0]} if tree.op == "call" and tree.args[0] in LAYERS else set()
+    for x in tree.args:
+        if isinstance(x, N):
+            out |= _layered(x)
+        elif isinstance(x, tuple):
+            for y in x:
+                out |= _layered(y)
+    return out
+
+
 def _table(test, names, D):
     """digit tuples over the named cells for which test(grid) holds"""
     import itertools
@@ -1043,6 +1077,8 @@ def compile_rule(rule, B, D):
     {"type": "table", "cells", "allowed"} otherwise. B: the board helper (exchange.board.Board). Raises LangError when
     the rule is malformed or too large for a table."""
     tree = parse(rule["holds"])
+    if _layered(tree):  # the engine has no layer values inside rules yet: refused, never dropped
+        raise LangError(f"{', '.join(sorted(_layered(tree)))}() in a rule is not graded yet")
     cells = dict(rule.get("cells") or {})
     scope = rule.get("scope") or {}
     skip = {tuple(sorted(x)) for x in scope.get("except", [])}
@@ -1161,7 +1197,7 @@ OPS = ("num", "bool", "cells", "cell", "slot", "list", "range", "comp", "let", "
 OPCODE = {op: i for i, op in enumerate(OPS)}
 FNS = ("sum", "product", "min", "max", "count", "len", "all", "any", "sort", "reverse", "abs", "odd", "even", "prime",
        "num", "defined", "all_different", "count_distinct", "concat", "median", "seen", "upto", "take_while", "take",
-       "position", "row", "col", "box")  # fmt: skip
+       "position", "row", "col", "box", "region", "shaded")  # fmt: skip
 FNCODE = {f: i for i, f in enumerate(FNS)}
 
 

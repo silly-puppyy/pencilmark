@@ -323,3 +323,27 @@ def test_cpp_evaluator_matches_the_reference():
             digits = [rng.randint(1, 9) for _ in names]
             want = holds(src, {"c": names}, dict(zip(names, digits)))
             assert CB._C.expr_holds(spec, digits) == want, (src, digits)
+
+
+def test_board_layers():
+    """region(c) and shaded(c) read the board's layers; without the layer the rule is refused, and puzzles using them
+    are refused at load (not graded yet), never read without the rule"""
+    cells, grid = {"a": "r1c1", "b": "r1c2"}, {"r1c1": 3, "r1c2": 5}
+    assert holds("region(a) != region(b)", cells, grid, layers={"region": {"r1c1": 1, "r1c2": 2}})
+    assert holds("not shaded(a) or odd(a)", cells, grid, layers={"shaded": {"r1c1": True, "r1c2": False}})
+    assert check(parse("region(a) == region(b) and shaded(b)"), {"a", "b"}) == "bool"
+    with pytest.raises(LangError, match="regions to find"):
+        holds("region(a) == 1", cells, grid)
+    import json
+    import sys
+    from pathlib import Path
+
+    import pencilmark
+
+    sys.path.insert(0, str(Path(__file__).parent))
+    from test_substeps import CHAOS_DEMO
+
+    doc = json.loads(json.dumps(CHAOS_DEMO))
+    doc["rules"].append({"type": "custom", "cells": {"a": ["r1c1"], "b": ["r5c5"]}, "holds": "region(a) != region(b)"})
+    with pytest.raises(pencilmark.NotSupportedError, match="not graded yet"):
+        pencilmark.load(doc)
