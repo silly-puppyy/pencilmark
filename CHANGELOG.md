@@ -19,6 +19,9 @@
   lines through several circles; refused instead of misread: anti-line rules, broken zippers, rings drawn along grid
   lines, default line colours without a positive description, a line with two rules. Screen of 1,351 Cracking the
   Cryptic puzzles: 281 -> 337 graded.
+- Reader, from the GMPuzzles GAS series (286 posts with replays: 136 -> 163 graded): skyscrapers and sum frames
+  from their wordings, little killers drawn as arrowheads, fortress cells, clones drawn as coloured shapes, Rossini
+  arrows, Battenburg markers (with sums on them), f-puzzles' own X-sum clues, typographic quotes in rules texts.
 - Speed and robustness: the C++ uniqueness search without OR-Tools stops at a time limit, not only a node limit
   (counting-circle puzzles ran for hours); the trial step retries with a larger search before giving up (two unique
   killers ended Unknown) and keeps its result per position (one killer: 558 -> 316 s).

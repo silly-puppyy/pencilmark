@@ -350,6 +350,7 @@ NO_BOXES = re.compile(
     r"(?:once|exactly once)(?: each)? in (?:every|each) row and (?:every |each )?column(?![^.]{0,40}(?:box|region|cage|block|nonet))"
     r"|no (?:3x3 )?box(?:es)?\b|(?:there are )?no boxes|without boxes"
 )
+BATTENBURG_TEXT = re.compile(r"battenburg|checkerboard")
 QUAD_TEXT = re.compile(
     r"quadruple|(?:surrounding|touching|around|adjacent to)(?: the| that| this)? (?:four|4) cells|"
     r"(?:four|4) (?:surrounding|adjacent|touching) cells|"
@@ -1002,6 +1003,10 @@ def translate(sp, page_text=None, overrides=None):
             near_corner = abs(cx - round(cx)) < 0.3 and abs(cy - round(cy)) < 0.3
             if not centred and not (near_corner and QUAD_TEXT.search(rules.lower())):
                 unknown.append(f"cell text {txt!r}")
+        elif (
+            txt and BATTENBURG_TEXT.search(rules.lower()) and abs(cx - round(cx)) < 0.15 and abs(cy - round(cy)) < 0.15
+        ):
+            continue  # a sum on a Battenburg marker (battenburg_corners)
         elif on_edge and w < 0.5 and not (abs(cx - round(cx)) < 0.05 and abs(cy - round(cy)) < 0.05):
             # edge marker between two cells: kropki dot or XV letter
             a = (int(math.floor(cx - 0.01)), int(math.floor(cy - 0.01)))
@@ -1291,6 +1296,8 @@ def translate(sp, page_text=None, overrides=None):
     global_rules(n, p, rules, used)
     shaded_regions(P, n, p, rules, used)
     fortress_cells(P, n, p, rules, used, idx, inside)
+    battenburg_corners(P, n, p, rules, used, idx)
+    rossini_arrows(P, n, p, rules, used)
     outside_clues(P, n, p, rules, used, unknown, idx, inside)
     used["_quad_text"] = int(bool(QUAD_TEXT.search(text_rules)))
     quadruples(P, n, p, used, unknown, idx, inside)
@@ -1507,6 +1514,84 @@ def fortress_cells(P, n, p, rules, used, idx, inside):
                 p.relations.append(("lt", idx(q), idx((r, c))))
     if grey:
         used["fortress"] += 1
+
+
+_NO_INVERSE = re.compile(r"absence of an? [^.]{0,40}(?:clue|arrow|marker)[^.]{0,20}(?:has no meaning|means nothing)")
+
+
+def battenburg_corners(P, n, p, rules, used, idx):
+    """Battenburg (checkerboard) clues: a square marker on a cell corner -> the 4 cells around it form an odd / even
+    checkerboard; "all possible ... are given" -> the other windows do not (no inverse when the text says absence
+    means nothing)"""
+    t = (rules or "").lower()
+    if not BATTENBURG_TEXT.search(t):
+        return
+    from ..exchange.board import battenburg_table
+
+    marks = set()
+    for lay in P.get("overlays") or []:
+        if not isinstance(lay, dict) or "center" not in lay or lay.get("rounded") or lay.get("text"):
+            continue
+        (y, x), w = lay["center"], lay.get("width") or 0
+        if (
+            0.45 <= w <= 0.8
+            and abs(y - round(y)) < 0.05
+            and abs(x - round(x)) < 0.05
+            and 0 < round(y) < n
+            and 0 < round(x) < n
+        ):
+            marks.add((round(y), round(x)))
+    if not marks:
+        return
+    win = lambda r, c: [idx((r - 1, c - 1)), idx((r - 1, c)), idx((r, c - 1)), idx((r, c))]
+    T, F = battenburg_table(p.D, True), battenburg_table(p.D, False)
+    every = bool(
+        re.search(r"all (?:possible )?[a-z ]{0,25}clues? (?:have been|are) given|if there is no such mark", t)
+    ) and not _NO_INVERSE.search(t)
+    for r in range(1, n):
+        for c in range(1, n):
+            if (r, c) in marks or every:
+                p.constraints.append({"type": "table", "cells": win(r, c), "allowed": T if (r, c) in marks else F})
+    for lay in P.get("overlays") or []:  # "a number on a marking is the sum of its 4 cells"
+        txt = str(lay.get("text", "")).strip() if isinstance(lay, dict) else ""
+        if re.fullmatch(r"\d{1,2}", txt) and "center" in lay:
+            y, x = lay["center"]
+            if (round(y), round(x)) in marks and abs(y - round(y)) < 0.15 and abs(x - round(x)) < 0.15:
+                p.constraints.append({"type": "sum", "cells": win(round(y), round(x)), "total": int(txt)})
+    used["battenburg"] += 1
+
+
+def rossini_arrows(P, n, p, rules, used):
+    """Rossini: an arrow outside the grid -> the first three cells of that row / column increase in the arrow's
+    direction ("all possible arrows are given": the other edges have none)"""
+    t = (rules or "").lower()
+    if not re.search(
+        r"rossini|first three (?:numbers|digits|cells)[^.]{0,60}increase in the direction of the arrow", t
+    ):
+        return
+    arrows = []
+    for ln in P.get("lines") or []:
+        wp = (ln or {}).get("wayPoints") or [] if isinstance(ln, dict) else []
+        if len(wp) < 2:
+            continue
+        (y0, x0), (y1, x1) = wp[0], wp[1]
+        r, c = math.floor(y0), math.floor(x0)
+        dy, dx = y1 - y0, x1 - x0
+        if r < 0 and 0 <= c < n and abs(dx) < 1e-6:
+            arrows.append({"side": "top", "index": c + 1, "towards": "in" if dy > 0 else "out"})
+        elif r >= n and 0 <= c < n and abs(dx) < 1e-6:
+            arrows.append({"side": "bottom", "index": c + 1, "towards": "in" if dy < 0 else "out"})
+        elif c < 0 and 0 <= r < n and abs(dy) < 1e-6:
+            arrows.append({"side": "left", "index": r + 1, "towards": "in" if dx > 0 else "out"})
+        elif c >= n and 0 <= r < n and abs(dy) < 1e-6:
+            arrows.append({"side": "right", "index": r + 1, "towards": "in" if dx < 0 else "out"})
+    if not arrows:
+        return
+    from .. import puzzle_json as PJ
+
+    every = bool(re.search(r"all (?:possible )?[a-z ]{0,20}(?:arrows|clues) (?:have been|are) given", t))
+    PJ.add_named(p, {"type": "rossini", "arrows": arrows, "all_given": every and not _NO_INVERSE.search(t)})
+    used["rossini"] += 1
 
 
 def shaded_regions(P, n, p, rules, used):

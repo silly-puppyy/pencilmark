@@ -466,6 +466,27 @@ def test_clones_from_coloured_shapes():
     assert info.get("clone") and [c["regions"] for c in p.constraints if c["type"] == "clone"] == [[[0, 1], [10, 11]]]
 
 
+def test_rossini_and_battenburg():
+    """Rossini arrows are short lines outside the grid (the shaft's direction says in / out); Battenburg markers are
+    small squares on cell corners (the 4 cells around it); "all ... clues are given" adds the negatives unless the
+    text says an absent clue means nothing"""
+    from pencilmark.sources import _sp_translate as SP
+
+    arrow = {"color": "#000000", "thickness": 2, "wayPoints": [[1.5, -0.88], [1.5, -0.29], [1.44, -0.29]]}
+    p, info = SP.translate(_sp4(lines=[arrow]), "Rossini: the first three digits increase in the direction of the arrow.")
+    assert info.get("rossini") and p is not None
+    mark = {"center": [2, 2], "width": 0.6, "height": 0.6, "backgroundColor": "#CFCFCF"}
+    text = "Battenburg: the four cells around a marker form a checkerboard of odd and even. All clues are given."
+    p, info = SP.translate(_sp4(overlays=[mark]), text)
+    tables = [c for c in p.constraints if c["type"] == "table"]
+    assert info.get("battenburg") and len(tables) == 9 and [5, 6, 9, 10] in [t["cells"] for t in tables]
+    p, _ = SP.translate(_sp4(overlays=[mark]), text + " The absence of a clue has no meaning.")
+    assert [t["cells"] for t in p.constraints if t["type"] == "table"] == [[5, 6, 9, 10]]
+    sum_ = {"text": 20, "center": [2.09, 2], "width": 0, "height": 0, "fontSize": 12}
+    p, _ = SP.translate(_sp4(overlays=[mark, sum_]), text + " A number on a marking is the sum of its 4 cells.")
+    assert {"type": "sum", "cells": [5, 6, 9, 10], "total": 20} in p.constraints and not p.relations
+
+
 def test_rule_for_every_line():
     """ "all lines are region sum lines" gives every line that rule; a line whose colour also names another rule has two
     rules and is refused (CTC zkz5Qw2BWx4: orange lines are also Dutch whispers)"""
