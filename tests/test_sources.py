@@ -377,6 +377,21 @@ def test_default_colours_need_a_positive_description():
     assert [it[0] for it in items] == ["offcentre", "pink"]
 
 
+def test_branching_arrow():
+    """an arrow starting on another arrow's shaft is a branch: the circle sums the stem up to the fork plus the branch
+    (CTC TrSwZ9PQ6k8, refused as an arrow without circle)"""
+    from pencilmark.sources import _sp_translate as SP
+
+    circle = [{"center": [0.5, 0.5], "width": 0.85, "height": 0.85, "rounded": True, "borderColor": "#CFCFCF"}]
+    arrows = [
+        {"wayPoints": [[0.8, 0.5], [2.5, 0.5]], "color": "#CFCFCF", "headLength": 0.3},  # r1c1: r2c1 r3c1
+        {"wayPoints": [[1.5, 0.5], [1.5, 2.5]], "color": "#CFCFCF", "headLength": 0.3},
+    ]  # fork at r2c1: r2c2 r2c3
+    p, _ = SP.translate(_sp4(arrows=arrows, overlays=circle), "Digits along an arrow sum to the digit in its circle.")
+    got = sorted(c["line"] for c in p.constraints if c["type"] == "arrow")
+    assert got == [[4, 5, 6], [4, 8]]  # the branch keeps the stem's r2c1
+
+
 def test_rule_for_every_line():
     """ "all lines are region sum lines" gives every line that rule; a line whose colour also names another rule has two
     rules and is refused (CTC zkz5Qw2BWx4: orange lines are also Dutch whispers)"""

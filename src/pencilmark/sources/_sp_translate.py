@@ -813,6 +813,7 @@ def translate(sp, page_text=None, overrides=None):
             cs_ = [c for c in cs_ if inside(c)]
             if cs_:
                 rcirc.append(((cx, cy), cs_))
+    attached, branches = [], []  # (circle cells, shaft cells); waypoints of arrows starting away from a circle
     for ar in P.get("arrows") or []:
         wp = ar.get("wayPoints") if isinstance(ar, dict) else None
         if not wp or len(wp) < 2 or not inside(cell_of(wp[0])):  # outside starts = little killers (below)
@@ -825,14 +826,30 @@ def translate(sp, page_text=None, overrides=None):
             continue  # a short arrow across an edge = inequality sign
         near = min(rcirc, key=lambda c_: (c_[0][0] - wp[0][0]) ** 2 + (c_[0][1] - wp[0][1]) ** 2, default=None)
         if near is None or (near[0][0] - wp[0][0]) ** 2 + (near[0][1] - wp[0][1]) ** 2 > 0.9**2:
-            unknown.append("arrow without circle")
+            branches.append(wp)
             continue
         shaft = [x for x in line_cells(wp) if inside(x) and x not in near[1]]
         if shaft:
-            p.constraints.append(
-                {"type": "arrow", "circle": [idx(c_) for c_ in near[1]], "line": [idx(x) for x in shaft]}
-            )
-            used["arrow"] += 1
+            attached.append((near[1], shaft))
+    # a branch starts on another arrow's shaft: each path from the circle to a tip is an arrow (the stem's cells up to
+    # the fork, then the branch)
+    while branches:
+        left = []
+        for wp in branches:
+            start = cell_of(wp[0])
+            stem = next(((cc, sh) for cc, sh in attached if start in sh), None)
+            if stem is None:
+                left.append(wp)
+                continue
+            own = [x for x in line_cells(wp) if inside(x) and x != start]
+            attached.append((stem[0], stem[1][: stem[1].index(start) + 1] + [x for x in own if x not in stem[1]]))
+        if len(left) == len(branches):
+            unknown.extend(["arrow without circle"] * len(left))
+            break
+        branches = left
+    for cc, shaft in attached:
+        p.constraints.append({"type": "arrow", "circle": [idx(c_) for c_ in cc], "line": [idx(x) for x in shaft]})
+        used["arrow"] += 1
     # circles (bulbs / arrow circles) and other shapes
     circles = {}
     quad_corners = (
