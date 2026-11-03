@@ -75,7 +75,10 @@
   a consecutive digit, no repeats around a digit; f-puzzles payloads read global entropy and Dutch flat mates too.
   Anti-knight stated for marked cells only ("the digit in the yellow cell ... a knight's move away") applies to those
   cells, not the whole grid (refused when the cells are not found).
-  2,000 most-solved Logic Masters sudokus: 802 -> 863 graded.
+  Oil and water cages (each cage row one parity, even rows above odd) as custom rules; refused instead of misread:
+  pick-up sticks, a magic square somewhere, every domino once, dice, letters for digits, clues or objects the
+  solver must place.
+  2,000 most-solved Logic Masters sudokus: 802 -> 866 graded.
 - SudokuPad links of the form `sudokupad.app/<author>/<slug>` are fetched (they were refused as not a short id).
 - Speed and robustness: the C++ uniqueness search without OR-Tools stops at a time limit, not only a node limit
   (counting-circle puzzles ran for hours); the trial step retries with a larger search before giving up (two unique

@@ -888,6 +888,22 @@ def test_more_global_text_rules():
                               {}, Counter()) == ["anti-knight from marked cells"]  # fmt: skip
 
 
+def test_oil_and_water_and_unmodelled_refusals():
+    """oil and water cages: each cage row one parity, even rows above odd rows (custom rule per cage); mechanics that
+    place or identify unknown objects are refused (pick-up sticks, a magic square somewhere, every domino once)"""
+    from pencilmark.sources import _sp_translate as SP
+
+    cage = {"cells": [[0, 0], [0, 1], [1, 0], [1, 1]]}
+    text = 'Each cage is either full of "oil" (even digits), full of "water" (odd digits), or a mix of both.'
+    p, _ = SP.translate(_sp4(cages=[cage]), text)
+    rule = next(r for r, _ in p.named_rules)
+    assert rule["label"] == "Oil and water" and "R[i][1] mod 2 <= R[i + 1][1] mod 2" in rule["holds"]
+    for words, kind in (("A stick always has a lower total than any stick which lies on top of it.", "pick-up sticks"),
+                        ("There is a 3x3 magic square somewhere in the grid.", "magic square"),
+                        ("Every possible domino appears exactly once in the cages.", "unique dominoes")):  # fmt: skip
+        assert f"rule '{kind}'" in SP.unmodelled_rules(words.lower())
+
+
 def test_rule_for_every_line():
     """ "all lines are region sum lines" gives every line that rule; a line whose colour also names another rule has two
     rules and is refused (CTC zkz5Qw2BWx4: orange lines are also Dutch whispers)"""

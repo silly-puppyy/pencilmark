@@ -43,10 +43,22 @@ UNMODELLED_RULES = (
     ),
     ("modifier", r"modifier"),
     ("maze path", r"path through the maze|\brat run\b"),  # a route through walls (path genre): no path layer yet
+    # mechanics that place or identify unknown clues / objects (LMD top-2000 misreads, classified)
+    ("oil and water letters", r"\boily water\b"),
+    ("pick-up sticks", r"\bstick (?:which |that )?lies on top|pick-up sticks"),
+    ("magic square", r"magic square somewhere|somewhere in the grid lies a 3 ?[x×] ?3 magic square"),
+    ("unique dominoes", r"every possible domino\b"),
+    ("dice", r"\broll a [^.]{0,30}dic?e\b|fold into (?:legitimate )?dice"),
+    (
+        "clues to place",
+        r"bulbs of the lines need to be deduced|split points'?,? to be located|which line is which"
+        r"|which player wins|\(to be found\)|written in invisible ink|influencer cells"
+        r"|place \d+ straight (?:and vertical )?thermometers",
+    ),
     (
         "digit subset",
         r"\buses? (?:\w+|\d+) of the digits\b|\btake (?:two|three|four|five|six|seven|eight|\d) \(?(?:different|distinct)?\)? ?digits from"
-        r"|digit in each (?:row|column|box|house)?[^.]{0,30}does not fit",
+        r"|digit in each (?:row|column|box|house)?[^.]{0,30}does not fit|\bpick (?:two|three|four|five|six|seven|eight|\d) digits from",
     ),
     # a digit used once by all clues of a kind across the grid ("if a cage contained a 1, no other cage can")
     (
@@ -1752,6 +1764,20 @@ def text_cell_rules(p, n, rules, colour_cells, used):
                     p.relations.append(("neq", min(i, q), max(i, q)))
         if cells:
             used["knight_from_cells"] = used.get("knight_from_cells", 0) + 1
+    if re.search(r"full of \W?oil\W?[^.]{0,40}full of \W?water", t):  # oil and water cages
+        from .. import puzzle_json as PJ
+
+        for g in [g for g in p.groups if g.kind == "cage"]:
+            by_row = {}
+            for c in g.cells:
+                by_row.setdefault(p.coords[c][0], []).append(f"r{p.coords[c][0] + 1}c{p.coords[c][1] + 1}")
+            rows = [by_row[r] for r in sorted(by_row)]
+            k = len(rows)
+            holds = "all(count_distinct(x mod 2 for x in r) == 1 for r in R)"  # each row of the cage: one type
+            if k > 1:  # oil (even) floats on water (odd): never an odd row above an even row
+                holds += f" and all(R[i][1] mod 2 <= R[i + 1][1] mod 2 for i in {{1..{k - 1}}})"
+            PJ.add_named(p, {"type": "custom", "cells": {"R": rows}, "holds": holds, "label": "Oil and water"})
+        used["oil_water"] = used.get("oil_water", 0) + 1
     m = re.search(r"(?:digits|numbers) in (?:the |each |all |every )?cages? (?:are|must be) (?:all )?(odd|even)\b", t)
     if m:
         odd_m = sum(1 << (v - 1) for v in range(1, n + 1, 2))
