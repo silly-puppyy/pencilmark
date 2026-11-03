@@ -404,8 +404,14 @@ RULE_DESCRIPTIONS = {
     "zipper": [r"equidistant from the (?:centre|center)", r"(?:same|equal) distance from the (?:centre|center)"],
     # one-off line rules (GAS), kept as custom rules
     "same_parity": [r"all (?:numbers|digits) must be odd or all (?:numbers|digits) must be even",
-                    r"(?:must be|are) (?:either )?all odd or all even"],
-    "sequence": [r"arithmetic (?:series|sequence|progression)"],
+                    r"(?:must be|are) (?:either )?all odd or all even", r"(?:three|all) odd digits or (?:three|all) even digits",
+                    r"all of the digits on it are odd, or all of them are even", r"\bhave the same parity\b"],
+    "sequence": [r"arithmetic (?:series|sequence|progression)", r"evenly spaced sequence"],
+    "monotone": [r"either strictly increase or strictly decrease", r"strictly (?:increasing|increase) or strictly (?:decreasing|decrease)"],
+    "three_distinct": [r"(?:(?:contains?|has) only|only (?:contains?|has)) three distinct (?:digits|numbers)"],
+    "entropic": [r"exactly one low (?:digit|number) \(?1,? ?2,? ?3\)?,? one medium (?:digit|number)"],
+    "doubling": [r"every (?:digit|number) that appears (?:along|on) [a-z ]{0,20}line must appear exactly twice"],
+    "centre_sum": [r"(?:digit|number) in the cent(?:er|re) (?:position|cell) is the sum of the other"],
     "zigzag": [r"alternate between increasing and decreasing", r"alternately (?:increase|rise) and (?:decrease|fall)"],
     "consecutive_line": [r"(?:adjacent|neighbou?ring|next to each other|connected)[^.]{0,50}differ by (?:exactly )?(?:1|one)\b"],
     "same_digit": [r"(?:exactly|only) one distinct (?:number|digit)"],
@@ -474,6 +480,14 @@ LINE_CUSTOM = {
     "sequence": (3, "t[2] - t[1] == t[3] - t[2]", "Sequence line"),
     "zigzag": (3, "(t[2] - t[1]) * (t[3] - t[2]) < 0", "Alternating line"),
     "same_digit": (0, "count_distinct(t) == 1", "One-digit line"),
+    "monotone": (
+        0,
+        lambda n: f"all(t[i] < t[i + 1] for i in {{1..{n - 1}}}) or all(t[i] > t[i + 1] for i in {{1..{n - 1}}})",
+        "Increasing or decreasing line",
+    ),
+    "doubling": (0, "all(count(y for y in t if y == x) == 2 for x in t)", "Doubling line"),
+    "three_distinct": (0, "count_distinct(t) == 3", "Three-digit line"),
+    "centre_sum": (0, lambda n: f"2 * t[{(n + 1) // 2}] == sum(t)" if n % 2 else "1 == 0", "Centre-sum line"),
     "almost_palindrome": (
         0,
         lambda n: f"count(i for i in {{1..{n // 2}}} if t[i] != t[{n + 1} - i]) == 1",
@@ -485,6 +499,29 @@ LINE_CUSTOM = {
         "Consecutive palindrome",
     ),
 }
+
+
+def custom_line(p, rule, ids):
+    """a line rule with no rule family on cells ids: custom rules (LINE_CUSTOM runs, same parity along the line) or
+    difference pairs (neighbours one apart)"""
+    from .. import puzzle_json as PJ
+
+    name = lambda i: f"r{p.coords[i][0] + 1}c{p.coords[i][1] + 1}"
+    if rule == "consecutive_line":
+        p.relations += [("diff", a, b, 1) for a, b in zip(ids, ids[1:])]
+    elif rule == "same_parity":
+        PJ.add_named(p, {"type": "custom", "cells": {"pair": [[name(a), name(b)] for a, b in zip(ids, ids[1:])]},
+                         "each": "pair", "holds": "pair[1] mod 2 == pair[2] mod 2", "label": "Same-parity line"})  # fmt: skip
+    else:
+        k, holds, label = LINE_CUSTOM[rule]
+        holds = holds(len(ids)) if callable(holds) else holds
+        runs = (
+            [[name(c_) for c_ in ids[i : i + k]] for i in range(len(ids) - k + 1)] if k else [[name(c_) for c_ in ids]]
+        )
+        if runs:
+            PJ.add_named(p, {"type": "custom", "cells": {"t": runs}, "each": "t", "holds": holds, "label": label})
+
+
 LINE_VARIANTS = {  # a line rule the text modifies: (the rule as read, wording) -> the custom rule
     "almost_palindrome": (("palindrome",), r"palindrome[^.]{0,80}except for (?:a|one) single pair"),
     "consecutive_palindrome": (
@@ -504,9 +541,12 @@ RS_PER_BOX = re.compile(
 def _described(sent):
     """line rules one sentence describes without naming them: only a sentence about a line or thread, and a region sum
     only with the boxes or regions in it ("lines of the same colour sum to the same total" is another rule)"""
-    if not re.search(r"\b(?:lines?|threads?)\b", sent):
+    diag = not re.search(r"\b(?:lines?|threads?)\b", sent) and re.search(r"\bdiagonals?\b", sent)
+    if not re.search(r"\b(?:lines?|threads?)\b", sent) and not diag:
         return []
     got = [k for k, pats in RULE_DESCRIPTIONS.items() if any(re.search(p, sent) for p in pats)]
+    if diag:  # marked diagonals drawn as lines (f-puzzles): only rules about a diagonal's digit count
+        got = [k for k in got if k == "three_distinct"]
     return [k for k in got if k != "region_sum" or re.search(r"\bbox(?:es)?\b|3x3|\bregions?\b", sent)]
 
 

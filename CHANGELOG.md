@@ -53,6 +53,10 @@
   custom rule `ray[ray[1]] == X` (they were internal digit tables the format cannot hold).
 - f-puzzles one-cell circles and squares (rectangles, dropped as decoration before) are read as shape clues
   (parity, digit sets: "1s, 2s, and 3s are marked with circles").
+- f-puzzles generic lines take every line rule the SudokuPad reader knows from a description (custom-rule lines,
+  same parity, one apart, palindrome variants), also when the lines are drawn in several shades; new line
+  descriptions: increasing or decreasing, every digit twice, centre sum, three distinct digits on a marked diagonal,
+  evenly spaced sequences, more same-parity and entropic wordings.
 - SudokuPad links of the form `sudokupad.app/<author>/<slug>` are fetched (they were refused as not a short id).
 - Speed and robustness: the C++ uniqueness search without OR-Tools stops at a time limit, not only a node limit
   (counting-circle puzzles ran for hours); the trial step retries with a larger search before giving up (two unique

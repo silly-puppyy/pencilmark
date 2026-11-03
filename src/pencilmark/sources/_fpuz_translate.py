@@ -325,6 +325,8 @@ def translate(fp, line_kinds=None):
             cells = [ix(x) for x in line]
             if kind == "between":
                 p.constraints.append({"type": "between", "cells": cells})
+            elif kind in ST.LINE_CUSTOM or kind in ("same_parity", "consecutive_line"):
+                ST.custom_line(p, kind, cells)
             elif kind:
                 p.constraints.append({"type": "line", "kind": kind, "cells": cells})
     for item in fp.get("betweenline") or []:
@@ -543,11 +545,20 @@ def _text_line_reading(fp, text):
     only = (named | ST.described_line_rules(text) | ({dk} if dk else set())) - {"ten"}
     if cmap:  # the text gives its lines colours: an unnamed colour is not the one rule
         only = set()
+    every = ST.every_line_rule(text)
     reading = {}
     for c in colours:
         rk = ST.line_rule_from_text(c, cmap) if c.startswith("#") else None
-        if rk is None and len(colours) == 1 and len(only) == 1:
-            rk = next(iter(only))
+        if rk is None and len(only) == 1 and (len(colours) == 1 or not cmap):
+            rk = next(iter(only))  # the one line rule the text describes (lines drawn in several shades)
+        if rk is None and every:
+            rk = every
+        for var_, (from_, pat_) in ST.LINE_VARIANTS.items():
+            if rk in from_ and re.search(pat_, text.lower()):
+                rk = var_
+        if rk in ST.LINE_CUSTOM or rk in ("same_parity", "consecutive_line"):
+            reading[c] = rk  # custom-rule lines, applied by ST.custom_line
+            continue
         if TEXT_LINE_KINDS.get(rk) is None:
             return None
         reading[c] = TEXT_LINE_KINDS[rk]

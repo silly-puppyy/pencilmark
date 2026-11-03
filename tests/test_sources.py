@@ -513,7 +513,7 @@ def test_one_off_line_rules():
     fp = {"size": 4, "grid": [[{} for _ in range(4)] for _ in range(4)], "ruleset": "Lines.",
           "_page_rules": "Each line contains exactly one distinct number.",
           "line": [{"lines": [["R1C1", "R2C2"]], "outlineC": "#CCCCCC"}]}  # fmt: skip
-    assert FT.text_line_reading(fp) is None  # no f-puzzles line kind for it: refused, not misread
+    assert FT.text_line_reading(fp) == {"#cccccc": "same_digit"}  # a custom-rule line
     fp["_page_rules"] = "Along each gray line, adjoining digits must have a difference of 4 or more."
     assert FT.text_line_reading(fp) == {"#cccccc": "dutch_whisper"}
 
@@ -778,6 +778,27 @@ def test_fpuzzles_circles_and_squares_as_shape_clues():
           "circle": [one("R1C1")], "rectangle": [one("R2C2")]}  # fmt: skip
     p, _ = FT.translate(fp)
     assert p.domains[0] == 0b0011 and p.domains[5] == 0b1100
+
+
+def test_fpuzzles_generic_lines_as_custom_rules():
+    """f-puzzles generic lines take the line rules the SudokuPad reader knows from their descriptions, also when drawn
+    in several shades: increasing-or-decreasing, same parity, centre sum, three distinct digits on a diagonal"""
+    from pencilmark.sources import _fpuz_translate as FT
+
+    line = lambda cells, col="#CCCCCC": {"lines": [cells], "outlineC": col, "width": 0.4}
+    base = {"size": 4, "grid": [[{} for _ in range(4)] for _ in range(4)]}
+    p, _ = FT.translate(dict(base, ruleset="Along each line, digits either strictly increase or strictly decrease.",
+                             line=[line(["R1C1", "R1C2", "R1C3"])]))  # fmt: skip
+    assert next(r for r, _ in p.named_rules)["label"] == "Increasing or decreasing line"
+    p, _ = FT.translate(dict(base, ruleset="Digits on the same line have the same parity.",
+                             line=[line(["R1C1", "R2C1"]), line(["R3C3", "R4C3"], "#999999")]))  # fmt: skip
+    assert [r["label"] for r, _ in p.named_rules] == ["Same-parity line", "Same-parity line"]
+    p, _ = FT.translate(dict(base, ruleset="On each line, the digit in the center position is the sum of the other two digits.",
+                             line=[line(["R1C1", "R1C2", "R1C3"])]))  # fmt: skip
+    assert next(r for r, _ in p.named_rules)["holds"] == "2 * t[2] == sum(t)"
+    p, _ = FT.translate(dict(base, ruleset="Each marked diagonal contains only three distinct digits.",
+                             line=[line(["R1C1", "R2C2", "R3C3", "R4C4"])]))  # fmt: skip
+    assert next(r for r, _ in p.named_rules)["holds"] == "count_distinct(t) == 3"
 
 
 def test_rule_for_every_line():
