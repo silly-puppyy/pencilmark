@@ -1317,7 +1317,16 @@ def outside_clues(P, n, p, rules, used, unknown, idx, inside):
             outside.setdefault(rc, []).append(lay["text"])
     if not outside:
         return
-    for ar in P.get("arrows") or []:
+    # diagonal arrows: SudokuPad arrows, or arrowheads drawn as a short line beside the clue (its first segment points)
+    heads = [
+        {"wayPoints": ln["wayPoints"][:2]}
+        for ln in P.get("lines") or []
+        if isinstance(ln, dict)
+        and len(ln.get("wayPoints") or []) >= 2
+        and not inside(cell_of(ln["wayPoints"][0]))
+        and max(abs(x - y) for pt in ln["wayPoints"] for x, y in zip(pt, ln["wayPoints"][0])) < 0.5
+    ]
+    for ar in (P.get("arrows") or []) + heads:
         wp = ar.get("wayPoints") or [] if isinstance(ar, dict) else []
         if len(wp) < 2:
             continue
@@ -1346,7 +1355,8 @@ def outside_clues(P, n, p, rules, used, unknown, idx, inside):
         for k, pat in (
             ("sandwich", r"sandwich|between (?:the )?1 and (?:the )?9"),
             ("xsum", r"\bx-?sums?\b|sum of the first (?:x|n|k)\b"),
-            ("skyscraper", r"skyscraper"),
+            ("skyscraper", r"skyscraper|buildings? (?:can be )?\W?seen|taller buildings block"),
+            ("frame", r"sum of the (?:values|digits|numbers) in the first (?:three|3|two|2|four|4) cells"),
             ("numbered_room", r"numbered rooms?|digit x (?:in|into) the x-?th cell|in the nth cell"),
             (
                 "first_seen",
@@ -1394,6 +1404,13 @@ def outside_clues(P, n, p, rules, used, unknown, idx, inside):
                     }
                 )
             used["numbered_room"] += 1
+            continue
+        if kind == "frame":  # sum frame: the first k cells seen from the clue
+            k = {"two": 2, "2": 2, "three": 3, "3": 3, "four": 4, "4": 4}[
+                re.search(r"first (three|3|two|2|four|4) cells", t).group(1)
+            ]
+            p.constraints.append({"type": "sum", "cells": cells[:k], "total": vals[0]})
+            used["sum_frame"] += 1
             continue
         if kind == "first_seen":
             p.constraints.append({"type": "first_seen", "cells": cells, "value": vals[0], "digits": [1, 2, 3]})

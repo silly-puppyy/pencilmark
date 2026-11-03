@@ -415,6 +415,22 @@ def test_yin_yang_couplings_read():
     assert info.get("yin_yang") and any(c.get("type") == "yin_yang" for c in p.constraints)
 
 
+def test_outside_clue_wordings_and_arrowheads():
+    """GMPuzzles' GAS texts: skyscrapers stated as buildings seen, sum frames as the first three cells; little killer
+    arrows drawn as a short line beside the clue"""
+    from pencilmark.sources import _sp_translate as SP
+
+    clue = lambda r, c, v: {"center": [r, c], "width": 0, "height": 0, "text": v}
+    sp = _sp4(overlays=[clue(-0.36, 0.5, 4)])
+    p, _ = SP.translate(sp, "Clues outside the grid indicate how many buildings can be seen; taller buildings block.")
+    assert [c["type"] for c in p.constraints] == ["skyscraper"]
+    p, _ = SP.translate(sp, "Clues outside give the sum of the values in the first two cells seen in that direction.")
+    assert [(c["type"], len(c["cells"])) for c in p.constraints] == [("sum", 2)]
+    head = {"color": "#0", "wayPoints": [[-0.28, 0.72], [-0.15, 0.85], [-0.12, 0.81]]}
+    p, _ = SP.translate(_sp4(overlays=[clue(-0.36, 0.5, 4)], lines=[head]), "Numbers along diagonals sum to the clue.")
+    assert [(c["type"], c["cells"]) for c in p.constraints] == [("little_killer", [1, 6, 11])]  # r1c2 r2c3 r3c4
+
+
 def test_rule_for_every_line():
     """ "all lines are region sum lines" gives every line that rule; a line whose colour also names another rule has two
     rules and is refused (CTC zkz5Qw2BWx4: orange lines are also Dutch whispers)"""
