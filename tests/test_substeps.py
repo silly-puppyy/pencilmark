@@ -175,6 +175,11 @@ CHAOS_DEMO = {
 
 
 def test_region_substeps_keep_their_colours():
+    jsonschema = pytest.importorskip("jsonschema")
+    only = pencilmark.rate(
+        CHAOS_DEMO, fields=["steps"], explain=["substeps"]
+    )  # steps without sub-steps: no explanation
+    jsonschema.Draft202012Validator(json.loads(SCHEMA.read_text(encoding="utf-8"))).validate(only)
     card = pencilmark.rate(CHAOS_DEMO, fields=["steps"], explain=["short", "substeps"])
     colour_of = {}
     joins = 0
@@ -188,3 +193,5 @@ def test_region_substeps_keep_their_colours():
         assert colour_of.setdefault(k, cols.pop()) == next(iter({a["colour"] for a in sub[0]["annotations"]}))
         joins += any(x["text"].startswith("So ") and "joins" in x["text"] for x in sub)
     assert colour_of and joins
+    first = next(s["explanation"]["substeps"][0] for s in card["steps"] if s.get("region", "").endswith("@1"))
+    assert "r1c1" in {a["cell"] for a in first["annotations"]}  # region 1 holds the first cell from the start

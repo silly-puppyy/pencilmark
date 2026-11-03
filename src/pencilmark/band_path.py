@@ -769,6 +769,10 @@ def _region_substeps(p, st, ex, lab, region_colour):
     from .explain.base import Namer
 
     nm = Namer(p)
+    if (
+        not lab
+    ):  # regions are numbered by their first cell in reading order: region 1 holds the first cell from the start
+        lab[min(range(p.N), key=lambda x: p.coords[x])] = 1
     text = ex.get("short") or ""
     if not text or text.startswith(":"):  # no digit result: the reason (teach's first sentence) reads on its own
         text = (ex.get("teach") or ex.get("notation") or "").split(". So ")[0]
@@ -793,13 +797,27 @@ def _region_substeps(p, st, ex, lab, region_colour):
         for c, k in st["lelims"]:
             if c != placed:  # the placed cell's other labels go with it
                 by.setdefault(k, []).append(c)
-        parts = []
+        parts, ann, legend = [], [], {}
+        nid = len(sub.get("annotations", []))
         for k, cs in sorted(by.items()):
             cs = sorted(cs, key=lambda x: p.coords[x])
+            known = sorted((x for x, kk in lab.items() if kk == k), key=lambda x: p.coords[x])
+            if k not in region_colour and known:  # first mention of a region with a known cell: its colour from now on
+                region_colour[k] = REGION_COLOURS[len(region_colour) % len(REGION_COLOURS)]
+                legend[region_colour[k]] = f"region {k}"
             where = f"the {region_colour[k]} region" if k in region_colour else f"region {k}"
             parts.append(f"{nm.cells(cs)} {'is' if len(cs) == 1 else 'are'} not in {where}")
+            if placed is None:  # the region as known so far, and the cells ruled out of it
+                if k in region_colour:
+                    ann += [{"cell": nm.cell(x), "colour": region_colour[k]} for x in known]
+                ann += [{"cell": nm.cell(x), "colour": "red"} for x in cs]
         if parts:
-            out.append({"text": "So " + "; ".join(parts) + "."})
+            last = {"text": "So " + "; ".join(parts) + "."}
+            if legend:
+                last["legend"] = legend
+            if ann:
+                last["annotations"] = [dict(a, id=nid + i + 1) for i, a in enumerate(ann)]
+            out.append(last)
     return out
 
 

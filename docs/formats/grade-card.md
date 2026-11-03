@@ -124,7 +124,8 @@ the simplest technique first, as the band is found. Band, difficulty and time ar
 Each step: `n` (from 1), `code`, `name`, `band` (the same keys as in `contains`), then `placement` (`"r2c8=3"`) and / or `eliminations`
 (`["r4c5#7", …]`: candidate 7 removed from r4c5); for regions to find, `region` (`"r4c5@3"`: r4c5 is in region 3) and /
 or `region_eliminations` (`["r4c5@!3", …]`: r4c5 is not in region 3), regions numbered so that each region's first
-cell in reading order comes before the next region's; and, when requested, `explanation` with the requested levels:
+cell in reading order comes before the next region's; and, when requested, `explanation` with the requested levels
+(left out on a step that has none of them, such as a step told in one go when only `substeps` was asked for):
 
 | Level | Example |
 |---|---|

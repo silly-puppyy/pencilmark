@@ -16,7 +16,8 @@ RULE_FACTS = {
     "region_sum": "A region-sum line has the same total in every box it passes through.",
     "parity": "Neighbours on a parity line alternate between odd and even.",
     "between": "Digits on a between line lie strictly between the two circle digits at its ends.",
-    "zipper": "Cells the same distance from the middle of a zipper line add up to the same total.",
+    "zipper": "Cells the same distance from the middle of a zipper line add up to the same total; on a line with a "
+    "centre cell that total is the centre digit, so the centre is the line's largest digit.",
     "cage": "Digits in a cage don't repeat and add up to its total.",
     "arrow": "The digits on an arrow add up to the digit in its circle.",
 }
