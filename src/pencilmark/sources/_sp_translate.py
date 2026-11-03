@@ -2255,16 +2255,22 @@ def parity_shapes(P, n, p, rules, used, idx, inside):
                     idx(rc),
                 )
             )
-    if not shapes or len(shapes) > n * n // 2:
+    if not shapes or len(shapes) > n * n * 3 // 4:  # more is decorative shading
         return
     odd = sum(1 << (v - 1) for v in range(1, n + 1, 2))
     # clauses: sentences, then ", (and)" outside braces ("orange circles contain {1, 2, 3}, blue squares {4, 5, 6}")
-    clauses = [c_ for sent in re.split(r"(?<=[.\n;])\s*", t) for c_ in re.split(r",\s*(?:and\s+)?(?![^{]*\})", sent)]
+    clauses = [
+        c_
+        for sent in re.split(r"(?<=[.\n;])\s*", t)
+        for c_ in re.split(r",(?!\s*(?:and\s+|or\s+)?\d)\s*(?:and\s+)?(?![^{]*\})", sent)
+    ]
     for sent in clauses:
         if re.search(r"count|number of|how many|sum|total|lots", sent):
             continue
         shp = [s_ for s_ in ("circle", "square", "diamond") if re.search(rf"\b{s_}s?\b", sent)]
-        dset = re.search(r"\{\s*(\d(?:\s*,\s*\d)+)\s*\}", sent)
+        dset = re.search(r"\{\s*(\d(?:\s*,\s*\d)+)\s*\}", sent) or re.search(
+            r"\b(\d'?s(?:,? (?:and |or )?\d'?s)+) (?:are|is) (?:marked|shown|placed|drawn) (?:with|in|by)", sent
+        )  # "1s, 2s, and 3s are marked with circles"
         if shp and dset and len(shp) == 1:  # "blue squares contain numbers from {4, 5, 6}"
             ds = [int(x) for x in re.findall(r"\d", dset.group(1))]
             col_ = {{"gray": "grey"}.get(c, c) for c in COLOR_WORDS if re.search(rf"\b{c}\b", sent)}

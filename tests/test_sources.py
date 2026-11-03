@@ -767,6 +767,19 @@ def test_fpuzzles_outside_text_and_numbered_rooms():
     assert next(r for r, _ in p.named_rules)["holds"] == "ray[ray[1]] == 3"
 
 
+def test_fpuzzles_circles_and_squares_as_shape_clues():
+    """f-puzzles one-cell circles and squares (rectangles) are read by the shape-clue reader: "1s, 2s, and 3s are marked
+    with circles" is a digit set for the circled cells; squares are no longer dropped as decoration"""
+    from pencilmark.sources import _fpuz_translate as FT
+
+    one = lambda c: {"cells": [c], "baseC": "#FFFFFF", "outlineC": "#000000", "width": 0.85, "height": 0.85}
+    fp = {"size": 4, "grid": [[{} for _ in range(4)] for _ in range(4)],
+          "ruleset": "1s and 2s are marked with circles. 3s and 4s are marked with squares.",
+          "circle": [one("R1C1")], "rectangle": [one("R2C2")]}  # fmt: skip
+    p, _ = FT.translate(fp)
+    assert p.domains[0] == 0b0011 and p.domains[5] == 0b1100
+
+
 def test_rule_for_every_line():
     """ "all lines are region sum lines" gives every line that rule; a line whose colour also names another rule has two
     rules and is refused (CTC zkz5Qw2BWx4: orange lines are also Dutch whispers)"""

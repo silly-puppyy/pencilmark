@@ -51,6 +51,8 @@
   text, else the page's), and refused when nothing reads them (they were dropped as decoration: 54 GAS Leak puzzles
   and 5 sampled Logic Masters puzzles read as plain sudoku with two solutions). Numbered rooms are written as the
   custom rule `ray[ray[1]] == X` (they were internal digit tables the format cannot hold).
+- f-puzzles one-cell circles and squares (rectangles, dropped as decoration before) are read as shape clues
+  (parity, digit sets: "1s, 2s, and 3s are marked with circles").
 - SudokuPad links of the form `sudokupad.app/<author>/<slug>` are fetched (they were refused as not a short id).
 - Speed and robustness: the C++ uniqueness search without OR-Tools stops at a time limit, not only a node limit
   (counting-circle puzzles ran for hours); the trial step retries with a larger search before giving up (two unique

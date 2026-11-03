@@ -155,8 +155,9 @@ def translate(fp, line_kinds=None):
     if refused:
         return None, "unsupported: " + ", ".join(refused)
     circles_counting = bool(fp.get("circle")) and bool(re.search(COUNTING_CIRCLES, text0))
+    shape_clues = not circles_counting and _shape_cells(fp, n) is not None  # single-cell circles / squares: shapes
     for k in ("cage", "circle"):
-        if fp.get(k) and not (k == "circle" and circles_counting):
+        if fp.get(k) and not (k == "circle" and (circles_counting or shape_clues)):
             return None, f"unsupported: generic {k} (meaning in rules text)"
     if fp.get("line") and line_kinds is None:
         line_kinds = text_line_reading(fp)
@@ -407,6 +408,17 @@ def translate(fp, line_kinds=None):
             else:  # row clue (left or right)
                 cells = [r * n + cc for cc in (range(n) if c < 0 else range(n - 1, -1, -1))]
             p.constraints.append({"type": typ, "cells": cells, field: int(sw["value"])})
+    if shape_clues and (fp.get("circle") or re.search(r"\bsquares?\b", text0)):
+        # one-cell circles and squares: the SudokuPad reader's shape clues (parity, digit sets by shape / colour)
+        from collections import Counter
+
+        shapes = _shape_cells(fp, n)
+        u = Counter()
+        ST.parity_shapes({"underlays": shapes}, n, p, fp.get("ruleset") or "", u, lambda rc_: rc_[0] * n + rc_[1],
+                         lambda rc_: 0 <= rc_[0] < n and 0 <= rc_[1] < n)  # fmt: skip
+        if sum(u.values()) < len(shapes):
+            return None, "unsupported: generic circle (meaning in rules text)"
+        used.update({k: v for k, v in u.items() if v})
     if outside_texts:  # read like SudokuPad outside clues, from the payload's wording, else the page's
         from collections import Counter
 
@@ -491,6 +503,24 @@ LINE_WORDS = [
 TEXT_LINE_KINDS = {"whisper": "whisper", "dutch": "dutch_whisper", "renban": "renban", "region_sum": "region_sum",
                    "palindrome": "palindrome", "entropic": "entropic", "parity": "parity", "modular": "modular",
                    "zipper": "zipper", "between": "between"}  # fmt: skip
+
+
+def _shape_cells(fp, n):
+    """one-cell circles and squares (f-puzzles 'circle' / 'rectangle' without a value) as SudokuPad underlays, or None
+    when any circle covers several cells or carries a value"""
+    out = []
+    for key, rounded in (("circle", True), ("rectangle", False)):
+        for it in fp.get(key) or []:
+            cs = it.get("cells") or []
+            if len(cs) != 1 or str(it.get("value", "")).strip():
+                if key == "circle":
+                    return None
+                continue
+            r, c = rc(cs[0], n)
+            w = float(it.get("width") or 0.8)
+            out.append({"center": [r + 0.5, c + 0.5], "width": w, "height": float(it.get("height") or w),
+                        "rounded": rounded, "backgroundColor": it.get("baseC") or it.get("outlineC")})  # fmt: skip
+    return out
 
 
 def text_line_reading(fp):
