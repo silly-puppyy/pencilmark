@@ -62,7 +62,8 @@
   equal-parity lines; thermos of a single parity; cells greater / less than a digit by colour or shape; f-puzzles
   coloured cells read by the shape-clue reader when the text gives them a meaning; "digits in the cage are odd"; cells
   of one colour "are the same number"; refused instead of misread: maze paths (RAT RUN), digit subsets chosen by
-  the solver, every clue type exclusive across the puzzle, cage sums to find (graded 165 -> 167).
+  the solver, every clue type exclusive across the puzzle, cage sums to find; line colours the text calls
+  decorative ("have no effect") are ignored (graded 165 -> 169).
 - SudokuPad links of the form `sudokupad.app/<author>/<slug>` are fetched (they were refused as not a short id).
 - Speed and robustness: the C++ uniqueness search without OR-Tools stops at a time limit, not only a node limit
   (counting-circle puzzles ran for hours); the trial step retries with a larger search before giving up (two unique

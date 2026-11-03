@@ -821,6 +821,9 @@ def test_lmd_wording_fixes():
            "ruleset": "The cells shaded orange are the same number as one another."}  # fmt: skip
     p, _ = FT.translate(fp2)
     assert next(r for r, _ in p.named_rules)["holds"] == "count_distinct(S) == 1"
+    cmap = SP.rules_color_map("Green lines are German whispers. Blue lines have no effect on the puzzle.")
+    assert cmap == {"green": "whisper", "blue": "ignore"}
+    assert SP.described_line_rules("Digits on lines are consecutive and non-repeating but in any order.") == {"renban"}
 
 
 def test_rule_for_every_line():

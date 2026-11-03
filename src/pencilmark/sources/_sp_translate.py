@@ -403,7 +403,7 @@ def diff_rule(sent):
 # a line rule described without its name ("a purple line contains a set of consecutive digits"); counted only in a
 # sentence about a line or thread, so a cage or dot described the same way does not colour a line
 RULE_DESCRIPTIONS = {
-    "renban": [r"set of (?:non-repeating,? )?consecutive", r"consecutive set",
+    "renban": [r"set of (?:non-repeating,? )?consecutive", r"consecutive set", r"consecutive and non-repeating",
                r"\b(?:are|be|contains?|form) (?:an? )?(?:non-repeating,? )?consecutive (?:digits|numbers|values|sequence)"],
     "region_sum": [r"segments? (?:that |which )?(?:each )?(?:sum|add)s? (?:up )?to the same", r"(?:same|equal) (?:sums?|totals?)",
                    r"sum (?:of the digits )?(?:on|along) (?:a|the|each) [a-z ]{0,20}line is (?:equal|the same)",
@@ -705,6 +705,13 @@ def rules_color_map(rules):
         if not rules_here:
             rules_here = _described(sent)
         cols = [c for c in COLOR_WORDS if re.search(rf"\b{c}", sent)]
+        if cols and re.search(
+            r"lines?\b[^.]{0,30}\b(?:have|has) no (?:effect|meaning)|lines?\b[^.]{0,20}\b(?:are|is) (?:purely )?decorative",
+            sent,
+        ):
+            for c in cols:  # "Blue lines have no effect on the puzzle"
+                out.setdefault({"gray": "grey"}.get(c, c), "ignore")
+            continue
         dk = diff_rule(sent) if (not rules_here or set(rules_here) & {"whisper", "dutch"}) else None
         if (rules_here or dk) and cols:
             rk = dk or ("dutch" if "dutch" in rules_here else rules_here[0])

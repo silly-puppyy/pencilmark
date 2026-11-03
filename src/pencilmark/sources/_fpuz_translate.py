@@ -323,6 +323,8 @@ def translate(fp, line_kinds=None):
         kind = (line_kinds or {}).get(_colour(item))
         for line in item.get("lines", []):
             cells = [ix(x) for x in line]
+            if kind == "ignore":
+                continue
             if kind == "between":
                 p.constraints.append({"type": "between", "cells": cells})
             elif kind in ST.LINE_CUSTOM or kind in ("same_parity", "consecutive_line"):
@@ -575,6 +577,9 @@ def _text_line_reading(fp, text):
         for var_, (from_, pat_) in ST.LINE_VARIANTS.items():
             if rk in from_ and re.search(pat_, text.lower()):
                 rk = var_
+        if rk == "ignore":  # the text says these lines have no effect
+            reading[c] = "ignore"
+            continue
         if rk in ST.LINE_CUSTOM or rk in ("same_parity", "consecutive_line"):
             reading[c] = rk  # custom-rule lines, applied by ST.custom_line
             continue
