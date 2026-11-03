@@ -466,10 +466,12 @@ def add_named(p, rule):
     width = max(c for _, c in coords) + 1
     height = max(rr for rr, _ in coords) + 1
     shape = ["".join("#" if (y, x) in set(coords) else "." for x in range(width)) for y in range(height)]
-    q = from_json({"digits": p.D, "shape": shape, "regions": [], "rules": [r]})
+    # a custom rule reading the shading / regions compiles only beside them: the layer rides along, then is dropped
+    layers = [{"type": t} for t in ("yin_yang",) if any(c.get("type") == t for c in getattr(p, "constraints", ()))]
+    q = from_json({"digits": p.D, "shape": shape, "regions": [], "rules": layers + [r]})
     a, b = len(p.relations), len(p.constraints)
     p.relations += q.relations
-    p.constraints += q.constraints
+    p.constraints += [c for c in q.constraints if c.get("type") != "yin_yang"]
     if getattr(q, "domains", None) and p.domains:
         p.domains = [x & y for x, y in zip(p.domains, q.domains)]
     _remember(p, r, p.relations[a:], p.constraints[b:])

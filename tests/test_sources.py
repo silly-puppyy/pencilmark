@@ -394,6 +394,22 @@ def test_branching_arrow():
     assert got == [[4, 5, 6], [4, 8]]  # the branch keeps the stem's r2c1
 
 
+def test_yin_yang_couplings_read():
+    """yin-yang texts: the frame and the couplings setters repeat become the yin_yang rule and shaded() rules; any other
+    sentence about the shading leaves the puzzle refused, and other shading genres are not read as yin-yang"""
+    from pencilmark.sources import _sp_translate as SP
+
+    frame = "Yin Yang: shade some cells so that shaded and unshaded cells are each connected; no 2x2 is one colour. "
+    got = SP.yin_yang_reading(frame + "Even digits in a cage are always shaded, odd digits are always unshaded.")
+    assert got == [("cage", "even", True), ("cage", "odd", False)]
+    assert SP.yin_yang_reading(frame + "Odd digits on a thermometer are shaded.") == [("thermo", "odd", True)]
+    assert SP.yin_yang_reading(frame) == []
+    assert SP.yin_yang_reading(frame + "A digit in a square counts the cells of the same colour it sees.") is None
+    assert SP.yin_yang_reading("Nurikabe: shade some cells; each island is connected; no 2x2 is shaded.") is None
+    p, info = SP.translate(_sp4(), frame + "Shaded cells contain odd digits.")
+    assert info.get("yin_yang") and any(c.get("type") == "yin_yang" for c in p.constraints)
+
+
 def test_rule_for_every_line():
     """ "all lines are region sum lines" gives every line that rule; a line whose colour also names another rule has two
     rules and is refused (CTC zkz5Qw2BWx4: orange lines are also Dutch whispers)"""

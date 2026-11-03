@@ -408,6 +408,80 @@ def every_line_rule(rules):
     return None
 
 
+# yin-yang: the frame (each colour connected, no 2x2 of one colour) and the couplings between shading and digits that
+# recur in setters' texts; any other sentence about shading leaves the puzzle refused
+YY_WORD = re.compile(r"\byin(?:[- ]?yang)?\b")
+YY_BOTH = re.compile(  # both colours connected (nurikabe / heyawake / caves connect one colour only)
+    r"shaded (?:cells )?and (?:the |all )?unshaded cells|unshaded cells and (?:the |all )?shaded cells|"
+    r"(?:each|both|every) colou?r|cells of (?:the same|each) colou?r|as do (?:all )?(?:the )?unshaded"
+)
+_YY_PAIR = re.compile(
+    r"(odd|even)(?: number)?(?: digits?| numbers?| values?)?[^.,;]*? (?:are|is) (?:always )?(shaded|unshaded)"
+)
+
+
+def yin_yang_reading(rules):
+    """the shading couplings a yin-yang rules text states -> [("cage" | "thermo" | "all", "odd" | "even", shaded?),
+    ("whisper", k)] (empty: the plain frame), or None (no yin-yang, or a shading sentence not understood)"""
+    text = (rules or "").lower()
+    if not (YY_WORD.search(text) or (YY_BOTH.search(text) and re.search(r"2 ?x ?2|2 by 2|two by two", text))):
+        return None
+    if re.search(r"nurikabe|heyawake|\bcaves?\b|star battle|\bloop\b|\bislands?\b|\bpaths?\b|\byong\b", text):
+        return None  # another shading genre beside it
+    out = []
+    for sent in re.split(r"(?<=[.\n;])\s*|\s*[•\u2022]\s*", text):
+        if not re.search(
+            r"\b(?:un)?shad(?:ed|e|ing)\b|\byin\b|\byang\b|\b(?:same|opposite|other|one|two|each|both|every|its|that)"
+            r" colou?rs?\b|\bcolou?r (?:every|each|all|some|the (?:grid|cells))|\b(?:dark|light) cells?\b",
+            sent,
+        ):
+            continue  # not about the shading (clue colours such as "a green line" are not)
+        if re.search(r"connected|2 ?x ?2|2 by 2|two by two", sent) and not _YY_PAIR.search(sent):
+            continue  # the frame
+        if re.fullmatch(r"\W*yin[- ]?yang\W*(?:rules?\W*)?(?:apply\W*)?", sent.strip()):
+            continue
+        scope = "cage" if re.search(r"\bcages?\b", sent) else "thermo" if re.search(r"\bthermo", sent) else "all"
+        pairs = _YY_PAIR.findall(sent)
+        m = re.search(r"shaded cells? (?:contain|are|must be|must contain|hold)s? (?:an? |only )?(odd|even)", sent)
+        if pairs:
+            out += [(scope, par, col == "shaded") for par, col in pairs]
+        elif m and scope == "all":
+            out.append(("all-shaded", m.group(1), True))
+        elif re.search(r"shaded cells? (?:act|acts|behave) as (?:a |an )?german whispers?", sent):
+            out.append(("whisper", 5))
+        else:
+            return None
+    return out
+
+
+def add_yin_yang(p, specs, thermo_cells):
+    """the shading frame and its couplings as rules of the puzzle (custom rules reading shaded())"""
+    from .. import puzzle_json as PJ
+
+    p.constraints.append({"type": "yin_yang", "shaded": [], "unshaded": []})
+    name = lambda i: f"r{p.coords[i][0] + 1}c{p.coords[i][1] + 1}"
+    cage_cells = sorted({c for g in p.groups if g.kind == "cage" for c in g.cells})
+    for spec in specs:
+        if spec[0] == "whisper":
+            at = {p.coords[c]: c for c in range(p.N)}
+            for c in range(p.N):
+                r0, c0 = p.coords[c]
+                for q in (at.get((r0, c0 + 1)), at.get((r0 + 1, c0))):
+                    if q is not None:
+                        PJ.add_named(p, {"type": "custom", "cells": {"a": [name(c)], "b": [name(q)]},
+                                         "holds": f"not (shaded(a) and shaded(b)) or abs(a - b) >= {spec[1]}"})  # fmt: skip
+            continue
+        scope, par, shaded = spec
+        cells = cage_cells if scope == "cage" else thermo_cells if scope == "thermo" else range(p.N)
+        holds = (
+            f"not shaded(a) or {par}(a)"
+            if scope == "all-shaded"
+            else f"not {par}(a) or {'' if shaded else 'not '}shaded(a)"
+        )
+        for c in cells:
+            PJ.add_named(p, {"type": "custom", "cells": {"a": [name(c)]}, "holds": holds})
+
+
 def described_line_rules(rules):
     """line rules the text describes without naming them, from sentences about a line or thread that name no colour
     (a puzzle with one line colour); empty when any line sentence names a colour"""
@@ -785,6 +859,7 @@ def translate(sp, page_text=None, overrides=None):
     p.constraints = []
     used = defaultdict(int)
     unknown = []
+    thermo_cells = []  # cells on thermometers (shading couplings name them)
     # killer cages (skip metadata cages)
     for cg in P.get("cages") or []:
         if not isinstance(cg, dict) or not cg.get("cells"):
@@ -1026,6 +1101,7 @@ def translate(sp, page_text=None, overrides=None):
         if rule in ("renban", "region_sum") and len(set(ids)) != len(ids):
             ids = list(dict.fromkeys(ids))  # closed loop: the start cell is drawn twice, counted once
         if rule in ("thermo", "slow_thermo"):
+            thermo_cells += [c_ for c_ in ids if c_ not in thermo_cells]
             if lc[-1] in circles and lc[0] not in circles:
                 ids = ids[::-1]
             p.relations += [("lt" if rule == "thermo" else "le", a, b) for a, b in zip(ids, ids[1:])]
@@ -1185,6 +1261,11 @@ def translate(sp, page_text=None, overrides=None):
     quadruples(P, n, p, used, unknown, idx, inside)
     used.pop("_quad_text")
     unknown += unmodelled_rules(text_rules, chaos_ok=chaos)
+    yy = yin_yang_reading(text_rules)
+    if yy is not None:  # shading read: the frame and every coupling sentence understood
+        unknown = [u for u in unknown if u not in ("rule 'yin'", "rule 'shading'")]
+        add_yin_yang(p, yy, thermo_cells)
+        used["yin_yang"] += 1
     if chaos:
         p.constraints += chaos_rules(P, p, n, rules)
         used["chaos"] += 1
