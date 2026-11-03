@@ -715,6 +715,22 @@ def test_given_pencilmarks():
     assert p.domains[0] == 0b0011 and not [g for g in p.groups if g.kind == "cage"]
 
 
+def test_sudokupad_author_slug_links():
+    """SudokuPad links of the form sudokupad.app/<author>/<slug> are fetched through the API with the slash kept"""
+    from pencilmark.sources import sudokupad
+
+    asked = []
+
+    class FakeHttp:
+        def get_text(self, url):
+            asked.append(url)
+            raise sudokupad.FetchError("offline")
+
+    with pytest.raises(sudokupad.FetchError):
+        sudokupad.fetch("https://sudokupad.app/clover/dec-4-2023-equal-sudoku", http=FakeHttp())
+    assert asked == [sudokupad.API + "clover/dec-4-2023-equal-sudoku"]
+
+
 def test_rule_for_every_line():
     """ "all lines are region sum lines" gives every line that rule; a line whose colour also names another rule has two
     rules and is refused (CTC zkz5Qw2BWx4: orange lines are also Dutch whispers)"""

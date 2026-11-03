@@ -45,6 +45,7 @@
   them misread before).
 - Styles: a SudokuPad puzzle's look (line colours and widths, cage colours, dot and shape fills) is exported as each
   rule's cosmetic `style`, for named and custom rules alike; `to_export(..., style=False)` leaves it out.
+- SudokuPad links of the form `sudokupad.app/<author>/<slug>` are fetched (they were refused as not a short id).
 - Speed and robustness: the C++ uniqueness search without OR-Tools stops at a time limit, not only a node limit
   (counting-circle puzzles ran for hours); the trial step retries with a larger search before giving up (two unique
   killers ended Unknown) and keeps its result per position (one killer: 558 -> 316 s); a custom rule with a `neighbours`
