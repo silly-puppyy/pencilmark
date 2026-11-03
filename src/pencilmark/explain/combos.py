@@ -22,7 +22,7 @@ from .base import (
     fmt_elims,
     rel_label,
 )
-from .facts import RULE_FACTS
+from .facts import RULE_FACTS, rule_fact
 from .grid import Rule, _rule_dom, enum_rule
 from .singles import _con_json, _rule_from_move
 
@@ -301,7 +301,7 @@ def _h_combo(ctx):
                 "annotations": [{"id": i + 1, "cell": nm.cell(c), "colour": "cyan"} for i, c in enumerate(rule.cells)],
             }
             if kind in RULE_FACTS:
-                first["why"] = RULE_FACTS[kind]
+                first["why"] = rule_fact(kind, p.D, rule)
             r["substeps"] = [first, {"text": why.strip()}, _red_step(nm, ctx.elims, len(rule.cells) + 1)]
         return r
     if kind in ("cage", "sum", "little_killer") and len(emp) == 1:

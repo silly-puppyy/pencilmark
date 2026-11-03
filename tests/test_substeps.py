@@ -135,7 +135,7 @@ def test_line_rule_substeps_and_facts():
         for s in card["steps"]
         if s["code"] == "LNR" and "substeps" in s.get("explanation", {})
     )
-    assert sub[0]["text"].startswith("Read ") and sub[0]["why"] in RULE_FACTS.values()
+    assert sub[0]["text"].startswith("Read ") and any(sub[0]["why"].startswith(f) for f in RULE_FACTS.values())
     assert {a["colour"] for a in sub[-1]["annotations"]} == {"red"}
 
 
@@ -195,3 +195,19 @@ def test_region_substeps_keep_their_colours():
     assert colour_of and joins
     first = next(s["explanation"]["substeps"][0] for s in card["steps"] if s.get("region", "").endswith("@1"))
     assert "r1c1" in {a["cell"] for a in first["annotations"]}  # region 1 holds the first cell from the start
+
+
+def test_rule_facts_follow_the_digit_range():
+    """rule facts are worked out for the puzzle's digits, not written for 9x9: on 16x16 a whisper of difference 5 has
+    no impossible digit and no low / high alternation; a 6x6 whisper of 3 alternates 1-3 / 4-6"""
+    from pencilmark.explain.facts import derived
+
+    assert derived("whisper", 9) == (
+        "With digits 1-9, 5 can never be on the line and neighbours alternate between low (1-4) and high (6-9) digits."
+    )
+    assert derived("whisper", 16) == ""
+    assert (
+        derived("whisper", 6, k=3) == "With digits 1-6, neighbours alternate between low (1-3) and high (4-6) digits."
+    )
+    assert derived("arrow", 9, 2).startswith("With digits 1-9, 9 cannot sit on its 2-cell shaft")
+    assert derived("renban", 6, 4) == "A 4-cell renban with digits 1-6 always holds 3 and 4."
