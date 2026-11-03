@@ -749,6 +749,24 @@ def test_shape_clues_are_written_as_cell_rules():
     assert "candidates" not in doc and any(r.get("kind") == "odd" for r in doc["rules"])
 
 
+def test_fpuzzles_outside_text_and_numbered_rooms():
+    """numbers written as f-puzzles text outside the grid are read like SudokuPad outside clues (the payload's wording,
+    else the page's) and refused when nothing reads them; a numbered room is the custom rule ray[ray[1]] == X"""
+    from pencilmark.sources import _fpuz_translate as FT
+    from pencilmark.sources import _sp_translate as SP
+
+    grid = [[{} for _ in range(4)] for _ in range(4)]
+    fp = {"size": 4, "grid": grid, "ruleset": "Clues give the median of the first three cells.",
+          "text": [{"cells": ["R0C2"], "value": "2"}]}  # fmt: skip
+    p, _ = FT.translate(fp)
+    assert [r["holds"] for r, _ in p.named_rules] == ["median(take(3, ray)) == 2"]
+    p, why = FT.translate(dict(fp, ruleset="Normal sudoku rules apply."))
+    assert p is None and "outside clue text" in why
+    clue = {"center": [0.5, -0.5], "text": 3, "width": 0, "height": 0}
+    p, _ = SP.translate(_sp4(overlays=[clue]), "Numbered rooms: a clue X says the digit X is in the N-th cell.")
+    assert next(r for r, _ in p.named_rules)["holds"] == "ray[ray[1]] == 3"
+
+
 def test_rule_for_every_line():
     """ "all lines are region sum lines" gives every line that rule; a line whose colour also names another rule has two
     rules and is refused (CTC zkz5Qw2BWx4: orange lines are also Dutch whispers)"""

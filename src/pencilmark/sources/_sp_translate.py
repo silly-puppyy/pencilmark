@@ -1815,18 +1815,11 @@ def outside_clues(P, n, p, rules, used, unknown, idx, inside):
             if not 1 <= X <= n:
                 unknown.append("numbered room clue")
                 continue
-            if X != 1:
-                p.domains[cells[0]] &= ~(1 << 0)  # first = 1 would put X in the first cell itself
-            for k in range(2, n + 1):
-                p.constraints.append(
-                    {
-                        "type": "table",
-                        "cells": [cells[0], cells[k - 1]],
-                        "allowed": [
-                            (a, b) for a in range(1, n + 1) for b in range(1, n + 1) if a != b and (a != k or b == X)
-                        ],
-                    }
-                )
+            from .. import puzzle_json as PJ
+
+            ray = [f"r{p.coords[i][0] + 1}c{p.coords[i][1] + 1}" for i in cells]
+            PJ.add_named(p, {"type": "custom", "cells": {"ray": ray}, "holds": f"ray[ray[1]] == {X}",
+                             "label": "Numbered room"})  # fmt: skip
             used["numbered_room"] += 1
             continue
         if kind == "frame":  # sum frame: the first k cells seen from the clue

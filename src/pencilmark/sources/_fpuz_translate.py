@@ -86,6 +86,8 @@ def normalise(fp):
     xv_text = re.search(r"\bxv\b|sum (?:to|of) (?:5|five)|\bv\b[^.]{0,40}\b5\b|\bx\b[^.]{0,40}\b10\b", text)
     n = int(fp.get("size") or 9)
     families = [k for k, pat in OUTSIDE_TEXT if re.search(pat, text)]
+    if not families and fp.get("_page_rules"):  # the page's wording names it when the payload's own text does not
+        families = [k for k, pat in OUTSIDE_TEXT if re.search(pat, fp["_page_rules"].lower())]
     outside = families[0] if len(families) == 1 else None  # numbers outside the grid mean the one clue family named
     for t in fp.get("text") or []:
         if t.get("fromConstraint"):  # the drawing of a constraint listed under its own key (an X-sum's number)
@@ -130,6 +132,13 @@ def translate(fp, line_kinds=None):
     text0 = (fp.get("ruleset") or "").lower()
 
     refused = ST.unmodelled_rules(text0)
+    outside_texts = []  # numbers left outside the grid: clues for the SudokuPad reader's outside-clue reading
+    for t in fp.get("text") or []:
+        cs = t.get("cells") or []
+        if len(cs) == 1 and re.search(r"\d", str(t.get("value", ""))) and not t.get("fromConstraint"):
+            r, c = rc(cs[0], 99)
+            if r in (-1, n) or c in (-1, n):
+                outside_texts.append({"center": [r + 0.5, c + 0.5], "text": str(t["value"]).strip()})
     clones = None
     if ST.CLONE_TEXT.search(text0) and not fp.get("clone"):  # clones drawn as coloured cells
         colour_of = {
@@ -398,6 +407,26 @@ def translate(fp, line_kinds=None):
             else:  # row clue (left or right)
                 cells = [r * n + cc for cc in (range(n) if c < 0 else range(n - 1, -1, -1))]
             p.constraints.append({"type": typ, "cells": cells, field: int(sw["value"])})
+    if outside_texts:  # read like SudokuPad outside clues, from the payload's wording, else the page's
+        from collections import Counter
+
+        inside = lambda rc_: 0 <= rc_[0] < n and 0 <= rc_[1] < n
+        for words in (fp.get("ruleset"), fp.get("_page_rules")):
+            if not words:
+                continue
+            q = M.Puzzle(D=n, coords=M._grid_coords(n))
+            u, unknown = Counter(), []
+            ST.outside_clues(
+                {"overlays": outside_texts}, n, q, words, u, unknown, lambda rc_: rc_[0] * n + rc_[1], inside
+            )
+            if not unknown and any(u.values()):
+                p.constraints += q.constraints
+                p.relations += q.relations
+                p.named_rules = getattr(p, "named_rules", []) + getattr(q, "named_rules", [])
+                used.update({k: v for k, v in u.items() if v})
+                break
+        else:
+            return None, "unsupported: outside clue text"
     for q in fp.get("quadruple") or []:
         cells = [ix(x) for x in q["cells"]]
         if not all(str(v).strip().isdigit() for v in q.get("values", [])):
