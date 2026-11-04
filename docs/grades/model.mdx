@@ -56,6 +56,12 @@ The band route is the order of steps a person would take, choosing the easiest m
    before a naked single, a pointing pair before a naked pair), the cheaper one on a tie.
 4. The move is applied and the route goes on until the grid is full.
 
+Stretches of singles are taken in a person's order. Which singles are available does not depend on the order (every
+order reaches the same next position where a harder move is needed), so the engine picks among them the way people do:
+by a spotting score fitted on casual classic replays, from the move's price, its technique and attention to the
+previous placement (same digit, same box, row or column, distance), sampled reproducibly (params `spot_w`, `spot_fam`,
+`spot_seed`). On held-out replays this puts the route's step-to-step behaviour about four times closer to people's.
+
 Where no technique applies, the engine proves an elimination by full search (Trial and error, Extreme); with
 `allow_guessing` it guesses instead and the band is Unknown.
 
@@ -73,9 +79,16 @@ technique's place. They share a chip (`XWG/KTE/SCL`).
 
 ## 5. The written route
 
-Difficulty and time are priced on a second route (`card_score.steps`): the engine's own solve, cheapest move first,
-without the moves people do in their head (pairs, short chains and case splits seen without notes). It models a
-solver who writes candidates. Variant techniques are switched on only for puzzles with the matching rules.
+Difficulty and time are priced on the engine's own solve (`card_score.steps`), without the moves people do in their
+head (pairs, short chains and case splits seen without notes). It models a solver who writes candidates, and it prices
+full candidate notes (score `card_notes`). Variant techniques are switched on only for puzzles with the matching rules.
+
+- **Difficulty** reads the effort a human-like solver can expect (score `route_rollouts`): two routes chosen by the
+  spotting score of section 2 keep their bottleneck steps (every step that is not a single), and each stretch of
+  singles between two bottlenecks is replayed four times in random human order from the position the route reached.
+  The mean step sum stands in for $\sum_i v_i$ in section 9. Which bottlenecks a human-order solve runs into is what
+  ranks puzzles better than the cheapest path; the replays cost a fraction of extra full routes.
+- **Time** reads the single cheapest-first route (score `card_route`).
 
 ## 6. Step features
 
