@@ -91,6 +91,8 @@ are optional for readers: cosmetic layers may be ignored, and only a writer that
 | `solution` | no | Same shape as `givens`, every existing cell filled, `null` exactly where `givens` has `null`. |
 | `candidates` | no | Given pencil marks (Sukaku): `{"r1c1": [1, 3, 7], …}`, ascending integer lists. **Semantic**: each listed cell's digit is one of its list; unlisted cells are unrestricted. Graphical cell clues (odd, even, …) are `cell` rules, never candidates. |
 | `rules` | yes | Every constraint, houses included (section 6). Nothing is implied: a board without house rules has no houses. |
+| `unknowns` | no | Named unknown numbers that custom rules read ([6.18](rules/custom.mdx#unknowns-and-layers)): `{"X": {"range": [1, 9]}, "Y": {"values": [2, 4, 8]}}`. Part of the puzzle's solution; a tool that cannot solve them refuses the puzzle. |
+| `layers` | no | Named values per cell beside the digit that custom rules read ([6.18](rules/custom.mdx#unknowns-and-layers)): `{"shift": {"values": [-1, 0, 1], "given": {"r1c1": 0}}}`. Same status as `unknowns`. |
 | `decorations` | no | Cosmetic drawing primitives (section 7). Never semantic. |
 | `style` | no | Cosmetic, puzzle-wide drawing hints (section 7). Never semantic. |
 

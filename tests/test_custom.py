@@ -356,3 +356,42 @@ def test_board_layers():
     doc["rules"] = doc["rules"] + [dict(rule("x"), holds="not shaded(a) or odd(a)")]
     with pytest.raises(pencilmark.NotSupportedError, match="shading"):
         pencilmark.load(doc)
+
+
+def _hidden_doc(**extra):
+    base = {"format": "sudoku-puzzle", "format_version": 1, "board": {"rows": 4, "cols": 4}, "digits": 4,
+            "givens": [0] * 16, "rules": [{"type": "box_grid", "origin": "r1c1", "box": [2, 2]}]}
+    base.update(extra)
+    return base
+
+
+def test_unknowns_and_layers_read_check_write():
+    import importlib
+    import json
+    import pytest
+    import pencilmark
+    from pencilmark.exchange import FormatError
+    from pencilmark.rules import custom as CU
+
+    V = importlib.import_module("pencilmark.exchange.validate")
+    rule = {"type": "custom", "cells": {"c": ["r1c1", "r1c2"]}, "holds": "sum(c)+shift(r1c1)==X"}
+    doc = _hidden_doc(unknowns={"X": {"range": [1, 4]}, "T": {"values": [0, 1]}},
+                      layers={"shift": {"values": [-1, 0, 1], "given": {"r1c1": 0}}},
+                      rules=_hidden_doc()["rules"] + [rule])
+    V.validate(doc)
+    out = json.loads(pencilmark.dumps(doc))  # writers keep them, the rule in canonical spelling
+    assert out["unknowns"] == doc["unknowns"] and out["layers"] == doc["layers"]
+    assert out["rules"][-1]["holds"] == "sum(c) + shift(r1c1) == X"
+    env = dict(box=(2, 2), layers={"shift": {"r1c1": 1}})
+    assert CU.holds("sum(c) + shift(r1c1) == X", rule["cells"], {"r1c1": 1, "r1c2": 2}, unknowns={"X": 4}, **env)
+    assert not CU.holds("sum(c) + shift(r1c1) == X", rule["cells"], {"r1c1": 1, "r1c2": 2}, unknowns={"X": 3}, **env)
+    for bad in (_hidden_doc(unknowns={"sum": {"range": [1, 2]}}),  # a built-in's name
+                _hidden_doc(layers={"mod": {"values": [0, 1]}}),  # a keyword
+                _hidden_doc(unknowns={"X": {"range": [3, 1]}}),
+                _hidden_doc(layers={"s": {"values": [1, 2], "given": {"r1c1": 5}}}),
+                _hidden_doc(unknowns={"X": {"range": [1, 2]}}, layers={"X": {"values": [0, 1]}}),
+                _hidden_doc(rules=_hidden_doc()["rules"] + [{"type": "custom", "cells": {"c": ["r1c1"]}, "holds": "sum(c) == Y"}])):
+        with pytest.raises(FormatError):
+            V.validate(bad)
+    with pytest.raises(Exception, match="cannot be solved by the engine yet"):  # never solved with a rule ignored
+        pencilmark.load(doc)

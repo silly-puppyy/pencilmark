@@ -33,6 +33,10 @@
   largest. On Cracking the Cryptic solves it covers more of the hosts' own identity colours at the moment they paint
   them (0.45 vs 0.31 from the digits placed alone, 158 groups in 83 videos) while drawing about as many colours at
   once as the hosts keep (about two). Bookkeeping only: routes, prices and the card are unchanged.
+- Custom rules: named `unknowns` (a number several clues share, or a 0 / 1 choice) and `layers` (a second value per
+  cell, e.g. a -1 / 0 / +1 shift) at the top level of the puzzle file, read by custom rules as `X` and `shift(c)`
+  (rules/custom.mdx, unknowns and layers; puzzle-format.md; schema). pencilmark reads, checks, writes and evaluates
+  them; the engine does not solve them yet, so such puzzles are refused for solving and grading.
 - New engine param, off by default: `digit_cont` (favour the previous placement's digit).
 - Shading (format: `"type": "yin_yang"`, optional given `shaded` / `unshaded` cells; whole-board-rules 6.19): shaded
   and unshaded cells each orthogonally connected, no 2x2 of one colour. Readers, writers, `fingerprint` and

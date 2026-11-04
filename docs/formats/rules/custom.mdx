@@ -70,6 +70,31 @@ a rule about "the next cell" simply does not hold at the end of a row; `defined(
 
 Each scope takes `"except": [[cells], …]`, instances to skip.
 
+### Unknowns and layers
+
+Some one-off rules talk about numbers that are not digits in cells: a value shared by several clues ("X is the same
+in every cage marked X"), a choice ("exactly two of these three clues are true"), or a second value per cell ("one cell
+in every row, column and box counts one more or one less than its digit"). The file declares them at the top level and
+custom rules read them:
+
+```json
+"unknowns": {"X": {"range": [1, 9]}, "T1": {"values": [0, 1]}},
+"layers": {"shift": {"values": [-1, 0, 1]}}
+```
+
+- An unknown is read by its name, as a number: `sum(c) == X`. A choice is an unknown with values 0 / 1, used as
+  `T1 == 1 or sum(c) == 10` or counted with `T1 + T2 + T3 == 2`.
+- A layer gives each cell one of its values; a rule reads it as a function of a cell named after the layer:
+  `shift(c) != 0`, `c + shift(c)`. `"given": {"r1c1": 0}` fixes a cell's value. A rule about the layer itself
+  ("one shifted cell per row") is another custom rule.
+- Unknowns that must all differ (ciphers) are a custom rule too: `all_different([A, B, C])`.
+- Names are identifiers that are no cell name, keyword or built-in (so not `mod`, `sum`, `region`), and an unknown
+  and a layer cannot share a name. Values are integers, given as `range` [lo, hi] (inclusive) or a list of `values`.
+
+They are part of the solution: a reader that cannot solve them refuses the puzzle rather than ignoring a rule.
+pencilmark reads, checks and writes them, and evaluates rules with them, but its engine does not solve them yet, so it
+refuses such puzzles for solving and grading.
+
 ### Reading, writing, limits
 
 A reader refuses a custom rule that does not parse or type-check (unknown names or functions, arithmetic on a

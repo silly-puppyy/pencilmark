@@ -357,12 +357,15 @@ def is_prime(n):
 class Env:
     """names: cell lists ({name: [cell names] or lists of lists}), the grid ({cell name: digit}) and the box shape"""
 
-    def __init__(self, cells, grid, box=(3, 3), parent=None, local=None, layers=None):
+    def __init__(self, cells, grid, box=(3, 3), parent=None, local=None, layers=None, unknowns=None):
         self.cells, self.grid, self.box, self.parent, self.local = cells, grid, box, parent, local or {}
-        self.layers = layers or {}  # board layers beside the digits: {"region": {cell: label}, "shaded": {cell: bool}}
+        # board layers beside the digits: {"region": {cell: label}, "shaded": {cell: bool}} and the file's own layers
+        # ({"mod": {cell: value}}); unknowns: the file's named unknowns ({"X": value or None})
+        self.layers = layers or {}
+        self.unknowns = unknowns or {}
 
     def child(self, **binds):
-        return Env(self.cells, self.grid, self.box, self, binds, self.layers)
+        return Env(self.cells, self.grid, self.box, self, binds, self.layers, self.unknowns)
 
     def lookup(self, name):
         e = self
@@ -372,6 +375,9 @@ class Env:
             e = e.parent
         if name in self.cells:
             return self._cellvalue(self.cells[name])
+        if name in self.unknowns:  # a named unknown of the file: a number (absent while it is not known)
+            v = self.unknowns[name]
+            return ABSENT if v is None else Fraction(v)
         if re.fullmatch(r"r\d+c\d+", name):
             return Cell(name, self.grid[name])
         raise LangError(f"unknown name {name!r}")
@@ -684,6 +690,12 @@ def evaluate(e, env):
             f = None
         if isinstance(f, tuple):
             return call_fn(f, [evaluate(x, env) for x in args], env)
+        if name not in BUILTINS and name in env.layers:  # a layer of the file: its value at a cell
+            x = evaluate(args[0], env) if len(args) == 1 else None
+            if not isinstance(x, Cell):
+                raise LangError(f"{name}() takes a cell")
+            v = env.layers[name].get(x.name)
+            return ABSENT if v is None else Fraction(v)
         if name not in BUILTINS:
             raise LangError(f"unknown function {name!r}")
         vals = [evaluate(x, env) for x in args]
@@ -693,10 +705,10 @@ def evaluate(e, env):
     raise LangError(f"unknown construct {op}")
 
 
-def holds(expr, cells, grid, box=(3, 3), layers=None):
-    """does the rule hold for this filling? (expr: text or a parsed tree; layers: Env.layers)"""
+def holds(expr, cells, grid, box=(3, 3), layers=None, unknowns=None):
+    """does the rule hold for this filling? (expr: text or a parsed tree; layers / unknowns: Env.layers / unknowns)"""
     tree = parse(expr) if isinstance(expr, str) else expr
-    v = evaluate(tree, Env(cells, grid, box, layers=layers))
+    v = evaluate(tree, Env(cells, grid, box, layers=layers, unknowns=unknowns))
     if not isinstance(v, bool):
         raise LangError("a rule must be a condition (true / false)")
     return v
@@ -711,9 +723,10 @@ BOOL_FNS = {"all", "any", "odd", "even", "prime", "defined", "all_different", "s
 LIST_FNS = {"sort", "reverse", "seen", "upto", "take_while", "take"}
 
 
-def check(tree, names):
+def check(tree, names, unknowns=(), layers=()):
     """static checks on load: known names and functions, arities, conditions where conditions are needed, a condition
-    at the top. names: the cell list names. Returns the top type ('bool', 'num', 'list', 'fn')."""
+    at the top. names: the cell list names; unknowns / layers: the file's named unknowns (numbers) and layers
+    (functions of one cell). Returns the top type ('bool', 'num', 'list', 'fn')."""
 
     def t(e, scope):
         op, a = e.op, e.args
@@ -727,7 +740,7 @@ def check(tree, names):
                 return scope[n]
             if n in names:
                 return "cells"
-            if re.fullmatch(r"r\d+c\d+", n):
+            if n in unknowns or re.fullmatch(r"r\d+c\d+", n):
                 return "num"
             raise LangError(f"unknown name {n!r}")
         if op in ("list", "set", "range"):
@@ -785,6 +798,10 @@ def check(tree, names):
                 t(x, scope)
             if scope.get(name) == "fn":
                 return "any"
+            if name in layers and name not in ARITY:
+                if len(args) != 1:
+                    raise LangError(f"{name}() takes 1 argument(s), got {len(args)}")
+                return "num"
             if name in ("all", "any") and args and args[0].op == "comp":
                 body, var, src, cond = args[0].args
                 if t(body, dict(scope, **{var: "num"})) not in ("bool", "any"):
@@ -1033,7 +1050,7 @@ def _positional(tree):
 
 
 def _layered(tree):
-    """the board layers an expression reads (region(), shaded())"""
+    """the board layers an expression reads (region(), shaded()); see _hidden for the file's unknowns and layers"""
     if not isinstance(tree, N):
         return set()
     out = {tree.args[0]} if tree.op == "call" and tree.args[0] in LAYERS else set()
@@ -1072,11 +1089,32 @@ def _instance(holds_text, args, B, D, test):
     return _expr({"cells": cells, "holds": f"let __f = {holds_text}; __f({call})"}, B)
 
 
+def _hidden(tree, unknowns, layers):
+    """the file's unknowns and layers an expression reads"""
+    if not isinstance(tree, N):
+        return set()
+    out = set()
+    if tree.op == "name" and tree.args[0] in unknowns:
+        out.add(tree.args[0])
+    if tree.op == "call" and tree.args[0] in layers and tree.args[0] not in BUILTINS:
+        out.add(tree.args[0])
+    for x in tree.args:
+        if isinstance(x, N):
+            out |= _hidden(x, unknowns, layers)
+        elif isinstance(x, tuple):
+            for y in x:
+                out |= _hidden(y, unknowns, layers)
+    return out
+
+
 def compile_rule(rule, B, D, layers=()):
     """a custom rule -> internal puzzle rules for the engine: {"type": "pairs", "rel": "allowed", ...} for pair scopes,
     {"type": "table", "cells", "allowed"} otherwise. B: the board helper (exchange.board.Board). Raises LangError when
     the rule is malformed or too large for a table."""
     tree = parse(rule["holds"])
+    hid = _hidden(tree, getattr(B, "unknowns", {}), getattr(B, "layers", {}))
+    if hid:  # the engine has no variables beyond the cells' digits yet (docs/research: custom unknowns and layers)
+        raise LangError(f"rules that read {', '.join(sorted(hid))} (unknowns / layers) cannot be solved by the engine yet")
     used = _layered(tree)
     if used - set(layers):
         raise LangError(

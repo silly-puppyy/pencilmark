@@ -86,6 +86,8 @@ TOP_KEYS = {
     "rules",
     "decorations",
     "style",
+    "unknowns",
+    "layers",
 }
 
 
@@ -148,6 +150,7 @@ def validate(doc):
                 raise FormatError(f"candidates of {k} must be a list of digits 1..{D}")
     if doc.get("meta") is not None and not isinstance(doc["meta"], dict):
         raise FormatError("meta must be an object")
+    B.unknowns, B.layers = _hidden_vars(doc, B)
     if not isinstance(doc["rules"], list):
         raise FormatError("rules must be a list")
     B.grid_origins = {
@@ -507,6 +510,61 @@ def _validate_rule(r, B):
             area_cells(B, r["area"])
 
 
+def _values(spec, what):
+    """the values of an unknown or a layer: {"values": [ints]} or {"range": [lo, hi]} (inclusive)"""
+    if not isinstance(spec, dict) or len({"values", "range"} & set(spec)) != 1:
+        raise FormatError(f'{what} needs "values" (a list of integers) or "range" ([lo, hi])')
+    if "range" in spec:
+        r = spec["range"]
+        if not isinstance(r, list) or len(r) != 2 or any(not isinstance(x, int) or isinstance(x, bool) for x in r) or r[0] > r[1]:
+            raise FormatError(f"{what}: range must be [lo, hi] with lo <= hi")
+        return list(range(r[0], r[1] + 1))
+    v = spec["values"]
+    if not isinstance(v, list) or not v or any(not isinstance(x, int) or isinstance(x, bool) for x in v) or len(set(v)) != len(v):
+        raise FormatError(f"{what}: values must be a non-empty list of different integers")
+    return list(v)
+
+
+def _hidden_vars(doc, B):
+    """the file's named unknowns and layers (custom rules read them; custom.mdx): names that are identifiers and no
+    cell, keyword or built-in; their values; a layer's given values"""
+    from ..rules import custom as CU
+
+    def name_ok(n, what):
+        if not isinstance(n, str) or not re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]*", n) or re.fullmatch(r"r\d+c\d+", n) \
+                or n in CU.KEYWORDS or n in CU.BUILTINS or n in CU.LAYERS:
+            raise FormatError(f"{what} name {n!r} is not usable (an identifier that is no cell, keyword or built-in)")
+
+    unk, lay = {}, {}
+    u = doc.get("unknowns")
+    if u is not None:
+        if not isinstance(u, dict):
+            raise FormatError("unknowns must be an object of named unknowns")
+        for n, spec in u.items():  # (unknowns that must differ: a custom rule, all_different([A, B, C]))
+            name_ok(n, "unknown")
+            unk[n] = _values(spec, f"unknown {n!r}")
+    L = doc.get("layers")
+    if L is not None:
+        if not isinstance(L, dict):
+            raise FormatError("layers must be an object of named layers")
+        for n, spec in L.items():
+            name_ok(n, "layer")
+            if n in unk:
+                raise FormatError(f"{n!r} names both an unknown and a layer")
+            if not isinstance(spec, dict) or set(spec) - {"values", "range", "given"}:
+                raise FormatError(f'layer {n!r} takes "values" or "range", and optionally "given"')
+            vals = _values({k: v for k, v in spec.items() if k != "given"}, f"layer {n!r}")
+            giv = spec.get("given", {})
+            if not isinstance(giv, dict):
+                raise FormatError(f"layer {n!r}: given must be an object of cell values")
+            for c, v in giv.items():
+                B.idx(c)
+                if v not in vals:
+                    raise FormatError(f"layer {n!r}: given value {v!r} at {c} is not one of its values")
+            lay[n] = {"values": vals, "given": dict(giv)}
+    return unk, lay
+
+
 def _validate_custom(r, B):
     """a custom rule (docs/formats/rules/custom.mdx, since pencilmark 1.2): known keys, existing cells, a well-formed
     scope, and an expression that parses and type-checks (a predicate when scoped, a condition otherwise)"""
@@ -556,7 +614,7 @@ def _validate_custom(r, B):
             for c in x if isinstance(x, list) else [x]:
                 B.idx(c)
     try:
-        top = CU.check(CU.parse(r["holds"]), set(cells))
+        top = CU.check(CU.parse(r["holds"]), set(cells), getattr(B, "unknowns", {}), getattr(B, "layers", {}))
     except CU.LangError as e:
         raise FormatError(f"custom rule: {e}") from None
     if scope is not None and top not in ("fn", "any"):

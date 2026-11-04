@@ -88,6 +88,73 @@
     "$ref": "#/$defs/rule"
    }
   },
+  "unknowns": {
+   "type": "object",
+   "description": "named unknown numbers custom rules read (rules/custom.mdx, unknowns and layers)",
+   "propertyNames": {
+    "pattern": "^[A-Za-z_][A-Za-z_0-9]*$"
+   },
+   "additionalProperties": {
+    "type": "object",
+    "properties": {
+     "values": {
+      "type": "array",
+      "items": {
+       "type": "integer"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+     },
+     "range": {
+      "type": "array",
+      "items": {
+       "type": "integer"
+      },
+      "minItems": 2,
+      "maxItems": 2
+     }
+    },
+    "additionalProperties": false
+   }
+  },
+  "layers": {
+   "type": "object",
+   "description": "named values per cell custom rules read (rules/custom.mdx, unknowns and layers)",
+   "propertyNames": {
+    "pattern": "^[A-Za-z_][A-Za-z_0-9]*$"
+   },
+   "additionalProperties": {
+    "type": "object",
+    "properties": {
+     "values": {
+      "type": "array",
+      "items": {
+       "type": "integer"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+     },
+     "range": {
+      "type": "array",
+      "items": {
+       "type": "integer"
+      },
+      "minItems": 2,
+      "maxItems": 2
+     },
+     "given": {
+      "type": "object",
+      "propertyNames": {
+       "pattern": "^r[0-9]+c[0-9]+$"
+      },
+      "additionalProperties": {
+       "type": "integer"
+      }
+     }
+    },
+    "additionalProperties": false
+   }
+  },
   "decorations": {
    "type": "array",
    "items": {
