@@ -6,13 +6,18 @@
   `--computer`): each step is chosen the way people choose, by a spotting score fitted on casual classic replays (the
   move's price, its technique, and attention to the previous placement: same digit, same box / row / column, distance),
   sampled reproducibly (params `spot_w`, `spot_fam`, `spot_seed`). On held-out sudoku.today replays the trace's
-  step-to-step behaviour is about 4x closer to people's than before. Difficulty and time are unchanged: the card's
-  numbers read the single price-first route (score `card_route`). The band, the technique list and the publishing
+  step-to-step behaviour is about 4x closer to people's than before. The band, the technique list and the publishing
   checks follow the band route, which is now the human one: on the private golden corpus 1 of 227 bands, 15 technique
   lists and some warnings differ.
-- Optional: score `route_samples` = K makes the difficulty the mean effort over K sampled human routes (run on threads
-  in a single rating). Dev set at K 6: fed +0.028, Wang 2024 +0.036, grandgames +0.017 within-group Spearman; it costs
-  about a third more rating time, so it is off.
+- Card difficulty is the expected effort of a human-like solver, estimated cheaply (score `route_rollouts`: 2 human
+  routes, 4 playthroughs): singles reach the same next bottleneck in any order, so each human route keeps its
+  bottleneck steps and the stretches of singles between them are replayed in random human order from the state the
+  route reached. Dev set, within-group Spearman vs the old card: fed +0.040, Wang 2024 +0.028, sudoku.coach +0.009,
+  grandgames -0.001. Difficulty rises 0.09 on average (more on singles-only puzzles); bands are unchanged. Rating takes
+  about 15% longer (1.54 -> 1.77 s on dev puzzles). The time quote still reads the single price-first route (score
+  `card_route`).
+- Optional: score `route_samples` = K (with `route_rollouts` off) makes the difficulty the mean effort over K full
+  sampled human routes (on threads in a single rating): a similar gain for about a third more rating time.
 - New engine params, off by default: `digit_cont` (favour the previous placement's digit) and `notes_live` (position
   notes as casual solvers write them, counted on each step's `notes_written`).
 - Shading (format: `"type": "yin_yang"`, optional given `shaded` / `unshaded` cells; whole-board-rules 6.19): shaded

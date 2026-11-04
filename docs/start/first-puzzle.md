@@ -24,7 +24,7 @@ A classic puzzle can be written as one line of 81 characters, row by row, with `
 
 ```
 $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9.......' | pencilmark rate -
-Hard	5.7	10.7	X-Wing
+Hard	5.8	10.7	X-Wing
 ```
 
 The four columns are the band, the difficulty, the time in minutes and the hardest technique the solve
@@ -36,7 +36,7 @@ needs. `-` means "read puzzles from standard input"; you can also pass a file wi
 
 ```
 $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9.......' | pencilmark rate - --report
-#1  Hard  -  difficulty 5.7  -  time 10.7 min
+#1  Hard  -  difficulty 5.8  -  time 10.7 min
    contains: Naked Pair (or Hidden Pair), X-Wing (or 2-String Kite / Simple Colouring / Short chain in the head)
 ```
 
@@ -67,7 +67,7 @@ $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7..
 import pencilmark
 
 card = pencilmark.rate("....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9.......")
-print(card["band"], card["difficulty"], card["time"])     # Hard 5.7 10.7
+print(card["band"], card["difficulty"], card["time"])     # Hard 5.8 10.7
 print([c["chip"] for c in card["contains"]])              # ['HSI', 'NSI', 'NPR/HPR', 'XWG/KTE/SCL/MCH']
 ```
 

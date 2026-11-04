@@ -164,6 +164,8 @@ changing a shipped value is a deliberate commit with a golden rewrite.
 | `score.beta_time` | 3.807 | The same exponent for the time effort (time fit). |
 | `score.refute_w` | 4 | Weight of the technique-free search effort. |
 | `score.route_samples` | 0 | Card-score configuration (data/card_score.json). |
+| `score.route_rollouts.routes` | 2 | ″ |
+| `score.route_rollouts.playthroughs` | 4 | ″ |
 | `score.card_route.spot_w` |  | ″ |
 | `score.card_route.locality` | 0.4 | ″ |
 | `score.map.form` | A * w * softplus((r - r0) / w) | The smooth difficulty map: softplus slope A, knee r0 and width w; below 2 a gentler square-root rule. |

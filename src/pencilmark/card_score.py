@@ -177,6 +177,77 @@ def _spot_params(P, cfg):
     return [dict(base, spot_seed=k) for k in range(1, int(cfg["route_samples"]) + 1)]
 
 
+# score route_rollouts: the steps that are singles (or note taking); every other step is a bottleneck
+_SINGLE_NAMES = {"FullHouse", "HiddenSingle(direct)", "NakedSingle(direct)", "HiddenSingle(notes)", "NakedSingle(notes)",
+                 "LineSingle(direct)", "ConstraintSingle(direct)", "notes", "MentalSingle(direct)", "MentalNotesSingle"}
+
+
+def _rollout_sum(p, P, cfg, w, seed, n_play):
+    """expected step-value sum of a human-like solver, from ONE human route plus cheap playthroughs (score
+    route_rollouts): singles are confluent (every order of them reaches the same next bottleneck), so the route's
+    bottleneck steps are kept and each stretch of singles between bottlenecks is replayed n_play times from the state
+    the route reached, in random human order, same settings and note mode, cut at the stretch's length. None if the
+    route is not the plain card route (guessing / full-search fallback)."""
+    import copy
+
+    from .band_path import variant_gate
+
+    gate = variant_gate(p)
+    st, ok = CB.solve(p, dict(P, spot_seed=seed), disabled=dis | gate)
+    if not ok or any(s.move.feat[0] == S.GUESS for s in st):
+        return None
+    beta, delta = cfg["beta"], cfg.get("delta", {})
+    cage_of = _cage_enum(p) if w and getattr(p, "has_cages", False) else {}
+
+    def value(nm, d, f, cs):
+        e = max((cage_of.get(c, 0.0) for c in cs), default=0.0)
+        return math.exp(beta * math.log(d) + delta.get(nm, 0.0) + w * e) * f
+
+    rec, cells = _record(p, st)
+    N, D = p.N, p.D
+    vals = [p.givens.get(c, 0) for c in range(N)]
+    dom = getattr(p, "domains", None)
+    cand = [0 if vals[c] else (dom[c] if dom else (1 << D) - 1) for c in range(N)]
+    for c in range(N):
+        if vals[c]:
+            for x in p.peer_list[c]:
+                cand[x] &= ~(1 << (vals[c] - 1))
+    starts, run, n_run, bott = [(list(vals), list(cand), st[0].mode if st else "direct")], [], 0, 0.0
+    for (nm, d, f), cs, s in zip(rec, cells, st):
+        if nm in _SINGLE_NAMES:
+            n_run += 1
+        else:
+            bott += value(nm, d, f, cs)
+            run.append(n_run)
+            n_run = 0
+        if s.move.place:
+            c, dg = s.move.place
+            vals[c], cand[c] = dg, 0
+            for x in p.peer_list[c]:
+                cand[x] &= ~(1 << (dg - 1))
+        for c, dg in s.move.elim or ():
+            cand[c] &= ~(1 << (dg - 1))
+        if nm not in _SINGLE_NAMES:
+            starts.append((list(vals), list(cand), s.mode))
+    run.append(n_run)
+    cp = CB.to_cpuzzle(p)
+    total = bott
+    for (vs, cs_, mode), n in zip(starts, run):
+        if not n:
+            continue
+        q = copy.copy(p)
+        q.givens = {c: v for c, v in enumerate(vs) if v}
+        mask = [cs_[c] if not vs[c] else 1 << (vs[c] - 1) for c in range(N)]
+        acc = 0.0
+        for k in range(n_play):
+            st2, _ = CB.solve(q, dict(P, spot_seed=1000 * seed + k + 1), disabled=dis | gate, cpuzzle=cp, cand=mask,
+                              max_steps=n, assume_unique=False, allow_direct=mode != "notes")
+            r2, c2 = _record(q, st2)
+            acc += sum(value(nm, d, f, cc) for (nm, d, f), cc in zip(r2, c2) if nm in _SINGLE_NAMES)
+        total += acc / n_play
+    return total
+
+
 def score_parts(p, model=None):
     """(card score, L1 = log of the step-value sum) for one puzzle; None if the engine must guess. The score is priced
     with the model's difficulty prices, L1 (the effort the time model reads) with its route prices; both on the
@@ -201,7 +272,13 @@ def score_parts(p, model=None):
 
     v = values(pth)
     tot = sum(v)
-    if cfg.get("route_samples"):  # expected effort of a human-like solver: mean step sum over sampled spotting routes
+    ro = cfg.get("route_rollouts")
+    if ro:  # expected effort of a human-like solver: human routes' bottlenecks + playthroughs of the singles between
+        sums = [_rollout_sum(p, model.price, cfg, w, k, int(ro.get("playthroughs", 4))) for k in range(1, int(ro.get("routes", 2)) + 1)]
+        sums = [x for x in sums if x is not None]
+        if sums:
+            tot = sum(sums) / len(sums)
+    elif cfg.get("route_samples"):  # expected effort of a human-like solver: mean step sum over sampled spotting routes
         Ps = _spot_params(model.price, cfg)
         nt = min(len(Ps), ROUTE_THREADS or os.cpu_count() or 1)
         if nt > 1:

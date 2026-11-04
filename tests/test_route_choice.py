@@ -44,6 +44,24 @@ def test_spot_sampling_is_reproducible():
     assert sorted(x[0] for x in a if x[0]) == sorted(x[0] for x in c if x[0])  # same placements, other order
 
 
+def test_card_difficulty_from_bottleneck_rollouts():
+    from pencilmark import card_score as CS
+
+    p = api.load(api.from_string(GIVENS))
+    m = GM.default()
+    saved = dict(m.score)
+    try:
+        assert m.score["route_rollouts"] == {"routes": 2, "playthroughs": 4}
+        base = CS.score_parts(p, m)
+        assert CS.score_parts(p, m) == base  # reproducible
+        m.score.pop("route_rollouts")
+        one = CS.score_parts(p, m)  # off: the single price-first route
+        assert one[0] != base[0] and one[1] == base[1]  # the difficulty moves, the time model's effort does not
+    finally:
+        m.score.clear()
+        m.score.update(saved)
+
+
 def test_card_reads_one_price_first_route():
     from pencilmark import card_score as CS
 
@@ -51,6 +69,7 @@ def test_card_reads_one_price_first_route():
     m = GM.default()
     saved = dict(m.score)
     try:
+        m.score.pop("route_rollouts", None)  # the price-first route alone (rollouts tested above)
         assert not m.score.get("route_samples") and m.score["card_route"] == {"spot_w": [], "locality": 0.4}
         base = CS.score_parts(p, m)
         m.score["card_route"] = {}

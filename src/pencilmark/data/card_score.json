@@ -6,6 +6,10 @@
  "beta_time": 3.806986787524209,
  "refute_w": 4.0,
  "route_samples": 0,
+ "route_rollouts": {
+  "routes": 2,
+  "playthroughs": 4
+ },
  "card_route": {
   "spot_w": [],
   "locality": 0.4
