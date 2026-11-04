@@ -18,8 +18,13 @@
   `card_route`).
 - Optional: score `route_samples` = K (with `route_rollouts` off) makes the difficulty the mean effort over K full
   sampled human routes (on threads in a single rating): a similar gain for about a third more rating time.
-- New engine params, off by default: `digit_cont` (favour the previous placement's digit) and `notes_live` (position
-  notes as casual solvers write them, counted on each step's `notes_written`).
+- Note model of casual classic solvers, on by default as bookkeeping: position notes written as you go (`notes_live`:
+  a digit with 2-3 places left in a box), candidate lists in the cells with <= 3 candidates when notes start
+  (`notes_small`), every other cell written only when a step uses it (`notes_lazy`); the marks are counted on each
+  step's `notes_written`. On lisudoku replays its marked cells overlap people's far better on medium puzzles (Jaccard
+  0.65 vs 0.39 for full notes). Routes, prices and the card are unchanged (`notes_lazy_view` false; the card prices
+  full notes: score `card_notes`).
+- New engine param, off by default: `digit_cont` (favour the previous placement's digit).
 - Shading (format: `"type": "yin_yang"`, optional given `shaded` / `unshaded` cells; whole-board-rules 6.19): shaded
   and unshaded cells each orthogonally connected, no 2x2 of one colour. Readers, writers, `fingerprint` and
   `describe` handle it; `solve` and `count_solutions` check it (the exhaustive search carries a colour per cell, agreeing with a

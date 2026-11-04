@@ -14,6 +14,12 @@
   "spot_w": [],
   "locality": 0.4
  },
+ "card_notes": {
+  "notes_live": false,
+  "notes_lazy": false,
+  "notes_small": 0,
+  "snyder_max": 2
+ },
  "map": {
   "form": "A * w * softplus((r - r0) / w)",
   "A": 0.6895039129238775,

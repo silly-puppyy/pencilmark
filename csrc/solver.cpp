@@ -893,9 +893,15 @@ void Solver::filter(MoveBuf& b) {
 }
 
 void Solver::take_notes(SolveResult& out, int n_empty) {
-    int written = 0;
+    int written = 0, small = 0;
     for (int c = 0; c < p.N; ++c)
-        if (!vals[c]) written += popc(cand[c]);
+        if (!vals[c]) {
+            written += popc(cand[c]);
+            if (P.notes_lazy && P.notes_small > 0 && popc(cand[c]) <= P.notes_small) {  // params notes_small
+                marked[c] = 1;
+                small += popc(cand[c]);
+            }
+        }
     StepRec st;
     st.move.tech = TAKE_NOTES;
     st.move.shape = 1.0;
@@ -907,7 +913,7 @@ void Solver::take_notes(SolveResult& out, int n_empty) {
     st.mode = 1;
     st.n_empty = n_empty;
     st.n_cands = cand_total();
-    st.notes_written = P.notes_lazy ? 0 : written;
+    st.notes_written = P.notes_lazy ? small : written;
     st.move.cov_off = (int)out.covers.size();
     st.move.el_off = (int)out.elims.size();
     out.alts.push_back(st.move);

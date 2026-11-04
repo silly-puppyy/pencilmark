@@ -143,6 +143,11 @@ changing a shipped value is a deliberate commit with a golden rewrite.
 | `route.spot_w` | list of 6 | ″ |
 | `route.spot_fam` | list of 114 | ″ |
 | `route.spot_seed` | 1 | ″ |
+| `route.notes_live` | True | ″ |
+| `route.notes_lazy` | True | ″ |
+| `route.notes_lazy_view` | False | ″ |
+| `route.notes_small` | 3 | ″ |
+| `route.snyder_max` | 3 | ″ |
 | `route.case_rounds` | 3 | ″ |
 | `route.case_light` | 1 | ″ |
 
@@ -168,6 +173,10 @@ changing a shipped value is a deliberate commit with a golden rewrite.
 | `score.route_rollouts.playthroughs` | 4 | ″ |
 | `score.card_route.spot_w` |  | ″ |
 | `score.card_route.locality` | 0.4 | ″ |
+| `score.card_notes.notes_live` | False | ″ |
+| `score.card_notes.notes_lazy` | False | ″ |
+| `score.card_notes.notes_small` | 0 | ″ |
+| `score.card_notes.snyder_max` | 2 | ″ |
 | `score.map.form` | A * w * softplus((r - r0) / w) | The smooth difficulty map: softplus slope A, knee r0 and width w; below 2 a gentler square-root rule. |
 | `score.map.A` | 0.6895 | ″ |
 | `score.map.r0` | 0.5497 | ″ |

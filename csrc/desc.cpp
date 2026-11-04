@@ -77,7 +77,7 @@ void Solver::desc_stats() {
 uint32_t Solver::written_marks(int c, int mode) const {
     if (vals[c]) return 0;
     if (!written_override.empty()) return written_override[c] & cand[c];  // a replay state's own marks
-    if (mode == 1) return P.notes_lazy ? (marked[c] ? cand[c] : 0u) : cand[c];
+    if (mode == 1) return P.notes_lazy && P.notes_lazy_view ? (marked[c] ? cand[c] : 0u) : cand[c];
     if (!snyder_on) return 0;
     uint32_t w = 0;
     for (int g : p.groups_of[c]) {

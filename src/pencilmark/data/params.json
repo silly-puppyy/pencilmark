@@ -172,6 +172,11 @@
   "MentalNotesSingle": -1.61
  },
  "spot_seed": 1,
+ "notes_live": true,
+ "notes_lazy": true,
+ "notes_lazy_view": false,
+ "notes_small": 3,
+ "snyder_max": 3,
  "case_rounds": 3,
  "case_light": 1
 }

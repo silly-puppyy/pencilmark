@@ -114,7 +114,7 @@ def test_fish_substeps():
 
 def test_locked_and_subset_substeps():
     card = pencilmark.rate(
-        "400500060000008300025700080003000000000213000000000500070002410009800000010007005",
+        "7......2..3....6..9.5..2..465.4....8...1.8...1....5.475..3..1.6..9....3..4......2",  # a pointing pair, a hidden pair and a naked triple on the trace
         fields=["steps"],
         explain=["substeps"],
     )

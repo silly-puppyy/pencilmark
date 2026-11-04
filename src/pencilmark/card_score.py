@@ -74,7 +74,8 @@ def refute_lr_cell(p):
         return 0.0
     model = GM.default()
     # rounds: independent of cell order
-    route = dict(model.route, **(model.score.get("card_route") or {}), refute_rounds=int(model.score.get("refute_rounds", 0)))
+    route = dict(model.route, **(model.score.get("card_notes") or {}), **(model.score.get("card_route") or {}),
+                 refute_rounds=int(model.score.get("refute_rounds", 0)))
     pr = _CB._C.refute_profile(_CB.to_cpuzzle(p), list(p.givens.items()), route, [int(x) for x in bs[0]], 400)
     s = sum((math.log(C / R) if R else math.log(max(C, 1)) + 2) for C, R, d, dp, rel in pr)
     return math.log1p(s / max(p.N - len(p.givens), 1))
@@ -257,8 +258,10 @@ def score_parts(p, model=None):
     w = cfg.get("enum_w", 0.0)
     # score card_route: the card's difficulty and time read the price-first route (one route: the cheapest move each
     # step); the human closeness route (engine params spot_*) is the trace's. route_samples > 0 averages sampled routes.
-    cr = cfg.get("card_route") or {}
+    cn = cfg.get("card_notes") or {}  # the card prices full candidate notes; the note model is the trace's
+    cr = dict(cn, **(cfg.get("card_route") or {}))
     P_route, P_price = dict(model.route, **cr), dict(model.price, **cr)
+    P_human = dict(model.price, **cn)  # human routes for rollouts / samples, with the card's notes
     pth_time = _route(p, P_route, w)
     if not pth_time:
         return None
@@ -274,12 +277,12 @@ def score_parts(p, model=None):
     tot = sum(v)
     ro = cfg.get("route_rollouts")
     if ro:  # expected effort of a human-like solver: human routes' bottlenecks + playthroughs of the singles between
-        sums = [_rollout_sum(p, model.price, cfg, w, k, int(ro.get("playthroughs", 4))) for k in range(1, int(ro.get("routes", 2)) + 1)]
+        sums = [_rollout_sum(p, P_human, cfg, w, k, int(ro.get("playthroughs", 4))) for k in range(1, int(ro.get("routes", 2)) + 1)]
         sums = [x for x in sums if x is not None]
         if sums:
             tot = sum(sums) / len(sums)
     elif cfg.get("route_samples"):  # expected effort of a human-like solver: mean step sum over sampled spotting routes
-        Ps = _spot_params(model.price, cfg)
+        Ps = _spot_params(P_human, cfg)
         nt = min(len(Ps), ROUTE_THREADS or os.cpu_count() or 1)
         if nt > 1:
             from concurrent.futures import ThreadPoolExecutor

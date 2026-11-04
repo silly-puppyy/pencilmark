@@ -306,6 +306,11 @@ struct Params {
     double k_tab = 0.5;
     bool snyder = false;  ///< params notes_mode = "snyder": Snyder marks before full candidates
     int snyder_max = 2;  ///< params snyder_max: Snyder marks for digits confined to <= 2 (default) or <= 3 cells of a box
+    bool notes_lazy_view = true;  ///< params notes_lazy_view: with notes_lazy, the descriptors (held / coverage) see only the
+                                  ///< written cells, which re-prices notes moves; false = lazy notes are bookkeeping only
+    int notes_small = 0;      ///< params notes_small (with notes_lazy): when notes start, write the candidate lists of the cells
+                              ///< with <= notes_small candidates (casual classic solvers on hard puzzles: centre marks are
+                              ///< complete lists in 2-3 candidate cells); the rest stay unwritten until a step uses them
     bool notes_live = false;  ///< params notes_live: position notes written as you go (casual classic solvers, lisudoku): after
                               ///< every step, each (box, digit) whose places by hatching first number 2..snyder_max is
                               ///< noted once; the marks go to the step's notes_written (read by scoring.work_time, not by
