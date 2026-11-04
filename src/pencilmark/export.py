@@ -567,10 +567,20 @@ def _f_trace(c):
     cn = lambda x: f"r{p.coords[x][0] + 1}c{p.coords[x][1] + 1}"
     digits = lambda m: [d for d in range(1, p.D + 1) if m >> (d - 1) & 1]
     order = sorted(range(p.N), key=lambda x: p.coords[x])
+    pos = BP.positions(p, c.bp["steps"])
+    from . import grader_model as GM
+
+    wm = BP.written_marks(p, c.bp["steps"], pos, GM.default().route)  # what a casual solver would have on paper
+
+    def marks(i):
+        m = wm[i]
+        return {cn(x): {k: v for k, v in (("corner", m[x][0]), ("centre", m[x][1])) if v} for x in order if x in m}
+
     return {
         "trace": [
-            {"digits": [vals[x] for x in order], "candidates": {cn(x): digits(cand[x]) for x in order if not vals[x]}}
-            for vals, cand in BP.positions(p, c.bp["steps"])
+            dict({"digits": [vals[x] for x in order], "candidates": {cn(x): digits(cand[x]) for x in order if not vals[x]}},
+                 **({"marks": marks(i)} if wm is not None else {}))
+            for i, (vals, cand) in enumerate(pos)
         ]
     }
 

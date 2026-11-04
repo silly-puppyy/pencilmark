@@ -1002,6 +1002,63 @@ def apply_step(p, vals, cand, st):
         cand[c] &= ~(1 << (d - 1))
 
 
+def written_marks(p, steps, pos, P):
+    """the marks a casual classic solver would have on paper at each position (pos = positions(p, steps)), following
+    the engine's note model (params notes_live, snyder_max, notes_small, notes_lazy; docs/research/notes_dynamics.md):
+    corner = position notes (a digit with 2..snyder_max places left in a box by the placed digits, noted once, from the
+    start); centre = candidate lists, written when notes start (the first step that is neither direct nor worked in the
+    head) in the cells with <= notes_small candidates, then in every cell a step uses. Marks show only digits that are
+    still candidates. -> [{cell index: (corner digits, centre digits)}] per position; None when the model is off."""
+    from .scoring import MENTAL
+
+    live, lazy = bool(P.get("notes_live")), bool(P.get("notes_lazy"))
+    if not (live or lazy):
+        return None
+    K, small = int(P.get("snyder_max", 2)), int(P.get("notes_small", 0) or 0)
+    boxes = [g.cells for g in p.groups if getattr(g, "kind", "") == "box" and len(g.cells) == p.D]
+    corner, centre, noted = {}, set(), set()
+    notes_on = False
+
+    def scan(vals):
+        for i, cells in enumerate(boxes):
+            present = {vals[c] for c in cells}
+            for d in range(1, p.D + 1):
+                if d in present or (i, d) in noted:
+                    continue
+                places = [c for c in cells if not vals[c] and not any(vals[q] == d for q in p.peer_list[c])]
+                if 2 <= len(places) <= K:
+                    noted.add((i, d))
+                    for c in places:
+                        corner.setdefault(c, set()).add(d)
+
+    def snap(vals, cand):
+        out = {}
+        for c in range(p.N):
+            if vals[c]:
+                continue
+            cs = sorted(d for d in corner.get(c, ()) if cand[c] >> (d - 1) & 1)
+            ce = sorted(d for d in range(1, p.D + 1) if cand[c] >> (d - 1) & 1) if c in centre else []
+            if cs or ce:
+                out[c] = (cs, ce)
+        return out
+
+    if live:
+        scan(pos[0][0])
+    res = [snap(*pos[0])]
+    for st, (vals0, cand0), (vals, cand) in zip(steps, pos[:-1], pos[1:]):
+        name = st.get("name") or S.TECH_NAMES.get(st.get("tech"), "")
+        if lazy and not notes_on and st.get("tech") not in MENTAL and name != "FullHouse" and not name.endswith("(direct)"):
+            notes_on = True
+            centre.update(c for c in range(p.N) if not vals0[c] and 0 < bin(cand0[c]).count("1") <= small)
+        if notes_on:
+            used = [st["place"][0]] if st.get("place") else []
+            centre.update(used + [c for c, _ in st.get("elims") or ()])
+        if live:
+            scan(vals)
+        res.append(snap(vals, cand))
+    return res
+
+
 def positions(p, steps):
     """the positions of a route: before its first step, then after each step -> [(vals, cand)] of len(steps) + 1"""
     vals, cand = start_position(p)

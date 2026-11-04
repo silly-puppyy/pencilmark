@@ -415,6 +415,33 @@
         "minimum": 1
        }
       }
+     },
+     "marks": {
+      "type": "object",
+      "description": "marks a casual solver would have written (grade-card.md 6): corner = position notes, centre = candidate lists",
+      "propertyNames": {
+       "pattern": "^r[0-9]+c[0-9]+$"
+      },
+      "additionalProperties": {
+       "type": "object",
+       "additionalProperties": false,
+       "properties": {
+        "corner": {
+         "type": "array",
+         "items": {
+          "type": "integer",
+          "minimum": 1
+         }
+        },
+        "centre": {
+         "type": "array",
+         "items": {
+          "type": "integer",
+          "minimum": 1
+         }
+        }
+       }
+      }
      }
     }
    }

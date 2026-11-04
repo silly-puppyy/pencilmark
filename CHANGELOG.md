@@ -23,7 +23,9 @@
   (`notes_small`), every other cell written only when a step uses it (`notes_lazy`); the marks are counted on each
   step's `notes_written`. On lisudoku replays its marked cells overlap people's far better on medium puzzles (Jaccard
   0.65 vs 0.39 for full notes). Routes, prices and the card are unchanged (`notes_lazy_view` false; the card prices
-  full notes: score `card_notes`).
+  full notes: score `card_notes`). The card's `trace` gains a `marks` layer per position (grade-card.md 6): the corner
+  position notes and centre candidate lists such a solver would have written, so a viewer can draw them instead of
+  the full candidates.
 - New engine param, off by default: `digit_cont` (favour the previous placement's digit).
 - Shading (format: `"type": "yin_yang"`, optional given `shaded` / `unshaded` cells; whole-board-rules 6.19): shaded
   and unshaded cells each orthogonally connected, no 2x2 of one colour. Readers, writers, `fingerprint` and

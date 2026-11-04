@@ -90,3 +90,14 @@ def test_notes_live_writes_position_notes_only():
     b, _ = CB.solve(p, dict(P, notes_live=True))
     assert [(s.move.place, s.move.d) for s in a] == [(s.move.place, s.move.d) for s in b]  # same route and prices
     assert sum(s.notes_written for s in b) > sum(s.notes_written for s in a)  # notes written along the way
+
+
+def test_trace_marks_layer():
+    import pencilmark
+
+    card = pencilmark.rate(GIVENS, fields=["steps", "trace"])
+    tr = card["trace"]
+    assert all("marks" in t for t in tr) and tr[0]["marks"]  # position notes from the start
+    for t in tr:
+        for cell, m in t["marks"].items():
+            assert set(m.get("corner", [])) | set(m.get("centre", [])) <= set(t["candidates"][cell])

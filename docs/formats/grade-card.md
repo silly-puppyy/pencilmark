@@ -177,6 +177,11 @@ written as the puzzle file writes a board:
 
 - `digits`: one entry per cell in reading order, the placed digit or 0 (givens and digits placed so far).
 - `candidates`: every empty cell's remaining candidates, ascending, keys in reading order.
+- `marks` (optional): what a casual solver would have written down at this position, for the cells that carry marks:
+  `corner` = position notes (a digit with 2 or 3 places left in its box, noted once, from the start), `centre` =
+  candidate lists (written when the route first needs notes, in the cells with at most 3 candidates, then in each cell
+  a step uses). Marks always show a subset of the cell's `candidates`; a viewer may draw them instead of the full
+  candidates. Present when the grader's note model is on (the default).
 
 The first position is each empty cell's possible digits less those its peers' givens rule out; a step's placement
 then clears its digit from the cell's peers and its eliminations remove candidates. Steps that only add a pencil mark
