@@ -308,7 +308,8 @@ struct Params {
     int snyder_max = 2;  ///< params snyder_max: Snyder marks for digits confined to <= 2 (default) or <= 3 cells of a box
     bool notes_live = false;  ///< params notes_live: position notes written as you go (casual classic solvers, lisudoku): after
                               ///< every step, each (box, digit) whose places by hatching first number 2..snyder_max is
-                              ///< noted once; the marks go to the step's notes_written (time model), the card is unchanged
+                              ///< noted once; the marks go to the step's notes_written (read by scoring.work_time, not by
+                              ///< the card or the time quote)
     int case_light = 0;  ///< params case_light: CaseAnalysis cases also run light techniques (intersections, pairs)
     int case_rounds = 0, case_cands = 4;  ///< params case_rounds (default 0 = off until a refit prices descriptors; 3 = on), case_cands
     bool dc_lines = true;  ///< params dc_lines: DigitCount uses line rules' must-contain digits
