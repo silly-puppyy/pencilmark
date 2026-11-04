@@ -159,6 +159,20 @@ def _r_at(mp, score):
     return _R_AT[key]
 
 
+def _spot_params(P, cfg):
+    """score route_samples / route_spot: the price params for each sampled spotting route (seeds 1..K): route choice by
+    the spotting score fitted on casual replays (price, technique, same box / row / column / digit as the previous
+    placement, distance), sampled with probability ~ exp(score); locality and digit_cont off"""
+    sp = cfg.get("route_spot") or {}
+    fam = [float(sp.get("other", 0.0))] * (max(S.TECH_NAMES) + 1)
+    code = {nm: t for t, nm in S.TECH_NAMES.items()}
+    for nm, x in (sp.get("fam") or {}).items():
+        if nm in code:
+            fam[code[nm]] = float(x)
+    base = dict(P, locality=0.0, digit_cont=0.0, spot_w=list(sp.get("w") or []), spot_fam=fam)
+    return [dict(base, spot_seed=k) for k in range(1, int(cfg["route_samples"]) + 1)]
+
+
 def score_parts(p, model=None):
     """(card score, L1 = log of the step-value sum) for one puzzle; None if the engine must guess. The score is priced
     with the model's difficulty prices, L1 (the effort the time model reads) with its route prices; both on the
@@ -170,13 +184,21 @@ def score_parts(p, model=None):
     if not pth_time:
         return None
     pth = _route(p, model.price, w) or pth_time
-    v = sorted(
-        (math.exp(cfg["beta"] * math.log(d) + cfg.get("delta", {}).get(nm, 0.0) + w * e) * f for nm, d, f, e in pth),
-        reverse=True,
-    )
+
+    def values(path):
+        return sorted(
+            (math.exp(cfg["beta"] * math.log(d) + cfg.get("delta", {}).get(nm, 0.0) + w * e) * f for nm, d, f, e in path),
+            reverse=True,
+        )
+
+    v = values(pth)
+    tot = sum(v)
+    if cfg.get("route_samples"):  # expected effort of a human-like solver: mean step sum over sampled spotting routes
+        sums = [sum(values(_route(p, P_k, w) or pth)) for P_k in _spot_params(model.price, cfg)]
+        tot = sum(sums) / len(sums)
     if cfg.get("stat") == "per_cell":  # average effort to discover one cell = step sum / empty cells
         empty = max(p.N - len(p.givens), 1)
-        lpc = math.log(max(sum(v) / empty, 1e-9))
+        lpc = math.log(max(tot / empty, 1e-9))
         if cfg.get("refute_w"):  # technique-free search effort (refute.cpp): + w * log1p(sum log(C/R) / empty cells)
             lpc += cfg["refute_w"] * refute_lr_cell(p)
         r = 2 * lpc / math.log(5)

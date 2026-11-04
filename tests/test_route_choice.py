@@ -39,3 +39,23 @@ def test_spot_sampling_is_reproducible():
     assert a == b
     assert [x[0] for x in a] != [x[0] for x in c]
     assert sorted(x[0] for x in a if x[0]) == sorted(x[0] for x in c if x[0])  # same placements, other order
+
+
+def test_route_samples_score_switch():
+    from pencilmark import card_score as CS
+
+    p = api.load(api.from_string(GIVENS))
+    m = GM.default()
+    saved = dict(m.score)
+    try:
+        base = CS.score_parts(p, m)
+        m.score["route_samples"] = 0
+        assert CS.score_parts(p, m) == base  # off: the canonical route
+        m.score.update(route_samples=3, route_spot={"w": [-1.2, 0.89, 0.85, 0.74, 1.64, -0.88], "other": -0.37,
+                                                     "fam": {"NakedSingle(direct)": 1.36}})
+        a, b = CS.score_parts(p, m), CS.score_parts(p, m)
+        assert a == b and a[0] != base[0]  # reproducible, and the expected effort over sampled routes differs
+        assert a[1] == base[1]  # the time model's effort is unchanged
+    finally:
+        m.score.clear()
+        m.score.update(saved)
