@@ -283,6 +283,14 @@ struct Params {
     std::vector<double> theta;  ///< meta_theta (empty = per-technique B path)
     std::vector<double> theta_full;  ///< params meta_theta_full: 18-19 weights pricing every technique (empty = off)
     double locality = 0.0;  ///< params locality: route choice by price x exp(locality x log2(1 + distance to the previous step)); 0 = off
+    double digit_cont = 0.0;  ///< params digit_cont: route choice x exp(-digit_cont) for a move placing the previous placement's digit (casual solvers chain a digit; lisudoku replays); 0 = off
+    std::vector<double> spot_w;    ///< params spot_w: route choice by a spotting score (fitted on casual replays): argmax of
+                                   ///< w0 d + w1 same box + w2 same row + w3 same col + w4 same digit (as the previous
+                                   ///< placement) + w5 distance / 8 + spot_fam[tech]; empty = off (the price key decides)
+    std::vector<double> spot_fam;  ///< params spot_fam: per-technique spotting bonus (index = technique code)
+    long long spot_seed = 0;       ///< params spot_seed: 0 = argmax of the spotting score; else the choice is SAMPLED with
+                                   ///< probability ~ exp(score) (a human picks what they happen to spot), deterministic
+                                   ///< per (seed, step, state)
     double theta_enum = 0.0;  ///< params meta_theta_enum (D5): weight on Move::enumv inside the meta_theta_full price
     std::vector<double> tech_obsc;       ///< params tech_obscurity: per-technique log-price offset = cultural familiarity /
                                          /// obscurity (a property of the technique, measured from human outcomes); indexed by tech code
@@ -808,6 +816,8 @@ private:
     };
     std::unordered_map<GacKey, GacCache, GacKeyHash> gcache;
     double loc_r = -1.0, loc_c = -1.0;  ///< position (board coords) of the previous route step, for params locality
+    int loc_d = 0;  ///< digit of the previous route placement, for params digit_cont
+    int loc_pc = -1;  ///< cell of the previous route placement, for params spot_w
     /// consistency result (optionally with one "v somewhere in mask" requirement),
     /// cached while the constraint's domains are unchanged
     const GacOut& gac_cached(const NConstraint& k, const uint32_t* dom, int req_v = 0, uint64_t req_mask = 0);

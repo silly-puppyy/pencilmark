@@ -105,6 +105,10 @@ static Params params_from(const py::dict& P) {
         pr.theta_full = P["meta_theta_full"].cast<std::vector<double>>();
     if (P.contains("meta_theta_enum") && !P["meta_theta_enum"].is_none()) pr.theta_enum = P["meta_theta_enum"].cast<double>();
     if (P.contains("locality") && !P["locality"].is_none()) pr.locality = P["locality"].cast<double>();
+    if (P.contains("digit_cont") && !P["digit_cont"].is_none()) pr.digit_cont = P["digit_cont"].cast<double>();
+    if (P.contains("spot_w") && !P["spot_w"].is_none()) pr.spot_w = P["spot_w"].cast<std::vector<double>>();
+    if (P.contains("spot_fam") && !P["spot_fam"].is_none()) pr.spot_fam = P["spot_fam"].cast<std::vector<double>>();
+    if (P.contains("spot_seed") && !P["spot_seed"].is_none()) pr.spot_seed = P["spot_seed"].cast<long long>();
     if (P.contains("meta_theta_interact") && !P["meta_theta_interact"].is_none())
         pr.theta_interact = P["meta_theta_interact"].cast<std::vector<double>>();
     if (P.contains("tech_obscurity") && !P["tech_obscurity"].is_none())

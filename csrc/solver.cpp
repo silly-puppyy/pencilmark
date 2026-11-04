@@ -1422,17 +1422,61 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
             if (!n) return false;
             r = sr / n; c = sc / n; return true;
         };
-        if (P.locality > 0 && loc_r >= 0) {
+        // params digit_cont: a casual solver chains the digit just placed (lisudoku replays: same digit as the last
+        // placement is the strongest choice feature); route choice x exp(-digit_cont) for a move placing it
+        if ((P.locality > 0 && loc_r >= 0) || (P.digit_cont > 0 && loc_d > 0)) {
             double bestv = 0; int bi = -1;
             for (size_t i = 0; i < buf.moves.size(); ++i) {
                 double r, c, f = 1.0;
-                if (mpos(buf.moves[i], r, c)) f = std::exp(P.locality * std::log2(1.0 + std::max(std::fabs(r - loc_r), std::fabs(c - loc_c))));
+                if (P.locality > 0 && loc_r >= 0 && mpos(buf.moves[i], r, c))
+                    f = std::exp(P.locality * std::log2(1.0 + std::max(std::fabs(r - loc_r), std::fabs(c - loc_c))));
+                if (P.digit_cont > 0 && loc_d > 0 && buf.moves[i].pc >= 0 && buf.moves[i].pv == loc_d) f *= std::exp(-P.digit_cont);
                 const double v = buf.moves[i].d * f;
                 if (bi < 0 || v < bestv - 1e-12 || ((int)i == best && std::fabs(v - bestv) <= 1e-12)) { bestv = v; bi = (int)i; }
             }
             if (bi >= 0) best = bi;
         }
+        // params spot_w: the human's choice among the tier's moves by a spotting score (price, technique, attention to
+        // the previous placement's house and digit); the recorded step price is unchanged
+        if (P.spot_w.size() >= 6) {
+            const auto& w = P.spot_w;
+            double bu = 0; int bi = -1;
+            std::vector<double> us(buf.moves.size(), 0.0);
+            for (size_t i = 0; i < buf.moves.size(); ++i) {
+                const Move& m = buf.moves[i];
+                double u = w[0] * m.d + (m.tech >= 0 && m.tech < (int)P.spot_fam.size() ? P.spot_fam[m.tech] : 0.0);
+                if (loc_pc >= 0 && m.pc >= 0) {  // attention: the placed cell vs the previous placement
+                    const double r = p.coords[m.pc].first, c = p.coords[m.pc].second;
+                    const double r0 = p.coords[loc_pc].first, c0 = p.coords[loc_pc].second;
+                    bool same_box = false;
+                    for (int g : p.groups_of[m.pc])
+                        if (p.group_line[g] == 2)
+                            for (int q : p.groups[g].cells) same_box |= q == loc_pc;
+                    u += w[1] * (same_box ? 1.0 : 0.0) + w[2] * (r == r0 ? 1.0 : 0.0) + w[3] * (c == c0 ? 1.0 : 0.0) +
+                         w[5] * std::hypot(r - r0, c - c0) / 8.0;
+                }
+                if (loc_d > 0 && m.pc >= 0 && m.pv == loc_d) u += w[4];
+                us[i] = u;
+                if (bi < 0 || u > bu + 1e-12 || ((int)i == best && std::fabs(u - bu) <= 1e-12)) { bu = u; bi = (int)i; }
+            }
+            if (bi >= 0) best = bi;
+            if (P.spot_seed != 0 && buf.moves.size() > 1) {  // sample: P(i) ~ exp(u_i); splitmix64 of (seed, step, state)
+                uint64_t z = (uint64_t)P.spot_seed * 0x9E3779B97F4A7C15ull + (uint64_t)out.steps.size() * 0xBF58476D1CE4E5B9ull;
+                for (const Move& m : buf.moves) z ^= (uint64_t)(m.pc + 2) * 0x94D049BB133111EBull + (uint64_t)m.pv + (z << 6) + (z >> 2);
+                z += 0x9E3779B97F4A7C15ull; z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ull; z = (z ^ (z >> 27)) * 0x94D049BB133111EBull;
+                z ^= z >> 31;
+                const double x = (double)(z >> 11) / 9007199254740992.0;  // uniform [0, 1)
+                double tot = 0;
+                for (size_t i = 0; i < us.size(); ++i) tot += std::exp(us[i] - bu);
+                double acc = 0;
+                for (size_t i = 0; i < us.size(); ++i) {
+                    acc += std::exp(us[i] - bu) / tot;
+                    if (x < acc) { best = (int)i; break; }
+                }
+            }
+        }
         { double r, c; if (mpos(buf.moves[best], r, c)) { loc_r = r; loc_c = c; } }
+        if (buf.moves[best].pc >= 0) { loc_d = buf.moves[best].pv; loc_pc = buf.moves[best].pc; }
         if (opt.all_tiers) {  // audit: append every other family's moves (not chosen)
             const size_t n0 = buf.moves.size();
             std::set<std::vector<uint32_t>> have;
