@@ -22,10 +22,10 @@ $ cat puzzles.txt
 
 ```
 $ pencilmark rate puzzles.txt -j 4
-Very Easy	2.2	4.5	Hidden Single
-Easy	3.9	5.2	Naked Single
+Very Easy	2.9	4.5	Hidden Single
+Easy	4.3	5.2	Naked Single
 Hard	5.7	10.7	X-Wing
-Expert	6.9	13.7	Alternating Inference Chain
+Expert	6.5	13.7	Alternating Inference Chain
 ```
 
 The columns are band, difficulty, time in minutes and the hardest technique.
@@ -36,10 +36,10 @@ The columns are band, difficulty, time in minutes and the hardest technique.
 
 ```
 $ pencilmark rate puzzles.txt -j 4 --format '%i,%b,%d,%m,%c'
-1,Very Easy,2.2,4.5,
-2,Easy,3.9,5.2,NSI
-3,Hard,5.9,10.7,NSI NPR/HPR XWG/KTE/SCL/MCH
-4,Expert,6.9,13.7,NSI PPRx2 HPR/NQDx2 KTE/SKY/MCH AIC/ALS/WIF
+1,Very Easy,2.9,4.5,
+2,Easy,4.3,5.2,NSI
+3,Hard,5.7,10.7,NSI NPR/HPR XWG/KTE/SCL/MCH
+4,Expert,6.5,13.7,NSI PPRx2 HPR/NQDx2 KTE/SKY/MCH AIC/ALS/WIF
 ```
 
 [Usage](../../start/usage.mdx#command-line) lists every `%` field.

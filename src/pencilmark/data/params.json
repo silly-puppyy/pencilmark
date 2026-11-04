@@ -158,7 +158,20 @@
   0.11081211268901825
  ],
  "dc_lines": 1,
- "locality": 0.4,
+ "locality": 0.0,
+ "digit_cont": 0.0,
+ "spot_w": [-1.2, 0.89, 0.85, 0.74, 1.64, -0.88],
+ "spot_fam": {
+  "other": -0.37,
+  "FullHouse": 0.06,
+  "HiddenSingle(direct)": 0.28,
+  "NakedSingle(direct)": 1.36,
+  "HiddenSingle(notes)": -0.06,
+  "NakedSingle(notes)": 0.61,
+  "MentalSingle(direct)": -0.27,
+  "MentalNotesSingle": -1.61
+ },
+ "spot_seed": 1,
  "case_rounds": 3,
  "case_light": 1
 }

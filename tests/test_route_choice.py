@@ -1,5 +1,6 @@
-"""Human route choice (params digit_cont, spot_w / spot_fam / spot_seed, experiment): off by default, the
-recorded step prices never change, sampling is reproducible per seed."""
+"""Human route choice (params digit_cont, spot_w / spot_fam / spot_seed): the spotting chooser (closeness model) is the
+default route (the trace); the card's numbers read the single price-first route (score card_route); the recorded step
+prices never change; sampling is reproducible per seed; route_samples (opt-in) averages sampled routes."""
 
 from pencilmark import cbackend as CB
 from pencilmark import grader_model as GM
@@ -23,15 +24,17 @@ def _spot(seed):
             "spot_seed": seed}
 
 
-def test_defaults_leave_the_route_alone():
-    assert _route() == _route(digit_cont=0.0, spot_w=[])
+def test_closeness_model_is_the_default_route():
+    assert GM.default().route.get("spot_w") and GM.default().route.get("spot_seed") == 1
+    assert _route() == _route(spot_seed=1)
+    assert [x[0] for x in _route()] != [x[0] for x in _route(spot_w=[], locality=0.4)]  # the old price-first route
 
 
 def test_digit_cont_chains_the_digit():
     def chained(r):
         return sum(a[0][1] == b[0][1] for a, b in zip(r, r[1:]) if a[0] and b[0])
 
-    assert chained(_route(locality=0, digit_cont=0.5)) > chained(_route(locality=0))
+    assert chained(_route(spot_w=[], locality=0, digit_cont=0.5)) > chained(_route(spot_w=[], locality=0))
 
 
 def test_spot_sampling_is_reproducible():
@@ -41,21 +44,20 @@ def test_spot_sampling_is_reproducible():
     assert sorted(x[0] for x in a if x[0]) == sorted(x[0] for x in c if x[0])  # same placements, other order
 
 
-def test_route_samples_score_switch():
+def test_card_reads_one_price_first_route():
     from pencilmark import card_score as CS
 
     p = api.load(api.from_string(GIVENS))
     m = GM.default()
     saved = dict(m.score)
     try:
+        assert not m.score.get("route_samples") and m.score["card_route"] == {"spot_w": [], "locality": 0.4}
         base = CS.score_parts(p, m)
-        m.score["route_samples"] = 0
-        assert CS.score_parts(p, m) == base  # off: the canonical route
-        m.score.update(route_samples=3, route_spot={"w": [-1.2, 0.89, 0.85, 0.74, 1.64, -0.88], "other": -0.37,
-                                                     "fam": {"NakedSingle(direct)": 1.36}})
+        m.score["card_route"] = {}
+        assert CS.score_parts(p, m) != base  # without card_route the card would read the human route
+        m.score.update(card_route=saved["card_route"], route_samples=3)
         a, b = CS.score_parts(p, m), CS.score_parts(p, m)
-        assert a == b and a[0] != base[0]  # reproducible, and the expected effort over sampled routes differs
-        assert a[1] == base[1]  # the time model's effort is unchanged
+        assert a == b and a[0] != base[0] and a[1] == base[1]  # opt-in average: reproducible, difficulty only
     finally:
         m.score.clear()
         m.score.update(saved)

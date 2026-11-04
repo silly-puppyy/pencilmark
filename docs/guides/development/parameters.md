@@ -138,7 +138,11 @@ changing a shipped value is a deliberate commit with a golden rewrite.
 | `route.meta_theta_full` | list of 18 | Structural step-price weights (18 features), fitted on human solve times. |
 | `route.meta_theta_interact` | 0.02882, 0.2858, 0.1108 | Depth interaction weights of the step price (D6). |
 | `route.dc_lines` | 1 | Engine parameters (data/params.json): the step-price model and the scan / note costs, fitted on human solve times; they also price the time effort and the band route's tie-breaks. |
-| `route.locality` | 0.4 | ″ |
+| `route.locality` | 0 | ″ |
+| `route.digit_cont` | 0 | ″ |
+| `route.spot_w` | list of 6 | ″ |
+| `route.spot_fam` | list of 114 | ″ |
+| `route.spot_seed` | 1 | ″ |
 | `route.case_rounds` | 3 | ″ |
 | `route.case_light` | 1 | ″ |
 
@@ -159,6 +163,9 @@ changing a shipped value is a deliberate commit with a golden rewrite.
 | `score.stat` | per_cell | How step values combine: the average per empty cell. |
 | `score.beta_time` | 3.807 | The same exponent for the time effort (time fit). |
 | `score.refute_w` | 4 | Weight of the technique-free search effort. |
+| `score.route_samples` | 0 | Card-score configuration (data/card_score.json). |
+| `score.card_route.spot_w` |  | ″ |
+| `score.card_route.locality` | 0.4 | ″ |
 | `score.map.form` | A * w * softplus((r - r0) / w) | The smooth difficulty map: softplus slope A, knee r0 and width w; below 2 a gentler square-root rule. |
 | `score.map.A` | 0.6895 | ″ |
 | `score.map.r0` | 0.5497 | ″ |

@@ -4,6 +4,7 @@ Parameters: the grader model (grader_model.py): price (difficulty), route (time 
 """
 
 import math
+import os
 
 from . import cbackend as CB
 from . import grader_model as GM
@@ -12,6 +13,9 @@ from .scoring import MENTAL
 from .scoring import Scorer as _Scorer
 
 dis = set(MENTAL)  # the first solve leaves out the moves worked out in the head
+# score route_samples: the sampled routes run on threads (the engine releases the GIL; its listing caches are per
+# thread); None = min(routes, CPU count). rate_many's worker processes set 1: there the processes already fill the cores.
+ROUTE_THREADS = None
 
 
 def steps(p, P):
@@ -70,7 +74,7 @@ def refute_lr_cell(p):
         return 0.0
     model = GM.default()
     # rounds: independent of cell order
-    route = dict(model.route, refute_rounds=int(model.score.get("refute_rounds", 0)))
+    route = dict(model.route, **(model.score.get("card_route") or {}), refute_rounds=int(model.score.get("refute_rounds", 0)))
     pr = _CB._C.refute_profile(_CB.to_cpuzzle(p), list(p.givens.items()), route, [int(x) for x in bs[0]], 400)
     s = sum((math.log(C / R) if R else math.log(max(C, 1)) + 2) for C, R, d, dp, rel in pr)
     return math.log1p(s / max(p.N - len(p.givens), 1))
@@ -160,16 +164,16 @@ def _r_at(mp, score):
 
 
 def _spot_params(P, cfg):
-    """score route_samples / route_spot: the price params for each sampled spotting route (seeds 1..K): route choice by
-    the spotting score fitted on casual replays (price, technique, same box / row / column / digit as the previous
-    placement, distance), sampled with probability ~ exp(score); locality and digit_cont off"""
-    sp = cfg.get("route_spot") or {}
-    fam = [float(sp.get("other", 0.0))] * (max(S.TECH_NAMES) + 1)
-    code = {nm: t for t, nm in S.TECH_NAMES.items()}
-    for nm, x in (sp.get("fam") or {}).items():
-        if nm in code:
-            fam[code[nm]] = float(x)
-    base = dict(P, locality=0.0, digit_cont=0.0, spot_w=list(sp.get("w") or []), spot_fam=fam)
+    """score route_samples: the price params for each sampled spotting route (seeds 1..K): route choice by the spotting
+    score fitted on casual replays (price, technique, same box / row / column / digit as the previous placement,
+    distance), sampled with probability ~ exp(score). The engine params' own spot_w / spot_fam unless the score config
+    gives route_spot (w, fam by technique name, other)."""
+    sp = cfg.get("route_spot")
+    base = dict(P)
+    if sp:
+        fam = dict(sp.get("fam") or {}, other=sp.get("other", 0.0))
+        base.update(locality=0.0, digit_cont=0.0, spot_w=list(sp.get("w") or []),
+                    spot_fam=_Scorer(dict(P, spot_fam=fam)).p["spot_fam"])  # by name -> by technique code
     return [dict(base, spot_seed=k) for k in range(1, int(cfg["route_samples"]) + 1)]
 
 
@@ -180,10 +184,14 @@ def score_parts(p, model=None):
     model = model or GM.default()
     cfg = model.score
     w = cfg.get("enum_w", 0.0)
-    pth_time = _route(p, model.route, w)
+    # score card_route: the card's difficulty and time read the price-first route (one route: the cheapest move each
+    # step); the human closeness route (engine params spot_*) is the trace's. route_samples > 0 averages sampled routes.
+    cr = cfg.get("card_route") or {}
+    P_route, P_price = dict(model.route, **cr), dict(model.price, **cr)
+    pth_time = _route(p, P_route, w)
     if not pth_time:
         return None
-    pth = _route(p, model.price, w) or pth_time
+    pth = _route(p, P_price, w) or pth_time
 
     def values(path):
         return sorted(
@@ -194,7 +202,16 @@ def score_parts(p, model=None):
     v = values(pth)
     tot = sum(v)
     if cfg.get("route_samples"):  # expected effort of a human-like solver: mean step sum over sampled spotting routes
-        sums = [sum(values(_route(p, P_k, w) or pth)) for P_k in _spot_params(model.price, cfg)]
+        Ps = _spot_params(model.price, cfg)
+        nt = min(len(Ps), ROUTE_THREADS or os.cpu_count() or 1)
+        if nt > 1:
+            from concurrent.futures import ThreadPoolExecutor
+
+            with ThreadPoolExecutor(nt) as ex:
+                paths = list(ex.map(lambda P_k: _route(p, P_k, w), Ps))
+        else:
+            paths = [_route(p, P_k, w) for P_k in Ps]
+        sums = [sum(values(x or pth)) for x in paths]
         tot = sum(sums) / len(sums)
     if cfg.get("stat") == "per_cell":  # average effort to discover one cell = step sum / empty cells
         empty = max(p.N - len(p.givens), 1)

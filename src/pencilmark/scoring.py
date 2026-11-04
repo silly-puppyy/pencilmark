@@ -187,6 +187,14 @@ def complete_params(P):
     P["K"] = K
     for k, v in DEFAULT_PARAMS.items():
         P.setdefault(k, v)
+    sf = P.get("spot_fam")  # spotting bonuses by technique name (params files) -> the engine's list by technique code
+    if isinstance(sf, dict):
+        fam = [float(sf.get("other", 0.0))] * (max(S.TECH_NAMES) + 1)
+        code = {nm: t for t, nm in S.TECH_NAMES.items()}
+        for nm, x in sf.items():
+            if nm in code:
+                fam[code[nm]] = float(x)
+        P["spot_fam"] = fam
     # the trial family has no fitted offset yet: priced by B, not by the structural meta model (whose
     # negative cells weight would make big case splits nearly free); the refit replaces this
     P.setdefault("meta_exclude", list(TRIAL_FAMILY_META_EXCLUDE))

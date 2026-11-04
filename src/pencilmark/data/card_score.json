@@ -5,6 +5,11 @@
  "stat": "per_cell",
  "beta_time": 3.806986787524209,
  "refute_w": 4.0,
+ "route_samples": 0,
+ "card_route": {
+  "spot_w": [],
+  "locality": 0.4
+ },
  "map": {
   "form": "A * w * softplus((r - r0) / w)",
   "A": 0.6895039129238775,

@@ -255,6 +255,13 @@ def _mp_context():
     return mp.get_context("fork" if "fork" in mp.get_all_start_methods() else "spawn")
 
 
+def _one_route_thread():
+    """worker processes of rate_many: the card's sampled routes run one after another (the processes fill the cores)"""
+    from . import card_score
+
+    card_score.ROUTE_THREADS = 1
+
+
 def _rate_job(args):
     puzzle, steps, max_seconds, mode, se, fields, allow_guessing, explain, quality, alternatives = args
     try:
@@ -307,7 +314,7 @@ def rate_many(
     items = [(p, steps, max_seconds, mode, se, fields, allow_guessing, explain, quality, alternatives) for p in puzzles]
     if jobs <= 1:
         return [_rate_job(it) for it in items]
-    with _mp_context().Pool(jobs) as pool:
+    with _mp_context().Pool(jobs, initializer=_one_route_thread) as pool:
         return pool.map(_rate_job, items, chunksize=1)
 
 

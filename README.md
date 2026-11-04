@@ -40,7 +40,7 @@ Cryptic puzzles, 38 of the 53 that stayed undecided without it).
 import pencilmark
 
 card = pencilmark.rate("....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9.......")
-card["band"], card["difficulty"], card["time"]          # ('Hard', 5.9, 10.7)
+card["band"], card["difficulty"], card["time"]          # ('Hard', 5.7, 10.7)
 
 card  = pencilmark.rate(puzzle, steps=True)             # add the step-by-step solve with explanations
 cards = pencilmark.rate_many(puzzles, jobs=4)           # several puzzles in parallel, input order kept

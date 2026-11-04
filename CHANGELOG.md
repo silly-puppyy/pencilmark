@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- The solve trace follows a human route by default (computer search stays opt-in with `mode="computer"` /
+  `--computer`): each step is chosen the way people choose, by a spotting score fitted on casual classic replays (the
+  move's price, its technique, and attention to the previous placement: same digit, same box / row / column, distance),
+  sampled reproducibly (params `spot_w`, `spot_fam`, `spot_seed`). On held-out sudoku.today replays the trace's
+  step-to-step behaviour is about 4x closer to people's than before. Difficulty and time are unchanged: the card's
+  numbers read the single price-first route (score `card_route`). The band, the technique list and the publishing
+  checks follow the band route, which is now the human one: on the private golden corpus 1 of 227 bands, 15 technique
+  lists and some warnings differ.
+- Optional: score `route_samples` = K makes the difficulty the mean effort over K sampled human routes (run on threads
+  in a single rating). Dev set at K 6: fed +0.028, Wang 2024 +0.036, grandgames +0.017 within-group Spearman; it costs
+  about a third more rating time, so it is off.
+- New engine params, off by default: `digit_cont` (favour the previous placement's digit) and `notes_live` (position
+  notes as casual solvers write them, counted on each step's `notes_written`).
 - Shading (format: `"type": "yin_yang"`, optional given `shaded` / `unshaded` cells; whole-board-rules 6.19): shaded
   and unshaded cells each orthogonally connected, no 2x2 of one colour. Readers, writers, `fingerprint` and
   `describe` handle it; `solve` and `count_solutions` check it (the exhaustive search carries a colour per cell, agreeing with a
