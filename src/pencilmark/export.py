@@ -571,15 +571,20 @@ def _f_trace(c):
     from . import grader_model as GM
 
     wm = BP.written_marks(p, c.bp["steps"], pos, GM.default().route)  # what a casual solver would have on paper
+    wc = BP.written_colours(p, pos, GM.default().route)  # the identity colours an expert would have painted
 
     def marks(i):
         m = wm[i]
         return {cn(x): {k: v for k, v in (("corner", m[x][0]), ("centre", m[x][1])) if v} for x in order if x in m}
 
+    def colours(i):
+        return [dict(g, cells=[cn(x) for x in g["cells"]]) for g in wc[i]]
+
     return {
         "trace": [
             dict({"digits": [vals[x] for x in order], "candidates": {cn(x): digits(cand[x]) for x in order if not vals[x]}},
-                 **({"marks": marks(i)} if wm is not None else {}))
+                 **({"marks": marks(i)} if wm is not None else {}),
+                 **({"colours": colours(i)} if wc is not None else {}))
             for i, (vals, cand) in enumerate(pos)
         ]
     }

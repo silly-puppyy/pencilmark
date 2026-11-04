@@ -182,6 +182,14 @@ written as the puzzle file writes a board:
   candidate lists (written when the route first needs notes, in the cells with at most 3 candidates, then in each cell
   a step uses). Marks always show a subset of the cell's `candidates`; a viewer may draw them instead of the full
   candidates. Present when the grader's note model is on (the default).
+- `colours` (optional): the identity colours an expert would have painted at this position, as a list of
+  `{"colour": "green", "cells": ["r3c7", …], "digits": [7, 8], "opposite": "purple"}`. Every cell of one colour holds
+  the same digit, one of `digits`; the `opposite` colour holds the other one (which is which is still open). Colours
+  start where two cells of one house have exactly the same two candidates and are tracked further: in a house without
+  the colour, the one cell left that can hold it joins it; cells a palindrome or clone rule makes equal share it. A
+  pair seen only in its two starting cells is left out (the candidates already show it), and at most three colour
+  pairs are listed, the largest. A colour keeps its name while it lasts. Present when the grader's colour model is on
+  (the default).
 
 The first position is each empty cell's possible digits less those its peers' givens rule out; a step's placement
 then clears its digit from the cell's peers and its eliminations remove candidates. Steps that only add a pencil mark

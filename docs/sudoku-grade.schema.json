@@ -442,6 +442,42 @@
         }
        }
       }
+     },
+     "colours": {
+      "type": "array",
+      "description": "identity colours an expert would have painted (grade-card.md 6): each colour's cells hold one and the same digit, one of digits; the opposite colour holds the other digit of the pair",
+      "items": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "colour",
+        "cells",
+        "digits",
+        "opposite"
+       ],
+       "properties": {
+        "colour": {
+         "type": "string"
+        },
+        "cells": {
+         "type": "array",
+         "items": {
+          "type": "string",
+          "pattern": "^r[0-9]+c[0-9]+$"
+         }
+        },
+        "digits": {
+         "type": "array",
+         "items": {
+          "type": "integer",
+          "minimum": 1
+         }
+        },
+        "opposite": {
+         "type": "string"
+        }
+       }
+      }
      }
     }
    }

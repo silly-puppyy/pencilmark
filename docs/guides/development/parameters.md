@@ -147,6 +147,7 @@ changing a shipped value is a deliberate commit with a golden rewrite.
 | `route.notes_lazy` | True | ″ |
 | `route.notes_lazy_view` | False | ″ |
 | `route.notes_small` | 3 | ″ |
+| `route.notes_colours` | True | ″ |
 | `route.snyder_max` | 3 | ″ |
 | `route.case_rounds` | 3 | ″ |
 | `route.case_light` | 1 | ″ |

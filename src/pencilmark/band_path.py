@@ -1059,6 +1059,92 @@ def written_marks(p, steps, pos, P):
     return res
 
 
+MAX_COLOUR_PAIRS = 3
+COLOUR_PAIRS = (("green", "purple"), ("blue", "yellow"), ("orange", "cyan"), ("pink", "grey"), ("red", "brown"))
+
+
+def written_colours(p, pos, P):
+    """the identity colours an expert would have painted at each position (pos = positions(p, steps); params
+    notes_colours): pair colouring as hosts do it ("colour the sevens and nines against each other", CtC solves):
+    for a digit pair {a, b}, the cells whose candidates are exactly {a, b}; two of them in one house hold different
+    digits, so they take opposite colours of a colour pair (which colour is a and which b is still open). Each colour
+    stands for one unknown digit and is tracked further: in a complete house without it, the single open cell that
+    can hold one of its digits and sees none of its cells joins it; cells an equality rule joins (palindromes,
+    clones) share it. A pair coloured only in its two seed cells is left out (the centre marks show a naked pair). A
+    colour pair keeps its names while its first cell stays in it; at most MAX_COLOUR_PAIRS pairs, the largest.
+    -> [[{"colour", "cells", "digits", "opposite"}]] per position (cell indices); None when the model is off."""
+    if not P.get("notes_colours"):
+        return None
+    houses = [g.cells for g in p.groups if g.complete and len(g.cells) == p.D]  # holds every digit exactly once
+    eq = {}
+    for r in getattr(p, "relations", ()):
+        if r[0] == "eq":
+            eq.setdefault(r[1], set()).add(r[2])
+            eq.setdefault(r[2], set()).add(r[1])
+    names = {}  # (pair mask, first cell) -> colour pair, kept while it lasts
+
+    def grow(col, m, vals, cand):
+        changed = True
+        while changed:
+            changed = False
+            for x in list(col):
+                for y in eq.get(x, ()):
+                    if y not in col and not vals[y]:
+                        col.add(y)
+                        changed = True
+            for h in houses:
+                if any(x in col for x in h) or any(vals[x] and (1 << (vals[x] - 1)) & m for x in h):
+                    continue  # the colour is already here, or its digit may be one placed here
+                opts = [x for x in h if not vals[x] and cand[x] & m and not any(y in col for y in p.peer_list[x])]
+                if len(opts) == 1:
+                    col.add(opts[0])
+                    changed = True
+
+    out = []
+    for vals, cand in pos:
+        pairs = {}
+        for c in range(p.N):
+            if not vals[c] and bin(cand[c]).count("1") == 2:
+                pairs.setdefault(cand[c], []).append(c)
+        layer = []
+        for m, cells in sorted(pairs.items()):
+            adj = {x: [y for y in cells if y != x and y in p.peer_list[x]] for x in cells}
+            side = {}
+            for st in cells:
+                if st in side or not adj[st]:
+                    continue
+                side[st], comp, todo = 0, [st], [st]
+                while todo:
+                    x = todo.pop()
+                    for y in adj[x]:
+                        if y not in side:
+                            side[y] = 1 - side[x]
+                            comp.append(y)
+                            todo.append(y)
+                cols = []
+                for s in (0, 1):
+                    col = {x for x in comp if side[x] == (s if side[min(comp)] == 0 else 1 - s)}
+                    grow(col, m, vals, cand)
+                    cols.append(col)
+                if len(cols[0]) + len(cols[1]) < 3:
+                    continue  # a bare naked pair: the centre marks already show it, nobody colours it
+                layer.append(((m, min(comp)), m, cols))
+        # hosts keep about two colours on the board, rarely more than four to six (CtC action logs): the largest pairs
+        layer.sort(key=lambda e: -(len(e[2][0]) + len(e[2][1])))
+        taken, shown = set(), []
+        for key, m, cols in layer[:MAX_COLOUR_PAIRS]:
+            pair = names.get(key)
+            if pair is None or pair in taken:  # a colour keeps its names unless another pair on the board has them
+                pair = next(x for x in COLOUR_PAIRS if x not in taken)
+                names[key] = pair
+            taken.add(pair)
+            digits = [d for d in range(1, p.D + 1) if m >> (d - 1) & 1]
+            shown += [{"colour": pair[s], "cells": sorted(cols[s], key=lambda x: p.coords[x]), "digits": digits,
+                       "opposite": pair[1 - s]} for s in (0, 1)]
+        out.append(shown)
+    return out
+
+
 def positions(p, steps):
     """the positions of a route: before its first step, then after each step -> [(vals, cand)] of len(steps) + 1"""
     vals, cand = start_position(p)

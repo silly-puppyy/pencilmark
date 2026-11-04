@@ -26,6 +26,13 @@
   full notes: score `card_notes`). The card's `trace` gains a `marks` layer per position (grade-card.md 6): the corner
   position notes and centre candidate lists such a solver would have written, so a viewer can draw them instead of
   the full candidates.
+- Colour model of expert solvers, on by default (`notes_colours`): the card's `trace` gains a `colours` layer per
+  position (grade-card.md 6), the identity colours a host would have painted: pair colouring ("colour the sevens and
+  nines against each other": two cells of a house with the same two candidates take opposite colours) and each
+  colour tracked through houses (one cell left that can hold it) and equality rules, at most three colour pairs, the
+  largest. On Cracking the Cryptic solves it covers more of the hosts' own identity colours at the moment they paint
+  them (0.45 vs 0.31 from the digits placed alone, 158 groups in 83 videos) while drawing about as many colours at
+  once as the hosts keep (about two). Bookkeeping only: routes, prices and the card are unchanged.
 - New engine param, off by default: `digit_cont` (favour the previous placement's digit).
 - Shading (format: `"type": "yin_yang"`, optional given `shaded` / `unshaded` cells; whole-board-rules 6.19): shaded
   and unshaded cells each orthogonally connected, no 2x2 of one colour. Readers, writers, `fingerprint` and
