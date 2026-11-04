@@ -109,6 +109,7 @@ static Params params_from(const py::dict& P) {
     if (P.contains("spot_w") && !P["spot_w"].is_none()) pr.spot_w = P["spot_w"].cast<std::vector<double>>();
     if (P.contains("spot_fam") && !P["spot_fam"].is_none()) pr.spot_fam = P["spot_fam"].cast<std::vector<double>>();
     if (P.contains("spot_seed") && !P["spot_seed"].is_none()) pr.spot_seed = P["spot_seed"].cast<long long>();
+    if (P.contains("notes_live") && !P["notes_live"].is_none()) pr.notes_live = P["notes_live"].cast<bool>();
     if (P.contains("meta_theta_interact") && !P["meta_theta_interact"].is_none())
         pr.theta_interact = P["meta_theta_interact"].cast<std::vector<double>>();
     if (P.contains("tech_obscurity") && !P["tech_obscurity"].is_none())

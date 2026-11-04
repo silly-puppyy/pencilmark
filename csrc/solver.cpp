@@ -1611,12 +1611,43 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
         }
         if (id_on()) id_normalize();  // a placement may free a class
         st.erasures = mode == 1 ? erasures : 0;
+        if (P.notes_live) st.notes_written += live_notes();
         out.steps.push_back(st);
     }
     bool solved = true;
     for (int c = 0; c < p.N; ++c)
         if (!vals[c]) solved = false;
     out.solved = solved && grid_valid();  // a filled grid must satisfy every rule
+}
+
+// params notes_live: position notes as casual classic solvers write them (lisudoku replays: 68-84% of their (box, digit)
+// notes are complete -- the digit's places left in the box by hatching -- mostly pairs, written from the start). Each
+// (box, digit) is noted once, when hatching from the placed digits first leaves 2..snyder_max places; stale notes stay.
+int Solver::live_notes() {
+    if ((int)live_noted.size() != p.G) live_noted.assign(p.G, 0u);
+    int written = 0;
+    for (int g : p.houses) {
+        if (p.group_line[g] != 2 || (int)p.groups[g].cells.size() != p.D) continue;
+        uint32_t present = 0;
+        for (int c : p.groups[g].cells)
+            if (vals[c]) present |= bit(vals[c]);
+        for (int d = 1; d <= p.D; ++d) {
+            if ((present | live_noted[g]) & bit(d)) continue;
+            int n = 0;
+            for (int c : p.groups[g].cells) {
+                if (vals[c]) continue;
+                bool seen = false;
+                for (int q : p.peer_list[c])
+                    if (vals[q] == d) { seen = true; break; }
+                if (!seen) ++n;
+            }
+            if (n >= 2 && n <= P.snyder_max) {
+                live_noted[g] |= bit(d);
+                written += n;
+            }
+        }
+    }
+    return written;
 }
 
 bool Solver::grid_valid() const {

@@ -59,3 +59,12 @@ def test_route_samples_score_switch():
     finally:
         m.score.clear()
         m.score.update(saved)
+
+
+def test_notes_live_writes_position_notes_only():
+    p = api.load(api.from_string(GIVENS))
+    P = dict(GM.default().price, snyder_max=3)
+    a, _ = CB.solve(p, P)
+    b, _ = CB.solve(p, dict(P, notes_live=True))
+    assert [(s.move.place, s.move.d) for s in a] == [(s.move.place, s.move.d) for s in b]  # same route and prices
+    assert sum(s.notes_written for s in b) > sum(s.notes_written for s in a)  # notes written along the way

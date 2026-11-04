@@ -306,6 +306,9 @@ struct Params {
     double k_tab = 0.5;
     bool snyder = false;  ///< params notes_mode = "snyder": Snyder marks before full candidates
     int snyder_max = 2;  ///< params snyder_max: Snyder marks for digits confined to <= 2 (default) or <= 3 cells of a box
+    bool notes_live = false;  ///< params notes_live: position notes written as you go (casual classic solvers, lisudoku): after
+                              ///< every step, each (box, digit) whose places by hatching first number 2..snyder_max is
+                              ///< noted once; the marks go to the step's notes_written (time model), the card is unchanged
     int case_light = 0;  ///< params case_light: CaseAnalysis cases also run light techniques (intersections, pairs)
     int case_rounds = 0, case_cands = 4;  ///< params case_rounds (default 0 = off until a refit prices descriptors; 3 = on), case_cands
     bool dc_lines = true;  ///< params dc_lines: DigitCount uses line rules' must-contain digits
@@ -818,6 +821,8 @@ private:
     double loc_r = -1.0, loc_c = -1.0;  ///< position (board coords) of the previous route step, for params locality
     int loc_d = 0;  ///< digit of the previous route placement, for params digit_cont
     int loc_pc = -1;  ///< cell of the previous route placement, for params spot_w
+    std::vector<uint32_t> live_noted;  ///< params notes_live: digits already noted per box (group index)
+    int live_notes();  ///< params notes_live: write the position notes hatching now allows; returns the marks written
     /// consistency result (optionally with one "v somewhere in mask" requirement),
     /// cached while the constraint's domains are unchanged
     const GacOut& gac_cached(const NConstraint& k, const uint32_t* dom, int req_v = 0, uint64_t req_mask = 0);
