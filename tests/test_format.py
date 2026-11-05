@@ -978,3 +978,20 @@ def test_fog_rule_reads_writes_and_is_not_graded():
                 {"type": "fog", "lit": ["r1c1"], "reveal": "triggers", "triggers": [{"when": ["r1c1"]}]}):
         with pytest.raises(FormatError):
             pm.validate(dict(doc, rules=[doc["rules"][0], bad]))
+
+
+def test_fog_route_reveals_and_places_only_what_is_seen():
+    """pencilmark.fog.route: a classic with everything lit solves like the classic; with one box lit it still solves,
+    revealing as digits land, and every placement is correct (route raises otherwise)"""
+    import pencilmark as pm
+    from pencilmark import fog
+
+    giv = [int(c) if c != "." else 0 for c in "53..7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8..79"]
+    base = {"format": "sudoku-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9, "givens": giv,
+            "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}]}
+    every = [f"r{r}c{c}" for r in range(1, 10) for c in range(1, 10)]
+    res = fog.route(dict(base, rules=base["rules"] + [{"type": "fog", "lit": every}]))
+    assert res["solved"] and res["reveals"] == 0
+    res = fog.route(dict(base, rules=base["rules"] + [{"type": "fog", "lit": ["r1c1", "r1c2", "r1c3"]}]))
+    assert res["solved"] and res["reveals"] > 0
+    assert all(s["place"] is None or s["place"][0] for s in res["steps"])

@@ -7,6 +7,9 @@
   `triggereffect`; the f-puzzles reader from `foglight` / `fogofwar`. Fog puzzles now load, validate, solve, count and
   export with their fog; `rate` refuses them by name ("fog of war: the puzzle is solved under the fog ...") until the
   engine grades under fog. Of the Cracking the Cryptic fog puzzles, 43 now load with their fog (none before).
+- Experimental: `pencilmark.fog.route(puzzle)`, the route a solver can take under the fog (what is lit, reveals on
+  correct digits and setter triggers, no guessing); not yet used by `rate`. Hidden-content reasoning (partly seen
+  arrows, cage shapes) comes with the engine port (docs/research/fog_engine_port.md in the research repo).
 - Links are checked against the setter's embedded solution by default: a reading the solution breaks is refused with
   `VerificationError` ("the reading contradicts the setter's embedded solution"); `sources.load(...,
   check_solution=False)` skips it. On the 1,351 Cracking the Cryptic SudokuPad puzzles: 345 correct readings all
