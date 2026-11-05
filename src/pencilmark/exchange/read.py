@@ -49,6 +49,9 @@ def to_internal(doc):
     for i, r in enumerate(rules):
         if i in done:
             continue
+        if r["type"] == "fog":  # how the puzzle is played, not a constraint: kept beside the rules (puzzle_json "fog")
+            out["fog"] = {k: r[k] for k in ("lit", "reveal", "triggers") if k in r}
+            continue
         internal += ctx.rule(i, r, done)
     if internal:
         out["rules"] = internal

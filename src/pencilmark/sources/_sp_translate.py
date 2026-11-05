@@ -110,6 +110,49 @@ UNMODELLED_RULES = (
 )
 
 
+def fog_of(P, p, idx, inside):
+    """SudokuPad fog of war (docs/research/fog_mechanics.md): lit cells from FOGLIGHT cages ("foglight" or
+    "foglight: r1c1,r2c1") and puzzle.foglight; triggereffect cellvalue -> foglight effects as triggers (a puzzle with
+    triggers has no 3x3 reveal). None when the puzzle has no fog, or fog this reads does not cover."""
+    cell_re = re.compile(r"[rR](\d+)[cC](\d+)")
+    name = lambda i: f"r{p.coords[i][0] + 1}c{p.coords[i][1] + 1}"
+
+    def cells(spec):
+        out = []
+        for x in spec if isinstance(spec, list) else [spec]:
+            if x is None:
+                continue
+            if isinstance(x, str):
+                out += [(int(a) - 1, int(b) - 1) for a, b in cell_re.findall(x)]
+            elif isinstance(x, (list, tuple)) and len(x) == 2:
+                out.append((int(x[0]), int(x[1])))
+        return [name(idx(c)) for c in out if inside(c)]
+
+    lit, have = [], False
+    for cg in P.get("cages") or []:
+        v = str((cg or {}).get("value", "")) if isinstance(cg, dict) else ""
+        if v.lower() == "foglight":
+            lit += cells([tuple(x) for x in cg.get("cells") or []]); have = True
+        elif v.lower().startswith("foglight:"):
+            lit += cells(v); have = True
+    if P.get("foglight"):
+        lit += cells(P["foglight"]); have = True
+    triggers = []
+    for t in P.get("triggereffect") or []:
+        tr, ef = (t or {}).get("trigger") or {}, (t or {}).get("effect") or {}
+        if tr.get("type") != "cellvalue" or ef.get("type") != "foglight":
+            return None  # another trigger kind: not read
+        triggers.append({"when": cells(tr.get("cell")), "light": cells(ef.get("cells"))})
+        have = True
+    if not have:
+        return None
+    fog = {"lit": sorted(set(lit), key=lambda c: (int(c[1:c.index("c")]), int(c[c.index("c") + 1:])))}
+    if triggers:
+        fog["reveal"] = "triggers"
+        fog["triggers"] = [t for t in triggers if t["when"] and t["light"]]
+    return fog
+
+
 def unmodelled_rules(text, chaos_ok=False):
     """the mechanics of UNMODELLED_RULES a (lower-case) rules text names, as refusal reasons; chaos_ok: the reader
     models chaos construction itself (SudokuPad, regions to find)"""
@@ -1262,6 +1305,8 @@ def translate(sp, page_text=None, overrides=None):
     for cg in P.get("cages") or []:
         if not isinstance(cg, dict) or not cg.get("cells"):
             continue
+        if str(cg.get("value", "")).lower().startswith("foglight"):
+            continue  # fog of war's lit cells (read by fog_of())
         cs = [idx(tuple(x)) for x in cg["cells"] if inside(tuple(x))]
         v = cg.get("value")
         total = int(v) if isinstance(v, (int, float)) or (isinstance(v, str) and v.isdigit()) else None
@@ -1846,7 +1891,11 @@ def translate(sp, page_text=None, overrides=None):
     ):
         if kw in text_rules and not any(used[k] for k in ((key,) if isinstance(key, str) else key)):
             unknown.append(f"rule '{kw}'")
-    if P.get("foglight") or P.get("triggereffect"):
+    fog = fog_of(P, p, idx, inside)
+    if fog is not None:  # fog of war: kept as the puzzle's fog rule (rate refuses it until the engine grades under fog)
+        p.fog = fog
+        unknown[:] = [u for u in unknown if u != "rule 'fog'"]
+    elif P.get("foglight") or P.get("triggereffect"):
         unknown.append("fog of war")
     arrow_variants(p, rules, used, unknown)
     if re.search(

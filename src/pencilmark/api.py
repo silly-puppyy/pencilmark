@@ -203,6 +203,13 @@ def rate(
             "shading (yin-yang): the grader does not grade it yet; validate, describe, solve and count work (solve and "
             "count with OR-Tools)"
         )
+    if getattr(p, "fog", None):  # fog of war is a rule of play: a grade must follow what the fog shows (not yet in the engine)
+        from .exchange import NotSupportedError
+
+        raise NotSupportedError(
+            "fog of war: the puzzle is solved under the fog, and the fog-aware grade is not in the engine yet; validate, "
+            "describe, solve and count work"
+        )
     if getattr(p, "aux", None):  # unknowns / layers: the search solves them, no human technique reasons with them yet
         from .exchange import NotSupportedError
 

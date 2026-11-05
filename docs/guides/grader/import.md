@@ -72,7 +72,7 @@ a colour gives that rule to every line.
 A rule pencilmark cannot map exactly is refused with the list of what it could not read; nothing is dropped silently.
 The error is `pencilmark.sources.UnsupportedPuzzle`, and its message names each element, for example "pink line" or
 "generic line (meaning in rules text)": a line whose meaning only the rules text gives. A puzzle whose rules define a
-mechanic pencilmark does not model, such as equality cages, clones or fog of war, is refused by name ("rule 'equality
+mechanic pencilmark does not model, such as equality cages or clones, is refused by name ("rule 'equality
 cage'") even when its elements look like familiar ones, so its cages never grade as killer cages.
 
 When the link embeds the setter's solution (most SudokuPad and f-puzzles links do), the reading is checked against it.
@@ -111,7 +111,9 @@ Not read:
   when grading: `NoSolution` or `NotUnique`.
 - **Digit sets other than 1 to D** (0 to 8, 1 to 5 twice): refused when the embedded solution shows them. Some links
   drop the solution, and then the check cannot see it.
-- **Fog of war**: refused by name, since a fog puzzle is solved under the fog.
+- **Fog of war**: read as the puzzle's [fog rule](../../formats/rules/other.mdx#619-fog-of-war) (SudokuPad lit cells
+  and setter triggers, f-puzzles fog). The puzzle loads, solves and exports, but `rate` refuses it: a fog puzzle is
+  graded under the fog, and that grade is not in the engine yet.
 - **Several grids on one canvas**, unless the setter drew the houses explicitly.
 - **Shading, loop and path genres.**
 

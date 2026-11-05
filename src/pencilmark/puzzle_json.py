@@ -145,7 +145,7 @@ def _layout_regions(origins, D=9, bh=3, bw=3):
 
 
 # ---------------------------------------------------------------- decode
-KEYS = {"digits", "shape", "box", "layout", "numbers", "solution", "regions", "rules", "candidates", "meta", "title"}
+KEYS = {"digits", "shape", "box", "layout", "numbers", "solution", "regions", "rules", "candidates", "meta", "title", "fog"}
 KEYS |= {"hash", "v"}  # written by `pencilmark json` / by older files; ignored
 KEYS |= {"drawn"}  # how a source drew its elements (sources/_sp_style.py): the rules' styles on export
 KEYS |= {"unknowns", "layers"}  # the file's unknowns and layers (custom rules read them; the engine's aux variables)
@@ -194,6 +194,8 @@ def from_json(obj) -> M.Puzzle:
         coords = M._grid_coords(D)
         groups = []
     p = M.Puzzle(D=D, coords=coords, name=(d.get("meta") or {}).get("title") or d.get("title", "") or "")
+    if d.get("fog"):  # fog of war: {"lit": [cells], "reveal": "3x3" | "triggers", "triggers": [...]}; changes no solution
+        p.fog = dict(d["fog"])
     cid = {rc: i for i, rc in enumerate(coords)}
     width = max(c for _, c in coords) + 1
     height = max(r for r, _ in coords) + 1
@@ -581,6 +583,8 @@ def to_json(p: M.Puzzle, solution=None, meta=None) -> dict:
     )
     if solution is not None:
         out["solution"] = "".join(_sym(v) for v in solution)
+    if getattr(p, "fog", None):
+        out["fog"] = dict(p.fog)
     # graphical cell clues (parity / digit_class / exclude / lowhigh) go back out as rules; "candidates" keeps only what no clue
     # explains (Sukaku pencil marks)
     implied = [(1 << D) - 1] * len(p.domains)

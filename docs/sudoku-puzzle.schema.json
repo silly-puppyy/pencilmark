@@ -1734,6 +1734,9 @@
     },
     {
      "$ref": "#/$defs/rule_custom"
+    },
+    {
+     "$ref": "#/$defs/rule_fog"
     }
    ]
   },
@@ -1894,6 +1897,65 @@
    ],
    "additionalProperties": false,
    "description": "shading: shaded and unshaded cells each orthogonally connected, no 2x2 of one colour; optional given colours (docs/formats/rules/whole-board-rules.mdx 6.19)"
+  },
+  "rule_fog": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "fog"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "type": "object"
+    },
+    "lit": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/cell"
+     }
+    },
+    "reveal": {
+     "enum": [
+      "3x3",
+      "triggers"
+     ]
+    },
+    "triggers": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "when": {
+        "type": "array",
+        "items": {
+         "$ref": "#/$defs/cell"
+        }
+       },
+       "light": {
+        "type": "array",
+        "items": {
+         "$ref": "#/$defs/cell"
+        }
+       }
+      },
+      "required": [
+       "when",
+       "light"
+      ],
+      "additionalProperties": false
+     }
+    }
+   },
+   "required": [
+    "type",
+    "lit"
+   ],
+   "additionalProperties": false
   }
  }
 }

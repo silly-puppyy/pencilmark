@@ -59,6 +59,7 @@ RULE_KEYS = {
     "vudoku": ({"cells"}, set()),
     "table": ({"allowed"}, {"cells", "where"}),
     "negative": ({"of"}, {"color", "letter", "value", "sum", "kind", "split", "area"}),
+    "fog": ({"lit"}, {"reveal", "triggers"}),
 }
 KINDS = {
     "region": {"diagonal", "window", "disjoint", "colour", "extra", "region"},
@@ -290,6 +291,20 @@ def _validate_rule(r, B):
         un = _cells(B, r["unshaded"], "unshaded", minlen=0) if "unshaded" in r else []
         if len(set(sh)) != len(sh) or len(set(un)) != len(un) or set(sh) & set(un):
             raise FormatError("shaded / unshaded cells repeat or overlap")
+        return
+    if t == "fog":  # fog of war (6.19): cells lit at the start; a correct digit lights its 3x3, or setter triggers
+        _cells(B, r["lit"], "lit", minlen=0)
+        rv = r.get("reveal", "3x3")
+        if rv not in ("3x3", "triggers"):
+            raise FormatError(f'fog reveal must be "3x3" or "triggers", not {rv!r}')
+        trg = r.get("triggers", [])
+        if trg and rv != "triggers":
+            raise FormatError('fog triggers go with "reveal": "triggers"')
+        for x in trg:
+            if not isinstance(x, dict) or set(x) != {"when", "light"}:
+                raise FormatError('a fog trigger is {"when": [cells], "light": [cells]}')
+            _cells(B, x["when"], "when", minlen=1)
+            _cells(B, x["light"], "light", minlen=1)
         return
     if t in ("region_border", "same_region"):  # 6.3: relations between the regions of a chaos area
         cs = _cells(B, r["cells"], n=2 if t == "region_border" else None, minlen=2)

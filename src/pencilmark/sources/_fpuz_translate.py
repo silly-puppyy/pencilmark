@@ -18,7 +18,7 @@ from .. import model as M
 _log = logging.getLogger(__name__)
 
 BOX = {4: (2, 2), 5: None, 6: (2, 3), 7: None, 8: (2, 4), 9: (3, 3), 10: (2, 5), 12: (3, 4), 16: (4, 4)}
-UNSUPPORTED = ("fogofwar", "foglight", "columnindexer", "rowindexer", "boxindexer", "nabner")
+UNSUPPORTED = ("columnindexer", "rowindexer", "boxindexer", "nabner")
 COUNTING_CIRCLES = (
     r"counting circle|digit in a circle.{0,40}(appears|number of)|number in a circle.{0,60}circles|"
     r"(circled|circle) digits?.{0,40}(how many|exactly that many|number of)|"
@@ -158,8 +158,18 @@ def translate(fp, line_kinds=None, join=True):
         fp = dict(fp, ruleset=fp["ruleset"].translate(ST.TYPO_QUOTES))
     text0 = (fp.get("ruleset") or "").lower()
 
+    fog = None
+    if fp.get("foglight") or fp.get("fogofwar"):  # fog of war: foglight cells lit; each fogofwar cell lights its 3x3
+        lit = set()
+        for c in fp.get("foglight") or []:
+            lit.add(rc(c, n))
+        for c in fp.get("fogofwar") or []:
+            r0, c0 = rc(c, n)
+            lit |= {(r0 + a, c0 + b) for a in (-1, 0, 1) for b in (-1, 0, 1) if 0 <= r0 + a < n and 0 <= c0 + b < n}
+        fog = {"lit": [f"r{r + 1}c{c + 1}" for r, c in sorted(lit) if 0 <= r < n and 0 <= c < n]}
     refused = [
-        u for u in ST.unmodelled_rules(text0) if not (u == "rule 'equality cage'" and ST.EQUALITY_TEXT.search(text0))
+        u for u in ST.unmodelled_rules(text0)
+        if not (u == "rule 'equality cage'" and ST.EQUALITY_TEXT.search(text0)) and not (u == "rule 'fog'" and fog)
     ]
     outside_texts = []  # numbers left outside the grid: clues for the SudokuPad reader's outside-clue reading
     for t in fp.get("text") or []:
@@ -239,6 +249,8 @@ def translate(fp, line_kinds=None, join=True):
             "extraregion",
             "doublearrow",
             "lockout",
+            "foglight",  # fog of war: read above (p.fog)
+            "fogofwar",
         )
     ]
     if unknown:
@@ -599,6 +611,8 @@ def translate(fp, line_kinds=None, join=True):
     for k, v in fp.items():
         if v and k not in DECORATIVE and k != "negative" and not k.startswith("_"):
             used.setdefault(k, len(v) if isinstance(v, list) else True)
+    if fog:
+        p.fog = fog  # rate refuses it until the engine grades under fog
     return p, used
 
 

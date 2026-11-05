@@ -952,3 +952,29 @@ def test_malformed_values_are_format_errors():
     for bad in bads:
         with pytest.raises(pencilmark.FormatError):
             pencilmark.validate(bad)
+
+
+def test_fog_rule_reads_writes_and_is_not_graded():
+    """fog of war (6.19): validated, carried through load / export, solved and counted as usual (fog changes no
+    solution), and refused by rate (a fog puzzle is graded under the fog or not at all)"""
+    import pytest
+    import pencilmark as pm
+    from pencilmark.exchange import FormatError, NotSupportedError
+
+    giv = [int(c) if c != "." else 0 for c in "4.....8.5.3..........7......2.....6.....8.4......1.......6.3.7.5..2.....1.4......"]
+    fog = {"type": "fog", "lit": ["r1c1", "r5c5"], "reveal": "triggers", "triggers": [{"when": ["r1c1"], "light": ["r9c9"]}]}
+    doc = {"format": "sudoku-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9, "givens": giv,
+           "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}, fog]}
+    pm.validate(doc)
+    p = pm.load(doc)
+    assert p.fog["lit"] == ["r1c1", "r5c5"] and len(pm.solve(p)) == 81
+    out = pm.to_export(p, with_solution=False)
+    out = out.get("puzzle", out)
+    assert [r for r in out["rules"] if r["type"] == "fog"] == [fog]
+    with pytest.raises(NotSupportedError, match="fog of war"):
+        pm.rate(p)
+    for bad in ({"type": "fog", "lit": ["r1c1"], "reveal": "5x5"},
+                {"type": "fog", "lit": ["r1c1"], "triggers": [{"when": ["r1c1"], "light": ["r2c2"]}]},
+                {"type": "fog", "lit": ["r1c1"], "reveal": "triggers", "triggers": [{"when": ["r1c1"]}]}):
+        with pytest.raises(FormatError):
+            pm.validate(dict(doc, rules=[doc["rules"][0], bad]))

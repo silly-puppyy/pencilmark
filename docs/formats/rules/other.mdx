@@ -8,7 +8,7 @@ import Swatch from '@site/src/components/Swatch';
 
 # Other rules
 
-This page covers the remaining rule families (6.13), vendor rules (6.15), what is not a rule (6.16) and reserved names (6.17); custom rules (6.18) have [their own page](custom.mdx).
+This page covers the remaining rule families (6.13), vendor rules (6.15), what is not a rule (6.16), reserved names (6.17) and fog of war (6.19); custom rules (6.18) have [their own page](custom.mdx).
 
 ## 6.13 Other families
 
@@ -57,3 +57,21 @@ and `decorations` only.
   lists make files large and cannot be drawn; [custom rules (6.18)](custom.mdx) replace them.
 - `digits` as an object (`{"values": [0, …, 8], "symbols": {…}}`, with an `empty` sentinel) for digit sets other
   than 1..D, and digit-selection puzzles: reserved; refused in format_version 1.
+
+## 6.19 Fog of war
+
+```json
+{"type": "fog", "lit": ["r5c5"]}
+{"type": "fog", "lit": ["r1c1", "r1c2"], "reveal": "triggers", "triggers": [{"when": ["r1c1"], "light": ["r4c4", "r4c5"]}]}
+```
+
+The grid is covered in fog except the `lit` cells. A digit entered that matches the solution lights cells:
+
+- `reveal` `"3x3"` (default): the 3×3 block around it, clipped at the board edge;
+- `reveal` `"triggers"`: no 3×3 reveal. Each trigger lights its `light` cells once every cell of its `when` holds its
+  digit (the setter's reveal pattern).
+
+A given lights only its own cell. Clues on fogged cells are hidden; a clue on the edge of a lit cell, outside clues and
+rules stated for the whole board are seen. Fog changes no solution, but it is a rule of play: the puzzle is solved
+from what the fog shows, so a file with fog SHOULD carry its `solution` ("a correct digit" is defined by it). A
+grader that cannot grade under fog refuses the puzzle; it never grades the revealed grid.

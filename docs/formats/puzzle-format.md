@@ -262,7 +262,7 @@ Each rule family has its own page; the quick reference lists every `type` and `k
 - [Outside clues](rules/outside-clues.mdx): 6.9 `sandwich`, `xsum`, `skyscraper`, `rossini`, `first_seen`
 - [Whole-board rules](rules/whole-board-rules.mdx): 6.10 `neighbours`, 6.11 `relation`, 6.14 `negative`
 - [Cell clues](rules/cell-clues.mdx): 6.12 `cell`
-- [Other rules](rules/other.mdx): 6.13 other families, 6.15 vendor rules, 6.16 what is not a rule, 6.17 reserved
+- [Other rules](rules/other.mdx): 6.13 other families, 6.15 vendor rules, 6.16 what is not a rule, 6.17 reserved, 6.19 `fog`
 - [Quick reference](quick-reference.mdx): every `type` and `kind` on one page
 
 "Repeats" in the family tables says whether digits may repeat among a rule's cells **because of that rule**; houses still apply.

@@ -1132,3 +1132,19 @@ def test_reading_that_breaks_the_embedded_solution_is_refused():
     with pytest.raises(sources.VerificationError):
         sources.load(pj)
     assert sources.load(pj, check_solution=False)["solution"] == sol
+
+
+def test_fog_payloads_keep_their_fog():
+    """SudokuPad FOGLIGHT cages / triggers and f-puzzles foglight are read as the fog rule, not refused"""
+    from pencilmark.sources import _sp_translate as ST
+    from pencilmark import model as M
+
+    p = M.Puzzle(D=9, coords=M._grid_coords(9))
+    idx = lambda rc: rc[0] * 9 + rc[1]
+    inside = lambda rc: 0 <= rc[0] < 9 and 0 <= rc[1] < 9
+    P = {"cages": [{"cells": [[0, 0], [0, 1]], "value": "FOGLIGHT"}, {"value": "foglight: r5c5"}],
+         "triggereffect": [{"trigger": {"type": "cellvalue", "cell": "r1c1r1c2"}, "effect": {"type": "foglight", "cells": "r9c9"}}]}
+    fog = ST.fog_of(P, p, idx, inside)
+    assert fog == {"lit": ["r1c1", "r1c2", "r5c5"], "reveal": "triggers",
+                   "triggers": [{"when": ["r1c1", "r1c2"], "light": ["r9c9"]}]}
+    assert ST.fog_of({"cages": [{"cells": [[0, 0]], "value": 12}]}, p, idx, inside) is None

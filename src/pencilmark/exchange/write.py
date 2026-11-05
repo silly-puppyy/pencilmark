@@ -44,6 +44,10 @@ def write(p, meta=None, solution=None, provenance=False):
             doc["layers"] = {L["name"]: dict({"values": list(L["values"])},
                                              **({"given": {name(int(c)): v for c, v in L["given"].items()}} if L["given"] else {}))
                              for L in aux["layers"]}
+    fog = getattr(p, "fog", None)
+    if fog:  # fog of war: a rule of play, written after the constraints (not an engine constraint)
+        doc["rules"].append({"type": "fog", **{k: fog[k] for k in ("lit", "reveal", "triggers") if k in fog}})
+        w.prov.append({"groups": [], "relations": [], "constraints": [], "clues": []})
     prov = w.prov
     src = getattr(p, "_pm_input_rules", None)
     if src:
