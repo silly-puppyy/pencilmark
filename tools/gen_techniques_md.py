@@ -33,6 +33,7 @@ SITES = {
     "sudokuvariants.com": ("sudokuvariants.com", "sudokuvariants.png"),
     "logic-masters.de": ("Logic Masters Germany", "logicmasters.png"),
     "sudopedia.sudocue.net": ("Sudopedia", "sudopedia.png"),
+    "lisudoku.xyz": ("lisudoku", "lisudoku.png"),
     "www.sugurupuzzles.com": ("sugurupuzzles.com", None),
 }
 LINKS = ROOT / "docs" / "technique_links.csv"  # more explainer pages per code, beside the explanation catalogue's
