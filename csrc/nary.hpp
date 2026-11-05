@@ -166,6 +166,9 @@ struct GacOut {
 /// dom[i]: allowed digits of var i (placed vars: their single digit)
 void nary_gac(const NConstraint& k, const uint32_t* dom, const std::vector<GacReq>& req, pm_long budget, int D,
               GacOut& out);
+/// nary_gac without the cases memo
+void nary_gac_plain(const NConstraint& k, const uint32_t* dom, const std::vector<GacReq>& req, pm_long budget, int D,
+                    GacOut& out);
 /// consistency of a constraint by enumeration (long sandwiches: small exact budget, then a relaxation)
 /// whether the rule can still be met at these domains: !(complete && !any) of nary_gac, by a matching search on
 /// all-different rules (sums with distinct digits, consecutive sets)

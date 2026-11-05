@@ -1,3 +1,5 @@
+#include <string>
+#include <unordered_map>
 #include <cstdlib>
 #include "portable.hpp"
 #include "nary.hpp"
@@ -1122,8 +1124,44 @@ void nary_gac_brute(const NConstraint& k, const uint32_t* dom, pm_long budget, i
     nary_gac(k, dom, noreq, budget, D, out);
 }
 
+// NT_CASES: many techniques ask the same cases rule on the same live domains within a solve; the answer depends only
+// on the rule's content and the domains, so it is memoised on both (content, not address: puzzles are rebuilt)
+static void cases_gac_memo(const NConstraint& k, const uint32_t* dom, pm_long budget, int D, GacOut& out,
+                           const std::vector<GacReq>& req);
+static thread_local std::unordered_map<std::string, GacOut> g_cases_memo;
+
 void nary_gac(const NConstraint& k, const uint32_t* dom, const std::vector<GacReq>& req, pm_long budget, int D,
               GacOut& out) {
+    if (k.type == NT_CASES && req.empty()) {
+        cases_gac_memo(k, dom, budget, D, out, req);
+        return;
+    }
+    nary_gac_plain(k, dom, req, budget, D, out);
+}
+
+static void cases_gac_memo(const NConstraint& k, const uint32_t* dom, pm_long budget, int D, GacOut& out,
+                           const std::vector<GacReq>& req) {
+    std::string key;
+    key.reserve(64 + k.nv() * 8);
+    auto put = [&](int64_t x) { key.append(reinterpret_cast<const char*>(&x), sizeof x); };
+    put(D), put(budget), put(k.nv());
+    for (int i = 0; i < k.nv(); ++i) put(k.vars[i]), put(dom[i]);
+    for (const NCase& c : k.cases) {
+        put(-1), put(c.circle), put(c.total), put(c.distinct);
+        for (int v : c.cells) put(v);
+    }
+    auto it = g_cases_memo.find(key);
+    if (it != g_cases_memo.end()) {
+        out = it->second;
+        return;
+    }
+    if (g_cases_memo.size() > 20000) g_cases_memo.clear();
+    nary_gac_plain(k, dom, req, budget, D, out);
+    if (out.complete) g_cases_memo.emplace(std::move(key), out);  // an aborted search is not cached
+}
+
+void nary_gac_plain(const NConstraint& k, const uint32_t* dom, const std::vector<GacReq>& req, pm_long budget, int D,
+                    GacOut& out) {
     const int nv = k.nv();
     if (((k.type == NT_ARROW && k.ncircle >= 1 && k.ncircle <= 3) || (k.type == NT_SUM && !k.distinct)) &&
         (int)k.pvar.size() > 12) {
