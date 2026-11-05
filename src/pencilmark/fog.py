@@ -405,6 +405,10 @@ def route(puzzle, max_rounds=400, rules_text=None):
             return {"solved": True, "rounds": rounds - 1, "reveals": reveals, "steps": steps, "stuck": 0}
         before = list(cand)
         vis = dict(doc, givens=givens, rules=visible_rules(doc["rules"], lit, D))
+        for c in cage_cases(doc["rules"], lit, rows, cols, clue_always, None, cage_size):
+            if len(c["cases"]) == 1 and c["cases"][0]["total"] is not None:  # one shape left: the cage is known, as a
+                cs1 = c["cases"][0]["cells"]  # cage rule (set theory, combinations and the rest read it)
+                vis["rules"].append({"type": "cage", "cells": [_name(i // cols, i % cols) for i in cs1], "sum": c["cases"][0]["total"]})
         q = api.load(vis)
         base = list(q.constraints)
         forced = {}  # ("arrow" | "cage", rule index) -> cells every surviving case uses: closed to the others
