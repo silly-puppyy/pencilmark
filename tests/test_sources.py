@@ -1145,6 +1145,5 @@ def test_fog_payloads_keep_their_fog():
     P = {"cages": [{"cells": [[0, 0], [0, 1]], "value": "FOGLIGHT"}, {"value": "foglight: r5c5"}],
          "triggereffect": [{"trigger": {"type": "cellvalue", "cell": "r1c1r1c2"}, "effect": {"type": "foglight", "cells": "r9c9"}}]}
     fog = ST.fog_of(P, p, idx, inside)
-    assert fog == {"lit": ["r1c1", "r1c2", "r5c5"], "reveal": "triggers",
-                   "triggers": [{"when": ["r1c1", "r1c2"], "light": ["r9c9"]}]}
+    assert fog == {"lit": ["r1c1", "r1c2", "r5c5"], "triggers": [{"when": ["r1c1", "r1c2"], "light": ["r9c9"]}]}
     assert ST.fog_of({"cages": [{"cells": [[0, 0]], "value": 12}]}, p, idx, inside) is None

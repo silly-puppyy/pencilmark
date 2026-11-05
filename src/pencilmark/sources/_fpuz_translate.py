@@ -611,7 +611,9 @@ def translate(fp, line_kinds=None, join=True):
     for k, v in fp.items():
         if v and k not in DECORATIVE and k != "negative" and not k.startswith("_"):
             used.setdefault(k, len(v) if isinstance(v, list) else True)
-    if fog:
+    if fog:  # played in SudokuPad: a given lights its own cell
+        fog["lit"] = sorted(set(fog["lit"]) | {f"r{i // n + 1}c{i % n + 1}" for i in p.givens},
+                            key=lambda c: (int(c[1:c.index("c")]), int(c[c.index("c") + 1:])))
         p.fog = fog  # rate refuses it until the engine grades under fog
     return p, used
 

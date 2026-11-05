@@ -146,9 +146,9 @@ def fog_of(P, p, idx, inside):
         have = True
     if not have:
         return None
+    lit += [name(i) for i in p.givens]  # SudokuPad: a given lights its own cell
     fog = {"lit": sorted(set(lit), key=lambda c: (int(c[1:c.index("c")]), int(c[c.index("c") + 1:])))}
-    if triggers:
-        fog["reveal"] = "triggers"
+    if triggers:  # the setter's reveals replace the 3x3 reveal
         fog["triggers"] = [t for t in triggers if t["when"] and t["light"]]
     return fog
 

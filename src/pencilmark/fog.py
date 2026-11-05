@@ -4,7 +4,8 @@ The puzzle is solved from what the fog shows. A round runs the engine on the rul
 from earlier rounds, no guessing) up to the first placement that lights a new cell; a round that only eliminates is
 repeated. Every rule given to the engine holds in the real puzzle, so every placement is correct.
 
-What a solver sees (docs/research/fog_mechanics.md, read from SudokuPad's own drawing):
+What a solver sees (docs/research/fog_mechanics.md, read from SudokuPad's own drawing), on top of the `lit` cells and
+what correct digits reveal:
 
 - a rule on cells, once all its cells are lit;
 - an edge or corner clue (dot, X / V, inequality, quadruple), from any lit cell it touches;
@@ -37,16 +38,13 @@ def _name(r, c):
 
 
 def lit_cells(fog, givens, placed, rows, cols):
-    """the cells a solver sees: the start cells; a given lights only itself; without triggers each correctly entered
-    digit lights its 3x3; with triggers an effect lights once every cell of its `when` holds a digit"""
+    """the cells a solver sees: the `lit` cells (what the puzzle shows at the start, givens included as the source
+    shows them); without triggers each correctly entered digit lights its 3x3; with triggers an effect lights once
+    every cell of its `when` holds a digit (givens count as held)"""
     lit = {_rc(c) for c in fog.get("lit", [])}
-    filled = set(placed)
-    for i, g in enumerate(givens):
-        if g:
-            lit.add((i // cols, i % cols))
-            filled.add((i // cols, i % cols))
-    if fog.get("reveal", "3x3") == "triggers":
-        for t in fog.get("triggers", []):
+    filled = set(placed) | {(i // cols, i % cols) for i, g in enumerate(givens) if g}
+    if fog.get("triggers"):
+        for t in fog["triggers"]:
             if all(_rc(c) in filled for c in t["when"]):
                 lit |= {_rc(c) for c in t["light"]}
     else:

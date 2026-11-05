@@ -1919,12 +1919,6 @@
       "$ref": "#/$defs/cell"
      }
     },
-    "reveal": {
-     "enum": [
-      "3x3",
-      "triggers"
-     ]
-    },
     "triggers": {
      "type": "array",
      "items": {

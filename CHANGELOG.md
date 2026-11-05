@@ -2,9 +2,11 @@
 
 ## Unreleased
 
-- Fog of war is a rule of the format (6.19): `{"type": "fog", "lit": [...], "reveal": "3x3" | "triggers",
-  "triggers": [{"when": [...], "light": [...]}]}`. The SudokuPad reader fills it from FOGLIGHT cages, `foglight` and
-  `triggereffect`; the f-puzzles reader from `foglight` / `fogofwar`. Fog puzzles now load, validate, solve, count and
+- Fog of war is a rule of the format (6.19): `{"type": "fog", "lit": [...], "triggers": [{"when": [...], "light":
+  [...]}]}`. Without triggers a correct digit lights its 3x3; with them only the triggers reveal. `lit` is everything
+  visible at the start (givens as the source shows them), and a fog puzzle must carry its solution. The SudokuPad
+  reader fills it from FOGLIGHT cages, `foglight` and `triggereffect` (adding each given's own cell); the f-puzzles
+  reader from `foglight` / `fogofwar`. Fog puzzles now load, validate, solve, count and
   export with their fog; `rate` refuses them by name ("fog of war: the puzzle is solved under the fog ...") until the
   engine grades under fog. Of the Cracking the Cryptic fog puzzles, 43 now load with their fog (none before).
 - Experimental: `pencilmark.fog.route(puzzle)`, the route a solver can take under the fog (what is lit, reveals on

@@ -962,20 +962,23 @@ def test_fog_rule_reads_writes_and_is_not_graded():
     from pencilmark.exchange import FormatError, NotSupportedError
 
     giv = [int(c) if c != "." else 0 for c in "4.....8.5.3..........7......2.....6.....8.4......1.......6.3.7.5..2.....1.4......"]
-    fog = {"type": "fog", "lit": ["r1c1", "r5c5"], "reveal": "triggers", "triggers": [{"when": ["r1c1"], "light": ["r9c9"]}]}
+    fog = {"type": "fog", "lit": ["r1c1", "r5c5"], "triggers": [{"when": ["r1c1"], "light": ["r9c9"]}]}
     doc = {"format": "sudoku-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9, "givens": giv,
            "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}, fog]}
+    doc["solution"] = pm.solve(dict(doc, rules=doc["rules"][:1]))  # the same puzzle without its fog
+    with pytest.raises(Exception, match="needs its solution"):
+        pm.load(dict(doc, solution=None))
     pm.validate(doc)
     p = pm.load(doc)
     assert p.fog["lit"] == ["r1c1", "r5c5"] and len(pm.solve(p)) == 81
-    out = pm.to_export(p, with_solution=False)
+    out = pm.to_export(p)
     out = out.get("puzzle", out)
     assert [r for r in out["rules"] if r["type"] == "fog"] == [fog]
     with pytest.raises(NotSupportedError, match="fog of war"):
         pm.rate(p)
-    for bad in ({"type": "fog", "lit": ["r1c1"], "reveal": "5x5"},
-                {"type": "fog", "lit": ["r1c1"], "triggers": [{"when": ["r1c1"], "light": ["r2c2"]}]},
-                {"type": "fog", "lit": ["r1c1"], "reveal": "triggers", "triggers": [{"when": ["r1c1"]}]}):
+    for bad in ({"type": "fog", "lit": ["r1c1"], "reveal": "3x3"},
+                {"type": "fog", "lit": "r1c1"},
+                {"type": "fog", "lit": ["r1c1"], "triggers": [{"when": ["r1c1"]}]}):
         with pytest.raises(FormatError):
             pm.validate(dict(doc, rules=[doc["rules"][0], bad]))
 
@@ -989,6 +992,7 @@ def test_fog_route_reveals_and_places_only_what_is_seen():
     giv = [int(c) if c != "." else 0 for c in "53..7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8..79"]
     base = {"format": "sudoku-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9, "givens": giv,
             "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}]}
+    base["solution"] = pm.solve(base)
     every = [f"r{r}c{c}" for r in range(1, 10) for c in range(1, 10)]
     res = fog.route(dict(base, rules=base["rules"] + [{"type": "fog", "lit": every}]))
     assert res["solved"] and res["reveals"] == 0

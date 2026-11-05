@@ -194,7 +194,9 @@ def from_json(obj) -> M.Puzzle:
         coords = M._grid_coords(D)
         groups = []
     p = M.Puzzle(D=D, coords=coords, name=(d.get("meta") or {}).get("title") or d.get("title", "") or "")
-    if d.get("fog"):  # fog of war: {"lit": [cells], "reveal": "3x3" | "triggers", "triggers": [...]}; changes no solution
+    if d.get("fog"):  # fog of war: {"lit": [cells], "triggers": [...]}; changes no solution, but is played by it
+        if not d.get("solution"):
+            raise ValueError("a fog puzzle needs its solution: a correct digit is what lights the fog")
         p.fog = dict(d["fog"])
     cid = {rc: i for i, rc in enumerate(coords)}
     width = max(c for _, c in coords) + 1

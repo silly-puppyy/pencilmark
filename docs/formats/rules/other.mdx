@@ -62,16 +62,18 @@ and `decorations` only.
 
 ```json
 {"type": "fog", "lit": ["r5c5"]}
-{"type": "fog", "lit": ["r1c1", "r1c2"], "reveal": "triggers", "triggers": [{"when": ["r1c1"], "light": ["r4c4", "r4c5"]}]}
+{"type": "fog", "lit": ["r1c1", "r1c2"], "triggers": [{"when": ["r1c1"], "light": ["r4c4", "r4c5"]}]}
 ```
 
-The grid is covered in fog except the `lit` cells. A digit entered that matches the solution lights cells:
+The grid is covered in fog except the `lit` cells: everything visible at the start, givens included where the puzzle
+shows them. A digit entered that matches the solution lights more:
 
-- `reveal` `"3x3"` (default): the 3×3 block around it, clipped at the board edge;
-- `reveal` `"triggers"`: no 3×3 reveal. Each trigger lights its `light` cells once every cell of its `when` holds its
-  digit (the setter's reveal pattern).
+- without `triggers`: the 3×3 block around it, clipped at the board edge;
+- with `triggers`: only the triggers. Each lights its `light` cells once every cell of its `when` holds its digit (the
+  setter's reveal pattern).
 
-A given lights only its own cell. Clues on fogged cells are hidden; a clue on the edge of a lit cell, outside clues and
-rules stated for the whole board are seen. Fog changes no solution, but it is a rule of play: the puzzle is solved
-from what the fog shows, so a file with fog SHOULD carry its `solution` ("a correct digit" is defined by it). A
-grader that cannot grade under fog refuses the puzzle; it never grades the revealed grid.
+A file with fog MUST carry its `solution`: "a correct digit" is defined by it. Clues on fogged cells are hidden; a clue
+on the edge of a lit cell, outside clues and rules stated for the whole board are seen. Fog changes no solution, but
+it is a rule of play: the puzzle is solved from what the fog shows. A grader that cannot grade under fog refuses the
+puzzle; it never grades the revealed grid. SudokuPad, f-puzzles and sudoku.coach store fog in their own ways (see their
+documentation); pencilmark's readers translate them.

@@ -50,7 +50,9 @@ def to_internal(doc):
         if i in done:
             continue
         if r["type"] == "fog":  # how the puzzle is played, not a constraint: kept beside the rules (puzzle_json "fog")
-            out["fog"] = {k: r[k] for k in ("lit", "reveal", "triggers") if k in r}
+            if not doc.get("solution"):
+                raise FormatError("a fog puzzle needs its solution: a correct digit is what lights the fog")
+            out["fog"] = {k: r[k] for k in ("lit", "triggers") if k in r}
             continue
         internal += ctx.rule(i, r, done)
     if internal:
