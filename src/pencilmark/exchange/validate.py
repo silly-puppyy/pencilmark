@@ -292,7 +292,7 @@ def _validate_rule(r, B):
         if len(set(sh)) != len(sh) or len(set(un)) != len(un) or set(sh) & set(un):
             raise FormatError("shaded / unshaded cells repeat or overlap")
         return
-    if t == "fog":  # fog of war (6.19): cells lit at the start; correct digits light their 3x3, or the setter's triggers
+    if t == "fog":  # fog of war (6.20): cells lit at the start; correct digits light their 3x3, or the setter's triggers
         _cells(B, r["lit"], "lit", minlen=0)
         for x in r.get("triggers", []):
             if not isinstance(x, dict) or set(x) != {"when", "light"}:

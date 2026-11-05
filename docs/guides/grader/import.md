@@ -111,7 +111,7 @@ Not read:
   when grading: `NoSolution` or `NotUnique`.
 - **Digit sets other than 1 to D** (0 to 8, 1 to 5 twice): refused when the embedded solution shows them. Some links
   drop the solution, and then the check cannot see it.
-- **Fog of war**: read as the puzzle's [fog rule](../../formats/rules/other.mdx#619-fog-of-war) (SudokuPad lit cells
+- **Fog of war**: read as the puzzle's [fog rule](../../formats/rules/other.mdx#620-fog-of-war) (SudokuPad lit cells
   and setter triggers, f-puzzles fog). The puzzle loads, solves and exports, but `rate` refuses it: a fog puzzle is
   graded under the fog, and that grade is not in the engine yet.
 - **Several grids on one canvas**, unless the setter drew the houses explicitly.

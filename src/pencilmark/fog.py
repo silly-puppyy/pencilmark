@@ -1,4 +1,4 @@
-"""Fog of war: the route a solver can take under the fog (docs/formats/rules/other.mdx 6.19).
+"""Fog of war: the route a solver can take under the fog (docs/formats/rules/other.mdx 6.20).
 
 The puzzle is solved from what the fog shows. A round runs the engine on the rules a solver sees (candidates carried
 from earlier rounds, no guessing) up to the first placement that lights a new cell; a round that only eliminates is

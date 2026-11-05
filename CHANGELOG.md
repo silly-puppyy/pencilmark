@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Fog of war is a rule of the format (6.19): `{"type": "fog", "lit": [...], "triggers": [{"when": [...], "light":
+- Fog of war is a rule of the format (6.20): `{"type": "fog", "lit": [...], "triggers": [{"when": [...], "light":
   [...]}]}`. Without triggers a correct digit lights its 3x3; with them only the triggers reveal. `lit` is everything
   visible at the start (givens as the source shows them), and a fog puzzle must carry its solution. The SudokuPad
   reader fills it from FOGLIGHT cages, `foglight` and `triggereffect` (adding each given's own cell); the f-puzzles
