@@ -1115,6 +1115,61 @@ def _hidden(tree, unknowns, layers):
     return out
 
 
+def _const_reads(tree, name):
+    """the constant indices at which tree reads the list `name`, or None when it uses the list any other way
+    (whole: sum(L), position(L, ...), len(L); or at a computed index)"""
+    found, whole = set(), False
+
+    def walk(t):
+        nonlocal whole
+        if not isinstance(t, N):
+            return
+        if t.op == "index" and isinstance(t.args[0], N) and t.args[0].op == "name" and t.args[0].args[0] == name:
+            i = t.args[1]
+            if isinstance(i, N) and i.op == "num" and isinstance(i.args[0], int):
+                found.add(i.args[0])
+            else:
+                whole = True
+            walk(i)
+            return
+        if t.op == "name" and t.args[0] == name:
+            whole = True
+            return
+        for x in t.args:
+            if isinstance(x, N):
+                walk(x)
+            elif isinstance(x, tuple):
+                for y in x:
+                    walk(y)
+    walk(tree)
+    return None if whole or not found else sorted(found)
+
+
+def _narrowed(tree, cells):
+    """a rule that reads a list only at constant indices reads only those cells ("ray[3] + ray[4] == 3" over a
+    9-cell ray): the list shrinks to them and the indices are renumbered, so the table spans 2 cells, not 9"""
+    import dataclasses
+
+    keep = {}
+    for name, v in cells.items():
+        if isinstance(v, list) and len(v) > 1 and all(isinstance(x, str) for x in v):
+            ix = _const_reads(tree, name)
+            if ix and all(1 <= i <= len(v) for i in ix) and len(ix) < len(v):
+                keep[name] = ix
+    if not keep:
+        return tree, cells
+
+    def re_ix(t):
+        if not isinstance(t, N):
+            return t
+        if t.op == "index" and isinstance(t.args[0], N) and t.args[0].op == "name" and t.args[0].args[0] in keep:
+            name = t.args[0].args[0]
+            return dataclasses.replace(t, args=(t.args[0], N("num", (keep[name].index(t.args[1].args[0]) + 1,))))
+        return dataclasses.replace(t, args=tuple(re_ix(x) if isinstance(x, N) else tuple(re_ix(y) for y in x) if isinstance(x, tuple) else x for x in t.args))
+    cells = dict(cells, **{n: [cells[n][i - 1] for i in ix] for n, ix in keep.items()})
+    return re_ix(tree), cells
+
+
 def compile_rule(rule, B, D, layers=()):
     """a custom rule -> internal puzzle rules for the engine: {"type": "pairs", "rel": "allowed", ...} for pair scopes,
     {"type": "table", "cells", "allowed"} otherwise. B: the board helper (exchange.board.Board). Raises LangError when
@@ -1158,6 +1213,7 @@ def compile_rule(rule, B, D, layers=()):
             out += compile_rule(dict(rule, each=None, cells=dict(cells, **{name: t})), B, D)
         return out
     if not scope:
+        tree, cells = _narrowed(tree, cells)
         names = []
         for v in cells.values():
             for x in v if isinstance(v, list) else [v]:

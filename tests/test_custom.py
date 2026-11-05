@@ -259,6 +259,21 @@ def test_compile_matches_known_families():
     assert len(rel) == 1 and rel[0]["rel"] == "allowed" and len(rel[0]["cells"]) == 144  # one shared relation
 
 
+def test_constant_index_reads_narrow_the_rule():
+    """a rule reading its list only at constant indices compiles over those cells (GAS Serbian Frame: "ray[3] + ray[4]
+    == 3" over a 9-cell ray is a 2-cell table, not a 9-cell expression); a whole-list use keeps every cell"""
+    from pencilmark.exchange.board import Board
+    from pencilmark.rules.custom import compile_rule
+
+    B = Board([(r, c) for r in range(9) for c in range(9)], 9)
+    ray = [f"r1c{c}" for c in range(1, 10)]
+    [x] = compile_rule({"cells": {"ray": ray}, "holds": "ray[3] + ray[4] == 3"}, B, 9)
+    assert x["type"] == "table" and x["cells"] == ["r1c3", "r1c4"]
+    assert sorted(map(tuple, x["allowed"])) == [(1, 2), (2, 1)]
+    [y] = compile_rule({"cells": {"ray": ray}, "holds": "ray[1] == 1 and sum(ray) == 45"}, B, 9)
+    assert len(y["cells"]) == 9  # sum(ray) reads the whole list
+
+
 EXPRESSIONS = [
     "2 * max(c) == sum(c)",
     "count(x for x in c if odd(x)) == 2",

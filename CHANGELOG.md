@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Custom rules that read a list only at constant indices compile over just those cells: "ray[3] + ray[4] == 3" over a
+  9-cell ray is now a 2-cell table, not a 9-cell expression constraint. Results are unchanged (golden gate
+  identical). Hand ports that declared whole rays now grade: three GAS ports went from Unknown to Very Easy 5.8 / Easy
+  9.0 / Easy 7.5.
 - The solve trace follows a human route by default (computer search stays opt-in with `mode="computer"` /
   `--computer`): each step is chosen the way people choose, by a spotting score fitted on casual classic replays (the
   move's price, its technique, and attention to the previous placement: same digit, same box / row / column, distance),
