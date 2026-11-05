@@ -56,9 +56,15 @@ struct Ev {
     const int* dig;
     const int* lab;  ///< region label per variable, or null
     const int* sh;   ///< colour per variable (1 shaded, 2 unshaded, 0 unknown), or null
+    const int* aux;  ///< value per aux variable (AUX_UNSET: not known), or null
     std::vector<Val> slots;
 
-    Ev(const ExprProgram& p, const int* d, const int* l, const int* s) : P(p), dig(d), lab(l), sh(s), slots(p.nslots) {}
+    Ev(const ExprProgram& p, const int* d, const int* l, const int* s, const int* a = nullptr)
+        : P(p), dig(d), lab(l), sh(s), aux(a), slots(p.nslots) {}
+    Val aux_value(long long i) {
+        if (!aux || i < 0 || aux[i] == AUX_UNSET) return Val();
+        return Val::num(aux[i]);
+    }
 
     Val cell(int var) {
         Val v;
@@ -297,6 +303,12 @@ Val Ev::eval(const ExprNode& e) {
         case X_CELLS: return list_value(P.lists[e.v]);
         case X_CELL: return cell((int)e.v);
         case X_SLOT: return slots[e.v];
+        case X_AUX: return aux_value(e.v);
+        case X_AUXCELL: {  // layer e.v at a cell of the rule
+            Val c = eval(K[0]);
+            if (c.k != Val::CELL || c.var < 0 || c.var >= (int)P.gcell.size()) return Val();
+            return aux_value(P.aux_u + e.v * (long long)P.aux_n + P.gcell[c.var]);
+        }
         case X_LIST: {
             std::vector<Val> xs;
             for (const ExprNode& k : K) xs.push_back(eval(k));
@@ -434,6 +446,7 @@ Val Ev::eval(const ExprNode& e) {
 
 bool layered_node(const ExprNode& e) {
     if (e.op == X_CALL && (e.v == REGION || e.v == SHADED)) return true;
+    if (e.op == X_AUX || e.op == X_AUXCELL) return true;  // unknowns / layers: decided once their values are known
     for (const ExprNode& k : e.kids)
         if (layered_node(k)) return true;
     return false;
@@ -441,8 +454,8 @@ bool layered_node(const ExprNode& e) {
 
 }  // namespace
 
-bool expr_holds(const ExprProgram& prog, const int* digits, const int* labels, const int* shading) {
-    Ev ev(prog, digits, labels, shading);
+bool expr_holds(const ExprProgram& prog, const int* digits, const int* labels, const int* shading, const int* aux) {
+    Ev ev(prog, digits, labels, shading, aux);
     Val r = ev.eval(prog.root);
     return r.k == Val::BOOL && r.b;
 }

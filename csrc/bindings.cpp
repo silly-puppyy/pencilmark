@@ -130,8 +130,12 @@ static ExprNode parse_expr(const py::handle& h) {
     n.op = l[0].cast<int>();
     size_t i = 1;
     switch (n.op) {
-        case X_NUM: case X_BOOL: case X_CELLS: case X_CELL: case X_SLOT:
+        case X_NUM: case X_BOOL: case X_CELLS: case X_CELL: case X_SLOT: case X_AUX:
             n.v = l[1].cast<long long>();
+            return n;
+        case X_AUXCELL:  // [op, layer, cell expression]
+            n.v = l[1].cast<long long>();
+            n.kids.push_back(parse_expr(l[2]));
             return n;
         case X_COMP: case X_LET: case X_CALL: case X_CALLFN:
             n.v = l[1].cast<long long>();
@@ -254,6 +258,13 @@ static NSpec parse_constraint(const py::dict& d) {
         }
         auto box = d["box"].cast<std::vector<int>>();
         prog->box_h = box[0], prog->box_w = box[1];
+        prog->gcell = s.a;  // variable -> board cell (the rule's cells, in variable order)
+        if (d.contains("aux") && !d["aux"].is_none()) {  // {"u": unknowns, "n": board cells, "read": [aux vars]}
+            auto ax = d["aux"].cast<py::dict>();
+            prog->aux_u = ax["u"].cast<int>();
+            prog->aux_n = ax["n"].cast<int>();
+            prog->aux_read = ax["read"].cast<std::vector<int>>();
+        }
         s.expr = prog;
     } else if (t == "contains") {  // {"cells": [source, target, ...]}: the source digit appears among the targets
         s.type = NT_CONTAINS;
@@ -338,6 +349,28 @@ static std::shared_ptr<Puzzle> make_puzzle_raw(int D, const std::vector<std::pai
             if (t == "chaos") p->chaos.push_back(cells);
             else if (t == "region_border" && cells.size() == 2) p->region_border.push_back({cells[0], cells[1]});
             else if (t == "same_region") p->same_region.push_back(cells);
+        }
+        if (d.contains("aux_defs")) {  // the file's unknowns and layers: {"unknowns": [[values]], "layers": [{"values", "given"}]}
+            py::dict a = d["aux_defs"].cast<py::dict>();
+            const int N = (int)p->coords.size();
+            p->aux_values.clear();
+            p->aux_given.clear();
+            for (auto u : a["unknowns"]) {
+                p->aux_values.push_back(u.cast<std::vector<int>>());
+                p->aux_given.push_back(AUX_UNSET);
+            }
+            p->aux_u = (int)p->aux_values.size();
+            for (auto L : a["layers"]) {
+                py::dict ld = L.cast<py::dict>();
+                auto vals = ld["values"].cast<std::vector<int>>();
+                std::vector<int> giv(N, AUX_UNSET);
+                for (auto kv : ld["given"].cast<py::dict>()) giv[kv.first.cast<int>()] = kv.second.cast<int>();
+                for (int c = 0; c < N; ++c) {
+                    p->aux_values.push_back(vals);
+                    p->aux_given.push_back(giv[c]);
+                }
+                ++p->aux_layers;
+            }
         }
         if (d.contains("shading")) {  // yin-yang: given colours
             py::dict r = d["shading"].cast<py::dict>();

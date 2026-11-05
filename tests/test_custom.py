@@ -393,5 +393,45 @@ def test_unknowns_and_layers_read_check_write():
                 _hidden_doc(rules=_hidden_doc()["rules"] + [{"type": "custom", "cells": {"c": ["r1c1"]}, "holds": "sum(c) == Y"}])):
         with pytest.raises(FormatError):
             V.validate(bad)
-    with pytest.raises(Exception, match="cannot be solved by the engine yet"):  # never solved with a rule ignored
-        pencilmark.load(doc)
+    p = pencilmark.load(doc)  # the exhaustive search carries unknowns and layers (aux variables)
+    assert pencilmark.count_solutions(p, limit=2)["count"] >= 1
+    with pytest.raises(Exception, match="does not grade them yet"):  # never graded with a rule ignored
+        pencilmark.rate(doc)
+
+
+def test_unknowns_solve_a_small_cipher():
+    """a 4x4 whose cage totals are one unknown X, told apart by a second rule on X: solved by the search alone"""
+    import pencilmark
+
+    doc = _hidden_doc(
+        givens=[1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+        unknowns={"X": {"range": [1, 20]}},
+        rules=_hidden_doc()["rules"] + [
+            {"type": "custom", "cells": {"c": ["r1c2", "r1c3"]}, "holds": "sum(c) == X"},
+            {"type": "custom", "cells": {"c": ["r2c1", "r2c2"]}, "holds": "sum(c) == X"},
+            {"type": "custom", "cells": {}, "holds": "X == 5"}])
+    p = pencilmark.load(doc)
+    n = pencilmark.count_solutions(p, limit=3)
+    sol = "".join(map(str, pencilmark.solve(p))) if n["count"] == 1 else None
+    plain = _hidden_doc(givens=doc["givens"], rules=_hidden_doc()["rules"] + [
+        {"type": "custom", "cells": {"c": ["r1c2", "r1c3"]}, "holds": "sum(c) == 5"},
+        {"type": "custom", "cells": {"c": ["r2c1", "r2c2"]}, "holds": "sum(c) == 5"}])
+    q = pencilmark.load(plain)  # the same puzzle with X written in: the same answer
+    assert n == pencilmark.count_solutions(q, limit=3)
+    if sol is not None:
+        assert sol == "".join(map(str, pencilmark.solve(q)))
+
+
+def test_unknowns_and_layers_survive_export():
+    import importlib
+    import pencilmark
+
+    V = importlib.import_module("pencilmark.exchange.validate")
+    doc = _hidden_doc(unknowns={"X": {"range": [1, 8]}}, layers={"shift": {"values": [-1, 0, 1], "given": {"r1c1": 0}}},
+                      rules=_hidden_doc()["rules"] + [
+                          {"type": "custom", "cells": {"c": ["r1c1", "r1c2"]}, "holds": "sum(c) + shift(r1c2) == X"},
+                          {"type": "custom", "cells": {}, "scope": {"pairs": "orthogonal"}, "holds": "(a, b) => shift(a) * shift(b) == 0"}])
+    out = pencilmark.to_export(pencilmark.load(doc), describe=False, style=False, with_solution=False)
+    V.validate(out)
+    assert out["unknowns"] == {"X": {"values": list(range(1, 9))}}
+    assert out["layers"]["shift"] == {"values": [-1, 0, 1], "given": {"r1c1": 0}}

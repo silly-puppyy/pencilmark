@@ -414,6 +414,11 @@ def _cpuzzle_args(p):
                 "region": d,
             }  # search (brute_force.cpp)
         cons.append(d)
+    aux = getattr(p, "aux", None)
+    if aux:  # the file's unknowns and layers: read by the exhaustive search (brute_force.cpp); rate refuses them
+        cons.append({"type": "line", "kind": "palindrome", "cells": [], "skip": True,
+                     "aux_defs": {"unknowns": [u["values"] for u in aux["unknowns"]],
+                             "layers": [{"values": L["values"], "given": L["given"]} for L in aux["layers"]]}})
     extra = detect_lines(p)
     p._cextra = [f"{d['kind']} line (detected)" for d in extra]
     return (p.D, [tuple(xy) for xy in p.coords], groups, list(p.domains), rels, cons + extra)

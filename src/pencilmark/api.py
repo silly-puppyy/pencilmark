@@ -203,6 +203,12 @@ def rate(
             "shading (yin-yang): the grader does not grade it yet; validate, describe, solve and count work (solve and "
             "count with OR-Tools)"
         )
+    if getattr(p, "aux", None):  # unknowns / layers: the search solves them, no human technique reasons with them yet
+        from .exchange import NotSupportedError
+
+        raise NotSupportedError(
+            "unknowns / layers (custom rules): the grader does not grade them yet; validate, describe, solve and count work"
+        )
     import time
 
     from . import cbackend as CB

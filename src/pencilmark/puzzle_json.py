@@ -148,6 +148,7 @@ def _layout_regions(origins, D=9, bh=3, bw=3):
 KEYS = {"digits", "shape", "box", "layout", "numbers", "solution", "regions", "rules", "candidates", "meta", "title"}
 KEYS |= {"hash", "v"}  # written by `pencilmark json` / by older files; ignored
 KEYS |= {"drawn"}  # how a source drew its elements (sources/_sp_style.py): the rules' styles on export
+KEYS |= {"unknowns", "layers"}  # the file's unknowns and layers (custom rules read them; the engine's aux variables)
 
 
 def from_json(obj) -> M.Puzzle:
@@ -399,7 +400,9 @@ def from_json(obj) -> M.Puzzle:
                 for k, t in (("region", "chaos"), ("shaded", "yin_yang"))
                 if any(x.get("type") == t for x in d.get("rules") or [])
             )
-            compiled = CU.compile_rule(r, Board(coords, D), D, layers)
+            Bc = Board(coords, D)
+            Bc.unknowns, Bc.layers = d.get("unknowns") or {}, d.get("layers") or {}
+            compiled = CU.compile_rule(r, Bc, D, layers)
             width, height = max(c for _, c in coords) + 1, max(rr for rr, _ in coords) + 1
             shape = ["".join("#" if (y, x) in cid else "." for x in range(width)) for y in range(height)]
             q = from_json({"digits": D, "shape": shape, "regions": [], "rules": compiled})
@@ -426,6 +429,20 @@ def from_json(obj) -> M.Puzzle:
             _remember(p, r, p.relations[a:a2], p.constraints[b:b2])
     if d.get("drawn"):
         p.drawn = d["drawn"]
+    if d.get("unknowns") or d.get("layers"):  # aux variables: unknowns first, then each layer per cell
+        B_ = None
+        try:
+            from .exchange.board import Board
+            B_ = Board(coords, D)
+        except Exception:  # noqa: BLE001
+            pass
+        lay = []
+        for n, v in (d.get("layers") or {}).items():
+            giv = {}
+            for c, x in (v.get("given") or {}).items():
+                giv[B_.idx(c) if B_ is not None else c] = x
+            lay.append({"name": n, "values": list(v["values"]), "given": giv})
+        p.aux = {"unknowns": [{"name": n, "values": list(v)} for n, v in (d.get("unknowns") or {}).items()], "layers": lay}
     return p
 
 

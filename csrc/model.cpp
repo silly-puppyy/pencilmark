@@ -873,7 +873,8 @@ void Puzzle::build_nary() {
             for (auto& r : s.rows)
                 for (int p = 0; p < k.arity; ++p) k.rows.push_back((uint8_t)(p < (int)r.size() ? r[p] : 0));
         }
-        if (k.nv() > 64 || k.nv() == 0) continue;  // unsupported (kept out of the engine)
+        const bool aux_only = s.type == NT_EXPR && s.expr && !s.expr->aux_read.empty();  // unknowns only: no cells
+        if (k.nv() > 64 || (k.nv() == 0 && !aux_only)) continue;  // unsupported (kept out of the engine)
         nary.push_back(std::move(k));
     }
     // (CSOLVER_OVERLAP_DIFF=0 disables): overlapping sum clues -- two sums sharing >= 2 cells, each with a

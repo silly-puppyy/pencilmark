@@ -42,6 +42,13 @@ struct Brute {
     // removes digits and digits that all imply one colour set it
     struct Coupling { int cell; uint32_t ok[3]; };  // ok[1]: digits allowed shaded, ok[2]: unshaded
     std::vector<Coupling> couplings;
+    // ---- aux variables (the file's unknowns and layers): allowed flags per value, per depth ----
+    bool aux_on = false;
+    std::vector<int> aoff;                  // flag offset per aux variable (values in p.aux_values order)
+    std::vector<std::vector<char>> as;      // flags per depth
+    std::vector<int> aux_rules;             // custom rules reading aux variables (indices into p.nary)
+    std::vector<char> aux_read_any;         // aux variable read by some rule
+    std::vector<int> auxv;                  // scratch: value per aux variable (AUX_UNSET when open)
 
     Brute(const Puzzle& pz, int lim, pm_long nl)
         : p(pz), limit(lim), node_limit(nl), areas(pz.chaos), area_of(pz.chaos_of), nbr(pz.chaos_nbr) {
@@ -50,7 +57,18 @@ struct Brute {
         chaos_on = !p.chaos.empty();
         shade_on = p.shading;
         for (size_t ki = 0; ki < p.nary.size(); ++ki)
-            if (p.nary[ki].type == NT_EXPR && p.nary[ki].expr->layered) layered.push_back((int)ki);
+            if (p.nary[ki].type == NT_EXPR && !p.nary[ki].expr->aux_read.empty()) aux_rules.push_back((int)ki);
+            else if (p.nary[ki].type == NT_EXPR && p.nary[ki].expr->layered) layered.push_back((int)ki);
+        aux_on = !p.aux_values.empty();
+        if (aux_on) {
+            int off = 0;
+            for (const auto& vals : p.aux_values) aoff.push_back(off), off += (int)vals.size();
+            aoff.push_back(off);
+            aux_read_any.assign(p.aux_values.size(), 0);
+            for (int ki : aux_rules)
+                for (int a : p.nary[ki].expr->aux_read) aux_read_any[a] = 1;
+            auxv.assign(p.aux_values.size(), AUX_UNSET);
+        }
         if (shade_on)
             for (int ki : layered) {
                 const NConstraint& k = p.nary[ki];
@@ -132,6 +150,88 @@ struct Brute {
                 ready = dg[i] && (!sh || sd[i]) && (!lab || lb[i] || area_of[c] < 0);
             }
             if (ready && !expr_holds(*k.expr, dg, lab ? lb : nullptr, sh ? sd : nullptr)) return false;
+        }
+        return true;
+    }
+    int aux_count(const char* f, int a) const {
+        int n = 0;
+        for (int i = aoff[a]; i < aoff[a + 1]; ++i) n += f[i] != 0;
+        return n;
+    }
+    // aux rules: once a rule's digits are fixed, its open aux values are tried (up to 4096 combinations): values no
+    // combination supports are removed; a rule with no supported combination fails the node
+    bool aux_prop(const uint8_t* vals, uint32_t* cand, char* f, bool& dch) {
+        bool again = true;
+        while (again) {
+            again = false;
+            for (size_t a = 0; a < p.aux_values.size(); ++a) {
+                auxv[a] = AUX_UNSET;
+                if (aux_count(f, (int)a) == 1)
+                    for (int i = aoff[a]; i < aoff[a + 1]; ++i)
+                        if (f[i]) auxv[a] = p.aux_values[a][i - aoff[a]];
+                if (!aux_count(f, (int)a)) return false;
+            }
+            for (int ki : aux_rules) {
+                const NConstraint& k = p.nary[ki];
+                int dg[64];
+                std::vector<int> fd;  // open digit cells of the rule (variable positions)
+                for (int i = 0; i < k.nv(); ++i)
+                    if (!(dg[i] = vals[k.vars[i]])) fd.push_back(i);
+                if (fd.size() > 2) continue;  // read once at most two of its digits are open
+                std::vector<int> fr;
+                pm_long combos = 1;
+                for (int i : fd) combos *= popc(cand[k.vars[i]]);
+                for (int a : k.expr->aux_read)
+                    if (auxv[a] == AUX_UNSET) fr.push_back(a), combos *= aux_count(f, a);
+                if (combos > 4096) continue;
+                std::vector<std::vector<char>> sup(fr.size());
+                for (size_t j = 0; j < fr.size(); ++j) sup[j].assign(aoff[fr[j] + 1] - aoff[fr[j]], 0);
+                std::vector<uint32_t> dsup(fd.size(), 0);
+                bool any = false;
+                std::vector<int> pick(fr.size(), 0);
+                std::function<void(size_t)> go = [&](size_t j) {
+                    if (j < fd.size()) {  // the open digits first
+                        const int i = fd[j];
+                        for (uint32_t m = cand[k.vars[i]]; m; m &= m - 1) {
+                            dg[i] = lowdigit(m);
+                            go(j + 1);
+                        }
+                        dg[i] = 0;
+                        return;
+                    }
+                    const size_t q = j - fd.size();
+                    if (q == fr.size()) {
+                        if (expr_holds(*k.expr, dg, nullptr, nullptr, auxv.data())) {
+                            any = true;
+                            for (size_t t = 0; t < fr.size(); ++t) sup[t][pick[t]] = 1;
+                            for (size_t t = 0; t < fd.size(); ++t) dsup[t] |= bit(dg[fd[t]]);
+                        }
+                        return;
+                    }
+                    const int a = fr[q];
+                    for (int i = aoff[a]; i < aoff[a + 1]; ++i)
+                        if (f[i]) {
+                            pick[q] = i - aoff[a];
+                            auxv[a] = p.aux_values[a][pick[q]];
+                            go(j + 1);
+                        }
+                    auxv[a] = AUX_UNSET;
+                };
+                go(0);
+                if (!any) return false;
+                for (size_t j = 0; j < fr.size(); ++j)
+                    for (int i = aoff[fr[j]]; i < aoff[fr[j] + 1]; ++i)
+                        if (f[i] && !sup[j][i - aoff[fr[j]]]) f[i] = 0, again = true;
+                for (size_t t = 0; t < fd.size(); ++t) {
+                    const int c = k.vars[fd[t]];
+                    if ((cand[c] & dsup[t]) != cand[c]) {
+                        cand[c] &= dsup[t];
+                        dch = true;
+                        if (!cand[c]) return false;
+                    }
+                }
+                if (again || dch) break;  // refresh the fixed values / propagate the digits again
+            }
         }
         return true;
     }
@@ -623,6 +723,11 @@ struct Brute {
         if (!layered.empty() &&
             !layered_ok(vals, chaos_on ? ls[depth].data() : nullptr, shade_on ? ss[depth].data() : nullptr))
             return;
+        if (aux_on) {
+            bool dch = false;
+            if (!aux_prop(vals, cand, as[depth].data(), dch)) return;
+            if (dch) goto top;  // digits narrowed by aux rules: propagate the digits again
+        }
         int c = -1, best = 1 << 30;
         for (int x = 0; x < N; ++x)
             if (!vals[x] && popc(cand[x]) < best) {
@@ -636,11 +741,18 @@ struct Brute {
             for (int x = 0; x < N; ++x)
                 if (area_of[x] >= 0 && !lab[x] && popc(lc[x]) < lbest) lbest = popc(lc[x]), lcell = x;
         }
+        int avar = -1, abest = 1 << 30;  // an aux variable still open (read by a rule), fewest values first
+        if (aux_on)
+            for (size_t a = 0; a < p.aux_values.size(); ++a)
+                if (aux_read_any[a]) {
+                    const int n = aux_count(as[depth].data(), (int)a);
+                    if (n > 1 && n < abest) abest = n, avar = (int)a;
+                }
         int scell = -1;  // a cell whose colour is still open (shading)
         if (shade_on)
             for (int x = 0; x < N && scell < 0; ++x)
                 if (!ss[depth][x]) scell = x;
-        if (c < 0 && lcell < 0 && scell < 0) {
+        if (c < 0 && lcell < 0 && scell < 0 && avar < 0) {
             if (!valid(vals)) return;  // a full grid must satisfy every rule
             if (chaos_on && !chaos_valid(vals, ls[depth].data())) return;
             if (shade_on) {  // both colours present (each is connected: shade_prop)
@@ -648,7 +760,7 @@ struct Brute {
                 for (int x = 0; x < N; ++x) s1 |= ss[depth][x] == 1, s2 |= ss[depth][x] == 2;
                 if (!s1 || !s2) return;
             }
-            if (chaos_on || shade_on)  // another region layout / shading with the same digits: one solution
+            if (chaos_on || shade_on || aux_on)  // another region layout / shading / aux values with the same digits
                 for (const auto& s : sols)
                     if (std::equal(s.begin(), s.end(), vals)) return;
             sols.emplace_back(vals, vals + N);
@@ -659,6 +771,7 @@ struct Brute {
             cs.emplace_back(N);
             if (chaos_on) ls.emplace_back(N), lcs.emplace_back(N);
             if (shade_on) ss.emplace_back(N);
+            if (aux_on) as.emplace_back(as[0].size());
         }
         auto copy_down = [&]() {
             std::copy(vs[depth].begin(), vs[depth].end(), vs[depth + 1].begin());
@@ -668,7 +781,19 @@ struct Brute {
                 std::copy(lcs[depth].begin(), lcs[depth].end(), lcs[depth + 1].begin());
             }
             if (shade_on) std::copy(ss[depth].begin(), ss[depth].end(), ss[depth + 1].begin());
+            if (aux_on) std::copy(as[depth].begin(), as[depth].end(), as[depth + 1].begin());
         };
+        if (avar >= 0 && c < 0 && lcell < 0 && scell < 0) {  // digits fixed: one valid set of aux values is enough
+            const size_t before = sols.size();
+            for (int i = aoff[avar]; i < aoff[avar + 1]; ++i) {
+                if (!as[depth][i]) continue;
+                copy_down();
+                for (int j = aoff[avar]; j < aoff[avar + 1]; ++j) as[depth + 1][j] = j == i;
+                rec(depth + 1);
+                if ((int)sols.size() >= limit || sols.size() > before) return;
+            }
+            return;
+        }
         // a colour: once the digits are fixed (one valid shading is enough: the others repeat the same digits), or
         // earlier when custom rules read the shading and can prune digits with it
         if (scell >= 0 && lcell < 0 && (c < 0 || (!layered.empty() && best > 2))) {
@@ -714,6 +839,12 @@ std::vector<std::vector<int>> brute_solve(const Puzzle& p, const std::vector<std
     b.vs.emplace_back(p.N);
     b.cs.emplace_back(p.N);
     if (b.shade_on) b.ss.emplace_back(p.shade_given);
+    if (b.aux_on) {  // every value allowed, a given value alone
+        b.as.emplace_back(b.aoff.back(), 1);
+        for (size_t a = 0; a < p.aux_values.size(); ++a)
+            if (p.aux_given[a] != AUX_UNSET)
+                for (int i = b.aoff[a]; i < b.aoff[a + 1]; ++i) b.as[0][i] = p.aux_values[a][i - b.aoff[a]] == p.aux_given[a];
+    }
     if (b.chaos_on) {
         b.ls.emplace_back(p.N, 0);
         b.lcs.emplace_back(p.N, 0);

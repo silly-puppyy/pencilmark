@@ -92,8 +92,9 @@ custom rules read them:
   and a layer cannot share a name. Values are integers, given as `range` [lo, hi] (inclusive) or a list of `values`.
 
 They are part of the solution: a reader that cannot solve them refuses the puzzle rather than ignoring a rule.
-pencilmark reads, checks and writes them, and evaluates rules with them, but its engine does not solve them yet, so it
-refuses such puzzles for solving and grading.
+pencilmark reads, checks and writes them, evaluates rules with them, and its exhaustive search solves and counts such
+puzzles (uniqueness is by digits; the hidden values only have to exist). The search can be slow where the hidden values
+say little until most digits are known. Grading refuses them: no human technique reasons with them yet.
 
 ### Reading, writing, limits
 

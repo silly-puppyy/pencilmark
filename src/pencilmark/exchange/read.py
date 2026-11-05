@@ -58,6 +58,9 @@ def to_internal(doc):
         }
     if doc.get("meta"):
         out["meta"] = dict(doc["meta"])
+    if B.unknowns or B.layers:  # the file's unknowns and layers (the engine's aux variables)
+        out["unknowns"] = {n: list(v) for n, v in B.unknowns.items()}
+        out["layers"] = {n: {"values": list(v["values"]), "given": dict(v["given"])} for n, v in B.layers.items()}
     return out
 
 

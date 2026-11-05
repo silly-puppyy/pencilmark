@@ -101,6 +101,12 @@ struct Puzzle {
     /// (1 shaded, 2 unshaded, 0 free). Only the exhaustive search reads it so far (brute_force.cpp).
     bool shading = false;
     std::vector<uint8_t> shade_given;
+    /// aux variables (the file's unknowns and layers, docs/research engine_aux_lemma_design.md): unknowns first, then
+    /// each layer's value per board cell; values per variable, a given value or AUX_UNSET. Only the exhaustive search
+    /// reads them so far (brute_force.cpp).
+    std::vector<std::vector<int>> aux_values;
+    std::vector<int> aux_given;
+    int aux_u = 0, aux_layers = 0;
     std::vector<std::vector<int>> grid_nbr;      ///< derived (shading): orthogonal neighbours on the board
     std::vector<std::array<int, 4>> windows4;    ///< derived (shading): every 2x2 block of board cells
 

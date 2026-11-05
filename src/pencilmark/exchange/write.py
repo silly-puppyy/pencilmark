@@ -35,6 +35,15 @@ def write(p, meta=None, solution=None, provenance=False):
     ({"groups", "relations", "constraints", "clues"}: indices into p.groups / p.relations / p.constraints / p.cell_clues)."""
     w = _Writer(p)
     doc = w.run(meta, solution)
+    aux = getattr(p, "aux", None)
+    if aux:  # the file's unknowns and layers: custom rules read them, so they are written with the rules
+        name = lambda c: f"r{p.coords[c][0] + 1}c{p.coords[c][1] + 1}"
+        if aux["unknowns"]:
+            doc["unknowns"] = {u["name"]: {"values": list(u["values"])} for u in aux["unknowns"]}
+        if aux["layers"]:
+            doc["layers"] = {L["name"]: dict({"values": list(L["values"])},
+                                             **({"given": {name(int(c)): v for c, v in L["given"].items()}} if L["given"] else {}))
+                             for L in aux["layers"]}
     prov = w.prov
     src = getattr(p, "_pm_input_rules", None)
     if src:

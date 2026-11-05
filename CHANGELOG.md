@@ -36,7 +36,10 @@
 - Custom rules: named `unknowns` (a number several clues share, or a 0 / 1 choice) and `layers` (a second value per
   cell, e.g. a -1 / 0 / +1 shift) at the top level of the puzzle file, read by custom rules as `X` and `shift(c)`
   (rules/custom.mdx, unknowns and layers; puzzle-format.md; schema). pencilmark reads, checks, writes and evaluates
-  them; the engine does not solve them yet, so such puzzles are refused for solving and grading.
+  them, and the exhaustive search solves and counts such puzzles: the C++ model carries them as aux variables (a value
+  set per unknown and per layer cell), a rule reading them is checked over its open hidden values once at most two of
+  its digits are open, and the search branches on them once the digits are fixed (uniqueness by digits). Grading
+  refuses them for now (no human technique reasons with them yet).
 - Engine: lemma rules (internal, for derived facts; docs/research/engine_aux_lemma_design.md in the research notes).
   An internal table constraint may carry `lemma` {id, setup, use}: its moves cost `setup` the first time any rule of
   that lemma is used in a route and `use` afterwards; a constraint marked `gated` makes no human moves (combination

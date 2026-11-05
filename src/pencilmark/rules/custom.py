@@ -1072,10 +1072,18 @@ def _table(test, names, D):
 
 def _expr(rule, B):
     """an unscoped rule as the engine's expression constraint (csrc/expr.cpp): checked once its cells are fixed"""
-    ir, names, lists, nslots = to_ir(rule)
+    unk, lay = list(getattr(B, "unknowns", {}) or ()), list(getattr(B, "layers", {}) or ())
+    ir, names, lists, nslots = to_ir(rule, unk, lay)
     pos = [[B.coords[B.idx(n)][0] + 1, B.coords[B.idx(n)][1] + 1] for n in names]
-    return {"type": "expr", "cells": names, "ir": ir, "lists": lists, "nslots": nslots, "pos": pos,
-            "box": list(B_box(B))}  # fmt: skip
+    out = {"type": "expr", "cells": names, "ir": ir, "lists": lists, "nslots": nslots, "pos": pos,
+           "box": list(B_box(B))}  # fmt: skip
+    hid = _hidden(parse(rule["holds"]), dict.fromkeys(unk), dict.fromkeys(lay))
+    if hid:  # the aux variables it reads: its unknowns, and each read layer's value at each of its cells
+        Nb = len(B.coords)
+        read = [unk.index(h) for h in hid if h in unk]
+        read += [len(unk) + lay.index(h) * Nb + B.idx(n) for h in hid if h in lay for n in names]
+        out["aux"] = {"u": len(unk), "n": Nb, "read": sorted(set(read))}
+    return out
 
 
 def _instance(holds_text, args, B, D, test):
@@ -1113,8 +1121,22 @@ def compile_rule(rule, B, D, layers=()):
     the rule is malformed or too large for a table."""
     tree = parse(rule["holds"])
     hid = _hidden(tree, getattr(B, "unknowns", {}), getattr(B, "layers", {}))
-    if hid:  # the engine has no variables beyond the cells' digits yet (docs/research: custom unknowns and layers)
-        raise LangError(f"rules that read {', '.join(sorted(hid))} (unknowns / layers) cannot be solved by the engine yet")
+    if hid:  # unknowns / layers: an expression constraint over cells and the engine's aux variables
+        if rule.get("each"):
+            return [x for t in rule["cells"][rule["each"]] for x in compile_rule(dict(rule, each=None, cells=dict(rule["cells"], **{rule["each"]: t})), B, D, layers)]
+        sc = rule.get("scope") or {}
+        if sc and set(sc) - {"pairs", "except"}:
+            raise LangError("a scoped rule reading unknowns / layers takes a pairs scope only, for now")
+        if sc:  # one expression constraint per pair: the predicate applied to the two cells
+            skip = {tuple(sorted(x)) for x in sc.get("except", [])}
+            out = []
+            for a, b in B.pairs(STEPS[sc["pairs"]]):
+                na, nb = B.name(a), B.name(b)
+                if tuple(sorted((na, nb))) in skip:
+                    continue
+                out.append(_expr({"cells": {"__a0": [na], "__a1": [nb]}, "holds": f"let __f = {rule['holds']}; __f(__a0, __a1)"}, B))
+            return out
+        return [_expr(rule, B)]
     used = _layered(tree)
     if used - set(layers):
         raise LangError(
@@ -1245,7 +1267,7 @@ def describe_rule(rule):
 # variables, cell-list indices and slots (one per binding site), built-ins to ids. Keep in step with csrc/expr.hpp.
 OPS = ("num", "bool", "cells", "cell", "slot", "list", "range", "comp", "let", "letfn", "lambda", "if", "??", "or",
        "and", "not", "==", "!=", "<", "<=", ">", ">=", "in", "not in", "+", "-", "*", "/", "div", "mod", "**", "neg",
-       "index", "slice", "call", "callfn", "none")  # fmt: skip
+       "index", "slice", "call", "callfn", "none", "aux", "auxcell")  # fmt: skip
 OPCODE = {op: i for i, op in enumerate(OPS)}
 FNS = ("sum", "product", "min", "max", "count", "len", "all", "any", "sort", "reverse", "abs", "odd", "even", "prime",
        "num", "defined", "all_different", "count_distinct", "concat", "median", "seen", "upto", "take_while", "take",
@@ -1253,10 +1275,13 @@ FNS = ("sum", "product", "min", "max", "count", "len", "all", "any", "sort", "re
 FNCODE = {f: i for i, f in enumerate(FNS)}
 
 
-def to_ir(rule):
+def to_ir(rule, unknowns=(), layers=()):
     """a custom rule (no scope) -> (ir, cell names, cell lists): ir nested lists of ints; cell names the engine variables
-    in order; cell lists the rule's named lists as variable indices (nested for lists of lists)"""
+    in order; cell lists the rule's named lists as variable indices (nested for lists of lists). unknowns / layers: the
+    file's names in order; an unknown is read as ["aux", its index], a layer call L(x) as ["auxcell", L's index, x]
+    (the engine's aux variables: unknowns first, then each layer's value per board cell)"""
     tree = parse(rule["holds"])
+    unknowns, layers = list(unknowns), list(layers)
     names, lists, list_index = [], [], {}
 
     def var(c):
@@ -1285,6 +1310,8 @@ def to_ir(rule):
                 return [code["slot"], scope[n]]
             if n in list_index:
                 return [code["cells"], list_index[n]]
+            if n in unknowns:
+                return [code["aux"], unknowns.index(n)]
             if re.fullmatch(r"r\d+c\d+", n):
                 return [code["cell"], var(n)]
             raise LangError(f"unknown name {n!r}")
@@ -1319,6 +1346,8 @@ def to_ir(rule):
             name, args = a
             if name in scope:
                 return [code["callfn"], scope[name]] + [emit(x, scope) for x in args]
+            if name in layers and name not in FNCODE:
+                return [code["auxcell"], layers.index(name), emit(args[0], scope)]
             if name not in FNCODE:
                 raise LangError(f"unknown function {name!r}")
             return [code["call"], FNCODE[name]] + [emit(x, scope) for x in args]
