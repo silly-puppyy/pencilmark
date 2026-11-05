@@ -20,6 +20,11 @@ from . import solver as S  # noqa: E402
 from .engine_records import _explain, _name  # noqa: E402
 from .scoring import Scorer  # noqa: E402
 
+import os as _os
+
+# diagnostics: PENCILMARK_SOLVE_STATS=1 sums the engine's per-strategy timings of every solve() call here
+SOLVE_STATS = {} if _os.environ.get("PENCILMARK_SOLVE_STATS") == "1" else None
+
 CTYPES = (
     "sum",
     "arrow",
@@ -538,10 +543,19 @@ def solve(
     args.append(bool(explain))
     args.append(_colour_list(colour_seeds, puzzle.N))
     kw = _ann_kw(labels)  # regions to find / colour classes: mid-solve
+    if SOLVE_STATS is not None:  # diagnostics: per-strategy (ms, calls, hits) summed into SOLVE_STATS
+        kw["stats"] = True
     if cand is not None:
-        raw, solved = _C.solve(*args, cand=[int(x) for x in cand], **kw)
+        out = _C.solve(*args, cand=[int(x) for x in cand], **kw)
     else:
-        raw, solved = _C.solve(*args, **kw)
+        out = _C.solve(*args, **kw)
+    raw, solved = out[0], out[1]
+    if SOLVE_STATS is not None:
+        for k_, (ms, calls, hits) in out[2].items():
+            a_ = SOLVE_STATS.setdefault(k_, [0.0, 0, 0])
+            a_[0] += ms
+            a_[1] += calls
+            a_[2] += hits
     info = _C.puzzle_info(cp, disabled) if explain else None
     steps = []
     for row in raw:

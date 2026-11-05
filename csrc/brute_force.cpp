@@ -429,6 +429,7 @@ struct Brute {
         uint32_t dom[64];
         static const std::vector<GacReq> noreq;
         for (const NConstraint& k : p.nary) {
+            if (k.type == NT_CASES) continue;  // implied by the puzzle's rules (a fog / CAS lemma)
             if (k.bounds_only) {
                 pm_long t = 0;
                 if (k.part_sign.empty()) {
@@ -664,6 +665,7 @@ struct Brute {
                 }
                 const NConstraint& k = p.nary[ki];
                 if (k.type == NT_LINE || k.type == NT_SAMESET) continue;  // implied by pairs / houses
+                if (k.type == NT_CASES) continue;  // a lemma implied by the puzzle's rules: the search does not need it
                 if (gac_memo) {  // skip a rule whose domains equal its last propagated output (exact GAC is idempotent)
                     auto& mo = memo_out[ki];
                     bool same = (int)mo.size() == k.nv();
