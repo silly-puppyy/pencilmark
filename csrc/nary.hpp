@@ -88,6 +88,11 @@ struct NSpec {
     std::vector<int> def_lines, def_regs;  ///< derived leftovers: the defining lines / regions
     std::vector<int> totals;  ///< sum with an unknown total from this set (incomplete clue); empty = total
     bool named = false;       ///< table with a rule name (moves coded 6000 + index)
+    /// table: a lemma rule (a fact derived from a puzzle rule, docs/research/engine_aux_lemma_design.md): its moves
+    /// cost lemma_setup the first time any rule of lemma_id is used in a route, lemma_use afterwards
+    int lemma_id = -1;
+    double lemma_setup = 0, lemma_use = 0;
+    bool gated = false;       ///< a rule its lemmas stand in for: no human moves from it (the search still checks it)
     int offset = 0;           ///< equal_sum: segment sums of (digit - offset)
     bool bounds_only = false; ///< sum: derived (BandLogic) -- brute force propagates bounds only
     std::vector<int> seg_sign;  ///< bounds_only: +1 / -1 per segment (outie cells subtracted); empty = all +1

@@ -71,6 +71,8 @@ bool Solver::compute_mental(int level) {
         for (size_t li = 0; li < NT; ++li) {
             const NConstraint& k = li < NL ? p.nary[li] : p.cage_nary[li - NL];
             if (k.type == NT_SAMESET) continue;
+            if (li < NL && k.index >= 0 && (p.nary_specs[k.index].gated || p.nary_specs[k.index].lemma_id >= 0))
+                continue;  // a lemma acts as its own priced step; a gated rule not at all (its lemmas stand in)
             bool any_empty = false;
             for (int i = 0; i < k.nv(); ++i) {
                 dom[i] = md0[k.vars[i]];

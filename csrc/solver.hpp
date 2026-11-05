@@ -12,6 +12,7 @@
 #include <mutex>
 #include <string>
 #include <unordered_map>
+#include <algorithm>
 #include <vector>
 
 #include "model.hpp"
@@ -826,6 +827,14 @@ private:
     std::unordered_map<GacKey, GacCache, GacKeyHash> gcache;
     double loc_r = -1.0, loc_c = -1.0;  ///< position (board coords) of the previous route step, for params locality
     int loc_d = 0;  ///< digit of the previous route placement, for params digit_cont
+    std::vector<int> lemma_seen;  ///< lemma ids a route step has used (their next moves cost lemma_use)
+    /// a lemma table's move: its own price (setup the first time its lemma is used in the route, use afterwards)
+    void lemma_price(Move& m) const {
+        if (m.nk != NM_NARY || m.na < 0 || m.na >= (int)p.nary_specs.size()) return;
+        const NSpec& s = p.nary_specs[m.na];
+        if (s.lemma_id < 0) return;
+        m.d = std::find(lemma_seen.begin(), lemma_seen.end(), s.lemma_id) != lemma_seen.end() ? s.lemma_use : s.lemma_setup;
+    }
     int loc_pc = -1;  ///< cell of the previous route placement, for params spot_w
     std::vector<uint32_t> live_noted;  ///< params notes_live: digits already noted per box (group index)
     int live_notes();  ///< params notes_live: write the position notes hatching now allows; returns the marks written

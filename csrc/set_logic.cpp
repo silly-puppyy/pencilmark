@@ -624,6 +624,7 @@ void Solver::rule_intersect(MoveBuf& out) {
                              k.type == NT_BETWEEN || k.type == NT_XSUM || k.type == NT_SANDWICH ||
                              (k.type == NT_TABLE && k.rows.size() <= 4000);
         if (!kind_ok || k.nv() > 20) return;
+        if (k.index >= 0 && p.nary_specs[k.index].gated) return;  // its lemmas stand in for it
         units.push_back({1, k.group, &k, k.vars});
     };
     for (const NConstraint& k : p.nary) add_rule(k);
@@ -1399,7 +1400,7 @@ void Solver::band_logic(MoveBuf& out) {
             // rule kinds whose consistency check is cheap in a search (as RuleIntersection; outside clues such as
             // skyscrapers / sandwiches and counting rules made the sub-puzzle searches cost minutes)
             for (const NConstraint& k : p.nary)
-                if (k.index >= 0 && (p.base_nary < 0 || k.index < p.base_nary) && band_cheap(k) && k.nv() <= 16 &&
+                if (k.index >= 0 && (p.base_nary < 0 || k.index < p.base_nary) && !p.nary_specs[k.index].gated && band_cheap(k) && k.nv() <= 16 &&
                     take(k.vars, k.index))
                     R.rules.push_back(k.index);
             for (int g = 0; g < G0; ++g)
@@ -1581,7 +1582,7 @@ void Solver::band_logic(MoveBuf& out) {
                 return o > 3 && o < (int)cs.size();
             };
             for (const NConstraint& k : p.nary)
-                if (k.index >= 0 && (p.base_nary < 0 || k.index < p.base_nary) && band_cheap(k) && k.nv() <= 16 &&
+                if (k.index >= 0 && (p.base_nary < 0 || k.index < p.base_nary) && !p.nary_specs[k.index].gated && band_cheap(k) && k.nv() <= 16 &&
                     meets(k.vars))
                     far.push_back(k.index);
             for (int g = 0; g < G0; ++g)

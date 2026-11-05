@@ -869,6 +869,7 @@ void Solver::state_moves(const std::vector<std::pair<int, int>>& givens, MoveBuf
         desc_mode = -1;
         if (canon) describe(m, b);  // descriptors first: params meta_theta_full prices with them
         m.d = P.difficulty(m, b.covers.data(), p.D);
+        lemma_price(m);  // one state: a lemma's setup price (no route history here)
     }
     if (canon) canon_dedupe(b);
     if (limit_per_tech > 0) {  // the cheapest ones per technique
@@ -1329,6 +1330,7 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
             desc_mode = mode;
             if (canon) describe(m, buf);  // canonical mode only (the Python-reference mode stays bit-identical)
             m.d = P.difficulty(m, buf.covers.data(), p.D);
+            lemma_price(m);
         }
         if (canon) {
             canon_dedupe(buf);
@@ -1510,6 +1512,7 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
                 desc_mode = mode;
                 if (canon) describe(m, buf);
                 m.d = P.difficulty(m, buf.covers.data(), p.D);
+                lemma_price(m);
             }
             // bounded audit: at most all_tiers_cap of the other families' moves per technique (the
             // cheapest; ties by the candidates they touch, so the kept set does not depend on discovery
@@ -1558,6 +1561,9 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
             out.alts.push_back(a);
         }
         const Move& bm = buf.moves[best];
+        if (bm.nk == NM_NARY && bm.na >= 0 && bm.na < (int)p.nary_specs.size() && p.nary_specs[bm.na].lemma_id >= 0 &&
+            std::find(lemma_seen.begin(), lemma_seen.end(), p.nary_specs[bm.na].lemma_id) == lemma_seen.end())
+            lemma_seen.push_back(p.nary_specs[bm.na].lemma_id);  // set up once: later uses are cheap
         st.move = out.alts[st.alt_off + best];
         st.move.pat_off = (int)out.pats.size();
         st.move.pat_n = bm.pat_n;

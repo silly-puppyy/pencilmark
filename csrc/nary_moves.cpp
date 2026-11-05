@@ -108,6 +108,7 @@ void Solver::nary_combination(MoveBuf& out, int part) {
     static const std::vector<GacReq> noreq;
     for (const NConstraint& k : p.nary) {
         if ((part == 0 && k.type == NT_SAMESET) || (part == 1 && k.type != NT_SAMESET)) continue;
+        if (k.index >= 0 && p.nary_specs[k.index].gated) continue;  // its lemmas stand in for it
         int unplaced = 0;
         for (int c : k.vars) unplaced += !vals[c];
         if (!unplaced) continue;

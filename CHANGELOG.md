@@ -37,6 +37,11 @@
   cell, e.g. a -1 / 0 / +1 shift) at the top level of the puzzle file, read by custom rules as `X` and `shift(c)`
   (rules/custom.mdx, unknowns and layers; puzzle-format.md; schema). pencilmark reads, checks, writes and evaluates
   them; the engine does not solve them yet, so such puzzles are refused for solving and grading.
+- Engine: lemma rules (internal, for derived facts; docs/research/engine_aux_lemma_design.md in the research notes).
+  An internal table constraint may carry `lemma` {id, setup, use}: its moves cost `setup` the first time any rule of
+  that lemma is used in a route and `use` afterwards; a constraint marked `gated` makes no human moves (combination
+  steps, rule intersections, band logic, rule reads in the head) while the search still checks it. Nothing in the
+  puzzle format uses them yet; cards and routes are unchanged.
 - New engine param, off by default: `digit_cont` (favour the previous placement's digit).
 - Shading (format: `"type": "yin_yang"`, optional given `shaded` / `unshaded` cells; whole-board-rules 6.19): shaded
   and unshaded cells each orthogonally connected, no 2x2 of one colour. Readers, writers, `fingerprint` and

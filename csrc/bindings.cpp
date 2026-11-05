@@ -270,6 +270,13 @@ static NSpec parse_constraint(const py::dict& d) {
     } else {
         throw std::invalid_argument("unknown constraint type: " + t);
     }
+    if (d.contains("lemma") && !d["lemma"].is_none()) {  // a lemma rule: {"id", "setup", "use"}
+        auto lm = d["lemma"].cast<py::dict>();
+        s.lemma_id = lm["id"].cast<int>();
+        s.lemma_setup = lm["setup"].cast<double>();
+        s.lemma_use = lm["use"].cast<double>();
+    }
+    if (d.contains("gated") && !d["gated"].is_none()) s.gated = d["gated"].cast<bool>();
     if (d.contains("offset") && !d["offset"].is_none()) {  // the rule is on (digit - offset): shifted universes
         const int off = d["offset"].cast<int>();
         if (s.type == NT_SUM) {
