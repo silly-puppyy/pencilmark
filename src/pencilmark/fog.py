@@ -133,11 +133,140 @@ def _partial_cage(k, L):
     return out
 
 
-def route(puzzle, max_rounds=400):
-    """the fog route of a unique fog puzzle (module docstring). Raises ValueError when the puzzle has no fog rule."""
-    from . import api, cbackend as CB, solver as SV
+CASE_CAP = 300  # an arrow with more possible hidden shapes than this gets no case rule (nothing claimed: sound)
+LEMMA = {"setup": 1.0, "use": 0.5}  # placeholder prices (coach fit: case lemmas are nearly free; to be fitted)
+
+
+def _segments(rules):
+    """drawn segments: consecutive cells of every arrow (circle to shaft) and line, seen from a lit end"""
+    seg = set()
+    for k in rules:
+        if k["type"] == "arrow":
+            for ln in k.get("lines") or []:
+                ch = list(k.get("bulb") or [])[:1] + ln
+                seg |= {frozenset(p) for p in zip(ch, ch[1:])}
+        elif k["type"] == "line":
+            seg |= {frozenset(p) for p in zip(k["cells"], k["cells"][1:])}
+    return seg
+
+
+import re as _re
+
+ORTHO = _re.compile(r"arrows?[^.]*orthogonal", _re.I)
+NO_SHARE = _re.compile(r"arrows?[^.]*(?:don.t|do not|may not|cannot|never) (?:share|overlap|cross)", _re.I)
+
+
+def arrow_cases(rules, lit, rows, cols, ortho=False, no_share=False):
+    """Case rules for arrows seen in part (CtC hosts: "this arrow can't stop here ... it must go down"). A lit cell
+    shows its drawn segments, so a hidden part of a shaft runs through fogged cells, stepping into or out of a lit cell
+    only along a drawn segment. Seen: the lit cells of the arrow, the fogged cells its drawn lines enter.
+    - circle lit: the shaft from the circle up to the first fogged cell, then every continuation (a case each);
+    - circle fogged: each lit stretch of the shaft; one end leads to the circle (a case per path), the other on
+      to the tip (unless the stretch holds the tip, whose arrowhead shows).
+    Each case: its cells with the circle = the sum of the others; the engine checks the cases against the live
+    candidates (rule kind "cases"). Returned as engine constraints over cell indices."""
+    L = {_name(r, c) for r, c in lit}
+    seg = _segments(rules)
+    steps = [(-1, 0), (1, 0), (0, -1), (0, 1)] + ([] if ortho else [(-1, -1), (-1, 1), (1, -1), (1, 1)])
+    ix = lambda c: _rc(c)[0] * cols + _rc(c)[1]
+
+    def nbs(x):
+        r, c = _rc(x)
+        return [_name(r + a, c + b) for a, b in steps if 0 <= r + a < rows and 0 <= c + b < cols]
+
+    def ok_step(x, y):
+        return frozenset((x, y)) in seg if (x in L or y in L) else True
+
+    others = set()
+
+    def paths(start, block, most):
+        out, todo = [], [[start]]
+        while todo:
+            p = todo.pop()
+            out.append(p)
+            if len(out) > CASE_CAP:
+                return None
+            if len(p) < most:
+                todo += [p + [y] for y in nbs(p[-1]) if y not in p and y not in block and y not in others and ok_step(p[-1], y)]
+        return out
+
+    seen_on = {}  # arrow -> its cells a solver sees (lit ones): with no_share, no other arrow's shaft enters them
+    for n_, k in enumerate(rules):
+        if k["type"] == "arrow":
+            seen_on[n_] = {c for c in list(k.get("bulb") or []) + [x for ln in k.get("lines") or [] for x in ln] if c in L}
+    out = []
+    for n_, k in enumerate(rules):
+        if k["type"] != "arrow" or len(k.get("bulb") or []) != 1:
+            continue
+        bulb = k["bulb"][0]
+        others.clear()
+        if no_share:
+            others.update(c for m, cs in seen_on.items() if m != n_ for c in cs)
+        for line in k.get("lines") or []:
+            if all(c in L for c in [bulb] + line):
+                continue  # seen whole: the arrow rule itself
+            cases = []
+            if bulb in L:
+                seen = []
+                for c in line:
+                    if c not in L:
+                        break
+                    seen.append(c)
+                if len(seen) == len(line):
+                    continue
+                ps = paths(line[len(seen)], set(seen) | {bulb}, rows - 1 - len(seen))
+                if ps is None:
+                    continue
+                cases = [{"cells": [ix(bulb)] + [ix(c) for c in seen + p], "circle": ix(bulb)} for p in ps]
+            else:
+                run = [i for i, c in enumerate(line) if c in L]
+                if not run:
+                    continue
+                a, b = run[0], run[-1]
+                if any(line[i] not in L for i in range(a, b + 1)):
+                    continue  # several stretches: not one known piece
+                stretch = line[a : b + 1]
+                ends = [line[a - 1] if a > 0 else bulb] + ([line[b + 1]] if b + 1 < len(line) else [])
+                for ce in ends:
+                    te = [e for e in ends if e != ce]
+                    cps = paths(ce, set(stretch) | set(te), rows - len(stretch))
+                    if cps is None:
+                        cases = None
+                        break
+                    for cp in cps:
+                        tps = [[]] if not te else (paths(te[0], set(stretch) | set(cp), rows - 1 - len(stretch) - len(cp) + 1) or [])
+                        for tp in tps:
+                            cells = cp + stretch + tp
+                            cases.append({"cells": [ix(c) for c in cells], "circle": ix(cp[-1])})
+                            if len(cases) > CASE_CAP:
+                                cases = None
+                                break
+                        if cases is None:
+                            break
+                    if cases is None:
+                        break
+                if not cases:
+                    continue
+            out.append({"type": "cases", "cases": cases, "name": f"arrow {bulb}: {len(cases)} possible shafts",
+                        "lemma": {"id": 7000, **LEMMA}})
+    return out
+
+
+def route(puzzle, max_rounds=400, rules_text=None):
+    """the fog route of a unique fog puzzle (module docstring). Raises ValueError when the puzzle has no fog rule.
+    rules_text: the puzzle's rules (read from the input's metadata when not given): statements such as "arrows move
+    orthogonally" and "arrows don't share cells" narrow the hidden shapes."""
+    from . import api, cbackend as CB, inputs, solver as SV
     from .exchange.write import write as write_doc
 
+    if rules_text is None and not hasattr(puzzle, "coords"):
+        try:
+            obj = inputs.read(puzzle)
+            obj = obj.get("puzzle", obj) if isinstance(obj.get("puzzle"), dict) else obj
+            rules_text = (obj.get("meta") or {}).get("rules_text") or ""
+        except Exception:  # noqa: BLE001 -- the load below reports a bad input
+            rules_text = ""
+    ortho, no_share = bool(ORTHO.search(rules_text or "")), bool(NO_SHARE.search(rules_text or ""))
     p = api.load(puzzle)
     fog = getattr(p, "fog", None)
     if not fog:
@@ -159,6 +288,7 @@ def route(puzzle, max_rounds=400):
         before = list(cand)
         vis = dict(doc, givens=givens, rules=visible_rules(doc["rules"], lit, D))
         q = api.load(vis)
+        q.constraints += arrow_cases(doc["rules"], lit, rows, cols, ortho, no_share)  # hidden-content lemmas ("cases")
         st, _ = CB.solve(q, assume_unique=False, cand=cand, disabled=(SV.GUESS, SV.TRIAL))
         progressed = False
         for s in st:

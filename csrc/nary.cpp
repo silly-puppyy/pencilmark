@@ -442,7 +442,63 @@ struct Enum {
             if (stop_first) return;
         }
     }
+    // NT_CASES: one search per case over its cells (live domains, house peers different, the sum relation). A case's
+    // filling supports its cells' digits; cells outside that case keep their whole live domain (unconstrained there).
+    void run_cases() {
+        set_unique = false;
+        for (const NCase& c : k.cases) {
+            std::vector<int> order;
+            if (c.circle >= 0) order.push_back(c.circle);
+            for (int v : c.cells)
+                if (v != c.circle) order.push_back(v);
+            for (int i = 0; i < nv; ++i) asg[i] = false;
+            bool any = false;
+            case_dfs(c, order, 0, 0, any);
+            if (aborted) return;
+            if (any)
+                for (int i = 0; i < nv; ++i)
+                    if (std::find(order.begin(), order.end(), i) == order.end()) sup[i] |= dom[i];
+            if (stop_first && found) return;
+        }
+        must = 0;
+    }
+    void case_dfs(const NCase& c, const std::vector<int>& order, size_t at, int sum, bool& any) {
+        if (aborted) return;
+        if (++nodes > budget || ((nodes & 1023) == 0 && deadline_passed())) {
+            aborted = true;
+            return;
+        }
+        const int rest = (int)order.size() - (int)at;  // cells still open (each at least 1)
+        const int start = c.circle >= 0 ? 1 : 0;
+        const int target = c.circle >= 0 ? (asg[c.circle] ? a[c.circle] : D) : (c.total >= 0 ? c.total : -1);
+        if (target >= 0 && at > (size_t)start && sum + (rest > 0 ? rest : 0) > target) return;
+        if (at == order.size()) {
+            if (target >= 0 && sum != target) return;
+            ++count;
+            found = any = true;
+            for (int v : order) sup[v] |= bitd(a[v]);
+            return;
+        }
+        const int v = order[at];
+        for (int d = lo[v]; d <= hi[v]; ++d) {
+            if (!(dom[v] & bitd(d)) || !pair_ok(v, d)) continue;
+            if (c.distinct) {
+                bool rep = false;
+                for (size_t j = 0; j < at && !rep; ++j) rep = a[order[j]] == d && order[j] != c.circle;
+                if (rep && v != c.circle) continue;
+            }
+            a[v] = d;
+            asg[v] = true;
+            case_dfs(c, order, at + 1, sum + ((int)at >= start ? d : 0), any);
+            asg[v] = false;
+            if (aborted || (stop_first && found)) return;
+        }
+    }
     void run() {
+        if (k.type == NT_CASES) {
+            run_cases();
+            return;
+        }
         if (k.type == NT_TABLE) {
             run_table();
             return;

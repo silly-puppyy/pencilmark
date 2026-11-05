@@ -450,3 +450,16 @@ def test_unknowns_and_layers_survive_export():
     V.validate(out)
     assert out["unknowns"] == {"X": {"values": list(range(1, 9))}}
     assert out["layers"]["shift"] == {"values": [-1, 0, 1], "given": {"r1c1": 0}}
+
+
+def test_cases_rule_checks_each_case_against_the_candidates():
+    """engine rule kind "cases" (one of several cases holds; docs fog lemmas): an arrow whose shaft is either r1c2 or
+    r1c2 + r2c2. One cell would repeat the circle digit in its row, so the second case holds: the circle is at least
+    1 + 2, and neither shaft cell can be 9 (the circle is at most 9)"""
+    import pencilmark as pm
+    from pencilmark import cbackend as cb
+
+    p = pm.load("." * 81)
+    p.constraints.append({"type": "cases", "cases": [{"cells": [0, 1], "circle": 0}, {"cells": [0, 1, 10], "circle": 0}]})
+    elim = {e for m in cb.state_moves(p, assume_unique=False) for e in (m.get("elim") or [])}
+    assert {(0, 1), (0, 2), (1, 9), (10, 9)} <= elim

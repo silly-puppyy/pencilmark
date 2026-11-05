@@ -39,6 +39,7 @@ CTYPES = (
     "distinct_count",
     "contains",
     "expr",
+    "cases",  # NT_CASES: a lemma about hidden structure (fog), one of several cases holds
 )
 # forcing chains: level (0 static / 1 dynamic / 2 nested), options, unit (0 cell / 1 unit),
 # surviving branches, propagation steps over all branches, contradicting branches

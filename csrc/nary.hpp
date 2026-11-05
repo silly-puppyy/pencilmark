@@ -44,7 +44,18 @@ enum NType {
     NT_DISTINCT = 15,
     /// contains ("contains" rule): the digit of position 0 appears in at least one later position
     NT_CONTAINS = 16,
-    NT_EXPR = 17  ///< a custom rule: an expression over the cells (expr.hpp), checked once all are fixed
+    NT_EXPR = 17,  ///< a custom rule: an expression over the cells (expr.hpp), checked once all are fixed
+    /// cases (a lemma about hidden structure, docs/research/fog_engine_port.md): one of several cases holds; a case is
+    /// a set of cells with a sum relation (a circle cell = the sum of the others, or the cells sum to a total) and
+    /// house peers different (all different when `distinct`). Cells outside the case that holds are unconstrained.
+    NT_CASES = 18
+};
+/// one case of an NT_CASES rule (cells in the puzzle; positions after model build)
+struct NCase {
+    std::vector<int> cells;  ///< spec: puzzle cells; constraint: var indices
+    int circle = -1;         ///< a cell / var: the sum of the others; -1 none
+    int total = -1;          ///< the cells (all but the circle) sum to this; -1 none
+    bool distinct = false;   ///< all different (a cage); otherwise house peers only
 };
 // engine line kinds, the one table: id and name. The ids are frozen (puzzle hashes, line move codes 4000 + 10 * kind and
 // explanation records use them): new kinds are appended only. pencilmark/model.py LINE_KINDS lists the same names in the
@@ -97,6 +108,7 @@ struct NSpec {
     bool bounds_only = false; ///< sum: derived (BandLogic) -- brute force propagates bounds only
     std::vector<int> seg_sign;  ///< bounds_only: +1 / -1 per segment (outie cells subtracted); empty = all +1
     std::shared_ptr<const ExprProgram> expr;  ///< NT_EXPR: the custom rule's program (a = its cells, in variable order)
+    std::vector<NCase> cases;  ///< NT_CASES: the cases (a = every cell any case reads)
 };
 
 struct NConstraint {
@@ -125,6 +137,7 @@ struct NConstraint {
     std::vector<std::vector<int>> parts;  ///< bounds_only: cells per part
     std::vector<int> part_sign;  ///< bounds_only: +1 / -1 per part (empty = all +1)
     std::vector<uint8_t> rows;     ///< table rows over positions
+    std::vector<NCase> cases;      ///< NT_CASES: cells / circle as var indices
     std::vector<int> quota;        ///< count
     int line_kind = -1;            ///< >= 0: line rule (cells in line order = vars)
     std::vector<uint8_t> differ;   ///< nv*nv

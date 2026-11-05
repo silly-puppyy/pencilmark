@@ -9,6 +9,10 @@
   reader from `foglight` / `fogofwar`. Fog puzzles now load, validate, solve, count and
   export with their fog; `rate` refuses them by name ("fog of war: the puzzle is solved under the fog ...") until the
   engine grades under fog. Of the Cracking the Cryptic fog puzzles, 43 now load with their fog (none before).
+- Engine rule kind `cases` (one of several cases holds; each case a set of cells with a circle = the sum of the
+  others or a total, house peers different): the engine checks every case against the live candidates. The fog route
+  uses it for arrows seen in part (the possible hidden shafts, with "arrows move orthogonally / don't share cells"
+  from the rules text). Golden gate identical.
 - Experimental: `pencilmark.fog.route(puzzle)`, the route a solver can take under the fog (what is lit, reveals on
   correct digits and setter triggers, no guessing); not yet used by `rate`. Hidden-content reasoning (partly seen
   arrows, cage shapes) comes with the engine port (docs/research/fog_engine_port.md in the research repo).

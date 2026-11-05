@@ -822,6 +822,20 @@ void Puzzle::build_nary() {
         k.offset = s.offset;
         k.bounds_only = s.bounds_only;
         k.expr = s.expr;
+        if (s.type == NT_CASES) {  // the cases over var indices
+            auto var_of = [&](int c) {
+                for (int i = 0; i < k.nv(); ++i)
+                    if (k.vars[i] == c) return i;
+                return -1;
+            };
+            for (const NCase& sc : s.cases) {
+                NCase c = sc;
+                c.cells.clear();
+                for (int x : sc.cells) c.cells.push_back(var_of(x));
+                c.circle = sc.circle >= 0 ? var_of(sc.circle) : -1;
+                k.cases.push_back(std::move(c));
+            }
+        }
         if (s.bounds_only && !s.segs.empty()) {  // parts: segs (pairwise distinct cell sets)
             k.part.assign(k.nv(), -1);
             for (size_t sg = 0; sg < s.segs.size(); ++sg)

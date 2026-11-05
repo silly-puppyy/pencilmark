@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "portable.hpp"
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -273,6 +274,23 @@ static NSpec parse_constraint(const py::dict& d) {
         s.type = NT_DIGITSET;
         for (auto h : d["houses"]) s.segs.push_back(h.cast<std::vector<int>>());
         s.total = d["n"].cast<int>();
+    } else if (t == "cases") {  // {"cases": [{"cells": [...], "circle": cell | None, "total": n | None, "distinct": b}]}
+        s.type = NT_CASES;
+        std::vector<int> all;
+        for (auto c : d["cases"]) {
+            auto cd = c.cast<py::dict>();
+            NCase k;
+            k.cells = cd["cells"].cast<std::vector<int>>();
+            if (cd.contains("circle") && !cd["circle"].is_none()) k.circle = cd["circle"].cast<int>();
+            if (cd.contains("total") && !cd["total"].is_none()) k.total = cd["total"].cast<int>();
+            if (cd.contains("distinct") && !cd["distinct"].is_none()) k.distinct = cd["distinct"].cast<bool>();
+            for (int x : k.cells)
+                if (std::find(all.begin(), all.end(), x) == all.end()) all.push_back(x);
+            if (k.circle >= 0 && std::find(all.begin(), all.end(), k.circle) == all.end()) all.push_back(k.circle);
+            s.cases.push_back(std::move(k));
+        }
+        s.a = all;
+        s.named = d.contains("name") && !d["name"].is_none();
     } else if (t == "table") {
         s.type = NT_TABLE;
         s.a = cells("cells");
