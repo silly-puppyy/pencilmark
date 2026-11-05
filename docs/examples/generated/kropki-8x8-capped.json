@@ -12,10 +12,13 @@
   "rules": [
    {
     "type": "box_grid",
-    "origin": "r1c1",
     "box": [
      2,
      4
+    ],
+    "count": [
+     4,
+     2
     ]
    },
    {
@@ -188,7 +191,10 @@
      2,
      4
     ],
-    "origin": "r1c1"
+    "count": [
+     4,
+     2
+    ]
    },
    {
     "type": "edge",

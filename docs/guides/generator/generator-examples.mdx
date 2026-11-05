@@ -25,7 +25,7 @@ Shows a cage `sum` and the count `"max"`: the run uses its whole time and keeps 
 ```json
 {"board": {"rows": 9, "cols": 9},
  "digits": 9,
- "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]},
+ "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
   {"type": "cage", "sum": 10, "count": "max"}],
  "quality": {},
  "limits": {"time": 300, "seed": 1}}
@@ -42,7 +42,7 @@ Shows a line `length` with no upper bound, and 180° symmetry of the givens.
 ```json
 {"board": {"rows": 9, "cols": 9},
  "digits": 9,
- "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]},
+ "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
   {"type": "line", "kind": "whisper", "length": [25, null], "count": 1}],
  "symmetry": [{"kind": "rot180", "of": "givens"}],
  "quality": {},
@@ -60,7 +60,7 @@ Shows lengths on two templates at once: whispers of 7 cells or more, renbans of 
 ```json
 {"board": {"rows": 9, "cols": 9},
  "digits": 9,
- "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]},
+ "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
   {"type": "line", "kind": "whisper", "length": [7, null], "count": 2},
   {"type": "line", "kind": "renban", "length": [5, null], "count": "auto"}],
  "quality": {},
@@ -78,7 +78,7 @@ Shows an exact count with a length range: three thermos of 7 to 9 cells.
 ```json
 {"board": {"rows": 9, "cols": 9},
  "digits": 9,
- "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]},
+ "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
   {"type": "line", "kind": "thermo", "length": [7, 9], "count": 3}],
  "quality": {},
  "limits": {"time": 180, "seed": 1}}
@@ -95,7 +95,7 @@ Shows difficulty `"min"` with a required technique: the easiest puzzle found in 
 ```json
 {"board": {"rows": 9, "cols": 9},
  "digits": 9,
- "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}],
+ "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}],
  "where": {"difficulty": "min", "contains": {"codes": ["XWG"], "strict": true}},
  "quality": {},
  "limits": {"time": 300, "seed": 1}}
@@ -113,7 +113,7 @@ Shows difficulty `"max"`: no givens, a minimal set of dots (count `"min"`), the 
 {"board": {"rows": 6, "cols": 6},
  "digits": 6,
  "givens": {"count": 0},
- "rules": [{"type": "box_grid", "origin": "r1c1", "box": [2, 3]},
+ "rules": [{"type": "box_grid", "box": [2, 3], "count": [3, 2]},
   {"type": "edge", "kind": "kropki", "count": "min"}],
  "where": {"difficulty": "max"},
  "quality": {},
@@ -131,7 +131,7 @@ Shows the count `"max"` on a cell template: every even cell is marked, and the r
 ```json
 {"board": {"rows": 9, "cols": 9},
  "digits": 9,
- "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]},
+ "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
   {"type": "cell", "kind": "even", "count": "max"}],
  "quality": {},
  "limits": {"time": 300, "seed": 1}}
@@ -148,7 +148,7 @@ Shows an exact count of 0 forbids a letter: as many X clues as fit and no V.
 ```json
 {"board": {"rows": 9, "cols": 9},
  "digits": 9,
- "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]},
+ "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
   {"type": "edge", "kind": "xv", "letter": "X", "count": "max"},
   {"type": "edge", "kind": "xv", "letter": "V", "count": 0}],
  "quality": {},
@@ -166,7 +166,7 @@ Shows the count `"tile"`: cages cover the whole board.
 ```json
 {"board": {"rows": 6, "cols": 6},
  "digits": 6,
- "rules": [{"type": "box_grid", "origin": "r1c1", "box": [2, 3]},
+ "rules": [{"type": "box_grid", "box": [2, 3], "count": [3, 2]},
   {"type": "cage", "count": "tile"}],
  "quality": {},
  "limits": {"time": 180, "seed": 1}}
@@ -183,7 +183,7 @@ Shows the smallest board; 90° symmetry (it needs square boxes).
 ```json
 {"board": {"rows": 4, "cols": 4},
  "digits": 4,
- "rules": [{"type": "box_grid", "origin": "r1c1", "box": [2, 2]}],
+ "rules": [{"type": "box_grid", "box": [2, 2], "count": [2, 2]}],
  "symmetry": [{"kind": "rot90", "of": "givens"}],
  "quality": {},
  "limits": {"time": 180, "seed": 1}}
@@ -200,7 +200,7 @@ Shows outside clues, corner clues, a newer line kind and a locked rule in one re
 ```json
 {"board": {"rows": 9, "cols": 9},
  "digits": 9,
- "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]},
+ "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
   {"type": "neighbours", "kind": "antiknight"},
   {"type": "sandwich", "count": [2, 4]},
   {"type": "contains", "count": [1, 3]},
@@ -221,7 +221,7 @@ Shows an 8×8 board and the element cap (`where.elements`).
 ```json
 {"board": {"rows": 8, "cols": 8},
  "digits": 8,
- "rules": [{"type": "box_grid", "origin": "r1c1", "box": [2, 4]},
+ "rules": [{"type": "box_grid", "box": [2, 4], "count": [4, 2]},
   {"type": "edge", "kind": "kropki", "count": "auto"}],
  "where": {"elements": {"max": 6}},
  "quality": {},
@@ -248,14 +248,14 @@ Shows eight overlapping grids (box_grid rules at the super-samurai origins), loc
 ```json
 {"board": {"rows": 21, "cols": 33},
  "digits": 9,
- "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]},
-  {"type": "box_grid", "origin": "r1c13", "box": [3, 3]},
-  {"type": "box_grid", "origin": "r1c25", "box": [3, 3]},
-  {"type": "box_grid", "origin": "r7c7", "box": [3, 3]},
-  {"type": "box_grid", "origin": "r7c19", "box": [3, 3]},
-  {"type": "box_grid", "origin": "r13c1", "box": [3, 3]},
-  {"type": "box_grid", "origin": "r13c13", "box": [3, 3]},
-  {"type": "box_grid", "origin": "r13c25", "box": [3, 3]},
+ "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r1c13", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r1c25", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r7c7", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r7c19", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r13c1", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r13c13", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r13c25", "box": [3, 3], "count": [3, 3]},
   {"type": "region", "kind": "diagonal", "cells": ["r1c1", "r2c2", "r3c3", "r4c4", "r5c5", "r6c6", "r7c7", "r8c8", "r9c9"]},
   {"type": "region", "kind": "diagonal", "cells": ["r1c9", "r2c8", "r3c7", "r4c6", "r5c5", "r6c4", "r7c3", "r8c2", "r9c1"]},
   {"type": "region", "kind": "diagonal", "cells": ["r1c13", "r2c14", "r3c15", "r4c16", "r5c17", "r6c18", "r7c19", "r8c20", "r9c21"]},
@@ -289,11 +289,11 @@ Shows a named layout: five grids sharing their corner boxes, 180° symmetry of t
 ```json
 {"board": {"rows": 21, "cols": 21},
  "digits": 9,
- "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]},
-  {"type": "box_grid", "origin": "r1c13", "box": [3, 3]},
-  {"type": "box_grid", "origin": "r7c7", "box": [3, 3]},
-  {"type": "box_grid", "origin": "r13c1", "box": [3, 3]},
-  {"type": "box_grid", "origin": "r13c13", "box": [3, 3]}],
+ "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r1c13", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r7c7", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r13c1", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r13c13", "box": [3, 3], "count": [3, 3]}],
  "symmetry": [{"kind": "rot180", "of": "givens"}],
  "quality": {},
  "limits": {"time": 1800, "seed": 1}}
@@ -310,8 +310,8 @@ Shows two grids sharing a box, with a band target.
 ```json
 {"board": {"rows": 15, "cols": 15},
  "digits": 9,
- "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]},
-  {"type": "box_grid", "origin": "r7c7", "box": [3, 3]}],
+ "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r7c7", "box": [3, 3], "count": [3, 3]}],
  "where": {"band": "Hard"},
  "quality": {},
  "limits": {"time": 900, "seed": 1}}
@@ -328,10 +328,10 @@ Shows four grids overlapping on a 12 × 12 board, with cages.
 ```json
 {"board": {"rows": 12, "cols": 12},
  "digits": 9,
- "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]},
-  {"type": "box_grid", "origin": "r1c4", "box": [3, 3]},
-  {"type": "box_grid", "origin": "r4c1", "box": [3, 3]},
-  {"type": "box_grid", "origin": "r4c4", "box": [3, 3]},
+ "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r1c4", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r4c1", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r4c4", "box": [3, 3], "count": [3, 3]},
   {"type": "cage", "count": [6, null]}],
  "quality": {},
  "limits": {"time": 1800, "seed": 1}}
@@ -349,7 +349,7 @@ Cages and whisper lines, exactly two givens, Hard.
 {"board": {"rows": 9, "cols": 9},
  "digits": 9,
  "givens": {"count": 2},
- "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]},
+ "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
   {"type": "cage", "count": [1, null]},
   {"type": "line", "kind": "whisper", "count": [1, null], "value": 5}],
  "where": {"band": "Hard"},
@@ -370,7 +370,7 @@ No givens, a minimal set of kropki dots, difficulty at least 3.
 {"board": {"rows": 6, "cols": 6},
  "digits": 6,
  "givens": {"count": 0},
- "rules": [{"type": "box_grid", "origin": "r1c1", "box": [2, 3]},
+ "rules": [{"type": "box_grid", "box": [2, 3], "count": [3, 2]},
   {"type": "edge", "kind": "kropki", "count": "min"}],
  "where": {"difficulty": [3, 99]},
  "quality": {},
@@ -388,7 +388,7 @@ At least one cage, thermo, whisper, renban, between line, arrow, kropki dot, XV 
 ```json
 {"board": {"rows": 9, "cols": 9},
  "digits": 9,
- "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]},
+ "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
   {"type": "cage", "count": [1, null]},
   {"type": "line", "kind": "thermo", "count": [1, null]},
   {"type": "line", "kind": "whisper", "count": [1, null]},

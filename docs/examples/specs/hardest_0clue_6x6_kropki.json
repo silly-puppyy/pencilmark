@@ -16,10 +16,13 @@
  "rules": [
   {
    "type": "box_grid",
-   "origin": "r1c1",
    "box": [
     2,
     3
+   ],
+   "count": [
+    3,
+    2
    ]
   },
   {

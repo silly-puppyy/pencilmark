@@ -19,7 +19,7 @@ mistakes it for a puzzle), plus blocks that say what the result must satisfy and
  "digits": 9,
  "givens": {"count": [0, 2]},
  "rules": [
-  {"type": "box_grid", "origin": "r1c1", "box": [3, 3]},
+  {"type": "box_grid", "box": [3, 3], "count": [3, 3]},
   {"type": "cage", "count": "auto"},
   {"type": "line", "kind": "whisper", "count": [2, null]}],
  "symmetry": [{"kind": "rot180", "of": "givens"}],

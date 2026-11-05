@@ -38,7 +38,7 @@ def layout_spec(layout, rules=(), locked=(), where=None, givens=None, symmetry=N
     origins = PJ._layouts()[layout]
     s = {"format": "sudoku-spec", "format_version": 1,
          "board": {"rows": max(r for r, _ in origins) + 9, "cols": max(c for _, c in origins) + 9}, "digits": 9,
-         "rules": [{"type": "box_grid", "origin": f"r{r + 1}c{c + 1}", "box": [3, 3]} for r, c in origins]
+         "rules": [{"type": "box_grid", "origin": f"r{r + 1}c{c + 1}", "box": [3, 3], "count": [3, 3]} for r, c in origins]
          + list(locked) + list(rules)}  # fmt: skip
     if givens:
         s["givens"] = givens

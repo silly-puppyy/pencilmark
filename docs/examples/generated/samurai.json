@@ -12,8 +12,11 @@
   "rules": [
    {
     "type": "box_grid",
-    "origin": "r1c1",
     "box": [
+     3,
+     3
+    ],
+    "count": [
      3,
      3
     ]
@@ -24,12 +27,20 @@
     "box": [
      3,
      3
+    ],
+    "count": [
+     3,
+     3
     ]
    },
    {
     "type": "box_grid",
     "origin": "r7c7",
     "box": [
+     3,
+     3
+    ],
+    "count": [
      3,
      3
     ]
@@ -40,12 +51,20 @@
     "box": [
      3,
      3
+    ],
+    "count": [
+     3,
+     3
     ]
    },
    {
     "type": "box_grid",
     "origin": "r13c13",
     "box": [
+     3,
+     3
+    ],
+    "count": [
      3,
      3
     ]
@@ -970,39 +989,58 @@
      3,
      3
     ],
-    "origin": "r1c1"
+    "count": [
+     3,
+     3
+    ]
    },
    {
     "type": "box_grid",
+    "origin": "r1c13",
     "box": [
      3,
      3
     ],
-    "origin": "r1c13"
+    "count": [
+     3,
+     3
+    ]
    },
    {
     "type": "box_grid",
+    "origin": "r7c7",
     "box": [
      3,
      3
     ],
-    "origin": "r7c7"
+    "count": [
+     3,
+     3
+    ]
    },
    {
     "type": "box_grid",
+    "origin": "r13c1",
     "box": [
      3,
      3
     ],
-    "origin": "r13c1"
+    "count": [
+     3,
+     3
+    ]
    },
    {
     "type": "box_grid",
+    "origin": "r13c13",
     "box": [
      3,
      3
     ],
-    "origin": "r13c13"
+    "count": [
+     3,
+     3
+    ]
    }
   ]
  },

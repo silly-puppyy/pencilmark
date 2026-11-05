@@ -183,8 +183,11 @@ def test_strict_refusal():
     bad["candidates"] = {"R1C3": [1, 2]}
     _refuses(bad, "bad cell name")
     bad = copy.deepcopy(d)
-    bad["rules"][0]["count"] = [3, 3]
-    _refuses(bad, "unknown key")
+    del bad["rules"][0]["count"]  # box size and repetition count are both required
+    _refuses(bad, "count")
+    bad = copy.deepcopy(d)
+    bad["rules"][0]["count"] = [3, 2]
+    _refuses(bad, "does not tile")
     bad = copy.deepcopy(d)
     bad["rules"][0]["box"] = [2, 3]
     _refuses(bad, "does not hold")
@@ -285,7 +288,7 @@ def test_fingerprint_stable():
         for bc in (0, 3, 6)
     ]
     d3 = copy.deepcopy(d)  # a grid plus boxes as single rules
-    d3["rules"] = [{"type": "grid", "origin": "r1c1"}] + boxes
+    d3["rules"] = [{"type": "grid"}] + boxes
     assert pencilmark.fingerprint(d3) == f
     d5 = copy.deepcopy(d)  # explicit rows / columns and boxes
     d5["rules"] = (
@@ -310,7 +313,7 @@ def test_dumps_layout():
 def test_plain_string_round_trip():
     d = pencilmark.from_string(CLASSIC)
     assert pencilmark.to_string(d, "plain") == CLASSIC
-    assert d["rules"] == [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}]
+    assert d["rules"] == [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}]
 
 
 def _semantic(p):
@@ -343,7 +346,7 @@ def test_sudokuwiki_round_trip():
         d["rules"] += extra
         kinds.setdefault(k, pencilmark.load(d))
     d = pencilmark.from_string(giv)
-    d["rules"] = [{"type": "grid", "origin": "r1c1"}] + boxes  # jigsaw
+    d["rules"] = [{"type": "grid"}] + boxes  # jigsaw
     kinds["jigsaw"] = pencilmark.load(d)
     d = copy.deepcopy(d)
     d["rules"].append(cage)
@@ -509,19 +512,19 @@ def test_houses():
         for bc in (0, 3, 6)
     ]
     jig = copy.deepcopy(classic)
-    jig["rules"] = [{"type": "grid", "origin": "r1c1"}] + boxes
+    jig["rules"] = [{"type": "grid"}] + boxes
     assert _houses(jig) == h
     only_boxes = copy.deepcopy(classic)
     only_boxes["rules"] = boxes
     assert [k for k, _ in _houses(only_boxes)] == ["box"] * 9  # no rows / columns without a grid
     latin = copy.deepcopy(classic)
-    latin["rules"] = [{"type": "grid", "origin": "r1c1"}]
+    latin["rules"] = [{"type": "grid"}]
     assert [k for k, _ in _houses(latin)] == ["row"] * 9 + ["col"] * 9
     # a jigsaw written from the engine: one grid plus its pieces
     pieces = copy.deepcopy(boxes)
     pieces[0]["cells"][8], pieces[1]["cells"][6] = pieces[1]["cells"][6], pieces[0]["cells"][8]
     jig2 = copy.deepcopy(classic)
-    jig2["rules"] = [{"type": "grid", "origin": "r1c1"}] + pieces
+    jig2["rules"] = [{"type": "grid"}] + pieces
     assert [r["type"] for r in X.write(X.read(jig2))["rules"]] == ["grid"] + ["box"] * 9
     # explicit houses whose rows / columns make a grid are written as one
     expl = copy.deepcopy(classic)
@@ -530,7 +533,7 @@ def test_houses():
         + boxes
         + [{"type": "row", "cells": [X.cell_name(r, c) for c in range(9)]} for r in range(9)]
     )
-    assert X.write(X.read(expl))["rules"] == [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}]
+    assert X.write(X.read(expl))["rules"] == [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}]
     sam = pencilmark.load({"layout": "samurai", "numbers": ""})
     d = X.write(sam)
     assert [r["type"] for r in d["rules"]] == ["box_grid"] * 5
@@ -642,7 +645,7 @@ def test_multigrid_written_compact():
         "board": {"rows": R, "cols": R},
         "digits": 9,
         "givens": giv,
-        "rules": [{"type": "box_grid", "origin": X.cell_name(r, c), "box": [3, 3]} for r, c in grids],
+        "rules": [dict({"type": "box_grid"}, **({"origin": X.cell_name(r, c)} if (r, c) != (0, 0) else {}), box=[3, 3], count=[3, 3]) for r, c in grids],
     }
     p = X.read(doc)
     p.groups.sort(key=lambda g: (g.kind != "box", g.kind != "row", g.cells))  # boxes first, then rows, then columns
@@ -667,7 +670,7 @@ def test_area_scope():
         "board": {"rows": R, "cols": R},
         "digits": 9,
         "givens": giv,
-        "rules": [{"type": "box_grid", "origin": o, "box": [3, 3]} for o in grids]
+        "rules": [{"type": "box_grid", "origin": o, "box": [3, 3], "count": [3, 3]} for o in grids]
         + [
             {"type": "neighbours", "kind": "antiknight", "area": "r13c13"},
             {"type": "negative", "of": "xv", "area": "r1c13"},
@@ -750,7 +753,7 @@ def test_describe_names_grids():
         for r in range(R)
         for c in range(R)
     ]
-    rules = [{"type": "box_grid", "origin": o, "box": [3, 3]} for o in ("r1c1", "r1c13", "r7c7", "r13c1", "r13c13")]
+    rules = [{"type": "box_grid", "origin": o, "box": [3, 3], "count": [3, 3]} for o in ("r1c1", "r1c13", "r7c7", "r13c1", "r13c13")]
     rules += [
         {"type": "region", "kind": "diagonal", "cells": [X.cell_name(i, i) for i in range(9)]},
         {"type": "region", "kind": "diagonal", "cells": [X.cell_name(i, 8 - i) for i in range(9)]},
@@ -930,7 +933,7 @@ def test_entropic_groups_with_an_empty_third_round_trip():
     """sudoku.coach's fixed thirds on a 4x4 ({1,2,3}, {4}, {}) read and write back: the reader compared the sorted groups
     with the engine's unsorted ones, so an empty group (sorted first) never matched"""
     d = {"format": "sudoku-puzzle", "format_version": 1, "board": {"rows": 4, "cols": 4}, "digits": 4, "givens": [0] * 16,
-         "rules": [{"type": "box_grid", "origin": "r1c1", "box": [2, 2]},
+         "rules": [{"type": "box_grid", "box": [2, 2], "count": [2, 2]},
                    {"type": "line", "kind": "entropic", "groups": [[1, 2, 3], [4], []], "cells": ["r1c1", "r1c2"]}]}  # fmt: skip
     doc = pencilmark.to_export(d)
     assert doc["rules"][1]["groups"] == [[1, 2, 3], [4], []] and pencilmark.to_export(doc) == doc
@@ -964,7 +967,7 @@ def test_fog_rule_reads_writes_and_is_not_graded():
     giv = [int(c) if c != "." else 0 for c in "4.....8.5.3..........7......2.....6.....8.4......1.......6.3.7.5..2.....1.4......"]
     fog = {"type": "fog", "lit": ["r1c1", "r5c5"], "triggers": [{"when": ["r1c1"], "light": ["r9c9"]}]}
     doc = {"format": "sudoku-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9, "givens": giv,
-           "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}, fog]}
+           "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}, fog]}
     doc["solution"] = pm.solve(dict(doc, rules=doc["rules"][:1]))  # the same puzzle without its fog
     with pytest.raises(Exception, match="needs its solution"):
         pm.load(dict(doc, solution=None))
@@ -991,7 +994,7 @@ def test_fog_route_reveals_and_places_only_what_is_seen():
 
     giv = [int(c) if c != "." else 0 for c in "53..7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8..79"]
     base = {"format": "sudoku-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9, "givens": giv,
-            "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}]}
+            "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}]}
     base["solution"] = pm.solve(base)
     every = [f"r{r}c{c}" for r in range(1, 10) for c in range(1, 10)]
     res = fog.route(dict(base, rules=base["rules"] + [{"type": "fog", "lit": every}]))

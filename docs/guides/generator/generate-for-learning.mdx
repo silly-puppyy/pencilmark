@@ -26,7 +26,7 @@ SINGLES = {"FHS", "HSI", "NSI"}
 def practice(code, band, known=(), tries=24):
     for seed in range(1, tries + 1):
         spec = {"format": "sudoku-spec", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
-                "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}],
+                "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}],
                 "where": {"band": band, "contains": {"codes": [code], "strict": True}}, "quality": {},
                 "limits": {"time": 120, "seed": seed}}
         try:
@@ -87,7 +87,7 @@ last there are no number clues at all. Each stage below is a killer whose cages 
 (a cell left alone becomes a given: a 1-cell cage is a given in disguise), with a given range and a target:
 
 ```json
-{"rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}, {"type": "cage", "count": "tile"}],
+{"rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}, {"type": "cage", "count": "tile"}],
  "givens": {"count": [28, 40]}, "where": {"band": "Very Easy", "difficulty": [2, 4.5]}}
 ```
 

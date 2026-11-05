@@ -21,7 +21,7 @@ spec = {
     "format": "sudoku-spec", "format_version": 1,
     "board": {"rows": 9, "cols": 9},
     "digits": 9,
-    "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}],
+    "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}],
     "symmetry": [{"kind": "rot180", "of": "givens"}],
     "where": {"band": "Hard", "contains": ["XWG"]},
     "limits": {"time": 120, "seed": 7},
@@ -70,7 +70,7 @@ spec = {
     "digits": 6,
     "givens": {"count": [4, 8]},
     "rules": [
-        {"type": "box_grid", "origin": "r1c1", "box": [2, 3]},
+        {"type": "box_grid", "box": [2, 3], "count": [3, 2]},
         {"type": "line", "kind": "thermo", "count": 2},
         {"type": "edge", "kind": "kropki", "count": [1, 3]},
     ],

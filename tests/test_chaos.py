@@ -13,7 +13,7 @@ def doc(rules, givens=None):
             "givens": givens or [0] * 16, "rules": rules}  # fmt: skip
 
 
-CHAOS = [{"type": "chaos", "origin": "r1c1"}, {"type": "region_border", "cells": ["r1c2", "r1c3"]},
+CHAOS = [{"type": "chaos"}, {"type": "region_border", "cells": ["r1c2", "r1c3"]},
          {"type": "same_region", "cells": ["r1c1", "r2c1", "r3c1"]}]  # fmt: skip
 
 
@@ -25,7 +25,7 @@ def test_read_write_fingerprint_describe():
     out = pencilmark.to_export(p, with_solution=False, describe=False)
     assert out["rules"] == CHAOS
     assert pencilmark.fingerprint(out) == pencilmark.fingerprint(d)
-    assert pencilmark.fingerprint(d) != pencilmark.fingerprint(doc([{"type": "grid", "origin": "r1c1"}]))
+    assert pencilmark.fingerprint(d) != pencilmark.fingerprint(doc([{"type": "grid"}]))
     rules = pencilmark.describe(d)["rules"]
     assert "orthogonally connected regions" in rules["Chaos Construction"]
 
@@ -33,10 +33,10 @@ def test_read_write_fingerprint_describe():
 @pytest.mark.parametrize(
     "rules,msg",
     [
-        ([{"type": "chaos", "origin": "r1c1"}, {"type": "region_border", "cells": ["r1c1", "r2c2"]}], "orthogonal"),
-        ([{"type": "grid", "origin": "r1c1"}, {"type": "same_region", "cells": ["r1c1", "r1c2"]}], "chaos area"),
+        ([{"type": "chaos"}, {"type": "region_border", "cells": ["r1c1", "r2c2"]}], "orthogonal"),
+        ([{"type": "grid"}, {"type": "same_region", "cells": ["r1c1", "r1c2"]}], "chaos area"),
         (
-            [{"type": "chaos", "origin": "r1c1"}, {"type": "box_grid", "origin": "r1c1", "box": [2, 2]}],
+            [{"type": "chaos"}, {"type": "box_grid", "box": [2, 2], "count": [2, 2]}],
             "inside a chaos",
         ),
     ],
@@ -62,7 +62,7 @@ QUADRANTS = [["r1c2", "r1c3"], ["r2c2", "r2c3"], ["r3c2", "r3c3"], ["r4c2", "r4c
 def test_engine_search(keep, borders, count):
     """the engine's search alone (no OR-Tools needed) counts regions-to-find puzzles"""
     givens = [v if (k not in keep if len(keep) == 4 else k in keep) else 0 for k, v in enumerate(SOL)]
-    d = doc([{"type": "chaos", "origin": "r1c1"}] + [{"type": "region_border", "cells": b} for b in borders], givens)
+    d = doc([{"type": "chaos"}] + [{"type": "region_border", "cells": b} for b in borders], givens)
     sols, complete = cpsat_verify._engine(pencilmark.load(d), 100, 10**6)
     assert complete and len(sols) == count
     assert SOL in sols
@@ -75,7 +75,7 @@ def test_solve_and_count_with_cpsat():
     givens = [v if k not in (3, 5, 10, 15) else 0 for k, v in enumerate(sol)]
     borders = [["r1c2", "r1c3"], ["r2c2", "r2c3"], ["r3c2", "r3c3"], ["r4c2", "r4c3"], ["r2c1", "r3c1"],
                ["r2c2", "r3c2"], ["r2c3", "r3c3"], ["r2c4", "r3c4"]]  # fmt: skip
-    d = doc([{"type": "chaos", "origin": "r1c1"}] + [{"type": "region_border", "cells": b} for b in borders], givens)
+    d = doc([{"type": "chaos"}] + [{"type": "region_border", "cells": b} for b in borders], givens)
     assert pencilmark.count_solutions(d, limit=3) == {"count": 1, "exact": True}
     assert list(pencilmark.solve(d)) == sol or pencilmark.solve(d)["solution"] == sol
 
@@ -84,7 +84,7 @@ def test_graded_with_region_steps():
     """a regions-to-find puzzle gets a card; its route uses the region techniques and every elimination keeps the
     solution"""
     givens = [v if k not in (3, 5, 10, 15) else 0 for k, v in enumerate(SOL)]
-    d = doc([{"type": "chaos", "origin": "r1c1"}] + [{"type": "region_border", "cells": b} for b in QUADRANTS], givens)
+    d = doc([{"type": "chaos"}] + [{"type": "region_border", "cells": b} for b in QUADRANTS], givens)
     card = pencilmark.rate(d, fields=["band", "difficulty", "steps"])
     assert card["band"] != "Unknown" and card["difficulty"] is not None
     from pencilmark import cbackend as CB
@@ -100,7 +100,7 @@ def test_region_steps_on_the_card():
 
     jsonschema = pytest.importorskip("jsonschema")
     givens = [v if k not in (3, 5, 10, 15) else 0 for k, v in enumerate(SOL)]
-    d = doc([{"type": "chaos", "origin": "r1c1"}] + [{"type": "region_border", "cells": b} for b in QUADRANTS], givens)
+    d = doc([{"type": "chaos"}] + [{"type": "region_border", "cells": b} for b in QUADRANTS], givens)
     card = pencilmark.rate(d, fields=["band", "steps"])
     schema = json.loads((Path(__file__).parents[1] / "docs" / "sudoku-grade.schema.json").read_text(encoding="utf-8"))
     assert not list(jsonschema.Draft202012Validator(schema).iter_errors(card))

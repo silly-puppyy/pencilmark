@@ -99,7 +99,7 @@ def test_cli_generate():
         "format_version": 1,
         "board": {"rows": 4, "cols": 4},
         "digits": 4,
-        "rules": [{"type": "box_grid", "origin": "r1c1", "box": [2, 2]}],
+        "rules": [{"type": "box_grid", "box": [2, 2], "count": [2, 2]}],
     }
     out = json.loads(run(["generate", "-", "--seed", "1", "--result"], json.dumps(spec))[0])
     assert out["puzzle"]["format"] == "sudoku-puzzle" and out["info"]["seed"] == 1

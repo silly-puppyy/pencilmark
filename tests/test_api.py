@@ -144,7 +144,7 @@ def test_meta_kept_and_ignored_for_rating():
         CLASSIC, meta={"author": "someone", "x-custom": 1}, title="T", date="2026-10-25", describe=False
     )
     assert exp["meta"] == {"title": "T", "author": "someone", "date": "2026-10-25", "x-custom": 1}
-    assert exp["format_version"] == 1 and exp["rules"] == [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}]
+    assert exp["format_version"] == 1 and exp["rules"] == [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}]
     again = pencilmark.to_export(exp, describe=False)  # metadata already in the input is kept
     assert again["meta"] == exp["meta"] and again["givens"] == exp["givens"]
     filled = pencilmark.to_export(exp)  # an empty meta.type / rules_text is filled, nothing overwritten
@@ -313,7 +313,7 @@ def test_ipuz_round_trip():
     lab = [[(r // 3) * 3 + c // 3 for c in range(9)] for r in range(9)]
     lab[0][2], lab[0][3] = lab[0][3], lab[0][2]
     jigsaw = copy.deepcopy(base)
-    jigsaw["rules"] = [{"type": "grid", "origin": "r1c1"}] + [
+    jigsaw["rules"] = [{"type": "grid"}] + [
         {"type": "box", "cells": [cn(r, c) for r in range(9) for c in range(9) if lab[r][c] == b]} for b in range(9)
     ]
     for doc in (base, killer, windoku, jigsaw):

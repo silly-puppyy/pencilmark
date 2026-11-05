@@ -41,7 +41,7 @@ a 6×6 board has boxes 2 cells high and 3 wide:
 
 ```json
  "rules": [
-  {"type": "box_grid", "origin": "r1c1", "box": [2, 3]}]
+  {"type": "box_grid", "box": [2, 3], "count": [3, 2]}]
 ```
 
 Cells are named by row and column: `r1c1` is the top-left cell, `r6c6` the bottom-right. `origin` is the top-left cell
@@ -53,7 +53,7 @@ Add the variant rules after the `box_grid`:
 
 ```json
  "rules": [
-  {"type": "box_grid", "origin": "r1c1", "box": [2, 3]},
+  {"type": "box_grid", "box": [2, 3], "count": [3, 2]},
   {"type": "line", "kind": "thermo", "cells": ["r4c4", "r3c4", "r2c4", "r2c3"]},
   {"type": "line", "kind": "thermo", "cells": ["r6c3", "r5c3", "r4c3", "r3c3", "r3c2"]},
   {"type": "edge", "kind": "kropki", "color": "white", "cells": ["r1c3", "r1c4"]},

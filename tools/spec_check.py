@@ -148,13 +148,16 @@ def houses_of(doc, rule):
     t = rule["type"]
     D = doc.D
     if t in ("grid", "box_grid"):
-        r0, c0, _ = grid_area(doc, rule["origin"])
+        r0, c0, _ = grid_area(doc, rule.get("origin", "r1c1"))
         hs = [("row", [(r0 + i, c0 + j) for j in range(D)]) for i in range(D)]
         hs += [("column", [(r0 + i, c0 + j) for i in range(D)]) for j in range(D)]
         if t == "box_grid":
             bh, bw = rule["box"]
             if bh * bw != D:
                 raise ValueError("box_grid box %r does not hold D cells" % (rule["box"],))
+            cd, ca = rule["count"]
+            if bh * cd != D or bw * ca != D:
+                raise ValueError("box_grid box %r x count %r does not tile the grid" % (rule["box"], rule["count"]))
             for bi in range(0, D, bh):
                 for bj in range(0, D, bw):
                     hs.append(("box", [(r0 + bi + i, c0 + bj + j) for i in range(bh) for j in range(bw)]))
@@ -166,7 +169,7 @@ def grid_areas(doc):
     out = []
     for rule in doc.d["rules"]:
         if rule["type"] in ("grid", "box_grid"):
-            out.append(set(grid_area(doc, rule["origin"])[2]))
+            out.append(set(grid_area(doc, rule.get("origin", "r1c1"))[2]))
     return out
 
 

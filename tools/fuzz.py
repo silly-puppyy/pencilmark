@@ -280,7 +280,7 @@ def case(seed):
     S = solution(rng, D)
     flat = [x for row in S for x in row]
     base = {"format": "sudoku-puzzle", "format_version": 1, "board": {"rows": D, "cols": D}, "digits": D,
-            "givens": [0] * (D * D), "rules": [{"type": "box_grid", "origin": "r1c1", "box": list(BOXES[D])}]}  # fmt: skip
+            "givens": [0] * (D * D), "rules": [{"type": "box_grid", "box": list(BOXES[D]), "count": [BOXES[D][1], BOXES[D][0]]}]}  # fmt: skip
     rules = []
     for _ in range(rng.randint(1, 5)):
         r = propose(rng, S, D)
@@ -348,8 +348,10 @@ def transpose(doc):
             out = {k: walk_(v) for k, v in x.items()}
             if "side" in out:
                 out["side"] = side[out["side"]]
-            if out.get("type") == "box_grid":
+            if out.get("type") == "box_grid":  # boxes and their repetition count swap with rows and columns
                 out["box"] = out["box"][::-1]
+                if "count" in out:
+                    out["count"] = out["count"][::-1]
             if out.get("type") == "corner" or (out.get("type") == "sum" and out.get("kind") == "corner"):
                 a, b, c, d = out["cells"]  # TL, TR, BL, BR: the old top right is now the bottom left
                 out["cells"] = [a, c, b, d]

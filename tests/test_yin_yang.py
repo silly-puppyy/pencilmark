@@ -14,7 +14,7 @@ BASE = {
     "board": {"rows": 4, "cols": 4},
     "digits": 4,
     "givens": [1, 0, 0, 0, 0, 0, 3, 0, 0, 4, 0, 0, 0, 0, 0, 2],
-    "rules": [{"type": "box_grid", "origin": "r1c1", "box": [2, 2]}],
+    "rules": [{"type": "box_grid", "box": [2, 2], "count": [2, 2]}],
 }
 
 

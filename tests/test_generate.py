@@ -22,7 +22,7 @@ def spec(D=9, box=None, where=None, rules=(), givens=None, symmetry=None, seed=N
         "format_version": 1,
         "board": {"rows": D, "cols": D},
         "digits": D,
-        "rules": [{"type": "box_grid", "origin": "r1c1", "box": box}, *rules],
+        "rules": [{"type": "box_grid", "box": box, "count": [box[1], box[0]]}, *rules],
     }
     if givens is not None:
         d["givens"] = givens
@@ -189,7 +189,7 @@ def test_parity_templates():
             "board": {"rows": 9, "cols": 9},
             "digits": 9,
             "rules": [
-                {"type": "box_grid", "origin": "r1c1", "box": [3, 3]},
+                {"type": "box_grid", "box": [3, 3], "count": [3, 3]},
                 {"type": "cell", "kind": kind, "count": 6},
             ],
         }
@@ -253,7 +253,7 @@ def test_malformed_request_parts_are_format_errors():
     for extra in ({"where": 5}, {"limits": "x"}, {"meta": 3}, {"rules": 5}, {"symmetry": 5}):
         with pytest.raises(pencilmark.FormatError):
             pencilmark.generate(dict(spec(4), **extra))
-    # and a quality that is not an object, or a box_grid without an origin cell (2026-11-01, KeyError / TypeError)
+    # and a quality that is not an object, or a box_grid with a bad origin or no count (2026-11-01, KeyError / TypeError)
     for extra in ({"quality": 0}, {"quality": ["x"]}, {"quality": "x"}):
         with pytest.raises(pencilmark.FormatError):
             pencilmark.generate(dict(spec(4), **extra))
@@ -261,9 +261,9 @@ def test_malformed_request_parts_are_format_errors():
         pencilmark.generate(dict(spec(4), fields=[["band"]]))
     with pytest.raises(pencilmark.FormatError):  # a locked rule's kind that is not a string
         pencilmark.generate(dict(spec(4), rules=spec(4)["rules"] + [{"type": "region", "kind": ["diagonal"]}]))
-    for origin in ({}, {"origin": 0}, {"origin": "a1"}):
+    for bad in ({"origin": 0, "count": [2, 2]}, {"origin": "a1", "count": [2, 2]}, {}):  # a bad origin; no count
         with pytest.raises(pencilmark.FormatError):
-            pencilmark.generate(dict(spec(4), rules=[{"type": "box_grid", "box": [2, 2], **origin}]))
+            pencilmark.generate(dict(spec(4), rules=[{"type": "box_grid", "box": [2, 2], **bad}]))
 
 
 def test_layout_requests():
@@ -273,7 +273,7 @@ def test_layout_requests():
     from pencilmark import spec_format as SF
 
     origins = PJ._layouts()["samurai"]
-    grids = [{"type": "box_grid", "origin": f"r{r + 1}c{c + 1}", "box": [3, 3]} for r, c in origins]
+    grids = [{"type": "box_grid", "origin": f"r{r + 1}c{c + 1}", "box": [3, 3], "count": [3, 3]} for r, c in origins]
     diag = {"type": "region", "kind": "diagonal", "cells": [f"r{i + 1}c{i + 1}" for i in range(9)]}
     doc = dict(spec(), board={"rows": 21, "cols": 21}, rules=grids + [diag], givens={"grids": [30, 25, [0, 40], 20, 0]})
     g = SF.spec_to_gen(doc)
@@ -299,7 +299,7 @@ def test_layout_generation():
     for layout in ("butterfly", "twodoku"):
         origins = PJ._layouts()[layout]
         rows, cols = max(r for r, _ in origins) + 9, max(c for _, c in origins) + 9
-        grids = [{"type": "box_grid", "origin": f"r{r + 1}c{c + 1}", "box": [3, 3]} for r, c in origins]
+        grids = [{"type": "box_grid", "origin": f"r{r + 1}c{c + 1}", "box": [3, 3], "count": [3, 3]} for r, c in origins]
         r = run(dict(spec(), board={"rows": rows, "cols": cols}, rules=grids, limits={"time": 60, "seed": 1}))
         assert r["info"]["givens"] == sum(1 for v in r["puzzle"]["givens"] if v)
         # the card is the one rate() gives the returned file: the generator numbers layout cells as the reader does
@@ -371,7 +371,7 @@ def test_outside_clues():
             kind = t.get("kind") or t["type"]
             assert EL.outside_value(kind, ds) == x.get("sum", x.get("value")), x
     origins = [(0, 0), (6, 6)]  # twodoku
-    grids = [{"type": "box_grid", "origin": f"r{r + 1}c{c + 1}", "box": [3, 3]} for r, c in origins]
+    grids = [{"type": "box_grid", "origin": f"r{r + 1}c{c + 1}", "box": [3, 3], "count": [3, 3]} for r, c in origins]
     with pytest.raises(GenerationFailed, match="outside clues"):
         pencilmark.generate(
             dict(spec(), board={"rows": 15, "cols": 15}, rules=grids + [{"type": "sandwich", "count": 2}])
@@ -422,7 +422,7 @@ def test_untargeted_request_warns():
 def test_fingerprints_asked_for_in_the_spec():
     """a fingerprint / generated_from key in the spec's meta is filled in on the puzzle; without it, neither"""
     doc = {"format": "sudoku-spec", "format_version": 1, "board": {"rows": 6, "cols": 6}, "digits": 6,
-           "rules": [{"type": "box_grid", "origin": "r1c1", "box": [2, 3]}], "where": {"band": "Easy"},
+           "rules": [{"type": "box_grid", "box": [2, 3], "count": [3, 2]}], "where": {"band": "Easy"},
            "limits": {"seed": 1}, "meta": {"title": "t", "fingerprint": True, "generated_from": True}}
     meta = run(doc)["puzzle"]["meta"]
     assert meta["fingerprint"] == pencilmark.fingerprint(run(doc)["puzzle"]) and meta["generated_from"].startswith("sha256:")

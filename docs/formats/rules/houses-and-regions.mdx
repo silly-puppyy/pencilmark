@@ -12,8 +12,8 @@ This page covers the rules that say where digits may not repeat: houses (6.1), r
 ## 6.1 Houses: `grid`, `box_grid`, `box`, `row`, `column`
 
 ```json
-{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}
-{"type": "grid", "origin": "r1c1"}
+{"type": "box_grid", "box": [3, 3], "count": [3, 3]}
+{"type": "grid"}
 {"type": "box", "cells": ["r1c1", "r1c2", "r1c3", "r2c1", "r2c2", "r2c3", "r3c1", "r3c2", "r4c1"]}
 {"type": "row", "cells": ["r1c1", "r1c2", "…"]}
 ```
@@ -21,11 +21,13 @@ This page covers the rules that say where digits may not repeat: houses (6.1), r
 A house holds no repeated digit; a house of exactly D cells holds every digit once. Houses come only from these rules:
 nothing is implied, so a board without house rules has no houses.
 
-- **`grid`**: a sudoku grid, the D × D area whose top-left cell is `origin`. It gives the area's D rows (top to bottom)
-  and D columns (left to right). Every cell of the area MUST exist.
-- **`box_grid`**: a `grid` whose boxes are a regular tiling. `box` = [box height, box width], with box height × box
-  width = D (a 6×6 is `box` [2, 3] or [3, 2]). It gives the grid's rows, columns, then its D boxes (reading order of
-  their top-left cells). A classic is one `box_grid`; a samurai is five; a super samurai is one per grid.
+- **`grid`**: a sudoku grid, the D × D area whose top-left cell is `origin` (default `r1c1`, left out when written). It
+  gives the area's D rows (top to bottom) and D columns (left to right). Every cell of the area MUST exist.
+- **`box_grid`**: a `grid` tiled with boxes: `box` = [box height, box width] repeated `count` = [boxes down, boxes
+  across] times, so box height × count down = box width × count across = D (a classic is `box` [3, 3], `count` [3, 3];
+  a 6×6 is `box` [2, 3], `count` [3, 2]). `origin` as for `grid`. It gives the grid's rows, columns, then its D boxes
+  (reading order of their top-left cells). A classic is one `box_grid`; a samurai is five; a super samurai is one per
+  grid.
 - **`box`**: one box with explicit `cells`, any shape. A jigsaw is a `grid` plus one `box` per piece.
 - **`row`** / **`column`**: explicit houses for rows and columns that are not those of a D × D area (staircase,
   toroidal, sujiken).
@@ -63,7 +65,7 @@ where the area's boxes are irregular or absent, and `box` / `row` / `column` rul
 Since pencilmark 1.2.
 
 ```json
-{"type": "chaos", "origin": "r1c1"}
+{"type": "chaos"}
 {"type": "region_border", "cells": ["r4c5", "r4c6"]}
 {"type": "same_region", "cells": ["r2c2", "r2c3", "r3c3"]}
 ```

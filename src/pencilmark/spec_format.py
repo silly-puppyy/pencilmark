@@ -96,6 +96,9 @@ DEFAULTS = {
 
 
 def _is_template(r):
+    """a rule asking the generator for elements ({"type": "cage", "count": 5}); a box_grid's count is its boxes"""
+    if r.get("type") in ("grid", "box_grid", "chaos"):
+        return False
     return "count" in r and not ({"cells", "bulb", "regions", "origin", "source"} & set(r))
 
 
@@ -162,9 +165,11 @@ def validate_spec(doc):
         elif "lock" in r and not isinstance(r["lock"], bool):
             raise FormatError("lock must be true / false")
         elif r["type"] == "box_grid" and not (
-            isinstance(r.get("origin"), str) and re.fullmatch(r"r\d+c\d+", r["origin"])
+            isinstance(r.get("origin", "r1c1"), str) and re.fullmatch(r"r\d+c\d+", r.get("origin", "r1c1"))
         ):
-            raise FormatError(f'box_grid needs an "origin" cell such as "r1c1", got {r.get("origin")!r}')
+            raise FormatError(f'a box_grid origin is a cell such as "r1c1" (the default), got {r.get("origin")!r}')
+        elif r["type"] == "box_grid" and not (isinstance(r.get("box"), list) and isinstance(r.get("count"), list)):
+            raise FormatError('box_grid needs "box" (box size) and "count" (boxes down and across), e.g. [3, 3] and [3, 3]')
     if doc.get("symmetry") is not None and not isinstance(doc["symmetry"], list):
         raise FormatError("symmetry must be a list of entries")
     for s in doc.get("symmetry") or []:
@@ -253,7 +258,7 @@ def _board(doc):
                     + ", ".join(f"{t} {k or '(any op)'}" for t, k in sorted(LOCKED_OK, key=lambda x: (x[0], x[1] or ""))))  # fmt: skip
     if any(r.get("box") != [bh, bw] for r in grids):
         return f"box_grid rules need the standard {bh}x{bw} boxes"
-    origins = sorted(tuple(x - 1 for x in map(int, r["origin"][1:].split("c"))) for r in grids)
+    origins = sorted(tuple(x - 1 for x in map(int, r.get("origin", "r1c1")[1:].split("c"))) for r in grids)
     if origins == [(0, 0)] and doc["board"] == {"rows": D, "cols": D}:
         return None, other
     for name, orig in PJ._layouts().items():
@@ -452,7 +457,7 @@ def spec_from_gen(spec):
         raise NotSupportedError(f"no standard boxes for size {D}")
     bh, bw = PJ.BOXES[D]
     origins = PJ._layouts()[s.layout] if s.layout else [(0, 0)]
-    rules = [{"type": "box_grid", "origin": f"r{r + 1}c{c + 1}", "box": [bh, bw]} for r, c in origins]
+    rules = [_box_grid(r, c, bh, bw, D) for r, c in origins]
     rules += [dict(r) for r in s.locked or []]
     from .gen.elements import CLASSES
 
@@ -529,3 +534,11 @@ def spec_from_gen(spec):
 def spec_fingerprint(doc):
     keep = {k: doc[k] for k in ("board", "digits", "givens", "rules", "symmetry", "where", "quality") if k in doc}
     return "sha256:" + hashlib.sha256(jcs(keep).encode()).hexdigest()
+
+
+def _box_grid(r, c, bh, bw, D):
+    """the box_grid rule of a D x D grid at (r, c) with bh x bw boxes (6.1: origin left out at r1c1)"""
+    rule = {"type": "box_grid", "box": [bh, bw], "count": [D // bh, D // bw]}
+    if (r, c) != (0, 0):
+        rule["origin"] = f"r{r + 1}c{c + 1}"
+    return rule

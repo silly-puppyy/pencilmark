@@ -12,8 +12,11 @@
   "rules": [
    {
     "type": "box_grid",
-    "origin": "r1c1",
     "box": [
+     2,
+     2
+    ],
+    "count": [
      2,
      2
     ]
@@ -88,7 +91,10 @@
      2,
      2
     ],
-    "origin": "r1c1"
+    "count": [
+     2,
+     2
+    ]
    }
   ]
  },

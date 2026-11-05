@@ -187,12 +187,15 @@ class _Writer:
             covered |= {frozenset(u[1]) for u in units}
             gi = sorted(k for u in units for k in where[(u[0], frozenset(u[1]))] if k not in used)
             used |= set(gi)
-            rule = {"type": "box_grid" if box else "grid", "origin": cell_name(r0, c0)}
+            rule = {"type": "box_grid" if box else "grid"}
+            if (r0, c0) != (0, 0):  # the origin defaults to r1c1 (6.1)
+                rule["origin"] = cell_name(r0, c0)
             chaos = [set(c["cells"]) for c in self.p.constraints if c.get("type") == "chaos"]
             if not box and grid_area(B, r0, c0) in chaos:  # its regions are to be found (6.3)
                 rule["type"] = "chaos"
             if box:
                 rule["box"] = list(box)
+                rule["count"] = [B.D // box[0], B.D // box[1]]
             items.append((first, {"rule": rule, "area": grid_area(B, r0, c0), "units": units, "gi": gi}))
         seen = set(covered)
         self.merged_duplicates = len(used) - len(covered)
@@ -210,7 +213,7 @@ class _Writer:
         rules = []
         self.group_prov = []
         self.subgrids = [it["area"] for _, it in items if "rule" in it]
-        self.grid_areas = [(it["rule"]["origin"], it["area"]) for _, it in items if "rule" in it]
+        self.grid_areas = [(it["rule"].get("origin", "r1c1"), it["area"]) for _, it in items if "rule" in it]
         self.box_sets = []
         for _, it in items:
             prov = {"groups": {self.gidx[k] for k in it["gi"]}}

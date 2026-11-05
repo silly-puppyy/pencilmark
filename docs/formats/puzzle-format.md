@@ -302,7 +302,7 @@ Coordinates are cell units `[row, col]` with the origin at the top-left corner o
   `except`), then `id`, `label`, `style`.
 - Houses as described in 6.1. Rules in the order given (a grader's tie-breaks can depend on it). Candidate lists ascending; `candidates` keys in reading order. Cells of sets as the source listed them (the
   fingerprint sorts them).
-- Defaults omitted (`closed: false`; whisper `value` 5, entropic `groups`, modular `value` 3, lockout `value` 4 on
+- Defaults omitted (a `grid` / `box_grid` / `chaos` `origin` of `r1c1`; `closed: false`; whisper `value` 5, entropic `groups`, modular `value` 3, lockout `value` 4 on
   9×9; they are written when D ≠ 9).
 - Pretty form: `givens` and `solution` one grid row per line; one rule per line; LF line endings; UTF-8; no trailing
   spaces. Compact form: no whitespace.
@@ -311,7 +311,7 @@ Coordinates are cell units `[row, col]` with the origin at the top-left corner o
 import pencilmark
 
 messy = {"rules": [{"cells": ["r1c2", "r1c1"], "sum": 3, "type": "cage"},
-                   {"box": [2, 2], "type": "box_grid", "origin": "r1c1"}],
+                   {"count": [2, 2], "box": [2, 2], "type": "box_grid", "origin": "r1c1"}],
          "digits": 4, "board": {"cols": 4, "rows": 4}, "format_version": 1, "format": "sudoku-puzzle",
          "givens": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4]}
 print(pencilmark.dumps(messy))
@@ -329,10 +329,11 @@ print(pencilmark.dumps(messy))
     0, 0, 0, 4],
  "rules": [
   {"type": "cage", "sum": 3, "cells": ["r1c2", "r1c1"]},
-  {"type": "box_grid", "box": [2, 2], "origin": "r1c1"}]}
+  {"type": "box_grid", "box": [2, 2], "count": [2, 2]}]}
 ```
 
-The keys are reordered and the grid laid out row by row; the rules and the cage's cells keep their order.
+The keys are reordered, the default origin left out and the grid laid out row by row; the rules and the cage's cells
+keep their order.
 `dumps(doc, pretty=False)` gives the compact form, on one line.
 
 ### 8.2 Fingerprint
@@ -352,7 +353,7 @@ The keys are reordered and the grid laid out row by row; the rules and the cage'
 6. Serialise with RFC 8785 (JSON Canonicalization Scheme) and hash with SHA-256.
 
 ```python
-same = dict(messy, rules=[{"type": "box_grid", "origin": "r1c1", "box": [2, 2]},
+same = dict(messy, rules=[{"type": "box_grid", "box": [2, 2], "count": [2, 2]},
                           {"type": "cage", "sum": 3, "cells": ["r1c1", "r1c2"]}])
 pencilmark.fingerprint(messy) == pencilmark.fingerprint(same)    # True: rule order and cell order do not matter
 ```

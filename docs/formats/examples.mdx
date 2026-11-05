@@ -50,11 +50,11 @@ The `grid` gives the rows and columns; each piece is a `box`. (A shape example, 
     0, 0, 0, 0, 0, 0, 0, 0, 0, null, null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     …rows 17 to 21 the same…],
  "rules": [
-  {"type": "box_grid", "origin": "r1c1", "box": [3, 3]},
-  {"type": "box_grid", "origin": "r1c13", "box": [3, 3]},
-  {"type": "box_grid", "origin": "r7c7", "box": [3, 3]},
-  {"type": "box_grid", "origin": "r13c1", "box": [3, 3]},
-  {"type": "box_grid", "origin": "r13c13", "box": [3, 3]}]}
+  {"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r1c13", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r7c7", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r13c1", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r13c13", "box": [3, 3], "count": [3, 3]}]}
 ```
 
 (`…` marks rows left out of this document; a real file lists all 441 entries.) The centre grid shares one box with
@@ -65,7 +65,7 @@ c13–c21).
 
 ```json
 "rules": [
-  {"type": "box_grid", "origin": "r1c1", "box": [3, 3]},
+  {"type": "box_grid", "box": [3, 3], "count": [3, 3]},
   {"type": "region", "kind": "diagonal", "cells": ["r1c1", "r2c2", "r3c3", "r4c4", "r5c5", "r6c6", "r7c7", "r8c8", "r9c9"]},
   {"type": "region", "kind": "diagonal", "cells": ["r1c9", "r2c8", "r3c7", "r4c6", "r5c5", "r6c4", "r7c3", "r8c2", "r9c1"]}]
 ```
@@ -74,7 +74,7 @@ Argyle has 8 shorter diagonals instead, all `region` kind `diagonal`:
 
 ```json
 "rules": [
-  {"type": "box_grid", "origin": "r1c1", "box": [3, 3]},
+  {"type": "box_grid", "box": [3, 3], "count": [3, 3]},
   {"type": "region", "kind": "diagonal", "cells": ["r1c2", "r2c3", "r3c4", "r4c5", "r5c6", "r6c7", "r7c8", "r8c9"]},
   {"type": "region", "kind": "diagonal", "cells": ["r2c1", "r3c2", "r4c3", "r5c4", "r6c5", "r7c6", "r8c7", "r9c8"]},
   {"type": "region", "kind": "diagonal", "cells": ["r1c8", "r2c7", "r3c6", "r4c5", "r5c4", "r6c3", "r7c2", "r8c1"]},
@@ -89,7 +89,7 @@ Argyle has 8 shorter diagonals instead, all `region` kind `diagonal`:
 
 ```json
 "rules": [
-  {"type": "box_grid", "origin": "r1c1", "box": [3, 3]},
+  {"type": "box_grid", "box": [3, 3], "count": [3, 3]},
   {"type": "line", "kind": "thermo", "cells": ["r9c1", "r8c1", "r7c1", "r7c2"]},
   {"type": "line", "kind": "thermo", "cells": ["r9c1", "r9c2", "r9c3"]},
   {"type": "arrow", "bulb": ["r2c2"], "lines": [["r3c3", "r4c4", "r5c5"]]},
@@ -104,7 +104,7 @@ The two thermos share the bulb r9c1. The second arrow's pill reads as 10·r1c7 +
 
 ```json
 "rules": [
-  {"type": "box_grid", "origin": "r1c1", "box": [3, 3]},
+  {"type": "box_grid", "box": [3, 3], "count": [3, 3]},
   {"type": "edge", "kind": "xv", "letter": "X", "cells": ["r1c1", "r1c2"]},
   {"type": "edge", "kind": "xv", "letter": "V", "cells": ["r4c5", "r5c5"]},
   {"type": "negative", "of": "xv"}]
@@ -117,7 +117,7 @@ every X is shown but V clues may be partial. With no XV clues at all, the negati
 
 ```json
 "rules": [
-  {"type": "box_grid", "origin": "r1c1", "box": [3, 3]},
+  {"type": "box_grid", "box": [3, 3], "count": [3, 3]},
   {"type": "sandwich", "sum": 12, "side": "left", "cells": ["r3c1", "r3c2", "r3c3", "r3c4", "r3c5", "r3c6", "r3c7", "r3c8", "r3c9"]},
   {"type": "xsum", "sum": 24, "side": "top", "cells": ["r1c9", "r2c9", "r3c9", "r4c9", "r5c9", "r6c9", "r7c9", "r8c9", "r9c9"]},
   {"type": "sum", "kind": "little_killer", "sum": 15, "side": "top", "cells": ["r1c4", "r2c5", "r3c6", "r4c7", "r5c8", "r6c9"]},
@@ -131,7 +131,7 @@ below r9c2 and runs up-left.
 
 ```json
 "rules": [
-  {"type": "box_grid", "origin": "r1c1", "box": [3, 3]},
+  {"type": "box_grid", "box": [3, 3], "count": [3, 3]},
   {"type": "neighbours", "kind": "antiknight", "within": "box"}]
 ```
 

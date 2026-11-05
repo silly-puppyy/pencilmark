@@ -9,6 +9,7 @@ from ..rules.edge import EDGE, NEG_SELECTOR, edge_value_ok
 from ..rules.line import LINE
 from .board import Board, grid_area, grid_units
 from .common import (
+    with_origins,
     DIRECTED_OPS,
     FORMAT,
     FORMAT_VERSION,
@@ -24,12 +25,12 @@ from .common import (
 # -------------------------------------------------------------------------------------------------------- validation
 COMMON = {"type", "id", "label", "style"}
 RULE_KEYS = {
-    "grid": ({"origin"}, set()),
-    "chaos": ({"origin"}, set()),
+    "grid": (set(), {"origin"}),
+    "chaos": (set(), {"origin"}),
     "region_border": ({"cells"}, set()),
     "same_region": ({"cells"}, set()),
     "yin_yang": (set(), {"shaded", "unshaded"}),
-    "box_grid": ({"origin", "box"}, set()),
+    "box_grid": ({"box", "count"}, {"origin"}),
     "box": ({"cells"}, set()),
     "row": ({"cells"}, set()),
     "column": ({"cells"}, set()),
@@ -102,6 +103,7 @@ def validate(doc):
     """strict reading (docs/formats/puzzle-format.md section 4) of a format_version 1 dict; raises FormatError. Returns the Board."""
     if not isinstance(doc, dict) or doc.get("format") != FORMAT:
         raise FormatError('not a sudoku-puzzle ("format" must be "sudoku-puzzle")')
+    doc = with_origins(doc)  # a grid / box_grid / chaos rule's origin defaults to r1c1
     if "format_version" not in doc:
         raise FormatError("format_version missing")
     fv = _int(doc["format_version"], "format_version", 1)
@@ -322,6 +324,15 @@ def _validate_rule(r, B):
                 raise FormatError("box must be [rows, cols] of positive integers")
             if bx[0] * bx[1] != D:
                 raise FormatError(f"box {bx} does not hold {D} cells")
+            n = r["count"]
+            if not (
+                isinstance(n, list)
+                and len(n) == 2
+                and all(isinstance(x, int) and not isinstance(x, bool) and x >= 1 for x in n)
+            ):
+                raise FormatError("count must be [rows, cols] of boxes, positive integers")
+            if bx[0] * n[0] != D or bx[1] * n[1] != D:
+                raise FormatError(f"box {bx} x count {n} does not tile a {D} x {D} grid")
         r0, c0 = parse_cell(r["origin"])
         if grid_units(B, r0, c0) is None:
             raise FormatError(f"{t} covers a missing cell (its area is {D} x {D} from origin)")

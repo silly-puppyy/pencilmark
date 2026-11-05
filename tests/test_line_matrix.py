@@ -45,7 +45,7 @@ def cases():
                             "board": {"rows": D, "cols": D},
                             "digits": D,
                             "givens": [0] * (D * D),
-                            "rules": [{"type": "box_grid", "origin": "r1c1", "box": BOX[D]}, rule],
+                            "rules": [{"type": "box_grid", "box": BOX[D], "count": [BOX[D][1], BOX[D][0]]}, rule],
                         }
 
 

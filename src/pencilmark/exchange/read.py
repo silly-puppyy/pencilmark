@@ -7,6 +7,7 @@ from ..rules.edge import NEG_SELECTOR, edge_relation, negative_relation
 from ..rules.line import line_to_engine
 from .board import _MATHRAX_OK, _NUMBERED_OK, battenburg_table, grid_area, product_pairs, read_houses
 from .common import (
+    with_origins,
     KING_DIAG,
     KNIGHT,
     NEIGHBOUR_STEPS,
@@ -26,6 +27,7 @@ from .validate import resolve_areas, validate
 # ----------------------------------------------------------------------------------------------------------- reading
 def to_internal(doc):
     """sudoku-puzzle (format_version 1) -> puzzle JSON (pencilmark.puzzle_json) that builds the engine Puzzle."""
+    doc = with_origins(doc)
     B = validate(doc)
     D = B.D
     R, C = doc["board"]["rows"], doc["board"]["cols"]

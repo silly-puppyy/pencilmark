@@ -87,7 +87,7 @@ the file instead of dropping a rule.
  "givens":   [0, 0, 5, 4, 0, ...],
  "solution": [6, 1, 5, 4, 2, ...],
  "rules": [
-  {"type": "box_grid", "origin": "r1c1", "box": [3, 3]},
+  {"type": "box_grid", "box": [3, 3], "count": [3, 3]},
   {"type": "cage", "sum": 15, "cells": ["r1c4", "r1c5", "r2c4"]},
   {"type": "edge", "kind": "kropki", "color": "white", "cells": ["r5c5", "r5c6"]}]}
 ```
@@ -117,7 +117,7 @@ Rules that cannot be translated exactly are refused, never dropped silently.
 ```python
 r = pencilmark.generate({"format": "sudoku-spec", "format_version": 1,
                          "board": {"rows": 9, "cols": 9}, "digits": 9,
-                         "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}],
+                         "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}],
                          "where": {"band": "Hard"}})
 r["puzzle"], r["card"], r["info"]       # sudoku-puzzle, its card, run details
 ```

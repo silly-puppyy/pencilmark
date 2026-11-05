@@ -35,7 +35,7 @@ def test_generator_logs(caplog):
         "format_version": 1,
         "board": {"rows": 4, "cols": 4},
         "digits": 4,
-        "rules": [{"type": "box_grid", "origin": "r1c1", "box": [2, 2]}],
+        "rules": [{"type": "box_grid", "box": [2, 2], "count": [2, 2]}],
         "where": {"band": "Very Easy"},
         "limits": {"seed": 1, "time": 30},
     }

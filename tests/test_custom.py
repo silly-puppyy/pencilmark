@@ -364,7 +364,7 @@ def test_board_layers():
     assert pencilmark.count_solutions(dict(doc, rules=doc["rules"] + [rule("region(a) != region(b)")]))["count"] == 1
     assert pencilmark.count_solutions(dict(doc, rules=doc["rules"] + [rule("region(a) == region(b)")]))["count"] == 0
     plain = {"format": "sudoku-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
-             "givens": [0] * 81, "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]},
+             "givens": [0] * 81, "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
                        rule("region(a) != region(b)")]}  # fmt: skip
     with pytest.raises(pencilmark.NotSupportedError, match="regions to find"):
         pencilmark.load(plain)
@@ -375,7 +375,7 @@ def test_board_layers():
 
 def _hidden_doc(**extra):
     base = {"format": "sudoku-puzzle", "format_version": 1, "board": {"rows": 4, "cols": 4}, "digits": 4,
-            "givens": [0] * 16, "rules": [{"type": "box_grid", "origin": "r1c1", "box": [2, 2]}]}
+            "givens": [0] * 16, "rules": [{"type": "box_grid", "box": [2, 2], "count": [2, 2]}]}
     base.update(extra)
     return base
 

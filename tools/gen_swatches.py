@@ -282,7 +282,7 @@ SWATCHES = {
 }
 
 
-BOXES = {"type": "box_grid", "origin": "r1c1", "box": [3, 3]}
+BOXES = {"type": "box_grid", "box": [3, 3], "count": [3, 3]}
 PLACEMENT = ("X", "Windoku", "Argyle", "Asterisk", "Centre-dot", "Girandola", "Disjoint Groups")
 
 # grid tints for layout outlines, per theme; overlapping grids never share a tint, so a shared box shows a blend

@@ -132,7 +132,7 @@ def visible_rules(rules, lit, D, above=(), line_len=None):
         if k["type"] == "box":
             for c in k["cells"]:
                 box_of[c] = n_
-        elif k["type"] == "box_grid" and k.get("origin") == "r1c1":
+        elif k["type"] == "box_grid" and k.get("origin", "r1c1") == "r1c1":
             bh, bw = k["box"]
             for r in range(D):
                 for c in range(D):
@@ -538,7 +538,7 @@ def route(puzzle, max_rounds=400, rules_text=None):
     rows, cols = doc["board"]["rows"], doc["board"]["cols"]
     D = doc["digits"]
     grids = [k for k in doc["rules"] if k["type"] == "box_grid"]
-    _BH[0] = tuple(grids[0]["box"]) if len(grids) == 1 and grids[0].get("origin") == "r1c1" else None
+    _BH[0] = tuple(grids[0]["box"]) if len(grids) == 1 and grids[0].get("origin", "r1c1") == "r1c1" else None
     givens = list(doc["givens"])
     givens0 = list(givens)
     placed = set()

@@ -6,7 +6,7 @@ import hashlib
 import json
 
 from .board import Board, read_houses
-from .common import DIRECTED_OPS, parse_cell
+from .common import DIRECTED_OPS, GRID_TYPES, parse_cell, with_origins
 from .validate import resolve_areas
 
 # --------------------------------------------------------------------------------------------- canonical text + hash
@@ -44,6 +44,7 @@ RULE_ORDER = [
     "size",
     "repeat",
     "box",
+    "count",
     "where",
     "within",
     "area",
@@ -71,12 +72,17 @@ def _order(d, order):
 
 
 def canonical(doc):
-    """key order of docs/formats/puzzle-format.md 8.1 (content unchanged)"""
+    """key order of docs/formats/puzzle-format.md 8.1 (content unchanged; a default origin left out)"""
     out = _order(doc, KEY_ORDER)
     if isinstance(out.get("board"), dict):
         out["board"] = _order(out["board"], ["rows", "cols"])
     if "rules" in out:
-        out["rules"] = [_order(r, RULE_ORDER) for r in out["rules"]]
+        out["rules"] = [  # a grid / box_grid / chaos origin at r1c1 is the default: left out
+            _order({k: v for k, v in r.items() if not (k == "origin" and v == "r1c1" and r.get("type") in GRID_TYPES)}, RULE_ORDER)
+            if isinstance(r, dict)
+            else r
+            for r in out["rules"]
+        ]
         out["rules"] = [dict(r, holds=_holds(r["holds"])) if r.get("type") == "custom" else r for r in out["rules"]]
     if "candidates" in out:
 
@@ -166,6 +172,7 @@ def semantic_subset(doc):
     """the fingerprinted content: board, digits, givens, candidates and rules, with the houses replaced by the houses they
     state (grid, box_grid, box / row / column rules), so every spelling of the same houses gives
     the same result, and set-like cell lists sorted"""
+    doc = with_origins(doc)
     keep = {k: doc[k] for k in ("format", "format_version", "digits", "givens", "candidates") if k in doc}
     keep["board"] = {"rows": doc["board"]["rows"], "cols": doc["board"]["cols"]}
     D = doc.get("digits")

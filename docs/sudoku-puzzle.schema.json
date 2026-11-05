@@ -196,12 +196,12 @@
      "$ref": "#/$defs/style"
     },
     "origin": {
-     "$ref": "#/$defs/cell"
+     "$ref": "#/$defs/cell",
+     "description": "the grid's top-left cell; default r1c1"
     }
    },
    "required": [
-    "type",
-    "origin"
+    "type"
    ],
    "additionalProperties": false
   },
@@ -221,12 +221,12 @@
      "$ref": "#/$defs/style"
     },
     "origin": {
-     "$ref": "#/$defs/cell"
+     "$ref": "#/$defs/cell",
+     "description": "the grid's top-left cell; default r1c1"
     }
    },
    "required": [
-    "type",
-    "origin"
+    "type"
    ],
    "additionalProperties": false,
    "description": "a grid whose boxes are to be found: D orthogonally connected regions of D cells, each holding every digit once (docs/formats/rules/houses-and-regions.mdx 6.3)"
@@ -312,16 +312,28 @@
       "minimum": 1
      },
      "minItems": 2,
-     "maxItems": 2
+     "maxItems": 2,
+     "description": "[box height, box width]"
+    },
+    "count": {
+     "type": "array",
+     "items": {
+      "type": "integer",
+      "minimum": 1
+     },
+     "minItems": 2,
+     "maxItems": 2,
+     "description": "[boxes down, boxes across]: box x count = D x D"
     },
     "origin": {
-     "$ref": "#/$defs/cell"
+     "$ref": "#/$defs/cell",
+     "description": "the grid's top-left cell; default r1c1"
     }
    },
    "required": [
     "type",
     "box",
-    "origin"
+    "count"
    ],
    "additionalProperties": false
   },

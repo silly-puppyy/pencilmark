@@ -158,7 +158,7 @@ CHAOS_DEMO = {
     "digits": 5,
     "givens": [0, 0, 3, 0, 0, 0, 0, 4, 3, 2, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 4, 0, 5, 0],
     "rules": [
-        {"type": "chaos", "origin": "r1c1"},
+        {"type": "chaos"},
         {"type": "region_border", "cells": ["r2c2", "r3c2"]},
         {"type": "region_border", "cells": ["r2c5", "r3c5"]},
         {"type": "region_border", "cells": ["r4c3", "r4c4"]},

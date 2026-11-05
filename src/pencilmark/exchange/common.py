@@ -130,3 +130,20 @@ def _engine_params_to_op(kind, args):
     if kind == "allowed":
         return [[list(x) for x in args[0]]]
     return list(args)
+
+
+GRID_TYPES = ("grid", "box_grid", "chaos")
+
+
+def with_origins(doc):
+    """the doc with every grid / box_grid / chaos rule's origin filled in: r1c1 when it is left out (6.1)"""
+    rules = doc.get("rules") if isinstance(doc, dict) else None
+    if not isinstance(rules, list):
+        return doc
+    return dict(
+        doc,
+        rules=[
+            dict(r, origin="r1c1") if isinstance(r, dict) and r.get("type") in GRID_TYPES and "origin" not in r else r
+            for r in rules
+        ],
+    )

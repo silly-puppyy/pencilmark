@@ -36,7 +36,7 @@ def cases():
                         if param:
                             rule[param[0]] = param[1]
                         rule["cells"] = cells
-                        rules = [{"type": "box_grid", "origin": "r1c1", "box": BOX[D]}, rule]
+                        rules = [{"type": "box_grid", "box": BOX[D], "count": [BOX[D][1], BOX[D][0]]}, rule]
                         if negative:
                             neg = {"type": "negative", "of": "cell", "kind": kind}
                             if param and param[0] == "split":

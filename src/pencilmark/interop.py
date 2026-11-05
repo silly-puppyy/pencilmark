@@ -48,7 +48,7 @@ def _doc(D, givens, rules, meta=None, candidates=None):
 
 def _box_grid(D):
     bh, bw = PJ.BOXES[D]
-    return {"type": "box_grid", "origin": "r1c1", "box": [bh, bw]}
+    return {"type": "box_grid", "box": [bh, bw], "count": [D // bh, D // bw]}
 
 
 # ------------------------------------------------------------------------------------------------------------ reading
@@ -232,7 +232,7 @@ def _from_sudokuwiki(kind, D, ver, body):
             )
     rules = []
     if kind in ("J", "M"):
-        rules.append({"type": "grid", "origin": "r1c1"})
+        rules.append({"type": "grid"})
         groups = {}
         for i, lab in enumerate(box_lab):
             groups.setdefault(lab, []).append(i)
@@ -727,11 +727,11 @@ def from_ipuz(ipuz):
             raise NotSupportedError("ipuz cage without a sum")
         rules.append({"type": "cage", "cells": cells, "sum": int(cg["value"])})
     if boxes:
-        houses = [{"type": "grid", "origin": "r1c1"}] + [{"type": "box", "cells": b} for b in boxes]
+        houses = [{"type": "grid"}] + [{"type": "box", "cells": b} for b in boxes]
     elif d.get("boxes", True) and D in PJ.BOXES:
         houses = [_box_grid(D)]
     else:
-        houses = [{"type": "grid", "origin": "r1c1"}]
+        houses = [{"type": "grid"}]
     meta = {}
     for ik, k in (("title", "title"), ("author", "author"), ("url", "url"), ("uniqueid", "id")):
         if d.get(ik):

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Format: `box_grid` states its tiling as a box size and a repetition count, `{"type": "box_grid", "box": [3, 3],
+  "count": [3, 3]}` (3×3 boxes, 3×3 times); `count` is required. `origin` of `grid`, `box_grid` and `chaos` is
+  optional, `r1c1` by default, and writers and the canonical form leave it out there. Files without `count` are refused
+  (no aliases). Fingerprints are unchanged (they hash the houses).
 - Generated puzzles no longer carry `meta.generated_from` by default. A spec asks for it in its own `meta`
   (`"meta": {"generated_from": true, "fingerprint": true}`), and the puzzle gets the request's fingerprint and the new
   optional `meta.fingerprint`, its own (`meta` is outside the fingerprint, so a file can carry it).

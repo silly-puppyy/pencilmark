@@ -197,6 +197,7 @@ def board_of(s):
         b.extra_json = None
         return b
     from .. import exchange
+    from .. import spec_format as SF
     from ..exchange.read import to_internal
 
     origins = b.origins
@@ -208,7 +209,7 @@ def board_of(s):
         "board": {"rows": rows, "cols": cols},
         "digits": s.size,
         "givens": [0 if (r, c) in cells else None for r in range(rows) for c in range(cols)],
-        "rules": [{"type": "box_grid", "origin": f"r{o[0] + 1}c{o[1] + 1}", "box": [b.bh, b.bw]} for o in origins]
+        "rules": [SF._box_grid(o[0], o[1], b.bh, b.bw, s.size) for o in origins]
         + list(s.locked),
     }
     try:

@@ -12,7 +12,7 @@ DOC = {
     "board": {"rows": 9, "cols": 9},
     "digits": 9,
     "givens": [0] * 81,
-    "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}, {"type": "neighbours", "kind": "antiknight"}],
+    "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}, {"type": "neighbours", "kind": "antiknight"}],
 }
 BOX5 = [r * 9 + c for r in range(3, 6) for c in range(3, 6)]
 
