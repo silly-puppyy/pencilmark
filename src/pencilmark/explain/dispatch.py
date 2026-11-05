@@ -55,6 +55,8 @@ from .trial import (
     _h_class_propagation,
     _h_class_single,
     _h_class_trap,
+    _h_chain_colour,
+    _h_colour_clash,
     _h_digit_count,
     _h_either_way,
     _h_equal_digits,
@@ -207,6 +209,26 @@ _X_HANDLERS = {
             "Colour pair",
             "Two cells that can only be the same two digits and must differ hold them in some order: give them two "
             "colours. A cell of that pair seeing one colour gets the other.",
+        ),
+    ),
+    "CHAIN_COLOUR": (
+        _h_chain_colour,
+        "equal_cells",
+        "intersections+combos",
+        (
+            "Chain colour",
+            "A cell tied to two others by pair rules (V / X dominoes, dots) can force them to hold the same digit: "
+            "trace each digit through the chain and back. Give them one colour.",
+        ),
+    ),
+    "COLOUR_CLASH": (
+        _h_colour_clash,
+        "equal_cells",
+        "chains",
+        (
+            "Colour clash",
+            "Two colours tied by a rule (one fixes the other): a cell that would leave the second colour no digit if it "
+            "held the first can never have the first colour.",
         ),
     ),
     "CLASS_TRAP": (

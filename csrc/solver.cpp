@@ -193,7 +193,7 @@ static bool strategy_off(const char* name, const Flags& disabled) {
         {"suedecoq", {SUE_DE_COQ}}, {"ape", {APE}}, {"chuterp", {CHUTE_RP}},
         {"ur", {UNIQUE_RECT}}, {"xur", {UNIQUE_RECT}}, {"bug", {BUG_PLUS1}}, {"gurth", {GURTH}},
         {"pairs", {NPAIR, HPAIR}}, {"triples", {NTRIPLE, HTRIPLE}}, {"quads", {NQUAD, HQUAD}},
-        {"digitcount", {DIGIT_COUNT}}, {"equaldigits", {EQUAL_DIGITS}}, {"colouralgebra", {COLOUR_ALGEBRA}}, {"classcolour", {CLASS_COLOUR}}, {"cluefacts", {CLUE_FACTS, CLUE_SHAPE}},
+        {"digitcount", {DIGIT_COUNT}}, {"equaldigits", {EQUAL_DIGITS, CHAIN_COLOUR}}, {"colouralgebra", {COLOUR_ALGEBRA}}, {"classcolour", {CLASS_COLOUR}}, {"cluefacts", {CLUE_FACTS, CLUE_SHAPE}},
         {"ruleintersect", {RULE_INTERSECT}}, {"regioncap", {REGION_CAP}}, {"regionexcl", {REGION_EXCL}},
         {"regionreach", {REGION_REACH}}, {"deadend", {DEAD_END}}, {"regionexit", {REGION_EXIT}},
         {"regiondigit", {REGION_DIGIT}}, {"pocket", {POCKET}}, {"shorttrial", {SHORT_TRIAL}}, {"humancase", {HUMAN_CASE}},

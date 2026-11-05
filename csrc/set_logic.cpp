@@ -219,10 +219,10 @@ void Solver::equal_digits(MoveBuf& out) {
 // Equal digits through a relation chain (CtC, Restricted Access: "imagine this was a three, then this is a two, this
 // is a three ... we can just trace them through the V dominoes"): B related to A and to C by pair rules (dots, X / V,
 // sums) such that every digit of A leads, through B, to the same digit at C, and every digit of C back to the same
-// at A -> A and C hold the same (unknown) digit. Moves as equal_digits (EQUAL_DIGITS): the candidates outside the
+// at A -> A and C hold the same (unknown) digit. Moves as equal_digits (own code CHAIN_COLOUR): the candidates outside the
 // other's go; with the identity layer the two join one colour class.
 void Solver::equal_digits_chain(MoveBuf& out) {
-    if (disabled[EQUAL_DIGITS]) return;
+    if (disabled[CHAIN_COLOUR]) return;
     const bool ids = id_on();
     const bool room = ids && id_live() < ID_CAP;
     auto through = [&](int x, int y, int z, int v) -> uint32_t {  // digits z can take when x holds v (via y)
@@ -256,7 +256,7 @@ void Solver::equal_digits_chain(MoveBuf& out) {
                 const int ka = ids ? id_anchor(A) : A, kc = ids ? id_anchor(C) : C;
                 const bool join = ids && ka != kc && (idc[A] || idc[C] || room) && !id_paired(ka, kc);
                 if (!ea && !ec && !join) continue;
-                Move& mv = new_move(out, EQUAL_DIGITS, 1.0, popc(cand[A]));
+                Move& mv = new_move(out, CHAIN_COLOUR, 1.0, popc(cand[A]));
                 if (join) add_aeff(out, mv, AE_ID_JOIN, std::max(ka, kc), std::min(ka, kc));
                 for (uint32_t x = ea; x; x &= x - 1) add_elim(out, mv, A, lowdigit(x));
                 for (uint32_t x = ec; x; x &= x - 1) add_elim(out, mv, C, lowdigit(x));
@@ -441,7 +441,7 @@ void Solver::class_single(MoveBuf& out) {
 // given) such that c holding K1's digit v would leave o no digit but the one K2 must hold, for every digit v K1 can
 // still be: c holds a digit other than K1's. Recorded as a class difference (AE_ID_NEQ); class singles then skip c.
 void Solver::class_link_neq(MoveBuf& out) {
-    if (!id_on() || disabled[CLASS_SINGLE]) return;
+    if (!id_on() || disabled[COLOUR_CLASH]) return;
     const auto cls = id_classes(idc, p.N);
     for (const auto& k1 : cls)
         for (const auto& k2 : cls) {
@@ -481,7 +481,7 @@ void Solver::class_link_neq(MoveBuf& out) {
                     }
                     if (!never) continue;
                     if (id_live() >= ID_CAP && !idc[c]) continue;
-                    Move& m = new_move(out, CLASS_SINGLE, 1.0, (int)k1.second.size());
+                    Move& m = new_move(out, COLOUR_CLASH, 1.0, (int)k1.second.size());
                     const int kc = id_anchor(c);
                     add_aeff(out, m, AE_ID_NEQ, std::max(kc, k1.first), std::min(kc, k1.first));
                     add_aeff(out, m, AE_ID_USE, k1.first, 0);

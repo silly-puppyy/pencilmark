@@ -90,6 +90,8 @@ CLASS_SINGLE = 110  # in a house only one cell can hold a class's digit (the oth
 ID_PROPAGATE = 111  # a class member's lost candidate leaves every member; a placed member places the others
 CLASS_PAIR = 112  # bivalue cells {a, b} that differ: two classes of opposite colour; a cell seeing one joins the other
 CLASS_TRAP = 113  # a cell seeing both colours of an {a, b} class pair holds neither
+CHAIN_COLOUR = 114  # two cells forced equal through a third by pair rules (a V / X / dot chain): one colour
+COLOUR_CLASH = 115  # a cell next to a linked colour would leave that colour no digit: it is not this colour
 CLASS_COLOUR = 100  # class colouring (C++ only): low / high or odd / even links between cells, sides fixed by known cells / house counts
 # names and flags: the technique registry (data/techniques.csv); the constants above mirror csrc/solver.hpp enum Tech,
 # and tests/test_registry.py checks all three agree

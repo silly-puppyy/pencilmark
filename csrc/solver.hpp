@@ -92,6 +92,8 @@ enum Tech {
     ID_PROPAGATE = 111,   ///< identity layer: a class member's lost candidate / placed digit carries to every member
     CLASS_PAIR = 112,     ///< identity layer: bivalue cells {a, b} that differ are two classes of opposite colour
     CLASS_TRAP = 113,     ///< identity layer: a cell seeing both colours of an {a, b} class pair holds neither
+    CHAIN_COLOUR = 114,   ///< two cells forced equal through a third by pair rules (a V / X / dot chain): one colour
+    COLOUR_CLASH = 115,   ///< identity layer: a cell next to a linked colour would leave that colour no digit: not this colour
     MENTAL_NOTES = 84,    ///< single after notes logic done in the head (subset / pointing / combination on the mental view)    // line consistency on 3-cell windows (local scan of a long line)  // both options of a 2-way choice lead to the same placement / elimination  // short chain (<= 5 links) on the no-notes mental view, leading to a single  // bounded case split: bivalue cell, contradiction within a few direct rounds
     N_TECH = 128
 };

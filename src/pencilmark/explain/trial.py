@@ -664,6 +664,46 @@ def _h_class_trap(ctx):
     return _result(ctx, J, short, teach, True, extra_cells=cells)
 
 
+
+def _h_chain_colour(ctx):
+    """two cells forced to hold the same digit through a third cell tied to both by pair rules (a V / X / dot chain)"""
+    nm, st = ctx.nm, ctx.st
+    A, C, B = ctx.xm.get("cell_a"), ctx.xm.get("cell_b"), ctx.xm.get("via")
+    if A is None or C is None or B is None:
+        return _generic(ctx)
+    why = (
+        f"{nm.cell(B)} is tied to both {nm.cell(A)} and {nm.cell(C)} by pair rules. Try each digit {nm.cell(A)} can be: "
+        f"it leaves {nm.cell(B)} only digits that force {nm.cell(C)} to the same one, and the same works back from "
+        f"{nm.cell(C)}. So the two cells hold one digit, whatever it is"
+    )
+    if not ctx.elims:
+        short = f"{nm.cell(A)} and {nm.cell(C)} hold the same digit through {nm.cell(B)} (one colour)"
+        teach = why + ": colour them alike and keep the colour for later."
+    else:
+        short = f"{fmt_elims(nm, ctx.elims)}: {nm.cell(A)} and {nm.cell(C)} hold the same digit through {nm.cell(B)}"
+        teach = why + f", and each keeps only the candidates the other has: {_cant(nm, ctx.elims)}."
+    J = _J(ctx, digits=sorted(digits_of(st.cand[A] | st.cand[C])), base_cells=[A, B, C])
+    return _result(ctx, J, short, teach, True, extra_cells=[A, B, C])
+
+
+def _h_colour_clash(ctx):
+    """identity layer: a cell next to a member of a linked colour would leave that colour no digit -> it is not the
+    first colour"""
+    nm = ctx.nm
+    c, k, o = ctx.xm.get("cell"), ctx.xm.get("anchor"), ctx.xm.get("via")
+    cells = [x for x in (ctx.engine.get("pattern_cells") or ()) if isinstance(x, int)]
+    if c is None or k is None or o is None:
+        return _generic(ctx)
+    short = f"{nm.cell(c)} is not the colour of {nm.cell(k)}: it would leave {nm.cell(o)}'s colour no digit"
+    teach = (
+        f"The colour of {nm.cell(k)} and the colour of {nm.cell(o)} are tied by a rule: each digit of the first fixes "
+        f"the second. Whatever digit the first colour is, {nm.cell(c)} holding it would rule out the one digit "
+        f"{nm.cell(o)} then needs. So {nm.cell(c)} never has {nm.cell(k)}'s colour."
+    )
+    J = _J(ctx, base_cells=cells)
+    return _result(ctx, J, short, teach, True, extra_cells=cells)
+
+
 def _h_line_scan(ctx):
     nm, p, st = ctx.nm, ctx.p, ctx.st
     parent = _rule_from_move(ctx)
