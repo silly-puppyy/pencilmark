@@ -623,6 +623,24 @@ static py::list py_state_moves(const Puzzle& p, const std::vector<std::pair<int,
     return out;
 }
 
+// the cases of each "cases" rule still possible on these candidates (per cell masks): [(spec index, [case indices])]
+static py::list py_cases_alive(const Puzzle& p, const std::vector<uint32_t>& cand, pm_long budget) {
+    py::list out;
+    for (const NConstraint& k : p.nary) {
+        if (k.type != NT_CASES || k.index < 0) continue;
+        std::vector<uint32_t> dom(k.nv());
+        for (int i = 0; i < k.nv(); ++i) dom[i] = cand[k.vars[i]];
+        py::list alive;
+        for (size_t c = 0; c < k.cases.size(); ++c) {
+            NConstraint one = k;
+            one.cases = {k.cases[c]};
+            if (nary_consistent(one, dom.data(), budget, p.D)) alive.append((int)c);
+        }
+        out.append(py::make_tuple(k.index, alive));
+    }
+    return out;
+}
+
 static py::object py_brute(const Puzzle& p, const std::vector<std::pair<int, int>>& givens, int limit, pm_long node_limit,
                            const py::object& start, bool with_status) {
     std::vector<std::vector<int>> sols;
@@ -702,6 +720,8 @@ PYBIND11_MODULE(_csolver, m) {
           py::arg("all_tiers") = false, py::arg("explain") = false, py::arg("colours") = py::none(),
           py::arg("cand") = py::none(), py::arg("stats") = false, py::arg("labels") = py::none(),
           py::arg("idc") = py::none());
+    m.def("cases_alive", &py_cases_alive, py::arg("puzzle"), py::arg("cand"), py::arg("budget") = 200000,
+          "the cases of each cases rule still possible on these candidates: [(spec index, [case indices])]");
     m.def("brute_solve", &py_brute, py::arg("puzzle"), py::arg("givens"), py::arg("limit"), py::arg("node_limit"),
           py::arg("start") = py::none(), py::arg("with_status") = false);
     m.def("puzzle_info", &puzzle_info, py::arg("puzzle"), py::arg("disabled") = std::vector<int>());

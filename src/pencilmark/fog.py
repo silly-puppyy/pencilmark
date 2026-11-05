@@ -133,6 +133,7 @@ def _partial_cage(k, L):
     return out
 
 
+_BH = [None]  # the box shape of a regular box grid (set per route); None: boxes not used in the bound
 CASE_CAP = 300  # an arrow with more possible hidden shapes than this gets no case rule (nothing claimed: sound)
 LEMMA = {"setup": 1.0, "use": 0.5}  # placeholder prices (coach fit: case lemmas are nearly free; to be fitted)
 
@@ -156,7 +157,7 @@ ORTHO = _re.compile(r"arrows?[^.]*orthogonal", _re.I)
 NO_SHARE = _re.compile(r"arrows?[^.]*(?:don.t|do not|may not|cannot|never) (?:share|overlap|cross)", _re.I)
 
 
-def arrow_cases(rules, lit, rows, cols, ortho=False, no_share=False):
+def arrow_cases(rules, lit, rows, cols, ortho=False, no_share=False, forced=None):
     """Case rules for arrows seen in part (CtC hosts: "this arrow can't stop here ... it must go down"). A lit cell
     shows its drawn segments, so a hidden part of a shaft runs through fogged cells, stepping into or out of a lit cell
     only along a drawn segment. Seen: the lit cells of the arrow, the fogged cells its drawn lines enter.
@@ -179,10 +180,27 @@ def arrow_cases(rules, lit, rows, cols, ortho=False, no_share=False):
 
     others = set()
 
-    def paths(start, block, most):
+    D = rows
+    box = (lambda c: (_rc(c)[0] // _BH[0][0], _rc(c)[1] // _BH[0][1])) if _BH[0] else None
+
+    def least(cells):  # a lower bound on the cells' sum: cells sharing a house differ (1 + 2 + ... in one house)
+        best = len(cells)
+        keys = [lambda c: ("r", _rc(c)[0]), lambda c: ("c", _rc(c)[1])] + ([lambda c: ("b", box(c))] if box else [])
+        for key in keys:
+            g = {}
+            for c in cells:
+                g[key(c)] = g.get(key(c), 0) + 1
+            n = max(g.values()) if g else 0
+            best = max(best, n * (n + 1) // 2 + len(cells) - n)
+        return best
+
+    def paths(start, block, most, shaft0=(), circle_last=False):
         out, todo = [], [[start]]
         while todo:
             p = todo.pop()
+            shaft = list(shaft0) + (p[:-1] if circle_last else p)
+            if least(shaft) > D:
+                continue  # even this much shaft outweighs the largest circle: longer is no better
             out.append(p)
             if len(out) > CASE_CAP:
                 return None
@@ -190,10 +208,11 @@ def arrow_cases(rules, lit, rows, cols, ortho=False, no_share=False):
                 todo += [p + [y] for y in nbs(p[-1]) if y not in p and y not in block and y not in others and ok_step(p[-1], y)]
         return out
 
-    seen_on = {}  # arrow -> its cells a solver sees (lit ones): with no_share, no other arrow's shaft enters them
-    for n_, k in enumerate(rules):
+    seen_on = {}  # arrow -> its cells a solver sees (lit ones), and cells every surviving case of it uses (forced):
+    for n_, k in enumerate(rules):  # with no_share, no other arrow's shaft enters them
         if k["type"] == "arrow":
             seen_on[n_] = {c for c in list(k.get("bulb") or []) + [x for ln in k.get("lines") or [] for x in ln] if c in L}
+            seen_on[n_] |= (forced or {}).get(n_, set())
     out = []
     for n_, k in enumerate(rules):
         if k["type"] != "arrow" or len(k.get("bulb") or []) != 1:
@@ -214,7 +233,7 @@ def arrow_cases(rules, lit, rows, cols, ortho=False, no_share=False):
                     seen.append(c)
                 if len(seen) == len(line):
                     continue
-                ps = paths(line[len(seen)], set(seen) | {bulb}, rows - 1 - len(seen))
+                ps = paths(line[len(seen)], set(seen) | {bulb}, rows - 1 - len(seen), seen)
                 if ps is None:
                     continue
                 cases = [{"cells": [ix(bulb)] + [ix(c) for c in seen + p], "circle": ix(bulb)} for p in ps]
@@ -229,12 +248,12 @@ def arrow_cases(rules, lit, rows, cols, ortho=False, no_share=False):
                 ends = [line[a - 1] if a > 0 else bulb] + ([line[b + 1]] if b + 1 < len(line) else [])
                 for ce in ends:
                     te = [e for e in ends if e != ce]
-                    cps = paths(ce, set(stretch) | set(te), rows - len(stretch))
+                    cps = paths(ce, set(stretch) | set(te), rows - len(stretch), stretch, circle_last=True)
                     if cps is None:
                         cases = None
                         break
                     for cp in cps:
-                        tps = [[]] if not te else (paths(te[0], set(stretch) | set(cp), rows - 1 - len(stretch) - len(cp) + 1) or [])
+                        tps = [[]] if not te else (paths(te[0], set(stretch) | set(cp), rows - 1 - len(stretch) - len(cp) + 1, stretch + cp[:-1]) or [])
                         for tp in tps:
                             cells = cp + stretch + tp
                             cases.append({"cells": [ix(c) for c in cells], "circle": ix(cp[-1])})
@@ -248,7 +267,7 @@ def arrow_cases(rules, lit, rows, cols, ortho=False, no_share=False):
                 if not cases:
                     continue
             out.append({"type": "cases", "cases": cases, "name": f"arrow {bulb}: {len(cases)} possible shafts",
-                        "lemma": {"id": 7000, **LEMMA}})
+                        "lemma": {"id": 7000, **LEMMA}, "_arrow": n_})
     return out
 
 
@@ -275,6 +294,8 @@ def route(puzzle, max_rounds=400, rules_text=None):
     doc = write_doc(p)
     rows, cols = doc["board"]["rows"], doc["board"]["cols"]
     D = doc["digits"]
+    grids = [k for k in doc["rules"] if k["type"] == "box_grid"]
+    _BH[0] = tuple(grids[0]["box"]) if len(grids) == 1 and grids[0].get("origin") == "r1c1" else None
     givens = list(doc["givens"])
     givens0 = list(givens)
     placed = set()
@@ -288,7 +309,23 @@ def route(puzzle, max_rounds=400, rules_text=None):
         before = list(cand)
         vis = dict(doc, givens=givens, rules=visible_rules(doc["rules"], lit, D))
         q = api.load(vis)
-        q.constraints += arrow_cases(doc["rules"], lit, rows, cols, ortho, no_share)  # hidden-content lemmas ("cases")
+        base = list(q.constraints)
+        forced = {}
+        for _ in range(6):  # hidden-content lemmas ("cases"); with no_share, cells an arrow's surviving cases all use
+            cs = arrow_cases(doc["rules"], lit, rows, cols, ortho, no_share, forced)  # are closed to the others
+            q.constraints = base + cs
+            if not (no_share and cs):
+                break
+            alive = CB._C.cases_alive(CB.to_cpuzzle(q), [int(x) for x in cand])
+            new_forced = dict(forced)
+            for spec, ok in alive:
+                k = q.constraints[spec]
+                if ok and "_arrow" in k:
+                    sets = [{_name(c // cols, c % cols) for c in k["cases"][i]["cells"]} for i in ok]
+                    new_forced[k["_arrow"]] = set.intersection(*sets)
+            if new_forced == forced:
+                break
+            forced = new_forced
         st, _ = CB.solve(q, assume_unique=False, cand=cand, disabled=(SV.GUESS, SV.TRIAL))
         progressed = False
         for s in st:
