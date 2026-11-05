@@ -91,6 +91,7 @@ id,const,name,role,code,display,band,split,family,gate,direct,mental,price_fallb
 113,CLASS_TRAP,ClassTrap,logic,CTR,Colour Trap,Hard,0,chains,any,0,0,Coloring
 114,CHAIN_COLOUR,ChainColour,logic,CCH,Chain Colour,Medium,0,intersections+combos,any,0,0,EqualDigits
 115,COLOUR_CLASH,ColourClash,logic,CCX,Colour Clash,Hard,0,chains,any,0,0,EqualDigits
+116,CLASS_POINTING,ColourPointing,logic,CPT,Colour Pointing,Medium,0,intersections+combos,any,0,0,EqualDigits
 52,ALS_XZ,ALS-XZ,logic,ALS,,Expert,0,ALS,,0,0,
 53,ALS_XYWING,ALS-XY-Wing,logic,AXY,,Expert,0,ALS,,0,0,
 54,DEATH_BLOSSOM,DeathBlossom,logic,DEB,,Expert,0,ALS,,0,0,

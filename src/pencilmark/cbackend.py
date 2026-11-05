@@ -102,6 +102,7 @@ XMETA_KEYS = {
     S.CLASS_TRAP: ("anchor", "other_anchor", "pair_digits", "targets"),
     S.CHAIN_COLOUR: ("cell_a", "cell_b", "via", "candidates"),
     S.COLOUR_CLASH: ("cell", "anchor", "via", "members", "class_digits"),
+    S.CLASS_POINTING: ("anchor", "house", "line", "places", "targets", "members"),
     S.LINE_SCAN: ("line_kind", "constraint", "window", "cells"),
     S.LINE_RANGE: ("line_kind", "constraint", "line_len", "cells_changed", "informing", "transitive_depth", "combos"),
     S.UNIQUE_RECT: ("type", "x", "y", "extra_cells", "n_elims"),

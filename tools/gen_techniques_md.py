@@ -23,7 +23,7 @@ FAMILY_TITLES = {
     "trial": "Trial and forcing",
 }
 # colouring: one concept across families (codes share the prefix C); the page explains it once
-COLOUR_CODES = ("CFL", "CEQ", "CSG", "CPR", "CCH", "CCL", "CTR", "CCX", "CSM", "CAL", "CMU", "CMD")
+COLOUR_CODES = ("CFL", "CEQ", "CSG", "CPT", "CPR", "CCH", "CCL", "CTR", "CCX", "CSM", "CAL", "CMU", "CMD")
 COLOURING_INTRO = [
     "## Colouring",
     "",
@@ -34,8 +34,8 @@ COLOURING_INTRO = [
     "",
     "Every colouring technique is Medium or harder: colouring is a concept to learn, not a first step. The route",
     "parameter `colouring` switches kept colours on or off in the solve path: with it off, Same Colour and Chain Colour",
-    "still remove candidates but keep no colour, and Colour Fill, Colour Single, Colour Pair, Colour Trap and Colour",
-    "Clash do not occur.",
+    "still remove candidates but keep no colour, and Colour Fill, Colour Single, Colour Pointing, Colour Pair, Colour",
+    "Trap and Colour Clash do not occur.",
     "",
 ]
 # link icon per site (website/static/img/sites, made by tools/site_icons.py); a site without one gets a text badge

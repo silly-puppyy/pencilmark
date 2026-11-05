@@ -704,6 +704,30 @@ def _h_colour_clash(ctx):
     return _result(ctx, J, short, teach, True, extra_cells=cells)
 
 
+
+def _h_colour_pointing(ctx):
+    """identity layer: a colour's places in one house all lie in another house -> its other cells there are not that
+    colour"""
+    nm = ctx.nm
+    x = ctx.xm
+    a, hi, li = x.get("anchor"), x.get("house"), x.get("line")
+    cells = [c for c in (ctx.engine.get("pattern_cells") or ()) if isinstance(c, int)]
+    if a is None or hi is None or li is None:
+        return _generic(ctx)
+    k, n = int(x.get("places") or 0), int(x.get("targets") or 0)
+    ms = cells[: len(cells) - k - n]
+    P, T = cells[len(ms) : len(ms) + k], cells[len(ms) + k :]
+    are, hold = ("is", "holds") if len(T) == 1 else ("are", "hold")
+    short = f"{nm.cells(T)} {are} not the colour of {nm.cell(a)}: in {nm.unit(hi)} it is in {nm.cells(P, 'or')}"
+    teach = (
+        f"{_cap(nm.cells(ms))} hold one digit, whatever it is. In {nm.unit(hi)} that digit can only be in "
+        f"{nm.cells(P, 'or')}, {'both' if len(P) == 2 else 'all'} in {nm.unit(li)}. So {nm.unit(li)} has it there, and "
+        f"{nm.cells(T)} {hold} a different digit: a pointing pair, for a colour."
+    )
+    J = _J(ctx, base_units=[hi], cover_units=[li], base_cells=ms + P)
+    return _result(ctx, J, short, teach, True, extra_cells=cells)
+
+
 def _h_line_scan(ctx):
     nm, p, st = ctx.nm, ctx.p, ctx.st
     parent = _rule_from_move(ctx)

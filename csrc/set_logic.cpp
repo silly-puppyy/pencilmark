@@ -436,6 +436,80 @@ void Solver::class_single(MoveBuf& out) {
     }
 }
 
+// Colour pointing (CtC, Restricted Access: "orange is in one of these two positions [in box 1] ... where is orange in
+// this row? ... not in these squares, because it's in one of these two"): locked candidates over a colour class. In
+// a house H without a member, the class's places are the cells that do not see a member, can hold one of its digits
+// and are not known to differ from it. When they all lie in another house L (no member there either), the class's
+// cell in L is one of them, so every other place of the class in L holds a different digit: recorded as class
+// differences (AE_ID_NEQ); class singles then skip those cells.
+void Solver::class_pointing(MoveBuf& out) {
+    if (!id_on() || disabled[CLASS_POINTING]) return;
+    const int W = p.W;
+    std::set<std::pair<int, std::vector<int>>> seen;  // a class and its cells ruled out: one move (two houses may agree)
+    for (const auto& kv : id_classes(idc, p.N)) {
+        const int a = kv.first;
+        const std::vector<int>& ms = kv.second;
+        int pv = 0;
+        const uint32_t I = id_digits(ms, &pv);
+        if (pv || !I) continue;
+        std::vector<uint64_t> sees(W, 0);
+        for (int c : ms)
+            for (int w = 0; w < W; ++w) sees[w] |= p.peers(c)[w];
+        auto place = [&](int c) {  // c could be this class's cell
+            if (tbit(sees.data(), c)) return false;
+            if (!((vals[c] ? bit(vals[c]) : cand[c]) & I)) return false;
+            return vals[c] || !id_paired(id_anchor(c), a);
+        };
+        auto has_member = [&](int hi) {
+            for (int c : ms)
+                if (tbit(p.gbits(hi), c)) return true;
+            return false;
+        };
+        for (int hi : p.houses) {
+            if (has_member(hi)) continue;
+            std::vector<int> P;
+            for (int c : p.groups[hi].cells)
+                if (place(c)) P.push_back(c);
+            if (P.size() < 2) continue;  // one place: a class single
+            for (int li : p.houses) {
+                if (li == hi || has_member(li)) continue;
+                bool all = true;
+                for (int c : P) all &= tbit(p.gbits(li), c);
+                if (!all) continue;
+                std::vector<int> T;  // the class's other places in L: not this colour
+                for (int c : p.groups[li].cells)
+                    if (!tbit(p.gbits(hi), c) && !vals[c] && place(c) && id_anchor(c) != a) T.push_back(c);
+                if (T.empty()) continue;
+                int room = ID_CAP - id_live();
+                std::vector<int> keep;
+                for (int c : T) {
+                    if (!idc[c]) {
+                        if (room <= 0) continue;
+                        --room;
+                    }
+                    keep.push_back(c);
+                }
+                if (keep.empty() || !seen.insert({a, keep}).second) continue;
+                Move& m = new_move(out, CLASS_POINTING, 1.0, (int)P.size());
+                for (int c : keep) {
+                    const int kc = id_anchor(c);
+                    add_aeff(out, m, AE_ID_NEQ, std::max(kc, a), std::min(kc, a));
+                }
+                add_aeff(out, m, AE_ID_USE, a, 0);
+                std::vector<int> pc(ms);
+                pc.insert(pc.end(), P.begin(), P.end());
+                pc.insert(pc.end(), keep.begin(), keep.end());
+                set_pattern(out, m, pc);
+                add_expl(out, m, EX_BASE, {hi, li});
+                m.shape = pspread(pc);
+                meta9(m, (int)pc.size(), 2, popc(I), 1, 1, 0, 0, 1, m.shape);
+                pm_long xm[XM_N] = {a, hi, li, (pm_long)P.size(), (pm_long)keep.size(), (pm_long)ms.size(), 0, 0, 0, 0};
+                std::copy(xm, xm + XM_N, m.xm);
+            }
+        }
+    }
+}
+
 // "Red can't go next to orange" (CtC, Restricted Access): classes K1 and K2 linked one-to-one by a pair rule between
 // two members (a V: K2 = 5 - K1). A cell c related to a member o of K2 (orthogonal neighbours without a V, all Vs
 // given) such that c holding K1's digit v would leave o no digit but the one K2 must hold, for every digit v K1 can

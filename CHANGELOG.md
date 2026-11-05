@@ -12,6 +12,9 @@
   keep theirs. No aliases.
 - Bands: Clue Facts are Easy (memorised variant facts), Colour Fill Medium; colouring techniques get short names (Same
   Colour, Colour Single, Colour Fill, Colour Pair, Colour Trap, Simple Colouring, Class Colouring).
+- Colour Pointing (CPT, Medium; with `colouring` on): pointing for a colour. When a colour's places in one house all lie
+  in another house, the other cells of that house are not that colour (CtC, Restricted Access: "orange is in one of
+  these two positions").
 - Two colouring techniques of their own: Chain Colour (CCH, Medium: two cells forced to hold one digit through a third
   tied to both by pair rules, e.g. V dominoes) and Colour Clash (CCX, Hard: a cell that would leave a linked colour no
   digit never has the first colour). Both were reported as Same Colour / Colour Single before, with explanations that

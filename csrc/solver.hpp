@@ -94,6 +94,7 @@ enum Tech {
     CLASS_TRAP = 113,     ///< identity layer: a cell seeing both colours of an {a, b} class pair holds neither
     CHAIN_COLOUR = 114,   ///< two cells forced equal through a third by pair rules (a V / X / dot chain): one colour
     COLOUR_CLASH = 115,   ///< identity layer: a cell next to a linked colour would leave that colour no digit: not this colour
+    CLASS_POINTING = 116, ///< identity layer: a colour's places in a house lie in another: elsewhere there, not that colour
     MENTAL_NOTES = 84,    ///< single after notes logic done in the head (subset / pointing / combination on the mental view)    // line consistency on 3-cell windows (local scan of a long line)  // both options of a 2-way choice lead to the same placement / elimination  // short chain (<= 5 links) on the no-notes mental view, leading to a single  // bounded case split: bivalue cell, contradiction within a few direct rounds
     N_TECH = 128
 };
@@ -665,6 +666,7 @@ public:
     void equal_digits(MoveBuf& out);
     void equal_digits_chain(MoveBuf& out);
     void class_link_neq(MoveBuf& out);
+    void class_pointing(MoveBuf& out);
     /// identity layer: a house where only one cell can hold a class's digit (the others see a member): it joins
     void class_single(MoveBuf& out);
     /// identity layer: a member's lost candidate leaves every member; a placed member places the others (direct_view:

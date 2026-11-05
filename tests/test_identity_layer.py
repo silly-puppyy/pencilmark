@@ -80,7 +80,7 @@ def test_colour_legend_kept_for_the_solve():
     assert BP._class_substeps(p, {"idfx": [], "elims": [], "place": None}, ex, idc, vals, cand, colours) is None
 
 
-COLOUR_CODES = {"CFL", "CEQ", "CCH", "CSG", "CPR", "CCL", "CTR", "CCX", "CSM", "CAL", "CMU", "CMD"}
+COLOUR_CODES = {"CFL", "CEQ", "CCH", "CSG", "CPT", "CPR", "CCL", "CTR", "CCX", "CSM", "CAL", "CMU", "CMD"}
 GOLDEN = Path(__file__).parent / "golden"
 
 
@@ -120,3 +120,21 @@ def test_colouring_on_leaves_easy_cards_alone():
     finally:
         m.route["colouring"] = old
         api._PARAMS = (None, None)
+
+
+def test_colour_pointing():
+    """a colour's places in box 1 all lie in column 1 (CtC, Restricted Access: "orange is in one of these two
+    positions"): the colour's other places in column 1 are not that colour"""
+    p = pencilmark.load("." * 81)
+    P = dict(api._params("human"), colouring=1)
+    full = (1 << 9) - 1
+    cand = [full] * 81
+    m1, m2 = 1 * 9 + 3, 3 * 9 + 1  # r2c4, r4c2: one colour, digits 1 / 2
+    cand[m1] = cand[m2] = 0b11
+    for c in (0 * 9 + 2, 2 * 9 + 2):  # r1c3, r3c3 can't hold it: box 1's places are r1c1, r3c1
+        cand[c] = full & ~0b11
+    idc = [0] * 81
+    idc[m1] = idc[m2] = m1 + 1
+    off = set(S.TECH_NAMES) - {S.CLASS_POINTING}
+    ms = [m for m in CB.state_moves(p, P, cand=cand, disabled=off, labels=(None, None, idc)) if m["tech"] == S.CLASS_POINTING]
+    assert len(ms) == 1 and ms[0]["idfx"] == [(NEQ, 54, 12), (NEQ, 63, 12), (NEQ, 72, 12), (USE, 12, 0)]

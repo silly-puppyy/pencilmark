@@ -55,6 +55,7 @@ This page is generated from `pencilmark/data/codes.csv`, `techniques.csv` and `d
 | `CEQ` | Same Colour *(variant)* | Medium |  | <a href="https://sudokuvariants.com/help/variants/palindrome" title="sudokuvariants.com" class="pm-site-link"><img src="/pencilmark/img/sites/sudokuvariants.png" alt="sudokuvariants.com" class="pm-site"/></a> <a href="https://lisudoku.xyz/learn#PalindromeValues" title="lisudoku" class="pm-site-link"><img src="/pencilmark/img/sites/lisudoku.png" alt="lisudoku" class="pm-site"/></a> |
 | `CCH` | Chain Colour *(variant)* | Medium |  |  |
 | `CSG` | Colour Single *(variant)* | Medium |  |  |
+| `CPT` | Colour Pointing *(variant)* | Medium |  |  |
 | `CPR` | Colour Pair *(variant)* | Medium |  |  |
 | `DGC` | Digit counting *(variant)* | Medium |  | <a href="https://www.sudokuwiki.org/Cage_Unit_Overlap" title="sudokuwiki.org" class="pm-site-link"><img src="/pencilmark/img/sites/sudokuwiki.png" alt="sudokuwiki.org" class="pm-site"/></a> <a href="https://hodoku.sourceforge.net/en/tech_fishg.php" title="HoDoKu" class="pm-site-link"><img src="/pencilmark/img/sites/hodoku.png" alt="HoDoKu" class="pm-site"/></a> |
 | `LOL` | Set theory (law of leftovers) | Medium |  | <a href="https://www.sudokuwiki.org/Law_of_Leftovers" title="sudokuwiki.org" class="pm-site-link"><img src="/pencilmark/img/sites/sudokuwiki.png" alt="sudokuwiki.org" class="pm-site"/></a> <a href="https://sudopedia.sudocue.net/index.php?title=Law_of_Leftovers" title="Sudopedia" class="pm-site-link"><img src="/pencilmark/img/sites/sudopedia.png" alt="Sudopedia" class="pm-site"/></a> |
@@ -168,8 +169,8 @@ appears, such as *orange: an unknown digit (5 or 6)* or *blue: a low digit (1-4)
 
 Every colouring technique is Medium or harder: colouring is a concept to learn, not a first step. The route
 parameter `colouring` switches kept colours on or off in the solve path: with it off, Same Colour and Chain Colour
-still remove candidates but keep no colour, and Colour Fill, Colour Single, Colour Pair, Colour Trap and Colour
-Clash do not occur.
+still remove candidates but keep no colour, and Colour Fill, Colour Single, Colour Pointing, Colour Pair, Colour
+Trap and Colour Clash do not occur.
 
 | Code | Technique | Band |
 |---|---|---|
@@ -177,6 +178,7 @@ Clash do not occur.
 | `CEQ` | Same Colour | Medium |
 | `CCH` | Chain Colour | Medium |
 | `CSG` | Colour Single | Medium |
+| `CPT` | Colour Pointing | Medium |
 | `CPR` | Colour Pair | Medium |
 | `CCL` | Class Colouring | Medium |
 | `CTR` | Colour Trap | Hard |
