@@ -1115,3 +1115,20 @@ def test_off_centre_cell_text_is_refused():
     centred = [{"center": [1.5, 1.5], "width": 0, "height": 0.46, "text": "4"}]
     p, _ = SP.translate(_sp4(overlays=centred), "Normal sudoku rules apply.")
     assert p is not None
+
+
+def test_reading_that_breaks_the_embedded_solution_is_refused():
+    """a reading the setter's embedded solution breaks is refused by default (one-off rules worded like standard
+    ones); check_solution=False skips the check"""
+    import pytest
+    from pencilmark import sources
+
+    sol = "123456789456789123789123456214365897365897214897214365531642978642978531978531642"
+    pj = {"numbers": "." * 81, "solution": sol, "rules": [{"type": "kropki", "color": "white", "cells": ["r1c1", "r1c3"]}]}
+    assert sources.contradicts_solution(pj)  # 1 and 3 are not consecutive
+    assert not sources.contradicts_solution(dict(pj, rules=[{"type": "kropki", "color": "white", "cells": ["r1c1", "r1c2"]}]))
+    assert not sources.contradicts_solution({"numbers": "." * 81})  # no solution: nothing to check
+    assert sources.contradicts_solution(dict(pj, solution="0" + sol[1:]))  # the setter's digits include 0
+    with pytest.raises(sources.VerificationError):
+        sources.load(pj)
+    assert sources.load(pj, check_solution=False)["solution"] == sol

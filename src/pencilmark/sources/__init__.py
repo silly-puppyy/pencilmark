@@ -27,7 +27,8 @@ from ._common import USER_AGENT, DecodeError, FetchError, SourceError, Unsupport
 
 
 class VerificationError(SourceError):
-    """verify=True: the translated puzzle is not unique, or contradicts its embedded solution."""
+    """The reading contradicts the setter's embedded solution (checked by default), or with verify=True: the
+    translated puzzle is not unique."""
 
 
 def detect(x):
@@ -76,11 +77,14 @@ def detect(x):
     return None
 
 
-def load(x, rules_text=None, infer=False, fetch=True, verify=False, time_limit=30.0):
+def load(x, rules_text=None, infer=False, fetch=True, verify=False, time_limit=30.0, check_solution=True):
     """Link / payload / decoded dict -> puzzle JSON dict. rules_text: the rules from the page that links the puzzle
     (used where the puzzle file has none, and for penpa's rule screening). infer=True lets SudokuPad / f-puzzles
     search line readings with the solver (slow). fetch=False refuses anything that needs a network request.
-    verify=True checks uniqueness (and the embedded solution) with CP-SAT and raises VerificationError otherwise."""
+    verify=True checks uniqueness (and the embedded solution) with CP-SAT and raises VerificationError otherwise.
+    check_solution=True (default): when the puzzle embeds the setter's solution, a reading that the solution breaks
+    is refused (VerificationError) -- a rule was read differently from what the setter meant (usually a one-off rule
+    worded like a standard one: "digits may repeat in a cage", digits 0-8, rounded cage sums)."""
     from . import fpuzzles, lmd, penpa, sudokupad
 
     kind = detect(x)
@@ -113,7 +117,32 @@ def load(x, rules_text=None, infer=False, fetch=True, verify=False, time_limit=3
         pj = penpa.to_puzzle(s, rules_text=rules_text)
     if verify:
         check(pj, time_limit=time_limit)
+    elif check_solution and contradicts_solution(pj):
+        raise VerificationError(
+            "the reading contradicts the setter's embedded solution: some rule was not read as the setter meant "
+            "(one-off rules worded like standard ones are the usual cause; see docs/reference/sources.md)"
+        )
     return pj
+
+
+def contradicts_solution(pj, node_limit=200_000):
+    """True when the puzzle embeds a full solution and no grid with those digits satisfies the reading (the engine's
+    exhaustive search, completed within node_limit). False when it fits, when there is no usable solution, or when the
+    search could not decide."""
+    from .. import cbackend, puzzle_json
+
+    sol = pj.get("solution") if isinstance(pj, dict) else None
+    nums = (pj.get("numbers") or "") if isinstance(pj, dict) else ""
+    if not sol or (nums and len(re.sub(r"\s+", "", nums)) != len(re.sub(r"\s+", "", sol))) or "." in sol:
+        return False
+    if "0" in sol:  # a full solution with a 0: the setter's digits include 0, the reading's are 1..D
+        return True
+    try:
+        p = puzzle_json.from_json(dict(pj, numbers=sol, candidates=None))
+        res = cbackend.brute_solve(p, limit=1, node_limit=node_limit)
+    except Exception:  # noqa: BLE001 -- a reading the engine cannot even set up is judged elsewhere
+        return False
+    return len(res) == 0 and res.complete
 
 
 def check(pj, time_limit=30.0):
@@ -138,6 +167,7 @@ def check(pj, time_limit=30.0):
 
 __all__ = [
     "load",
+    "contradicts_solution",
     "detect",
     "check",
     "SourceError",

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Links are checked against the setter's embedded solution by default: a reading the solution breaks is refused with
+  `VerificationError` ("the reading contradicts the setter's embedded solution"); `sources.load(...,
+  check_solution=False)` skips it. On the 1,351 Cracking the Cryptic SudokuPad puzzles: 345 correct readings all
+  still load, 107 of 112 misreads (one-off rules worded like standard ones) are now refused; the other 5 have no usable
+  embedded solution or an undecided check. The import guide lists what links read and what they don't.
 - Custom rules that read a list only at constant indices compile over just those cells: "ray[3] + ray[4] == 3" over a
   9-cell ray is now a 2-cell table, not a 9-cell expression constraint. Results are unchanged (golden gate
   identical). Hand ports that declared whole rays now grade: three GAS ports went from Unknown to Very Easy 5.8 / Easy

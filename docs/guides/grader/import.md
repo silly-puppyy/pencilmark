@@ -75,6 +75,46 @@ The error is `pencilmark.sources.UnsupportedPuzzle`, and its message names each 
 mechanic pencilmark does not model, such as equality cages, clones or fog of war, is refused by name ("rule 'equality
 cage'") even when its elements look like familiar ones, so its cages never grade as killer cages.
 
+When the link embeds the setter's solution (most SudokuPad and f-puzzles links do), the reading is checked against it.
+A reading that the solution breaks is refused with `pencilmark.sources.VerificationError` ("the reading contradicts the
+setter's embedded solution"). The usual cause is a one-off rule worded like a standard one: the reader takes the
+familiar meaning and the puzzle comes out different. `sources.load(link, check_solution=False)` skips the check.
+
+### What links read, and what they don't
+
+Measured on the 1,351 SudokuPad puzzles from Cracking the Cryptic videos (2026-11):
+
+| Outcome | Puzzles |
+|---|---|
+| Read without `infer`, matching the setter's solution | 345 |
+| Misread, now refused by the solution check | 107 |
+| Misread, not caught (no usable embedded solution, or the check could not decide) | 5 |
+| Refused before reading (a rule or element pencilmark does not model) | the rest |
+
+Reads well:
+
+- the standard rule families and their many wordings;
+- line meanings given by colour in the rules text;
+- killer cages, arrows, thermos, dots, X/V, whispers, renbans, region-sum lines, quadruples, sandwiches and the other
+  families on the [puzzle format](../../formats/puzzle-format.md) pages.
+
+Not read:
+
+- **One-off rules worded like standard ones**, for example:
+  - digits that may repeat in a cage;
+  - cage sums rounded to a multiple;
+  - letters standing for numbers;
+  - "exactly k of these hold";
+  - hot and cold cells.
+
+  With an embedded solution these are refused. Without one they can load as a different puzzle, which usually shows
+  when grading: `NoSolution` or `NotUnique`.
+- **Digit sets other than 1 to D** (0 to 8, 1 to 5 twice): refused when the embedded solution shows them. Some links
+  drop the solution, and then the check cannot see it.
+- **Fog of war**: refused by name, since a fog puzzle is solved under the fog.
+- **Several grids on one canvas**, unless the setter drew the houses explicitly.
+- **Shading, loop and path genres.**
+
 For those, `infer=True` lets the reader try the possible meanings of each unexplained element and keep the reading
 under which the puzzle has exactly one solution (and agrees with its embedded solution, when the link has one); the
 rules text breaks ties. It is slower, and opt-in because it is an inference, however well checked:
