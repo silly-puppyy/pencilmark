@@ -104,6 +104,7 @@ XMETA_KEYS = {
     S.COLOUR_CLASH: ("cell", "anchor", "via", "members", "class_digits"),
     S.CLASS_POINTING: ("anchor", "house", "line", "places", "targets", "members"),
     S.CLASS_FISH: ("anchor", "base_a", "base_b", "cover_a", "cover_b", "places", "targets", "members"),
+    S.CLASS_COMPLETE: ("colours", "digits", "copies"),
     S.LINE_SCAN: ("line_kind", "constraint", "window", "cells"),
     S.LINE_RANGE: ("line_kind", "constraint", "line_len", "cells_changed", "informing", "transitive_depth", "combos"),
     S.UNIQUE_RECT: ("type", "x", "y", "extra_cells", "n_elims"),

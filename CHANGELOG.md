@@ -12,6 +12,12 @@
   keep theirs. No aliases.
 - Bands: Clue Facts are Easy (memorised variant facts), Colour Fill Medium; colouring techniques get short names (Same
   Colour, Colour Single, Colour Fill, Colour Pair, Colour Trap, Simple Colouring, Class Colouring).
+- Colour Fish (CFS, Hard) and Complete Colours (CCM, Medium), with `colouring` on: an X-Wing over a colour (two houses
+  confine it to two others), and k colours with a cell in every row and k possible digits between them, which use
+  those digits up. Colours whose cells see each other count as different. Up to 48 colours are kept (was 16).
+- Experimental fog route: colours are kept across reveals, and visible cell rules (parity squares and the like) narrow
+  the candidates (they were dropped each round). Restricted Access (CtC) now solves under the fog with colouring on,
+  first digit as the host's.
 - Colour Pointing (CPT, Medium; with `colouring` on): pointing for a colour. When a colour's places in one house all lie
   in another house, the other cells of that house are not that colour (CtC, Restricted Access: "orange is in one of
   these two positions").

@@ -96,6 +96,7 @@ enum Tech {
     COLOUR_CLASH = 115,   ///< identity layer: a cell next to a linked colour would leave that colour no digit: not this colour
     CLASS_POINTING = 116, ///< identity layer: a colour's places in a house lie in another: elsewhere there, not that colour
     CLASS_FISH = 117,     ///< identity layer: two houses confine a colour to two others (an X-Wing over a colour)
+    CLASS_COMPLETE = 118, ///< identity layer: k complete colours with k digits between them: the other cells lose those
     MENTAL_NOTES = 84,    ///< single after notes logic done in the head (subset / pointing / combination on the mental view)    // line consistency on 3-cell windows (local scan of a long line)  // both options of a 2-way choice lead to the same placement / elimination  // short chain (<= 5 links) on the no-notes mental view, leading to a single  // bounded case split: bivalue cell, contradiction within a few direct rounds
     N_TECH = 128
 };
@@ -515,7 +516,7 @@ public:
     uint32_t id_digits(const std::vector<int>& ms, int* pv) const;
     /// the anchor of c's class, or c itself when it has none
     int id_anchor(int c) const { return idc.empty() || !idc[c] ? c : idc[c] - 1; }
-    static constexpr int ID_CAP = 16;  ///< at most this many live classes
+    static constexpr int ID_CAP = 48;  ///< at most this many live classes
 
     // ---- techniques (each appends to out) ----
     void direct_moves(MoveBuf& out, bool use_locks, int mental = 0);  ///< mental: 0 off, 2 relations/lines, 3 + subsets
@@ -669,6 +670,7 @@ public:
     void class_link_neq(MoveBuf& out);
     void class_pointing(MoveBuf& out);
     void class_fish(MoveBuf& out);
+    void class_complete(MoveBuf& out);
     /// identity layer: a house where only one cell can hold a class's digit (the others see a member): it joins
     void class_single(MoveBuf& out);
     /// identity layer: a member's lost candidate leaves every member; a placed member places the others (direct_view:

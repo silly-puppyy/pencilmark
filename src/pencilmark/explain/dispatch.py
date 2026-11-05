@@ -58,6 +58,7 @@ from .trial import (
     _h_chain_colour,
     _h_colour_clash,
     _h_colour_fish,
+    _h_complete_colours,
     _h_colour_pointing,
     _h_digit_count,
     _h_either_way,
@@ -221,6 +222,16 @@ _X_HANDLERS = {
             "Chain colour",
             "A cell tied to two others by pair rules (V / X dominoes, dots) can force them to hold the same digit: "
             "trace each digit through the chain and back. Give them one colour.",
+        ),
+    ),
+    "CLASS_COMPLETE": (
+        _h_complete_colours,
+        "equal_cells",
+        "subsets",
+        (
+            "Complete colours",
+            "A colour with a cell in every row holds every copy of its digit. When some complete colours can only be as "
+            "many digits as there are colours, they use those digits up: every other cell loses them.",
         ),
     ),
     "CLASS_FISH": (

@@ -371,7 +371,7 @@ Solver::Solver(const Puzzle& pz, const Params& prm, const SolveOptions& o)
             }
             if (sg) t.push_back(S("idprop", [](Solver& s, MoveBuf& b) { s.id_propagate(b, false); }));
             if (eq) {
-                t.push_back(S("classsingle", [](Solver& s, MoveBuf& b) { s.class_single(b); s.class_link_neq(b); s.class_pointing(b); s.class_fish(b); }));
+                t.push_back(S("classsingle", [](Solver& s, MoveBuf& b) { s.class_single(b); s.class_link_neq(b); s.class_pointing(b); s.class_fish(b); s.class_complete(b); }));
                 t.push_back(S("classpair", [](Solver& s, MoveBuf& b) { s.class_pair(b); }));
                 t.push_back(S("classtrap", [](Solver& s, MoveBuf& b) { s.class_trap(b); }));
             }

@@ -751,6 +751,27 @@ def _h_colour_fish(ctx):
     return _result(ctx, J, short, teach, True, extra_cells=cells)
 
 
+
+def _h_complete_colours(ctx):
+    """identity layer: k complete colours with k possible digits between them -> every other cell loses those digits"""
+    nm = ctx.nm
+    x = ctx.xm
+    k, U = int(x.get("colours") or 0), int(x.get("digits") or 0)
+    cells = [c for c in (ctx.engine.get("pattern_cells") or ()) if isinstance(c, int)]
+    if not k or not U:
+        return _generic(ctx)
+    D = sorted(digits_of(U))
+    ds = ", ".join(map(str, D[:-1])) + " and " + str(D[-1]) if len(D) > 1 else str(D[0])
+    short = f"{fmt_elims(nm, ctx.elims)}: {k} complete colours hold every {ds}"
+    teach = (
+        f"{k} colours each have a cell in every row, so each holds every copy of its digit, and they hold different "
+        f"digits. Between them they can only be {ds}: they use those digits up, so no other cell can be one: "
+        f"{_cant(nm, ctx.elims)}."
+    )
+    J = _J(ctx, digits=D, base_cells=cells)
+    return _result(ctx, J, short, teach, True, extra_cells=cells)
+
+
 def _h_line_scan(ctx):
     nm, p, st = ctx.nm, ctx.p, ctx.st
     parent = _rule_from_move(ctx)

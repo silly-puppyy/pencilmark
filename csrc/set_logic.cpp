@@ -620,6 +620,62 @@ void Solver::class_fish(MoveBuf& out) {
     }
 }
 
+// Complete colours (CtC, Restricted Access: "we've done all the colouring of all the ones, twos, threes and fours ...
+// these [blue squares] have all got to change nature to not be twos and fours"): a colour with a cell for every copy
+// of a digit (N / D members) holds all of its digit, and two complete colours hold different digits. k complete
+// colours whose possible digits are k between them use those digits up: every other cell loses them.
+void Solver::class_complete(MoveBuf& out) {
+    if (!id_on() || disabled[CLASS_COMPLETE]) return;
+    const int full = p.N / p.D;
+    std::vector<std::pair<int, std::vector<int>>> cs;  // complete colours, digits not yet known
+    std::vector<uint32_t> dg;
+    for (const auto& kv : id_classes(idc, p.N)) {
+        int pv = 0;
+        const uint32_t I = id_digits(kv.second, &pv);
+        if (pv || !I || (int)kv.second.size() != full) continue;
+        cs.push_back(kv);
+        dg.push_back(I);
+    }
+    const int k = (int)cs.size();
+    if (k == 0 || k > 12) return;
+    std::vector<char> mem(p.N, 0);
+    for (int s = 1; s < (1 << k); ++s) {
+        uint32_t U = 0;
+        int n = 0;
+        for (int i = 0; i < k; ++i)
+            if (s >> i & 1) U |= dg[i], ++n;
+        if (popc(U) != n) continue;
+        bool minimal = true;  // the smallest such sets only (a larger one repeats them)
+        for (int t = (s - 1) & s; t && minimal; t = (t - 1) & s) {
+            uint32_t V = 0;
+            int m = 0;
+            for (int i = 0; i < k; ++i)
+                if (t >> i & 1) V |= dg[i], ++m;
+            if (popc(V) == m) minimal = false;
+        }
+        if (!minimal) continue;
+        std::fill(mem.begin(), mem.end(), 0);
+        std::vector<int> pc;
+        for (int i = 0; i < k; ++i)
+            if (s >> i & 1)
+                for (int c : cs[i].second) mem[c] = 1, pc.push_back(c);
+        bool any = false;
+        for (int c = 0; c < p.N && !any; ++c) any = !vals[c] && !mem[c] && (cand[c] & U);
+        if (!any) continue;
+        Move& m = new_move(out, CLASS_COMPLETE, 1.0, n);
+        for (int c = 0; c < p.N; ++c)
+            if (!vals[c] && !mem[c])
+                for (uint32_t x = cand[c] & U; x; x &= x - 1) add_elim(out, m, c, lowdigit(x));
+        for (int i = 0; i < k; ++i)
+            if (s >> i & 1) add_aeff(out, m, AE_ID_USE, cs[i].first, 0);
+        set_pattern(out, m, pc);
+        m.shape = pspread(pc);
+        meta9(m, (int)pc.size(), 2, popc(U), 1, 1, 0, 0, 1, m.shape);
+        pm_long xm[XM_N] = {n, (pm_long)U, full, 0, 0, 0, 0, 0, 0, 0};
+        std::copy(xm, xm + XM_N, m.xm);
+    }
+}
+
 // "Red can't go next to orange" (CtC, Restricted Access): classes K1 and K2 linked one-to-one by a pair rule between
 // two members (a V: K2 = 5 - K1). A cell c related to a member o of K2 (orthogonal neighbours without a V, all Vs
 // given) such that c holding K1's digit v would leave o no digit but the one K2 must hold, for every digit v K1 can
