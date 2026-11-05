@@ -470,10 +470,14 @@ struct Enum {
             aborted = true;
             return;
         }
-        const int rest = (int)order.size() - (int)at;  // cells still open (each at least 1)
+        const int rest = (int)order.size() - (int)at;  // cells still open
         const int start = c.circle >= 0 ? 1 : 0;
         const int target = c.circle >= 0 ? (asg[c.circle] ? a[c.circle] : D) : (c.total >= 0 ? c.total : -1);
-        if (target >= 0 && at > (size_t)start && sum + (rest > 0 ? rest : 0) > target) return;
+        if (target >= 0 && at >= (size_t)start && rest > 0) {  // the open cells can still reach the target, not overshoot it
+            const int lo = c.distinct ? rest * (rest + 1) / 2 : rest;
+            const int hi = c.distinct ? rest * D - rest * (rest - 1) / 2 : rest * D;
+            if (sum + lo > target || sum + hi < target) return;
+        }
         if (at == order.size()) {
             if (target >= 0 && sum != target) return;
             ++count;

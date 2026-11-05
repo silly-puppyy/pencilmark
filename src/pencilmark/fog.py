@@ -261,6 +261,9 @@ def _partial_cage(k, L):
     return out
 
 
+import os as _os
+
+_NO_CASES = _os.environ.get("PENCILMARK_FOG_NO_CASES") == "1"  # diagnostics only
 _BH = [None]  # the box shape of a regular box grid (set per route); None: boxes not used in the bound
 CASE_CAP = 300  # an arrow with more possible hidden shapes than this gets no case rule (nothing claimed: sound)
 LEMMA = {"setup": 1.0, "use": 0.5}  # placeholder prices (coach fit: case lemmas are nearly free; to be fitted)
@@ -553,13 +556,18 @@ def route(puzzle, max_rounds=400, rules_text=None):
                 vis["rules"].append({"type": "cage", "cells": [_name(i // cols, i % cols) for i in cs1], "sum": c["cases"][0]["total"]})
         q = api.load(vis)
         base = list(q.constraints)
+        if _NO_CASES:  # diagnostics: the route without the hidden-content case rules
+            q.constraints = base
+            cand_cases = False
+        else:
+            cand_cases = True
         live = list(cand)  # basic sudoku on the candidates: a placed digit leaves its row, column and box
         for i, g in enumerate(givens):
             if g:
                 for j in q.peers[i] if hasattr(q, "peers") and q.peers else ():
                     live[j] &= ~(1 << (g - 1))
         forced = {}  # ("arrow" | "cage", rule index) -> cells every surviving case uses: closed to the others
-        for _ in range(6):  # hidden-content lemmas ("cases"), iterated while the closed cells grow
+        for _ in range(6 if cand_cases else 0):  # hidden-content lemmas ("cases"), iterated while the closed cells grow
             fa = {n: cs for (t_, n), cs in forced.items() if t_ == "arrow"}
             fc = {n: cs for (t_, n), cs in forced.items() if t_ == "cage"}
             cs = arrow_cases(doc["rules"], lit, rows, cols, ortho, no_share, fa, single, live) + cage_cases(doc["rules"], lit, rows, cols, clue_always, fc, cage_size)
