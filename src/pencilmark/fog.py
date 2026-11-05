@@ -24,6 +24,8 @@ fog hides.
 
 from __future__ import annotations
 
+import re as _re
+
 OUTSIDE = {"sandwich", "xsum", "skyscraper", "rossini", "first_seen"}
 STATED = {"box_grid", "grid", "box", "row", "column", "region", "global_entropy"}
 LINE_STRETCH = {"whisper", "thermo", "entropic"}  # every stretch of these lines obeys the rule
@@ -61,8 +63,29 @@ def _diagonal(rule, D):
     return rc in ({(i, i) for i in range(D)}, {(i, D - 1 - i) for i in range(D)})
 
 
-def visible_rules(rules, lit, D):
-    """the rules a solver sees with these cells lit (module docstring)"""
+ABOVE = _re.compile(r"[^.;\n]*(?:visible from the (?:outset|start)|visible through the fog|not (?:hidden|covered) by (?:the )?fog"
+                    r"|above the fog)[^.;\n]*", _re.I)
+_KINDS = [  # (rules-text words, does a rule belong to that clue kind)
+    (r"\bV\b|\bV clues", lambda k: k.get("letter") == "V" or (k.get("op") == "not_sum" and k.get("sum") == 5)),
+    (r"\bX\b|\bX clues", lambda k: k.get("letter") == "X" or (k.get("op") == "not_sum" and k.get("sum") == 10)),
+    (r"black dots?", lambda k: k.get("color") == "black"),
+    (r"white dots?", lambda k: k.get("color") == "white"),
+    (r"cages?", lambda k: k["type"] == "cage"),
+    (r"arrows?", lambda k: k["type"] == "arrow"),
+    (r"thermo", lambda k: k.get("kind") == "thermo"),
+]
+
+
+def above_fog(rules_text):
+    """clue kinds the rules say are drawn above the fog ("ALL V clues are given and visible from the outset")"""
+    out = []
+    for m in ABOVE.finditer(rules_text or ""):
+        out += [f for pat, f in _KINDS if _re.search(pat, m.group(0), _re.I)]
+    return out
+
+
+def visible_rules(rules, lit, D, above=()):
+    """the rules a solver sees with these cells lit (module docstring); `above`: clue kinds drawn above the fog"""
     L = {_name(r, c) for r, c in lit}
     box_of = {}
     for n_, k in enumerate(rules):  # region-sum lines count segments per box
@@ -80,7 +103,7 @@ def visible_rules(rules, lit, D):
         if t == "fog":
             continue
         cells = list(k.get("cells") or [])
-        if t in STATED or t in OUTSIDE or _diagonal(k, D) or (t == "neighbours" and "except" not in k):
+        if t in STATED or t in OUTSIDE or _diagonal(k, D) or (t == "neighbours" and "except" not in k) or any(f(k) for f in above):
             out.append(k)
         elif t in ("neighbours", "negative"):  # "all dots are given": only where both cells are seen
             area = sorted(set(k["area"]) & L) if isinstance(k.get("area"), list) else sorted(L)
@@ -197,8 +220,6 @@ def _segments(rules):
             seg |= {frozenset(p) for p in zip(k["cells"], k["cells"][1:])}
     return seg
 
-
-import re as _re
 
 ORTHO = _re.compile(r"arrows?[^.]*orthogonal", _re.I)
 NO_SHARE = _re.compile(r"arrows?[^.]*(?:don.t|do not|may not|cannot|never) (?:share|overlap|cross)", _re.I)
@@ -428,6 +449,7 @@ def route(puzzle, max_rounds=400, rules_text=None):
             rules_text = ""
     ortho, no_share = bool(ORTHO.search(rules_text or "")), bool(NO_SHARE.search(rules_text or ""))
     clue_always = bool(CLUE_ALWAYS.search(rules_text or "")) and not SOME_UNCLUED.search(rules_text or "")
+    above = above_fog(rules_text)
     m_ = CAGE_SIZE.search(rules_text or "")
     cage_size = (int(m_.group(1)) if m_.group(1).isdigit() else _WORDS[m_.group(1).lower()]) if m_ else None
     p = api.load(puzzle)
@@ -451,7 +473,7 @@ def route(puzzle, max_rounds=400, rules_text=None):
         if all(g or g is None for g in givens):
             return {"solved": True, "rounds": rounds - 1, "reveals": reveals, "steps": steps, "stuck": 0}
         before = list(cand)
-        vis = dict(doc, givens=givens, rules=visible_rules(doc["rules"], lit, D))
+        vis = dict(doc, givens=givens, rules=visible_rules(doc["rules"], lit, D, above))
         for c in cage_cases(doc["rules"], lit, rows, cols, clue_always, None, cage_size):
             if len(c["cases"]) == 1 and c["cases"][0]["total"] is not None:  # one shape left: the cage is known, as a
                 cs1 = c["cases"][0]["cells"]  # cage rule (set theory, combinations and the rest read it)
