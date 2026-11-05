@@ -271,6 +271,100 @@ def arrow_cases(rules, lit, rows, cols, ortho=False, no_share=False, forced=None
     return out
 
 
+CLUE_ALWAYS = _re.compile(r"clue is always given|all cages? (?:clues|totals) are given|every cage has a (?:clue|total)"
+                         r"|cages?[^.]*sum to (?:the )?(?:total|clue|number|small)", _re.I)
+SOME_UNCLUED = _re.compile(r"not all cages|some cages|cages? (?:without|with no) (?:a )?(?:total|clue|sum)|unclued cage", _re.I)
+
+
+CAGE_SIZE = _re.compile(r"cages are (?:all )?(?:exactly )?(\d|one|two|three|four|five|six) cells", _re.I)
+_WORDS = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6}
+
+
+def cage_cases(rules, lit, rows, cols, clue_always, forced=None, size=None):
+    """Case rules for cages seen in part (CtC, Corner Prison: "the clue is always in the top-left cell, so this cage
+    must reach row 1 ... it can't be more than 9 cells"). A lit cell shows its walls: across an edge with a lit side,
+    the two cells share a cage exactly when no wall is drawn. A shape is a connected set holding a lit stretch of the
+    cage, at most D cells, agreeing with every edge seen from a lit cell, avoiding cells of fully lit cages and cells
+    other cages' surviving shapes all use (cages never overlap); with clue_always its top-left cell holds the total, so
+    a lit top-left shows one and a shown total is the top-left. Each shape is a case: all different, summing to the
+    total when it is shown. Returned as engine constraints over cell indices."""
+    L = {_name(r, c) for r, c in lit}
+    D = rows
+    cage_of = {}
+    for n_, k in enumerate(rules):
+        if k["type"] == "cage" and k.get("sum") is not None:
+            for c in k["cells"]:
+                cage_of[c] = n_
+    taken = {c for n_, k in enumerate(rules) if k["type"] == "cage" and k.get("sum") is not None
+             and all(c in L for c in k["cells"]) for c in k["cells"]}
+    ix = lambda c: _rc(c)[0] * cols + _rc(c)[1]
+
+    def nbs(c):
+        r, q = _rc(c)
+        return [_name(r + a, q + b) for a, b in ((-1, 0), (1, 0), (0, -1), (0, 1)) if 0 <= r + a < rows and 0 <= q + b < cols]
+
+    same = lambda a, b: cage_of.get(a) is not None and cage_of.get(a) == cage_of.get(b)  # no wall drawn between them
+    out = []
+    for n_, k in enumerate(rules):
+        if k["type"] != "cage" or k.get("sum") is None or all(c in L for c in k["cells"]):
+            continue
+        lit_cells = [c for c in k["cells"] if c in L]
+        if not lit_cells:
+            continue
+        label = min(k["cells"], key=_rc)
+        shown = label in L
+        total = k["sum"] if shown else None
+        closed = taken | {c for m, cs in (forced or {}).items() if m != n_ for c in cs}
+        comp = [lit_cells[0]]  # one lit stretch (connected through lit cells of this cage) seeds the shapes
+        todo = [lit_cells[0]]
+        while todo:
+            x = todo.pop()
+            for y in nbs(x):
+                if y in lit_cells and y not in comp:
+                    comp.append(y)
+                    todo.append(y)
+
+        def agrees(sh):
+            for x in sh:
+                for y in nbs(x):
+                    if (x in L or y in L) and same(x, y) != (y in sh):
+                        return False
+            tl = min(sh, key=_rc)
+            if clue_always and ((shown and tl != label) or (not shown and tl in L)):
+                return False
+            if size and len(sh) != size:
+                return False  # the rules give every cage's size
+            if total is not None:
+                n = len(sh)
+                return n * (n + 1) // 2 <= total <= sum(range(D - n + 1, D + 1))
+            return True
+
+        shapes, seen, todo, too_many = [], set(), [frozenset(comp)], False
+        while todo:
+            sh = todo.pop()
+            if agrees(sh):
+                shapes.append(sh)
+                if len(shapes) > CASE_CAP:
+                    too_many = True
+                    break
+            if len(sh) >= (size or D):
+                continue
+            for x in sh:
+                for y in nbs(x):
+                    if y in sh or y in closed or ((x in L or y in L) and not same(x, y)):
+                        continue
+                    n2 = frozenset(sh | {y})
+                    if n2 not in seen:
+                        seen.add(n2)
+                        todo.append(n2)
+        if too_many or not shapes:
+            continue
+        cases = [{"cells": [ix(c) for c in sorted(sh, key=_rc)], "total": total, "distinct": True} for sh in shapes]
+        out.append({"type": "cases", "cases": cases, "name": f"cage {label}: {len(cases)} possible shapes",
+                    "lemma": {"id": 7100, **LEMMA}, "_cage": n_})
+    return out
+
+
 def route(puzzle, max_rounds=400, rules_text=None):
     """the fog route of a unique fog puzzle (module docstring). Raises ValueError when the puzzle has no fog rule.
     rules_text: the puzzle's rules (read from the input's metadata when not given): statements such as "arrows move
@@ -286,6 +380,9 @@ def route(puzzle, max_rounds=400, rules_text=None):
         except Exception:  # noqa: BLE001 -- the load below reports a bad input
             rules_text = ""
     ortho, no_share = bool(ORTHO.search(rules_text or "")), bool(NO_SHARE.search(rules_text or ""))
+    clue_always = bool(CLUE_ALWAYS.search(rules_text or "")) and not SOME_UNCLUED.search(rules_text or "")
+    m_ = CAGE_SIZE.search(rules_text or "")
+    cage_size = (int(m_.group(1)) if m_.group(1).isdigit() else _WORDS[m_.group(1).lower()]) if m_ else None
     p = api.load(puzzle)
     fog = getattr(p, "fog", None)
     if not fog:
@@ -310,19 +407,22 @@ def route(puzzle, max_rounds=400, rules_text=None):
         vis = dict(doc, givens=givens, rules=visible_rules(doc["rules"], lit, D))
         q = api.load(vis)
         base = list(q.constraints)
-        forced = {}
-        for _ in range(6):  # hidden-content lemmas ("cases"); with no_share, cells an arrow's surviving cases all use
-            cs = arrow_cases(doc["rules"], lit, rows, cols, ortho, no_share, forced)  # are closed to the others
+        forced = {}  # ("arrow" | "cage", rule index) -> cells every surviving case uses: closed to the others
+        for _ in range(6):  # hidden-content lemmas ("cases"), iterated while the closed cells grow
+            fa = {n: cs for (t_, n), cs in forced.items() if t_ == "arrow"}
+            fc = {n: cs for (t_, n), cs in forced.items() if t_ == "cage"}
+            cs = arrow_cases(doc["rules"], lit, rows, cols, ortho, no_share, fa) + cage_cases(doc["rules"], lit, rows, cols, clue_always, fc, cage_size)
             q.constraints = base + cs
-            if not (no_share and cs):
+            if not cs:
                 break
             alive = CB._C.cases_alive(CB.to_cpuzzle(q), [int(x) for x in cand])
             new_forced = dict(forced)
             for spec, ok in alive:
                 k = q.constraints[spec]
-                if ok and "_arrow" in k:
+                key = ("arrow", k["_arrow"]) if "_arrow" in k else ("cage", k["_cage"]) if "_cage" in k else None
+                if ok and key and (key[0] == "cage" or no_share):
                     sets = [{_name(c // cols, c % cols) for c in k["cases"][i]["cells"]} for i in ok]
-                    new_forced[k["_arrow"]] = set.intersection(*sets)
+                    new_forced[key] = set.intersection(*sets)
             if new_forced == forced:
                 break
             forced = new_forced
