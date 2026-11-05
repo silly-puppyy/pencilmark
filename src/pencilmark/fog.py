@@ -84,8 +84,48 @@ def above_fog(rules_text):
     return out
 
 
-def visible_rules(rules, lit, D, above=()):
-    """the rules a solver sees with these cells lit (module docstring); `above`: clue kinds drawn above the fog"""
+LINE_LEN = _re.compile(r"lines are (?:all )?(?:exactly )?(\d|three|four|five|six|seven|eight) cells long", _re.I)
+
+
+def _renban_seen(k, L, n, rules, D):
+    """A renban seen in part: its lit cells and the fogged cells the drawn line enters from them differ; with every
+    line n cells long (rules text), the rest is traced through fog (orthogonal steps, along drawn segments where a
+    lit cell is involved, off other lines' seen cells): cells on every trace are seen too, and the digits lie within a
+    window of n (CtC, Guess the Renban: "a 2 and an 8 can't share a 5-cell line")"""
+    line = k["cells"]
+    seen = [c for i, c in enumerate(line) if c in L or (i > 0 and line[i - 1] in L) or (i + 1 < len(line) and line[i + 1] in L)]
+    if len(seen) < 2:
+        return []
+    out = []
+    if n and len(seen) < n and all(line.index(seen[j + 1]) == line.index(seen[j]) + 1 for j in range(len(seen) - 1)):
+        seg = _segments(rules)
+        others = {c for kk in rules if kk is not k and kk["type"] == "line" for i, c in enumerate(kk["cells"])
+                  if c in L or (i > 0 and kk["cells"][i - 1] in L) or (i + 1 < len(kk["cells"]) and kk["cells"][i + 1] in L)}
+        traces, todo = [], [list(seen)]
+        while todo and len(traces) <= CASE_CAP:
+            p = todo.pop()
+            if len(p) == n:
+                traces.append(p)
+                continue
+            for end in (0, -1):
+                r, c = _rc(p[end])
+                for y in [_name(r + a, c + b) for a, b in ((-1, 0), (1, 0), (0, -1), (0, 1)) if 0 <= r + a < D and 0 <= c + b < D]:
+                    lit_side = p[end] in L or y in L
+                    if y in p or y in others or (lit_side and frozenset((p[end], y)) not in seg):
+                        continue
+                    todo.append([y] + p if end == 0 else p + [y])
+        if traces and len(traces) <= CASE_CAP:
+            common = set.intersection(*map(set, traces))
+            seen = seen + sorted(common - set(seen), key=_rc)
+    out.append({"type": "cage", "cells": seen})  # different digits (a cage without a total)
+    if n and len(seen) <= 6:
+        out.append({"type": "custom", "cells": {"S": seen}, "holds": f"max(S) - min(S) <= {n - 1}"})
+    return out
+
+
+def visible_rules(rules, lit, D, above=(), line_len=None):
+    """the rules a solver sees with these cells lit (module docstring); `above`: clue kinds drawn above the fog;
+    line_len: every line's length, when the rules give it"""
     L = {_name(r, c) for r, c in lit}
     box_of = {}
     for n_, k in enumerate(rules):  # region-sum lines count segments per box
@@ -123,7 +163,14 @@ def visible_rules(rules, lit, D, above=()):
                     seen = cells[max(a - 1, 0) : min(b + 2, len(cells))]  # the drawn line enters the next cells
                     if len(seen) >= 2:
                         out.append(dict(k, cells=seen))
+                    if k.get("kind") == "thermo":  # CtC: "the tip can't be 1": fogged cells below / above on the thermo
+                        if a > 0:
+                            out.append({"type": "cell", "kind": "set", "values": list(range(2, D + 1)), "cells": [cells[a]]})
+                        if b < len(cells) - 1:
+                            out.append({"type": "cell", "kind": "set", "values": list(range(1, D)), "cells": [cells[b]]})
                 run = []
+        elif t == "line" and k.get("kind") == "renban" and not all(c in L for c in cells):
+            out += _renban_seen(k, L, line_len, rules, D)
         elif t == "line" and k.get("kind") == "region_sum" and not all(c in L for c in cells):
             out += _partial_region_sum(cells, L, box_of)
         elif t == "cage" and not all(c in L for c in cells):
@@ -345,7 +392,7 @@ SOME_UNCLUED = _re.compile(r"not all cages|some cages|cages? (?:without|with no)
 
 
 CAGE_SIZE = _re.compile(r"cages are (?:all )?(?:exactly )?(\d|one|two|three|four|five|six) cells", _re.I)
-_WORDS = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6}
+_WORDS = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8}
 
 
 def cage_cases(rules, lit, rows, cols, clue_always, forced=None, size=None):
@@ -450,6 +497,8 @@ def route(puzzle, max_rounds=400, rules_text=None):
     ortho, no_share = bool(ORTHO.search(rules_text or "")), bool(NO_SHARE.search(rules_text or ""))
     clue_always = bool(CLUE_ALWAYS.search(rules_text or "")) and not SOME_UNCLUED.search(rules_text or "")
     above = above_fog(rules_text)
+    m_l = LINE_LEN.search(rules_text or "")
+    line_len = (int(m_l.group(1)) if m_l.group(1).isdigit() else _WORDS.get(m_l.group(1).lower())) if m_l else None
     m_ = CAGE_SIZE.search(rules_text or "")
     cage_size = (int(m_.group(1)) if m_.group(1).isdigit() else _WORDS[m_.group(1).lower()]) if m_ else None
     p = api.load(puzzle)
@@ -473,7 +522,7 @@ def route(puzzle, max_rounds=400, rules_text=None):
         if all(g or g is None for g in givens):
             return {"solved": True, "rounds": rounds - 1, "reveals": reveals, "steps": steps, "stuck": 0}
         before = list(cand)
-        vis = dict(doc, givens=givens, rules=visible_rules(doc["rules"], lit, D, above))
+        vis = dict(doc, givens=givens, rules=visible_rules(doc["rules"], lit, D, above, line_len))
         for c in cage_cases(doc["rules"], lit, rows, cols, clue_always, None, cage_size):
             if len(c["cases"]) == 1 and c["cases"][0]["total"] is not None:  # one shape left: the cage is known, as a
                 cs1 = c["cases"][0]["cells"]  # cage rule (set theory, combinations and the rest read it)
