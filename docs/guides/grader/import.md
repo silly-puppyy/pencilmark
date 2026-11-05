@@ -113,7 +113,7 @@ Not read:
   drop the solution, and then the check cannot see it.
 - **Fog of war**: read as the puzzle's [fog rule](../../formats/rules/other.mdx#620-fog-of-war) (SudokuPad lit cells
   and setter triggers, f-puzzles fog). The puzzle loads, solves and exports, but `rate` refuses it: a fog puzzle is
-  graded under the fog, and that grade is not in the engine yet.
+  graded under the fog, and that grade is not in the engine yet ([what works under fog](fog.md)).
 - **Several grids on one canvas**, unless the setter drew the houses explicitly.
 - **Shading, loop and path genres.**
 

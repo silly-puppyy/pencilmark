@@ -24,6 +24,7 @@ module.exports = {
         page('guides/grader/publish-checks', 'publish-checks', 'Check a puzzle before publishing'),
         page('guides/grader/variant-file', 'variant-file', 'Write a variant puzzle file'),
         page('guides/grader/import', 'import', 'Import puzzles from other apps'),
+        page('guides/grader/fog', 'fog', 'Fog of war: what works'),
         page('guides/grader/draw', 'draw', 'Draw a puzzle'),
       ]),
       group('Generator', '/guides/generator/', 'Make puzzles to order: a first request, examples of every kind, and puzzles for learners.', [
