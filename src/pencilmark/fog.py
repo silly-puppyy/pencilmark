@@ -265,7 +265,7 @@ import os as _os
 
 _NO_CASES = _os.environ.get("PENCILMARK_FOG_NO_CASES") == "1"  # diagnostics only
 _BH = [None]  # the box shape of a regular box grid (set per route); None: boxes not used in the bound
-CASE_CAP = 300  # an arrow with more possible hidden shapes than this gets no case rule (nothing claimed: sound)
+CASE_CAP = int(_os.environ.get("PENCILMARK_FOG_CASE_CAP", "300"))   # an arrow with more possible hidden shapes than this gets no case rule (nothing claimed: sound)
 LEMMA = {"setup": 1.0, "use": 0.5}  # placeholder prices (coach fit: case lemmas are nearly free; to be fitted)
 
 
@@ -510,7 +510,7 @@ def route(puzzle, max_rounds=400, rules_text=None):
     """the fog route of a unique fog puzzle (module docstring). Raises ValueError when the puzzle has no fog rule.
     rules_text: the puzzle's rules (read from the input's metadata when not given): statements such as "arrows move
     orthogonally" and "arrows don't share cells" narrow the hidden shapes."""
-    from . import api, cbackend as CB, inputs, solver as SV
+    from . import api, band_path as BP, cbackend as CB, inputs
     from .exchange.write import write as write_doc
 
     if rules_text is None and not hasattr(puzzle, "coords"):
@@ -529,6 +529,7 @@ def route(puzzle, max_rounds=400, rules_text=None):
     m_ = CAGE_SIZE.search(rules_text or "")
     cage_size = (int(m_.group(1)) if m_.group(1).isdigit() else _WORDS[m_.group(1).lower()]) if m_ else None
     p = api.load(puzzle)
+    P = api._params("human")
     fog = getattr(p, "fog", None)
     if not fog:
         raise ValueError("the puzzle has no fog rule")
@@ -585,22 +586,24 @@ def route(puzzle, max_rounds=400, rules_text=None):
             if new_forced == forced:
                 break
             forced = new_forced
-        st, _ = CB.solve(q, assume_unique=False, cand=cand, disabled=(SV.GUESS, SV.TRIAL))
+        # the human band route, as rate's card follows it: the easiest band's moves first, harder only when nothing
+        # easier applies; no search, no guessing (a stuck route waits for a reveal or stalls)
+        q.domains = [m_ if not givens[i] else (1 << (givens[i] - 1)) for i, m_ in enumerate(cand)]
+        route_ = BP.band_path(q, P)
         progressed = False
-        for s in st:
-            m = s.move
-            if m.family == "Guess":
-                break
-            steps.append({"technique": m.family, "difficulty": round(m.d, 3), "round": rounds,
-                          "place": None if not m.place else [_name(m.place[0] // cols, m.place[0] % cols), m.place[1]]})
-            for ci, dg in m.elim or ():
+        for m in route_["steps"]:
+            steps.append({"technique": m["technique"], "code": m["code"], "band": m["band"], "difficulty": round(m["d"], 3),
+                          "round": rounds, "place": None if not m["place"] else [_name(m["place"][0] // cols, m["place"][0] % cols), m["place"][1]]})
+            for ci, dg in m["elims"] or ():
                 cand[ci] &= ~(1 << (dg - 1))
-            if m.place:
-                ci, dg = m.place
+            if m["place"]:
+                ci, dg = m["place"]
                 if int(sol[ci]) != dg:  # cannot happen: every rule given holds in the puzzle
                     raise AssertionError(f"fog route placed a wrong digit at {ci}")
                 cand[ci] = 1 << (dg - 1)
                 givens[ci] = dg
+                for x in q.peer_list[ci]:
+                    cand[x] &= ~(1 << (dg - 1))
                 placed.add((ci // cols, ci % cols))
                 progressed = True
                 new = lit_cells(fog, givens0, placed, rows, cols)
