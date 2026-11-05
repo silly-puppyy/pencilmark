@@ -175,6 +175,17 @@ def visible_rules(rules, lit, D, above=(), line_len=None):
             out += _partial_region_sum(cells, L, box_of)
         elif t == "cage" and not all(c in L for c in cells):
             out += _partial_cage(k, L)
+        elif t == "arrow" and len(k.get("bulb") or []) == 1 and k["bulb"][0] not in L:
+            for ln in k.get("lines") or []:  # each lit stretch of a shaft whose circle is fogged sums to at most D
+                run = []                    # (D - 1 when the line runs on into fog at both ends: one end is more shaft)
+                for i, c in enumerate(ln + [None]):
+                    if c is not None and c in L:
+                        run.append(i)
+                        continue
+                    if run and len(run) <= 6:
+                        cap = D - 1 if run[-1] + 1 < len(ln) else D
+                        out.append({"type": "custom", "cells": {"S": [ln[j] for j in run]}, "holds": f"sum(S) <= {cap}"})
+                    run = []
         elif t == "cell":
             cs = [c for c in cells if c in L]
             if cs:
@@ -272,7 +283,10 @@ ORTHO = _re.compile(r"arrows?[^.]*orthogonal", _re.I)
 NO_SHARE = _re.compile(r"arrows?[^.]*(?:don.t|do not|may not|cannot|never) (?:share|overlap|cross)", _re.I)
 
 
-def arrow_cases(rules, lit, rows, cols, ortho=False, no_share=False, forced=None):
+SINGLE_ARROW = _re.compile(r"(?:circles?|bulbs?) (?:each )?(?:emits?|has|have) (?:only )?(?:a single|exactly one|one) arrow", _re.I)
+
+
+def arrow_cases(rules, lit, rows, cols, ortho=False, no_share=False, forced=None, single=False, cand=None):
     """Case rules for arrows seen in part (CtC hosts: "this arrow can't stop here ... it must go down"). A lit cell
     shows its drawn segments, so a hidden part of a shaft runs through fogged cells, stepping into or out of a lit cell
     only along a drawn segment. Seen: the lit cells of the arrow, the fogged cells its drawn lines enter.
@@ -309,12 +323,14 @@ def arrow_cases(rules, lit, rows, cols, ortho=False, no_share=False, forced=None
             best = max(best, n * (n + 1) // 2 + len(cells) - n)
         return best
 
+    cap_d = [D]  # the largest the circle can be (its live candidates when it is lit: fewer impossible cases listed)
+
     def paths(start, block, most, shaft0=(), circle_last=False):
         out, todo = [], [[start]]
         while todo:
             p = todo.pop()
             shaft = list(shaft0) + (p[:-1] if circle_last else p)
-            if least(shaft) > D:
+            if least(shaft) > cap_d[0]:
                 continue  # even this much shaft outweighs the largest circle: longer is no better
             out.append(p)
             if len(out) > CASE_CAP:
@@ -333,6 +349,9 @@ def arrow_cases(rules, lit, rows, cols, ortho=False, no_share=False, forced=None
         if k["type"] != "arrow" or len(k.get("bulb") or []) != 1:
             continue
         bulb = k["bulb"][0]
+        cap_d[0] = D
+        if cand is not None and bulb in L and cand[ix(bulb)]:
+            cap_d[0] = cand[ix(bulb)].bit_length()  # the circle's largest candidate
         others.clear()
         if no_share:
             others.update(c for m, cs in seen_on.items() if m != n_ for c in cs)
@@ -353,11 +372,15 @@ def arrow_cases(rules, lit, rows, cols, ortho=False, no_share=False, forced=None
                     continue
                 cases = [{"cells": [ix(bulb)] + [ix(c) for c in seen + p], "circle": ix(bulb)} for p in ps]
             else:
-                run = [i for i, c in enumerate(line) if c in L]
+                # "every circle emits a single arrow": a fogged cell both of whose shaft neighbours are lit is shaft
+                # (two drawn ends point at it; it is not a second circle), joining the stretches (CtC, Chasing Arrows)
+                bridge = {line[i] for i in range(1, len(line) - 1)
+                          if single and line[i] not in L and line[i - 1] in L and line[i + 1] in L}
+                run = [i for i, c in enumerate(line) if c in L or c in bridge]
                 if not run:
                     continue
                 a, b = run[0], run[-1]
-                if any(line[i] not in L for i in range(a, b + 1)):
+                if any(line[i] not in L and line[i] not in bridge for i in range(a, b + 1)):
                     continue  # several stretches: not one known piece
                 stretch = line[a : b + 1]
                 ends = [line[a - 1] if a > 0 else bulb] + ([line[b + 1]] if b + 1 < len(line) else [])
@@ -495,6 +518,7 @@ def route(puzzle, max_rounds=400, rules_text=None):
         except Exception:  # noqa: BLE001 -- the load below reports a bad input
             rules_text = ""
     ortho, no_share = bool(ORTHO.search(rules_text or "")), bool(NO_SHARE.search(rules_text or ""))
+    single = bool(SINGLE_ARROW.search(rules_text or ""))
     clue_always = bool(CLUE_ALWAYS.search(rules_text or "")) and not SOME_UNCLUED.search(rules_text or "")
     above = above_fog(rules_text)
     m_l = LINE_LEN.search(rules_text or "")
@@ -529,11 +553,16 @@ def route(puzzle, max_rounds=400, rules_text=None):
                 vis["rules"].append({"type": "cage", "cells": [_name(i // cols, i % cols) for i in cs1], "sum": c["cases"][0]["total"]})
         q = api.load(vis)
         base = list(q.constraints)
+        live = list(cand)  # basic sudoku on the candidates: a placed digit leaves its row, column and box
+        for i, g in enumerate(givens):
+            if g:
+                for j in q.peers[i] if hasattr(q, "peers") and q.peers else ():
+                    live[j] &= ~(1 << (g - 1))
         forced = {}  # ("arrow" | "cage", rule index) -> cells every surviving case uses: closed to the others
         for _ in range(6):  # hidden-content lemmas ("cases"), iterated while the closed cells grow
             fa = {n: cs for (t_, n), cs in forced.items() if t_ == "arrow"}
             fc = {n: cs for (t_, n), cs in forced.items() if t_ == "cage"}
-            cs = arrow_cases(doc["rules"], lit, rows, cols, ortho, no_share, fa) + cage_cases(doc["rules"], lit, rows, cols, clue_always, fc, cage_size)
+            cs = arrow_cases(doc["rules"], lit, rows, cols, ortho, no_share, fa, single, live) + cage_cases(doc["rules"], lit, rows, cols, clue_always, fc, cage_size)
             q.constraints = base + cs
             if not cs:
                 break
@@ -575,6 +604,7 @@ def route(puzzle, max_rounds=400, rules_text=None):
             continue  # eliminations only: the next round reads them
         if not progressed:
             return {"solved": False, "rounds": rounds, "reveals": reveals, "steps": steps,
-                    "stuck": sum(1 for g in givens if g == 0)}
+                    "stuck": sum(1 for g in givens if g == 0),
+                    "state": {"givens": list(givens), "lit": sorted(_name(r, c) for r, c in lit), "candidates": list(cand)}}
     return {"solved": False, "rounds": max_rounds, "reveals": reveals, "steps": steps,
             "stuck": sum(1 for g in givens if g == 0)}
