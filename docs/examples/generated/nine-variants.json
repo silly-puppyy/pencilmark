@@ -530,22 +530,22 @@
    },
    {
     "code": "NPR",
-    "chip": "NPR/EQD/IOM",
+    "chip": "NPR/CEQ/IOM",
     "name": "Naked Pair",
     "band": 2,
     "alternatives": [
-     "EQD",
+     "CEQ",
      "IOM"
     ],
     "uses": 2
    },
    {
     "code": "HPR",
-    "chip": "HPR/EQD/IOM",
+    "chip": "HPR/CEQ/IOM",
     "name": "Hidden Pair",
     "band": 2,
     "alternatives": [
-     "EQD",
+     "CEQ",
      "IOM"
     ],
     "uses": 1

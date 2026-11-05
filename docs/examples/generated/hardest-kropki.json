@@ -275,22 +275,22 @@
    },
    {
     "code": "NPR",
-    "chip": "NPR/EQD/HQD",
+    "chip": "NPR/CEQ/HQD",
     "name": "Naked Pair",
     "band": 2,
     "alternatives": [
-     "EQD",
+     "CEQ",
      "HQD"
     ],
     "uses": 3
    },
    {
     "code": "HPR",
-    "chip": "HPR/EQD/NQD",
+    "chip": "HPR/CEQ/NQD",
     "name": "Hidden Pair",
     "band": 2,
     "alternatives": [
-     "EQD",
+     "CEQ",
      "NQD"
     ],
     "uses": 2
@@ -303,8 +303,8 @@
     "uses": 20
    },
    {
-    "code": "SCL",
-    "chip": "SCL",
+    "code": "CSM",
+    "chip": "CSM",
     "name": "Simple Colouring",
     "band": 3,
     "uses": 1
@@ -319,7 +319,7 @@
    {
     "code": "CAL",
     "chip": "CAL",
-    "name": "Equal-digit colouring",
+    "name": "Colour Algebra",
     "band": 4,
     "uses": 2
    },

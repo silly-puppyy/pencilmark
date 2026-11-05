@@ -506,7 +506,7 @@ _X_HANDLERS = {
         "colour_algebra",
         "chains",
         (
-            "Equal-digit colouring",
+            "Colour Algebra",
             "Cells forced to be equal share one colour; the colour's possible digits are what all its cells allow.",
         ),
     ),

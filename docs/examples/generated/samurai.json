@@ -1026,12 +1026,12 @@
    },
    {
     "code": "SKY",
-    "chip": "SKY/KTE/SCL",
+    "chip": "SKY/KTE/CSM",
     "name": "Skyscraper (in the head)",
     "band": 3,
     "alternatives": [
      "KTE",
-     "SCL"
+     "CSM"
     ],
     "uses": 1
    }

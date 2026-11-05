@@ -14,7 +14,7 @@ other formats for convenience. None of them is part of the format or required by
 | `from_string(s)` | pencil-mark grids, 729-character candidate strings | – |
 | `from_string(s)` / `to_string(puzzle, "sudokuwiki")` | [sudokuwiki.org](https://www.sudokuwiki.org/) packed strings | sudokuwiki.org packed strings |
 | `from_ipuz(ipuz)` / `to_ipuz(puzzle)` | [ipuz](http://www.ipuz.org/) 1 and 2 sudoku | [ipuz](http://www.ipuz.org/) 2 |
-| `pencilmark.sources.load(url)` | [f-puzzles](https://www.f-puzzles.com/), [SudokuPad](https://sudokupad.app/) (SCL / fpuz / ctc), [Penpa](https://swaroopg92.github.io/penpa-edit/)+, [Logic Masters](https://logic-masters.de/) links | – |
+| `pencilmark.sources.load(url)` | [f-puzzles](https://www.f-puzzles.com/), [SudokuPad](https://sudokupad.app/) (CSM / fpuz / ctc), [Penpa](https://swaroopg92.github.io/penpa-edit/)+, [Logic Masters](https://logic-masters.de/) links | – |
 
 `from_string` returns a `sudoku-puzzle` dict. `sources.load` returns pencilmark's internal puzzle JSON; `to_export`
 turns it into a `sudoku-puzzle` file. Every entry point (`rate`, `solve`, `load`, `describe`, the command line) also
@@ -113,7 +113,7 @@ block cells, and cages without a sum are refused.
 
 ## Site loaders
 
-`pencilmark.sources` reads [f-puzzles](https://www.f-puzzles.com), [SudokuPad](https://sudokupad.app) (SCL / fpuz /
+`pencilmark.sources` reads [f-puzzles](https://www.f-puzzles.com), [SudokuPad](https://sudokupad.app) (CSM / fpuz /
 ctc), [Penpa+](https://swaroopg92.github.io/penpa-edit/) and [Logic Masters](https://logic-masters.de) links, and `to_export`
 turns the result into a `sudoku-puzzle` file. Writing those formats is not supported. Loaders that fetch pages identify
 themselves, obey robots.txt and pause between requests.

@@ -19,7 +19,7 @@ What `rate()` returns and `pencilmark rate --json` prints: one JSON object per p
  "contains": [{"code": "HSI", "chip": "HSI", "name": "Hidden Single", "band": 0},
               {"code": "NSI", "chip": "NSI", "name": "Naked Single", "band": 1},
               {"code": "NPR", "chip": "NPR/HPR", "name": "Naked Pair", "band": 2, "alternatives": ["HPR"], "uses": 1},
-              {"code": "XWG", "chip": "XWG/KTE/SCL/MCH", "name": "X-Wing", "band": 3, "alternatives": ["KTE", "SCL", "MCH"], "uses": 1}]}
+              {"code": "XWG", "chip": "XWG/KTE/CSM/MCH", "name": "X-Wing", "band": 3, "alternatives": ["KTE", "CSM", "MCH"], "uses": 1}]}
 ```
 
 A card exists only for a puzzle with exactly one solution. For any other puzzle, `rate()` raises `NotUnique`,

@@ -108,7 +108,7 @@ enum Kind { K_HOUSE = 0, K_CAGE = 1, K_NEQ = 2, K_NONCONSEC = 3, K_DOMAIN = 4, K
 
 struct Move;
 /// an annotation effect of a move: a persistent mark beyond digits and candidates (kind, cell, argument)
-/// region label placed / ruled out (arg: the label); identity layer (params id_layer): AE_ID_JOIN the cell joins the
+/// region label placed / ruled out (arg: the label); identity layer (params colouring): AE_ID_JOIN the cell joins the
 /// colour class whose anchor (first cell in reading order) is arg -- its own class, if any, merges into that one;
 /// AE_ID_NEQ the classes of cell and arg hold different digits (a cell without a class becomes one); AE_ID_USE the move
 /// relies on the class anchored at cell (no state change: route accounting charges the joins that built it)
@@ -357,7 +357,7 @@ struct Params {
     int neq_peers = 0;           ///< params neq_peers: 1 = relation pointing through "different" links (anti-knight, anti-king)
                                  ///< also counts house peers: a cell seeing every place of a digit in a house, some by a
                                  ///< knight's move and some by row / column / box, loses it (experiment, C2b sheet)
-    int id_layer = 0;            ///< params id_layer: 1 = persistent identity classes (cells holding one unknown digit):
+    int id_layer = 0;            ///< params colouring: 1 = persistent identity classes (cells holding one unknown digit):
                                  ///< EqualDigits / ClassSingle create them without eliminating, ClassPropagation uses them
     int refute_rounds = 0;       ///< params refute_rounds: 1 = refute_profile counts propagation rounds (all singles of a
                                  ///< round placed together: independent of cell order), 0 = placements (experiment, B1c)
@@ -492,7 +492,7 @@ public:
     std::vector<uint8_t> lab_override;     ///< a mid-solve state's labels (band_path), applied after the givens
     std::vector<uint32_t> lcand_override;  ///< ... and label candidates
     void label_normalize();  ///< canonical label names (label k first appears before k + 1), silently: a naming convention
-    /// identity layer (params id_layer): class per cell (0 none, else 1 + the class's first cell in reading order) for
+    /// identity layer (params colouring): class per cell (0 none, else 1 + the class's first cell in reading order) for
     /// cells known to hold one common unknown digit, followed by the class differences (id_neq): sorted pairs of class
     /// ids (lo, hi), flattened; empty when the layer is off
     std::vector<int> idc;

@@ -548,7 +548,7 @@ def _h_equal_digits(ctx):
         ok &= cs == [B]
     el = {(A, d) for d in digits_of(st.cand[A] & ~st.cand[B])} | {(B, d) for d in digits_of(st.cand[B] & ~st.cand[A])}
     ok &= set(ctx.elims) <= el
-    if not ctx.elims:  # identity layer (params id_layer): kept as a colour class, nothing eliminated yet
+    if not ctx.elims:  # identity layer (params colouring): kept as a colour class, nothing eliminated yet
         short = f"{nm.cell(A)} and {nm.cell(B)} must hold the same digit (one colour)"
         teach = (
             f"{nm.cell(A)} {nm.cset(st.cand[A])} sits outside {nm.unit(hi)}. Whatever digit it is, {nm.unit(hi)} needs "

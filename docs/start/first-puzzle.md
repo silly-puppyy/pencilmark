@@ -68,7 +68,7 @@ import pencilmark
 
 card = pencilmark.rate("....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9.......")
 print(card["band"], card["difficulty"], card["time"])     # Hard 5.8 10.7
-print([c["chip"] for c in card["contains"]])              # ['HSI', 'NSI', 'NPR/HPR', 'XWG/KTE/SCL/MCH']
+print([c["chip"] for c in card["contains"]])              # ['HSI', 'NSI', 'NPR/HPR', 'XWG/KTE/CSM/MCH']
 ```
 
 The card is a plain dictionary; [Grade card](../formats/grade-card.md) lists every key. The `contains` entries carry short codes

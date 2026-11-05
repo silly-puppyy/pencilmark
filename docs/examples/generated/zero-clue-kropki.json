@@ -315,8 +315,8 @@
     "uses": 15
    },
    {
-    "code": "SCL",
-    "chip": "SCL/TUR",
+    "code": "CSM",
+    "chip": "CSM/TUR",
     "name": "Simple Colouring",
     "band": 3,
     "alternatives": [

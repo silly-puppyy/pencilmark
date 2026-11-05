@@ -80,7 +80,7 @@ def test_simple_colouring_substeps():
         fields=["steps"],
         explain=["substeps"],
     )
-    sub = next(s["explanation"]["substeps"] for s in card["steps"] if s["code"] == "SCL")
+    sub = next(s["explanation"]["substeps"] for s in card["steps"] if s["code"] == "CSM")
     assert set(sub[0]["legend"]) == {"blue", "yellow"}
     cols = [a["colour"] for x in sub[1:-1] for a in x["annotations"] if "candidate" in a]
     assert set(cols) <= {"blue", "yellow"} and {a["colour"] for a in sub[-1]["annotations"]} == {"red"}

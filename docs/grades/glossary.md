@@ -6,7 +6,7 @@ description: The words these pages use, in one place.
 # Glossary
 
 **Alternatives.** Techniques that would each do the same job at a point of the solve. On the card they share a chip:
-`XWG/KTE/SCL` means an X-Wing, a 2-String Kite or simple colouring works there.
+`XWG/KTE/CSM` means an X-Wing, a 2-String Kite or simple colouring works there.
 
 **Band.** What you need to know to solve the puzzle: Very Easy, Easy, Medium, Hard, Very Hard, Expert or Extreme. It
 is the band of the hardest technique on the route. See [Philosophy](philosophy.md).

@@ -263,11 +263,11 @@
    },
    {
     "code": "XWG",
-    "chip": "XWG/SCL/MCH",
+    "chip": "XWG/CSM/MCH",
     "name": "X-Wing",
     "band": 3,
     "alternatives": [
-     "SCL",
+     "CSM",
      "MCH"
     ],
     "uses": 1

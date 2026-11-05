@@ -180,8 +180,8 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
         if c_.get("type") == "chaos":
             for x in c_["cells"]:
                 lcand[x] = (1 << D) - 1
-    # identity layer (params id_layer): colour class per cell (0 none), canonical ids as the engine keeps them
-    ids = bool(P.get("id_layer"))
+    # identity layer (params colouring): colour class per cell (0 none), canonical ids as the engine keeps them
+    ids = bool(P.get("colouring"))
     idc = [0] * N if ids else None
     labels = lambda: (lab, lcand, idc) if chaos or ids else None  # noqa: E731
     lkey = lambda: (tuple(lab or ()), tuple(lcand or ()), tuple(idc or ())) if chaos or ids else ()  # noqa: E731
@@ -868,6 +868,81 @@ def _region_substeps(p, st, ex, lab, region_colour):
     return out
 
 
+CLASS_COLOURS = ("orange", "green", "purple", "cyan", "pink", "brown", "grey", "yellow", "blue")
+
+
+def _class_substeps(p, st, ex, idc, vals, cand, class_colour):
+    """identity layer: a step's colour work as sub-steps. Each colour class (cells holding one unknown digit) keeps one
+    colour for the whole solve, with a legend the first time it appears ("orange: an unknown digit (3, 5 or 6)"); two
+    classes that merge keep the older colour. Updates idc (class per cell) and class_colour (class id -> colour) in
+    place; None for a step without joins or differences."""
+    from .explain.base import Namer
+
+    fx = st.get("idfx") or ()
+    if not any(k in (CB.AE_ID_JOIN, CB.AE_ID_NEQ) for k, _, _ in fx):
+        CB.id_apply(idc, vals, fx)
+        return None
+    nm = Namer(p)
+    before = list(idc[: p.N])
+    CB.id_apply(idc, vals, fx)
+    N = p.N
+    cls = {}
+    for c in range(N):
+        if idc[c]:
+            cls.setdefault(idc[c], []).append(c)
+    for k, ms in cls.items():  # a class inherits the colour of the oldest coloured class it absorbed
+        olds = sorted({before[c] for c in ms if before[c] and before[c] in class_colour})
+        if k not in class_colour and olds:
+            class_colour[k] = class_colour[olds[0]]
+    text = ex.get("short") or ex.get("notation") or ""
+    if text[:1] != "r":  # a sentence, not a cell name first ("r3c9 ≠ 3: ...")
+        text = text[:1].upper() + text[1:]
+    sub = {"text": text + ("" if text.endswith(".") else ".")}
+    gone = {}
+    for c, d in st["elims"]:
+        gone[c] = gone.get(c, 0) | (1 << (d - 1))
+    legend, ann, parts = {}, [], []
+    touched = []
+    for k, c, a in fx:
+        for x in (c, a) if k in (CB.AE_ID_JOIN, CB.AE_ID_NEQ) else ():
+            if idc[x] and idc[x] not in touched:
+                touched.append(idc[x])
+    used = set(class_colour.values())
+    for k in touched:
+        if k not in class_colour:
+            free = [x for x in CLASS_COLOURS if x not in used] or list(CLASS_COLOURS)
+            class_colour[k] = free[0]
+            used.add(free[0])
+            m = (1 << p.D) - 1  # the class's digits: what every open member can still be
+            for c in cls[k]:
+                if not vals[c]:
+                    m &= cand[c] & ~gone.get(c, 0)
+            digs = [str(d) for d in range(1, p.D + 1) if m >> (d - 1) & 1]
+            one = ", ".join(digs[:-1]) + " or " + digs[-1] if len(digs) > 1 else "".join(digs)
+            legend[class_colour[k]] = f"an unknown digit ({one})" if digs else "an unknown digit"
+        ann += [{"cell": nm.cell(c), "colour": class_colour[k]} for c in sorted(cls[k], key=lambda x: p.coords[x])]
+    for k, c, a in fx:
+        if k == CB.AE_ID_JOIN and idc[c] in class_colour:
+            col = class_colour[idc[c]]
+            if col in legend:  # a new colour: both cells start it
+                parts.append(f"{nm.cell(c)} and {nm.cell(a)} are {col}")
+            else:
+                new = [x for x in (c, a) if before[x] != idc[x] and not (before[x] and before[x] in class_colour)]
+                parts.append(f"{nm.cells(new) if new else nm.cell(c)} {'joins' if len(new) < 2 else 'join'} {col}")
+        elif k == CB.AE_ID_NEQ and idc[c] in class_colour and idc[a] in class_colour:
+            parts.append(f"{class_colour[idc[c]]} and {class_colour[idc[a]]} hold different digits")
+    if legend:
+        sub["legend"] = legend
+    if ann:
+        sub["annotations"] = [dict(x, id=i + 1) for i, x in enumerate(ann)]
+    out = list(ex.get("substeps") or ()) or [sub]
+    if out[0] is not sub:
+        out.append({k: v for k, v in sub.items() if k != "text"} | {"text": "Colours: " + "; ".join(parts) + "."})
+    elif parts:
+        out.append({"text": "So " + "; ".join(parts) + "."})
+    return out
+
+
 def explain_steps(p, P, steps):
     """teaching text for band-path steps: rebuild each position, let the engine find that technique's moves there
     (one short solve with only that technique), take the move with exactly the same placement / eliminations and
@@ -883,6 +958,8 @@ def explain_steps(p, P, steps):
     vals, cand = start_position(p)
     out = []
     lab, region_colour = {}, {}  # regions to find: cell -> region label known so far; label -> colour name (fixed)
+    ids = any("idfx" in st for st in steps)  # identity layer: colour classes, one colour each for the whole solve
+    idc, class_colour = [0] * N, {}
     for st in steps:
         q = copy.copy(p)
         q.givens = {c: v for c, v in enumerate(vals) if v}
@@ -972,6 +1049,10 @@ def explain_steps(p, P, steps):
             ex = {"notation": step_notation(p, st)}  # the notation needs no pattern: technique and result
         if st.get("lplace") or st.get("lelims"):
             ex["substeps"] = _region_substeps(p, st, ex, lab, region_colour)
+        if ids:
+            sub = _class_substeps(p, st, ex, idc, vals, cand, class_colour)
+            if sub:
+                ex["substeps"] = sub
         out.append(ex)
         apply_step(p, vals, cand, st)
     return out

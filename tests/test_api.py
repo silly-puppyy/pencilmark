@@ -24,7 +24,7 @@ def test_classic_card():
     assert d["time_dist"]["type"] == "lognormal" and "median" not in d["time_dist"] and d["time"] == d["time_p50"], d
     assert d["time_dist"]["sigma_players"] == 0.79 and d["time_dist"]["sigma_model"] == 0.33, d
     chips = [c["chip"] for c in card["contains"] if c["band"] > 0]
-    assert chips == ["NSI", "NPR/HPR", "XWG/KTE/SCL/MCH"]
+    assert chips == ["NSI", "NPR/HPR", "XWG/KTE/CSM/MCH"]
 
 
 def test_classic_se_rating():
@@ -397,13 +397,13 @@ def test_params_follow_in_place_setting_changes():
     from pencilmark import grader_model as GM
 
     m = GM.default()
-    old = m.route.get("id_layer", 0)
+    old = m.route.get("colouring", 0)
     try:
-        m.route["id_layer"] = 0
+        m.route["colouring"] = 0
         a = api._params("human")
-        m.route["id_layer"] = 1
+        m.route["colouring"] = 1
         b = api._params("human")
-        assert a.get("id_layer", 0) != b.get("id_layer", 0) or a != b
+        assert a.get("colouring", 0) != b.get("colouring", 0) or a != b
     finally:
-        m.route["id_layer"] = old
+        m.route["colouring"] = old
         api._PARAMS = (None, None)

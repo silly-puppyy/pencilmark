@@ -22,6 +22,22 @@ FAMILY_TITLES = {
     "ALS": "Almost locked sets",
     "trial": "Trial and forcing",
 }
+# colouring: one concept across families (codes share the prefix C); the page explains it once
+COLOUR_CODES = ("CFL", "CEQ", "CSG", "CPR", "CCH", "CCL", "CTR", "CCX", "CSM", "CAL", "CMU", "CMD")
+COLOURING_INTRO = [
+    "## Colouring",
+    "",
+    "Colouring gives cells a colour for what is known about them before their digits are: cells of one colour hold",
+    "the same digit, whatever it is, and two colours of a pair hold two different digits. A colour, once given, stays",
+    "for the whole solve, so later steps build on it. Explanations name each colour with a legend the first time it",
+    "appears, such as *orange: an unknown digit (5 or 6)* or *blue: a low digit (1-4)*.",
+    "",
+    "Every colouring technique is Medium or harder: colouring is a concept to learn, not a first step. The route",
+    "parameter `colouring` switches kept colours on or off in the solve path: with it off, Same Colour and Chain Colour",
+    "still remove candidates but keep no colour, and Colour Fill, Colour Single, Colour Pair, Colour Trap and Colour",
+    "Clash do not occur.",
+    "",
+]
 # link icon per site (website/static/img/sites, made by tools/site_icons.py); a site without one gets a text badge
 SITES = {
     "www.sudokuwiki.org": ("sudokuwiki.org", "sudokuwiki.png"),
@@ -128,6 +144,14 @@ def page():
         L += [f"## {title}", "", "| Code | Technique | Band | Special case of | Learn |", "|---|---|---|---|---|"]
         L += [r for _, _, r in sorted(rows[fam], key=lambda x: (x[0], x[1]))]
         L.append("")
+    col = sorted(
+        (tech_of[k].band if codes[k].shape_band is None else codes[k].shape_band, codes[k].order, k)
+        for k in COLOUR_CODES
+        if k in codes and k in tech_of
+    )
+    L += COLOURING_INTRO + ["| Code | Technique | Band |", "|---|---|---|"]
+    L += [f"| `{k}` | {codes[k].name} | {R.BANDS[b].replace(' ', '&nbsp;')} |" for b, _, k in col]
+    L.append("")
     return "\n".join(L)
 
 

@@ -22,7 +22,7 @@ JLF,https://sudoku.coach/en/learn/jellyfish
 SKY,https://sudoku.coach/en/learn/skyscraper
 KTE,https://sudoku.coach/en/learn/two-string-kite
 TUR,https://sudoku.coach/en/learn/crane
-SCL,https://sudoku.coach/en/learn/simple-colouring
+CSM,https://sudoku.coach/en/learn/simple-colouring
 YWG,https://sudoku.com/sudoku-rules/y-wing/
 YWG,https://sudoku.coach/en/learn/y-wing
 XYZ,https://sudoku.coach/en/learn/xyz-wing
@@ -35,7 +35,7 @@ URC,https://sudoku.coach/en/learn/unique-rectangle
 BUG,https://sudoku.coach/en/learn/bug-plus-one
 XCL,https://sudoku.coach/en/learn/x-chain
 XYC,https://sudoku.coach/en/learn/xy-chain
-3DM,https://sudoku.coach/en/learn/3d-medusa
+CMD,https://sudoku.coach/en/learn/3d-medusa
 AIC,https://sudoku.coach/en/learn/aic
 FCH,https://sudoku.coach/en/learn/forcing-chain-types
 ARW,https://sudokuvariants.com/help/variants/arrow
@@ -55,7 +55,7 @@ LNR,https://sudokuvariants.com/help/variants/german-whisper
 LNR,https://sudokuvariants.com/help/variants/between-line
 LNC,https://sudokuvariants.com/help/variants/german-whisper
 SWC,http://www.sugurupuzzles.com/between-1-and-9-sudoku-techniques.html
-EQD,https://sudokuvariants.com/help/variants/palindrome
+CEQ,https://sudokuvariants.com/help/variants/palindrome
 EQS,https://sudokuvariants.com/help/variants/zipper
 EQS,https://sudokuvariants.com/help/variants/equal-sum
 SBD,https://sudokuvariants.com/help/variants/equal-sum
@@ -88,8 +88,8 @@ JLF,https://sudopedia.sudocue.net/index.php?title=Jellyfish
 SKY,https://sudopedia.sudocue.net/index.php?title=Skyscraper
 KTE,https://sudopedia.sudocue.net/index.php?title=2-String_Kite
 TUR,https://sudopedia.sudocue.net/index.php?title=Turbot_Fish
-SCL,https://sudopedia.sudocue.net/index.php?title=Simple_Colors
-MCL,https://sudopedia.sudocue.net/index.php?title=Multi-Colors
+CSM,https://sudopedia.sudocue.net/index.php?title=Simple_Colors
+CMU,https://sudopedia.sudocue.net/index.php?title=Multi-Colors
 YWG,https://sudopedia.sudocue.net/index.php?title=XY-Wing
 XYZ,https://sudopedia.sudocue.net/index.php?title=XYZ-Wing
 WXZ,https://sudopedia.sudocue.net/index.php?title=WXYZ-Wing
@@ -103,7 +103,7 @@ BUG,https://sudopedia.sudocue.net/index.php?title=Bivalue_Universal_Grave
 XCL,https://sudopedia.sudocue.net/index.php?title=X-Chain
 XYC,https://sudopedia.sudocue.net/index.php?title=XY-Chain
 RMP,https://sudopedia.sudocue.net/index.php?title=Remote_Pairs
-3DM,https://sudopedia.sudocue.net/index.php?title=3D_Medusa
+CMD,https://sudopedia.sudocue.net/index.php?title=3D_Medusa
 AIC,https://sudopedia.sudocue.net/index.php?title=Alternating_Inference_Chain
 NLP,https://sudopedia.sudocue.net/index.php?title=Nice_Loop
 ALS,https://sudopedia.sudocue.net/index.php?title=ALS-XZ
@@ -141,4 +141,4 @@ ARW,https://lisudoku.xyz/learn#ArrowCandidates
 RNB,https://lisudoku.xyz/learn#RenbanCandidates
 LNR,https://lisudoku.xyz/learn#ThermoCandidates
 PWC,https://lisudoku.xyz/learn#Kropki
-EQD,https://lisudoku.xyz/learn#PalindromeValues
+CEQ,https://lisudoku.xyz/learn#PalindromeValues

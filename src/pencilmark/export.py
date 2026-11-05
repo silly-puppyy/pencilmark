@@ -15,7 +15,7 @@ grade (format "sudoku-grade", format_version 1):
               time_pNN = the NN-th percentile over today's players and time_mean = the mean (log-normal, sigma spread_sigma)
   band        "Very Easy" … "Extreme" or "Unknown" (not solvable without computer search); on request band_index 0..6
   contains    what a solver meets going easy -> hard (band path): [{"code", "chip", "name", "band", "uses", "alternatives"}];
-              a chip "XWG/KTE/SCL" = each of these alone also gets you through here; singles listed without counts
+              a chip "XWG/KTE/CSM" = each of these alone also gets you through here; singles listed without counts
   notes       publishing notes: [{"code": "spike", "severity": "reject" | "note", "text": "…"}]
   steps       [{"n", "code", "name", "placement" ("r2c8=3"), "eliminations" (["r4c5#7"]), "explanation", "detail"}]
 """
@@ -545,7 +545,7 @@ def _f_steps(c):
             r["region"] = f"{cn(st['lplace'][0])}@{st['lplace'][1]}"
         if st.get("lelims"):
             r["region_eliminations"] = [f"{cn(x)}@!{k}" for x, k in st["lelims"]]
-        if st.get("idfx"):  # identity layer (params id_layer, experiment): the cell joins the colour class of anchor /
+        if st.get("idfx"):  # identity layer (params colouring, experiment): the cell joins the colour class of anchor /
             fx = st["idfx"]  # the two cells' classes hold different digits
             if any(k == CB.AE_ID_JOIN for k, _, _ in fx):
                 r["same_digit"] = [f"{cn(x)}={cn(a)}" for x, a in CB.id_joins(fx)]

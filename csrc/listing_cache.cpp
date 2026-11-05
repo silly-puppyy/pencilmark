@@ -32,7 +32,7 @@ struct LEntry {
     std::vector<int> solution, colours;
     std::vector<uint8_t> lab;      // regions to find: the label state (empty without regions)
     std::vector<uint32_t> lcand;
-    std::vector<int> idc;          // identity layer: the colour classes (empty with params id_layer off)
+    std::vector<int> idc;          // identity layer: the colour classes (empty with params colouring off)
     // band logic: the per-solve state its output depends on (its two early-return caps, the escalation pass) and
     // what one call spends of the budget, replayed on a hit
     int band_state;

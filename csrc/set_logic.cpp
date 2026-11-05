@@ -174,7 +174,7 @@ void Solver::digit_count(MoveBuf& out) {
 // Abstract colouring: A outside house H; for every candidate d of A the only cell of H
 // that can hold d without seeing A is the same cell B (d not yet placed in H) -> A and B
 // hold the same digit (whatever it is) -> each keeps only the other's candidates.
-// Identity layer (params id_layer): the finding is kept as a colour class even when no candidate goes (AE_ID_JOIN).
+// Identity layer (params colouring): the finding is kept as a colour class even when no candidate goes (AE_ID_JOIN).
 void Solver::equal_digits(MoveBuf& out) {
     if (disabled[EQUAL_DIGITS]) return;
     const bool ids = id_on();
@@ -270,7 +270,7 @@ void Solver::equal_digits_chain(MoveBuf& out) {
     }
 }
 
-// ---- identity layer (params id_layer): persistent colour classes of cells holding one unknown digit ----
+// ---- identity layer (params colouring): persistent colour classes of cells holding one unknown digit ----
 // A class is a set of cells known to hold the same digit, whatever it is; its digits are the intersection of its
 // members' candidates (not stored). Ids are canonical: 1 + the class's first cell in reading order, so the listing
 // cache and band_path's state keys see one name per class.

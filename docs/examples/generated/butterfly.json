@@ -601,9 +601,9 @@
     "uses": 24
    },
    {
-    "code": "EQD",
-    "chip": "EQD/DGC/CBL/RUL/HTR",
-    "name": "Equal cells (same digit)",
+    "code": "CEQ",
+    "chip": "CEQ/DGC/CBL/RUL/HTR",
+    "name": "Same Colour",
     "band": 2,
     "alternatives": [
      "DGC",

@@ -263,7 +263,7 @@ def _label_fx(aeffs):
 
 
 def _id_fx(aeffs):
-    """identity layer (params id_layer): the move's identity effects [(kind, cell, arg)]: AE_ID_JOIN cell's class merges
+    """identity layer (params colouring): the move's identity effects [(kind, cell, arg)]: AE_ID_JOIN cell's class merges
     into the class whose first cell is arg; AE_ID_NEQ the classes of cell and arg differ; AE_ID_USE the move relies on
     the class anchored at cell"""
     return [(k, c, a) for k, c, a in aeffs if k in (AE_ID_JOIN, AE_ID_NEQ, AE_ID_USE)]
@@ -685,7 +685,7 @@ def state_moves(
     else:
         raw = _C.state_moves(*args, skip=[int(t) for t in skip], **kw)
     chaos = any(c.get("type") == "chaos" for c in getattr(puzzle, "constraints", ()))
-    ann = chaos or bool(sc.p.get("id_layer"))  # regions to find / identity layer: annotation effects
+    ann = chaos or bool(sc.p.get("colouring"))  # regions to find / identity layer: annotation effects
     out = []
     for r in raw:
         lfx = None

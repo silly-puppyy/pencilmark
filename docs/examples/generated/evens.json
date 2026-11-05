@@ -542,8 +542,8 @@
     "uses": 2
    },
    {
-    "code": "SCL",
-    "chip": "SCL/MCH",
+    "code": "CSM",
+    "chip": "CSM/MCH",
     "name": "Simple Colouring",
     "band": 3,
     "alternatives": [

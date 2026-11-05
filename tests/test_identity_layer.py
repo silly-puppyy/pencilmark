@@ -1,5 +1,10 @@
-"""Identity layer (params id_layer, experiment): the Python mirror of the class state, the held-step accounting and
+"""Identity layer (params colouring, experiment): the Python mirror of the class state, the held-step accounting and
 the two-colour moves on a hand-made position."""
+
+import json
+from pathlib import Path
+
+import pytest
 
 import pencilmark
 from pencilmark import api
@@ -40,7 +45,7 @@ def test_id_held_accounting():
 
 def test_class_pair_and_trap_listed():
     p = pencilmark.load("." * 81)
-    P = dict(api._params("human"), id_layer=1)
+    P = dict(api._params("human"), colouring=1)
     on = {S.CLASS_PAIR, S.CLASS_TRAP}
     off = set(S.TECH_NAMES) - on
     full = (1 << 9) - 1
@@ -53,3 +58,65 @@ def test_class_pair_and_trap_listed():
     trap = [m for m in ms if m["tech"] == S.CLASS_TRAP]
     assert len(trap) == 1 and {c for c, _ in trap[0]["elim"]} == set(range(2, 9)) | {9, 10, 11, 18, 19, 20}
     assert {d for _, d in trap[0]["elim"]} == {3, 6}
+
+
+def test_colour_legend_kept_for_the_solve():
+    """colouring sub-steps: each colour class keeps one colour name for the whole solve, with a legend (its possible
+    digits) the first time; a cell joining an existing colour says so, without a new legend"""
+    from pencilmark import band_path as BP
+
+    p = pencilmark.load("." * 81)
+    vals, cand, idc, colours = [0] * 81, [(1 << 9) - 1] * 81, [0] * 81, {}
+    cand[0] = cand[30] = cand[40] = 0b110000  # 5 / 6
+    ex = {"short": "r1c1 and r4c4 must hold the same digit"}
+    out = BP._class_substeps(p, {"idfx": [(J, 30, 0)], "elims": [], "place": None}, ex, idc, vals, cand, colours)
+    assert out[0]["text"].startswith("r1c1 and r4c4") and out[0]["legend"] == {"orange": "an unknown digit (5 or 6)"}
+    assert {a["cell"] for a in out[0]["annotations"]} == {"r1c1", "r4c4"}
+    assert out[-1]["text"] == "So r4c4 and r1c1 are orange."
+    out = BP._class_substeps(p, {"idfx": [(J, 40, 0)], "elims": [], "place": None}, ex, idc, vals, cand, colours)
+    assert "legend" not in out[0] and out[-1]["text"] == "So r5c5 joins orange."
+    out = BP._class_substeps(p, {"idfx": [(J, 70, 60)], "elims": [], "place": None}, ex, idc, vals, cand, colours)
+    assert out[0]["legend"] == {"green": "an unknown digit (1, 2, 3, 4, 5, 6, 7, 8 or 9)"}
+    assert BP._class_substeps(p, {"idfx": [], "elims": [], "place": None}, ex, idc, vals, cand, colours) is None
+
+
+COLOUR_CODES = {"CFL", "CEQ", "CCH", "CSG", "CPR", "CCL", "CTR", "CCX", "CSM", "CAL", "CMU", "CMD"}
+GOLDEN = Path(__file__).parent / "golden"
+
+
+def test_colouring_never_below_medium():
+    """colouring is a concept to learn (user 2026-11-05): every colouring code is Medium or harder, and no Very Easy /
+    Easy golden card lists one"""
+    from pencilmark import registry as R
+
+    codes = R.codes()
+    tech = {t.code: t for t in R.techniques() if t.code}
+    assert {k: R.BANDS[tech[k].band] for k in COLOUR_CODES if tech[k].band < 2} == {}
+    easy = [json.loads(line).get("card") or {} for line in (GOLDEN / "expected.jsonl").open(encoding="utf-8")]
+    easy = [c for c in easy if c.get("band_index", 9) <= 1]
+    assert easy and not [c for c in easy if COLOUR_CODES & {x["code"] for x in c.get("contains") or ()}]
+    assert set(codes) >= COLOUR_CODES
+
+
+@pytest.mark.slow
+def test_colouring_on_leaves_easy_cards_alone():
+    """the solve path stays easiest-first: with colouring on, Very Easy / Easy golden cards keep their band and list"""
+    from pencilmark import grader_model as GM
+
+    inputs = {json.loads(line)["name"]: json.loads(line) for line in (GOLDEN / "inputs.jsonl").open(encoding="utf-8")}
+    easy = [json.loads(line) for line in (GOLDEN / "expected.jsonl").open(encoding="utf-8")]
+    easy = [r for r in easy if (r.get("card") or {}).get("band_index", 9) <= 1 and "contains" in r["card"]]
+    m = GM.default()
+    old = m.route.get("colouring", 0)
+    try:
+        m.route["colouring"] = 1
+        api._PARAMS = (None, None)
+        for r in easy:
+            c = pencilmark.rate(inputs[r["name"]]["puzzle"], fields=["band", "contains"], max_seconds=60)
+            assert (c["band"], [x["code"] for x in c["contains"]]) == (
+                r["card"]["band"],
+                [x["code"] for x in r["card"]["contains"]],
+            ), r["name"]
+    finally:
+        m.route["colouring"] = old
+        api._PARAMS = (None, None)

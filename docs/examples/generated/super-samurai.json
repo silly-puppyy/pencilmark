@@ -2142,11 +2142,11 @@
    },
    {
     "code": "KTE",
-    "chip": "KTE/SCL",
+    "chip": "KTE/CSM",
     "name": "2-String Kite",
     "band": 3,
     "alternatives": [
-     "SCL"
+     "CSM"
     ],
     "uses": 1
    },
