@@ -74,7 +74,13 @@ States exactly which clues are "all shown".
 - With no clue of the family in the file at all, the negative still applies ("no two adjacent digits sum to 10
   or 5").
 
-## 6.19 `yin_yang`
+## 6.19 Shading
+
+Shading puzzles add a second layer beside the digits: each cell is shaded or unshaded, and rules govern the shading
+and how it relates to the digits. Format version 1 defines one shading rule, `yin_yang`; other shading genres
+(nurikabe, caves, heyawake and the like) are planned for a later version and are refused until then.
+
+### `yin_yang`
 
 Shading beside the digits: the solver also shades some cells so that the shaded cells are orthogonally connected, the
 unshaded cells are orthogonally connected, and no 2x2 area is all shaded or all unshaded.
