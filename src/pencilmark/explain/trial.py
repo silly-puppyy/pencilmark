@@ -728,6 +728,29 @@ def _h_colour_pointing(ctx):
     return _result(ctx, J, short, teach, True, extra_cells=cells)
 
 
+
+def _h_colour_fish(ctx):
+    """identity layer: two houses confine a colour to two other houses -> the colour's other places there are not it"""
+    nm = ctx.nm
+    x = ctx.xm
+    a, b1, b2, c1, c2 = (x.get(k) for k in ("anchor", "base_a", "base_b", "cover_a", "cover_b"))
+    cells = [c for c in (ctx.engine.get("pattern_cells") or ()) if isinstance(c, int)]
+    if None in (a, b1, b2, c1, c2):
+        return _generic(ctx)
+    k, n = int(x.get("places") or 0), int(x.get("targets") or 0)
+    ms = cells[: len(cells) - k - n]
+    P, T = cells[len(ms) : len(ms) + k], cells[len(ms) + k :]
+    are = "is" if len(T) == 1 else "are"
+    short = f"{nm.cells(T)} {are} not the colour of {nm.cell(a)}: an X-Wing on the colour"
+    teach = (
+        f"{_cap(nm.cells(ms))} hold one digit, whatever it is. {_cap(nm.unit(b1))} and {nm.unit(b2)} each need it once, "
+        f"and its places there ({nm.cells(P)}) all lie in {nm.unit(c1)} and {nm.unit(c2)}. So those two hold both "
+        f"copies, and {nm.cells(T)} hold a different digit: fish logic, for a colour."
+    )
+    J = _J(ctx, base_units=[b1, b2], cover_units=[c1, c2], base_cells=ms + P)
+    return _result(ctx, J, short, teach, True, extra_cells=cells)
+
+
 def _h_line_scan(ctx):
     nm, p, st = ctx.nm, ctx.p, ctx.st
     parent = _rule_from_move(ctx)

@@ -138,7 +138,7 @@ void Solver::describe(Move& m, const MoveBuf& b) {
     case N_WING: branches = std::max(pm_long(2), xm[0]), depth = 2, search = (double)ds_bivalue * ds_empty; break;
     case COLORING: case MULTI_COLOR: case MEDUSA: case COLOUR_ALGEBRA: case EQUAL_DIGITS: case CLASS_SINGLE:
     case CLASS_PAIR: case CLASS_TRAP: case CHAIN_COLOUR: case COLOUR_CLASH:
-    case CLASS_POINTING:
+    case CLASS_POINTING: case CLASS_FISH:
         branches = 2;
         depth = std::max(1.0, meta(3));
         search = ds_cands;

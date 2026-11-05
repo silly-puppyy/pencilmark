@@ -124,6 +124,7 @@ changing a shipped value is a deliberate commit with a golden rewrite.
 | `route.price.ChainColour` | 5 | ″ |
 | `route.price.ColourClash` | 5 | ″ |
 | `route.price.ColourPointing` | 5 | ″ |
+| `route.price.ColourFish` | 8.707 | ″ |
 | `route.K` | list of 9 | Engine parameters (data/params.json): the step-price model and the scan / note costs, fitted on human solve times; they also price the time effort and the band route's tie-breaks. |
 | `route.gamma` | -0.6291 | ″ |
 | `route.alpha` | 1 | ″ |
@@ -144,7 +145,7 @@ changing a shipped value is a deliberate commit with a golden rewrite.
 | `route.locality` | 0 | ″ |
 | `route.digit_cont` | 0 | ″ |
 | `route.spot_w` | list of 6 | ″ |
-| `route.spot_fam` | list of 117 | ″ |
+| `route.spot_fam` | list of 118 | ″ |
 | `route.spot_seed` | 1 | ″ |
 | `route.notes_live` | True | ″ |
 | `route.notes_lazy` | True | ″ |

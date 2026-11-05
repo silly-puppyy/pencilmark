@@ -93,6 +93,7 @@ CLASS_TRAP = 113  # a cell seeing both colours of an {a, b} class pair holds nei
 CHAIN_COLOUR = 114  # two cells forced equal through a third by pair rules (a V / X / dot chain): one colour
 COLOUR_CLASH = 115  # a cell next to a linked colour would leave that colour no digit: it is not this colour
 CLASS_POINTING = 116  # a colour's places in a house lie in another house: elsewhere there, cells are not that colour
+CLASS_FISH = 117  # two houses confine a colour to two other houses (an X-Wing over a colour)
 CLASS_COLOUR = 100  # class colouring (C++ only): low / high or odd / even links between cells, sides fixed by known cells / house counts
 # names and flags: the technique registry (data/techniques.csv); the constants above mirror csrc/solver.hpp enum Tech,
 # and tests/test_registry.py checks all three agree

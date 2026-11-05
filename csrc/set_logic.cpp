@@ -395,10 +395,23 @@ std::map<int, std::vector<int>> id_classes(const std::vector<int>& idc, int N) {
 // "Only one place for blue in this box": class K (no member placed, none in house H); a cell of H that sees a member
 // cannot hold K's digit, nor can a cell without any of K's digits. K's digit is somewhere in H, so when one cell X is
 // left, X holds it: X joins K.
+// a cell whose colour class is known to differ from class a: a recorded difference, or a member of its class that
+// sees a member of a (two cells that see each other hold different digits); sees = the cells seeing a member of a
+static bool class_differs(const Solver& s, int c, int a, const std::map<int, std::vector<int>>& all,
+                          const std::vector<uint64_t>& sees) {
+    if (s.id_paired(s.id_anchor(c), a)) return true;
+    const auto it = all.find(s.id_anchor(c));
+    if (it == all.end() || s.id_anchor(c) == a) return false;
+    for (int x : it->second)
+        if (tbit(sees.data(), x)) return true;
+    return false;
+}
+
 void Solver::class_single(MoveBuf& out) {
     if (!id_on() || disabled[CLASS_SINGLE]) return;
     const int W = p.W;
-    for (const auto& kv : id_classes(idc, p.N)) {
+    const auto all = id_classes(idc, p.N);
+    for (const auto& kv : all) {
         const int a = kv.first;
         const std::vector<int>& ms = kv.second;
         int pv = 0;
@@ -415,7 +428,7 @@ void Solver::class_single(MoveBuf& out) {
             for (int c : p.groups[hi].cells) {
                 if (tbit(sees.data(), c)) continue;
                 if (!((vals[c] ? bit(vals[c]) : cand[c]) & I)) continue;
-                if (!vals[c] && id_paired(id_anchor(c), a)) continue;  // known to hold a different digit
+                if (!vals[c] && class_differs(*this, c, a, all, sees)) continue;  // known to hold a different digit
                 ++n;
                 X = c;
             }
@@ -446,7 +459,8 @@ void Solver::class_pointing(MoveBuf& out) {
     if (!id_on() || disabled[CLASS_POINTING]) return;
     const int W = p.W;
     std::set<std::pair<int, std::vector<int>>> seen;  // a class and its cells ruled out: one move (two houses may agree)
-    for (const auto& kv : id_classes(idc, p.N)) {
+    const auto all = id_classes(idc, p.N);
+    for (const auto& kv : all) {
         const int a = kv.first;
         const std::vector<int>& ms = kv.second;
         int pv = 0;
@@ -458,7 +472,7 @@ void Solver::class_pointing(MoveBuf& out) {
         auto place = [&](int c) {  // c could be this class's cell
             if (tbit(sees.data(), c)) return false;
             if (!((vals[c] ? bit(vals[c]) : cand[c]) & I)) return false;
-            return vals[c] || !id_paired(id_anchor(c), a);
+            return vals[c] || !class_differs(*this, c, a, all, sees);
         };
         auto has_member = [&](int hi) {
             for (int c : ms)
@@ -507,6 +521,102 @@ void Solver::class_pointing(MoveBuf& out) {
                 std::copy(xm, xm + XM_N, m.xm);
             }
         }
+    }
+}
+
+// Colour fish (CtC, Restricted Access: orange sits in rows 8-9 in both box 7 and box 8, so in box 9 it is in row
+// 7): an X-Wing over a colour class. Two disjoint houses without a member each hold the class once; when all their
+// places lie in two disjoint houses without a member, those two hold both copies, so their other places are not the
+// colour (class differences, AE_ID_NEQ).
+void Solver::class_fish(MoveBuf& out) {
+    if (!id_on() || disabled[CLASS_FISH]) return;
+    const int W = p.W;
+    std::set<std::pair<int, std::vector<int>>> seen;
+    const auto all = id_classes(idc, p.N);
+    for (const auto& kv : all) {
+        const int a = kv.first;
+        const std::vector<int>& ms = kv.second;
+        int pv = 0;
+        const uint32_t I = id_digits(ms, &pv);
+        if (pv || !I) continue;
+        std::vector<uint64_t> sees(W, 0);
+        for (int c : ms)
+            for (int w = 0; w < W; ++w) sees[w] |= p.peers(c)[w];
+        auto place = [&](int c) {
+            if (tbit(sees.data(), c)) return false;
+            if (!((vals[c] ? bit(vals[c]) : cand[c]) & I)) return false;
+            return vals[c] || !class_differs(*this, c, a, all, sees);
+        };
+        std::vector<int> free;  // houses without a member
+        std::vector<std::vector<int>> P(p.groups.size());
+        for (int hi : p.houses) {
+            bool inside = false;
+            for (int c : ms) inside |= tbit(p.gbits(hi), c);
+            if (inside) continue;
+            for (int c : p.groups[hi].cells)
+                if (place(c)) P[hi].push_back(c);
+            if (P[hi].size() >= 2) free.push_back(hi);
+        }
+        auto disjoint = [&](int x, int y) {
+            for (int c : p.groups[x].cells)
+                if (tbit(p.gbits(y), c)) return false;
+            return true;
+        };
+        for (size_t i = 0; i < free.size(); ++i)
+            for (size_t j = i + 1; j < free.size(); ++j) {
+                const int b1 = free[i], b2 = free[j];
+                if (!disjoint(b1, b2)) continue;
+                std::vector<int> U(P[b1]);
+                U.insert(U.end(), P[b2].begin(), P[b2].end());
+                std::vector<int> cov;  // houses holding a base place
+                for (int hi : free)
+                    if (hi != b1 && hi != b2)
+                        for (int c : U)
+                            if (tbit(p.gbits(hi), c)) {
+                                cov.push_back(hi);
+                                break;
+                            }
+                for (size_t x = 0; x < cov.size(); ++x)
+                    for (size_t y = x + 1; y < cov.size(); ++y) {
+                        const int c1 = cov[x], c2 = cov[y];
+                        if (!disjoint(c1, c2)) continue;
+                        bool all = true;
+                        for (int c : U) all &= tbit(p.gbits(c1), c) || tbit(p.gbits(c2), c);
+                        if (!all) continue;
+                        std::vector<int> T;
+                        for (int ch : {c1, c2})
+                            for (int c : P[ch])
+                                if (!vals[c] && !tbit(p.gbits(b1), c) && !tbit(p.gbits(b2), c) && id_anchor(c) != a)
+                                    T.push_back(c);
+                        if (T.empty()) continue;
+                        int room = ID_CAP - id_live();
+                        std::vector<int> keep;
+                        for (int c : T) {
+                            if (!idc[c]) {
+                                if (room <= 0) continue;
+                                --room;
+                            }
+                            keep.push_back(c);
+                        }
+                        std::sort(keep.begin(), keep.end());
+                        if (keep.empty() || !seen.insert({a, keep}).second) continue;
+                        Move& m = new_move(out, CLASS_FISH, 1.0, (int)U.size());
+                        for (int c : keep) {
+                            const int kc = id_anchor(c);
+                            add_aeff(out, m, AE_ID_NEQ, std::max(kc, a), std::min(kc, a));
+                        }
+                        add_aeff(out, m, AE_ID_USE, a, 0);
+                        std::vector<int> pc(ms);
+                        pc.insert(pc.end(), U.begin(), U.end());
+                        pc.insert(pc.end(), keep.begin(), keep.end());
+                        set_pattern(out, m, pc);
+                        add_expl(out, m, EX_BASE, {b1, b2, c1, c2});
+                        m.shape = pspread(pc);
+                        meta9(m, (int)pc.size(), 3, popc(I), 2, 1, 0, 0, 1, m.shape);
+                        pm_long xm[XM_N] = {a, b1, b2, c1, c2, (pm_long)U.size(), (pm_long)keep.size(), (pm_long)ms.size(), 0, 0};
+                        std::copy(xm, xm + XM_N, m.xm);
+                    }
+            }
     }
 }
 

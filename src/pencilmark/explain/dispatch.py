@@ -57,6 +57,7 @@ from .trial import (
     _h_class_trap,
     _h_chain_colour,
     _h_colour_clash,
+    _h_colour_fish,
     _h_colour_pointing,
     _h_digit_count,
     _h_either_way,
@@ -220,6 +221,16 @@ _X_HANDLERS = {
             "Chain colour",
             "A cell tied to two others by pair rules (V / X dominoes, dots) can force them to hold the same digit: "
             "trace each digit through the chain and back. Give them one colour.",
+        ),
+    ),
+    "CLASS_FISH": (
+        _h_colour_fish,
+        "equal_cells",
+        "fish+wings",
+        (
+            "Colour fish",
+            "An X-Wing for a colour: two houses that each need the colour, with all its places in two other houses, "
+            "put both copies there; the colour leaves the rest of those houses.",
         ),
     ),
     "CLASS_POINTING": (

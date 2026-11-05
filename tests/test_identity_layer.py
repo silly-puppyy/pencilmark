@@ -80,7 +80,7 @@ def test_colour_legend_kept_for_the_solve():
     assert BP._class_substeps(p, {"idfx": [], "elims": [], "place": None}, ex, idc, vals, cand, colours) is None
 
 
-COLOUR_CODES = {"CFL", "CEQ", "CCH", "CSG", "CPT", "CPR", "CCL", "CTR", "CCX", "CSM", "CAL", "CMU", "CMD"}
+COLOUR_CODES = {"CFL", "CEQ", "CCH", "CSG", "CPT", "CPR", "CFS", "CCL", "CTR", "CCX", "CSM", "CAL", "CMU", "CMD"}
 GOLDEN = Path(__file__).parent / "golden"
 
 
