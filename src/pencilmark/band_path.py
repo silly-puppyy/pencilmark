@@ -148,11 +148,13 @@ def variant_gate(p):
 _CACHE = None  # position -> state_moves, shared by the many routes of one contents() call (same openings)
 
 
-def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes=(), guard=None, prefix=(), max_band=6):
+def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes=(), guard=None, prefix=(), max_band=6,
+              keep_held=False):
     """solve band by band (see module doc). Moves are taken in full-notes mode: each placement clears its peers.
     target = a cell: stop once it is placed, preferring (within the current band) a move that places it -- "what does
     it take to place this cell from here". max_band: stop (unsolved) where only a harder move would continue -- contents()
-    reruns can only count if they stay in the card's band, so they never list above it."""
+    reruns can only count if they stay in the card's band, so they never list above it. keep_held: keep colour-only
+    steps no later step used (the fog route: a colour may pay off after the next reveal)."""
     if not hasattr(p, "groups_of"):
         p.finalize()
     P = dict(P or {}, search="human")
@@ -441,7 +443,7 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
                 **({"idfx": list(m.get("idfx") or ())} if ids else {}),
             }
         )
-    if ids and steps:  # identity layer: identity-only steps no later step relied on cost nothing -- dropped, the
+    if ids and steps and not keep_held:  # identity layer: identity-only steps no later step relied on cost nothing -- dropped, the
         # route without them is the same proof (cbackend.id_held)
         held = CB.id_held(N, p.givens, [(st["place"], st["elims"], st.get("idfx")) for st in steps])
         steps[:] = [st for st, h in zip(steps, held) if not h]

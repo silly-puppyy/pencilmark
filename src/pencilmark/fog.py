@@ -546,6 +546,7 @@ def route(puzzle, max_rounds=400, rules_text=None):
     full = (1 << D) - 1
     cand = [full if not g else 1 << (g - 1) for g in givens]
     steps, reveals = [], 0
+    colours = []  # colouring on: the colour work so far (class joins / differences), kept across reveals
     for rounds in range(1, max_rounds + 1):
         if all(g or g is None for g in givens):
             return {"solved": True, "rounds": rounds - 1, "reveals": reveals, "steps": steps, "stuck": 0}
@@ -589,9 +590,11 @@ def route(puzzle, max_rounds=400, rules_text=None):
         # the human band route, as rate's card follows it: the easiest band's moves first, harder only when nothing
         # easier applies; no search, no guessing (a stuck route waits for a reveal or stalls)
         q.domains = [m_ if not givens[i] else (1 << (givens[i] - 1)) for i, m_ in enumerate(cand)]
-        route_ = BP.band_path(q, P)
+        route_ = BP.band_path(q, P, prefix=colours, keep_held=bool(colours) or bool(P.get("colouring")))
         progressed = False
-        for m in route_["steps"]:
+        for m in route_["steps"][len(colours):]:
+            if m.get("idfx"):  # its colour effects carry into the next round (the candidates carry the rest)
+                colours.append(dict(m, place=None, elims=[]))
             steps.append({"technique": m["technique"], "code": m["code"], "band": m["band"], "difficulty": round(m["d"], 3),
                           "round": rounds, "place": None if not m["place"] else [_name(m["place"][0] // cols, m["place"][0] % cols), m["place"][1]]})
             for ci, dg in m["elims"] or ():
