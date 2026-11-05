@@ -117,7 +117,8 @@ agree on the common ones:
 | `type` | Display name of the variant, such as `"Killer Sudoku"`. Variant names live **only** here; they never change the rules. `describe()` ([How variants are named](../library/variant-naming.md)) fills it when it is empty. |
 | `license` | Licence of the puzzle. |
 | `tags` | List of strings. |
-| `generated_from` | Fingerprint of the `sudoku-spec` that produced the puzzle ([Generator spec](generator-spec.md)). |
+| `fingerprint` | Optional: the puzzle's [fingerprint](#82-fingerprint), `sha256:...`. `meta` is outside the fingerprint, so a file can carry its own. |
+| `generated_from` | Optional: fingerprint of the `sudoku-spec` that produced the puzzle ([Generator spec](generator-spec.md)). |
 
 ## 3. Cells, outside clues and ordering
 

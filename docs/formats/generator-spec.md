@@ -28,8 +28,9 @@ mistakes it for a puzzle), plus blocks that say what the result must satisfy and
  "fields": ["difficulty", "time", "band", "contains"]}
 ```
 
-The result is an ordinary `sudoku-puzzle` with its `solution`; `meta.generated_from` carries the spec's fingerprint
-(section 6), and `meta` of the spec (title, author, ...) is copied to it.
+The result is an ordinary `sudoku-puzzle` with its `solution`, and `meta` of the spec (title, author, ...) is copied to
+it. On request (`generate(spec, fingerprints=True)`, `pencilmark generate --fingerprints`) `meta.generated_from`
+carries the spec's fingerprint (section 6) and `meta.fingerprint` the puzzle's.
 
 ## 1. Board
 

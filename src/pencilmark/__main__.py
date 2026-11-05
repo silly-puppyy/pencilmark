@@ -326,7 +326,7 @@ def cmd_generate(a):
         lim["time"] = a.time
     if lim:
         spec = dict(spec, limits=lim)
-    r = generate(spec)
+    r = generate(spec, fingerprints=a.fingerprints)
     if a.result:
         print(json.dumps(r, ensure_ascii=False, default=str))
     else:
@@ -466,6 +466,7 @@ def main(argv=None):
     g.add_argument("--seed", type=int, help="override limits.seed")
     g.add_argument("--time", type=float, help="override limits.time (seconds)")
     g.add_argument("--result", action="store_true", help='print {"puzzle", "card", "info"} as one JSON line')
+    g.add_argument("--fingerprints", action="store_true", help="write meta.fingerprint and meta.generated_from")
     g.set_defaults(fn=cmd_generate)
     j = sub.add_parser("json", parents=[common])
     j.add_argument("file", nargs="?")

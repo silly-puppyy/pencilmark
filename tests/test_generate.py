@@ -45,7 +45,7 @@ def run(doc, budget=150):  # a runaway guard; CI on Windows is about 2x slower t
     t = time.time()
     r = pencilmark.generate(doc)
     assert time.time() - t < budget
-    assert r["puzzle"]["format"] == "sudoku-puzzle" and r["puzzle"]["meta"]["generated_from"].startswith("sha256:")
+    assert r["puzzle"]["format"] == "sudoku-puzzle" and "generated_from" not in r["puzzle"].get("meta", {})
     assert unique(r["puzzle"])
     assert r["info"]["unique_verified"] is True
     return r

@@ -416,10 +416,10 @@ NO_TARGET = (
 )
 
 
-def generate(spec):
+def generate(spec, fingerprints=False):
     """generate one puzzle meeting a sudoku-spec request (docs/formats/generator-spec.md; a dict, JSON text or a path). Returns
-    {"puzzle": sudoku-puzzle (with solution; meta.generated_from = the spec's fingerprint), "card": sudoku-grade card,
-    "info": {...}}. Raises NotSupportedError for a part of the spec the generator does not run, GenerationFailed when no
+    {"puzzle": sudoku-puzzle (with solution), "card": sudoku-grade card, "info": {...}}. fingerprints=True also writes
+    meta.fingerprint (the puzzle's, pencilmark.fingerprint) and meta.generated_from (the request's). Raises NotSupportedError for a part of the spec the generator does not run, GenerationFailed when no
     puzzle met it in time."""
     import json as _json
     from pathlib import Path
@@ -449,10 +449,15 @@ def generate(spec):
     if not aimed:
         r["info"]["warnings"] = [NO_TARGET]
     meta = {k: v for k, v in (doc.get("meta") or {}).items() if k != SF.NS}
-    meta["generated_from"] = SF.spec_fingerprint(doc)
+    if fingerprints:
+        meta["generated_from"] = SF.spec_fingerprint(doc)
     p = PJ.from_json(r["puzzle"])  # with the solution the puzzle was dug from: exporting needs no search
     p._pm_solution = [PJ._val(ch) for ch in r["puzzle"]["solution"]]
     puzzle = to_export(p, meta=dict(r["puzzle"].get("meta") or {}, **meta))
+    if fingerprints:
+        from ..api import fingerprint
+
+        puzzle["meta"]["fingerprint"] = fingerprint(puzzle)  # meta is outside the fingerprint: no loop
     from ..exchange import validate
 
     validate(puzzle)  # what the generator returns is a valid file: a bad element fails here, not in the user's reader
