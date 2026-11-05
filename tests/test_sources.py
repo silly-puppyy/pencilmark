@@ -1147,3 +1147,21 @@ def test_fog_payloads_keep_their_fog():
     fog = ST.fog_of(P, p, idx, inside)
     assert fog == {"lit": ["r1c1", "r1c2", "r5c5"], "triggers": [{"when": ["r1c1", "r1c2"], "light": ["r9c9"]}]}
     assert ST.fog_of({"cages": [{"cells": [[0, 0]], "value": 12}]}, p, idx, inside) is None
+
+
+def test_fpuzzles_fog_cages():
+    """f-puzzles fog written as generic cages, as SudokuPad imports them: a one-cell FOW cage lights its 3x3 (drawn
+    invisible, which the cage normaliser drops), a FOGLIGHT cage lights its cells; neither is read as a clue. A rule
+    described without its name ("indicate the column in which") is refused, not dropped."""
+    from pencilmark.sources import _fpuz_translate as FT
+
+    grid = [[{} for _ in range(9)] for _ in range(9)]
+    fp = {"size": 9, "grid": grid, "ruleset": "Normal sudoku rules apply. The grid is covered with fog.",
+          "cage": [{"value": "FOW", "cells": ["R8C8"], "outlineC": "#00000000"},
+                   {"value": "foglight", "cells": ["R1C1", "R1C2"], "outlineC": "#000000"}]}
+    p, info = FT.translate(fp)
+    assert p is not None, info
+    assert p.fog["lit"][:2] == ["r1c1", "r1c2"] and {"r7c7", "r8c8", "r9c9"} <= set(p.fog["lit"]) and len(p.fog["lit"]) == 11
+    fp["ruleset"] += " Digits in column 1 indicate the column in which the digit 1 appears in that row."
+    p, info = FT.translate(fp)
+    assert p is None and "indexing" in info

@@ -83,7 +83,8 @@ UNMODELLED_RULES = (
     ("star battle", r"star battle"),
     ("nurikabe", r"nurikabe"),
     ("cave", r"cave"),
-    ("indexing", r"indexing"),
+    # the word, or the mechanic described ("digits in a strip in column N indicate the column in which N appears")
+    ("indexing", r"indexing|indicates? (?:the|which) (?:column|row|box|position|cell)s? (?:in which|where|of)"),
     ("ten line", r"ten[- ]line"),
     ("10 line", r"10[- ]line"),
     ("broken zipper", r"broken zipper"),

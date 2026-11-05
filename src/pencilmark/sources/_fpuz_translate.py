@@ -145,6 +145,16 @@ def normalise(fp):
 def translate(fp, line_kinds=None, join=True):
     """line_kinds: {colour: kind} reading for generic 'line' entries (see infer_lines). join: same-colour segments of a
     set rule (renban, line total) that share a cell are one line (info "_joined" when that merged any)."""
+    # fog light written as generic cages (as SudokuPad imports them; often drawn invisible, which normalise drops): a
+    # FOGLIGHT / "foglight: ..." cage's cells are lit, a one-cell FOW cage lights its 3x3 like a fogofwar cell
+    def fog_kind(c):
+        return str(c.get("value") or "").strip().lower().split(":")[0]
+
+    fog_cages = [c for c in fp.get("cage") or [] if fog_kind(c) in ("foglight", "fow")]
+    if fog_cages:
+        fp = dict(fp, cage=[c for c in fp["cage"] if c not in fog_cages])
+        for key, kind in (("foglight", "foglight"), ("fogofwar", "fow")):
+            fp[key] = list(fp.get(key) or []) + [x for c in fog_cages if fog_kind(c) == kind for x in c.get("cells") or []]
     fp = normalise(fp) if "_ineq" not in fp else fp
     n = fp.get("size", 9)
     ix = lambda name: (lambda r, c: r * n + c)(*rc(name, n))

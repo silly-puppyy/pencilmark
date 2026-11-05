@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+- Reader: f-puzzles fog written as generic cages, as SudokuPad imports them, is read (a one-cell `FOW` cage lights
+  its 3x3, a `FOGLIGHT` cage its cells); an invisible `FOW` cage was dropped and the puzzle refused. Rules that
+  describe indexing without the word ("digits in column 1 indicate the column in which the digit 1 appears") are
+  refused instead of read without them.
+- Colouring techniques share a code prefix C (codes appear in cards' `contains` and steps): Same Colour EQD -> CEQ,
+  Simple Colouring SCL -> CSM, Multi-colouring MCL -> CMU, 3D Medusa 3DM -> CMD; the identity-layer codes become CSG
+  (Colour Single), CFL (Colour Fill), CPR (Colour Pair), CTR (Colour Trap). Class Colouring CCL and Colour Algebra CAL
+  keep theirs. No aliases.
+- Bands: Clue Facts are Easy (memorised variant facts), Colour Fill Medium; colouring techniques get short names (Same
+  Colour, Colour Single, Colour Fill, Colour Pair, Colour Trap, Simple Colouring, Class Colouring).
+- Two colouring techniques of their own: Chain Colour (CCH, Medium: two cells forced to hold one digit through a third
+  tied to both by pair rules, e.g. V dominoes) and Colour Clash (CCX, Hard: a cell that would leave a linked colour no
+  digit never has the first colour). Both were reported as Same Colour / Colour Single before, with explanations that
+  read their cells wrongly.
+- Explanation sub-steps of colouring steps (identity layer): each colour keeps one colour name for the whole solve,
+  with a legend the first time it appears ("orange": "an unknown digit (5 or 6)") and its cells drawn in it.
 - Fog of war is a rule of the format (6.20): `{"type": "fog", "lit": [...], "triggers": [{"when": [...], "light":
   [...]}]}`. Without triggers a correct digit lights its 3x3; with them only the triggers reveal. `lit` is everything
   visible at the start (givens as the source shows them), and a fog puzzle must carry its solution. The SudokuPad
@@ -178,13 +194,13 @@
 - The engine params cache follows in-place changes to the grader model's route / price settings: an experiment that
   switches a parameter between two `rate` calls in one process now gets the new route params for the second (both
   arms used to run on the first arm's route params; only pricing changed).
-- Experimental identity layer behind the parameter `id_layer` (off by default; grades unchanged): cells known to hold
-  one unknown digit are kept as a colour class even when no candidate goes (EqualDigits joins), with ClassSingle (a
-  class's only place in a house) and ClassPropagation (a member loses a digit / is placed -> all members). First
-  increment of docs/research/identity_layer_v2_proposal.md; not yet adopted (accuracy test pending). Increment 2:
-  class steps that place or eliminate nothing are free unless a later step uses the class; two-colour classes
-  (ClassPair: two cells with the same two candidates that differ start a pair; ClassTrap: a cell seeing both colours
-  loses both digits).
+- Colouring (the identity layer) behind the route parameter `colouring` (0 = off, the default for now; grades
+  unchanged): cells known to hold one unknown digit are kept as a colour class even when no candidate goes (Same
+  Colour joins), with Colour Single (a class's only place in a house) and Colour Fill (a member loses a digit / is
+  placed -> all members). First increment of docs/research/identity_layer_v2_proposal.md; not yet adopted (accuracy
+  test pending). Increment 2: class steps that place or eliminate nothing are free unless a later step uses the class;
+  two-colour classes (Colour Pair: two cells with the same two candidates that differ start a pair; Colour Trap: a
+  cell seeing both colours loses both digits).
 - SudokuPad links of the form `sudokupad.app/<author>/<slug>` are fetched (they were refused as not a short id).
 - Speed and robustness: the C++ uniqueness search without OR-Tools stops at a time limit, not only a node limit
   (counting-circle puzzles ran for hours); the trial step retries with a larger search before giving up (two unique
