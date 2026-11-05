@@ -45,7 +45,9 @@ def run(doc, budget=150):  # a runaway guard; CI on Windows is about 2x slower t
     t = time.time()
     r = pencilmark.generate(doc)
     assert time.time() - t < budget
-    assert r["puzzle"]["format"] == "sudoku-puzzle" and "generated_from" not in r["puzzle"].get("meta", {})
+    asked = (doc.get("meta") or {}) if isinstance(doc, dict) else {}
+    meta = r["puzzle"].get("meta", {})
+    assert r["puzzle"]["format"] == "sudoku-puzzle" and ("generated_from" in meta) == ("generated_from" in asked)
     assert unique(r["puzzle"])
     assert r["info"]["unique_verified"] is True
     return r
@@ -415,3 +417,13 @@ def test_untargeted_request_warns():
     assert "where.band" in r["info"]["warnings"][0]
     r = run(spec(4, where={"band": "Very Easy"}, seed=1, time_limit=10))
     assert "warnings" not in r["info"]
+
+
+def test_fingerprints_asked_for_in_the_spec():
+    """a fingerprint / generated_from key in the spec's meta is filled in on the puzzle; without it, neither"""
+    doc = {"format": "sudoku-spec", "format_version": 1, "board": {"rows": 6, "cols": 6}, "digits": 6,
+           "rules": [{"type": "box_grid", "origin": "r1c1", "box": [2, 3]}], "where": {"band": "Easy"},
+           "limits": {"seed": 1}, "meta": {"title": "t", "fingerprint": True, "generated_from": True}}
+    meta = run(doc)["puzzle"]["meta"]
+    assert meta["fingerprint"] == pencilmark.fingerprint(run(doc)["puzzle"]) and meta["generated_from"].startswith("sha256:")
+    assert meta["fingerprint"] != meta["generated_from"]

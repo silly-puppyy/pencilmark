@@ -2,9 +2,9 @@
 
 ## Unreleased
 
-- Generated puzzles no longer carry `meta.generated_from` by default: `generate(spec, fingerprints=True)` /
-  `pencilmark generate --fingerprints` writes it, together with the new optional `meta.fingerprint` (the puzzle's own
-  fingerprint; `meta` is outside the fingerprint, so a file can carry it).
+- Generated puzzles no longer carry `meta.generated_from` by default. A spec asks for it in its own `meta`
+  (`"meta": {"generated_from": true, "fingerprint": true}`), and the puzzle gets the request's fingerprint and the new
+  optional `meta.fingerprint`, its own (`meta` is outside the fingerprint, so a file can carry it).
 - Reader: f-puzzles fog written as generic cages, as SudokuPad imports them, is read (a one-cell `FOW` cage lights
   its 3x3, a `FOGLIGHT` cage its cells); an invisible `FOW` cage was dropped and the puzzle refused. Rules that
   describe indexing without the word ("digits in column 1 indicate the column in which the digit 1 appears") are

@@ -132,7 +132,7 @@ How many solutions a puzzle has, counting up to a limit.
 
 ## Generating
 
-### `def generate(spec, fingerprints=False)` {#generate}
+### `def generate(spec)` {#generate}
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L654)
 
@@ -141,7 +141,6 @@ One puzzle for a "sudoku-spec" request ([Generator spec](../formats/generator-sp
 **Parameters**
 
 - `spec` *dict, str or Path* — The request: a dict, JSON text or a path to a .json file.
-- `fingerprints` *bool* — Also write meta.fingerprint (the puzzle's fingerprint) and meta.generated_from (the request's).
 
 **Returns**
 

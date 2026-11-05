@@ -651,15 +651,13 @@ def to_string(puzzle, form="plain"):
     return t(puzzle, form)
 
 
-def generate(spec, fingerprints=False):
+def generate(spec):
     """One puzzle for a "sudoku-spec" request (docs/formats/generator-spec.md).
 
     Parameters
     ----------
     spec : dict, str or Path
         The request: a dict, JSON text or a path to a .json file.
-    fingerprints : bool
-        Also write meta.fingerprint (the puzzle's fingerprint) and meta.generated_from (the request's).
 
     Returns
     -------
@@ -673,4 +671,4 @@ def generate(spec, fingerprints=False):
     """
     from .gen.api import generate as g
 
-    return g(spec, fingerprints=fingerprints)
+    return g(spec)
