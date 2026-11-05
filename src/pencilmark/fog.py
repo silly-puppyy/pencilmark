@@ -557,6 +557,9 @@ def route(puzzle, max_rounds=400, rules_text=None):
                 cs1 = c["cases"][0]["cells"]  # cage rule (set theory, combinations and the rest read it)
                 vis["rules"].append({"type": "cage", "cells": [_name(i // cols, i % cols) for i in cs1], "sum": c["cases"][0]["total"]})
         q = api.load(vis)
+        qdom = list(getattr(q, "domains", None) or ())  # the visible cell rules (parity squares, ...) narrow the candidates
+        if len(qdom) == len(cand):
+            cand = [m_ & qdom[i] if not givens[i] and m_ & qdom[i] else m_ for i, m_ in enumerate(cand)]
         base = list(q.constraints)
         if _NO_CASES:  # diagnostics: the route without the hidden-content case rules
             q.constraints = base
