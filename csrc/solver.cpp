@@ -251,7 +251,7 @@ std::vector<Tier> default_notes_tiers() {
          S("multicolour", [](Solver& s, MoveBuf& b) { s.multi_colouring(b); }),
          S("finned2", [](Solver& s, MoveBuf& b) { s.gfish(b, 2, false, true); }),
          S("digitcount", [](Solver& s, MoveBuf& b) { s.digit_count(b); }),
-         S("equaldigits", [](Solver& s, MoveBuf& b) { s.equal_digits(b); }),
+         S("equaldigits", [](Solver& s, MoveBuf& b) { s.equal_digits(b); s.equal_digits_chain(b); }),
          S("colouralgebra", [](Solver& s, MoveBuf& b) { s.colour_algebra(b); }),
          S("chains3-5", [](Solver& s, MoveBuf& b) { s.aic(b, 3, 5); })},
         {S("quads", [](Solver& s, MoveBuf& b) { s.subsets(b, 4); }),
@@ -371,7 +371,7 @@ Solver::Solver(const Puzzle& pz, const Params& prm, const SolveOptions& o)
             }
             if (sg) t.push_back(S("idprop", [](Solver& s, MoveBuf& b) { s.id_propagate(b, false); }));
             if (eq) {
-                t.push_back(S("classsingle", [](Solver& s, MoveBuf& b) { s.class_single(b); }));
+                t.push_back(S("classsingle", [](Solver& s, MoveBuf& b) { s.class_single(b); s.class_link_neq(b); }));
                 t.push_back(S("classpair", [](Solver& s, MoveBuf& b) { s.class_pair(b); }));
                 t.push_back(S("classtrap", [](Solver& s, MoveBuf& b) { s.class_trap(b); }));
             }

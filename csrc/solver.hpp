@@ -661,6 +661,8 @@ public:
     void digit_count(MoveBuf& out);
     /// two cells forced to hold the same unknown digit (abstract colouring): each keeps the other's candidates
     void equal_digits(MoveBuf& out);
+    void equal_digits_chain(MoveBuf& out);
+    void class_link_neq(MoveBuf& out);
     /// identity layer: a house where only one cell can hold a class's digit (the others see a member): it joins
     void class_single(MoveBuf& out);
     /// identity layer: a member's lost candidate leaves every member; a placed member places the others (direct_view:

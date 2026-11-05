@@ -216,6 +216,60 @@ void Solver::equal_digits(MoveBuf& out) {
     }
 }
 
+// Equal digits through a relation chain (CtC, Restricted Access: "imagine this was a three, then this is a two, this
+// is a three ... we can just trace them through the V dominoes"): B related to A and to C by pair rules (dots, X / V,
+// sums) such that every digit of A leads, through B, to the same digit at C, and every digit of C back to the same
+// at A -> A and C hold the same (unknown) digit. Moves as equal_digits (EQUAL_DIGITS): the candidates outside the
+// other's go; with the identity layer the two join one colour class.
+void Solver::equal_digits_chain(MoveBuf& out) {
+    if (disabled[EQUAL_DIGITS]) return;
+    const bool ids = id_on();
+    const bool room = ids && id_live() < ID_CAP;
+    auto through = [&](int x, int y, int z, int v) -> uint32_t {  // digits z can take when x holds v (via y)
+        const uint32_t* xy = p.rel_ex(x, y);
+        const uint32_t* yz = p.rel_ex(y, z);
+        if (!xy || !yz) return ~0u;
+        const uint32_t ym = (vals[y] ? bit(vals[y]) : cand[y]) & ~xy[v];
+        uint32_t zm = 0;
+        for (uint32_t m = ym; m; m &= m - 1) zm |= ~yz[lowdigit(m)];
+        return zm & (vals[z] ? bit(vals[z]) : cand[z]);
+    };
+    for (int B = 0; B < p.N; ++B) {
+        const auto& rb = p.rel[B];
+        for (size_t i = 0; i < rb.size(); ++i)
+            for (size_t j = i + 1; j < rb.size(); ++j) {
+                const int A = rb[i], C = rb[j];
+                if (vals[A] || vals[C]) continue;
+                bool ok = true;
+                for (uint32_t m = cand[A]; m && ok; m &= m - 1) {
+                    const int v = lowdigit(m);
+                    const uint32_t zm = through(A, B, C, v);
+                    if (zm & ~bit(v)) ok = false;
+                }
+                for (uint32_t m = cand[C]; m && ok; m &= m - 1) {
+                    const int v = lowdigit(m);
+                    const uint32_t am = through(C, B, A, v);
+                    if (am & ~bit(v)) ok = false;
+                }
+                if (!ok) continue;
+                uint32_t ea = cand[A] & ~cand[C], ec = cand[C] & ~cand[A];
+                const int ka = ids ? id_anchor(A) : A, kc = ids ? id_anchor(C) : C;
+                const bool join = ids && ka != kc && (idc[A] || idc[C] || room) && !id_paired(ka, kc);
+                if (!ea && !ec && !join) continue;
+                Move& mv = new_move(out, EQUAL_DIGITS, 1.0, popc(cand[A]));
+                if (join) add_aeff(out, mv, AE_ID_JOIN, std::max(ka, kc), std::min(ka, kc));
+                for (uint32_t x = ea; x; x &= x - 1) add_elim(out, mv, A, lowdigit(x));
+                for (uint32_t x = ec; x; x &= x - 1) add_elim(out, mv, C, lowdigit(x));
+                std::vector<int> pc{A, B, C};
+                set_pattern(out, mv, pc);
+                mv.shape = pspread(pc);
+                meta9(mv, 3, 2, popc(cand[A]), 1, 1, 0, 0, 1, mv.shape);
+                pm_long xm[XM_N] = {A, C, B, popc(cand[A]), 1, 0, 0, 0, 0, 0};
+                std::copy(xm, xm + XM_N, mv.xm);
+            }
+    }
+}
+
 // ---- identity layer (params id_layer): persistent colour classes of cells holding one unknown digit ----
 // A class is a set of cells known to hold the same digit, whatever it is; its digits are the intersection of its
 // members' candidates (not stored). Ids are canonical: 1 + the class's first cell in reading order, so the listing
@@ -361,6 +415,7 @@ void Solver::class_single(MoveBuf& out) {
             for (int c : p.groups[hi].cells) {
                 if (tbit(sees.data(), c)) continue;
                 if (!((vals[c] ? bit(vals[c]) : cand[c]) & I)) continue;
+                if (!vals[c] && id_paired(id_anchor(c), a)) continue;  // known to hold a different digit
                 ++n;
                 X = c;
             }
@@ -379,6 +434,68 @@ void Solver::class_single(MoveBuf& out) {
             std::copy(xm, xm + XM_N, m.xm);
         }
     }
+}
+
+// "Red can't go next to orange" (CtC, Restricted Access): classes K1 and K2 linked one-to-one by a pair rule between
+// two members (a V: K2 = 5 - K1). A cell c related to a member o of K2 (orthogonal neighbours without a V, all Vs
+// given) such that c holding K1's digit v would leave o no digit but the one K2 must hold, for every digit v K1 can
+// still be: c holds a digit other than K1's. Recorded as a class difference (AE_ID_NEQ); class singles then skip c.
+void Solver::class_link_neq(MoveBuf& out) {
+    if (!id_on() || disabled[CLASS_SINGLE]) return;
+    const auto cls = id_classes(idc, p.N);
+    for (const auto& k1 : cls)
+        for (const auto& k2 : cls) {
+            if (k1.first == k2.first) continue;
+            int pv1 = 0, pv2 = 0;
+            const uint32_t I1 = id_digits(k1.second, &pv1), I2 = id_digits(k2.second, &pv2);
+            if (pv1 || pv2 || !I1 || !I2) continue;
+            int f[33] = {0};  // K2's digit when K1 holds v, through a one-to-one link between a member of each
+            bool linked = false;
+            for (int a : k1.second) {
+                for (int b : k2.second) {
+                    const uint32_t* t = p.rel_ex(a, b);
+                    if (!t) continue;
+                    bool bij = true;
+                    for (uint32_t m = I1; m && bij; m &= m - 1) {
+                        const int v = lowdigit(m);
+                        const uint32_t ok = I2 & ~t[v];
+                        if (popc(ok) != 1) bij = false;
+                        else f[v] = lowdigit(ok);
+                    }
+                    if (bij) linked = true;
+                    if (linked) break;
+                }
+                if (linked) break;
+            }
+            if (!linked) continue;
+            for (int o : k2.second) {
+                for (int c : p.rel[o]) {
+                    if (vals[c] || idc[c] == k1.first + 1 || id_paired(id_anchor(c), k1.first)) continue;
+                    if (!(cand[c] & I1)) continue;
+                    const uint32_t* t = p.rel_ex(c, o);
+                    if (!t) continue;
+                    bool never = true;
+                    for (uint32_t m = I1 & cand[c]; m && never; m &= m - 1) {
+                        const int v = lowdigit(m);
+                        never = (t[v] >> (f[v] - 1)) & 1;  // c = v forbids o = f(v), which K2 then must hold
+                    }
+                    if (!never) continue;
+                    if (id_live() >= ID_CAP && !idc[c]) continue;
+                    Move& m = new_move(out, CLASS_SINGLE, 1.0, (int)k1.second.size());
+                    const int kc = id_anchor(c);
+                    add_aeff(out, m, AE_ID_NEQ, std::max(kc, k1.first), std::min(kc, k1.first));
+                    add_aeff(out, m, AE_ID_USE, k1.first, 0);
+                    std::vector<int> pc(k1.second);
+                    pc.push_back(o);
+                    pc.push_back(c);
+                    set_pattern(out, m, pc);
+                    m.shape = pspread(pc);
+                    meta9(m, (int)pc.size(), 2, popc(I1), 1, 1, 0, 0, 1, m.shape);
+                    pm_long xm[XM_N] = {c, k1.first, o, (pm_long)k1.second.size(), popc(I1), 2, 0, 0, 0, 0};
+                    std::copy(xm, xm + XM_N, m.xm);
+                }
+            }
+        }
 }
 
 // The use of a class: its members hold one digit, so a candidate one member lost leaves them all, and a placed member
