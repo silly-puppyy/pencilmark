@@ -64,6 +64,16 @@ def _diagonal(rule, D):
 def visible_rules(rules, lit, D):
     """the rules a solver sees with these cells lit (module docstring)"""
     L = {_name(r, c) for r, c in lit}
+    box_of = {}
+    for n_, k in enumerate(rules):  # region-sum lines count segments per box
+        if k["type"] == "box":
+            for c in k["cells"]:
+                box_of[c] = n_
+        elif k["type"] == "box_grid" and k.get("origin") == "r1c1":
+            bh, bw = k["box"]
+            for r in range(D):
+                for c in range(D):
+                    box_of[_name(r, c)] = (r // bh, c // bw)
     out = []
     for k in rules:
         t = k["type"]
@@ -91,6 +101,8 @@ def visible_rules(rules, lit, D):
                     if len(seen) >= 2:
                         out.append(dict(k, cells=seen))
                 run = []
+        elif t == "line" and k.get("kind") == "region_sum" and not all(c in L for c in cells):
+            out += _partial_region_sum(cells, L, box_of)
         elif t == "cage" and not all(c in L for c in cells):
             out += _partial_cage(k, L)
         elif t == "cell":
@@ -102,6 +114,41 @@ def visible_rules(rules, lit, D):
             every += [c for ln in (k.get("lines") or []) for c in ln]
             if every and all(c in L for c in every):
                 out.append(k)
+    return out
+
+
+def _partial_region_sum(line, L, box_of):
+    """A region-sum line seen in part (CtC, Regions in the Fog: the dominoes around box 5). A fogged cell both of whose
+    neighbours on the line are lit joins them (the drawn ends point at it; lines do not branch). In a seen stretch, a
+    piece inside one box is complete when the line is seen crossing the box border at both ends (or ending there);
+    the complete pieces of one stretch have equal sums."""
+    if not box_of:
+        return []
+    seen = set(L) | {line[i] for i in range(1, len(line) - 1) if line[i - 1] in L and line[i + 1] in L}
+    out, run = [], []
+    for i, c in enumerate(line + [None]):
+        if c is not None and c in seen:
+            run.append(i)
+            continue
+        if len(run) > 1:
+            pieces, cur = [], [run[0]]
+            for j in run[1:]:
+                if box_of.get(line[j]) == box_of.get(line[cur[-1]]):
+                    cur.append(j)
+                else:
+                    pieces.append(cur)
+                    cur = [j]
+            pieces.append(cur)
+            done = []
+            for pc in pieces:
+                a, b = pc[0], pc[-1]
+                ok_a = a == 0 or a - 1 >= run[0] or box_of.get(line[a - 1]) != box_of.get(line[a])
+                ok_b = b == len(line) - 1 or b + 1 <= run[-1] or box_of.get(line[b + 1]) != box_of.get(line[b])
+                if ok_a and ok_b:
+                    done.append([line[j] for j in pc])
+            if len(done) > 1:
+                out.append({"type": "equal_sum", "segments": done})
+        run = []
     return out
 
 
