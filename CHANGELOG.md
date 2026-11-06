@@ -18,6 +18,16 @@ What changes for you (details in the entries below):
   `rate` grades fog under the fog; shading and unknowns give band Unknown with a `reason` for now (they load,
   validate, solve and count). Errors are only for wrong inputs (unreadable, misread, not unique, no solution).
 
+- Techniques checked against Andrew Stuart's sudokuwiki.org strategy examples (141 positions, every move sound) and
+  independent reference finders; what was missing is added:
+  - XY-Chain: a second chain search over bivalue cells only, so an XY-chain is no longer named (and priced) AIC when an
+    AIC of the same length joins the same ends.
+  - Simple Colouring and 3D Medusa: a colour that would leave a house no place for a digit is false (sudokuwiki's
+    rule of July 2026).
+  - Hidden Unique Rectangle type 2 (bivalue floor, a strong link from it to the roof) and Extended Unique Rectangle
+    type 2 (two cells with the same one extra digit).
+  - Aligned Pair Exclusion also counts two cells sharing three digits that see both cells of the pair.
+  Bands unchanged on the reference cards; times and difficulties move by up to 0.5 on 32 of 227.
 - Quality presets: `quality={"preset": "standard"}` (`--quality preset=standard`) turns on decorative, trivial, trial,
   thin and unusual (all reject) and switches the other checks off; checks named next to the preset adjust it.
 - Opt-in quality checks (off unless named): `asymmetric`, `no_interplay`, `winding`, `short_lines`, `repetitive`,

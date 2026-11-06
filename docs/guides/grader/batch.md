@@ -24,7 +24,7 @@ $ cat puzzles.txt
 $ pencilmark rate puzzles.txt -j 4
 Very Easy	3.5	4.5	Hidden Single
 Easy	4.1	5.2	Naked Single
-Hard	5.8	10.7	X-Wing
+Hard	5.8	10.6	X-Wing
 Expert	6.6	13.7	Alternating Inference Chain
 ```
 
@@ -38,7 +38,7 @@ The columns are band, difficulty, time in minutes and the hardest technique.
 $ pencilmark rate puzzles.txt -j 4 --format '%i,%b,%d,%m,%c'
 1,Very Easy,3.5,4.5,
 2,Easy,4.1,5.2,NSI
-3,Hard,5.8,10.7,NSI NPR/HPR XWG/KTE/CSM/MCH
+3,Hard,5.8,10.6,NSI NPR/HPR XWG/KTE/CSM/MCH
 4,Expert,6.6,13.7,NSI PPRx2 HPR/NQDx2 KTE/SKY/MCH AIC/ALS/WIF
 ```
 

@@ -569,6 +569,17 @@ def _h_coloring(ctx):
                     break
             if wrap:
                 break
+        if not wrap:  # unit wrap: a colour seeing every v of a house (none of them its own) would empty it
+            for side in (0, 1):
+                for hi in p.houses:
+                    hc = [c for c in p.groups[hi].cells if not st.vals[c] and st.cand[c] & b]
+                    if hc and all(
+                        comp.get(c) == 1 - side if c in comp else bool(p.peers[c] & set(g[side])) for c in hc
+                    ):
+                        wrap = (side, None, hi)
+                        break
+                if wrap:
+                    break
         if wrap:
             el = {(c, v) for c in g[wrap[0]]}
         else:
@@ -592,7 +603,14 @@ def _h_coloring(ctx):
         tg = sorted({c for c, _ in ctx.elims})
         A, Bc = nm.cells(g[0]), nm.cells(g[1])
         short = f"{fmt_elims(nm, ctx.elims)}: colouring on {v}"
-        if wrap:
+        if wrap and wrap[1] is None:
+            teach = (
+                f"Colour the {v}s that form conjugate pairs (houses with exactly two {v}s): one colour is "
+                f"{A}, the other {Bc}. Exactly one colour is the truth. But if {nm.cells(g[wrap[0]])} were {v}, "
+                f"{nm.unit(wrap[2])} would have no place left for {v}, so that whole colour is false: remove {v} "
+                f"from {nm.cells(tg)}."
+            )
+        elif wrap:
             teach = (
                 f"Colour the {v}s that form conjugate pairs (houses with exactly two {v}s): one colour is "
                 f"{A}, the other {Bc}. Exactly one colour is the truth. But {nm.cell(wrap[1])} and "
@@ -655,7 +673,17 @@ def _colouring_substeps(nm, v, comp, adj, via, wrap, tg, elims):
                 stp["why"] = why
             out.append(stp)
     red = [{"id": next(ids), "candidate": f"{nm.cell(c)}#{d}", "colour": "red"} for c, d in sorted(elims)]
-    if wrap:
+    if wrap and wrap[1] is None:
+        side, _, hi = wrap
+        out.append(
+            {
+                "text": f"Every place for {v} in {nm.unit(hi)} is {names[1 - side]} or sees a {names[side]} {v}, so "
+                f"{names[side]} would leave it no {v}: {names[side]} is false, no {names[side]} cell is {v}.",
+                "why": f"Every house needs a {v}.",
+                "annotations": red,
+            }
+        )
+    elif wrap:
         side, a, b = wrap
         out.append(
             {

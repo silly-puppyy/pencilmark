@@ -333,7 +333,8 @@ def _explain(p, m, nm, pats, exs, info=None):
                 "type": "wrap" if wrap else "trap",
                 "colors": [[{"cell": e // 32, "rc": _rc(p, e // 32), "digit": e % 32} for e in col] for col in cols],
                 "eliminated_color": side if wrap else None,
-                "clash": [ca, cb] if wrap else None,
+                "clash": [ca, cb] if wrap == 1 else None,
+                "emptied": {"unit": _group(p, ca, info), "digit": cb} if wrap == 2 else None,  # colour empties a house
             }
         elif tag == 9 and n >= 6:
             v, wrap, side, ca, cb, n0 = data[:6]
@@ -344,7 +345,8 @@ def _explain(p, m, nm, pats, exs, info=None):
                 "colors": cols,
                 "rc": [[_rc(p, c) for c in col] for col in cols],
                 "eliminated_color": side if wrap else None,
-                "clash": [ca, cb] if wrap else None,
+                "clash": [ca, cb] if wrap == 1 else None,
+                "emptied": {"unit": _group(p, ca, info), "digit": v} if wrap == 2 else None,  # colour empties a house
             }
         elif tag == 10 and n >= 4:
             total, outie, nh = data[:3]

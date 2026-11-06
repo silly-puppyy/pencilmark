@@ -180,7 +180,7 @@ enum {
     EX_REASON = 6,   ///< [(cell, digit, reason kind, a, b)...]  why a digit / cell is excluded (singles)
     EX_TRIAL = 7,    ///< [view, n, (cell, digit) x n]  the assumption(s) of a trial / either-way
     EX_BRANCH = 8,   ///< [cell, digit, contradiction round, (event, round, cell, digit|mask, source)...]
-    EX_COLOR = 9,    ///< [digit, wrap, eliminated side, clash a, clash b, n0, cells0..., cells1...]
+    EX_COLOR = 9,    ///< [digit, wrap (2: empties house clash a), eliminated side, clash a, clash b, n0, cells0..., cells1...]
     EX_REGION = 10,  ///< [total, outie, n houses, houses..., n cages, cages..., cells...]
     EX_ROLE = 11,    ///< ALS-XY-Wing: [hinge als, x, y, z mask]; Death Blossom: [stem, (digit, als)...]
     EX_RULE = 12,    ///< [constraint index...]      rule units (DigitCount)

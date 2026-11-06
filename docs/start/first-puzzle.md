@@ -24,7 +24,7 @@ A classic puzzle can be written as one line of 81 characters, row by row, with `
 
 ```
 $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9.......' | pencilmark rate -
-Hard	5.8	10.7	X-Wing
+Hard	5.8	10.6	X-Wing
 ```
 
 The four columns are the band, the difficulty, the time in minutes and the hardest technique the solve
@@ -36,14 +36,14 @@ needs. `-` means "read puzzles from standard input"; you can also pass a file wi
 
 ```
 $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9.......' | pencilmark rate - --report
-#1  Hard  -  difficulty 5.8  -  time 10.7 min
+#1  Hard  -  difficulty 5.8  -  time 10.6 min
    contains: Naked Pair (or Hidden Pair), X-Wing (or 2-String Kite / Simple Colouring / Short chain in the head)
 ```
 
 - Hard is the band: what you need to know. Hard means the puzzle needs a pattern most people learn after the basics;
   here an X-Wing.
 - 5.9 is the difficulty: how hard the steps are, on a scale with no ceiling. A typical newspaper medium is about 5.
-- 10.7 min is the predicted median solve time; the median classic takes about 12 minutes.
+- 10.6 min is the predicted median solve time; the median classic takes about 12 minutes.
 - `contains` lists the techniques the solve needs, easiest first (the report leaves out the singles). "X-Wing (or
   2-String Kite / …)" means any one of those does the job at that point.
 
@@ -67,7 +67,7 @@ $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7..
 import pencilmark
 
 card = pencilmark.rate("....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9.......")
-print(card["band"], card["difficulty"], card["time"])     # Hard 5.8 10.7
+print(card["band"], card["difficulty"], card["time"])     # Hard 5.8 10.6
 print([c["chip"] for c in card["contains"]])              # ['HSI', 'NSI', 'NPR/HPR', 'XWG/KTE/CSM/MCH']
 ```
 

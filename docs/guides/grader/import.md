@@ -41,7 +41,7 @@ and others) are read directly, in Python and on the command line:
 
 ```
 $ echo 'S9Bepepepep04ep08ep03ep06epepep08epep0209ep0806ep05epep01020305epepepepepepepepep07epep02epepepepepepepepep0906epep02epepepepepep08ep0102epep07epepep09epepepepepepep' | pencilmark rate -
-Hard	5.8	10.7	X-Wing
+Hard	5.8	10.6	X-Wing
 ```
 
 `pencilmark.to_string(puzzle, "sudokuwiki")` writes one, to open a puzzle in their solver.
@@ -53,7 +53,7 @@ classic as an f-puzzles link, so the card is the classic's:
 
 ```
 $ pencilmark rate links.txt          # one link per line
-Hard	5.8	10.7	X-Wing
+Hard	5.8	10.6	X-Wing
 ```
 
 ```python

@@ -185,7 +185,10 @@ def _h_medusa(ctx):
     cs = col.get("colors") or [[], []]
     cells = {e["cell"] for c in cs for e in c}
     fmt = lambda c: ", ".join(f"{nm.cell(e['cell'])} as {e['digit']}" for e in c)  # noqa: E731
-    if col.get("type") == "wrap":
+    if col.get("emptied"):
+        e = col["emptied"]
+        why = f"one colour would leave {nm.unit(ctx.gi(e['unit']['name']))} no place for {e['digit']}, so all of it is false"
+    elif col.get("type") == "wrap":
         why = "one colour contradicts itself (twice in a cell or house, or it empties a cell), so all of it is false"
     else:
         why = "whichever colour is true, these candidates cannot survive (they see both colours, or share a cell with one)"

@@ -593,7 +593,8 @@ _X_HANDLERS = {
         _h_pattern_named(
             "aligned pair exclusion",
             "Every combination of the two cells' digits is checked; a "
-            "digit with no combination that leaves the cells seeing both alive goes.",
+            "digit with no combination that leaves the cells seeing both alive (a cell, or two cells "
+            "sharing three digits) goes.",
         ),
         "aligned_pair_exclusion",
         "fish+wings",

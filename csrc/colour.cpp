@@ -1,7 +1,8 @@
 // 3D Medusa: two-colouring of candidates over strong links of several digits (bivalue cells,
 // digits with two places in a house). One colour is entirely true, the other entirely false.
 //   wrap (colour false): two same-coloured candidates in one cell; the same digit twice in one
-//     colour seeing each other; an uncoloured cell all of whose candidates see that colour.
+//     colour seeing each other; an uncoloured cell all of whose candidates see that colour; a house
+//     where the colour would remove every place of a digit.
 //   trap (eliminations): a candidate seeing both colours of its digit; a cell holding both
 //     colours loses its other candidates; a candidate seeing colour X of its digit while its
 //     cell holds the opposite colour.
@@ -105,7 +106,7 @@ void Solver::medusa(MoveBuf& out) {
                 ++m.el_n;
             }
             set_pattern(out, m, pat);
-            std::vector<int> rec{0, false_col >= 0, false_col, wa, wb, 0};
+            std::vector<int> rec{0, false_col < 0 ? 0 : rule == 4 ? 2 : 1, false_col, wa, wb, 0};
             std::vector<int> c0, c1;
             for (int x : members) (col[x] ? c1 : c0).push_back(node[x].first * 32 + node[x].second);
             rec[5] = (int)c0.size();
@@ -122,7 +123,7 @@ void Solver::medusa(MoveBuf& out) {
             m.meta[6] = 0;
             m.meta[7] = 1;
             m.spread = pspread(pat);
-            m.code = 3501 + rule;
+            m.code = rule == 4 ? 3521 : 3501 + rule;
             pm_long xm[XM_N] = {rule, n, popc(digs), (pm_long)el.size(), false_col, 0, 0, 0, 0, 0};
             std::copy(xm, xm + XM_N, m.xm);
         };
@@ -147,6 +148,26 @@ void Solver::medusa(MoveBuf& out) {
                 bool all = true;
                 for (uint32_t m = cand[c]; m && all; m &= m - 1) all = sees_col(c, lowdigit(m), colour);
                 if (all) false_col = colour, wa = wb = c, wrule = 3;
+            }
+        }
+        // a colour that removes every place of a digit in a house (none of them its own) is false: the place is
+        // the other colour, sees the digit in this colour, or its cell holds this colour (sudokuwiki, July 2026)
+        for (int colour = 0; colour < 2 && false_col < 0; ++colour) {
+            const auto& own = colour ? cm1 : cm0;
+            const auto& oth = colour ? cm0 : cm1;
+            for (int hi : p.houses) {
+                for (uint32_t mm = p.full & ~placed_g[hi]; mm && false_col < 0; mm &= mm - 1) {
+                    const int v = lowdigit(mm);
+                    bool any = false, all = true;
+                    for (int c : p.groups[hi].cells) {
+                        if (vals[c] || !(cand[c] & bit(v))) continue;
+                        any = true;
+                        all = !(own[c] & bit(v)) && ((oth[c] & bit(v)) || (own[c] & ~bit(v)) || sees_col(c, v, colour));
+                        if (!all) break;
+                    }
+                    if (any && all) false_col = colour, wa = hi, wb = v, wrule = 4;
+                }
+                if (false_col >= 0) break;
             }
         }
         if (false_col >= 0) {

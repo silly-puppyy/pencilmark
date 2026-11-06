@@ -3,8 +3,8 @@
 //     digit but Z confined to cells that see each other -> Z is in one of the set's Z cells;
 //   SueDeCoq (77): box-line intersection cells C (2-3) with digits V, a line set L and a box set B
 //     (1-2 cells each), digit sets disjoint, |V u VL u VB| = |C|+|L|+|B|;
-//   AlignedPairExclusion (78): two cells; a value pair is impossible when a cell seeing both would
-//     be left empty; values without a possible partner go;
+//   AlignedPairExclusion (78): two cells; a value pair is impossible when a cell (or a 2-cell almost
+//     locked set) seeing both would be left short of digits; values without a possible partner go;
 //   ChuteRemotePairs (79): two bivalue cells {x,y} of one band / stack in different boxes and lines;
 //     the third box's cells on the remaining line hold no x -> y leaves the cells seeing both;
 //   PatternOverlay (80): per digit, every placement template (one cell per row, every complete
@@ -255,11 +255,20 @@ void Solver::aligned_pair(MoveBuf& out) {
         if (vals[X] || popc(cand[X]) < 2) continue;
         for (int Y : p.peer_list[X]) {
             if (Y <= X || vals[Y] || popc(cand[Y]) < 2) continue;
-            // cells seeing both, with few candidates
-            std::vector<int> Z;
+            // cells seeing both, with few candidates; 2-cell almost locked sets seeing both (3 digits: any two of
+            // them in X and Y leave the pair one digit) -- sudokuwiki's extension
+            std::vector<int> Z, Z3;
+            std::vector<std::pair<int, int>> A2;
             for (int q : p.peer_list[X])
-                if (q != Y && !vals[q] && popc(cand[q]) <= 2 && tbit(p.peers(Y), q)) Z.push_back(q);
-            if (Z.empty()) continue;
+                if (q != Y && !vals[q] && popc(cand[q]) <= 3 && tbit(p.peers(Y), q))
+                    (popc(cand[q]) <= 2 ? Z : Z3).push_back(q);
+            std::vector<int> Zall = Z;
+            Zall.insert(Zall.end(), Z3.begin(), Z3.end());
+            for (size_t i = 0; i < Zall.size(); ++i)
+                for (size_t j = i + 1; j < Zall.size(); ++j)
+                    if (tbit(p.peers(Zall[i]), Zall[j]) && popc(cand[Zall[i]] | cand[Zall[j]]) == 3)
+                        A2.push_back({Zall[i], Zall[j]});
+            if (Z.empty() && A2.empty()) continue;
             uint32_t okX = 0, okY = 0;
             for (uint32_t mx = cand[X]; mx; mx &= mx - 1) {
                 const int x = lowdigit(mx);
@@ -268,21 +277,25 @@ void Solver::aligned_pair(MoveBuf& out) {
                     if (x == y) continue;  // X and Y see each other
                     bool dead = false;
                     for (int q : Z) dead |= !(cand[q] & ~(bit(x) | bit(y)));
+                    for (auto& a : A2) dead |= popc((cand[a.first] | cand[a.second]) & ~(bit(x) | bit(y))) < 2;
                     if (!dead) okX |= bit(x), okY |= bit(y);
                 }
             }
             const uint32_t ex = cand[X] & ~okX, ey = cand[Y] & ~okY;
             if (!ex && !ey) continue;
             if (!okX || !okY) continue;  // inconsistent state
-            Move& m = new_move(out, APE, pspread({X, Y}), (int)Z.size());
+            Move& m = new_move(out, APE, pspread({X, Y}), (int)(Z.size() + A2.size()));
             for (uint32_t b = ex; b; b &= b - 1) addel(out, m, X, lowdigit(b));
             for (uint32_t b = ey; b; b &= b - 1) addel(out, m, Y, lowdigit(b));
             std::vector<int> pc{X, Y};
             pc.insert(pc.end(), Z.begin(), Z.end());
+            for (auto& a : A2)
+                for (int q : {a.first, a.second})
+                    if (std::find(pc.begin(), pc.end(), q) == pc.end()) pc.push_back(q);
             set_pattern(out, m, pc);
             meta_set(m, (int)pc.size(), 2, popc(cand[X] | cand[Y]), 1, 0, 0, 0, 1, m.shape);
             m.code = 4801;
-            pm_long xm[XM_N] = {X, Y, (pm_long)Z.size(), popc(ex) + popc(ey), 0, 0, 0, 0, 0, 0};
+            pm_long xm[XM_N] = {X, Y, (pm_long)Z.size(), popc(ex) + popc(ey), (pm_long)A2.size(), 0, 0, 0, 0, 0};
             std::copy(xm, xm + XM_N, m.xm);
         }
     }

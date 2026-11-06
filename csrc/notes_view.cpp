@@ -415,6 +415,32 @@ void Solver::coloring(MoveBuf& out) {
                     break;
                 }
             }
+            // unit wrap: a colour seeing every v of a house (none of them its own) would empty it (sudokuwiki, July 2026)
+            bool unit_wrap = false;
+            for (int side = 0; side < 2 && el.empty(); ++side)
+                for (int hi : p.houses) {
+                    if (placed_g[hi] & b) continue;
+                    const uint64_t* gs = side ? g1.data() : g0.data();
+                    bool any = false, all = true;
+                    for (int c : p.groups[hi].cells) {
+                        if (vals[c] || !(cand[c] & b)) continue;
+                        any = true;
+                        if (in_comp[c]) {
+                            all = comp_col[c] != side;
+                        } else {
+                            const uint64_t* pc = p.peers(c);
+                            bool s = false;
+                            for (int w = 0; w < W && !s; ++w) s = (pc[w] & gs[w]) != 0;
+                            all = s;
+                        }
+                        if (!all) break;
+                    }
+                    if (any && all) {
+                        el = grp[side];
+                        wrap_side = side, clash_a = hi, clash_b = -1, unit_wrap = true;
+                        break;
+                    }
+                }
             if (el.empty()) {
                 for (int c = 0; c < p.N; ++c) {
                     if (vals[c] || in_comp[c] || !(cand[c] & b)) continue;
@@ -435,7 +461,7 @@ void Solver::coloring(MoveBuf& out) {
                 for (int c : el) add_elim(out, m, c, v);
                 set_pattern(out, m, comp_order);
                 set_meta(m, n, n - 1, 1, n - 1, 1, 0, 0, 1, pspread(comp_order));
-                std::vector<int> rec{v, wrap_side >= 0, wrap_side, clash_a, clash_b, (int)grp[0].size()};
+                std::vector<int> rec{v, unit_wrap ? 2 : wrap_side >= 0, wrap_side, clash_a, clash_b, (int)grp[0].size()};
                 rec.insert(rec.end(), grp[0].begin(), grp[0].end());
                 rec.insert(rec.end(), grp[1].begin(), grp[1].end());
                 add_expl(out, m, EX_COLOR, rec);

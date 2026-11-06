@@ -195,6 +195,28 @@ void Solver::unique_rect(MoveBuf& out) {
                             rec(0, 0, E);
                         }
                     }
+                    // hidden rectangle type 2 (floor = the bivalue side f, g; rf, rg the roof corners beside them): a
+                    // strong on f-rf -> b leaves rg (rg = b forces g = a, f = b, rf = a: the deadly pattern)
+                    for (int fi = 0; fi < 4; ++fi) {
+                        if (!(fm >> fi & 1)) continue;
+                        const int gi2 = __builtin_ctz(fm & ~(1u << fi));
+                        const int rfi = (fi ^ 1) == gi2 ? fi ^ 2 : fi ^ 1, rgi = gi2 ^ (fi ^ rfi);
+                        const int F = c[fi], RF = c[rfi], RG = c[rgi];
+                        for (int t = 0; t < 2; ++t) {
+                            const int a2 = t ? y : x, b2 = t ? x : y;
+                            common_groups2(F, RF, true, gs);
+                            bool strong = false;
+                            for (int gk : gs) {
+                                bool only = true;
+                                for (int q : p.groups[gk].cells)
+                                    if (q != F && q != RF && !vals[q] && (cand[q] & bit(a2))) only = false;
+                                strong |= only;
+                            }
+                            if (!strong || !(cand[RG] & bit(b2))) continue;
+                            el.assign(1, (uint32_t)RG * 32 + b2);
+                            emit(CODE_HUR, el, c, x, y, 0);
+                        }
+                    }
                     // type 4: one of x/y confined to the roof in a complete group
                     common_groups2(r1, r2, true, gs);
                     for (int gi : gs)
@@ -263,9 +285,10 @@ void Solver::unique_rect(MoveBuf& out) {
     }
 }
 
-// Extended unique rectangle type 1 (standard 9x9 geometry, houses only): 2 rows of one band x 3
-// columns in the band's 3 boxes (or transposed); five cells hold only digits of {x,y,z}, the sixth
-// more -> if the sixth took one of x,y,z the six cells could swap within each column -> not unique
+// Extended unique rectangle (standard 9x9 geometry, houses only): 2 rows of one band x 3 columns in
+// the band's 3 boxes (or transposed). Type 1: five cells hold only digits of {x,y,z}, the sixth more
+// -> if the sixth took one of x,y,z the six cells could swap within each column -> not unique.
+// Type 2: four cells only {x,y,z}, two more {x,y,z} plus the same digit w -> w is in one of them.
 void Solver::extended_ur(MoveBuf& out) {
     if (!opt.assume_unique || disabled[UNIQUE_RECT] || p.D != 9 || p.N != 81) return;
     const bool der = p.is_derived && p.base_G >= 0;
@@ -336,6 +359,33 @@ void Solver::extended_ur(MoveBuf& out) {
                                     pm_long xm[XM_N] = {7, (pm_long)X, 0, 6, (pm_long)el.size(), 0, 0, 0, 0, 0};
                                     std::copy(xm, xm + XM_N, m.xm);
                                 }
+                                // type 2: four cells hold only digits of {x,y,z}, two more the same one extra digit
+                                // w -> w is in one of those two -> it leaves the cells seeing both
+                                for (int t1 = 0; t1 < 6; ++t1)
+                                    for (int t2 = t1 + 1; t2 < 6; ++t2) {
+                                        uint32_t X = 0;
+                                        for (int i = 0; i < 6; ++i)
+                                            if (i != t1 && i != t2) X |= cand[cells[i]];
+                                        const uint32_t e1 = cand[cells[t1]] & ~X, e2 = cand[cells[t2]] & ~X;
+                                        if (popc(X) != 3 || popc(e1) != 1 || e1 != e2 || !(cand[cells[t1]] & X) ||
+                                            !(cand[cells[t2]] & X))
+                                            continue;
+                                        const int w = lowdigit(e1), A = cells[t1], B = cells[t2];
+                                        std::vector<uint32_t> el;
+                                        for (int q = 0; q < p.N; ++q)
+                                            if (q != A && q != B && !vals[q] && (cand[q] & e1) && tbit(p.peers(q), A) &&
+                                                tbit(p.peers(q), B))
+                                                el.push_back((uint32_t)q * 32 + w);
+                                        if (el.empty()) continue;
+                                        std::vector<int> pc(cells, cells + 6);
+                                        Move& m = new_move(out, UNIQUE_RECT, pspread(pc), 7);
+                                        for (uint32_t e : el) add_elim(out, m, (int)(e / 32), (int)(e % 32));
+                                        set_pattern(out, m, pc);
+                                        meta9(m, 6, 3, 3, 0, 0, 0, 0, 1, m.shape);
+                                        m.code = 3022;
+                                        pm_long xm[XM_N] = {7, (pm_long)X, 0, 6, (pm_long)el.size(), 0, 0, 0, 0, 0};
+                                        std::copy(xm, xm + XM_N, m.xm);
+                                    }
                             }
 }
 

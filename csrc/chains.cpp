@@ -520,8 +520,13 @@ void Solver::build_aic(int maxl, bool with_als) {
             if (tbit(p.gbits(gi), b)) return gi;
         return -1;
     };
+    // pass 1 (plain chains only): the same search over bivalue cells alone, for XY-chains that a shorter or
+    // equally short AIC between the same ends hides in pass 0
+    std::set<std::pair<int, int>> xy_done;
+    auto bival = [&](int i) { return i < Mc && popc(cand[node[i].first]) == 2; };
+    for (int xyp = 0; xyp < (with_als ? 1 : 2); ++xyp)
     for (int A = 0; A < Mc; ++A) {
-        if (st[A].empty()) continue;
+        if (st[A].empty() || (xyp && !bival(A))) continue;
         std::fill(dist.begin(), dist.end(), -1);
         dist[2 * A] = 0;
         par[2 * A] = -1;
@@ -536,6 +541,7 @@ void Solver::build_aic(int maxl, bool with_als) {
             for (int s : cur) {
                 int x = s >> 1, t = s & 1;
                 for (int y : eqv[x]) {  // equivalence: same truth value
+                    if (xyp) break;
                     int s2 = 2 * y + t;
                     if (dist[s2] >= 0) continue;
                     dist[s2] = dist[s] + 1;
@@ -545,6 +551,7 @@ void Solver::build_aic(int maxl, bool with_als) {
                 }
                 if (t == 0) {
                     for (auto& e : st[x]) {
+                        if (xyp && (e.second & 15) != 1) continue;
                         int s2 = 2 * e.first + 1;
                         if (dist[s2] >= 0) continue;
                         dist[s2] = dist[s] + 1;
@@ -557,6 +564,8 @@ void Solver::build_aic(int maxl, bool with_als) {
                     for (int w = 0; w < WW; ++w)
                         for (uint64_t m = wx[w]; m; m &= m - 1) {
                             int y = w * 64 + __builtin_ctzll(m);
+                            if (xyp && (!bival(y) || node[y].first == node[x].first || node[y].second != node[x].second))
+                                continue;
                             int s2 = 2 * y;
                             if (dist[s2] >= 0) continue;
                             dist[s2] = dist[s] + 1;
@@ -700,6 +709,11 @@ void Solver::build_aic(int maxl, bool with_als) {
                 if (!n_grp && L == 5 && stype[1] == 1 && stype[5] == 1 && (stype[3] == 2 || stype[3] == 3) &&
                     cand[node[chain[0]].first] == cand[node[chain[5]].first])
                     code = CODE_WWG;
+            }
+            if (tech == XY_CHAIN || tech == REMOTE_PAIRS) {
+                if (xyp ? xy_done.count({A, Z}) > 0 : !xy_done.insert({A, Z}).second) continue;
+            } else if (xyp) {
+                continue;
             }
             double shp = pspread(cells);
             Move& m = ob.moves.emplace_back();
