@@ -86,6 +86,7 @@ module.exports = {
         {type: 'doc', id: 'reference/formats', label: 'Formats'},
         {type: 'doc', id: 'reference/engine', label: 'The engine interface'},
         {type: 'doc', id: 'reference/explain', label: 'Explanations'},
+        {type: 'doc', id: 'reference/fog', label: 'Fog of war'},
         {type: 'doc', id: 'reference/generator', label: 'The generator'},
         {type: 'doc', id: 'reference/sources', label: 'Puzzle sources'},
         {type: 'doc', id: 'reference/cli', label: 'The command line'},

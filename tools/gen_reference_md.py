@@ -40,6 +40,11 @@ PAGES = {
         ["explain/__init__", "explain/base", "explain/dispatch", "explain/grid", "explain/catalog", "explain/singles",
          "explain/combos", "explain/notes", "explain/chains", "explain/trial", "explain/records", "explain/facts"],
     ),
+    "fog": (
+        "Fog of war",
+        "The experimental route a solver can take under the fog (what is lit, reveals, no guessing); not yet used by rate.",
+        ["fog"],
+    ),
     "generator": (
         "The generator",
         "One puzzle for a sudoku-spec request.",
@@ -48,7 +53,8 @@ PAGES = {
     "sources": (
         "Puzzle sources",
         "Links and payloads from SudokuPad, f-puzzles, Penpa and Logic Masters, read into puzzles.",
-        ["sources/__init__", "sources/_common", "sources/sudokupad", "sources/_sp_translate", "sources/fpuzzles",
+        ["sources/__init__", "sources/_common", "sources/sudokupad", "sources/_sp_translate", "sources/_sp_style",
+         "sources/fpuzzles",
          "sources/_fpuz_translate", "sources/penpa", "sources/lmd"],
     ),
     "cli": ("The command line", "`python -m pencilmark` and the `pencilmark` command.", ["__main__"]),
