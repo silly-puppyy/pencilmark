@@ -99,8 +99,9 @@ def test_colouring_never_below_medium():
 
 
 @pytest.mark.slow
-def test_colouring_on_leaves_easy_cards_alone():
-    """the solve path stays easiest-first: with colouring on, Very Easy / Easy golden cards keep their band and list"""
+def test_colouring_switch_leaves_easy_cards_alone():
+    """the solve path stays easiest-first: with colouring switched (off since it is on by default), Very Easy / Easy
+    golden cards keep their band and list"""
     from pencilmark import grader_model as GM
 
     inputs = {json.loads(line)["name"]: json.loads(line) for line in (GOLDEN / "inputs.jsonl").open(encoding="utf-8")}
@@ -109,7 +110,7 @@ def test_colouring_on_leaves_easy_cards_alone():
     m = GM.default()
     old = m.route.get("colouring", 0)
     try:
-        m.route["colouring"] = 1
+        m.route["colouring"] = 1 - old
         api._PARAMS = (None, None)
         for r in easy:
             c = pencilmark.rate(inputs[r["name"]]["puzzle"], fields=["band", "contains"], max_seconds=60)
