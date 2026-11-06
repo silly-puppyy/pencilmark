@@ -7,6 +7,8 @@
 - Opt-in quality checks (off unless named): `asymmetric`, `no_interplay`, `winding`, `short_lines`, `repetitive`,
   `monotone`, `desert`, `late_break`; limits near the edge of published Medium+ puzzles
   (1-27% of them flagged, per check).
+- Colour Algebra (colour the grid as unknown digits) comes before band set theory in the Very Hard study order: the
+  route opens with the colouring that solvers describe on zero-given palindrome puzzles; grades unchanged.
 - Colouring is on by default (`colouring` 1): the identity layer's colour techniques are part of the human route. A few
   cards change (golden: 2 of 55 bands Hard -> Medium, difficulty within 0.2 on 5; private 2 bands, 26 difficulties).
 - Publishing check `thin` replaces `spike`: a Medium or harder puzzle whose candidate steps carry less than 25% of
