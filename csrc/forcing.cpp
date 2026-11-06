@@ -23,9 +23,12 @@ namespace cs {
 
 namespace {
 bool fc_skip(const char* n) {
-    // never inside a branch: uniqueness arguments, case splits, the forcing tiers themselves
+    // never inside a branch: uniqueness arguments, case splits, the forcing tiers themselves, and the identity layer's
+    // colour steps (params colouring: kept colours are not branch state, and running them at every node of every
+    // branch made forcing ~7x slower for the same grades, 2026-11-06)
     static const char* bad[] = {"ur", "xur", "bug", "shorttrial", "eitherway", "trial", "forcing", "dynforcing",
-                                "nestedforcing", "nishio", "gurth", "pom", "whatif", "humancase"};
+                                "nestedforcing", "nishio", "gurth", "pom", "whatif", "humancase",
+                                "idprop", "classsingle", "classpair", "classtrap"};
     for (const char* b : bad)
         if (!std::strcmp(n, b)) return true;
     return false;
