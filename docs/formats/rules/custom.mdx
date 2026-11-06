@@ -82,6 +82,25 @@ custom rules read them:
 "layers": {"shift": {"values": [-1, 0, 1]}}
 ```
 
+A complete 4×4 puzzle with one shared unknown: three marked pairs have the same sum X (one solution, X included):
+
+```json
+{"format": "sudoku-puzzle", "format_version": 1,
+ "board": {"rows": 4, "cols": 4},
+ "digits": 4,
+ "givens": [
+    0, 0, 0, 1,
+    0, 0, 0, 0,
+    0, 2, 0, 0,
+    4, 0, 0, 0],
+ "unknowns": {"X": {"range": [3, 7]}},
+ "rules": [
+   {"type": "box_grid", "box": [2, 2], "count": [2, 2]},
+   {"type": "custom", "cells": {"a": ["r1c1", "r1c2"]}, "holds": "sum(a) == X"},
+   {"type": "custom", "cells": {"b": ["r4c3", "r4c4"]}, "holds": "sum(b) == X"},
+   {"type": "custom", "cells": {"c": ["r2c3", "r3c2"]}, "holds": "sum(c) == X"}]}
+```
+
 - An unknown is read by its name, as a number: `sum(c) == X`. A choice is an unknown with values 0 / 1, used as
   `T1 == 1 or sum(c) == 10` or counted with `T1 + T2 + T3 == 2`.
 - A layer gives each cell one of its values; a rule reads it as a function of a cell named after the layer:

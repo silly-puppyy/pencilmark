@@ -70,6 +70,23 @@ Since pencilmark 1.2.
 {"type": "same_region", "cells": ["r2c2", "r2c3", "r3c3"]}
 ```
 
+A complete 4×4 chaos construction (one solution, digits and regions; the dividing line between r1c2 and r1c3 and the three cells of one region are its clues):
+
+```json
+{"format": "sudoku-puzzle", "format_version": 1,
+ "board": {"rows": 4, "cols": 4},
+ "digits": 4,
+ "givens": [
+    0, 0, 0, 0,
+    0, 3, 1, 0,
+    0, 0, 0, 0,
+    2, 0, 0, 3],
+ "rules": [
+   {"type": "chaos"},
+   {"type": "region_border", "cells": ["r1c2", "r1c3"]},
+   {"type": "same_region", "cells": ["r3c1", "r4c1", "r4c2"]}]}
+```
+
 - **`chaos`**: a `grid` (its D rows and D columns are houses) whose boxes the solver finds: the area divides into D
   orthogonally connected regions of D cells, and every region holds each digit once (chaos construction). Every cell
   of the area MUST exist; the area has no `box` / `box_grid` rules of its own.
