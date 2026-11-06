@@ -5,7 +5,8 @@
 - Quality presets: `quality={"preset": "standard"}` (`--quality preset=standard`) turns on decorative, trivial, trial,
   thin and unusual (all reject) and switches the other checks off; checks named next to the preset adjust it.
 - Opt-in quality checks (off unless named): `asymmetric`, `no_interplay`, `winding`, `short_lines`, `repetitive`,
-  `monotone`, `desert`, `late_break`; limits at the 10th / 90th percentile of published Medium+ puzzles.
+  `monotone`, `desert`, `late_break`; limits near the edge of published Medium+ puzzles
+  (1-27% of them flagged, per check).
 - Colouring is on by default (`colouring` 1): the identity layer's colour techniques are part of the human route. A few
   cards change (golden: 2 of 55 bands Hard -> Medium, difficulty within 0.2 on 5; private 2 bands, 26 difficulties).
 - Publishing check `thin` replaces `spike`: a Medium or harder puzzle whose candidate steps carry less than 25% of

@@ -15,8 +15,9 @@ Hand-coded rules, each checked against published puzzles (docs/research/quality_
   unusual      a difficulty outside the middle 80% of published puzzles of the same band (classic 9x9 and variants
                apart, TYPICAL; Very Easy has no floor, Extreme no ceiling): a Very Easy puzzle that scans like an Easy
                one, a Medium that plays like a Very Hard (reject)
-Opt-in checks (off unless the quality object sets their severity or limit; limits at the 10th / 90th percentile of
-published Medium+ puzzles, 1,221 from LMD, sudoku.coach, Puzzle Duel, fed and others, quality study 2026-11-06):
+Opt-in checks (off unless the quality object sets their severity or limit; limits near the edge of published Medium+
+puzzles, 1,221 from LMD, sudoku.coach, Puzzle Duel, fed and others, quality study 2026-11-06; share of 165 published
+Medium+ dev puzzles flagged: monotone 27%, asymmetric 25%, desert 8%, others 1-4%):
   asymmetric   the givens pattern has no symmetry (62% of published Medium+ classics have one)
   no_interplay a variant with two or more rule families that share fewer than `no_interplay` (1) cells
   winding      lines turn at more than `winding` (0.9) of their inner cells on average (published p90 0.91)
