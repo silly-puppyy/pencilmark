@@ -68,14 +68,15 @@ QUALITY = {
 }
 OPT_IN = ("asymmetric", "no_interplay", "winding", "short_lines", "repetitive", "monotone", "desert", "late_break")
 # difficulty of published puzzles per band: (10th, 90th percentile), classic 9x9 and variants apart. Measured
-# 2026-11-02 (round counting, 1.2) on the development set (7,253 puzzles with human data from seven sources, 6,452 graded; never the frozen
-# benchmark); a band with fewer than 20 puzzles has no range. docs/guides/generator/generate.md shows the middle halves.
+# 2026-11-06 (1.2 engine: colouring on, round counting) on the v12 development set (7,253 puzzles with human data from
+# seven sources, 7,155 graded; never the frozen benchmark); a band with fewer than 20 puzzles has no range.
+# docs/guides/generator/generate.md shows the middle halves.
 # Very Easy has no floor and Extreme no ceiling (nothing is too easy or too hard for them)
 TYPICAL = {
-    "classic": {"Very Easy": (None, 4.6), "Easy": (4.4, 6.4), "Medium": (6.0, 7.2), "Hard": (5.1, 7.0),
-                "Very Hard": (6.7, 8.3), "Expert": (7.0, 11.1)},
-    "variant": {"Very Easy": (None, 5.6), "Easy": (4.4, 8.3), "Medium": (6.5, 11.1), "Hard": (4.6, 9.6),
-                "Very Hard": (8.0, 13.9), "Expert": (8.4, 14.2), "Extreme": (13.2, None)},
+    "classic": {"Very Easy": (None, 4.6), "Easy": (4.4, 6.4), "Medium": (6.0, 7.2),
+                "Hard": (5.2, 7.0), "Very Hard": (6.6, 8.2), "Expert": (7.3, 11.3)},
+    "variant": {"Very Easy": (None, 5.9), "Easy": (4.7, 8.5), "Medium": (6.5, 10.9),
+                "Hard": (5.2, 9.8), "Very Hard": (8.3, 13.8), "Expert": (8.5, 14.1)},
 }  # fmt: skip
 SEVERITIES = ("reject", "warning", "off")
 # presets (quality {"preset": name}): only these checks are on, at these severities; everything else is off; any check

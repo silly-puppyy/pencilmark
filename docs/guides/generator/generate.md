@@ -96,28 +96,29 @@ symmetry, board sizes), with the puzzle each produced and how long it took.
 
 Without a difficulty range the generator removes every given it can. A puzzle with few givens takes long to scan even
 when it needs only singles, so a Very Easy request comes back at about 4-5, the hard end of published Very Easy
-puzzles. For a gentle puzzle, add a range, and the publishing checks (`"quality": {}`, recommended):
+puzzles. For a gentle puzzle, add a range, and the standard publishing checks (`"quality": {"preset": "standard"}`,
+recommended):
 
 ```json
-"where": {"band": "Very Easy", "difficulty": [3.2, 4.0]}, "quality": {}
+"where": {"band": "Very Easy", "difficulty": [3.2, 4.0]}, "quality": {"preset": "standard"}
 ```
 
-The middle half of published puzzles per band (development set: 6,452 puzzles from seven sources with human data):
+The middle half of published puzzles per band (development set: 7,155 puzzles from seven sources with human data):
 
 | Band | Classic 9×9 | Variants |
 |---|---|---|
-| Very Easy | up to 4.3 | up to 5.2 |
-| Easy | 4.8 to 5.9 | 5.1 to 7.3 |
-| Medium | 6.3 to 7.0 | 8.2 to 10.0 |
-| Hard | 5.5 to 6.5 | 5.9 to 7.7 |
-| Very Hard | 6.8 to 7.5 | 9.7 to 12.6 |
-| Expert | 7.6 to 9.9 | 9.8 to 12.8 |
-| Extreme | (too few) | 14.4 and above |
+| Very Easy | up to 4.4 | up to 5.5 |
+| Easy | 4.9 to 6.0 | 5.2 to 7.6 |
+| Medium | 6.3 to 6.9 | 8.1 to 10.0 |
+| Hard | 5.6 to 6.6 | 6.2 to 8.0 |
+| Very Hard | 6.9 to 7.7 | 9.8 to 12.5 |
+| Expert | 7.8 to 10.1 | 9.8 to 12.9 |
+| Extreme | (too few) | (too few) |
 
 A band says which techniques a puzzle needs and the difficulty how hard its steps are to find, so a Hard puzzle (one
 X-Wing) is often quicker than a long Medium. For classics, Andrew Stuart's sudokuwiki.org grades read directly on
 pencilmark's difficulty (the two scales agree within 0.3 on the same puzzles): Gentle 3 to 4, Moderate 4 to 5, Tough 5
-to 7, Diabolical 7 to 9, Extreme 9 and above. With `"quality": {}` the check `unusual` refuses a result outside the
+to 7, Diabolical 7 to 9, Extreme 9 and above. With the standard preset the check `unusual` refuses a result outside the
 middle 80% of its band (Very Easy has no floor, Extreme no ceiling); `{"unusual": {"severity": "off"}}` lets it through.
 
 ## 5. When the generator cannot do it

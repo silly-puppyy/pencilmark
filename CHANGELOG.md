@@ -7,6 +7,9 @@
 - Opt-in quality checks (off unless named): `asymmetric`, `no_interplay`, `winding`, `short_lines`, `repetitive`,
   `monotone`, `desert`, `late_break`; limits near the edge of published Medium+ puzzles
   (1-27% of them flagged, per check).
+- Published ranges per band (`unusual`, the generator guide's table) re-measured on the 1.2 engine and the repaired
+  development set (7,155 puzzles): variant Easy from 4.7 (was 4.4), variant Hard from 5.2 (was 4.6), variant Very Easy
+  up to 5.9 (was 5.6); variant Extreme has too few puzzles for a range now. The guide recommends the standard preset.
 - Export: a rule part tagged with its line kind is dropped only when its line is there too; a reader that built only
   the part (an equal sum for a region-sum line) no longer loses the rule on export.
 - Custom rules: a set of number literals (`concat(c) in {...}`) is built once, not once per digit tuple: a puzzle

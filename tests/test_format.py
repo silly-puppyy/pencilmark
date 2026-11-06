@@ -492,7 +492,8 @@ def test_card_fields():
     d = pencilmark.from_string(CLASSIC)
     d["rules"].append({"type": "line", "kind": "thermo", "cells": ["r1c5", "r1c4"]})  # true, but never needed
     i = pencilmark.rate(d, fields=["issues", "reject"])
-    assert i["reject"] is True and i["issues"][0]["rules"] == [1] and "rule 1" in i["issues"][0]["text"], i
+    dec = next(x for x in i["issues"] if x["code"] == "decorative")
+    assert i["reject"] is True and dec["rules"] == [1] and "rule 1" in dec["text"], i
 
 
 def _houses(doc):
@@ -721,7 +722,7 @@ def test_quality_limits():
     assert soft["issues"][0]["severity"] == "warning" and soft["reject"] is False and soft["warning"] is True
     d = pencilmark.from_string(CLASSIC)
     d["rules"].append({"type": "line", "kind": "thermo", "cells": ["r1c5", "r1c4"]})
-    assert pencilmark.rate(d, fields=["issues"], quality={"decorative": {"severity": "off"}})["issues"] == []
+    assert pencilmark.rate(d, fields=["issues"], quality={"decorative": {"severity": "off"}, "unusual": {"severity": "off"}})["issues"] == []
     import pytest
 
     for bad in (
