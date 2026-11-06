@@ -42,7 +42,7 @@ def _json(x):
     raise FormatError("not a JSON document, JSON text or path")
 
 
-def pencilmark(x):
+def pencilmark(x: str | dict | Path) -> dict:
     """Read pencilmark JSON: a pencilmark-puzzle dict, its JSON text or a path to a .json file."""
     from .exchange import FORMAT, canonical
 
@@ -52,43 +52,43 @@ def pencilmark(x):
     return canonical(d)
 
 
-def plain(text, *, symbols=None):
+def plain(text: str, *, symbols: str | None = None) -> dict:
     """Read a plain string: D x D characters ('.' or '0' empty, 1-9 then A-Z), maybe followed by a comment. symbols: the
     symbol of each digit in order (e.g. "ABCDEFGHI" reads A as 1)."""
     return interop.read_plain(text, symbols)
 
 
-def grid(text):
+def grid(text: str) -> dict:
     """Read a text grid: one row per line, with or without | - + separators."""
     return interop.read_grid(text)
 
 
-def pencil_marks(text):
+def pencil_marks(text: str) -> dict:
     """Read a pencil-mark grid: one token per cell, the cell's candidates (a single digit: a given)."""
     return interop.read_pencil_marks(text)
 
 
-def candidates(text):
+def candidates(text: str) -> dict:
     """Read a 729-character candidate string (9 characters per cell, the digit or 0)."""
     return interop.read_candidates(text)
 
 
-def hodoku(line):
+def hodoku(line: str) -> dict:
     """Read a HoDoKu library line: the puzzle and its removed candidates."""
     return interop.read_hodoku(line)
 
 
-def sudokuwiki(text):
+def sudokuwiki(text: str) -> dict:
     """Read a sudokuwiki.org packed string (S9B, J9B, X9B, W9B, C9B, L9B, M9B, S6B, L6C)."""
     return interop.read_sudokuwiki(text)
 
 
-def ipuz(x):
+def ipuz(x: str | dict | Path) -> dict:
     """Read an ipuz sudoku: a dict, its JSON text or a path to a .ipuz file."""
     return interop.from_ipuz(_json(x))
 
 
-def link(url):
+def link(url: str) -> dict:
     """Read a SudokuPad, f-puzzles, Penpa or Logic Masters link (or a short link to one; some need one request). A
     reading the setter's embedded solution contradicts raises ReadingMismatch."""
     from . import sources
@@ -132,7 +132,7 @@ READERS = {
 }
 
 
-def detect(x):
+def detect(x) -> str | None:
     """Name the format of x (a key of READERS: "pencilmark", "plain", ..., "link"), or None; reads nothing but a file
     named by a path."""
     if isinstance(x, (dict, Path)) or (isinstance(x, str) and x.lstrip().startswith("{")):
@@ -155,7 +155,7 @@ def detect(x):
     return interop.text_form(x)
 
 
-def auto(x, *, format=None):  # noqa: A002 (the format's name, as in rate(format=))
+def auto(x: str | dict | Path, *, format: str | None = None) -> dict:  # noqa: A002 (the format's name, as in rate(format=))
     """Read x in its format (detected, or named by format)."""
     name = format or detect(x)
     if name is None and isinstance(x, str):  # the closest reader says what is wrong

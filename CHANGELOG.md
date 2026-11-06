@@ -28,6 +28,10 @@ What changes for you (details in the entries below):
   `from_ipuz`, `to_ipuz`, `rules_text` (now in `describe`'s result), the CLI `json` command, and the engine's internal
   JSON and sample-pack lines as inputs. A written document is kept as given (no longer rebuilt through the engine;
   fingerprints unchanged). Site links: the host names the reader, no options.
+- Public functions take their options as keywords only and carry type hints. `rate` gives band Unknown with a `reason`
+  (and `completed: false` under `max_seconds`) where it raised `Undecided`: the engine could not settle uniqueness,
+  which is not an input mistake; `solve` still raises it. `solve(info=True)` is gone; `solve` and `count_solutions`
+  take `format=`.
 - `placed` (pencilmark JSON): digits filled in after the start, as on a mid-solve board. Solved and graded like givens
   (the rest of the solve is graded), not clues for the publishing checks and symmetry. The sudokuwiki reader keeps
   Andrew Stuart's placed digits (code d + 9) as placed and the writer writes them back.

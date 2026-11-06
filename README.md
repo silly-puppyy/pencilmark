@@ -178,8 +178,8 @@ Being worked on after 1.0:
 - **The ends of the scale.** Between about 2 and 8, each point of difficulty means about 20-40% more solving time per
   cell. Above about 8 a point is worth less time (5-15% on three sources). Below 2 the scale is gentler (about the square root of
   effort, so it never goes negative); there it predicts solve times about 1.5% worse than a pure log scale would.
-- **Uniqueness on some killers.** A few large killers can raise `Undecided` without OR-Tools (`pip install
-  "pencilmark[verify]"`) although human logic solves them.
+- **Uniqueness on some killers.** A few large killers get band Unknown (uniqueness not settled) without OR-Tools
+  (`pip install "pencilmark[verify]"`) although human logic solves them.
 
 ## License
 

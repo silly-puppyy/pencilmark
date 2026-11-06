@@ -193,12 +193,11 @@ def _log_to_stderr(level):
 
 def _rate_one(args):
     """one input line -> its output text (runs in a worker process with -j). The card is api.rate's (fog under the fog,
-    Unknown with a reason where no route exists); a puzzle that is not unique, has no solution or is undecided prints
-    that instead."""
+    Unknown with a reason where no route exists or uniqueness is not settled); a puzzle that is not unique or has no
+    solution prints that instead."""
     k, obj, a = args
     _log_to_stderr(a.log)
     from . import api
-    from . import cpsat_verify as V
     from .export import card_fields
 
     fmt = a.format or "%b\\t%d\\t%m\\t%h"
@@ -227,14 +226,8 @@ def _rate_one(args):
                 alternatives=not a.no_alternatives,
                 colouring=bool(getattr(a, "colouring", False)),
             )
-        except (api.NotUnique, api.NoSolution, api.Undecided) as e:
-            st = (
-                "not unique"
-                if isinstance(e, api.NotUnique)
-                else "no solution"
-                if isinstance(e, api.NoSolution)
-                else "undecided (" + V.VERIFY_HINT + ")"
-            )
+        except (api.NotUnique, api.NoSolution) as e:
+            st = "not unique" if isinstance(e, api.NotUnique) else "no solution"
             return _fmt2(fmt, {"error": st}, k, False) if not a.json else json.dumps({"line": k, "error": st})
         return (
             json.dumps({"line": k, **g}, default=str)

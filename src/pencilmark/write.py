@@ -11,8 +11,10 @@ plain string, a link, ...) and raises NotSupportedError when the format cannot c
 
 from __future__ import annotations
 
+from pathlib import Path
 
-def document(x, *, solution=False, describe=False):
+
+def document(x: str | dict | Path, *, solution: bool = False, describe: bool = False) -> dict:
     """The pencilmark-puzzle dict of x, canonical. solution: add the solution (when the puzzle has exactly one);
     describe: fill an empty meta.type / meta.rules_text (never overwritten)."""
     from .api import _load
@@ -66,14 +68,14 @@ def _rebuilt(x):
     return export_puzzle(_load(src), meta=read_meta(src))
 
 
-def pencilmark(x, *, solution=False, describe=False, pretty=True):
+def pencilmark(x: str | dict | Path, *, solution: bool = False, describe: bool = False, pretty: bool = True) -> str:
     """pencilmark JSON text of x: canonical key order, one line per rule (pretty) or one line."""
     from .exchange import dumps
 
     return dumps(document(x, solution=solution, describe=describe), pretty=pretty)
 
 
-def plain(x):
+def plain(x: str | dict | Path) -> str:
     """One string of D x D characters, '.' for an empty cell (classic sudoku with standard boxes only)."""
     from .api import _load
     from .interop import to_string
@@ -81,7 +83,7 @@ def plain(x):
     return to_string(_load(x), "plain")
 
 
-def grid(x):
+def grid(x: str | dict | Path) -> str:
     """Rows on lines, boxes separated by | and -+- lines (classic sudoku with standard boxes only)."""
     from .api import _load
     from .interop import to_string
@@ -89,7 +91,7 @@ def grid(x):
     return to_string(_load(x), "grid")
 
 
-def sudokuwiki(x):
+def sudokuwiki(x: str | dict | Path) -> str:
     """A sudokuwiki.org packed string (classic, jigsaw, X, windoku, killer and the other forms sudokuwiki has)."""
     from .api import _load
     from .interop import to_string
@@ -97,7 +99,7 @@ def sudokuwiki(x):
     return to_string(_load(x), "sudokuwiki")
 
 
-def ipuz(x):
+def ipuz(x: str | dict | Path) -> dict:
     """An ipuz 2 dict (classic, Latin square, diagonal, windoku, jigsaw and killer sudoku)."""
     from .interop import to_ipuz
 

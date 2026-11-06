@@ -22,8 +22,8 @@ What `rate()` returns and `pencilmark rate --json` prints: one JSON object per p
               {"code": "XWG", "chip": "XWG/KTE/CSM/MCH", "name": "X-Wing", "band": 3, "alternatives": ["KTE", "CSM", "MCH"], "uses": 1}]}
 ```
 
-A card exists only for a puzzle with exactly one solution. For any other puzzle, `rate()` raises `NotUnique`,
-`NoSolution` or `Undecided`; `rate_many()` and the command line give `{"error": "…"}` in its place (the command line adds
+A card exists only for a puzzle with exactly one solution. For any other puzzle, `rate()` raises `NotUnique` or
+`NoSolution`; `rate_many()` and the command line give `{"error": "…"}` in its place (the command line adds
 `"line"`, the input line number, to every object).
 
 ## 1. Keys
@@ -42,7 +42,7 @@ A card exists only for a puzzle with exactly one solution. For any other puzzle,
 | `stopped_at_step` | with `contains`, when human logic ran out | integer | The first step human logic could not make (band `Unknown` with guessing allowed); the `contains` list ends there. |
 | `reason` | when no route grades the puzzle | string | Why `band` is `"Unknown"` though the puzzle is a valid, unique one: the fog stops the route, or a rule no human technique reasons with yet (shading, unknowns / layers). Wrong inputs (unreadable, not unique, no solution) raise errors instead. |
 | `fog` | on fog puzzles | object | What the fog route did: `lit_start` (cells lit at the start), `reveals`, `rounds`, `solved` (the route finished under the fog), and `stuck_empty` (empty cells left) when it did not. A fog puzzle is graded under the fog ([Fog of war](../guides/grader/fog.md)): when the route stops, `band` is `"Unknown"`, `difficulty` / `time` are null and `stopped_at_step` says where; `issues`, `steps`, `trace` and `se` are null on a fog card for now. |
-| `completed` | with `max_seconds` | boolean | True when grading finished within `max_seconds`; absent without a limit (grading then always finishes). False: the limit passed. If it passed in the difficulty route, `band` is `"Unknown"` and `difficulty` / `time` are null, with the techniques found so far in `contains`; if it passed only in the search for the shortest list, the grade stands but the list may not be minimal or may miss alternatives. `max_seconds` bounds the whole call (uniqueness proof, card, technique list); a puzzle whose uniqueness is not proven within it raises `Undecided`. Band `"Unknown"` with `completed` true means human logic ran out (`allow_guessing`). |
+| `completed` | with `max_seconds` | boolean | True when grading finished within `max_seconds`; absent without a limit (grading then always finishes). False: the limit passed. If it passed in the difficulty route, `band` is `"Unknown"` and `difficulty` / `time` are null, with the techniques found so far in `contains`; if it passed only in the search for the shortest list, the grade stands but the list may not be minimal or may miss alternatives. `max_seconds` bounds the whole call (uniqueness proof, card, technique list); a puzzle whose uniqueness is not proven within it gets band `"Unknown"`, `completed` false and a `reason`. Band `"Unknown"` with `completed` true means human logic ran out (`allow_guessing`). |
 | `elapsed` | optional | number | Wall-clock seconds the grader took for this card (for `rate()`: the uniqueness proof plus the card). Machine-dependent; not part of the grade. |
 | `issues` | optional | list | Publishing checks (section 4). |
 | `reject` | optional | boolean | True when any issue has severity `reject`. |

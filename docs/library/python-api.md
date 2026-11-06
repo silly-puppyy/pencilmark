@@ -47,9 +47,9 @@ toc_max_heading_level: 2
 
 ## Grading
 
-### `def rate(puzzle, steps=False, max_seconds=None, mode='human', se=False, fields=None, allow_guessing=False, explain=None, quality=None, alternatives=True, colouring=False, format=None)` {#rate}
+### `def rate(puzzle: str | dict | Path, *, steps: bool=False, max_seconds: float | None=None, mode: str='human', se: bool=False, fields: list[str] | None=None, allow_guessing: bool=False, explain: bool | str | list[str] | None=None, quality: dict | None=None, alternatives: bool=True, colouring: bool=False, format: str | None=None) -> dict` {#rate}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L108)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L110)
 
 The "pencilmark-grade" card of one puzzle ([Grade card](../formats/grade-card.md)), with only the fields you ask for.
 
@@ -76,11 +76,12 @@ The "pencilmark-grade" card of one puzzle ([Grade card](../formats/grade-card.md
 
 - *NotUnique* — The puzzle has more than one solution.
 - *NoSolution* — The puzzle has no solution.
-- *Undecided* — The uniqueness search hit its limit without OR-Tools installed, or max_seconds passed first.
+- *A puzzle whose uniqueness the engine cannot settle (max_seconds passed first, or the search hit its limit without*
+- *OR-Tools) is not an error: its card has band "Unknown" and a `reason`.*
 
-### `def rate_many(puzzles, jobs=1, steps=False, max_seconds=None, mode='human', se=False, fields=None, allow_guessing=False, explain=None, quality=None, alternatives=True, colouring=False)` {#rate_many}
+### `def rate_many(puzzles: list, *, jobs: int=1, steps: bool=False, max_seconds: float | None=None, mode: str='human', se: bool=False, fields: list[str] | None=None, allow_guessing: bool=False, explain: bool | str | list[str] | None=None, quality: dict | None=None, alternatives: bool=True, colouring: bool=False) -> list[dict]` {#rate_many}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L294)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L302)
 
 Cards for many puzzles, in input order.
 
@@ -94,9 +95,9 @@ Cards for many puzzles, in input order.
 
 - *list of dict* — One card per puzzle. A puzzle that cannot be rated (not unique, no solution, unreadable) gives {"error": "..."} instead of raising.
 
-### `def describe(puzzle)` {#describe}
+### `def describe(puzzle: str | dict | Path) -> dict` {#describe}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L451)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L455)
 
 The variant name and its rules in words, from the rules alone (pencilmark/variants.py).
 
@@ -110,9 +111,9 @@ The variant name and its rules in words, from the rules alone (pencilmark/varian
 
 ## Solving
 
-### `def solve(puzzle, info=False)` {#solve}
+### `def solve(puzzle: str | dict | Path, *, format: str | None=None) -> list[int]` {#solve}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L335)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L344)
 
 The unique solution of a puzzle.
 
@@ -121,7 +122,7 @@ Uses the engine's exhaustive C++ search; CP-SAT (OR-Tools, optional) only when t
 **Parameters**
 
 - `puzzle` *str, dict, Path or Puzzle* — Any format pencilmark.read reads (detected), or its document.
-- `info` *bool* — Return {"solution": [...], "seconds": wall-clock seconds of the search} instead of the bare list.
+- `format` *str, optional* — The input's format instead of detecting it.
 
 **Returns**
 
@@ -133,9 +134,9 @@ Uses the engine's exhaustive C++ search; CP-SAT (OR-Tools, optional) only when t
 - *NoSolution* — No solution.
 - *Undecided* — The search hit its node or time limit and OR-Tools is not installed.
 
-### `def count_solutions(puzzle, limit=1000)` {#count_solutions}
+### `def count_solutions(puzzle: str | dict | Path, *, limit: int=1000, format: str | None=None) -> dict` {#count_solutions}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L381)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L385)
 
 How many solutions a puzzle has, counting up to a limit.
 
@@ -150,9 +151,9 @@ How many solutions a puzzle has, counting up to a limit.
 
 ## Generating
 
-### `def generate(spec)` {#generate}
+### `def generate(spec: str | dict | Path) -> dict` {#generate}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L471)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L475)
 
 One puzzle for a "pencilmark-spec" request ([Generator spec](../formats/generator-spec.md)).
 
@@ -170,67 +171,67 @@ One puzzle for a "pencilmark-spec" request ([Generator spec](../formats/generato
 
 ## Reading (pencilmark.read)
 
-### `def read.auto(x, *, format=None)` {#read-auto}
+### `def read.auto(x: str | dict | Path, *, format: str | None=None) -> dict` {#read-auto}
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/read.py#L158)
 
 Read x in its format (detected, or named by format).
 
-### `def read.detect(x)` {#read-detect}
+### `def read.detect(x) -> str | None` {#read-detect}
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/read.py#L135)
 
 Name the format of x (a key of READERS: "pencilmark", "plain", ..., "link"), or None; reads nothing but a file named by a path.
 
-### `def read.pencilmark(x)` {#read-pencilmark}
+### `def read.pencilmark(x: str | dict | Path) -> dict` {#read-pencilmark}
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/read.py#L45)
 
 Read pencilmark JSON: a pencilmark-puzzle dict, its JSON text or a path to a .json file.
 
-### `def read.plain(text, *, symbols=None)` {#read-plain}
+### `def read.plain(text: str, *, symbols: str | None=None) -> dict` {#read-plain}
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/read.py#L55)
 
 Read a plain string: D x D characters ('.' or '0' empty, 1-9 then A-Z), maybe followed by a comment. symbols: the symbol of each digit in order (e.g. "ABCDEFGHI" reads A as 1).
 
-### `def read.grid(text)` {#read-grid}
+### `def read.grid(text: str) -> dict` {#read-grid}
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/read.py#L61)
 
 Read a text grid: one row per line, with or without | - + separators.
 
-### `def read.pencil_marks(text)` {#read-pencil_marks}
+### `def read.pencil_marks(text: str) -> dict` {#read-pencil_marks}
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/read.py#L66)
 
 Read a pencil-mark grid: one token per cell, the cell's candidates (a single digit: a given).
 
-### `def read.candidates(text)` {#read-candidates}
+### `def read.candidates(text: str) -> dict` {#read-candidates}
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/read.py#L71)
 
 Read a 729-character candidate string (9 characters per cell, the digit or 0).
 
-### `def read.hodoku(line)` {#read-hodoku}
+### `def read.hodoku(line: str) -> dict` {#read-hodoku}
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/read.py#L76)
 
 Read a HoDoKu library line: the puzzle and its removed candidates.
 
-### `def read.sudokuwiki(text)` {#read-sudokuwiki}
+### `def read.sudokuwiki(text: str) -> dict` {#read-sudokuwiki}
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/read.py#L81)
 
 Read a sudokuwiki.org packed string (S9B, J9B, X9B, W9B, C9B, L9B, M9B, S6B, L6C).
 
-### `def read.ipuz(x)` {#read-ipuz}
+### `def read.ipuz(x: str | dict | Path) -> dict` {#read-ipuz}
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/read.py#L86)
 
 Read an ipuz sudoku: a dict, its JSON text or a path to a .ipuz file.
 
-### `def read.link(url)` {#read-link}
+### `def read.link(url: str) -> dict` {#read-link}
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/read.py#L91)
 
@@ -238,47 +239,47 @@ Read a SudokuPad, f-puzzles, Penpa or Logic Masters link (or a short link to one
 
 ## Writing (pencilmark.write)
 
-### `def write.pencilmark(x, *, solution=False, describe=False, pretty=True)` {#write-pencilmark}
+### `def write.pencilmark(x: str | dict | Path, *, solution: bool=False, describe: bool=False, pretty: bool=True) -> str` {#write-pencilmark}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L69)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L71)
 
 pencilmark JSON text of x: canonical key order, one line per rule (pretty) or one line.
 
-### `def write.document(x, *, solution=False, describe=False)` {#write-document}
+### `def write.document(x: str | dict | Path, *, solution: bool=False, describe: bool=False) -> dict` {#write-document}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L15)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L17)
 
 The pencilmark-puzzle dict of x, canonical. solution: add the solution (when the puzzle has exactly one); describe: fill an empty meta.type / meta.rules_text (never overwritten).
 
-### `def write.plain(x)` {#write-plain}
+### `def write.plain(x: str | dict | Path) -> str` {#write-plain}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L76)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L78)
 
 One string of D x D characters, '.' for an empty cell (classic sudoku with standard boxes only).
 
-### `def write.grid(x)` {#write-grid}
+### `def write.grid(x: str | dict | Path) -> str` {#write-grid}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L84)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L86)
 
 Rows on lines, boxes separated by | and -+- lines (classic sudoku with standard boxes only).
 
-### `def write.sudokuwiki(x)` {#write-sudokuwiki}
+### `def write.sudokuwiki(x: str | dict | Path) -> str` {#write-sudokuwiki}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L92)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L94)
 
 A sudokuwiki.org packed string (classic, jigsaw, X, windoku, killer and the other forms sudokuwiki has).
 
-### `def write.ipuz(x)` {#write-ipuz}
+### `def write.ipuz(x: str | dict | Path) -> dict` {#write-ipuz}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L100)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L102)
 
 An ipuz 2 dict (classic, Latin square, diagonal, windoku, jigsaw and killer sudoku).
 
 ## Checking
 
-### `def validate(doc)` {#validate}
+### `def validate(doc: dict) -> bool` {#validate}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L427)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L431)
 
 Strict reading checks of a format_version 1 dict ([Puzzle format](../formats/puzzle-format.md) section 4).
 
@@ -294,9 +295,9 @@ Strict reading checks of a format_version 1 dict ([Puzzle format](../formats/puz
 
 - *FormatError* — The document breaks the format; the message names the rule and the problem.
 
-### `def fingerprint(puzzle)` {#fingerprint}
+### `def fingerprint(puzzle: str | dict | Path) -> str` {#fingerprint}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L405)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L409)
 
 Content fingerprint of a puzzle: the SHA-256 of its canonical form, 64 hex digits.
 

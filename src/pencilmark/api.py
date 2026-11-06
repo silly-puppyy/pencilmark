@@ -18,6 +18,8 @@ then says band "Unknown".
 
 from __future__ import annotations
 
+from pathlib import Path
+
 __all__ = [
     "rate",
     "rate_many",
@@ -106,19 +108,20 @@ def _load(puzzle, format=None):  # noqa: A002
 
 
 def rate(
-    puzzle,
-    steps=False,
-    max_seconds=None,
-    mode="human",
-    se=False,
-    fields=None,
-    allow_guessing=False,
-    explain=None,
-    quality=None,
-    alternatives=True,
-    colouring=False,
-    format=None,  # noqa: A002
-):
+    puzzle: str | dict | Path,
+    *,
+    steps: bool = False,
+    max_seconds: float | None = None,
+    mode: str = "human",
+    se: bool = False,
+    fields: list[str] | None = None,
+    allow_guessing: bool = False,
+    explain: bool | str | list[str] | None = None,
+    quality: dict | None = None,
+    alternatives: bool = True,
+    colouring: bool = False,
+    format: str | None = None,  # noqa: A002
+) -> dict:
     """The "pencilmark-grade" card of one puzzle (docs/formats/grade-card.md), with only the fields you ask for.
 
     Parameters
@@ -172,8 +175,9 @@ def rate(
         The puzzle has more than one solution.
     NoSolution
         The puzzle has no solution.
-    Undecided
-        The uniqueness search hit its limit without OR-Tools installed, or max_seconds passed first.
+
+    A puzzle whose uniqueness the engine cannot settle (max_seconds passed first, or the search hit its limit without
+    OR-Tools) is not an error: its card has band "Unknown" and a `reason`.
     """
     from . import cpsat_verify as V
     from .export import card_fields, grade
@@ -211,13 +215,17 @@ def rate(
         )
         if len(sols) > 1:
             raise NotUnique("more than one solution")
-        if not decided:
-            if timed and CB._C.deadline_hit():
-                raise Undecided(f"max_seconds ({max_seconds}) passed before uniqueness was proven")
-            raise Undecided(
-                'search limit reached without a verdict; install OR-Tools (pip install "pencilmark[verify]") '
-                "for the CP-SAT fallback"
+        if not decided:  # the engine cannot tell whether the puzzle is unique: Unknown, not an error
+            hit = timed and CB._C.deadline_hit()
+            g = EX.unknown_card(
+                want,
+                f"max_seconds ({max_seconds}) passed before uniqueness was proven"
+                if hit
+                else 'uniqueness search limit reached; OR-Tools (pip install "pencilmark[verify]") settles most',
             )
+            if max_seconds is not None:
+                g["completed"] = False
+            return g
         if not sols:
             raise NoSolution("no solution")
         p._pm_solution = list(sols[0])  # proven unique: later stages reuse it instead of searching again
@@ -292,19 +300,20 @@ def _rate_job(args):
 
 
 def rate_many(
-    puzzles,
-    jobs=1,
-    steps=False,
-    max_seconds=None,
-    mode="human",
-    se=False,
-    fields=None,
-    allow_guessing=False,
-    explain=None,
-    quality=None,
-    alternatives=True,
-    colouring=False,
-):
+    puzzles: list,
+    *,
+    jobs: int = 1,
+    steps: bool = False,
+    max_seconds: float | None = None,
+    mode: str = "human",
+    se: bool = False,
+    fields: list[str] | None = None,
+    allow_guessing: bool = False,
+    explain: bool | str | list[str] | None = None,
+    quality: dict | None = None,
+    alternatives: bool = True,
+    colouring: bool = False,
+) -> list[dict]:
     """Cards for many puzzles, in input order.
 
     Parameters
@@ -332,7 +341,7 @@ def rate_many(
         return pool.map(_rate_job, items, chunksize=1)
 
 
-def solve(puzzle, info=False):
+def solve(puzzle: str | dict | Path, *, format: str | None = None) -> list[int]:  # noqa: A002
     """The unique solution of a puzzle.
 
     Uses the engine's exhaustive C++ search; CP-SAT (OR-Tools, optional) only when that search hits its node or time limit.
@@ -341,8 +350,8 @@ def solve(puzzle, info=False):
     ----------
     puzzle : str, dict, Path or Puzzle
         Any format pencilmark.read reads (detected), or its document.
-    info : bool
-        Return {"solution": [...], "seconds": wall-clock seconds of the search} instead of the bare list.
+    format : str, optional
+        The input's format instead of detecting it.
 
     Returns
     -------
@@ -358,12 +367,9 @@ def solve(puzzle, info=False):
     Undecided
         The search hit its node or time limit and OR-Tools is not installed.
     """
-    import time
-
     from . import cpsat_verify as V
 
-    t0 = time.perf_counter()
-    sols, decided = V.decide(_load(puzzle), limit=2)
+    sols, decided = V.decide(_load(puzzle, format=format), limit=2)
     if len(sols) > 1:
         raise NotUnique("more than one solution")
     if not decided:
@@ -373,12 +379,10 @@ def solve(puzzle, info=False):
         )
     if not sols:
         raise NoSolution("no solution")
-    if info:
-        return {"solution": list(sols[0]), "seconds": round(time.perf_counter() - t0, 4)}
     return list(sols[0])
 
 
-def count_solutions(puzzle, limit=1000):
+def count_solutions(puzzle: str | dict | Path, *, limit: int = 1000, format: str | None = None) -> dict:  # noqa: A002
     """How many solutions a puzzle has, counting up to a limit.
 
     Parameters
@@ -398,11 +402,11 @@ def count_solutions(puzzle, limit=1000):
 
     if limit < 1:
         raise ValueError("limit must be at least 1")
-    sols, decided = V.decide(_load(puzzle), limit=limit)
+    sols, decided = V.decide(_load(puzzle, format=format), limit=limit)
     return {"count": len(sols), "exact": decided and len(sols) < limit}
 
 
-def fingerprint(puzzle):
+def fingerprint(puzzle: str | dict | Path) -> str:
     """Content fingerprint of a puzzle: the SHA-256 of its canonical form, 64 hex digits.
 
     Covers the rules, grid, givens and candidates; not meta, style or the solution. Two files of the same puzzle get the
@@ -424,7 +428,7 @@ def fingerprint(puzzle):
     return fingerprint_of_doc(_rebuilt(puzzle))
 
 
-def validate(doc):
+def validate(doc: dict) -> bool:
     """Strict reading checks of a format_version 1 dict (docs/formats/puzzle-format.md section 4).
 
     Parameters
@@ -448,7 +452,7 @@ def validate(doc):
     return True
 
 
-def describe(puzzle):
+def describe(puzzle: str | dict | Path) -> dict:
     """The variant name and its rules in words, from the rules alone (pencilmark/variants.py).
 
     Parameters
@@ -468,7 +472,7 @@ def describe(puzzle):
     return dict(out, rules_text=rules_text(out))
 
 
-def generate(spec):
+def generate(spec: str | dict | Path) -> dict:
     """One puzzle for a "pencilmark-spec" request (docs/formats/generator-spec.md).
 
     Parameters

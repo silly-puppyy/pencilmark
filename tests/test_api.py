@@ -239,8 +239,6 @@ def test_timing_fields():
     c = pencilmark.rate(CLASSIC, fields=["difficulty", "elapsed"])
     assert isinstance(c["elapsed"], float) and 0 <= c["elapsed"] < 30, c
     assert "elapsed" not in pencilmark.rate(CLASSIC)  # optional
-    s = pencilmark.solve(CLASSIC, info=True)
-    assert s["solution"] == pencilmark.solve(CLASSIC) and s["seconds"] >= 0, s
 
 
 def test_text_grids_and_pencilmarks():
