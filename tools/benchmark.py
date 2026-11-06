@@ -63,7 +63,9 @@ def grade(src, dst, jobs, max_seconds):
         }
     todo = [dict(r, _max_seconds=max_seconds) for r in rows if (r["source"], str(r["key"])) not in done]
     print(f"{len(rows)} puzzles, {len(todo)} to grade", file=sys.stderr)
-    with open(dst, "a", encoding="utf-8") as fh, Pool(jobs) as pool:
+    # workers are replaced every 20 puzzles: the engine's caches grow with each puzzle (a 6-worker run of the 7,623
+    # frozen puzzles reached 12 GB without this)
+    with open(dst, "a", encoding="utf-8") as fh, Pool(jobs, maxtasksperchild=20) as pool:
         for k, out in enumerate(pool.imap_unordered(_grade, todo), 1):
             fh.write(json.dumps(out, ensure_ascii=False) + "\n")
             fh.flush()
