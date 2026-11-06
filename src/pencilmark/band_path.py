@@ -160,12 +160,14 @@ def band_path(
     prefix=(),
     max_band=6,
     keep_held=False,
+    stop_cells=None,
 ):
     """solve band by band (see module doc). Moves are taken in full-notes mode: each placement clears its peers.
     target = a cell: stop once it is placed, preferring (within the current band) a move that places it -- "what does
     it take to place this cell from here". max_band: stop (unsolved) where only a harder move would continue -- contents()
     reruns can only count if they stay in the card's band, so they never list above it. keep_held: keep colour-only
-    steps no later step used (the fog route: a colour may pay off after the next reveal)."""
+    steps no later step used (the fog route: a colour may pay off after the next reveal). stop_cells: stop right after
+    a placement in one of these cells (the fog route: a placement that lights new cells ends the round)."""
     if not hasattr(p, "groups_of"):
         p.finalize()
     P = dict(P or {}, search="human")
@@ -242,9 +244,13 @@ def band_path(
     aborted = False
     seg = max((st.get("seg", 0) for st in prefix), default=0)  # engine call each step came from
 
+    stopped = [False]
+
     def record(stp):
         nonlocal aborted
         steps.append(stp)
+        if stop_cells and stp["place"] and stp["place"][0] in stop_cells:
+            stopped[0] = True
         if ids and not stp["place"] and not stp["elims"]:  # identity only: held until a later step uses it, so
             return  # whether it counts is known only at the end (held steps are dropped there; _route_ok judges)
         counts[stp["code"]] += 1
@@ -264,7 +270,7 @@ def band_path(
             }
         )
     for _ in range(max_steps):
-        if aborted or all(vals) or (target is not None and vals[target]):
+        if aborted or stopped[0] or all(vals) or (target is not None and vals[target]):
             break
         q.givens = {c: v for c, v in enumerate(vals) if v}
         mask = [cand[c] if not vals[c] else 1 << (vals[c] - 1) for c in range(N)]
@@ -328,7 +334,7 @@ def band_path(
                     }
                 )
                 moved = True
-                if aborted or (target is not None and vals[target]):
+                if aborted or stopped[0] or (target is not None and vals[target]):
                     break
             if moved:
                 continue

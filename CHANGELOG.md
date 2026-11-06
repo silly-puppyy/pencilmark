@@ -24,6 +24,8 @@ What changes for you (details in the entries below):
 - Opt-in quality checks (off unless named): `asymmetric`, `no_interplay`, `winding`, `short_lines`, `repetitive`,
   `monotone`, `desert`, `late_break`; limits near the edge of published Medium+ puzzles
   (1-27% of them flagged, per check).
+- The fog route ends each round's band route at the first placement that lights new cells instead of solving on and
+  discarding the rest: the same routes, up to 125x faster (265 s -> 2 s on one sudoku.coach puzzle).
 - `rate` grades fog-of-war puzzles under the fog: the band and techniques of the fog route (the human route on what
   the fog shows, round by round), its steps priced like any card and put on the card scale by a line fitted on
   puzzles graded both ways with nothing fogged (MAE 0.56). A card field `fog` tells what the fog did (lit at the

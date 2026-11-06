@@ -695,7 +695,16 @@ def route(puzzle, max_rounds=400, rules_text=None):
         # the human band route, as rate's card follows it: the easiest band's moves first, harder only when nothing
         # easier applies; no search, no guessing (a stuck route waits for a reveal or stalls)
         q.domains = [m_ if not givens[i] else (1 << (givens[i] - 1)) for i, m_ in enumerate(cand)]
-        route_ = BP.band_path(q, P, prefix=colours, keep_held=bool(colours) or bool(P.get("colouring")))
+        # the cells whose correct digit lights something new: the band route stops after placing one (the rest of a
+        # full route would be thrown away at the reveal)
+        reveal = {
+            i
+            for i, g in enumerate(givens)
+            if not g and lit_cells(fog, givens0, placed | {(i // cols, i % cols)}, rows, cols) - lit
+        }
+        route_ = BP.band_path(
+            q, P, prefix=colours, keep_held=bool(colours) or bool(P.get("colouring")), stop_cells=frozenset(reveal)
+        )
         progressed = False
         for m in route_["steps"][len(colours) :]:
             if m.get("idfx"):  # its colour effects carry into the next round (the candidates carry the rest)
