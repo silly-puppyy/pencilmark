@@ -198,24 +198,27 @@ def _ur(cd):
 
 
 def _ape(cd, filled):
-    """aligned pair exclusion: two cells seeing each other; a value pair dies when a cell seeing both has no other
-    candidate, or two cells seeing both (and each other) hold only three digits, the pair's among them"""
+    """aligned pair exclusion (sudokuwiki): two cells, aligned or not (then the pair may repeat a digit); a value pair
+    dies when a cell seeing both has no other candidate, or an almost locked set whose cells all see both holds both
+    digits (n cells left with n - 1 digits)"""
     out = set()
-    un = [c for c in range(81) if c not in filled]
+    sets = [(cs, ds) for cs, ds in _alss(cd, filled)]
+    un = [c for c in range(81) if c not in filled and len(cd[c]) > 1]
     for X, Y in itertools.combinations(un, 2):
-        if Y not in PEERS[X] or len(cd[X]) < 2 or len(cd[Y]) < 2:
-            continue
-        common = [q for q in PEERS[X] & PEERS[Y] if q not in filled]
-        wit = [set(cd[q]) for q in common if len(cd[q]) <= 2]
-        wit += [
-            ("als", set(cd[a]) | set(cd[b]))
-            for a, b in itertools.combinations(common, 2)
-            if b in PEERS[a] and len(cd[a]) <= 3 and len(cd[b]) <= 3 and len(set(cd[a]) | set(cd[b])) == 3
+        aligned = Y in PEERS[X]
+        single = [set(cd[q]) for q in PEERS[X] & PEERS[Y] if q not in filled and len(cd[q]) == 1]
+        wit = [
+            ds for cs, ds in sets if X not in cs and Y not in cs and all(X in PEERS[q] and Y in PEERS[q] for q in cs)
         ]
+        if not single and not wit:
+            continue
         okX, okY = set(), set()
         for x in cd[X]:
             for y in cd[Y]:
-                if x != y and not any((w[1] >= {x, y}) if isinstance(w, tuple) else (w <= {x, y}) for w in wit):
+                if x == y and aligned:
+                    continue
+                dead = any(w <= {x, y} for w in single) or (x != y and any({x, y} <= w for w in wit))
+                if not dead:
                     okX.add(x), okY.add(y)
         if okX and okY:
             out |= {(X, x) for x in cd[X] if x not in okX} | {(Y, y) for y in cd[Y] if y not in okY}
@@ -322,10 +325,10 @@ def _pom(cd):
     return out1, out2
 
 
-def _alss(cd):
+def _alss(cd, filled):
     out = set()
     for h in HOUSES:
-        un = [c for c in h if len(cd[c]) > 1]
+        un = [c for c in h if c not in filled]
         for n in range(1, len(un)):
             for cs in itertools.combinations(un, n):
                 ds = set().union(*[set(cd[c]) for c in cs])
@@ -334,9 +337,9 @@ def _alss(cd):
     return list(out)
 
 
-def _als_xz(cd):
+def _als_xz(cd, filled):
     out = set()
-    A = _alss(cd)
+    A = _alss(cd, filled)
     for (ca, da), (cb, db) in itertools.combinations(A, 2):
         if ca & cb:
             continue
@@ -359,7 +362,7 @@ REFS = [
     ("AlignedPairExclusion", _ape, "equal"),
     ("3DMedusa", _medusa, "equal"),
     ("PatternOverlay", lambda cd, filled: set().union(*_pom(cd)), "equal"),
-    ("ALS-XZ", lambda cd, filled: _als_xz(cd), "superset"),
+    ("ALS-XZ", _als_xz, "superset"),
 ]
 
 

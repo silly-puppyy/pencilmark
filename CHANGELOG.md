@@ -54,6 +54,10 @@ What changes for you (details in the entries below):
     type 2 (two cells with the same one extra digit).
   - Aligned Pair Exclusion also counts two cells sharing three digits that see both cells of the pair.
   Bands unchanged on the reference cards; times and difficulties move by up to 0.5 on 32 of 227.
+- Gaps the cited sources show, filled: WXYZ-Wing type 2 (every digit restricted: each leaves the cells seeing all its
+  wing cells; sudokuwiki); Death Blossom stems of any size (sudokuwiki, HoDoKu, Sudopedia); Aligned Pair Exclusion
+  takes any almost locked set seeing both cells as a witness, and non-aligned pairs (sudokuwiki type 2). Reference
+  cards: bands unchanged.
 - More names checked against every cited source (docs/research, 2026-11-07): a Skyscraper's pairs must share a line at
   their inner ends (else Turbot Fish, HoDoKu / Sudopedia); a chain-found Empty Rectangle needs the box's candidates on
   one row and one column; an XY-Chain has the same digit at both ends (else AIC); Remote Pairs need 4+ cells; basic

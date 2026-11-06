@@ -140,7 +140,7 @@ XMETA_KEYS = {
     S.COLOUR_ALGEBRA: ("cells", "digits", "n_elims", "seed", "class_kinds"),
     S.N_WING: ("size", "z", "z_cells", "n_elims"),
     S.SUE_DE_COQ: ("n_inter", "n_line", "n_box", "digit_mask", "n_elims"),
-    S.APE: ("cell_a", "cell_b", "n_witness", "n_elims", "n_als2"),
+    S.APE: ("cell_a", "cell_b", "n_single", "n_elims", "n_als"),
     S.CHUTE_RP: ("cell_a", "cell_b", "absent", "eliminated", "n_elims"),
     S.POM: ("digit", "templates", "n_elims"),
     S.GURTH: ("symmetry", "n_elims"),

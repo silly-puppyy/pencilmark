@@ -200,7 +200,7 @@ void Solver::death_blossom(MoveBuf& out) {
     ElimSet es;
     std::vector<uint64_t> tg(W), used(W);
     for (int S = 0; S < p.N; ++S) {
-        if (vals[S] || popc(cand[S]) < 2 || popc(cand[S]) > 3) continue;
+        if (vals[S] || popc(cand[S]) < 2) continue;  // any stem size (sudokuwiki, HoDoKu, Sudopedia)
         std::vector<int> digs;
         for (uint32_t dm = cand[S]; dm; dm &= dm - 1) digs.push_back(lowdigit(dm));
         std::vector<std::vector<int>> petals(digs.size());

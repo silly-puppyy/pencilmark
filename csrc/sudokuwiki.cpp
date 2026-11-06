@@ -3,8 +3,8 @@
 //     digit but Z confined to cells that see each other -> Z is in one of the set's Z cells;
 //   SueDeCoq (77): box-line intersection cells C (2-3) with digits V, a line set L and a box set B
 //     (1-2 cells each), digit sets disjoint, |V u VL u VB| = |C|+|L|+|B|;
-//   AlignedPairExclusion (78): two cells; a value pair is impossible when a cell (or a 2-cell almost
-//     locked set) seeing both would be left short of digits; values without a possible partner go;
+//   AlignedPairExclusion (78): two cells (aligned, or not: sudokuwiki type 2); a value pair is impossible when an
+//     almost locked set seeing both would be left short of digits; values without a possible partner go;
 //   ChuteRemotePairs (79): two bivalue cells {x,y} of one band / stack in different boxes and lines;
 //     the third box's cells on the remaining line hold no x -> y leaves the cells seeing both;
 //   PatternOverlay (80): per digit, every placement template (one cell per row, every complete
@@ -76,23 +76,30 @@ void Solver::n_wing(MoveBuf& out) {
                             for (size_t j = i + 1; j < h.size() && restricted; ++j) restricted = tbit(p.peers(h[i]), h[j]);
                         if (!restricted) z = d, ++nz;
                     }
-                    if (nz != 1) return;
-                    std::vector<int> zc;
-                    for (int c : set)
-                        if (cand[c] & bit(z)) zc.push_back(c);
+                    if (nz > 1) return;
+                    // one unrestricted digit Z: Z is in the wing; none (type 2, sudokuwiki): every digit is, once
                     std::vector<uint32_t> el;
-                    for (int q = 0; q < N; ++q) {
-                        if (vals[q] || !(cand[q] & bit(z)) || std::find(set.begin(), set.end(), q) != set.end()) continue;
-                        bool all = true;
-                        for (int c : zc) all &= tbit(p.peers(c), q);
-                        if (all) el.push_back((uint32_t)q * 32u + z);
+                    std::vector<int> zc;
+                    for (uint32_t mm = nz ? bit(z) : U; mm; mm &= mm - 1) {
+                        const int zz = lowdigit(mm);
+                        std::vector<int> cz;
+                        for (int c : set)
+                            if (cand[c] & bit(zz)) cz.push_back(c);
+                        if (zz == z || !nz) zc.insert(zc.end(), cz.begin(), cz.end());
+                        for (int q = 0; q < N; ++q) {
+                            if (vals[q] || !(cand[q] & bit(zz)) || std::find(set.begin(), set.end(), q) != set.end())
+                                continue;
+                            bool all = true;
+                            for (int c : cz) all &= tbit(p.peers(c), q);
+                            if (all) el.push_back((uint32_t)q * 32u + zz);
+                        }
                     }
                     if (el.empty()) return;
                     Move& mv = new_move(out, N_WING, pspread(key), n);
                     for (uint32_t e : el) addel(out, mv, (int)(e / 32), (int)(e % 32));
                     set_pattern(out, mv, key);
                     meta_set(mv, n, n, n, n - 1, 0, 0, 0, 1, mv.shape);
-                    mv.code = 4600 + n;
+                    mv.code = nz ? 4600 + n : 4610 + n;
                     pm_long xm[XM_N] = {n, z, (pm_long)zc.size(), (pm_long)el.size(), 0, 0, 0, 0, 0, 0};
                     std::copy(xm, xm + XM_N, mv.xm);
                     return;
@@ -251,52 +258,56 @@ void Solver::sue_de_coq(MoveBuf& out) {
 // ------------------------------------------------ AlignedPairExclusion --
 void Solver::aligned_pair(MoveBuf& out) {
     if (disabled[APE]) return;
-    const int N = p.N;
+    const int N = p.N, W = p.W;
+    // witnesses (sudokuwiki): an almost locked set (n cells, n + 1 digits; a bivalue cell is one) whose cells all see
+    // both base cells dies when the pair takes two of its digits; a cell with one candidate left dies on its digit
+    build_als();
+    std::vector<std::vector<uint64_t>> allsee(als.size(), std::vector<uint64_t>(W, ~0ULL));
+    for (size_t a = 0; a < als.size(); ++a)
+        for (int c : als[a].list) {
+            const uint64_t* pc = p.peers(c);
+            for (int w = 0; w < W; ++w) allsee[a][w] &= pc[w];
+        }
     for (int X = 0; X < N; ++X) {
         if (vals[X] || popc(cand[X]) < 2) continue;
-        for (int Y : p.peer_list[X]) {
-            if (Y <= X || vals[Y] || popc(cand[Y]) < 2) continue;
-            // cells seeing both, with few candidates; 2-cell almost locked sets seeing both (3 digits: any two of
-            // them in X and Y leave the pair one digit) -- sudokuwiki's extension
-            std::vector<int> Z, Z3;
-            std::vector<std::pair<int, int>> A2;
+        for (int Y = X + 1; Y < N; ++Y) {
+            if (vals[Y] || popc(cand[Y]) < 2) continue;
+            const bool aligned = tbit(p.peers(X), Y);  // not aligned (sudokuwiki type 2): the pair may repeat a digit
+            std::vector<int> Z, A;
             for (int q : p.peer_list[X])
-                if (q != Y && !vals[q] && popc(cand[q]) <= 3 && tbit(p.peers(Y), q))
-                    (popc(cand[q]) <= 2 ? Z : Z3).push_back(q);
-            std::vector<int> Zall = Z;
-            Zall.insert(Zall.end(), Z3.begin(), Z3.end());
-            for (size_t i = 0; i < Zall.size(); ++i)
-                for (size_t j = i + 1; j < Zall.size(); ++j)
-                    if (tbit(p.peers(Zall[i]), Zall[j]) && popc(cand[Zall[i]] | cand[Zall[j]]) == 3)
-                        A2.push_back({Zall[i], Zall[j]});
-            if (Z.empty() && A2.empty()) continue;
+                if (q != Y && !vals[q] && popc(cand[q]) == 1 && tbit(p.peers(Y), q)) Z.push_back(q);
+            for (size_t a = 0; a < als.size(); ++a)
+                if (tbit(allsee[a].data(), X) && tbit(allsee[a].data(), Y)) A.push_back((int)a);
+            if (Z.empty() && A.empty()) continue;
             uint32_t okX = 0, okY = 0;
             for (uint32_t mx = cand[X]; mx; mx &= mx - 1) {
                 const int x = lowdigit(mx);
                 for (uint32_t my = cand[Y]; my; my &= my - 1) {
                     const int y = lowdigit(my);
-                    if (x == y) continue;  // X and Y see each other
+                    if (x == y && aligned) continue;
+                    const uint32_t xy = bit(x) | bit(y);
                     bool dead = false;
-                    for (int q : Z) dead |= !(cand[q] & ~(bit(x) | bit(y)));
-                    for (auto& a : A2) dead |= popc((cand[a.first] | cand[a.second]) & ~(bit(x) | bit(y))) < 2;
+                    for (int q : Z) dead |= (cand[q] & ~xy) == 0;
+                    for (size_t k = 0; k < A.size() && !dead; ++k)
+                        dead = x != y && (als[A[k]].cand & xy) == xy;  // n cells left with n - 1 digits
                     if (!dead) okX |= bit(x), okY |= bit(y);
                 }
             }
             const uint32_t ex = cand[X] & ~okX, ey = cand[Y] & ~okY;
             if (!ex && !ey) continue;
             if (!okX || !okY) continue;  // inconsistent state
-            Move& m = new_move(out, APE, pspread({X, Y}), (int)(Z.size() + A2.size()));
+            Move& m = new_move(out, APE, pspread({X, Y}), (int)(Z.size() + A.size()));
             for (uint32_t b = ex; b; b &= b - 1) addel(out, m, X, lowdigit(b));
             for (uint32_t b = ey; b; b &= b - 1) addel(out, m, Y, lowdigit(b));
             std::vector<int> pc{X, Y};
             pc.insert(pc.end(), Z.begin(), Z.end());
-            for (auto& a : A2)
-                for (int q : {a.first, a.second})
+            for (int a : A)
+                for (int q : als[a].list)
                     if (std::find(pc.begin(), pc.end(), q) == pc.end()) pc.push_back(q);
             set_pattern(out, m, pc);
             meta_set(m, (int)pc.size(), 2, popc(cand[X] | cand[Y]), 1, 0, 0, 0, 1, m.shape);
-            m.code = 4801;
-            pm_long xm[XM_N] = {X, Y, (pm_long)Z.size(), popc(ex) + popc(ey), (pm_long)A2.size(), 0, 0, 0, 0, 0};
+            m.code = aligned ? 4801 : 4802;
+            pm_long xm[XM_N] = {X, Y, (pm_long)Z.size(), popc(ex) + popc(ey), (pm_long)A.size(), 0, 0, 0, 0, 0};
             std::copy(xm, xm + XM_N, m.xm);
         }
     }
