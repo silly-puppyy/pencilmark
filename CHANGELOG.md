@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Publishing check `thin` replaces `spike`: a Medium or harder puzzle whose candidate steps carry less than 25% of
+  its effort (singles around one hard step that changes little; Andrew Stuart: "too few candidates removed using
+  candidate strategies"). `spike` flagged most published puzzles (83-92% of human-set Medium / Hard): concentrated
+  effort is normal; little candidate work is not. Measured on fed, sudoku.coach and Stuart's daily puzzles.
 - Format: `box_grid` states its tiling as a box size and a repetition count, `{"type": "box_grid", "box": [3, 3],
   "count": [3, 3]}` (3×3 boxes, 3×3 times); `count` is required. `origin` of `grid`, `box_grid` and `chaos` is
   optional, `r1c1` by default, and writers and the canonical form leave it out there. Files without `count` are refused

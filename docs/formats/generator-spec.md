@@ -116,8 +116,8 @@ Conditions on the result's card, using the card's keys ([Grade card](grade-card.
 `quality` (top level, recommended) filters candidates by the publishing checks of the grade card: one with an issue of
 severity reject is not returned, and the run's `info.rejected` counts the candidates refused, by check. `"quality": {}`
 applies the default checks; an object adjusts them as [`rate(quality=...)`](grade-card.md) does:
-`{"trivial": {"limit": 0.45}}` refuses puzzles with more than 45% of the cells given, `{"spike": {"severity":
-"reject"}}` those whose effort sits in a few steps, `{"trivial": {"severity": "off"}}` turns a check off (a learner's
+`{"trivial": {"limit": 0.45}}` refuses puzzles with more than 45% of the cells given, `{"thin": {"severity":
+"reject"}}` those whose candidate steps do little (mostly singles around one hard step), `{"trivial": {"severity": "off"}}` turns a check off (a learner's
 first puzzle may well be mostly given). Without `quality` no candidate is filtered.
 
 ## 5. Limits, fields and program data

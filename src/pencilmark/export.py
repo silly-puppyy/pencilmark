@@ -16,7 +16,7 @@ grade (format "sudoku-grade", format_version 1):
   band        "Very Easy" … "Extreme" or "Unknown" (not solvable without computer search); on request band_index 0..6
   contains    what a solver meets going easy -> hard (band path): [{"code", "chip", "name", "band", "uses", "alternatives"}];
               a chip "XWG/KTE/CSM" = each of these alone also gets you through here; singles listed without counts
-  notes       publishing notes: [{"code": "spike", "severity": "reject" | "note", "text": "…"}]
+  notes       publishing notes: [{"code": "thin", "severity": "reject" | "note", "text": "…"}]
   steps       [{"n", "code", "name", "placement" ("r2c8=3"), "eliminations" (["r4c5#7"]), "explanation", "detail"}]
 """
 

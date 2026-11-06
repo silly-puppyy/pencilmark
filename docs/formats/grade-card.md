@@ -100,7 +100,7 @@ of the same shape for a later version ([Generator spec](generator-spec.md), sect
 
 | Code | Severity when asked for | Meaning | Limit (default) |
 |---|---|---|---|
-| `spike` | warning | A Medium or harder puzzle whose 3 hardest steps carry more than *limit* of its effort (effort per step as in `difficulty`). | share (0.6) |
+| `thin` | warning | A Medium or harder puzzle whose candidate (non-single) steps carry less than *limit* of its effort (effort per step as in `difficulty`): the hard step changes little and the rest is singles. Published Hard puzzles rarely go below 0.26. | share (0.25) |
 | `decorative` | reject | A rule family (for example all the thermometers, or all the white dots) that is neither needed for uniqueness nor used by any step. | – |
 | `barely_used` | reject when never used, else warning | A rule family used in fewer than *limit* steps. | steps (3) |
 | `redundant` | warning | A rule family the puzzle is unique without, although the solve uses it. | – |

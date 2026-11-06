@@ -126,7 +126,7 @@
     "properties": {
      "code": {
       "enum": [
-       "spike",
+       "thin",
        "decorative",
        "barely_used",
        "redundant",

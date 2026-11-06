@@ -730,7 +730,7 @@ def test_quality_limits():
         {"trivial": 0.5},
         {"trial": False},
         {"trial": {"severity": "maybe"}},
-        {"spike": {"limit": -1}},
+        {"thin": {"limit": -1}},
     ):
         with pytest.raises(ValueError):
             pencilmark.rate(CLASSIC, quality=bad)

@@ -6,25 +6,28 @@ description: Ask for the publishing checks (issues), read what they mean, and tu
 # Check a puzzle before publishing
 
 Besides grading, pencilmark can look for the problems an editor would catch: a rule nobody needs, a puzzle that is
-mostly given, a single hard step in an easy solve. Ask for the `issues` and `reject` fields:
+mostly given, a solve that is singles around one hard step. Ask for the `issues` and `reject` fields:
 
 ```
-$ pencilmark rate mini.json --json --fields band,issues,reject
-{"line": 1, "format": "sudoku-grade", "format_version": 1, "grader": {"name": "pencilmark", "version": "1.1.0"}, "band": "Medium", "issues": [{"code": "spike", "severity": "warning", "text": "98% of the effort is in the 3 hardest steps"}], "reject": false}
+$ echo '.3.1.78..........91.2.6.3..5...2...4..96.17..8...3...2..8.9.6.53..........68.3.9.' > hard.txt
+$ pencilmark rate hard.txt --json --fields band,issues,reject
+{"line": 1, "format": "sudoku-grade", "format_version": 1, "grader": {"name": "pencilmark", "version": "1.1.0"}, "band": "Hard", "issues": [{"code": "thin", "severity": "warning", "text": "candidate steps carry only 24% of the effort; the rest is singles"}], "reject": false}
 ```
 
-This is the 6×6 puzzle from [Write a variant puzzle file](variant-file.mdx). Each issue has a `code`, a
-`severity` and a sentence. `reject` is true when any issue has severity `reject`: a puzzle an
+A generated classic: 52 singles and one Skyscraper near the end. Each issue has a `code`, a `severity` and a
+sentence. `reject` is true when any issue has severity `reject`: a puzzle an
 editor would send back. A `warning` is worth a look but may be intended.
 
 ## What the checks find
 
 - In the rules: a rule family nobody needs (`decorative`, `redundant`) or that the solve hardly uses (`barely_used`).
 - In the givens: too many of them (`trivial`).
-- In the solve: most of the effort in a few steps (`spike`), a long routine solve rated easy (`tedious`), steps that
+- In the solve: candidate steps that do little (`thin`), a long routine solve rated easy (`tedious`), steps that
   rely on uniqueness or on trial and error (`uniqueness`, `trial`), or a difficulty unusual for the band (`unusual`).
 
-The warning above is a `spike`: almost all the work is in the three hardest steps, and the rest are singles.
+The warning above is `thin`: the one hard step carries a quarter of the effort and everything else is singles.
+Published Hard puzzles rarely go below that (Andrew Stuart's grader would not publish this one: "too few candidates
+removed using candidate strategies").
 
 [Grade card](../../formats/grade-card.md#4-issues) lists every check with its default limit.
 
@@ -67,9 +70,9 @@ Every check takes a `severity` (`reject`, `warning`, or `off`) and, where it has
 
 ```python
 card = pencilmark.rate(puzzle, fields=["issues", "reject"],
-                       quality={"trivial": {"limit": 0.7}, "spike": {"severity": "off"}})
+                       quality={"trivial": {"limit": 0.7}, "thin": {"severity": "off"}})
 ```
 
 With `trivial` raised to 70%, the puzzle above passes (`issues` is empty, `reject` false).
 
-On the command line the same settings are `--quality trivial.limit=0.7,spike.severity=off`.
+On the command line the same settings are `--quality trivial.limit=0.7,thin.severity=off`.

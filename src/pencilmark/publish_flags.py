@@ -1,9 +1,10 @@
 """Common-sense publishing notes ('would not be chosen for publishing'), sudokuwiki-style. Bands never change.
 
-Hand-coded rules (sudoku.coach likes are too sparse and its puzzles human-curated, so
-common sense first; the coach analysis only informed the spike rule's direction):
-  spike        a Medium+ puzzle whose 3 hardest steps carry more than `spike` (0.6 = 60%) of its effort (warning; enjoyment
-               check on LMD ratings and sudoku.coach likes, controlling difficulty: -0.08 / -0.03)
+Hand-coded rules, each checked against published puzzles (docs/research/quality_metrics.md):
+  thin         a Medium+ puzzle whose candidate (non-single) steps carry less than `thin` (0.25 = 25%) of its effort: the
+               hard step changes little and the rest is singles (Andrew Stuart's "too few candidates removed using
+               candidate strategies"); published Hard puzzles: 10th percentile 0.26 (fed / coach), 0.28 (Stuart); our
+               generator's puzzles sit well below unbiased ones (warning)
   decorative   a variant rule class that is neither needed for uniqueness nor used by any solve step
   barely_used  a variant rule class used in fewer than `barely_used` (3) steps of the whole solve (a 'Sudoku X' should use its X)
   redundant    a variant rule class the puzzle is unique without, although the solve uses it (soft note)
@@ -36,7 +37,7 @@ TRIAL = {
 }
 BASE_UNITS = ("row", "col", "box", "column")
 QUALITY = {
-    "spike": 0.6,
+    "thin": 0.25,
     "trivial": 0.6,
     "tedious": 60,
     "barely_used": 3,  # default limits (docs/formats/grade-card.md 4); None: no limit
@@ -100,9 +101,9 @@ def _apply_severity(notes, q):
     return out
 
 
-def _top3_share(puzzle, steps):
-    """share of the solve's effort in its 3 hardest steps; effort per step = price^beta x candidate density / moves
-    offered, as the card's difficulty"""
+def _thin_share(puzzle, steps):
+    """share of the solve's effort in its candidate (non-single) steps; effort per step = price^beta x candidate
+    density / moves offered, as the card's difficulty"""
 
     from . import grader_model as GM
 
@@ -112,9 +113,11 @@ def _top3_share(puzzle, steps):
     for st in steps:
         c = st.n_cands if st.n_cands is not None else nd
         dens = c / 727 * 20 if nd <= 729 else c / nd * 20 * 729 / 727
-        v.append(max(float(st.move.d), 1e-3) ** beta * dens / max(len(st.alts), 1))
-    v.sort(reverse=True)
-    return sum(v[:3]) / sum(v) if v and sum(v) > 0 else 0.0
+        name = S.TECH_NAMES.get(st.move.feat[0], "")
+        single = "Single" in name or name == "FullHouse"
+        v.append((max(float(st.move.d), 1e-3) ** beta * dens / max(len(st.alts), 1), single))
+    tot = sum(x for x, _ in v)
+    return sum(x for x, s in v if not s) / tot if tot > 0 else 0.0
 
 
 class _Ctx:
@@ -132,11 +135,11 @@ class _Ctx:
         return self.q[k]["limit"]
 
 
-def _c_spike(c):
+def _c_thin(c):
     if c.band_i >= 2:
-        share = _top3_share(c.puzzle, c.moves)
-        if share > c.lim("spike"):
-            return [("spike", "note", f"{share:.0%} of the effort is in the 3 hardest steps")]
+        share = _thin_share(c.puzzle, c.moves)
+        if share < c.lim("thin"):
+            return [("thin", "note", f"candidate steps carry only {share:.0%} of the effort; the rest is singles")]
     return []
 
 
@@ -185,7 +188,7 @@ def _c_trial(c):
 # the check registry (docs/formats/grade-card.md 4), in the order notes are reported: check -> the quality codes it can raise. The rule
 # checks (decorative, redundant, barely_used) share one pass over the rule families (_rule_notes) and come last.
 CHECKS = [
-    (_c_spike, ("spike",)),
+    (_c_thin, ("thin",)),
     (_c_trivial, ("trivial",)),
     (_c_tedious, ("tedious",)),
     (_c_uniqueness, ("uniqueness",)),
