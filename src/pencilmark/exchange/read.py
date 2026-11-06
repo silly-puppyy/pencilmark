@@ -1,4 +1,4 @@
-"""Reading: a sudoku-puzzle dict -> puzzle JSON / engine Puzzle (to_internal, read)."""
+"""Reading: a pencilmark-puzzle dict -> puzzle JSON / engine Puzzle (to_internal, read)."""
 
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ from .validate import resolve_areas, validate
 
 # ----------------------------------------------------------------------------------------------------------- reading
 def to_internal(doc):
-    """sudoku-puzzle (format_version 1) -> puzzle JSON (pencilmark.puzzle_json) that builds the engine Puzzle."""
+    """pencilmark-puzzle (format_version 1) -> puzzle JSON (pencilmark.puzzle_json) that builds the engine Puzzle."""
     doc = with_origins(doc)
     B = validate(doc)
     D = B.D
@@ -72,7 +72,7 @@ def to_internal(doc):
 
 
 def read(doc):
-    """sudoku-puzzle dict -> engine Puzzle (not finalized)"""
+    """pencilmark-puzzle dict -> engine Puzzle (not finalized)"""
     return PJ.from_json(to_internal(doc))
 
 

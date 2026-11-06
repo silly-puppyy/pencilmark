@@ -2,7 +2,7 @@
  "title": "A 0-clue 6×6 kropki",
  "shows": "",
  "spec": {
-  "format": "sudoku-spec",
+  "format": "pencilmark-spec",
   "format_version": 1,
   "meta": {
    "title": "0-clue 6x6 kropki",
@@ -47,7 +47,7 @@
   }
  },
  "puzzle": {
-  "format": "sudoku-puzzle",
+  "format": "pencilmark-puzzle",
   "format_version": 1,
   "meta": {
    "title": "0-clue 6x6 kropki",

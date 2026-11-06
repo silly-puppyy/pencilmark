@@ -1,15 +1,15 @@
 """Public Python API. Same inputs and outputs as the command line (`python -m pencilmark rate --json`).
 
     import pencilmark
-    card  = pencilmark.rate("....4.8.3.6...8..2...")            # classic string, puzzle JSON dict / str, sudoku-puzzle dict,
+    card  = pencilmark.rate("....4.8.3.6...8..2...")            # classic string, puzzle JSON dict / str, pencilmark-puzzle dict,
     card  = pencilmark.rate(puzzle, steps=True)                 #   a sample-pack line {"puzzle": ...}, or a path to a .json file
     cards = pencilmark.rate_many(puzzles, jobs=4)               # parallel, input order kept
     sol   = pencilmark.solve(puzzle)                            # list of digits; raises NotUnique / NoSolution
-    exp   = pencilmark.to_export(puzzle, title=..., author=..., date=...)  # -> "sudoku-puzzle" dict (docs/formats/puzzle-format.md)
+    exp   = pencilmark.to_export(puzzle, title=..., author=..., date=...)  # -> "pencilmark-puzzle" dict (docs/formats/puzzle-format.md)
     text  = pencilmark.dumps(exp); pencilmark.fingerprint(puzzle); pencilmark.describe(puzzle)
-    pencilmark.to_ipuz(puzzle); pencilmark.from_string("S9B..."); pencilmark.to_string(puzzle, "sudokuwiki")  # -> "sudoku-puzzle" dict, metadata under "meta"
+    pencilmark.to_ipuz(puzzle); pencilmark.from_string("S9B..."); pencilmark.to_string(puzzle, "sudokuwiki")  # -> "pencilmark-puzzle" dict, metadata under "meta"
 
-`rate` returns the "sudoku-grade" card: difficulty, time (minutes), band, contains (+ issues / reject,
+`rate` returns the "pencilmark-grade" card: difficulty, time (minutes), band, contains (+ issues / reject,
 time_pNN, ... with fields=[...], + steps with steps=True, + "se": {er, ep, ed, scale} with se=True).
 mode="human" (default) is the human route; mode="computer" also allows forcing chains / trial.
 Guessing is off by default: where no technique applies, the engine refutes a candidate by full search (Trial and error,
@@ -98,7 +98,7 @@ def load(puzzle):
     ----------
     puzzle : str, dict, Path or Puzzle
         A classic string (81 characters, with or without a trailing comment), a text or pencil-mark grid, a sudokuwiki
-        packed string, a sudoku-puzzle dict or JSON text, an ipuz file, a .json path, a SudokuPad / f-puzzles / Penpa /
+        packed string, a pencilmark-puzzle dict or JSON text, an ipuz file, a .json path, a SudokuPad / f-puzzles / Penpa /
         Logic Masters link, or an engine Puzzle (returned as it is).
 
     Returns
@@ -109,7 +109,7 @@ def load(puzzle):
     Raises
     ------
     FormatError
-        A sudoku-puzzle document that breaks the format.
+        A pencilmark-puzzle document that breaks the format.
     TypeError
         An input of no known form.
     """
@@ -124,7 +124,7 @@ def load(puzzle):
     p = PJ.from_json(inputs.to_puzzle_json(obj))
     p.finalize()
     src = obj.get("puzzle") if isinstance(obj.get("puzzle"), dict) else obj
-    if src.get("format") == "sudoku-puzzle" and isinstance(src.get("rules"), list):
+    if src.get("format") == "pencilmark-puzzle" and isinstance(src.get("rules"), list):
         p._pm_input_rules = src["rules"]  # written back and counted (issues) in the file's own order
     return p
 
@@ -142,12 +142,12 @@ def rate(
     alternatives=True,
     colouring=False,
 ):
-    """The "sudoku-grade" card of one puzzle (docs/formats/grade-card.md), with only the fields you ask for.
+    """The "pencilmark-grade" card of one puzzle (docs/formats/grade-card.md), with only the fields you ask for.
 
     Parameters
     ----------
     puzzle : str, dict, Path or Puzzle
-        Anything `load` accepts: an 81-character string, a sudoku-puzzle dict or JSON text, a .json file, an ipuz file, a
+        Anything `load` accepts: an 81-character string, a pencilmark-puzzle dict or JSON text, a .json file, an ipuz file, a
         SudokuPad / f-puzzles / Penpa / Logic Masters link.
     steps : bool
         Shorthand for the `steps` field with every explanation level.
@@ -422,7 +422,7 @@ def count_solutions(puzzle, limit=1000):
 
 
 def to_export(puzzle, meta=None, with_solution=True, describe=True, style=True, **meta_kw):
-    """The sudoku-puzzle dict of a puzzle (format_version 1, docs/formats/puzzle-format.md).
+    """The pencilmark-puzzle dict of a puzzle (format_version 1, docs/formats/puzzle-format.md).
 
     Canonical: houses and rules with "r1c1" cells, keys in a fixed order. Metadata already in a JSON input is kept.
 
@@ -444,7 +444,7 @@ def to_export(puzzle, meta=None, with_solution=True, describe=True, style=True, 
     Returns
     -------
     dict
-        The sudoku-puzzle document.
+        The pencilmark-puzzle document.
     """
     from . import inputs
     from .export import export_puzzle, read_meta
@@ -488,12 +488,12 @@ def to_export(puzzle, meta=None, with_solution=True, describe=True, style=True, 
 
 
 def dumps(doc, pretty=True):
-    """Canonical JSON text of a sudoku-puzzle dict: fixed key order; pretty: one grid row per line, one rule per line.
+    """Canonical JSON text of a pencilmark-puzzle dict: fixed key order; pretty: one grid row per line, one rule per line.
 
     Parameters
     ----------
     doc : dict
-        A sudoku-puzzle document.
+        A pencilmark-puzzle document.
     pretty : bool
         Readable layout (True) or one line (False).
 
@@ -534,7 +534,7 @@ def validate(doc):
     Parameters
     ----------
     doc : dict
-        A sudoku-puzzle document.
+        A pencilmark-puzzle document.
 
     Returns
     -------
@@ -602,7 +602,7 @@ def to_ipuz(puzzle):
 
 
 def from_ipuz(ipuz):
-    """An ipuz sudoku -> sudoku-puzzle dict (docs/formats/other-formats.md).
+    """An ipuz sudoku -> pencilmark-puzzle dict (docs/formats/other-formats.md).
 
     Parameters
     ----------
@@ -612,7 +612,7 @@ def from_ipuz(ipuz):
     Returns
     -------
     dict
-        The sudoku-puzzle document.
+        The pencilmark-puzzle document.
     """
     from .interop import from_ipuz as f
 
@@ -620,7 +620,7 @@ def from_ipuz(ipuz):
 
 
 def from_string(s, symbols=None):
-    """A puzzle as text -> sudoku-puzzle dict (docs/formats/other-formats.md).
+    """A puzzle as text -> pencilmark-puzzle dict (docs/formats/other-formats.md).
 
     Reads plain classic strings (with or without a trailing comment), text grids with separators, pencil-mark grids,
     729-character candidate strings, HoDoKu library lines and sudokuwiki.org packed strings.
@@ -635,7 +635,7 @@ def from_string(s, symbols=None):
     Returns
     -------
     dict
-        The sudoku-puzzle document.
+        The pencilmark-puzzle document.
     """
     from .interop import from_string as f
 
@@ -668,7 +668,7 @@ def to_string(puzzle, form="plain"):
 
 
 def generate(spec):
-    """One puzzle for a "sudoku-spec" request (docs/formats/generator-spec.md).
+    """One puzzle for a "pencilmark-spec" request (docs/formats/generator-spec.md).
 
     Parameters
     ----------
@@ -678,7 +678,7 @@ def generate(spec):
     Returns
     -------
     dict
-        {"puzzle": sudoku-puzzle dict, "card": its sudoku-grade card, "info": {...}}.
+        {"puzzle": pencilmark-puzzle dict, "card": its pencilmark-grade card, "info": {...}}.
 
     Raises
     ------

@@ -17,7 +17,7 @@ site link or another app's format ([Other formats](../formats/other-formats.md))
 | `pencilmark solve FILE` | the solution, or `not unique` / `no solution` / `undecided` |
 | `pencilmark count FILE` | the number of solutions (`>=1000` when it stops counting; `--limit N` to change) |
 | `pencilmark describe FILE` | the variant's name and its rules in words |
-| `pencilmark export FILE` | the puzzle as a canonical `sudoku-puzzle` file (`--pretty` for one rule per line) |
+| `pencilmark export FILE` | the puzzle as a canonical `pencilmark-puzzle` file (`--pretty` for one rule per line) |
 | `pencilmark json FILE` | the puzzle in pencilmark's internal JSON |
 | `pencilmark fingerprint FILE` | a content fingerprint, 64 hex digits |
 | `pencilmark generate SPEC` | a new puzzle for a [generator spec](../formats/generator-spec.md) |
@@ -59,7 +59,7 @@ $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7..
 
 ### Options of `generate`
 
-`--seed N` and `--time S` override the spec's `limits`. The puzzle is printed as a `sudoku-puzzle` file and its band,
+`--seed N` and `--time S` override the spec's `limits`. The puzzle is printed as a `pencilmark-puzzle` file and its band,
 difficulty and time go to standard error; `--result` prints `{"puzzle", "card", "info"}` as one JSON line instead.
 
 ## Python
@@ -101,7 +101,7 @@ text = pencilmark.dumps(exp)
 pencilmark.validate(exp)
 ```
 
-`to_export` gives the `sudoku-puzzle` dict, with its solution and with `meta.type` and `meta.rules_text` filled in from
+`to_export` gives the `pencilmark-puzzle` dict, with its solution and with `meta.type` and `meta.rules_text` filled in from
 `describe` when they are empty; `dumps` writes it in the canonical layout, one rule per line; `validate` raises
 `FormatError` with the exact problem. `describe(puzzle)` names the variant and its rules, `fingerprint(puzzle)` gives
 a fingerprint of the rules and grid (not the metadata), and `load(puzzle)` the engine's own object.
@@ -114,7 +114,7 @@ result = pencilmark.generate(spec)
 result["puzzle"], result["card"], result["info"]
 ```
 
-`spec` is a [generator spec](../formats/generator-spec.md) (a dict, JSON text or a path). The result is a `sudoku-puzzle` with its solution,
+`spec` is a [generator spec](../formats/generator-spec.md) (a dict, JSON text or a path). The result is a `pencilmark-puzzle` with its solution,
 its grade card and how the run went; `GenerationFailed` says why when no puzzle met the spec in time. Example specs are
 in `docs/examples/specs/`.
 

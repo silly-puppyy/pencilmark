@@ -32,7 +32,7 @@ class Spec:
 
     size              board size (4, 6, 8, 9, 10, 12, 16; standard boxes)
     layout            None (one size x size grid) or a named multi-grid layout of 9 x 9 grids (samurai, ...)
-    locked            sudoku-puzzle rules every result carries (all-different ones: diagonals, extra regions, windoku
+    locked            pencilmark-puzzle rules every result carries (all-different ones: diagonals, extra regions, windoku
                       windows, anti-knight, anti-king); the solution respects them
     grid_givens       [[min, max], ...] givens per grid of the layout (in its origins' order); None = no bound
     quality           None (no filtering), or the publishing checks as rate() takes them ({} = the defaults): a
@@ -204,7 +204,7 @@ def board_of(s):
     rows, cols = b.rows, b.cols
     cells = set(b.coords)
     doc = {
-        "format": "sudoku-puzzle",
+        "format": "pencilmark-puzzle",
         "format_version": 1,
         "board": {"rows": rows, "cols": cols},
         "digits": s.size,
@@ -417,8 +417,8 @@ NO_TARGET = (
 
 
 def generate(spec):
-    """generate one puzzle meeting a sudoku-spec request (docs/formats/generator-spec.md; a dict, JSON text or a path). Returns
-    {"puzzle": sudoku-puzzle (with solution), "card": sudoku-grade card, "info": {...}}. A `fingerprint` /
+    """generate one puzzle meeting a pencilmark-spec request (docs/formats/generator-spec.md; a dict, JSON text or a path). Returns
+    {"puzzle": pencilmark-puzzle (with solution), "card": pencilmark-grade card, "info": {...}}. A `fingerprint` /
     `generated_from` key in the spec's meta is filled in on the puzzle (its fingerprint / the request's). Raises NotSupportedError for a part of the spec the generator does not run, GenerationFailed when no
     puzzle met it in time."""
     import json as _json
@@ -432,9 +432,9 @@ def generate(spec):
         doc = _json.loads(Path(spec).read_text(encoding="utf-8"))
     elif isinstance(spec, str):
         doc = _json.loads(spec)
-    if not isinstance(doc, dict) or doc.get("format") != "sudoku-spec":
+    if not isinstance(doc, dict) or doc.get("format") != "pencilmark-spec":
         raise TypeError(
-            'generate takes a "sudoku-spec" request (docs/formats/generator-spec.md), e.g. {"format": "sudoku-spec", '
+            'generate takes a "pencilmark-spec" request (docs/formats/generator-spec.md), e.g. {"format": "pencilmark-spec", '
             '"format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9, "rules": [{"type": "box_grid", '
             '"origin": "r1c1", "box": [3, 3]}], "where": {"band": "Hard"}}'
         )

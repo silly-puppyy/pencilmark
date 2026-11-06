@@ -7,7 +7,7 @@ from pencilmark import api
 from pencilmark import cbackend as CB
 
 DOC = {
-    "format": "sudoku-puzzle",
+    "format": "pencilmark-puzzle",
     "format_version": 1,
     "board": {"rows": 9, "cols": 9},
     "digits": 9,

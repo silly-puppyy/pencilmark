@@ -2,7 +2,7 @@
  "title": "Long whispers and renbans",
  "shows": "lengths on two templates at once: whispers of 7 cells or more, renbans of at least 5 (\"auto\": as many as needed)",
  "spec": {
-  "format": "sudoku-spec",
+  "format": "pencilmark-spec",
   "format_version": 1,
   "board": {
    "rows": 9,
@@ -47,7 +47,7 @@
   }
  },
  "puzzle": {
-  "format": "sudoku-puzzle",
+  "format": "pencilmark-puzzle",
   "format_version": 1,
   "meta": {
    "title": "generated 9x9 6 renban, 2 whisper, 6 givens",

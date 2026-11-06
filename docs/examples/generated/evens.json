@@ -2,7 +2,7 @@
  "title": "Every even cell shaded",
  "shows": "the count `\"max\"` on a cell template: every even cell is marked, and the run keeps the result with the fewest givens",
  "spec": {
-  "format": "sudoku-spec",
+  "format": "pencilmark-spec",
   "format_version": 1,
   "board": {
    "rows": 9,
@@ -34,7 +34,7 @@
   }
  },
  "puzzle": {
-  "format": "sudoku-puzzle",
+  "format": "pencilmark-puzzle",
   "format_version": 1,
   "meta": {
    "title": "generated 9x9 36 parity, 10 givens",

@@ -1,5 +1,5 @@
 {
- "format": "sudoku-puzzle",
+ "format": "pencilmark-puzzle",
  "format_version": 1,
  "meta": {
   "title": "Example 4x4 killer"

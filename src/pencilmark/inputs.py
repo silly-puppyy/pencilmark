@@ -1,7 +1,7 @@
 """Reading a puzzle: every input form pencilmark accepts, in the order they are tried. load(), to_export() and the
 command line all read through here.
 
-    read(x)              -> a puzzle dict: puzzle JSON, a sudoku-puzzle document, an ipuz file or a sample-pack line
+    read(x)              -> a puzzle dict: puzzle JSON, a pencilmark-puzzle document, an ipuz file or a sample-pack line
     to_puzzle_json(obj)  -> puzzle JSON (pencilmark.puzzle_json), whatever read() returned
 """
 
@@ -74,7 +74,7 @@ def read(x):
 
 
 def to_puzzle_json(obj):
-    """accept puzzle JSON, the sudoku-puzzle exchange format, an ipuz sudoku, or a
+    """accept puzzle JSON, the pencilmark-puzzle exchange format, an ipuz sudoku, or a
     sample-pack line {"puzzle": ..., "grade": ...}."""
     if "puzzle" in obj and isinstance(obj["puzzle"], dict):
         obj = obj["puzzle"]
@@ -82,7 +82,7 @@ def to_puzzle_json(obj):
         from .interop import from_ipuz
 
         obj = from_ipuz(obj)
-    if obj.get("format") == "sudoku-puzzle":
+    if obj.get("format") == "pencilmark-puzzle":
         from .export import import_puzzle
 
         return import_puzzle(obj)

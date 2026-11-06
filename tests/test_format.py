@@ -1,5 +1,5 @@
-"""Tests for the sudoku-puzzle exchange format v1 (docs/formats/puzzle-format.md): round trips, strict reading, schema, fingerprint, interop
-strings, ipuz, describe, sudoku-spec.
+"""Tests for the pencilmark-puzzle exchange format v1 (docs/formats/puzzle-format.md): round trips, strict reading, schema, fingerprint, interop
+strings, ipuz, describe, pencilmark-spec.
 
     pytest tests/test_format.py        (synthetic puzzles only: tests/fixtures/variants.json, docs/formats/puzzle-format.md examples)
 """
@@ -24,7 +24,7 @@ from pencilmark import variants as VR  # noqa: E402
 from pencilmark.inputs import to_puzzle_json  # noqa: E402
 
 FIXTURES = ROOT / "tests" / "fixtures" / "variants.json"
-SCHEMA = ROOT / "docs" / "sudoku-puzzle.schema.json"
+SCHEMA = ROOT / "docs" / "pencilmark-puzzle.schema.json"
 CLASSIC = "79.214...8.67..............4.2..78....84.32....16..5.3..............97.2...826.39"
 UNIFIED = {}
 _pack = None
@@ -39,7 +39,7 @@ def pack():
         _pack += [
             json.loads(b)
             for b in re.findall(r"```json\n(.*?)```", text, re.S)
-            if b.startswith('{"format": "sudoku-puzzle"') and "…" not in b
+            if b.startswith('{"format": "pencilmark-puzzle"') and "…" not in b
         ]
         g9 = VR.Grid(9, (3, 3))
         for extra in (
@@ -177,8 +177,8 @@ def test_strict_refusal():
     bad = copy.deepcopy(d)
     bad["grid"] = bad.pop("board")
     _refuses(bad, "unknown top-level key")
-    bad = dict(d, format="sudoku-puzzle/2")
-    _refuses(bad, "not a sudoku-puzzle")
+    bad = dict(d, format="pencilmark-puzzle/2")
+    _refuses(bad, "not a pencilmark-puzzle")
     bad = copy.deepcopy(d)
     bad["candidates"] = {"R1C3": [1, 2]}
     _refuses(bad, "bad cell name")
@@ -237,7 +237,7 @@ def test_schema_validates_pack():
     assert list(
         v.iter_errors(
             {
-                "format": "sudoku-puzzle",
+                "format": "pencilmark-puzzle",
                 "format_version": 1,
                 "board": {"rows": 1, "cols": 1},
                 "digits": 1,
@@ -258,7 +258,7 @@ def test_format_md_examples():
     text = "\n".join(f.read_text(encoding="utf-8") for f in pages)
     n = 0
     for block in re.findall(r"```json\n(.*?)```", text, re.S):
-        if not block.startswith('{"format": "sudoku-puzzle"') or "…" in block:
+        if not block.startswith('{"format": "pencilmark-puzzle"') or "…" in block:
             continue
         d = json.loads(block)
         X.validate(d)
@@ -276,7 +276,7 @@ def test_format_md_examples():
 def test_fingerprint_stable():
     d = _classic_doc()
     f = pencilmark.fingerprint(d)
-    assert f == "a96eb0bb99b3f4a588d8d3f97dd28eaf321a4f453de36e60b4bab8f5eac239a6", f
+    assert f == "68dd0def219928b968ccc31854b2c77dfeab6c0f469ae20466c4ba0735752116", f
     # metadata, style and solution do not matter; another spelling of the same houses does not matter
     d2 = copy.deepcopy(d)
     d2["meta"] = {"title": "x"}
@@ -402,7 +402,7 @@ def test_ipuz_export():
     ip = pencilmark.to_ipuz(_classic_doc())
     assert ip["version"] == "http://ipuz.org/v2" and ip["kind"] == ["http://ipuz.org/sudoku#1"]
     assert ip["puzzle"][0][:3] == [7, 9, 0] and ip["boxes"] is True
-    assert ip[f"{I.IPUZ_NS}:puzzle"]["format"] == "sudoku-puzzle"
+    assert ip[f"{I.IPUZ_NS}:puzzle"]["format"] == "pencilmark-puzzle"
     killer = pencilmark.load(
         {
             "digits": 4,
@@ -471,7 +471,7 @@ def test_describe_names():
     )
 
 
-# ---------------------------------------------------------------------------------------------------------- sudoku-spec
+# ---------------------------------------------------------------------------------------------------------- pencilmark-spec
 def test_card_fields():
     """field mask = top-level keys, explanation levels, the issues / reject shape (docs/formats/grade-card.md)"""
     c = pencilmark.rate(CLASSIC)
@@ -560,7 +560,7 @@ def test_spec_round_trip():
     ]
     for s in specs:
         doc = SF.spec_from_gen(s)
-        assert doc["format"] == "sudoku-spec"
+        assert doc["format"] == "pencilmark-spec"
         back = SF.spec_to_gen(json.loads(json.dumps(doc)))
         norm = lambda x: _plan_of(Spec.from_any(x))
         assert norm(back) == norm(s), (s, back)
@@ -641,7 +641,7 @@ def test_multigrid_written_compact():
     ]
     grids = [(0, 0), (0, 12), (6, 6), (12, 0), (12, 12)]
     doc = {
-        "format": "sudoku-puzzle",
+        "format": "pencilmark-puzzle",
         "format_version": 1,
         "board": {"rows": R, "cols": R},
         "digits": 9,
@@ -674,7 +674,7 @@ def test_area_scope():
     ]
     grids = [X.cell_name(r, c) for r, c in [(0, 0), (0, 12), (6, 6), (12, 0), (12, 12)]]
     doc = {
-        "format": "sudoku-puzzle",
+        "format": "pencilmark-puzzle",
         "format_version": 1,
         "board": {"rows": R, "cols": R},
         "digits": 9,
@@ -702,7 +702,7 @@ def test_card_schema():
     import pytest
 
     jsonschema = pytest.importorskip("jsonschema")
-    schema = json.load(open(ROOT / "docs" / "sudoku-grade.schema.json", encoding="utf-8"))
+    schema = json.load(open(ROOT / "docs" / "pencilmark-grade.schema.json", encoding="utf-8"))
     jsonschema.Draft202012Validator.check_schema(schema)
     v = jsonschema.Draft202012Validator(schema)
     cards = [
@@ -778,7 +778,7 @@ def test_describe_names_grids():
         {"type": "neighbours", "kind": "antiknight", "area": "r13c13"},
     ]
     doc = {
-        "format": "sudoku-puzzle",
+        "format": "pencilmark-puzzle",
         "format_version": 1,
         "board": {"rows": R, "cols": R},
         "digits": 9,
@@ -874,7 +874,7 @@ def test_line_registry_matches_schema_palette_docs():
     """rules/line.py is the one list of line kinds: the JSON Schema, the default colours and the rule page agree"""
     from pencilmark.rules import LINE
 
-    schema = json.loads((ROOT / "docs" / "sudoku-puzzle.schema.json").read_text(encoding="utf-8"))
+    schema = json.loads((ROOT / "docs" / "pencilmark-puzzle.schema.json").read_text(encoding="utf-8"))
     rl = schema["$defs"]["rule_line"]
     assert set(rl["properties"]["kind"]["enum"]) == set(LINE)
     assert {p for k in LINE.values() for p in k.params} <= set(rl["properties"])
@@ -899,7 +899,7 @@ def test_edge_registry_matches_schema_docs():
     """rules/edge.py is the one list of edge kinds: the JSON Schema and the rule page agree"""
     from pencilmark.rules import EDGE
 
-    schema = json.loads((ROOT / "docs" / "sudoku-puzzle.schema.json").read_text(encoding="utf-8"))
+    schema = json.loads((ROOT / "docs" / "pencilmark-puzzle.schema.json").read_text(encoding="utf-8"))
     re_ = schema["$defs"]["rule_edge"]["properties"]
     assert set(re_["kind"]["enum"]) == set(EDGE)
     for k in EDGE.values():
@@ -918,7 +918,7 @@ def test_cell_registry_matches_schema_docs():
     """rules/cell.py is the one list of cell kinds: the JSON Schema and the rule page agree"""
     from pencilmark.rules import CELL
 
-    schema = json.loads((ROOT / "docs" / "sudoku-puzzle.schema.json").read_text(encoding="utf-8"))
+    schema = json.loads((ROOT / "docs" / "pencilmark-puzzle.schema.json").read_text(encoding="utf-8"))
     rc = schema["$defs"]["rule_cell"]["properties"]
     assert set(rc["kind"]["enum"]) == set(CELL)
     assert {k.param for k in CELL.values() if k.param} <= set(rc)
@@ -949,7 +949,7 @@ def test_lockout_puzzle_grades():
 def test_entropic_groups_with_an_empty_third_round_trip():
     """sudoku.coach's fixed thirds on a 4x4 ({1,2,3}, {4}, {}) read and write back: the reader compared the sorted groups
     with the engine's unsorted ones, so an empty group (sorted first) never matched"""
-    d = {"format": "sudoku-puzzle", "format_version": 1, "board": {"rows": 4, "cols": 4}, "digits": 4, "givens": [0] * 16,
+    d = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 4, "cols": 4}, "digits": 4, "givens": [0] * 16,
          "rules": [{"type": "box_grid", "box": [2, 2], "count": [2, 2]},
                    {"type": "line", "kind": "entropic", "groups": [[1, 2, 3], [4], []], "cells": ["r1c1", "r1c2"]}]}  # fmt: skip
     doc = pencilmark.to_export(d)
@@ -988,7 +988,7 @@ def test_fog_rule_reads_writes_and_is_graded_under_the_fog():
     ]
     fog = {"type": "fog", "lit": ["r1c1", "r5c5"], "triggers": [{"when": ["r1c1"], "light": ["r9c9"]}]}
     doc = {
-        "format": "sudoku-puzzle",
+        "format": "pencilmark-puzzle",
         "format_version": 1,
         "board": {"rows": 9, "cols": 9},
         "digits": 9,
@@ -1028,7 +1028,7 @@ def test_fog_route_reveals_and_places_only_what_is_seen():
         for c in "53..7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8..79"
     ]
     base = {
-        "format": "sudoku-puzzle",
+        "format": "pencilmark-puzzle",
         "format_version": 1,
         "board": {"rows": 9, "cols": 9},
         "digits": 9,
@@ -1089,7 +1089,7 @@ def test_fog_card():
     import pencilmark as pm
 
     doc = {
-        "format": "sudoku-puzzle", "format_version": 1, "board": {"rows": 4, "cols": 4}, "digits": 4,
+        "format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 4, "cols": 4}, "digits": 4,
         "givens": [0, 0, 0, 0, 0, 0, 1, 0, 0, 2, 0, 3, 0, 3, 0, 0],
         "solution": [2, 1, 3, 4, 3, 4, 1, 2, 1, 2, 4, 3, 4, 3, 2, 1],
         "rules": [{"type": "box_grid", "box": [2, 2], "count": [2, 2]},

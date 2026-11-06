@@ -2,7 +2,7 @@
  "title": "An 8×8 with at most six dots",
  "shows": "an 8×8 board and the element cap (`where.elements`)",
  "spec": {
-  "format": "sudoku-spec",
+  "format": "pencilmark-spec",
   "format_version": 1,
   "board": {
    "rows": 8,
@@ -39,7 +39,7 @@
   }
  },
  "puzzle": {
-  "format": "sudoku-puzzle",
+  "format": "pencilmark-puzzle",
   "format_version": 1,
   "meta": {
    "title": "generated 8x8 6 kropki, 13 givens",

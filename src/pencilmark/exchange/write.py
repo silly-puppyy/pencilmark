@@ -1,4 +1,4 @@
-"""Writing: an engine Puzzle -> a canonical sudoku-puzzle dict (write)."""
+"""Writing: an engine Puzzle -> a canonical pencilmark-puzzle dict (write)."""
 
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ from .validate import _RESERVED_OK, _merge_negatives
 
 # ----------------------------------------------------------------------------------------------------------- writing
 def write(p, meta=None, solution=None, provenance=False):
-    """engine Puzzle -> sudoku-puzzle dict (format_version 1). Raises NotSupportedError for engine structures the format
+    """engine Puzzle -> pencilmark-puzzle dict (format_version 1). Raises NotSupportedError for engine structures the format
     cannot express. provenance=True returns (doc, prov): prov[i] = the engine objects rule i was written from
     ({"groups", "relations", "constraints", "clues"}: indices into p.groups / p.relations / p.constraints / p.cell_clues)."""
     w = _Writer(p)
@@ -60,7 +60,7 @@ def write(p, meta=None, solution=None, provenance=False):
 
 
 def _input_order(doc, prov, src):
-    """the rules of a puzzle read from a sudoku-puzzle file back in the file's order, with their id / label / style
+    """the rules of a puzzle read from a pencilmark-puzzle file back in the file's order, with their id / label / style
     (docs/formats/puzzle-format.md 8.1: rules in the order given). Only when the written rules are exactly the file's rules up to spelling;
     otherwise the written order stays."""
     D = doc.get("digits")
@@ -233,7 +233,7 @@ class _Writer:
         return rules
 
     def group_rule(self, kind, cells, total):
-        """sudoku-puzzle rule dict for an engine group of this kind, cells and total"""
+        """pencilmark-puzzle rule dict for an engine group of this kind, cells and total"""
         B = self.B
         names = [B.name(c) for c in cells]
         if kind == "cage":
@@ -261,7 +261,7 @@ class _Writer:
 
     # ---------------------------------------------------------------- run
     def run(self, meta, solution):
-        """engine puzzle -> sudoku-puzzle dict (givens, solution, meta, candidates, rules); sets self.prov"""
+        """engine puzzle -> pencilmark-puzzle dict (givens, solution, meta, candidates, rules); sets self.prov"""
         p, B, D = self.p, self.B, self.D
         R, C = B.R, B.C
         flat = {i: rc[0] * C + rc[1] for i, rc in enumerate(B.coords)}
@@ -313,7 +313,7 @@ class _Writer:
         return cands, out
 
     def clue_rule(self, r):
-        """sudoku-puzzle rules for one engine cell clue (parity, digit_class, exclude, lowhigh)"""
+        """pencilmark-puzzle rules for one engine cell clue (parity, digit_class, exclude, lowhigh)"""
         B, D = self.B, self.D
         nm = lambda xs: [B.name(x) if isinstance(x, int) else x.lower() for x in xs]
         t = r["type"]
@@ -477,7 +477,7 @@ class _Writer:
         return 0
 
     def named_rule(self, rule):
-        """sudoku-puzzle rules for a named engine rule (global entropy, quadruple, vudoku, ...)"""
+        """pencilmark-puzzle rules for a named engine rule (global entropy, quadruple, vudoku, ...)"""
         B, D = self.B, self.D
         t = rule["type"]
         nm = lambda xs: [B.name(x) if isinstance(x, int) else x.lower() for x in xs]
@@ -847,7 +847,7 @@ class _Writer:
         return None
 
     def constraint_rule(self, c):
-        """sudoku-puzzle rules for one engine constraint"""
+        """pencilmark-puzzle rules for one engine constraint"""
         B, D = self.B, self.D
         t = c.get("type")
         nm = lambda xs: [B.name(x) for x in xs]
@@ -947,7 +947,7 @@ class _Writer:
         return any(s <= set(g.cells) for g in self.p.groups)
 
     def equal_sum_rule(self, c):
-        """sudoku-puzzle rule for an equal_sum constraint: a zipper, double arrow or region-sum line when it is one,
+        """pencilmark-puzzle rule for an equal_sum constraint: a zipper, double arrow or region-sum line when it is one,
         else equal_sum"""
         B = self.B
         segs = [list(s) for s in c["segments"]]

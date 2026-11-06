@@ -6,7 +6,7 @@ body:
     id: puzzle
     attributes:
       label: Puzzle
-      description: The puzzle as you passed it (81-character string, sudoku-puzzle JSON, or a SudokuPad / f-puzzles link).
+      description: The puzzle as you passed it (81-character string, pencilmark-puzzle JSON, or a SudokuPad / f-puzzles link).
     validations:
       required: true
   - type: textarea

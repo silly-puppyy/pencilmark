@@ -46,7 +46,7 @@ The engine knows no public kinds: the reader translates each rule. Choose the ch
 
 ## 3. The format and the drawing
 
-- **JSON Schema.** Add the kind to the `kind` enum of `rule_line` in `docs/sudoku-puzzle.schema.json`, and any new
+- **JSON Schema.** Add the kind to the `kind` enum of `rule_line` in `docs/pencilmark-puzzle.schema.json`, and any new
   parameter to its properties.
 - **Default colour.** Add it to `lines` in `docs/palette.json`. Use the colour most setters use for it, if there is
   one; [Drawing and style](../../library/drawing-style.md) says where the current defaults come from.

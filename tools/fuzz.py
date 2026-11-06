@@ -279,7 +279,7 @@ def case(seed):
     D = rng.choice(SIZES)
     S = solution(rng, D)
     flat = [x for row in S for x in row]
-    base = {"format": "sudoku-puzzle", "format_version": 1, "board": {"rows": D, "cols": D}, "digits": D,
+    base = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": D, "cols": D}, "digits": D,
             "givens": [0] * (D * D), "rules": [{"type": "box_grid", "box": list(BOXES[D]), "count": [BOXES[D][1], BOXES[D][0]]}]}  # fmt: skip
     rules = []
     for _ in range(rng.randint(1, 5)):

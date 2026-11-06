@@ -17,7 +17,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 VALUES = [None, True, 0, -1, 1, 99, 2.5, "", "x", "r0c0", "r99c1", [], [1], ["r1c1"], [["r1c1"]], {}, {"a": 1}]
-NOT_A_SPEC = 'generate takes a "sudoku-spec"'  # generate's own TypeError for anything that is no request at all
+NOT_A_SPEC = 'generate takes a "pencilmark-spec"'  # generate's own TypeError for anything that is no request at all
 CLASSIC = "....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9......."
 
 

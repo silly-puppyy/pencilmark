@@ -1,7 +1,7 @@
 {
  "$schema": "https://json-schema.org/draft/2020-12/schema",
- "$id": "https://silly-puppyy.github.io/pencilmark/schema/sudoku-grade-1.json",
- "title": "sudoku-grade format_version 1",
+ "$id": "https://silly-puppyy.github.io/pencilmark/schema/pencilmark-grade-1.json",
+ "title": "pencilmark-grade format_version 1",
  "description": "pencilmark grade card (docs/formats/grade-card.md).",
  "type": "object",
  "required": [
@@ -12,7 +12,7 @@
  "additionalProperties": false,
  "properties": {
   "format": {
-   "const": "sudoku-grade"
+   "const": "pencilmark-grade"
   },
   "format_version": {
    "const": 1

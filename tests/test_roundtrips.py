@@ -1,4 +1,4 @@
-"""Every puzzle we ship (the golden inputs, docs/examples, the sudoku-puzzle examples in the docs) survives the format
+"""Every puzzle we ship (the golden inputs, docs/examples, the pencilmark-puzzle examples in the docs) survives the format
 round trips: to_export is idempotent, and the fingerprint is the same after re-export, dumps and load. Lockout lines
 failed this for months because no test wrote every rule kind back. Slow (about 10 s): run with `pytest -m slow`.
 """
@@ -29,7 +29,7 @@ def puzzles():
                 d = json.loads(block)
             except ValueError:
                 continue
-            if isinstance(d, dict) and d.get("format") == "sudoku-puzzle":
+            if isinstance(d, dict) and d.get("format") == "pencilmark-puzzle":
                 out.append((f"{f.name}#{k}", d))
     return out
 

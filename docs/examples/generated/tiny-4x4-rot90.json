@@ -2,7 +2,7 @@
  "title": "A 4×4 with quarter-turn symmetry",
  "shows": "the smallest board; 90° symmetry (it needs square boxes)",
  "spec": {
-  "format": "sudoku-spec",
+  "format": "pencilmark-spec",
   "format_version": 1,
   "board": {
    "rows": 4,
@@ -35,7 +35,7 @@
   }
  },
  "puzzle": {
-  "format": "sudoku-puzzle",
+  "format": "pencilmark-puzzle",
   "format_version": 1,
   "meta": {
    "title": "generated 4x4 classic, 4 givens",

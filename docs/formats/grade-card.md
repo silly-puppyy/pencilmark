@@ -1,19 +1,19 @@
 ---
-description: "The sudoku-grade format: every field of a grade card (difficulty, time, band, techniques, steps, issues)."
+description: "The pencilmark-grade format: every field of a grade card (difficulty, time, band, techniques, steps, issues)."
 ---
 
 # Grade card
 
-The `sudoku-grade` format, version 1: what a grader reports about one puzzle. The card is separate from the
+The `pencilmark-grade` format, version 1: what a grader reports about one puzzle. The card is separate from the
 [puzzle format](puzzle-format.md): it
 refers to a puzzle but does not contain it. The key words MUST, MUST NOT, SHOULD and MAY are used as in
 [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
 
 What `rate()` returns and `pencilmark rate --json` prints: one JSON object per puzzle. [JSON Schema](https://json-schema.org/):
-[`sudoku-grade.schema.json`](../sudoku-grade.schema.json).
+[`pencilmark-grade.schema.json`](../pencilmark-grade.schema.json).
 
 ```json
-{"format": "sudoku-grade", "format_version": 1,
+{"format": "pencilmark-grade", "format_version": 1,
  "grader": {"name": "pencilmark", "version": "1.1.0"},
  "difficulty": 5.8, "time": 10.6, "band": "Hard",
  "contains": [{"code": "HSI", "chip": "HSI", "name": "Hidden Single", "band": 0},
@@ -30,7 +30,7 @@ A card exists only for a puzzle with exactly one solution. For any other puzzle,
 
 | Key | Field | Type | Meaning |
 |---|---|---|---|
-| `format`, `format_version` | always | `"sudoku-grade"`, `1` | |
+| `format`, `format_version` | always | `"pencilmark-grade"`, `1` | |
 | `grader` | always | `{"name", "version"}` | The engine that made the card. A card is only meaningful with that engine and version. |
 | `difficulty` | default | number or null | How hard the puzzle feels; continuous and positive (a nearly finished grid is about 0.2), no ceiling. Hardness, not amount: independent of board size and length, which belong to `time`. Independent of `band`: variants often sit above the classic range for their band. Null when the band is `Unknown`. Exact definition: [Philosophy](../grades/philosophy.md). |
 | `time` | default | number or null | Predicted median solving time in minutes over the people who solve puzzles like this one, without long breaks. Null when the band is `Unknown`. |

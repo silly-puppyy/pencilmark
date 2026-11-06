@@ -1,5 +1,5 @@
 {
- "format": "sudoku-spec",
+ "format": "pencilmark-spec",
  "format_version": 1,
  "meta": {
   "title": "Killer with German whispers and two givens",

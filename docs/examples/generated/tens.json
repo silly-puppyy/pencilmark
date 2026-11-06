@@ -2,7 +2,7 @@
  "title": "As many 10-cages as fit",
  "shows": "a cage `sum` and the count `\"max\"`: the run uses its whole time and keeps the result with the most cages",
  "spec": {
-  "format": "sudoku-spec",
+  "format": "pencilmark-spec",
   "format_version": 1,
   "board": {
    "rows": 9,
@@ -34,7 +34,7 @@
   }
  },
  "puzzle": {
-  "format": "sudoku-puzzle",
+  "format": "pencilmark-puzzle",
   "format_version": 1,
   "meta": {
    "title": "generated 9x9 24 cage, 1 givens",

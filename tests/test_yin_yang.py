@@ -9,7 +9,7 @@ import pytest
 import pencilmark
 
 BASE = {
-    "format": "sudoku-puzzle",
+    "format": "pencilmark-puzzle",
     "format_version": 1,
     "board": {"rows": 4, "cols": 4},
     "digits": 4,

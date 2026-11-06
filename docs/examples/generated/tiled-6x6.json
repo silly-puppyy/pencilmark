@@ -2,7 +2,7 @@
  "title": "A 6×6 killer tiled by cages",
  "shows": "the count `\"tile\"`: cages cover the whole board",
  "spec": {
-  "format": "sudoku-spec",
+  "format": "pencilmark-spec",
   "format_version": 1,
   "board": {
    "rows": 6,
@@ -33,7 +33,7 @@
   }
  },
  "puzzle": {
-  "format": "sudoku-puzzle",
+  "format": "pencilmark-puzzle",
   "format_version": 1,
   "meta": {
    "title": "generated 6x6 10 cage, 0 givens",

@@ -79,7 +79,7 @@ def cases():
     for rules in RULES:
         for D in (4, 6, 9):
             yield {
-                "format": "sudoku-puzzle",
+                "format": "pencilmark-puzzle",
                 "format_version": 1,
                 "board": {"rows": D, "cols": D},
                 "digits": D,

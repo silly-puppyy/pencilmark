@@ -14,7 +14,7 @@ CLASSIC_SOLUTION = None
 
 def test_classic_card():
     card = pencilmark.rate(CLASSIC)
-    assert card["format"] == "sudoku-grade"
+    assert card["format"] == "pencilmark-grade"
     assert (card["band"], card["difficulty"], card["time"]) == ("Hard", 5.8, 10.6) and "band_index" not in card
     assert "time_p80" not in card and "issues" not in card and "reject" not in card  # publishing checks on request
     t = pencilmark.rate(CLASSIC, fields=["time", "time_p20", "time_p80", "time_mean"])
@@ -36,7 +36,7 @@ def test_deterministic_and_input_forms(tmp_path):
     a = pencilmark.rate(CLASSIC)
     assert pencilmark.rate(CLASSIC) == a
     exp = pencilmark.to_export(CLASSIC, title="t")
-    assert exp["format"] == "sudoku-puzzle" and exp["givens"][4] == 4 and exp["givens"][0] == 0
+    assert exp["format"] == "pencilmark-puzzle" and exp["givens"][4] == 4 and exp["givens"][0] == 0
     assert exp["meta"]["title"] == "t" and exp["meta"]["type"] == "Sudoku"  # empty type / rules_text filled by describe
     assert pencilmark.rate(exp) == a
     assert pencilmark.rate(json.dumps({"numbers": CLASSIC})) == a
@@ -229,7 +229,7 @@ def test_trace_positions():
             assert after["digits"][(r - 1) * 9 + c - 1] == int(d) and cell not in after["candidates"]
     assert trace[-1]["digits"] == pencilmark.solve(CLASSIC) and trace[-1]["candidates"] == {}
     jsonschema = pytest.importorskip("jsonschema")
-    schema = json.loads((ROOT / "docs" / "sudoku-grade.schema.json").read_text(encoding="utf-8"))
+    schema = json.loads((ROOT / "docs" / "pencilmark-grade.schema.json").read_text(encoding="utf-8"))
     jsonschema.Draft202012Validator(schema).validate(card)
 
 

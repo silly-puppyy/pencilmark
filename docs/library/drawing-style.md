@@ -5,7 +5,7 @@ description: "How pencilmark draws puzzles, and the drawing conventions most sud
 # Drawing and style
 
 How pencilmark draws puzzles, and the conventions most sudoku software shares. **None of this is part of a format**: a
-`sudoku-puzzle` file says what each rule means, and a renderer may draw it any way that shows that meaning. The
+`pencilmark-puzzle` file says what each rule means, and a renderer may draw it any way that shows that meaning. The
 per-puzzle `style` and `decorations` keys ([Puzzle format, section 7](../formats/puzzle-format.md#7-cosmetic-layers-style-and-decorations))
 carry a setter's own choices.
 

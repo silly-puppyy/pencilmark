@@ -1,4 +1,4 @@
-"""Generator tests: pencilmark.generate takes a sudoku-spec request (docs/formats/generator-spec.md). Each case runs in a few seconds."""
+"""Generator tests: pencilmark.generate takes a pencilmark-spec request (docs/formats/generator-spec.md). Each case runs in a few seconds."""
 
 import json
 import os
@@ -16,10 +16,10 @@ from pencilmark.gen import api as GA
 
 
 def spec(D=9, box=None, where=None, rules=(), givens=None, symmetry=None, seed=None, time_limit=300):
-    """a sudoku-spec for a D x D board with standard boxes plus the given templates / targets"""
+    """a pencilmark-spec for a D x D board with standard boxes plus the given templates / targets"""
     box = box or {4: [2, 2], 6: [2, 3], 9: [3, 3]}[D]
     d = {
-        "format": "sudoku-spec",
+        "format": "pencilmark-spec",
         "format_version": 1,
         "board": {"rows": D, "cols": D},
         "digits": D,
@@ -48,7 +48,7 @@ def run(doc, budget=150):  # a runaway guard; CI on Windows is about 2x slower t
     assert time.time() - t < budget
     asked = (doc.get("meta") or {}) if isinstance(doc, dict) else {}
     meta = r["puzzle"].get("meta", {})
-    assert r["puzzle"]["format"] == "sudoku-puzzle" and ("generated_from" in meta) == ("generated_from" in asked)
+    assert r["puzzle"]["format"] == "pencilmark-puzzle" and ("generated_from" in meta) == ("generated_from" in asked)
     assert unique(r["puzzle"])
     assert r["info"]["unique_verified"] is True
     return r
@@ -103,7 +103,7 @@ def test_deterministic():
 
 
 def test_only_specs():
-    """the generator takes sudoku-spec requests only; unsupported parts are refused, not ignored"""
+    """the generator takes pencilmark-spec requests only; unsupported parts are refused, not ignored"""
     with pytest.raises(TypeError):
         pencilmark.generate({"size": 9, "target_band": "Hard"})
     with pytest.raises(pencilmark.NotSupportedError):
@@ -185,7 +185,7 @@ def test_parity_templates():
 
     for kind in ("odd", "even", "parity"):
         spec = {
-            "format": "sudoku-spec",
+            "format": "pencilmark-spec",
             "format_version": 1,
             "board": {"rows": 9, "cols": 9},
             "digits": 9,
@@ -425,7 +425,7 @@ def test_untargeted_request_warns():
 def test_fingerprints_asked_for_in_the_spec():
     """a fingerprint / generated_from key in the spec's meta is filled in on the puzzle; without it, neither"""
     doc = {
-        "format": "sudoku-spec",
+        "format": "pencilmark-spec",
         "format_version": 1,
         "board": {"rows": 6, "cols": 6},
         "digits": 6,

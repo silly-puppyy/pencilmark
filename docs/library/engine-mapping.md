@@ -4,7 +4,7 @@ description: "How each rule of the puzzle format maps onto pencilmark's engine."
 
 # Engine mapping
 
-How pencilmark builds its engine `Puzzle` from a `sudoku-puzzle` file ([Puzzle format](../formats/puzzle-format.md)). This is for people
+How pencilmark builds its engine `Puzzle` from a `pencilmark-puzzle` file ([Puzzle format](../formats/puzzle-format.md)). This is for people
 working on pencilmark or adding a rule; it is not part of the format.
 
 The format is a transport layer: the engine `Puzzle` built from a file equals the one the site loaders build (groups

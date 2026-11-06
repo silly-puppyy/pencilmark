@@ -55,7 +55,7 @@ rule (all cages, all thermometers). See [Rule families](../formats/puzzle-format
 **Single.** The simplest placements: a hidden single (the only place for a digit in a house) or a naked single (the
 only digit left for a cell).
 
-**Spec.** A request to the generator (`sudoku-spec`): the board, rule templates, and what the card must show. See
+**Spec.** A request to the generator (`pencilmark-spec`): the board, rule templates, and what the card must show. See
 [Generator spec](../formats/generator-spec.md).
 
 **Step.** One move of the route: a placement or some eliminations, made by one technique.

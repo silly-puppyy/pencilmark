@@ -372,7 +372,7 @@ def drawings():
 def doc_for(name, rules, givens):
     flat = [v for row in (givens or [[0] * 3] * 3) for v in row]
     return {
-        "format": "sudoku-puzzle",
+        "format": "pencilmark-puzzle",
         "format_version": 1,
         "board": {"rows": 3, "cols": 3},
         "digits": 9,

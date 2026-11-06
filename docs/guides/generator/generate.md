@@ -12,13 +12,13 @@ from Python.
 
 ## 1. A request
 
-A request is a `sudoku-spec`: it looks like a puzzle file, with blanks where the generator decides.
+A request is a `pencilmark-spec`: it looks like a puzzle file, with blanks where the generator decides.
 
 ```python
 import pencilmark
 
 spec = {
-    "format": "sudoku-spec", "format_version": 1,
+    "format": "pencilmark-spec", "format_version": 1,
     "board": {"rows": 9, "cols": 9},
     "digits": 9,
     "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}],
@@ -49,7 +49,7 @@ Hard 7.1 13.0 ['HSI', 'PPR/MSI', 'XWG/CSM/MCH']
 
 The run took under a second. The result has three parts:
 
-- `r["puzzle"]`: a `sudoku-puzzle` with its solution, ready to save as a file;
+- `r["puzzle"]`: a `pencilmark-puzzle` with its solution, ready to save as a file;
 - `r["card"]`: its grade card, as `pencilmark.rate` would give it;
 - `r["info"]`: how the run went, for example `{'givens': 28, 'attempts': 9, 'rejected': {'band too low (logic pre-check)': 8}, ...}`.
   `info.warnings` lists hints about the request: without `where.band` or `where.difficulty` the search is the broadest
@@ -65,7 +65,7 @@ Templates ask the generator to place rules. A rule with a `count` and no cells i
 
 ```python
 spec = {
-    "format": "sudoku-spec", "format_version": 1,
+    "format": "pencilmark-spec", "format_version": 1,
     "board": {"rows": 6, "cols": 6},
     "digits": 6,
     "givens": {"count": [4, 8]},

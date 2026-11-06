@@ -12,7 +12,7 @@ from pencilmark import export
 from pencilmark.explain import records as R
 from pencilmark.explain.base import Namer
 
-SCHEMA = Path(__file__).parents[1] / "docs" / "sudoku-grade.schema.json"
+SCHEMA = Path(__file__).parents[1] / "docs" / "pencilmark-grade.schema.json"
 
 
 def test_levels_on_request_only():
@@ -152,7 +152,7 @@ def test_wing_substeps():
 
 
 CHAOS_DEMO = {
-    "format": "sudoku-puzzle",
+    "format": "pencilmark-puzzle",
     "format_version": 1,
     "board": {"rows": 5, "cols": 5},
     "digits": 5,

@@ -56,7 +56,7 @@ def test_doc_examples_run(page, tmp_path, monkeypatch):
     (tmp_path / "puzzles.txt").write_text(CLASSIC + "\n" + CLASSIC.replace("4", ".", 1) + "\n", encoding="utf-8")
     monkeypatch.syspath_prepend(str(ROOT / "tools"))  # the drawing guide imports tools/render_svg.py
     spec = {  # the generate guide's first request (a classic with an X-Wing, found in about a second)
-        "format": "sudoku-spec",
+        "format": "pencilmark-spec",
         "format_version": 1,
         "board": {"rows": 9, "cols": 9},
         "digits": 9,

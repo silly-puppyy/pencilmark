@@ -1,12 +1,12 @@
 """Interop strings and ipuz export (docs/formats/other-formats.md).
 
-    from_string(s) -> sudoku-puzzle dict        plain classic strings (also as text grids with | - + separators, or with a
+    from_string(s) -> pencilmark-puzzle dict        plain classic strings (also as text grids with | - + separators, or with a
                                                 trailing comment), pencil-mark grids, 729-character candidate strings, HoDoKu
                                                 library lines, and
                                                 sudokuwiki.org packed strings (S9B, S6B, X9B, W9B, C9B, J9B, L9B, M9B, L6C)
     to_string(puzzle, "plain" | "grid" | "sudokuwiki")   the reverse (refuses what the target cannot express)
     to_ipuz(puzzle) -> dict                     ipuz 2 for classic / Latin square / diagonal / windoku / jigsaw / killer
-    from_ipuz(ipuz) -> sudoku-puzzle dict       the reverse (boxes, zones, cages); a to_ipuz file returns its embedded puzzle
+    from_ipuz(ipuz) -> pencilmark-puzzle dict       the reverse (boxes, zones, cages); a to_ipuz file returns its embedded puzzle
 
 The sudokuwiki encodings are checked against sudokuwiki.org's solver; the decoder reads exactly what the encoder writes
 and refuses anything else (candidates and placed digits in killer forms, 6x6 killer operators other than '+'). In the
@@ -61,7 +61,7 @@ _COMMENT = re.compile(r"\s*[#;].*$")
 
 def from_string(s, symbols=None):
     """plain classic string, text grid, pencil-mark grid, 729-character candidate string or sudokuwiki packed string ->
-    sudoku-puzzle dict (docs/formats/other-formats.md)"""
+    pencilmark-puzzle dict (docs/formats/other-formats.md)"""
     s = s or ""
     t = re.sub(r"\s+", "", s)
     m = _PACKED.fullmatch(t)
@@ -561,7 +561,7 @@ IPUZ_NS = "io.github.silly-puppyy.pencilmark"
 
 
 def to_ipuz(puzzle):
-    """sudoku-puzzle (or any accepted input) -> ipuz 2 dict, for classic / Latin square / diagonal / windoku / jigsaw /
+    """pencilmark-puzzle (or any accepted input) -> ipuz 2 dict, for classic / Latin square / diagonal / windoku / jigsaw /
     killer and their combinations; refuses everything else with NotSupportedError."""
     from .api import to_export
 
@@ -660,7 +660,7 @@ def to_ipuz(puzzle):
 
 
 def from_ipuz(ipuz):
-    """ipuz sudoku (dict or JSON text) -> sudoku-puzzle dict. Reads `puzzle`, `solution`, `boxes`, `zones` (jigsaw boxes,
+    """ipuz sudoku (dict or JSON text) -> pencilmark-puzzle dict. Reads `puzzle`, `solution`, `boxes`, `zones` (jigsaw boxes,
     diagonals, windows, other regions) and `cages`; a file written by to_ipuz gives back its embedded puzzle unless the
     grid was edited. Refuses kinds other than sudoku and cells it cannot read."""
     import json

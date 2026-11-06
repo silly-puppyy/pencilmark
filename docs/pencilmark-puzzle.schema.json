@@ -1,7 +1,7 @@
 {
  "$schema": "https://json-schema.org/draft/2020-12/schema",
- "$id": "https://silly-puppyy.github.io/pencilmark/schema/sudoku-puzzle-1.json",
- "title": "sudoku-puzzle format_version 1",
+ "$id": "https://silly-puppyy.github.io/pencilmark/schema/pencilmark-puzzle-1.json",
+ "title": "pencilmark-puzzle format_version 1",
  "description": "pencilmark exchange format (docs/formats/puzzle-format.md). Checks that need the board (cells exist, adjacency, outside-clue geometry, digits within 1..D, givens length) are made by the reference reader (pencilmark.validate).",
  "type": "object",
  "required": [
@@ -18,7 +18,7 @@
    "type": "string"
   },
   "format": {
-   "const": "sudoku-puzzle"
+   "const": "pencilmark-puzzle"
   },
   "format_version": {
    "const": 1

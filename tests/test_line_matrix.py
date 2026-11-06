@@ -40,7 +40,7 @@ def cases():
                             rule["closed"] = closed
                         rule["cells"] = cells
                         yield {
-                            "format": "sudoku-puzzle",
+                            "format": "pencilmark-puzzle",
                             "format_version": 1,
                             "board": {"rows": D, "cols": D},
                             "digits": D,

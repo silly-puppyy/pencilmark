@@ -2,7 +2,7 @@
  "title": "The hardest 0-clue 6×6 kropki",
  "shows": "difficulty `\"max\"`: no givens, a minimal set of dots (count `\"min\"`), the hardest found in the time",
  "spec": {
-  "format": "sudoku-spec",
+  "format": "pencilmark-spec",
   "format_version": 1,
   "meta": {
    "title": "Hardest 0-clue 6x6 kropki",
@@ -44,7 +44,7 @@
   }
  },
  "puzzle": {
-  "format": "sudoku-puzzle",
+  "format": "pencilmark-puzzle",
   "format_version": 1,
   "meta": {
    "title": "Hardest 0-clue 6x6 kropki",

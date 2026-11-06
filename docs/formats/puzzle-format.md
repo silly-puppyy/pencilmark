@@ -1,13 +1,13 @@
 ---
-description: "The sudoku-puzzle format: one JSON file for a classic or variant sudoku, read strictly and written canonically."
+description: "The pencilmark-puzzle format: one JSON file for a classic or variant sudoku, read strictly and written canonically."
 ---
 
 # Puzzle format
 
-The `sudoku-puzzle` format, version 1: the transport format for sudoku puzzles, classic and variant. It says what a file means, not how to
+The `pencilmark-puzzle` format, version 1: the transport format for sudoku puzzles, classic and variant. It says what a file means, not how to
 draw it or how hard the puzzle is: those are separate documents ([Drawing and style](../library/drawing-style.md), [Grade card](grade-card.md)
 and [Generator spec](generator-spec.md)). The [JSON Schema](https://json-schema.org/) is
-[`sudoku-puzzle.schema.json`](../sudoku-puzzle.schema.json); [pencilmark](https://github.com/silly-puppyy/pencilmark) is the
+[`pencilmark-puzzle.schema.json`](../pencilmark-puzzle.schema.json); [pencilmark](https://github.com/silly-puppyy/pencilmark) is the
 reference implementation.
 
 The key words MUST, MUST NOT, SHOULD and MAY are used as in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
@@ -28,7 +28,7 @@ Contents
 
 ## 1. Overview
 
-A `sudoku-puzzle` file describes one puzzle completely: the board, the givens, and every rule, houses included.
+A `pencilmark-puzzle` file describes one puzzle completely: the board, the givens, and every rule, houses included.
 It is written so that:
 
 - a **solver or grader** can rely on every rule having one exact meaning (section 6), with no defaults that depend on
@@ -41,7 +41,7 @@ It is written so that:
 
 The file is JSON ([RFC 8259](https://www.rfc-editor.org/rfc/rfc8259)), UTF-8, conventionally named `*.json` or
 `*.sudoku.json`, media type `application/json`. A file is recognised by its `"format"` member, not by its name.
-Several puzzles go in a [JSON Lines](https://jsonlines.org/) file (`*.jsonl`): one compact `sudoku-puzzle` object per
+Several puzzles go in a [JSON Lines](https://jsonlines.org/) file (`*.jsonl`): one compact `pencilmark-puzzle` object per
 line.
 
 ### 1.1 What each reader needs
@@ -65,9 +65,9 @@ are optional for readers: cosmetic layers may be ignored, and only a writer that
 ## 2. Envelope
 
 ```json
-{"format": "sudoku-puzzle",
+{"format": "pencilmark-puzzle",
  "format_version": 1,
- "$schema": "https://silly-puppyy.github.io/pencilmark/schema/sudoku-puzzle-1.json",
+ "$schema": "https://silly-puppyy.github.io/pencilmark/schema/pencilmark-puzzle-1.json",
  "meta": {"title": "…", "author": "…"},
  "board": {"rows": 9, "cols": 9},
  "digits": 9,
@@ -81,7 +81,7 @@ are optional for readers: cosmetic layers may be ignored, and only a writer that
 
 | Key | Required | Meaning |
 |---|---|---|
-| `format` | yes | Always `"sudoku-puzzle"`. |
+| `format` | yes | Always `"pencilmark-puzzle"`. |
 | `format_version` | yes | Integer, `1`. Bumped only on a breaking change. A reader MUST refuse a file whose `format_version` is higher than it supports. |
 | `$schema` | no | URL of the JSON Schema. Ignored by readers. |
 | `meta` | no | Information *about* the puzzle (2.1). Never changes how it is solved or graded. |
@@ -118,7 +118,7 @@ agree on the common ones:
 | `license` | Licence of the puzzle. |
 | `tags` | List of strings. |
 | `fingerprint` | Optional: the puzzle's [fingerprint](#82-fingerprint), 64 hex digits. `meta` is outside the fingerprint, so a file can carry its own. |
-| `generated_from` | Optional: fingerprint of the `sudoku-spec` that produced the puzzle ([Generator spec](generator-spec.md)). |
+| `generated_from` | Optional: fingerprint of the `pencilmark-spec` that produced the puzzle ([Generator spec](generator-spec.md)). |
 
 ## 3. Cells, outside clues and ordering
 
@@ -178,7 +178,7 @@ Edge and corner positions are never named directly. They follow from the cells:
 A reader MUST refuse a file, raising an error that names the offending key or rule and its position, when any of
 these holds:
 
-1. `format` is not `"sudoku-puzzle"`, or `format_version` is missing, not an integer, or higher than supported.
+1. `format` is not `"pencilmark-puzzle"`, or `format_version` is missing, not an integer, or higher than supported.
 2. A key it does not know appears **anywhere**: at the top level, in `board`, or inside a rule. The only exceptions are
    these, which are always safe to ignore: `meta`, `style` (top level and per rule), `decorations`, and a rule's `id`
    and `label`.
@@ -312,13 +312,13 @@ import pencilmark
 
 messy = {"rules": [{"cells": ["r1c2", "r1c1"], "sum": 3, "type": "cage"},
                    {"count": [2, 2], "box": [2, 2], "type": "box_grid", "origin": "r1c1"}],
-         "digits": 4, "board": {"cols": 4, "rows": 4}, "format_version": 1, "format": "sudoku-puzzle",
+         "digits": 4, "board": {"cols": 4, "rows": 4}, "format_version": 1, "format": "pencilmark-puzzle",
          "givens": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4]}
 print(pencilmark.dumps(messy))
 ```
 
 ```json
-{"format": "sudoku-puzzle",
+{"format": "pencilmark-puzzle",
  "format_version": 1,
  "board": {"rows": 4, "cols": 4},
  "digits": 4,
@@ -366,7 +366,7 @@ rotated or relabelled copy has another fingerprint.
 
 For a share link, compress the compact canonical JSON with lz-string `compressToEncodedURIComponent` (as [f-puzzles](https://www.f-puzzles.com/) and
 SudokuPad do), or gzip + base64url. Suggested URL parameter: `?pm=<data>`. Compression is transport only: the
-decompressed text is a normal `sudoku-puzzle` file.
+decompressed text is a normal `pencilmark-puzzle` file.
 
 ---
 

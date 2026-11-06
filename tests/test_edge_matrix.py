@@ -44,7 +44,7 @@ def cases():
                                 neg[param[0]] = param[1]
                             rules.append(neg)
                         yield {
-                            "format": "sudoku-puzzle",
+                            "format": "pencilmark-puzzle",
                             "format_version": 1,
                             "board": {"rows": D, "cols": D},
                             "digits": D,

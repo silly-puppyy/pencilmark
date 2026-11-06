@@ -144,7 +144,7 @@ puzzles.
 
 ## Save in the puzzle format
 
-`to_export` turns any of these inputs into a `sudoku-puzzle` file, with the variant name and rules filled in, its
+`to_export` turns any of these inputs into a `pencilmark-puzzle` file, with the variant name and rules filled in, its
 solution, and the title and source a link carries:
 
 ```python

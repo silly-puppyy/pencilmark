@@ -2,7 +2,7 @@
  "title": "Twodoku, Hard",
  "shows": "two grids sharing a box, with a band target",
  "spec": {
-  "format": "sudoku-spec",
+  "format": "pencilmark-spec",
   "format_version": 1,
   "board": {
    "rows": 15,
@@ -44,7 +44,7 @@
   }
  },
  "puzzle": {
-  "format": "sudoku-puzzle",
+  "format": "pencilmark-puzzle",
   "format_version": 1,
   "meta": {
    "title": "generated 9x9 classic, 39 givens",

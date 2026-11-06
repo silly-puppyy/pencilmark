@@ -2,7 +2,7 @@
  "title": "The gentlest X-Wing",
  "shows": "difficulty `\"min\"` with a required technique: the easiest puzzle found in the time that still needs an X-Wing",
  "spec": {
-  "format": "sudoku-spec",
+  "format": "pencilmark-spec",
   "format_version": 1,
   "board": {
    "rows": 9,
@@ -38,7 +38,7 @@
   }
  },
  "puzzle": {
-  "format": "sudoku-puzzle",
+  "format": "pencilmark-puzzle",
   "format_version": 1,
   "meta": {
    "title": "generated 9x9 classic, 24 givens",

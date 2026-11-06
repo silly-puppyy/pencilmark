@@ -2,7 +2,7 @@
  "title": "One whisper, 25 cells or more",
  "shows": "a line `length` with no upper bound, and 180° symmetry of the givens",
  "spec": {
-  "format": "sudoku-spec",
+  "format": "pencilmark-spec",
   "format_version": 1,
   "board": {
    "rows": 9,
@@ -44,7 +44,7 @@
   }
  },
  "puzzle": {
-  "format": "sudoku-puzzle",
+  "format": "pencilmark-puzzle",
   "format_version": 1,
   "meta": {
    "title": "generated 9x9 1 whisper, 12 givens",

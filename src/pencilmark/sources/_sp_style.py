@@ -1,4 +1,4 @@
-"""How a SudokuPad puzzle draws its rules, kept as the sudoku-puzzle `style` of each rule (docs/formats/puzzle-format.md
+"""How a SudokuPad puzzle draws its rules, kept as the pencilmark-puzzle `style` of each rule (docs/formats/puzzle-format.md
 section 7: cosmetic, never read for meaning). Each drawn element gives its cells and its look; on export a rule takes
 the look of the element whose cells are exactly the rule's cells (a purple renban line stays purple), and none when
 no element, or elements that disagree, match it."""
@@ -111,7 +111,7 @@ def _rule_cells(v, acc):
 
 
 def apply(doc, drawn):
-    """the sudoku-puzzle document with `style` on each rule whose cells one drawn look matches"""
+    """the pencilmark-puzzle document with `style` on each rule whose cells one drawn look matches"""
     looks, decorations = {}, [el["decoration"] for el in drawn or [] if "decoration" in el]
     for el in drawn or []:
         if "cells" not in el:

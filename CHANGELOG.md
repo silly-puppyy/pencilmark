@@ -14,6 +14,8 @@ What changes for you (details in the entries below):
 - **Breaking, no aliases** (nobody depends on them yet): fingerprints drop the `sha256:` prefix; `box_grid` needs `count`; colouring codes share the prefix C
   (EQD -> CEQ, SCL -> CSM, MCL -> CMU, 3DM -> CMD, identity-layer codes CSG / CFL / CPR / CTR); generated puzzles carry
   `meta.generated_from` only when the spec asks.
+- **Breaking, no aliases:** the format names are `pencilmark-puzzle`, `pencilmark-grade` and `pencilmark-spec` (the format is
+  called "pencilmark JSON"; were `sudoku-puzzle`, `sudoku-grade`, `sudoku-spec`); the schema files are renamed to match.
 - **New in the format:** fog of war, regions to find (chaos), shading (yin-yang), custom-rule unknowns and layers.
   `rate` grades fog under the fog; shading and unknowns give band Unknown with a `reason` for now (they load,
   validate, solve and count). Errors are only for wrong inputs (unreadable, misread, not unique, no solution).
@@ -323,7 +325,7 @@ What changes for you (details in the entries below):
   centre (a corner clue such as a run sum, a maze marker) is refused instead of dropped: no reading handles it. On
   1,500 random cached SudokuPad puzzles this refuses 19 misread puzzles and 1 read right (lines labelled "GW" / "RN"
   in their cells); on the top 500, 22 misread path puzzles, none graded lost.
-- `describe` no longer searches for the solution of a puzzle it is given as anything but a sudoku-puzzle file: it read
+- `describe` no longer searches for the solution of a puzzle it is given as anything but a pencilmark-puzzle file: it read
   the rules through `to_export`, which solves to add the solution (a hard Latin square took minutes; now 17 ms).
 - Readers refuse puzzles whose rules define a mechanic the engine does not model, instead of reading its elements as
   something else: equality and EquaLite cages, look-and-say cages, Rellik cages, counting cages (all read as killer
@@ -498,7 +500,7 @@ What changes for you (details in the entries below):
 - Faster grading, same cards: the engine caches what each technique finds at a position across a card's many
   routes, single-digit techniques per digit, and the costliest late techniques are listed only when they could still
   win, and case analysis follows each assumption once (a 16x16 classic card: about 300 s -> 23 s).
-- `pencilmark.load` reads JSON text that holds a link (every ipuz text does, in its `version`; a sudoku-puzzle with
+- `pencilmark.load` reads JSON text that holds a link (every ipuz text does, in its `version`; a pencilmark-puzzle with
   a source URL in `meta`). It tried the text as a puzzle link first and failed with "not a puzzle link".
 - `pencilmark.to_export("puzzle.json")` keeps the file's `meta` (title, source, ...), as it already did for a dict
   or JSON text. One reader (`pencilmark/inputs.py`) now serves `load`, `to_export` and the command line, so a link
@@ -560,7 +562,7 @@ What changes for you (details in the entries below):
 
 ## 1.0.0
 
-First stable release: the `sudoku-puzzle`, `sudoku-grade` and `sudoku-spec` formats are format_version 1, and the card's
+First stable release: the `pencilmark-puzzle`, `pencilmark-grade` and `pencilmark-spec` formats are format_version 1, and the card's
 meaning is set out in docs/PHILOSOPHY.md. Changes since 1.0.0rc2:
 
 - Grade card simplified (one meaning per key, docs/PHILOSOPHY.md): `contains_complete` removed (it was band != Unknown;
@@ -597,8 +599,8 @@ meaning is set out in docs/PHILOSOPHY.md. Changes since 1.0.0rc2:
 - `"type": "table"` and the `allowed` operator are reserved: explicit digit tables made files large and could not be
   drawn; a custom rule type is planned to replace them. Mechanics without a rule family cannot be written in
   format_version 1. The Rossini test puzzle now uses `rossini` rules and `negative` instead of edges and tables.
-- Generator: one vocabulary. `pencilmark.generate(spec)` (also `pencilmark.gen.generate`) takes a `sudoku-spec` request and
-  returns a `sudoku-puzzle` (with `meta.generated_from`), honouring the spec's `fields`; the internal Spec dicts
+- Generator: one vocabulary. `pencilmark.generate(spec)` (also `pencilmark.gen.generate`) takes a `pencilmark-spec` request and
+  returns a `pencilmark-puzzle` (with `meta.generated_from`), honouring the spec's `fields`; the internal Spec dicts
   (`target_band`, `max_givens`, ...) and `spec_from_gen` / `spec_to_gen` are no longer public. `SPEC.md` version 1
   describes exactly what the generator runs; the rest is listed as reserved and refused with a message naming it.
   Example specs that use reserved parts moved to `docs/examples/specs/reserved/`.
@@ -657,23 +659,23 @@ meaning is set out in docs/PHILOSOPHY.md. Changes since 1.0.0rc2:
 
 First public release.
 
-- `rate`, `rate_many`, `solve`, `to_export`, `load`: the "sudoku-grade" card (difficulty, time, band, contents, issues /
+- `rate`, `rate_many`, `solve`, `to_export`, `load`: the "pencilmark-grade" card (difficulty, time, band, contents, issues /
   reject; on request time_p80, steps with two explanation levels, Sudoku Explainer-style ratings, describe, symmetry;
   `fields=[...]` computes only the requested fields) for classic and variant sudoku.
 - Publishing checks (`issues`) with adjustable limits: `quality={"trivial": 0.5, "trial": False}` / `--quality`, the same
   object the generator spec's `quality` takes.
 - Command line: `pencilmark rate | solve | json | export | fingerprint | describe` (also `python -m pencilmark`).
-- Exchange format: `sudoku-puzzle` format_version 1, read and written, specified in `docs/FORMAT.md` with a JSON Schema (`docs/sudoku-puzzle.schema.json`):
+- Exchange format: `pencilmark-puzzle` format_version 1, read and written, specified in `docs/FORMAT.md` with a JSON Schema (`docs/pencilmark-puzzle.schema.json`):
   every constraint is a rule (houses as `grid` / `box_grid` / `box`, explicit `row` / `column` for bent ones; nothing
   implied), cells named `r1c1`, a rule
   vocabulary of families and kinds with exact semantics and default drawings, outside clues anchored by `side`,
   explicit `negative` rules, strict reading (unknown keys or rule types are refused).
-- `sudoku-spec` generator requests (givens, locked rules and templates, symmetry, `where` card targets, quality,
+- `pencilmark-spec` generator requests (givens, locked rules and templates, symmetry, `where` card targets, quality,
   limits); `spec_to_gen` runs what the generator supports and refuses the rest with the reason; showcase specs in
   `docs/examples/specs/`.
 - Format functions: `dumps` (canonical text), `fingerprint` (content hash), `validate`, `describe` / `rules_text` (variant
   name and rules from a registry of placement variants and rule families), optional `to_ipuz`, `from_string` / `to_string`
-  (plain and sudokuwiki.org strings), `spec_from_gen` / `spec_to_gen` (the `sudoku-spec` generator request).
+  (plain and sudokuwiki.org strings), `spec_from_gen` / `spec_to_gen` (the `pencilmark-spec` generator request).
 - Cards carry `"format_version": 1` and `"grader": {"name": "pencilmark", "version": ...}`.
 - One engine form per mechanic: renban / between / zipper / region-sum constraints as lines, jigsaw pieces as boxes,
   numbered pair clues (difference / sum / product / ratio, mathrax) as 2-cell tables, duplicated houses merged, global entropy and quadruple clues as named rules for

@@ -31,7 +31,7 @@ def test_time_limit_logged(caplog):
 
 def test_generator_logs(caplog):
     spec = {
-        "format": "sudoku-spec",
+        "format": "pencilmark-spec",
         "format_version": 1,
         "board": {"rows": 4, "cols": 4},
         "digits": 4,

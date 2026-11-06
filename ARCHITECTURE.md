@@ -23,7 +23,7 @@ flowchart TD
 ```
 
 1. **Read.** `api.load` turns any accepted input (string, JSON, file, link) into a `model.Puzzle`. The public format is
-   read by `exchange/` (`sudoku-puzzle`, docs/formats/puzzle-format.md), text forms by `interop.py`, links by `sources/`.
+   read by `exchange/` (`pencilmark-puzzle`, docs/formats/puzzle-format.md), text forms by `interop.py`, links by `sources/`.
 2. **Check uniqueness.** `cpsat_verify.decide` runs the C++ search (`cbackend.brute_solve`), with OR-Tools as an optional
    fallback; it raises `NotUnique` / `NoSolution` / `Undecided`.
 3. **Find the human route.** `band_path.band_path` solves band by band: at each position it asks the engine for every
@@ -62,7 +62,7 @@ flowchart TB
 | Engine | `csrc/` via `cbackend.py` (`engine_records.py` decodes its move records) | every search: techniques, move listing, brute force, refutation |
 | Grader | `band_path.py`, `card_score.py`, `scoring.py`, `metrics.py`, `export.py`, `card.py`, `grader_model.py` | route, prices, difficulty, time, band, contents; `grader_model.py` holds every fitted parameter, loaded once |
 | Words | `explain/` (base, grid, catalog, singles, combos, notes, chains, trial, records, dispatch), `variants.py`, `usage.py` | explanations, variant names and rule text |
-| Generator | `gen/` | puzzles for a `sudoku-spec` request |
+| Generator | `gen/` | puzzles for a `pencilmark-spec` request |
 | Registry | `registry.py` over `data/techniques.csv`, `codes.csv`, `patterns.csv` | every fact about a technique, chip code and engine pattern code (name, band, order, family, flags, SE rating) |
 | Data | `data/*.json`, `data/*.csv` | fitted parameters and tables |
 

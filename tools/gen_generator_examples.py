@@ -18,7 +18,7 @@ BOX = {4: [2, 2], 6: [2, 3], 8: [2, 4], 9: [3, 3]}
 
 
 def spec(size=9, rules=(), where=None, givens=None, symmetry=None, seed=1, time=180, quality=None):
-    s = {"format": "sudoku-spec", "format_version": 1, "board": {"rows": size, "cols": size}, "digits": size,
+    s = {"format": "pencilmark-spec", "format_version": 1, "board": {"rows": size, "cols": size}, "digits": size,
          "rules": [{"type": "box_grid", "box": BOX[size], "count": [BOX[size][1], BOX[size][0]]}, *rules]}  # fmt: skip
     if givens:
         s["givens"] = givens
@@ -36,7 +36,7 @@ def layout_spec(layout, rules=(), locked=(), where=None, givens=None, symmetry=N
     from pencilmark import puzzle_json as PJ
 
     origins = PJ._layouts()[layout]
-    s = {"format": "sudoku-spec", "format_version": 1,
+    s = {"format": "pencilmark-spec", "format_version": 1,
          "board": {"rows": max(r for r, _ in origins) + 9, "cols": max(c for _, c in origins) + 9}, "digits": 9,
          "rules": [{"type": "box_grid", "origin": f"r{r + 1}c{c + 1}", "box": [3, 3], "count": [3, 3]} for r, c in origins]
          + list(locked) + list(rules)}  # fmt: skip

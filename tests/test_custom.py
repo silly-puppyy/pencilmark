@@ -363,7 +363,7 @@ def test_board_layers():
     doc = json.loads(json.dumps(CHAOS_DEMO))  # regions to find: the search checks region() with the labels
     assert pencilmark.count_solutions(dict(doc, rules=doc["rules"] + [rule("region(a) != region(b)")]))["count"] == 1
     assert pencilmark.count_solutions(dict(doc, rules=doc["rules"] + [rule("region(a) == region(b)")]))["count"] == 0
-    plain = {"format": "sudoku-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
+    plain = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
              "givens": [0] * 81, "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
                        rule("region(a) != region(b)")]}  # fmt: skip
     with pytest.raises(pencilmark.NotSupportedError, match="regions to find"):
@@ -375,7 +375,7 @@ def test_board_layers():
 
 def _hidden_doc(**extra):
     base = {
-        "format": "sudoku-puzzle",
+        "format": "pencilmark-puzzle",
         "format_version": 1,
         "board": {"rows": 4, "cols": 4},
         "digits": 4,
@@ -538,7 +538,7 @@ def test_concat_table_matches_enumeration():
 def test_rate_unknowns_is_unknown_with_reason():
     """a puzzle with unknowns: no human technique reasons with them yet, so its card is band Unknown with the reason"""
     doc = {
-        "format": "sudoku-puzzle", "format_version": 1, "board": {"rows": 4, "cols": 4}, "digits": 4,
+        "format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 4, "cols": 4}, "digits": 4,
         "givens": [0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 4, 0, 0, 0], "unknowns": {"X": {"range": [3, 7]}},
         "rules": [{"type": "box_grid", "box": [2, 2], "count": [2, 2]},
                   {"type": "custom", "cells": {"a": ["r1c1", "r1c2"]}, "holds": "sum(a) == X"},

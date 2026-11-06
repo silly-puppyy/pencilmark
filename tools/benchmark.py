@@ -5,7 +5,7 @@ the card follows the target. Standard library only (plus pencilmark).
   python tools/benchmark.py report grades.jsonl
 
 Input, one JSON object per line:
-  puzzle       anything pencilmark.load reads (a sudoku-puzzle document, a classic string, a link, ...)
+  puzzle       anything pencilmark.load reads (a pencilmark-puzzle document, a classic string, a link, ...)
   source       where the target comes from ("fed-sudoku.eu", "my club", ...): the report has one row per source
   group        puzzles that are comparable (a difficulty tab, a variant type, a board size): correlations are
                computed within each group and averaged, as in the published benchmark

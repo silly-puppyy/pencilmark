@@ -1,8 +1,8 @@
-"""The "sudoku-puzzle" exchange format, format_version 1 (docs/formats/puzzle-format.md): engine Puzzle <-> exchange dict.
+"""The "pencilmark-puzzle" exchange format, format_version 1 (docs/formats/puzzle-format.md): engine Puzzle <-> exchange dict.
 
-    write(p, meta=None, solution=None) -> dict          engine Puzzle -> canonical sudoku-puzzle dict
-    to_internal(doc) -> dict                            sudoku-puzzle dict -> puzzle JSON (pencilmark.puzzle_json)
-    read(doc) -> Puzzle                                 sudoku-puzzle dict -> engine Puzzle (not finalized)
+    write(p, meta=None, solution=None) -> dict          engine Puzzle -> canonical pencilmark-puzzle dict
+    to_internal(doc) -> dict                            pencilmark-puzzle dict -> puzzle JSON (pencilmark.puzzle_json)
+    read(doc) -> Puzzle                                 pencilmark-puzzle dict -> engine Puzzle (not finalized)
     validate(doc)                                       strict reading checks (docs/formats/puzzle-format.md section 4); raises FormatError
     dumps(doc, pretty=True) -> str                      canonical JSON text (docs/formats/puzzle-format.md 8.1)
     fingerprint(doc) -> "<64 hex>"                       content fingerprint (docs/formats/puzzle-format.md 8.2)

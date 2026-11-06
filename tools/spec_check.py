@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Independent checker: does a solution satisfy every rule of a sudoku-puzzle document?
+"""Independent checker: does a solution satisfy every rule of a pencilmark-puzzle document?
 
 Written only from the docs (docs/formats/puzzle-format.md and the rule family pages, docs/formats/rules/*.mdx), not from
 the engine, so it can arbitrate: tools/fuzz.py builds puzzles it accepts. Standard library only.
@@ -754,7 +754,7 @@ def check_doc(doc, report):
     R, C, D = doc.R, doc.C, doc.D
     # envelope / implicit rules
     implicit = []
-    if d.get("format") != "sudoku-puzzle" or d.get("format_version") != 1:
+    if d.get("format") != "pencilmark-puzzle" or d.get("format_version") != 1:
         implicit.append("bad format/version")
     for k in d:
         if k not in (

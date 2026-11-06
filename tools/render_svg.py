@@ -1,4 +1,4 @@
-"""Draw a sudoku-puzzle file as SVG, following the default drawing of docs/library/drawing-style.md (reference renderer for
+"""Draw a pencilmark-puzzle file as SVG, following the default drawing of docs/library/drawing-style.md (reference renderer for
 the docs; not part of the package).
   python tools/render_svg.py puzzle.json out.svg [--dark] [--cell 48]
   render(doc, dark=False, cell=48) -> svg text"""

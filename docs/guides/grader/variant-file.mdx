@@ -1,6 +1,6 @@
 ---
 title: Write a variant puzzle file
-description: Write a 6×6 thermo and Kropki puzzle in the sudoku-puzzle format, check it and grade it.
+description: Write a 6×6 thermo and Kropki puzzle in the pencilmark-puzzle format, check it and grade it.
 ---
 
 import PuzzleJson from '@site/src/components/PuzzleJson';
@@ -16,7 +16,7 @@ it and grades it ([Grade your first puzzle](../../start/first-puzzle.md) covers 
 Start a file called `mini.json` (the finished file is also in the repository as `docs/examples/mini-thermo-kropki.json`):
 
 ```json
-{"format": "sudoku-puzzle", "format_version": 1,
+{"format": "pencilmark-puzzle", "format_version": 1,
  "board": {"rows": 6, "cols": 6},
  "digits": 6,
  "givens": [

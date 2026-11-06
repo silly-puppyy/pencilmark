@@ -6,9 +6,9 @@ import re
 
 from .. import puzzle_json as PJ
 
-FORMAT = "sudoku-puzzle"
+FORMAT = "pencilmark-puzzle"
 FORMAT_VERSION = 1
-SCHEMA_URL = "https://silly-puppyy.github.io/pencilmark/schema/sudoku-puzzle-1.json"
+SCHEMA_URL = "https://silly-puppyy.github.io/pencilmark/schema/pencilmark-puzzle-1.json"
 
 
 # normalisation 8 (docs/library/engine-mapping.md): 2-cell tables that are an edge clue (differences / sums / products / quotients) and mathrax

@@ -42,7 +42,7 @@ module.exports = {
     ]),
     section('Formats', '/formats/', 'The three formats: a puzzle, its grade card, and a request to the generator.', [
       {type: 'category', label: 'Puzzle format', collapsed: true, className: 'pm-ico-puzzle-format',
-        description: 'The sudoku-puzzle file: the format, every rule family, complete examples and a quick reference.',
+        description: 'The pencilmark-puzzle file: the format, every rule family, complete examples and a quick reference.',
         link: {type: 'doc', id: 'formats/puzzle-format'}, items: [
         {type: 'category', label: 'Rule families', collapsed: true, className: 'pm-ico-rules',
           description: 'Every rule type of the puzzle format, family by family.', link: {type: 'generated-index', slug: '/formats/rules/',

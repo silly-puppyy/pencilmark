@@ -9,7 +9,7 @@ from pencilmark.exchange import FormatError
 
 
 def doc(rules, givens=None):
-    return {"format": "sudoku-puzzle", "format_version": 1, "board": {"rows": 4, "cols": 4}, "digits": 4,
+    return {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 4, "cols": 4}, "digits": 4,
             "givens": givens or [0] * 16, "rules": rules}  # fmt: skip
 
 
@@ -102,5 +102,7 @@ def test_region_steps_on_the_card():
     givens = [v if k not in (3, 5, 10, 15) else 0 for k, v in enumerate(SOL)]
     d = doc([{"type": "chaos"}] + [{"type": "region_border", "cells": b} for b in QUADRANTS], givens)
     card = pencilmark.rate(d, fields=["band", "steps"])
-    schema = json.loads((Path(__file__).parents[1] / "docs" / "sudoku-grade.schema.json").read_text(encoding="utf-8"))
+    schema = json.loads(
+        (Path(__file__).parents[1] / "docs" / "pencilmark-grade.schema.json").read_text(encoding="utf-8")
+    )
     assert not list(jsonschema.Draft202012Validator(schema).iter_errors(card))

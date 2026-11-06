@@ -10,20 +10,20 @@ Everything below is importable from `pencilmark` directly (`pencilmark.rate`, `p
 
 | Name | What it does |
 |---|---|
-| def [`rate`](#rate) | The "sudoku-grade" card of one puzzle ([Grade card](../formats/grade-card.md)), with only the fields you ask for. |
+| def [`rate`](#rate) | The "pencilmark-grade" card of one puzzle ([Grade card](../formats/grade-card.md)), with only the fields you ask for. |
 | def [`rate_many`](#rate_many) | Cards for many puzzles, in input order. |
 | def [`describe`](#describe) | The variant name and its rules in words, from the rules alone (pencilmark/variants.py). |
 | def [`solve`](#solve) | The unique solution of a puzzle. |
 | def [`count_solutions`](#count_solutions) | How many solutions a puzzle has, counting up to a limit. |
-| def [`generate`](#generate) | One puzzle for a "sudoku-spec" request ([Generator spec](../formats/generator-spec.md)). |
+| def [`generate`](#generate) | One puzzle for a "pencilmark-spec" request ([Generator spec](../formats/generator-spec.md)). |
 | def [`load`](#load) | Any accepted input -> a finalised engine Puzzle. |
 | def [`validate`](#validate) | Strict reading checks of a format_version 1 dict ([Puzzle format](../formats/puzzle-format.md) section 4). |
 | def [`fingerprint`](#fingerprint) | Content fingerprint of a puzzle: the SHA-256 of its canonical form, 64 hex digits. |
-| def [`to_export`](#to_export) | The sudoku-puzzle dict of a puzzle (format_version 1, [Puzzle format](../formats/puzzle-format.md)). |
-| def [`dumps`](#dumps) | Canonical JSON text of a sudoku-puzzle dict: fixed key order; pretty: one grid row per line, one rule per… |
-| def [`from_string`](#from_string) | A puzzle as text -> sudoku-puzzle dict ([Other formats](../formats/other-formats.md)). |
+| def [`to_export`](#to_export) | The pencilmark-puzzle dict of a puzzle (format_version 1, [Puzzle format](../formats/puzzle-format.md)). |
+| def [`dumps`](#dumps) | Canonical JSON text of a pencilmark-puzzle dict: fixed key order; pretty: one grid row per line, one rule per… |
+| def [`from_string`](#from_string) | A puzzle as text -> pencilmark-puzzle dict ([Other formats](../formats/other-formats.md)). |
 | def [`to_string`](#to_string) | A puzzle as text ([Other formats](../formats/other-formats.md)). |
-| def [`from_ipuz`](#from_ipuz) | An ipuz sudoku -> sudoku-puzzle dict ([Other formats](../formats/other-formats.md)). |
+| def [`from_ipuz`](#from_ipuz) | An ipuz sudoku -> pencilmark-puzzle dict ([Other formats](../formats/other-formats.md)). |
 | def [`to_ipuz`](#to_ipuz) | A puzzle as an ipuz 2 dict ([Other formats](../formats/other-formats.md)). |
 | class [`NotUnique`](#NotUnique) | the puzzle has more than one solution |
 | class [`NoSolution`](#NoSolution) | the puzzle has no solution |
@@ -35,11 +35,11 @@ Everything below is importable from `pencilmark` directly (`pencilmark.rate`, `p
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L132)
 
-The "sudoku-grade" card of one puzzle ([Grade card](../formats/grade-card.md)), with only the fields you ask for.
+The "pencilmark-grade" card of one puzzle ([Grade card](../formats/grade-card.md)), with only the fields you ask for.
 
 **Parameters**
 
-- `puzzle` *str, dict, Path or Puzzle* — Anything `load` accepts: an 81-character string, a sudoku-puzzle dict or JSON text, a .json file, an ipuz file, a SudokuPad / f-puzzles / Penpa / Logic Masters link.
+- `puzzle` *str, dict, Path or Puzzle* — Anything `load` accepts: an 81-character string, a pencilmark-puzzle dict or JSON text, a .json file, an ipuz file, a SudokuPad / f-puzzles / Penpa / Logic Masters link.
 - `steps` *bool* — Shorthand for the `steps` field with every explanation level.
 - `max_seconds` *float, optional* — One wall-clock limit for the whole call. When it passes, the card says band "Unknown", difficulty and time are null and `completed` is false.
 - `mode` *str* — "human" (default): human techniques only, a proof by full search where they stop; "computer": also forcing chains and nets, Nishio and trial.
@@ -136,7 +136,7 @@ How many solutions a puzzle has, counting up to a limit.
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L660)
 
-One puzzle for a "sudoku-spec" request ([Generator spec](../formats/generator-spec.md)).
+One puzzle for a "pencilmark-spec" request ([Generator spec](../formats/generator-spec.md)).
 
 **Parameters**
 
@@ -144,7 +144,7 @@ One puzzle for a "sudoku-spec" request ([Generator spec](../formats/generator-sp
 
 **Returns**
 
-- *dict* — {"puzzle": sudoku-puzzle dict, "card": its sudoku-grade card, "info": {...}}.
+- *dict* — {"puzzle": pencilmark-puzzle dict, "card": its pencilmark-grade card, "info": {...}}.
 
 **Raises**
 
@@ -160,7 +160,7 @@ Any accepted input -> a finalised engine Puzzle.
 
 **Parameters**
 
-- `puzzle` *str, dict, Path or Puzzle* — A classic string (81 characters, with or without a trailing comment), a text or pencil-mark grid, a sudokuwiki packed string, a sudoku-puzzle dict or JSON text, an ipuz file, a .json path, a SudokuPad / f-puzzles / Penpa / Logic Masters link, or an engine Puzzle (returned as it is).
+- `puzzle` *str, dict, Path or Puzzle* — A classic string (81 characters, with or without a trailing comment), a text or pencil-mark grid, a sudokuwiki packed string, a pencilmark-puzzle dict or JSON text, an ipuz file, a .json path, a SudokuPad / f-puzzles / Penpa / Logic Masters link, or an engine Puzzle (returned as it is).
 
 **Returns**
 
@@ -168,7 +168,7 @@ Any accepted input -> a finalised engine Puzzle.
 
 **Raises**
 
-- *FormatError* — A sudoku-puzzle document that breaks the format.
+- *FormatError* — A pencilmark-puzzle document that breaks the format.
 - *TypeError* — An input of no known form.
 
 ### `def validate(doc)` {#validate}
@@ -179,7 +179,7 @@ Strict reading checks of a format_version 1 dict ([Puzzle format](../formats/puz
 
 **Parameters**
 
-- `doc` *dict* — A sudoku-puzzle document.
+- `doc` *dict* — A pencilmark-puzzle document.
 
 **Returns**
 
@@ -209,7 +209,7 @@ Covers the rules, grid, givens and candidates; not meta, style or the solution. 
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L414)
 
-The sudoku-puzzle dict of a puzzle (format_version 1, [Puzzle format](../formats/puzzle-format.md)).
+The pencilmark-puzzle dict of a puzzle (format_version 1, [Puzzle format](../formats/puzzle-format.md)).
 
 Canonical: houses and rules with "r1c1" cells, keys in a fixed order. Metadata already in a JSON input is kept.
 
@@ -224,17 +224,17 @@ Canonical: houses and rules with "r1c1" cells, keys in a fixed order. Metadata a
 
 **Returns**
 
-- *dict* — The sudoku-puzzle document.
+- *dict* — The pencilmark-puzzle document.
 
 ### `def dumps(doc, pretty=True)` {#dumps}
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L480)
 
-Canonical JSON text of a sudoku-puzzle dict: fixed key order; pretty: one grid row per line, one rule per line.
+Canonical JSON text of a pencilmark-puzzle dict: fixed key order; pretty: one grid row per line, one rule per line.
 
 **Parameters**
 
-- `doc` *dict* — A sudoku-puzzle document.
+- `doc` *dict* — A pencilmark-puzzle document.
 - `pretty` *bool* — Readable layout (True) or one line (False).
 
 **Returns**
@@ -245,7 +245,7 @@ Canonical JSON text of a sudoku-puzzle dict: fixed key order; pretty: one grid r
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L612)
 
-A puzzle as text -> sudoku-puzzle dict ([Other formats](../formats/other-formats.md)).
+A puzzle as text -> pencilmark-puzzle dict ([Other formats](../formats/other-formats.md)).
 
 Reads plain classic strings (with or without a trailing comment), text grids with separators, pencil-mark grids, 729-character candidate strings, HoDoKu library lines and sudokuwiki.org packed strings.
 
@@ -256,7 +256,7 @@ Reads plain classic strings (with or without a trailing comment), text grids wit
 
 **Returns**
 
-- *dict* — The sudoku-puzzle document.
+- *dict* — The pencilmark-puzzle document.
 
 ### `def to_string(puzzle, form='plain')` {#to_string}
 
@@ -281,7 +281,7 @@ A puzzle as text ([Other formats](../formats/other-formats.md)).
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L594)
 
-An ipuz sudoku -> sudoku-puzzle dict ([Other formats](../formats/other-formats.md)).
+An ipuz sudoku -> pencilmark-puzzle dict ([Other formats](../formats/other-formats.md)).
 
 **Parameters**
 
@@ -289,7 +289,7 @@ An ipuz sudoku -> sudoku-puzzle dict ([Other formats](../formats/other-formats.m
 
 **Returns**
 
-- *dict* — The sudoku-puzzle document.
+- *dict* — The pencilmark-puzzle document.
 
 ### `def to_ipuz(puzzle)` {#to_ipuz}
 

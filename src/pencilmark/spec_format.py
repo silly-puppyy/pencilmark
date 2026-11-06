@@ -1,8 +1,8 @@
-"""The "sudoku-spec" generator request (docs/formats/generator-spec.md): a puzzle file with blanks.
+"""The "pencilmark-spec" generator request (docs/formats/generator-spec.md): a puzzle file with blanks.
 
     validate_spec(doc)                    strict reading of the spec language (unknown keys refused)
     spec_to_gen(doc) -> dict              the part pencilmark.gen can run, as a Spec dict; anything else -> NotSupportedError
-    spec_from_gen(spec) -> dict           pencilmark.gen Spec (or dict) -> sudoku-spec
+    spec_from_gen(spec) -> dict           pencilmark.gen Spec (or dict) -> pencilmark-spec
     gen_support(doc) -> (bool, reason)    can pencilmark.gen run it today?
 
 What pencilmark.gen runs today: gap-free D x D boards (4, 6, 8, 9, 10, 12, 16) with the standard box_grid, or a named
@@ -23,7 +23,7 @@ from .exchange import FormatError, NotSupportedError, jcs
 from .rules.edge import EDGE
 from .rules.line import LINE
 
-FORMAT = "sudoku-spec"
+FORMAT = "pencilmark-spec"
 FORMAT_VERSION = 1
 NS = "io.github.silly-puppyy.pencilmark"
 # generator element kind <-> template (type, kind)
@@ -111,12 +111,12 @@ def _n_or_range(v, what):
 
 
 def validate_spec(doc):
-    """strict reading of a sudoku-spec (docs/formats/generator-spec.md); locked rules are checked like puzzle rules"""
+    """strict reading of a pencilmark-spec (docs/formats/generator-spec.md); locked rules are checked like puzzle rules"""
     if not isinstance(doc, dict) or doc.get("format") != FORMAT:
-        raise FormatError('not a sudoku-spec ("format" must be "sudoku-spec")')
+        raise FormatError('not a pencilmark-spec ("format" must be "pencilmark-spec")')
     fv = doc.get("format_version")
     if not isinstance(fv, int) or fv > FORMAT_VERSION:
-        raise FormatError(f"sudoku-spec format_version {fv!r} is not supported")
+        raise FormatError(f"pencilmark-spec format_version {fv!r} is not supported")
     for k in doc:
         if k not in SPEC_KEYS:
             raise FormatError(f"unknown key {k!r}")
@@ -278,7 +278,7 @@ def _board(doc):
 
 
 def spec_to_gen(doc):
-    """sudoku-spec -> pencilmark.gen Spec dict; NotSupportedError naming the first part the generator cannot run"""
+    """pencilmark-spec -> pencilmark.gen Spec dict; NotSupportedError naming the first part the generator cannot run"""
     validate_spec(doc)
     bd = _board(doc)
     if isinstance(bd, str):
@@ -449,7 +449,7 @@ def gen_support(doc):
 
 
 def spec_from_gen(spec):
-    """pencilmark.gen Spec (or its dict) -> sudoku-spec dict"""
+    """pencilmark.gen Spec (or its dict) -> pencilmark-spec dict"""
     from .gen.api import Spec
     from .gen.elements import norm_kind
 

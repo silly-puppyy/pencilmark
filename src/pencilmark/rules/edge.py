@@ -71,7 +71,7 @@ class EdgeKind:
     name_fn: object = None  # fn(rules) -> the name for these rules, when it depends on them
     marker: str = "circle"  # drawn on the edge midpoint: "dot", "letter" (a square chip), "chevron", "circle"
     label: object = None  # fn(rule) -> the text in a "circle" marker
-    generated: bool = False  # the generator can place it (a sudoku-spec template; pencilmark/gen/elements.py)
+    generated: bool = False  # the generator can place it (a pencilmark-spec template; pencilmark/gen/elements.py)
 
 
 EDGE = {

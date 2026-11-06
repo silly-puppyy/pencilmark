@@ -486,7 +486,9 @@ def describe(puzzle):
 
     doc = (
         puzzle
-        if isinstance(puzzle, dict) and puzzle.get("format") == "sudoku-puzzle" and puzzle.get("format_version") == 1
+        if isinstance(puzzle, dict)
+        and puzzle.get("format") == "pencilmark-puzzle"
+        and puzzle.get("format_version") == 1
         else to_export(puzzle, with_solution=False, describe=False)  # the rules alone: no search for the solution
     )
     D = doc["digits"]

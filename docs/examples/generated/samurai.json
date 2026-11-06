@@ -2,7 +2,7 @@
  "title": "A samurai",
  "shows": "a named layout: five grids sharing their corner boxes, 180° symmetry of the givens",
  "spec": {
-  "format": "sudoku-spec",
+  "format": "pencilmark-spec",
   "format_version": 1,
   "board": {
    "rows": 21,
@@ -83,7 +83,7 @@
   }
  },
  "puzzle": {
-  "format": "sudoku-puzzle",
+  "format": "pencilmark-puzzle",
   "format_version": 1,
   "meta": {
    "title": "generated 9x9 classic, 108 givens",

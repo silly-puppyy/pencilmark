@@ -11,7 +11,7 @@ mostly given, a solve that is singles around one hard step. Ask for the `issues`
 ```
 $ echo '.3.1.78..........91.2.6.3..5...2...4..96.17..8...3...2..8.9.6.53..........68.3.9.' > hard.txt
 $ pencilmark rate hard.txt --json --fields band,issues,reject
-{"line": 1, "format": "sudoku-grade", "format_version": 1, "grader": {"name": "pencilmark", "version": "1.1.0"}, "band": "Hard", "issues": [{"code": "thin", "severity": "warning", "text": "candidate steps carry only 24% of the effort; the rest is singles"}], "reject": false}
+{"line": 1, "format": "pencilmark-grade", "format_version": 1, "grader": {"name": "pencilmark", "version": "1.1.0"}, "band": "Hard", "issues": [{"code": "thin", "severity": "warning", "text": "candidate steps carry only 24% of the effort; the rest is singles"}], "reject": false}
 ```
 
 A generated classic: 52 singles and one Skyscraper near the end. Each issue has a `code`, a `severity` and a

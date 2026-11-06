@@ -2,7 +2,7 @@
  "title": "Only X, no V",
  "shows": "an exact count of 0 forbids a letter: as many X clues as fit and no V",
  "spec": {
-  "format": "sudoku-spec",
+  "format": "pencilmark-spec",
   "format_version": 1,
   "board": {
    "rows": 9,
@@ -41,7 +41,7 @@
   }
  },
  "puzzle": {
-  "format": "sudoku-puzzle",
+  "format": "pencilmark-puzzle",
   "format_version": 1,
   "meta": {
    "title": "generated 9x9 24 xv, 9 givens",

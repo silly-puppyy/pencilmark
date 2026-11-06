@@ -1,5 +1,5 @@
 # Builds the documentation site (Docusaurus, website/; pages from docs/) and publishes it with the JSON Schemas on
-# GitHub Pages: https://silly-puppyy.github.io/pencilmark/ and .../schema/sudoku-puzzle-1.json, sudoku-grade-1.json
+# GitHub Pages: https://silly-puppyy.github.io/pencilmark/ and .../schema/pencilmark-puzzle-1.json, pencilmark-grade-1.json
 # (the schemas' $id).
 name: docs
 
@@ -37,8 +37,8 @@ jobs:
         working-directory: website
       - run: |
           mkdir -p website/build/schema
-          cp docs/sudoku-puzzle.schema.json website/build/schema/sudoku-puzzle-1.json
-          cp docs/sudoku-grade.schema.json website/build/schema/sudoku-grade-1.json
+          cp docs/pencilmark-puzzle.schema.json website/build/schema/pencilmark-puzzle-1.json
+          cp docs/pencilmark-grade.schema.json website/build/schema/pencilmark-grade-1.json
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
         with:

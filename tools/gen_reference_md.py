@@ -47,7 +47,7 @@ PAGES = {
     ),
     "generator": (
         "The generator",
-        "One puzzle for a sudoku-spec request.",
+        "One puzzle for a pencilmark-spec request.",
         ["gen/__init__", "gen/api", "gen/board", "gen/elements", "gen/checks", "gen/search"],
     ),
     "sources": (

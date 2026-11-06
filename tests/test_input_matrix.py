@@ -1,6 +1,6 @@
 """Every offline input form, read exactly as recorded in tests/fixtures/input_matrix.jsonl: the safety net for moving
 the input readers into one registry (step 6 of the restructure). Each case records what pencilmark.load() and the CLI's
-line reader make of one input (the canonical sudoku-puzzle text, or the error). Nothing is fetched or solved.
+line reader make of one input (the canonical pencilmark-puzzle text, or the error). Nothing is fetched or solved.
 Regenerate (only when a change is meant to alter it):
     python tests/test_input_matrix.py --write
 """
@@ -45,8 +45,8 @@ def inputs():
         ("empty", ""),
         ("text grid", grid),
         ("packed", pencilmark.to_string(CLASSIC, "sudokuwiki")),
-        ("sudoku-puzzle dict", doc),
-        ("sudoku-puzzle text", json.dumps(doc)),
+        ("pencilmark-puzzle dict", doc),
+        ("pencilmark-puzzle text", json.dumps(doc)),
         ("sample-pack line", {"puzzle": doc, "grade": {"difficulty": 1.0}}),
         ("puzzle json numbers", {"numbers": CLASSIC}),
         ("ipuz dict", pencilmark.to_ipuz(CLASSIC)),

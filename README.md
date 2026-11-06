@@ -45,10 +45,10 @@ card["band"], card["difficulty"], card["time"]          # ('Hard', 5.8, 10.6)
 card  = pencilmark.rate(puzzle, steps=True)             # add the step-by-step solve with explanations
 cards = pencilmark.rate_many(puzzles, jobs=4)           # several puzzles in parallel, input order kept
 sol   = pencilmark.solve(puzzle)                        # list of digits; raises NotUnique / NoSolution
-exp   = pencilmark.to_export(puzzle, title="My puzzle") # the sudoku-puzzle format
+exp   = pencilmark.to_export(puzzle, title="My puzzle") # the pencilmark-puzzle format
 ```
 
-A puzzle can be a classic string (`.` or `0` for blanks), a `sudoku-puzzle` dict, a puzzle JSON dict or string, or a
+A puzzle can be a classic string (`.` or `0` for blanks), a `pencilmark-puzzle` dict, a puzzle JSON dict or string, or a
 path to a `.json` file.
 
 Command line:
@@ -66,7 +66,7 @@ More in [Usage](https://silly-puppyy.github.io/pencilmark/start/usage/).
 
 ## The card
 
-`rate` returns a `"sudoku-grade"` card: by default the band (Very Easy to Extreme: what you need to know), the
+`rate` returns a `"pencilmark-grade"` card: by default the band (Very Easy to Extreme: what you need to know), the
 difficulty (how hard the steps are to find, no ceiling; a newspaper medium is about 5), the predicted median solve time
 in minutes, and the techniques the puzzle contains, easiest first. On request it adds publishing checks (candidate
 steps that do little, a rule nobody needs, too many givens), the steps with explanations, time percentiles and more;
@@ -75,12 +75,12 @@ Every field is in [Grade card](https://silly-puppyy.github.io/pencilmark/formats
 
 ## Puzzle format
 
-`to_export` writes, and every entry point reads, the `"sudoku-puzzle"` format, format_version 1: every constraint is a
+`to_export` writes, and every entry point reads, the `"pencilmark-puzzle"` format, format_version 1: every constraint is a
 rule, houses included, each with one exact meaning and a default drawing, and an unknown key makes the reader refuse
 the file instead of dropping a rule.
 
 ```json
-{"format": "sudoku-puzzle", "format_version": 1,
+{"format": "pencilmark-puzzle", "format_version": 1,
  "meta": {"title": "Heartstring", "author": "...", "source": "example.org", "type": "Killer Sudoku"},
  "board": {"rows": 9, "cols": 9},
  "digits": 9,
@@ -93,12 +93,12 @@ the file instead of dropping a rule.
 ```
 
 The specification is [Puzzle format](https://silly-puppyy.github.io/pencilmark/formats/puzzle-format/) (JSON Schema:
-[docs/sudoku-puzzle.schema.json](https://github.com/silly-puppyy/pencilmark/blob/main/docs/sudoku-puzzle.schema.json)).
+[docs/pencilmark-puzzle.schema.json](https://github.com/silly-puppyy/pencilmark/blob/main/docs/pencilmark-puzzle.schema.json)).
 
 ### Other formats
 
 For convenience pencilmark also reads and writes [sudokuwiki.org](https://www.sudokuwiki.org/) packed strings, text grids and [ipuz](http://www.ipuz.org/), reads pencil-mark grids, and loads SudokuPad,
-f-puzzles, [Penpa+](https://swaroopg92.github.io/penpa-edit/) and Logic Masters links. None of these is needed to use the `sudoku-puzzle` format; see
+f-puzzles, [Penpa+](https://swaroopg92.github.io/penpa-edit/) and Logic Masters links. None of these is needed to use the `pencilmark-puzzle` format; see
 [docs/formats/other-formats.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/formats/other-formats.md). How rules map onto the engine is in
 [docs/library/engine-mapping.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/library/engine-mapping.md); how to add
 one, in [Add a rule kind](https://silly-puppyy.github.io/pencilmark/guides/development/add-rule-kind/).
@@ -115,14 +115,14 @@ Rules that cannot be translated exactly are refused, never dropped silently.
 ## Generator
 
 ```python
-r = pencilmark.generate({"format": "sudoku-spec", "format_version": 1,
+r = pencilmark.generate({"format": "pencilmark-spec", "format_version": 1,
                          "board": {"rows": 9, "cols": 9}, "digits": 9,
                          "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}],
                          "where": {"band": "Hard"}})
-r["puzzle"], r["card"], r["info"]       # sudoku-puzzle, its card, run details
+r["puzzle"], r["card"], r["info"]       # pencilmark-puzzle, its card, run details
 ```
 
-The request is a `sudoku-spec` ([docs/formats/generator-spec.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/formats/generator-spec.md)).
+The request is a `pencilmark-spec` ([docs/formats/generator-spec.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/formats/generator-spec.md)).
 
 Targets: band, a difficulty range or the hardest / easiest found, required techniques, symmetry, given counts (per
 grid on a multi-grid layout), and rule elements with counts and shape limits (cages, thermos, whispers, renban, between
@@ -133,7 +133,7 @@ different digits. Every result is checked for uniqueness.
 
 ```python
 card = pencilmark.rate("https://sudokupad.app/...")  # SudokuPad, f-puzzles, Penpa+, Logic Masters, short links
-exp = pencilmark.to_export("https://sudokupad.app/...")  # the same puzzle as a sudoku-puzzle file
+exp = pencilmark.to_export("https://sudokupad.app/...")  # the same puzzle as a pencilmark-puzzle file
 ```
 
 The command line takes links too: `pencilmark rate links.txt`, one link per line.

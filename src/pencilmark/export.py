@@ -1,13 +1,13 @@
 """Human-oriented exchange formats: one for the puzzle, one for its grade.
 
-puzzle (format "sudoku-puzzle", format_version 1): specified in docs/formats/puzzle-format.md, implemented in pencilmark/exchange/ (strict
-  reader, order-preserving writer, canonical text, fingerprint), schema docs/sudoku-puzzle.schema.json. In short: "board",
+puzzle (format "pencilmark-puzzle", format_version 1): specified in docs/formats/puzzle-format.md, implemented in pencilmark/exchange/ (strict
+  reader, order-preserving writer, canonical text, fingerprint), schema docs/pencilmark-puzzle.schema.json. In short: "board",
   "digits", flat "givens" (0 empty, null no cell), optional "solution" / "candidates", and "rules" holding every constraint,
   houses included ({"type": "box_grid", "box": [3, 3], "count": [3, 3]} for a classic, {"type": "grid", ...} plus "box"
   rules for a jigsaw), cells
   named "r{row}c{col}"; "meta" is free-form information that never changes solving. Unknown keys / rule types are refused.
 
-grade (format "sudoku-grade", format_version 1):
+grade (format "pencilmark-grade", format_version 1):
   grader      {"name": "pencilmark", "version": "1.1.0"}: the engine that made the card; a card from another version can differ
   difficulty  what a human feels per cell: continuous, above 0 (a nearly finished grid ~0.2), no ceiling; classic medians track Andrew Stuart's
               scale (data/card_score.json "map")
@@ -131,7 +131,7 @@ def read_meta(d):
 
 
 def export_puzzle(p, meta=None, solution=None, source=None, title=None, rules_text=None):
-    """engine Puzzle -> "sudoku-puzzle" dict (format_version 1, docs/formats/puzzle-format.md; pencilmark/exchange/). meta: free-form metadata
+    """engine Puzzle -> "pencilmark-puzzle" dict (format_version 1, docs/formats/puzzle-format.md; pencilmark/exchange/). meta: free-form metadata
     dict; source / title / rules_text keywords are merged into meta."""
     from . import exchange as X
 
@@ -140,7 +140,7 @@ def export_puzzle(p, meta=None, solution=None, source=None, title=None, rules_te
 
 
 def import_puzzle(d):
-    """sudoku-puzzle (format_version 1, docs/formats/puzzle-format.md) -> puzzle JSON (pencilmark.puzzle_json), read strictly by
+    """pencilmark-puzzle (format_version 1, docs/formats/puzzle-format.md) -> puzzle JSON (pencilmark.puzzle_json), read strictly by
     pencilmark/exchange/."""
     from . import exchange as X
 
@@ -652,7 +652,7 @@ _OUTER_END = [
 
 
 def _grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, explain=None, alternatives=True):
-    """sudoku-grade card (docs/formats/grade-card.md), only the requested fields (card_fields). explain: step explanation levels
+    """pencilmark-grade card (docs/formats/grade-card.md), only the requested fields (card_fields). explain: step explanation levels
     (explain_levels). with_steps=True is shorthand for the steps field with both explanation levels."""
     from . import band_path as BP
     from . import card as K
@@ -720,7 +720,7 @@ def _grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expl
             CB._C.set_deadline(0.0)
     c = _CardContext(p, P, want, card, bp, alternatives, levels, base=base)
     g = {
-        "format": "sudoku-grade",
+        "format": "pencilmark-grade",
         "format_version": FORMAT_VERSION,
         "grader": {"name": GRADER_NAME, "version": GRADER_VERSION},
     }
@@ -775,7 +775,7 @@ def grade_fog(p, source, P, fields=None):
             card["score"], card["effort_l1"] = round(sp[0], 1), round(sp[1], 3)
     c = _CardContext(p, P, want, card, bp, False, [], base=bp)
     g = {
-        "format": "sudoku-grade",
+        "format": "pencilmark-grade",
         "format_version": FORMAT_VERSION,
         "grader": {"name": GRADER_NAME, "version": GRADER_VERSION},
     }
@@ -812,7 +812,7 @@ def unknown_card(want, reason):
     """the card of a puzzle no human route can grade yet (shading, unknowns / layers): band Unknown, difficulty and
     time null, no techniques, and the reason"""
     g = {
-        "format": "sudoku-grade",
+        "format": "pencilmark-grade",
         "format_version": FORMAT_VERSION,
         "grader": {"name": GRADER_NAME, "version": GRADER_VERSION},
     }

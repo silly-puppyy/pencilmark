@@ -2,7 +2,7 @@
  "title": "A super samurai: a variant per row, harder to the right",
  "shows": "eight overlapping grids (box_grid rules at the super-samurai origins), locked rules per row of grids (X diagonals on top, windoku windows in the middle, an asterisk at the bottom) and a given floor per grid (`givens.grids`) that thins out from left to right",
  "spec": {
-  "format": "sudoku-spec",
+  "format": "pencilmark-spec",
   "format_version": 1,
   "board": {
    "rows": 21,
@@ -404,7 +404,7 @@
   }
  },
  "puzzle": {
-  "format": "sudoku-puzzle",
+  "format": "pencilmark-puzzle",
   "format_version": 1,
   "meta": {
    "title": "generated 9x9 classic, 199 givens",

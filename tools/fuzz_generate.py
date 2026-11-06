@@ -70,7 +70,7 @@ def request(rng):
             t["value"] = (D + 1) // 2
         rules.append(t)
     s = {
-        "format": "sudoku-spec",
+        "format": "pencilmark-spec",
         "format_version": 1,
         "board": {"rows": D, "cols": D},
         "digits": D,

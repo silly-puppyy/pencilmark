@@ -102,7 +102,7 @@ def _int(x, what, lo=None):
 def validate(doc):
     """strict reading (docs/formats/puzzle-format.md section 4) of a format_version 1 dict; raises FormatError. Returns the Board."""
     if not isinstance(doc, dict) or doc.get("format") != FORMAT:
-        raise FormatError('not a sudoku-puzzle ("format" must be "sudoku-puzzle")')
+        raise FormatError('not a pencilmark-puzzle ("format" must be "pencilmark-puzzle")')
     doc = with_origins(doc)  # a grid / box_grid / chaos rule's origin defaults to r1c1
     if "format_version" not in doc:
         raise FormatError("format_version missing")

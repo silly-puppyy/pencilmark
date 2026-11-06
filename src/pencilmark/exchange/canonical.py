@@ -192,5 +192,5 @@ def semantic_subset(doc):
 
 
 def fingerprint_of_doc(doc):
-    """SHA-256 of the JCS form of the semantic subset of an already canonical sudoku-puzzle dict"""
+    """SHA-256 of the JCS form of the semantic subset of an already canonical pencilmark-puzzle dict"""
     return hashlib.sha256(jcs(semantic_subset(doc)).encode("utf-8")).hexdigest()

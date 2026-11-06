@@ -1,10 +1,10 @@
 ---
-description: "The sudoku-spec format: a request to the puzzle generator (board, rules, givens, symmetry, targets)."
+description: "The pencilmark-spec format: a request to the puzzle generator (board, rules, givens, symmetry, targets)."
 ---
 
 # Generator spec
 
-The `sudoku-spec` format, version 1: a request to a puzzle generator. It reuses the vocabulary of the
+The `pencilmark-spec` format, version 1: a request to a puzzle generator. It reuses the vocabulary of the
 [puzzle format](puzzle-format.md) and the keys of the [grade card](grade-card.md). Version 1 contains exactly what pencilmark's generator runs
 (`pencilmark.generate(spec)`); the parts planned for later versions are listed in section 7 and refused today. Example
 specs: [Generator examples](../guides/generator/generator-examples.mdx).
@@ -13,7 +13,7 @@ A request **is a puzzle file with blanks**: the same envelope and rule vocabular
 mistakes it for a puzzle), plus blocks that say what the result must satisfy and how long to try.
 
 ```json
-{"format": "sudoku-spec", "format_version": 1,
+{"format": "pencilmark-spec", "format_version": 1,
  "meta": {"title": "Killer with whispers"},
  "board": {"rows": 9, "cols": 9},
  "digits": 9,
@@ -28,7 +28,7 @@ mistakes it for a puzzle), plus blocks that say what the result must satisfy and
  "fields": ["difficulty", "time", "band", "contains"]}
 ```
 
-The result is an ordinary `sudoku-puzzle` with its `solution`, and `meta` of the spec (title, author, ...) is copied to
+The result is an ordinary `pencilmark-puzzle` with its `solution`, and `meta` of the spec (title, author, ...) is copied to
 it. A `fingerprint` or `generated_from` key in the spec's `meta` (any value, `true` by convention) is filled in on the
 puzzle: `meta.fingerprint` with the puzzle's [fingerprint](puzzle-format.md#82-fingerprint), `meta.generated_from` with
 the spec's (section 6). Without them the puzzle carries neither.

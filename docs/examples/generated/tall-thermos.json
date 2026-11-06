@@ -2,7 +2,7 @@
  "title": "Three tall thermometers",
  "shows": "an exact count with a length range: three thermos of 7 to 9 cells",
  "spec": {
-  "format": "sudoku-spec",
+  "format": "pencilmark-spec",
   "format_version": 1,
   "board": {
    "rows": 9,
@@ -38,7 +38,7 @@
   }
  },
  "puzzle": {
-  "format": "sudoku-puzzle",
+  "format": "pencilmark-puzzle",
   "format_version": 1,
   "meta": {
    "title": "generated 9x9 3 thermo, 13 givens",

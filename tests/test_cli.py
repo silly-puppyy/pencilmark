@@ -95,20 +95,20 @@ def test_cli_count():
 
 def test_cli_generate():
     spec = {
-        "format": "sudoku-spec",
+        "format": "pencilmark-spec",
         "format_version": 1,
         "board": {"rows": 4, "cols": 4},
         "digits": 4,
         "rules": [{"type": "box_grid", "box": [2, 2], "count": [2, 2]}],
     }
     out = json.loads(run(["generate", "-", "--seed", "1", "--result"], json.dumps(spec))[0])
-    assert out["puzzle"]["format"] == "sudoku-puzzle" and out["info"]["seed"] == 1
+    assert out["puzzle"]["format"] == "pencilmark-puzzle" and out["info"]["seed"] == 1
 
 
 def test_cli_errors_are_one_line(tmp_path):
     """a missing file, a spec that is not JSON: an error line and exit status 1, never a traceback"""
     bad = tmp_path / "spec.json"
-    bad.write_text('{"format": "sudoku-spec"', encoding="utf-8")
+    bad.write_text('{"format": "pencilmark-spec"', encoding="utf-8")
     for args in (["rate", str(tmp_path / "missing.txt")], ["fingerprint", str(tmp_path / "missing.txt")],
                  ["generate", str(bad)]):  # fmt: skip
         r = subprocess.run([sys.executable, "-m", "pencilmark", *args], capture_output=True, text=True)

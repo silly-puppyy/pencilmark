@@ -2,9 +2,9 @@
 
   python -m pencilmark rate [FILE|-] [--format FMT] [--json] [--steps]
       One puzzle per line: a classic string ('.'/'0' blanks; 16 / 36 / 81 / 256 / 625 symbols), a JSON object in the
-      pencilmark.puzzle_json format or the sudoku-puzzle format (pencilmark.to_export), or a path to a .json file. A
+      pencilmark.puzzle_json format or the pencilmark-puzzle format (pencilmark.to_export), or a path to a .json file. A
       FILE ending in .json that holds one JSON value (a puzzle, or a list of puzzles) is read whole. Prints one
-      result line per puzzle. Card "sudoku-grade": FMT fields %d difficulty (continuous, above 0, no ceiling; ~5 = typical medium),
+      result line per puzzle. Card "pencilmark-grade": FMT fields %d difficulty (continuous, above 0, no ceiling; ~5 = typical medium),
       %m predicted median solve time in minutes, %p 80th-percentile minutes, %b band, %h hardest technique met,
       %c contents chips (band > 0, with uses), %n issue codes, %s status ("ok" or the error), %u unique?, %i line number.
       Default: "%b\t%d\t%m\t%h". --json prints the full card (add --steps for the step list, --explain for its
@@ -13,10 +13,10 @@
   python -m pencilmark solve [FILE|-]      the solution (or 'not unique' / 'no solution') per puzzle
   python -m pencilmark count [FILE|-] [--limit N]   how many solutions per puzzle (">=N" when it stops at N)
   python -m pencilmark generate [SPEC|-] [--seed N] [--time S] [--result]
-                                       a puzzle for a "sudoku-spec" request (docs/formats/generator-spec.md), as a sudoku-puzzle file
+                                       a puzzle for a "pencilmark-spec" request (docs/formats/generator-spec.md), as a pencilmark-puzzle file
   python -m pencilmark json  [FILE|-]      validate + normalise to canonical JSON (adds "hash")
   python -m pencilmark export [FILE|-] [--pretty] [--no-solution] [--no-style]
-                                       each puzzle as a "sudoku-puzzle" file (format_version 1, docs/formats/puzzle-format.md), canonical
+                                       each puzzle as a "pencilmark-puzzle" file (format_version 1, docs/formats/puzzle-format.md), canonical
   python -m pencilmark fingerprint [FILE|-]  the content fingerprint (64 hex digits) per puzzle
   python -m pencilmark describe [FILE|-]     variant name and rules per puzzle (JSON)
 Inputs may also be sudokuwiki.org packed strings (S9B..., L9B..., J9B...).
@@ -132,7 +132,7 @@ def _subst(fmt, vals):
 
 
 def report2(g, k=None):
-    """Readable summary of the sudoku-grade card."""
+    """Readable summary of the pencilmark-grade card."""
     if "band" not in g:
         return f"[{k}] {g.get('error')}"
     L = [
@@ -357,7 +357,7 @@ def cmd_json(a):
 
 
 def cmd_export(a):
-    """`export` command: print each input puzzle in the sudoku-puzzle format (--no-solution drops the solution, --no-style the rules' drawing styles)"""
+    """`export` command: print each input puzzle in the pencilmark-puzzle format (--no-solution drops the solution, --no-style the rules' drawing styles)"""
     from .api import dumps, to_export
 
     def one(k, obj):
@@ -473,7 +473,7 @@ def main(argv=None):
     c.set_defaults(fn=cmd_count)
     g = sub.add_parser("generate", parents=[common])
     g.add_argument(
-        "spec", nargs="?", help="a sudoku-spec file (docs/formats/generator-spec.md), or - for standard input"
+        "spec", nargs="?", help="a pencilmark-spec file (docs/formats/generator-spec.md), or - for standard input"
     )
     g.add_argument("--seed", type=int, help="override limits.seed")
     g.add_argument("--time", type=float, help="override limits.time (seconds)")

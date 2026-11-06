@@ -2,7 +2,7 @@
  "title": "Nine variants on one 9×9",
  "shows": "",
  "spec": {
-  "format": "sudoku-spec",
+  "format": "pencilmark-spec",
   "format_version": 1,
   "meta": {
    "title": "Nine variants on one 9x9",
@@ -108,7 +108,7 @@
   }
  },
  "puzzle": {
-  "format": "sudoku-puzzle",
+  "format": "pencilmark-puzzle",
   "format_version": 1,
   "meta": {
    "title": "Nine variants on one 9x9",
