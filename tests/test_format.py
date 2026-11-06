@@ -1015,3 +1015,19 @@ def test_quality_preset():
     assert q["thin"] == {"limit": 0.2, "severity": "warning"} and q["tedious"]["severity"] == "warning"
     with pytest.raises(ValueError):
         quality_limits({"preset": "lenient"})
+
+
+def test_quality_opt_in_checks():
+    """opt-in checks are off by default; a severity or a limit turns one on"""
+    import pencilmark as pm
+    from pencilmark.publish_flags import OPT_IN, quality_limits
+
+    q = quality_limits()
+    assert all(q[k]["severity"] == "off" for k in OPT_IN)
+    q = quality_limits({"winding": {"limit": 0.5}, "asymmetric": {"severity": "warning"}})
+    assert q["winding"] == {"limit": 0.5, "severity": None} and q["asymmetric"]["severity"] == "warning"
+    grid = "4.....8.5.3..........7......2.....6.....8.4......1.......6.3.7.5..2.....1.4......"
+    c = pm.rate(grid, fields=["issues"], quality={"asymmetric": {"severity": "warning"}})
+    assert [i["code"] for i in c["issues"]] == ["asymmetric"]  # its givens have no symmetry
+    c = pm.rate(grid, fields=["issues"])
+    assert not any(i["code"] in OPT_IN for i in c["issues"])

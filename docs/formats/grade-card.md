@@ -115,6 +115,22 @@ of the same shape for a later version ([Generator spec](generator-spec.md), sect
 | `trial` | warning | Needs trial and error or forcing chains. | – |
 | `unusual` | reject | A difficulty outside the middle 80% of published puzzles of the same band (classic 9×9 and variants apart; Very Easy has no floor, Extreme no ceiling; [Generate a puzzle](../guides/generator/generate.md#4-typical-difficulty) has the ranges). | – |
 
+**Opt-in checks** run only when the quality object names them (a `severity`, or a `limit`, which turns the check on);
+no preset uses them. They describe taste rather than faults, so their limits sit at the 10th or 90th percentile of
+published Medium and harder puzzles (1,221 from LMD, sudoku.coach, Puzzle Duel and others): about one published puzzle
+in ten trips each.
+
+| Code | Severity when on | Meaning | Limit (default) |
+|---|---|---|---|
+| `asymmetric` | warning | The givens pattern has no symmetry (62% of published Medium+ classics have one). | – |
+| `no_interplay` | warning | A variant with two or more rule families that share fewer than *limit* cells. | cells (1) |
+| `winding` | warning | Lines turn at more than *limit* of their inner cells, on average. | share (0.9) |
+| `short_lines` | warning | Lines average fewer than *limit* cells. | cells (3) |
+| `repetitive` | warning | One technique makes more than *limit* of the candidate steps of a Medium or harder solve (at least 4 such steps). | share (0.75) |
+| `monotone` | warning | The candidate steps of a Medium or harder solve come from fewer than *limit* technique families. | families (2) |
+| `desert` | warning | After the first candidate step, a run of singles longer than *limit* of the solve. | share (0.8) |
+| `late_break` | warning | The first candidate step of a Medium or harder solve comes after *limit* of the solve. | share (0.6) |
+
 The three rule checks look at whole families: one extra dot among needed dots is not reported.
 
 Example: `{"code": "barely_used", "severity": "reject", "text": "thermo lines (rules 3, 4, 5, 6): used in only 0 steps

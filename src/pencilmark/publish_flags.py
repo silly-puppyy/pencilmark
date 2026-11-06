@@ -15,6 +15,16 @@ Hand-coded rules, each checked against published puzzles (docs/research/quality_
   unusual      a difficulty outside the middle 80% of published puzzles of the same band (classic 9x9 and variants
                apart, TYPICAL; Very Easy has no floor, Extreme no ceiling): a Very Easy puzzle that scans like an Easy
                one, a Medium that plays like a Very Hard (reject)
+Opt-in checks (off unless the quality object sets their severity or limit; limits at the 10th / 90th percentile of
+published Medium+ puzzles, 1,221 from LMD, sudoku.coach, Puzzle Duel, fed and others, quality study 2026-11-06):
+  asymmetric   the givens pattern has no symmetry (62% of published Medium+ classics have one)
+  no_interplay a variant with two or more rule families that share fewer than `no_interplay` (1) cells
+  winding      lines turn at more than `winding` (0.9) of their inner cells on average (published p90 0.91)
+  short_lines  lines average fewer than `short_lines` (3) cells (published p10 3.0)
+  repetitive   one technique makes more than `repetitive` (0.75) of a Medium+ solve's candidate steps (at least 4)
+  monotone     a Medium+ solve's candidate steps come from fewer than `monotone` (2) technique families
+  desert       after the first candidate step, a run of singles longer than `desert` (0.8) of the solve
+  late_break   a Medium+ solve's first candidate step comes after `late_break` (0.6) of the solve
 Each note is (code, severity, text); severity 'reject' = would not be published, 'note' = informational.
 Every check is adjustable with an object (quality_limits): {"limit": n} replaces its limit (checks with one), {"severity":
 "reject" | "warning" | "off"} overrides its severity or turns it off.
@@ -46,7 +56,16 @@ QUALITY = {
     "uniqueness": None,
     "trial": None,
     "unusual": None,
+    "asymmetric": None,
+    "no_interplay": 1,
+    "winding": 0.9,
+    "short_lines": 3,
+    "repetitive": 0.75,
+    "monotone": 2,
+    "desert": 0.8,
+    "late_break": 0.6,
 }
+OPT_IN = ("asymmetric", "no_interplay", "winding", "short_lines", "repetitive", "monotone", "desert", "late_break")
 # difficulty of published puzzles per band: (10th, 90th percentile), classic 9x9 and variants apart. Measured
 # 2026-11-02 (round counting, 1.2) on the development set (7,253 puzzles with human data from seven sources, 6,452 graded; never the frozen
 # benchmark); a band with fewer than 20 puzzles has no range. docs/guides/generator/generate.md shows the middle halves.
@@ -70,7 +89,7 @@ def quality_limits(q=None):
     """quality object -> {check: {"limit": number or None, "severity": "reject" | "warning" | "off" | None}} for every check.
     Each entry of q is an object with "limit" (checks with a limit: a number >= 0) and / or "severity"; severity None =
     the check's own (docs/formats/grade-card.md 4). Raises ValueError for unknown checks, keys or values."""
-    out = {k: {"limit": v, "severity": None} for k, v in QUALITY.items()}
+    out = {k: {"limit": v, "severity": "off" if k in OPT_IN else None} for k, v in QUALITY.items()}
     if q is not None and not isinstance(q, dict):
         raise ValueError(f'quality must be an object of checks, e.g. {{"trivial": {{"severity": "off"}}}}, got {q!r}')
     q = dict(q or {})
@@ -94,6 +113,8 @@ def quality_limits(q=None):
             if isinstance(lim, bool) or not isinstance(lim, (int, float)) or lim < 0:
                 raise ValueError(f"quality {k} limit must be a number >= 0")
             out[k]["limit"] = lim
+            if k in OPT_IN and "severity" not in v and out[k]["severity"] == "off":
+                out[k]["severity"] = None  # setting an opt-in check's limit turns it on
         if "severity" in v:
             if v["severity"] not in SEVERITIES:
                 raise ValueError(f"quality {k} severity must be one of {list(SEVERITIES)}")
@@ -198,6 +219,108 @@ def _c_trial(c):
     return [("trial", "note", "needs trial / forcing chains (" + ", ".join(sorted(hit)) + ")")] if hit else []
 
 
+def _candidate_steps(c):
+    """technique names of the solve's non-single steps, and the position of each step (0..1) along the solve"""
+    names = [S.TECH_NAMES.get(st.move.feat[0], "") for st in c.moves]
+    single = ["Single" in k or k == "FullHouse" for k in names]
+    return names, single
+
+
+def _c_asymmetric(c):
+    from .export import symmetry_of
+
+    return [] if symmetry_of(c.puzzle) else [("asymmetric", "note", "the givens pattern has no symmetry")]
+
+
+def _families_cells(p):
+    """rule family -> the cells its rules cover (lines, cages, dots, ...; the n-ary parts of lines count with their line)"""
+    fam = {}
+    for k in getattr(p, "constraints", ()) or ():
+        if k.get("line_kind") or not k.get("cells"):
+            continue
+        fam.setdefault(f"{k.get('type')}:{k.get('kind') or ''}", set()).update(k["cells"])
+    return fam
+
+
+def _c_no_interplay(c):
+    fam = list(_families_cells(c.puzzle).values())
+    if len(fam) < 2:
+        return []
+    shared = set()
+    for i, a in enumerate(fam):
+        for b in fam[i + 1 :]:
+            shared |= a & b
+    if len(shared) < c.lim("no_interplay"):
+        return [("no_interplay", "note", f"{len(fam)} rule families share only {len(shared)} cells")]
+    return []
+
+
+def _lines(p):
+    co = p.coords
+    return [[tuple(co[i]) for i in k["cells"]] for k in getattr(p, "constraints", ()) or () if k.get("type") == "line"]
+
+
+def _c_winding(c):
+    t = []
+    for rc in _lines(c.puzzle):
+        if len(rc) >= 3:
+            d = [(b[0] - a[0], b[1] - a[1]) for a, b in zip(rc, rc[1:])]
+            t.append(sum(x != y for x, y in zip(d, d[1:])) / (len(rc) - 2))
+    if t and sum(t) / len(t) > c.lim("winding"):
+        return [("winding", "note", f"lines turn at {sum(t) / len(t):.0%} of their inner cells")]
+    return []
+
+
+def _c_short_lines(c):
+    L = [len(rc) for rc in _lines(c.puzzle)]
+    if L and sum(L) / len(L) < c.lim("short_lines"):
+        return [("short_lines", "note", f"lines average {sum(L) / len(L):.1f} cells")]
+    return []
+
+
+def _c_repetitive(c):
+    names, single = _candidate_steps(c)
+    ns = [k for k, s in zip(names, single) if not s]
+    if c.band_i >= 2 and len(ns) >= 4:
+        top = max(set(ns), key=ns.count)
+        if ns.count(top) / len(ns) > c.lim("repetitive"):
+            return [("repetitive", "note", f"{top} makes {ns.count(top) / len(ns):.0%} of the candidate steps")]
+    return []
+
+
+def _c_monotone(c):
+    from . import registry as R
+
+    names, single = _candidate_steps(c)
+    fam = {t.name: t.family for t in R.techniques()}
+    fams = {fam.get(k) or k for k, s in zip(names, single) if not s}
+    if c.band_i >= 2 and fams and len(fams) < c.lim("monotone"):
+        return [("monotone", "note", f"candidate steps from {len(fams)} technique famil{'y' if len(fams) == 1 else 'ies'}")]
+    return []
+
+
+def _c_desert(c):
+    names, single = _candidate_steps(c)
+    first = next((i for i, s in enumerate(single) if not s), None)
+    if first is None:
+        return []
+    run = best = 0
+    for s in single[first + 1 :]:
+        run = run + 1 if s else 0
+        best = max(best, run)
+    if best / max(len(single), 1) > c.lim("desert"):
+        return [("desert", "note", f"{best} singles in a row ({best / len(single):.0%} of the solve) after the first candidate step")]
+    return []
+
+
+def _c_late_break(c):
+    names, single = _candidate_steps(c)
+    first = next((i for i, s in enumerate(single) if not s), None)
+    if c.band_i >= 2 and first is not None and first / max(len(single) - 1, 1) > c.lim("late_break"):
+        return [("late_break", "note", f"the first candidate step comes at {first / max(len(single) - 1, 1):.0%} of the solve")]
+    return []
+
+
 # the check registry (docs/formats/grade-card.md 4), in the order notes are reported: check -> the quality codes it can raise. The rule
 # checks (decorative, redundant, barely_used) share one pass over the rule families (_rule_notes) and come last.
 CHECKS = [
@@ -207,6 +330,14 @@ CHECKS = [
     (_c_uniqueness, ("uniqueness",)),
     (_c_trial, ("trial",)),
     (_c_unusual, ("unusual",)),
+    (_c_asymmetric, ("asymmetric",)),
+    (_c_no_interplay, ("no_interplay",)),
+    (_c_winding, ("winding",)),
+    (_c_short_lines, ("short_lines",)),
+    (_c_repetitive, ("repetitive",)),
+    (_c_monotone, ("monotone",)),
+    (_c_desert, ("desert",)),
+    (_c_late_break, ("late_break",)),
 ]
 RULE_CODES = ("decorative", "redundant", "barely_used")
 
