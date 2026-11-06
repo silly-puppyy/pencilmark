@@ -172,10 +172,19 @@ void Solver::canon_dedupe(MoveBuf& b) {
             }
         }
         auto it = best.find(key);
+        // the same eliminations by the same technique: the plainer fish shape first (rows against columns before
+        // Franken before Mutant: the one a solver sees, and the shape that sets the band), then the cheaper
+        auto fish_kind = [&](const Move& x) {
+            return (x.tech == FINNED_FISH || x.tech == XWING || x.tech == SWORDFISH || x.tech == JELLYFISH) &&
+                           x.code >= 1000 && x.code < 2000
+                       ? (int)x.xm[3]
+                       : 0;
+        };
         if (it == best.end()) {
             best.emplace(key, i);
             keep[i] = 1;
-        } else if (m.d < b.moves[it->second].d - 1e-12) {
+        } else if (fish_kind(m) < fish_kind(b.moves[it->second]) ||
+                   (fish_kind(m) == fish_kind(b.moves[it->second]) && m.d < b.moves[it->second].d - 1e-12)) {
             keep[it->second] = 0;
             it->second = i;
             keep[i] = 1;

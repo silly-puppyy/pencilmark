@@ -269,19 +269,18 @@ CATALOG = {
         "Skyscraper",
         {
             "HoDoKu": ["Skyscraper"],
-            "sudokuwiki": ["Rectangle Elimination"],
             "SE": ["Turbot Fish"],
             "other": ["Single-digit pattern"],
         },
         3,
-        [HD + "tech_sdp.php#sk", SW + "Rectangle_Elimination"],
+        [HD + "tech_sdp.php#sk"],
         ["x_wing"],
     ),
     "two_string_kite": (
         "2-String Kite",
-        {"HoDoKu": ["2-String Kite"], "sudokuwiki": ["Rectangle Elimination"], "SE": ["Turbot Fish"]},
+        {"HoDoKu": ["2-String Kite"], "SE": ["Turbot Fish"]},
         3,
-        [HD + "tech_sdp.php#t2sk", SW + "Rectangle_Elimination"],
+        [HD + "tech_sdp.php#t2sk"],
         ["skyscraper"],
     ),
     "turbot_fish": (
@@ -293,9 +292,9 @@ CATALOG = {
     ),
     "empty_rectangle": (
         "Empty Rectangle",
-        {"HoDoKu": ["Empty Rectangle"], "sudokuwiki": ["Empty Rectangles"]},
+        {"HoDoKu": ["Empty Rectangle"], "sudokuwiki": ["Rectangle Elimination", "Empty Rectangles"]},
         3,
-        [HD + "tech_sdp.php#er", SW + "Empty_Rectangles"],
+        [HD + "tech_sdp.php#er", SW + "Rectangle_Elimination"],
         ["pointing", "skyscraper"],
     ),
     "unique_rectangle": (

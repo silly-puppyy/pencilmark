@@ -54,6 +54,12 @@ What changes for you (details in the entries below):
     type 2 (two cells with the same one extra digit).
   - Aligned Pair Exclusion also counts two cells sharing three digits that see both cells of the pair.
   Bands unchanged on the reference cards; times and difficulties move by up to 0.5 on 32 of 227.
+- Names that match the pattern (checked against sudokuwiki.org's examples by their cited page, and against reference
+  finders): a finned X-Wing / Swordfish is no longer named a Franken fish when its eliminations have a plain row /
+  column spelling (the fish search lists line fish first; equal moves keep the plainer shape); Empty Rectangles are
+  found directly (HoDoKu's definition) instead of only when the shortest chain had the ER shape (they were long
+  X-Chains or missed when the box's crossing cell held the digit). Skyscraper and 2-String Kite no longer cite
+  sudokuwiki's Rectangle Elimination, which is the Empty Rectangle. Reference cards: bands unchanged.
 - Pattern Overlay rule 2 (sudokuwiki.org): a template of one digit that meets every template of another digit is not
   the solution's; candidates left in no surviving template go. Bounded (1,000 templates per digit); reference cards
   unchanged.

@@ -3,10 +3,12 @@
 #include "portable.hpp"
 #include <cmath>
 #include <functional>
+#include <map>
 #include <set>
 #include <unordered_set>
 
 #include "solver.hpp"
+#include "move_util.hpp"
 
 namespace cs {
 
@@ -39,6 +41,8 @@ void Solver::gfish(MoveBuf& out, int n, bool finless, bool finned) {
     std::set<std::vector<uint32_t>> seen_el;
     auto ov = [&](int a, int b) { return p.group_overlap[(size_t)p.houses[a] * p.G + p.houses[b]] != 0; };
     auto line = [&](int h) { return p.group_line[p.houses[h]]; };
+    bool lines_only = false;  // first pass (reference mode): row / column fish only, so they are listed before a
+                              // Franken spelling of the same eliminations (the first fish per elimination set is kept)
     pm_long gf_nodes = 0;        // max_seconds: the cover / base enumeration checks the deadline every 4096 nodes
     bool gf_stop = false;
     // per-digit memo key: size, finless / finned, canonical mode (fish of one digit depend only on its candidates)
@@ -207,6 +211,7 @@ void Solver::gfish(MoveBuf& out, int n, bool finless, bool finned) {
                     for (int i = 0; i < n; ++i) inb |= combo[i] == h;
                     if (inb) continue;
                     if (ban_line >= 0 && line(h) == ban_line) continue;
+                    if (lines_only && line(h) == 2) continue;
                     const uint64_t* ph = &pos[(size_t)h * W];
                     bool hit = false;
                     for (int w = 0; w < W && !hit; ++w) hit = ph[w] & U[w];
@@ -227,6 +232,7 @@ void Solver::gfish(MoveBuf& out, int n, bool finless, bool finned) {
             }
             for (int i = start; i < (int)bases.size(); ++i) {
                 int h = bases[i];
+                if (lines_only && line(h) == 2) continue;
                 bool bad = false;
                 for (int j = 0; j < depth && !bad; ++j) bad = ov(combo[j], h);
                 if (bad) continue;
@@ -234,6 +240,11 @@ void Solver::gfish(MoveBuf& out, int n, bool finless, bool finned) {
                 pick_base(i + 1, depth + 1);
             }
         };
+        if (!canon) {  // canonical mode lists every fish; canon_dedupe prefers the plainer shape
+            lines_only = true;
+            pick_base(0, 0);
+            lines_only = false;
+        }
         pick_base(0, 0);
         if (!gf_stop) digit_memo_put(p, memo_tag, v, vb, out, memo_n0);
     }
@@ -765,6 +776,108 @@ void Solver::build_aic(int maxl, bool with_als) {
             if (with_als) xm[5] = n_als;  // ALS chains: slot 5 = ALS nodes (weak same-cell links cannot occur)
             std::copy(xm, xm + XM_N, m.xm);
             ol.push_back(L);
+        }
+    }
+}
+
+void Solver::empty_rect(MoveBuf& out) {
+    if (disabled[EMPTY_RECT]) return;
+    const int GRP0 = -1000000;
+    auto line_of = [&](int c, int orient) {  // the row (0) / column (1) house of a cell, or -1
+        for (int gi : p.groups_of[c])
+            if (p.groups[gi].complete && p.group_line[gi] == orient) return gi;
+        return -1;
+    };
+    std::map<std::pair<int, int>, int> at;
+    for (int c = 0; c < p.N; ++c) at[p.coords[c]] = c;
+    std::set<std::vector<uint32_t>> seen;
+    for (int hb : p.houses) {
+        if (p.group_line[hb] != 2 || !p.groups[hb].complete) continue;
+        for (int v = 1; v <= p.D; ++v) {
+            if (placed_g[hb] & bit(v)) continue;
+            std::vector<int> B;
+            for (int c : p.groups[hb].cells)
+                if (!vals[c] && (cand[c] & bit(v))) B.push_back(c);
+            if (B.size() < 2) continue;
+            std::set<int> rs, cs;
+            for (int c : B) rs.insert(p.coords[c].first), cs.insert(p.coords[c].second);
+            for (int r : rs)
+                for (int cc : cs) {
+                    bool cross = true, all_r = true, all_c = true;
+                    for (int c : B) {
+                        cross &= p.coords[c].first == r || p.coords[c].second == cc;
+                        all_r &= p.coords[c].first == r;
+                        all_c &= p.coords[c].second == cc;
+                    }
+                    if (!cross || all_r || all_c) continue;
+                    for (int orient = 0; orient < 2; ++orient) {
+                        // orient 0: the pair is in a column, one end X on row r; Z = (row of the other end, cc)
+                        // orient 1: the pair is in a row, one end X on column cc; Z = (r, column of the other end)
+                        for (int hl : p.houses) {
+                            if (p.group_line[hl] != 1 - orient || !p.groups[hl].complete) continue;
+                            if (placed_g[hl] & bit(v)) continue;
+                            bool meets = false;
+                            for (int c : p.groups[hl].cells) meets |= tbit(p.gbits(hb), c);
+                            if (meets) continue;
+                            int pr[2], k = 0;
+                            for (int c : p.groups[hl].cells)
+                                if (!vals[c] && (cand[c] & bit(v))) {
+                                    if (k < 2) pr[k] = c;
+                                    ++k;
+                                }
+                            if (k != 2) continue;
+                            for (int e = 0; e < 2; ++e) {
+                                const int X = pr[e], Y = pr[1 - e];
+                                if ((orient ? p.coords[X].second != cc : p.coords[X].first != r)) continue;
+                                auto zi = at.find(orient ? std::make_pair(r, p.coords[Y].second)
+                                                         : std::make_pair(p.coords[Y].first, cc));
+                                if (zi == at.end()) continue;
+                                const int Z = zi->second;
+                                if (Z == Y || vals[Z] || !(cand[Z] & bit(v)) || tbit(p.gbits(hb), Z)) continue;
+                                const int lineZ = line_of(Z, orient ? 0 : 1);  // Z sees the box part X does not
+                                if (lineZ < 0) continue;
+                                // parts: the one X sees (its line through the box) and the rest, which Z's line holds
+                                std::vector<int> seenX, rest;
+                                for (int c : B)
+                                    ((orient ? p.coords[c].second == cc : p.coords[c].first == r) ? seenX : rest)
+                                        .push_back(c);
+                                bool zsees = true;
+                                for (int c : rest) zsees &= tbit(p.gbits(lineZ), c);
+                                if (!zsees || rest.empty()) continue;
+                                std::vector<uint32_t> key{(uint32_t)Z * 32u + (uint32_t)v, (uint32_t)hb, (uint32_t)hl};
+                                if (!seen.insert(key).second) continue;
+                                std::vector<int> cells = B;
+                                cells.push_back(X), cells.push_back(Y);
+                                const double shp = pspread(cells);
+                                Move& m = new_move(out, EMPTY_RECT, shp, 3);
+                                add_elim(out, m, Z, v);
+                                set_pattern(out, m, cells);
+                                // chain record: rest = seenX (box) - X (weak) = Y (the pair)
+                                auto node = [&](const std::vector<int>& g, int id) {
+                                    return g.size() == 1 ? g[0] : GRP0 - id;
+                                };
+                                std::vector<int> lk{node(rest, 0), v, 0, -1, node(seenX, 1), v, 2, hb, X, v, 0, -1, Y, v, 2, hl};
+                                add_expl(out, m, EX_CHAIN, lk);
+                                for (int id = 0; id < 2; ++id) {
+                                    const std::vector<int>& g = id ? seenX : rest;
+                                    if (g.size() == 1) continue;
+                                    std::vector<int> gn{GRP0 - id, v};
+                                    gn.insert(gn.end(), g.begin(), g.end());
+                                    add_expl(out, m, EX_GNODE, gn);
+                                }
+                                int hop = 0;
+                                const int seq[4] = {rest[0], seenX[0], X, Y};
+                                for (int i = 1; i < 4; ++i)
+                                    hop = std::max(hop, std::max(std::abs(p.coords[seq[i]].first - p.coords[seq[i - 1]].first),
+                                                                 std::abs(p.coords[seq[i]].second - p.coords[seq[i - 1]].second)));
+                                set_meta9(m, (int)cells.size(), 3, 1, 3, true, false, false, 1, shp);
+                                m.code = CODE_ER;
+                                pm_long xm[XM_N] = {3, 0, 2, 0, 0, 0, 1, 0, hop, 1};
+                                std::copy(xm, xm + XM_N, m.xm);
+                            }
+                        }
+                    }
+                }
         }
     }
 }
