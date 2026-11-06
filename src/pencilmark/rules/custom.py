@@ -1076,6 +1076,21 @@ def _table(test, names, D):
     return [list(ds) for ds in itertools.product(range(1, D + 1), repeat=len(names)) if test(dict(zip(names, ds)))]
 
 
+def _concat_table(tree, cells, names, D):
+    """concat(c) in {n1, n2, ...} over one list of cells (D <= 9): the table's rows are the listed numbers' digits, no
+    enumeration needed (the v12 migration writes table rules this way); None for any other shape"""
+    if tree.op != "in" or D > 9:
+        return None
+    lhs, rhs = tree.args
+    if lhs.op != "call" or lhs.args[0] != "concat" or len(lhs.args[1]) != 1 or lhs.args[1][0].op != "name":
+        return None
+    if cells.get(lhs.args[1][0].args[0]) != names or rhs.op != "set" or not all(x.op == "num" for x in rhs.args):
+        return None
+    digits = "".join(str(d) for d in range(1, D + 1))
+    rows = {str(x.args[0]) for x in rhs.args}
+    return [[int(ch) for ch in t] for t in sorted(rows) if len(t) == len(names) and all(ch in digits for ch in t)]
+
+
 def _expr(rule, B):
     """an unscoped rule as the engine's expression constraint (csrc/expr.cpp): checked once its cells are fixed"""
     unk, lay = list(getattr(B, "unknowns", {}) or ()), list(getattr(B, "layers", {}) or ())
@@ -1229,7 +1244,9 @@ def compile_rule(rule, B, D, layers=()):
         names += [n for n in dict.fromkeys(re.findall(r"\br\d+c\d+\b", rule["holds"])) if n not in names]
         if len(names) > MAX_TABLE_CELLS:
             return [_expr(rule, B)]
-        allowed = _table(lambda g: holds(tree, cells, g), names, D)
+        allowed = _concat_table(tree, cells, names, D)
+        if allowed is None:
+            allowed = _table(lambda g: holds(tree, cells, g), names, D)
         return [{"type": "table", "cells": names, "allowed": allowed}]
     f = evaluate(tree, Env(cells, {}, B_box(B)))
     if not (isinstance(f, tuple) and f[0] == "fn"):

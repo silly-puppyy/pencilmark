@@ -485,3 +485,18 @@ def test_literal_set_membership_is_fast():
         assert holds(tree, {"c": ["r1c1", "r1c2", "r2c1", "r2c2"]}, grid) is True
     assert time.time() - t < 2.0
     assert holds(tree, {"c": ["r1c1", "r1c2", "r2c1", "r2c2"]}, {"r1c1": 1, "r1c2": 2, "r2c1": 3, "r2c2": 4}) is False
+
+
+def test_concat_table_matches_enumeration():
+    """the direct concat(c) in {...} table equals the enumerated one (rows, order), and other shapes enumerate"""
+    from pencilmark.rules.custom import _concat_table, _table
+
+    names = ["r1c1", "r1c2", "r2c1"]
+    cells = {"c": list(names)}
+    tree = parse("concat(c) in {123, 312, 999, 12, 1234, 102, 213}")
+    direct = _concat_table(tree, cells, names, 9)
+    assert direct == _table(lambda g: holds(tree, cells, g), names, 9)
+    assert direct == [[1, 2, 3], [2, 1, 3], [3, 1, 2], [9, 9, 9]]
+    assert _concat_table(tree, cells, names, 4) == _table(lambda g: holds(tree, cells, g), names, 4)
+    assert _concat_table(parse("concat(c) in {123} or true"), cells, names, 9) is None
+    assert _concat_table(tree, {"c": names[::-1]}, names, 9) is None
