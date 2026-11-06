@@ -409,7 +409,6 @@ def test_params_follow_in_place_setting_changes():
         api._PARAMS = (None, None)
 
 
-
 def test_colouring_is_opt_in(variants):
     """rate(colouring=True) puts kept colours on the route (Vudoku: Colour Fill / Single / Pair take it from Hard to
     Medium); the default leaves the colour-only techniques out"""
