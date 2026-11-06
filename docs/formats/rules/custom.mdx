@@ -101,6 +101,30 @@ A complete 4×4 puzzle with one shared unknown: three marked pairs have the same
    {"type": "custom", "cells": {"c": ["r2c3", "r3c2"]}, "holds": "sum(c) == X"}]}
 ```
 
+A complete 4×4 puzzle with a layer: one cell in every row is shifted (counts one more than its digit), and four pairs give the sum of what their cells count (one solution, digits and shifts):
+
+```json
+{"format": "sudoku-puzzle", "format_version": 1,
+ "board": {"rows": 4, "cols": 4},
+ "digits": 4,
+ "givens": [
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    0, 3, 1, 0,
+    0, 0, 0, 0],
+ "layers": {"shift": {"values": [0, 1]}},
+ "rules": [
+   {"type": "box_grid", "box": [2, 2], "count": [2, 2]},
+   {"type": "custom", "cells": {"r": ["r1c1", "r1c2", "r1c3", "r1c4"]}, "holds": "sum([shift(x) for x in r]) == 1"},
+   {"type": "custom", "cells": {"r": ["r2c1", "r2c2", "r2c3", "r2c4"]}, "holds": "sum([shift(x) for x in r]) == 1"},
+   {"type": "custom", "cells": {"r": ["r3c1", "r3c2", "r3c3", "r3c4"]}, "holds": "sum([shift(x) for x in r]) == 1"},
+   {"type": "custom", "cells": {"r": ["r4c1", "r4c2", "r4c3", "r4c4"]}, "holds": "sum([shift(x) for x in r]) == 1"},
+   {"type": "custom", "cells": {"a": ["r1c3", "r1c4"]}, "holds": "sum([x + shift(x) for x in a]) == 3"},
+   {"type": "custom", "cells": {"a": ["r2c3", "r3c3"]}, "holds": "sum([x + shift(x) for x in a]) == 6"},
+   {"type": "custom", "cells": {"a": ["r3c2", "r4c2"]}, "holds": "sum([x + shift(x) for x in a]) == 6"},
+   {"type": "custom", "cells": {"a": ["r1c1", "r2c1"]}, "holds": "sum([x + shift(x) for x in a]) == 7"}]}
+```
+
 - An unknown is read by its name, as a number: `sum(c) == X`. A choice is an unknown with values 0 / 1, used as
   `T1 == 1 or sum(c) == 10` or counted with `T1 + T2 + T3 == 2`.
 - A layer gives each cell one of its values; a rule reads it as a function of a cell named after the layer:
