@@ -116,9 +116,10 @@ of the same shape for a later version ([Generator spec](generator-spec.md), sect
 | `unusual` | reject | A difficulty outside the middle 80% of published puzzles of the same band (classic 9×9 and variants apart; Very Easy has no floor, Extreme no ceiling; [Generate a puzzle](../guides/generator/generate.md#4-typical-difficulty) has the ranges). | – |
 
 **Opt-in checks** run only when the quality object names them (a `severity`, or a `limit`, which turns the check on);
-no preset uses them. They describe taste rather than faults, so their limits sit at the 10th or 90th percentile of
-published Medium and harder puzzles (1,221 from LMD, sudoku.coach, Puzzle Duel and others): about one published puzzle
-in ten trips each.
+no preset uses them. They describe taste rather than faults, so their limits sit near the edge of what published Medium
+and harder puzzles do (1,221 from LMD, sudoku.coach, Puzzle Duel and others). Share of 165 published Medium+ puzzles
+(development set) each one flags at its default: `monotone` 27%, `asymmetric` 25%, `desert` 8%, `no_interplay` 4%,
+`late_break` 3%, `short_lines` 2%, `repetitive` 2%, `winding` 1%.
 
 | Code | Severity when on | Meaning | Limit (default) |
 |---|---|---|---|
