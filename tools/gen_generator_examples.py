@@ -19,7 +19,7 @@ BOX = {4: [2, 2], 6: [2, 3], 8: [2, 4], 9: [3, 3]}
 
 def spec(size=9, rules=(), where=None, givens=None, symmetry=None, seed=1, time=180, quality=None):
     s = {"format": "sudoku-spec", "format_version": 1, "board": {"rows": size, "cols": size}, "digits": size,
-         "rules": [{"type": "box_grid", "origin": "r1c1", "box": BOX[size]}, *rules]}  # fmt: skip
+         "rules": [{"type": "box_grid", "box": BOX[size], "count": [BOX[size][1], BOX[size][0]]}, *rules]}  # fmt: skip
     if givens:
         s["givens"] = givens
     if symmetry:

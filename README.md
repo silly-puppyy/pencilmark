@@ -68,9 +68,9 @@ More in [Usage](https://silly-puppyy.github.io/pencilmark/start/usage/).
 
 `rate` returns a `"sudoku-grade"` card: by default the band (Very Easy to Extreme: what you need to know), the
 difficulty (how hard the steps are to find, no ceiling; a newspaper medium is about 5), the predicted median solve time
-in minutes, and the techniques the puzzle contains, easiest first. On request it adds publishing checks (a difficulty
-spike, a rule nobody needs, too many givens), the steps with explanations, time percentiles and more; only requested
-fields are computed. A puzzle without exactly one solution has no card: `rate` raises `NotUnique` / `NoSolution`.
+in minutes, and the techniques the puzzle contains, easiest first. On request it adds publishing checks (candidate
+steps that do little, a rule nobody needs, too many givens), the steps with explanations, time percentiles and more;
+only requested fields are computed. A puzzle without exactly one solution has no card: `rate` raises `NotUnique` / `NoSolution`.
 Every field is in [Grade card](https://silly-puppyy.github.io/pencilmark/formats/grade-card/).
 
 ## Puzzle format
