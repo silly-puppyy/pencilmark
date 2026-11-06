@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+What changes for you (details in the entries below):
+
+- **Difficulty values move.** The search part counts refutations in propagation rounds and the score map is refitted
+  (easy puzzles a little higher, hard ones a little lower), and the difficulty is the expected effort of a human-like
+  solver (bottleneck rollouts, +0.09 on average). Rank agreement with human times rises (fed +0.040, Wang 2024 +0.028).
+- **Some bands and technique lists move.** The band route is the human one, and colouring is on by default: a few
+  variant puzzles drop a band (Hard -> Medium where a colour step does the work). Few bands move overall (reference
+  cards: 1 of 227 from the human route, 2 of 55 from colouring).
+- **Publishing checks.** `thin` replaces `spike`; the `unusual` ranges are re-measured; quality presets
+  (`{"preset": "standard"}`) and opt-in checks are new.
+- **Breaking, no aliases** (nobody depends on them yet): `box_grid` needs `count`; colouring codes share the prefix C
+  (EQD -> CEQ, SCL -> CSM, MCL -> CMU, 3DM -> CMD, identity-layer codes CSG / CFL / CPR / CTR); generated puzzles carry
+  `meta.generated_from` only when the spec asks.
+- **New in the format:** fog of war, regions to find (chaos), shading (yin-yang), custom-rule unknowns and layers.
+  `rate` refuses fog, shading and unknowns for now; they load, validate, solve and count.
+
 - Quality presets: `quality={"preset": "standard"}` (`--quality preset=standard`) turns on decorative, trivial, trial,
   thin and unusual (all reject) and switches the other checks off; checks named next to the preset adjust it.
 - Opt-in quality checks (off unless named): `asymmetric`, `no_interplay`, `winding`, `short_lines`, `repetitive`,
