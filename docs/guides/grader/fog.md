@@ -30,10 +30,11 @@ walls, arrows whose circle is still fogged, thermometer and renban bounds. Each 
 
 ## What does not work yet
 
-- **Grading details.** A fog card prices the fog route's steps like any card and is put on the same scale by a line
-  fitted on puzzles graded both ways with nothing fogged. No cost per reveal and no price for reasoning about hidden
-  content are fitted (the data showed no gain from them). Publishing checks (`issues`), `steps`, `trace` and `se` are
-  null on a fog card for now.
+- **Grading details.** A fog card is computed by the same algorithm as any card: the band route for the band and
+  techniques, the card's routes (the price-first route, the human rollouts) for difficulty and time, each run round by
+  round on what the fog shows. A fog rule that lights every cell gives exactly the card of the same puzzle without
+  fog. No cost per reveal is added (the data showed no gain from one). Publishing checks (`issues`), `steps`, `trace`
+  and `se` are null on a fog card for now.
 - **Stalls.** On the 24 Cracking the Cryptic fog puzzles pencilmark reads, the route solves 10 under the fog and stalls
   on 13, 8 of them before the first placement (one more ran out of time). A stall is a deduction the engine does not
   make yet; found so far: colouring steps a host makes (Restricted Access) and two hidden arrows checked together.

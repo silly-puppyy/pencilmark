@@ -29,8 +29,9 @@ What changes for you (details in the entries below):
 - The fog route ends each round's band route at the first placement that lights new cells instead of solving on and
   discarding the rest: the same routes, up to 125x faster (265 s -> 2 s on one sudoku.coach puzzle).
 - `rate` grades fog-of-war puzzles under the fog: the band and techniques of the fog route (the human route on what
-  the fog shows, round by round), its steps priced like any card and put on the card scale by a line fitted on
-  puzzles graded both ways with nothing fogged (MAE 0.56). A card field `fog` tells what the fog did (lit at the
+  the fog shows, round by round); difficulty and time by the card's own routes run the same way under the fog (the
+  same algorithm as every card: a fog rule that lights every cell gives exactly the card without fog). A card field
+  `fog` tells what the fog did (lit at the
   start, reveals, rounds, solved); where the fog stops the route, the band is Unknown with `stopped_at_step`, never
   the revealed grade. Errors stay for inputs that are wrong. Fog visibility now includes pair relations and custom
   rules (they were dropped, so a route could stall with nothing fogged).

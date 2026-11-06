@@ -1099,3 +1099,18 @@ def test_fog_card():
     assert card["band"] == "Very Easy" and card["difficulty"] > 0 and card["time"] > 0
     assert card["fog"] == {"lit_start": 4, "reveals": 1, "rounds": 2, "solved": True}
     assert card["issues"] is None  # publishing checks are not run under the fog yet
+
+
+def test_fog_lighting_everything_is_the_plain_card():
+    """one algorithm for every card: a fog rule that lights every cell grades exactly like the puzzle without fog"""
+    import pencilmark as pm
+
+    doc = pm.from_string(CLASSIC)
+    lit = [f"r{r}c{c}" for r in range(1, 10) for c in range(1, 10)]
+    fogged = dict(
+        doc, solution=[int(x) for x in pm.solve(doc)], rules=list(doc["rules"]) + [{"type": "fog", "lit": lit}]
+    )
+    a = pm.rate(doc, fields=["band", "difficulty", "time"])
+    b = pm.rate(fogged, fields=["band", "difficulty", "time"])
+    assert (a["band"], a["difficulty"], a["time"]) == (b["band"], b["difficulty"], b["time"])
+    assert b["fog"]["solved"] and b["fog"]["reveals"] == 0

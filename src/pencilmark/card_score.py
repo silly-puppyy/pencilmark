@@ -18,17 +18,18 @@ dis = set(MENTAL)  # the first solve leaves out the moves worked out in the head
 ROUTE_THREADS = None
 
 
-def steps(p, P):
+def steps(p, P, solve=None):
     """the written route under params P -> ([(technique name, price, F)], cells each step touches)"""
     from .band_path import variant_gate
 
+    solve = solve or CB.solve  # solve=: a CB.solve that sees the fog (fog._FogView.solve), for a fog card
     gate = variant_gate(p)  # variant techniques only for puzzles with the matching rules (as the card's bands)
-    st, ok = CB.solve(p, P, disabled=dis | gate)
+    st, ok = solve(p, P, disabled=dis | gate)
     if not ok or any(s.move.feat[0] == S.GUESS for s in st):
-        st, ok = CB.solve(p, P, disabled=gate)
+        st, ok = solve(p, P, disabled=gate)
         if not ok or any(s.move.feat[0] == S.GUESS for s in st):
             # guessing off: where it would guess, prove by full search (Trial and error, priced as that guess)
-            st, ok = CB.solve(p, dict(P, exhaust_fallback=1), disabled=gate | {S.GUESS})
+            st, ok = solve(p, dict(P, exhaust_fallback=1), disabled=gate | {S.GUESS})
             if not ok:
                 return [], []  # beyond engine: no score
     return _record(p, st)
@@ -134,18 +135,18 @@ def _pair_enum(p):
     return out
 
 
-def steps_enum(p, P):
+def steps_enum(p, P, solve=None):
     """steps(p, P) plus, per step, the enumeration size of the cages its cells touch (0 without cages)."""
-    pth, cells = steps(p, P)
+    pth, cells = steps(p, P, solve)
     if not pth or not getattr(p, "has_cages", False):
         return [(nm, d, f, 0.0) for nm, d, f in pth]
     cage_of = _cage_enum(p)
     return [(nm, d, f, max((cage_of.get(c, 0.0) for c in cs), default=0.0)) for (nm, d, f), cs in zip(pth, cells)]
 
 
-def _route(p, P, w):
+def _route(p, P, w, solve=None):
     """the written route under P with the enumeration term (or 0 when its weight is 0)"""
-    return steps_enum(p, P) if w else [(nm, d, f, 0.0) for nm, d, f in steps(p, P)[0]]
+    return steps_enum(p, P, solve) if w else [(nm, d, f, 0.0) for nm, d, f in steps(p, P, solve)[0]]
 
 
 def _softplus_map(mp, r):
@@ -201,7 +202,7 @@ _SINGLE_NAMES = {
 }
 
 
-def _rollout_sum(p, P, cfg, w, seed, n_play):
+def _rollout_sum(p, P, cfg, w, seed, n_play, solve=None):
     """expected step-value sum of a human-like solver, from ONE human route plus cheap playthroughs (score
     route_rollouts): singles are confluent (every order of them reaches the same next bottleneck), so the route's
     bottleneck steps are kept and each stretch of singles between bottlenecks is replayed n_play times from the state
@@ -211,8 +212,9 @@ def _rollout_sum(p, P, cfg, w, seed, n_play):
 
     from .band_path import variant_gate
 
+    solve = solve or CB.solve
     gate = variant_gate(p)
-    st, ok = CB.solve(p, dict(P, spot_seed=seed), disabled=dis | gate)
+    st, ok = solve(p, dict(P, spot_seed=seed), disabled=dis | gate)
     if not ok or any(s.move.feat[0] == S.GUESS for s in st):
         return None
     beta, delta = cfg["beta"], cfg.get("delta", {})
@@ -259,7 +261,7 @@ def _rollout_sum(p, P, cfg, w, seed, n_play):
         mask = [cs_[c] if not vs[c] else 1 << (vs[c] - 1) for c in range(N)]
         acc = 0.0
         for k in range(n_play):
-            st2, _ = CB.solve(
+            st2, _ = solve(
                 q,
                 dict(P, spot_seed=1000 * seed + k + 1),
                 disabled=dis | gate,
@@ -275,7 +277,7 @@ def _rollout_sum(p, P, cfg, w, seed, n_play):
     return total
 
 
-def score_parts(p, model=None):
+def score_parts(p, model=None, solve=None):
     """(card score, L1 = log of the step-value sum) for one puzzle; None if the engine must guess. The score is priced
     with the model's difficulty prices, L1 (the effort the time model reads) with its route prices; both on the
     written route each price set produces."""
@@ -288,10 +290,10 @@ def score_parts(p, model=None):
     cr = dict(cn, **(cfg.get("card_route") or {}))
     P_route, P_price = dict(model.route, **cr), dict(model.price, **cr)
     P_human = dict(model.price, **cn)  # human routes for rollouts / samples, with the card's notes
-    pth_time = _route(p, P_route, w)
+    pth_time = _route(p, P_route, w, solve)
     if not pth_time:
         return None
-    pth = _route(p, P_price, w) or pth_time
+    pth = _route(p, P_price, w, solve) or pth_time
 
     def values(path):
         return sorted(
@@ -307,7 +309,7 @@ def score_parts(p, model=None):
     ro = cfg.get("route_rollouts")
     if ro:  # expected effort of a human-like solver: human routes' bottlenecks + playthroughs of the singles between
         sums = [
-            _rollout_sum(p, P_human, cfg, w, k, int(ro.get("playthroughs", 4)))
+            _rollout_sum(p, P_human, cfg, w, k, int(ro.get("playthroughs", 4)), solve)
             for k in range(1, int(ro.get("routes", 2)) + 1)
         ]
         sums = [x for x in sums if x is not None]
@@ -320,9 +322,9 @@ def score_parts(p, model=None):
             from concurrent.futures import ThreadPoolExecutor
 
             with ThreadPoolExecutor(nt) as ex:
-                paths = list(ex.map(lambda P_k: _route(p, P_k, w), Ps))
+                paths = list(ex.map(lambda P_k: _route(p, P_k, w, solve), Ps))
         else:
-            paths = [_route(p, P_k, w) for P_k in Ps]
+            paths = [_route(p, P_k, w, solve) for P_k in Ps]
         sums = [sum(values(x or pth)) for x in paths]
         tot = sum(sums) / len(sums)
     return _finish(p, cfg, tot, v, pth_time, w)
@@ -356,18 +358,3 @@ def _finish(p, cfg, tot, v, pth_time, w):
             1e-9,
         )
     )
-
-
-def score_path(p, path, model=None):
-    """(card score, L1) for a route given as [(technique name, price, F)] (F = density / alternatives, as _record):
-    the fog route's steps (rate under fog), priced with the card's value function, refutation term and map. None for
-    an empty route."""
-    model = model or GM.default()
-    cfg = model.score
-    if not path:
-        return None
-    v = sorted(
-        (math.exp(cfg["beta"] * math.log(max(d, 1e-3)) + cfg.get("delta", {}).get(nm, 0.0)) * f for nm, d, f in path),
-        reverse=True,
-    )
-    return _finish(p, cfg, sum(v), v, [(nm, max(d, 1e-3), f, 0.0) for nm, d, f in path], 0.0)

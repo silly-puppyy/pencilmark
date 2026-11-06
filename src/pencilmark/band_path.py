@@ -378,13 +378,7 @@ def band_path(
                         hit = 0 if target is not None and m["place"] and m["place"][0] == target else 1
                         key = (mb, hit, rng.random()) if rng is not None else (mb, hit, _order(code), m["d"])
                         cands.append((key, code, name, mb, m))  # rng: any move of the lowest band (other solvers)
-                if not cands:
-                    return None
-                best = min(cands, key=lambda x: x[0])
-                # moves of the same technique and band on offer here (listing capped at 8 per technique): the card's
-                # density factor divides by them (card_score._record); the fog card reads it
-                n_alt = sum(1 for c_ in cands if c_[1] == best[1] and c_[3] == best[3])
-                return best[:4] + (dict(best[4], n_alts=n_alt),)
+                return min(cands, key=lambda x: x[0]) if cands else None
 
             # staged: without the LATE strategies first. Their moves are at least _late_bound; an ELIMINATION that
             # beats that stays the pick in the full listing (eliminations are deduplicated per technique, the per-
@@ -462,7 +456,6 @@ def band_path(
                 "elims": [tuple(e) for e in m["elim"]],
                 "seg": seg,
                 "d": m.get("d"),
-                "alts": m.get("n_alts", 1),
                 **({"lplace": m.get("lplace"), "lelims": list(m.get("lelim") or ())} if chaos else {}),
                 **({"idfx": list(m.get("idfx") or ())} if ids else {}),
             }

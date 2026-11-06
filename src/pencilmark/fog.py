@@ -599,56 +599,61 @@ def cage_cases(rules, lit, rows, cols, clue_always, forced=None, size=None):
     return out
 
 
-def route(puzzle, max_rounds=400, rules_text=None):
-    """the fog route of a unique fog puzzle (module docstring). Raises ValueError when the puzzle has no fog rule.
-    rules_text: the puzzle's rules (read from the input's metadata when not given): statements such as "arrows move
-    orthogonally" and "arrows don't share cells" narrow the hidden shapes."""
-    from . import api, inputs
-    from . import band_path as BP
-    from . import cbackend as CB
-    from .exchange.write import write as write_doc
+class _FogView:
+    """a fog puzzle as a solver sees it, round by round: its setup (rules text, lit cells, solution) and the visible
+    puzzle of a state. Shared by the band route (route) and the card's routes (solve, a CB.solve that sees the fog)."""
 
-    if rules_text is None and not hasattr(puzzle, "coords"):
-        try:
-            obj = inputs.read(puzzle)
-            obj = obj.get("puzzle", obj) if isinstance(obj.get("puzzle"), dict) else obj
-            rules_text = (obj.get("meta") or {}).get("rules_text") or ""
-        except Exception:  # noqa: BLE001 -- the load below reports a bad input
-            rules_text = ""
-    ortho, no_share = bool(ORTHO.search(rules_text or "")), bool(NO_SHARE.search(rules_text or ""))
-    single = bool(SINGLE_ARROW.search(rules_text or ""))
-    clue_always = bool(CLUE_ALWAYS.search(rules_text or "")) and not SOME_UNCLUED.search(rules_text or "")
-    above = above_fog(rules_text)
-    m_l = LINE_LEN.search(rules_text or "")
-    line_len = (int(m_l.group(1)) if m_l.group(1).isdigit() else _WORDS.get(m_l.group(1).lower())) if m_l else None
-    m_ = CAGE_SIZE.search(rules_text or "")
-    cage_size = (int(m_.group(1)) if m_.group(1).isdigit() else _WORDS[m_.group(1).lower()]) if m_ else None
-    p = api.load(puzzle)
-    P = api._params("human")
-    fog = getattr(p, "fog", None)
-    if not fog:
-        raise ValueError("the puzzle has no fog rule")
-    sol = api.solve(p)
-    doc = write_doc(p)
-    rows, cols = doc["board"]["rows"], doc["board"]["cols"]
-    D = doc["digits"]
-    grids = [k for k in doc["rules"] if k["type"] == "box_grid"]
-    _BH[0] = tuple(grids[0]["box"]) if len(grids) == 1 and grids[0].get("origin", "r1c1") == "r1c1" else None
-    CB._C.cases_memo_clear()  # the engine's cases memo knows rules and domains, not this puzzle's houses
-    givens = list(doc["givens"])
-    givens0 = list(givens)
-    placed = set()
-    lit = lit_cells(fog, givens0, placed, rows, cols)
-    full = (1 << D) - 1
-    cand = [full if not g else 1 << (g - 1) for g in givens]
-    steps, reveals = [], 0
-    colours = []  # colouring on: the colour work so far (class joins / differences), kept across reveals
-    for rounds in range(1, max_rounds + 1):
-        if all(g or g is None for g in givens):
-            return {"solved": True, "rounds": rounds - 1, "reveals": reveals, "steps": steps, "stuck": 0}
-        before = list(cand)
-        vis = dict(doc, givens=givens, rules=visible_rules(doc["rules"], lit, D, above, line_len))
-        for c in cage_cases(doc["rules"], lit, rows, cols, clue_always, None, cage_size):
+    def __init__(self, puzzle, rules_text=None):
+        from . import api, inputs
+        from . import cbackend as CB
+        from .exchange.write import write as write_doc
+
+        if rules_text is None and not hasattr(puzzle, "coords"):
+            try:
+                obj = inputs.read(puzzle)
+                obj = obj.get("puzzle", obj) if isinstance(obj.get("puzzle"), dict) else obj
+                rules_text = (obj.get("meta") or {}).get("rules_text") or ""
+            except Exception:  # noqa: BLE001 -- the load below reports a bad input
+                rules_text = ""
+        t = rules_text or ""
+        self.ortho, self.no_share = bool(ORTHO.search(t)), bool(NO_SHARE.search(t))
+        self.single = bool(SINGLE_ARROW.search(t))
+        self.clue_always = bool(CLUE_ALWAYS.search(t)) and not SOME_UNCLUED.search(t)
+        self.above = above_fog(rules_text)
+        m_l = LINE_LEN.search(t)
+        self.line_len = (
+            (int(m_l.group(1)) if m_l.group(1).isdigit() else _WORDS.get(m_l.group(1).lower())) if m_l else None
+        )
+        m_ = CAGE_SIZE.search(t)
+        self.cage_size = (int(m_.group(1)) if m_.group(1).isdigit() else _WORDS[m_.group(1).lower()]) if m_ else None
+        self.p = p = api.load(puzzle)
+        self.fog = getattr(p, "fog", None)
+        if not self.fog:
+            raise ValueError("the puzzle has no fog rule")
+        self.sol = api.solve(p)
+        self.doc = doc = write_doc(p)
+        self.rows, self.cols, self.D = doc["board"]["rows"], doc["board"]["cols"], doc["digits"]
+        grids = [k for k in doc["rules"] if k["type"] == "box_grid"]
+        _BH[0] = tuple(grids[0]["box"]) if len(grids) == 1 and grids[0].get("origin", "r1c1") == "r1c1" else None
+        CB._C.cases_memo_clear()  # the engine's cases memo knows rules and domains, not this puzzle's houses
+        self.givens0 = list(doc["givens"])
+
+    def lit(self, placed):
+        return lit_cells(self.fog, self.givens0, placed, self.rows, self.cols)
+
+    def reveal_cells(self, givens, placed, lit):
+        """the open cells whose correct digit lights something new"""
+        return {i for i, g in enumerate(givens) if not g and self.lit(placed | {(i // self.cols, i % self.cols)}) - lit}
+
+    def visible(self, givens, lit, cand):
+        """(the puzzle a solver sees in this state, its candidates narrowed by the visible cell rules); the puzzle
+        carries the hidden-content case rules and domains = the candidates"""
+        from . import api
+        from . import cbackend as CB
+
+        doc, rows, cols, D = self.doc, self.rows, self.cols, self.D
+        vis = dict(doc, givens=givens, rules=visible_rules(doc["rules"], lit, D, self.above, self.line_len))
+        for c in cage_cases(doc["rules"], lit, rows, cols, self.clue_always, None, self.cage_size):
             if len(c["cases"]) == 1 and c["cases"][0]["total"] is not None:  # one shape left: the cage is known, as a
                 cs1 = c["cases"][0]["cells"]  # cage rule (set theory, combinations and the rest read it)
                 vis["rules"].append(
@@ -661,23 +666,18 @@ def route(puzzle, max_rounds=400, rules_text=None):
         if len(qdom) == len(cand):
             cand = [m_ & qdom[i] if not givens[i] and m_ & qdom[i] else m_ for i, m_ in enumerate(cand)]
         base = list(q.constraints)
-        if _NO_CASES:  # diagnostics: the route without the hidden-content case rules
-            q.constraints = base
-            cand_cases = False
-        else:
-            cand_cases = True
         live = list(cand)  # basic sudoku on the candidates: a placed digit leaves its row, column and box
         for i, g in enumerate(givens):
             if g:
                 for j in q.peers[i] if hasattr(q, "peers") and q.peers else ():
                     live[j] &= ~(1 << (g - 1))
         forced = {}  # ("arrow" | "cage", rule index) -> cells every surviving case uses: closed to the others
-        for _ in range(6 if cand_cases else 0):  # hidden-content lemmas ("cases"), iterated while the closed cells grow
+        for _ in range(0 if _NO_CASES else 6):  # hidden-content lemmas ("cases"), iterated while the closed cells grow
             fa = {n: cs for (t_, n), cs in forced.items() if t_ == "arrow"}
             fc = {n: cs for (t_, n), cs in forced.items() if t_ == "cage"}
-            cs = arrow_cases(doc["rules"], lit, rows, cols, ortho, no_share, fa, single, live) + cage_cases(
-                doc["rules"], lit, rows, cols, clue_always, fc, cage_size
-            )
+            cs = arrow_cases(
+                doc["rules"], lit, rows, cols, self.ortho, self.no_share, fa, self.single, live
+            ) + cage_cases(doc["rules"], lit, rows, cols, self.clue_always, fc, self.cage_size)
             q.constraints = base + cs
             if not cs:
                 break
@@ -686,22 +686,103 @@ def route(puzzle, max_rounds=400, rules_text=None):
             for spec, ok in alive:
                 k = q.constraints[spec]
                 key = ("arrow", k["_arrow"]) if "_arrow" in k else ("cage", k["_cage"]) if "_cage" in k else None
-                if ok and key and (key[0] == "cage" or no_share):
+                if ok and key and (key[0] == "cage" or self.no_share):
                     sets = [{_name(c // cols, c % cols) for c in k["cases"][i]["cells"]} for i in ok]
                     new_forced[key] = set.intersection(*sets)
             if new_forced == forced:
                 break
             forced = new_forced
-        # the human band route, as rate's card follows it: the easiest band's moves first, harder only when nothing
-        # easier applies; no search, no guessing (a stuck route waits for a reveal or stalls)
         q.domains = [m_ if not givens[i] else (1 << (givens[i] - 1)) for i, m_ in enumerate(cand)]
-        # the cells whose correct digit lights something new: the band route stops after placing one (the rest of a
-        # full route would be thrown away at the reveal)
-        reveal = {
-            i
-            for i, g in enumerate(givens)
-            if not g and lit_cells(fog, givens0, placed | {(i // cols, i % cols)}, rows, cols) - lit
-        }
+        q._fog_vis = vis  # the visible file (fog solve rebuilds it with the original givens)
+        return q, cand
+
+    def solve(self, puzzle, params=None, disabled=(), cand=None, max_steps=5000, allow_direct=True, **kw):
+        """CB.solve under the fog, for the card's routes (card_score.score_parts(solve=)): from the state of `puzzle`
+        (its givens = the filled cells) and `cand`, the engine solves the visible puzzle up to the first placement that
+        lights new cells, the fog lifts there, and so on. No guessing: a round with no step, or only a guess, stalls.
+        Returns (steps, solved) like CB.solve."""
+        from . import api
+        from . import cbackend as CB
+        from . import solver as S
+
+        N, D = self.rows * self.cols, self.D
+        givens = [puzzle.givens.get(c, 0) for c in range(N)]
+        full = (1 << D) - 1
+        own = cand is not None  # the caller's state (a rollout replay); else the engine starts from the givens itself
+        unique = kw.pop("assume_unique", True)
+        cand = list(cand) if own else [full if not g else 1 << (g - 1) for g in givens]
+        placed = {(i // self.cols, i % self.cols) for i, g in enumerate(givens) if g and not self.givens0[i]}
+        out = []
+        while len(out) < max_steps:
+            if all(givens):
+                return out, True
+            lit = self.lit(placed)
+            q, cand = self.visible(givens, lit, cand)
+            reveal = self.reveal_cells(givens, placed, lit)
+            mask = [cand[c] if not givens[c] else 1 << (givens[c] - 1) for c in range(N)]
+            kw.pop("cpuzzle", None)
+            # as CB.solve expects a mid-solve state: the puzzle with its ORIGINAL givens, compiled once, and the filled
+            # cells as the state (the engine prices from what was given, not from what was placed)
+            q0 = api.load(dict(q._fog_vis, givens=self.givens0))
+            q0.constraints = q.constraints  # with this round's hidden-content cases
+            cp = CB.to_cpuzzle(q0)
+            q0.givens = {c: v for c, v in enumerate(givens) if v}
+            q = q0
+            fogged = len(lit) < N  # nothing hidden: the solver's own call, uniqueness and starting state as given
+            st, _ = CB.solve(
+                q, params, disabled=disabled, cpuzzle=cp, cand=mask if (own or out or fogged) else None,
+                max_steps=max_steps - len(out), assume_unique=unique and not fogged, allow_direct=allow_direct, **kw,
+            )  # fmt: skip
+            moved = False
+            for s_ in st:
+                if s_.move.feat[0] == S.GUESS:  # the fog leaves nothing to deduce: stalled
+                    return out, False
+                out.append(s_)
+                for c, dg in s_.move.elim or ():
+                    if cand[c] >> (dg - 1) & 1:
+                        cand[c] &= ~(1 << (dg - 1))
+                        moved = True
+                if s_.move.place:
+                    c, dg = s_.move.place
+                    givens[c], cand[c] = dg, 1 << (dg - 1)
+                    for x in q.peer_list[c]:
+                        cand[x] &= ~(1 << (dg - 1))
+                    placed.add((c // self.cols, c % self.cols))
+                    moved = True
+                    if c in reveal:
+                        break
+            if not moved:
+                return out, False
+        return out, all(givens)
+
+
+def route(puzzle, max_rounds=400, rules_text=None):
+    """the fog route of a unique fog puzzle (module docstring): the human band route, round by round on what the fog
+    shows. Raises ValueError when the puzzle has no fog rule. rules_text: the puzzle's rules (read from the input's
+    metadata when not given): statements such as "arrows move orthogonally" and "arrows don't share cells" narrow the
+    hidden shapes."""
+    from . import api
+    from . import band_path as BP
+
+    V = _FogView(puzzle, rules_text)
+    P = api._params("human")
+    sol, cols, givens0 = V.sol, V.cols, V.givens0
+    givens = list(givens0)
+    placed = set()
+    lit = V.lit(placed)
+    full = (1 << V.D) - 1
+    cand = [full if not g else 1 << (g - 1) for g in givens]
+    steps, reveals = [], 0
+    colours = []  # colouring on: the colour work so far (class joins / differences), kept across reveals
+    for rounds in range(1, max_rounds + 1):
+        if all(g or g is None for g in givens):
+            return {"solved": True, "rounds": rounds - 1, "reveals": reveals, "steps": steps, "stuck": 0}
+        before = list(cand)
+        q, cand = V.visible(givens, lit, cand)
+        # the human band route, as rate's card follows it: the easiest band's moves first, harder only when nothing
+        # easier applies; no search, no guessing (a stuck route waits for a reveal or stalls). It stops after placing a
+        # cell whose digit lights something new (the rest of a full route would be thrown away at the reveal)
+        reveal = V.reveal_cells(givens, placed, lit)
         route_ = BP.band_path(
             q, P, prefix=colours, keep_held=bool(colours) or bool(P.get("colouring")), stop_cells=frozenset(reveal)
         )
@@ -716,9 +797,6 @@ def route(puzzle, max_rounds=400, rules_text=None):
                     "name": m.get("name") or m["technique"],
                     "band": m["band"],
                     "difficulty": round(m["d"], 3),
-                    # candidates left in the open cells before the step: the card's density factor (card_score)
-                    "cands": sum(bin(cand[i]).count("1") for i, g in enumerate(givens) if not g),
-                    "alts": m.get("alts", 1),
                     "round": rounds,
                     "place": None
                     if not m["place"]
@@ -737,7 +815,7 @@ def route(puzzle, max_rounds=400, rules_text=None):
                     cand[x] &= ~(1 << (dg - 1))
                 placed.add((ci // cols, ci % cols))
                 progressed = True
-                new = lit_cells(fog, givens0, placed, rows, cols)
+                new = V.lit(placed)
                 if new - lit:
                     lit = new
                     reveals += 1
