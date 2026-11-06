@@ -140,6 +140,7 @@ def rate(
     explain=None,
     quality=None,
     alternatives=True,
+    colouring=False,
 ):
     """The "sudoku-grade" card of one puzzle (docs/formats/grade-card.md), with only the fields you ask for.
 
@@ -173,6 +174,10 @@ def rate(
     alternatives : bool
         False skips the search for interchangeable techniques (each chip in contains lists one code). Band, difficulty
         and time are the same either way, and the card comes much faster.
+    colouring : bool
+        Opt in to colouring as a solving method: colours kept through the solve (Colour Fill, Colour Single, Colour
+        Pair, ...; docs/grades/techniques.md, Colouring). Off by default: most solvers do not colour, and with it
+        the hardest puzzles take much longer to grade.
 
     Returns
     -------
@@ -231,7 +236,7 @@ def rate(
         if not sols:
             raise NoSolution("no solution")
         p._pm_solution = list(sols[0])  # proven unique: later stages reuse it instead of searching again
-        P = dict(_params(mode), allow_guess=bool(allow_guessing), quality=quality or {})
+        P = dict(_params(mode), allow_guess=bool(allow_guessing), quality=quality or {}, colouring=int(bool(colouring)))
         if no_route:
             g = EX.unknown_card(want, no_route)
             if "elapsed" in want:
@@ -282,7 +287,7 @@ def _one_route_thread():
 
 
 def _rate_job(args):
-    puzzle, steps, max_seconds, mode, se, fields, allow_guessing, explain, quality, alternatives = args
+    puzzle, steps, max_seconds, mode, se, fields, allow_guessing, explain, quality, alternatives, colouring = args
     try:
         return rate(
             puzzle,
@@ -295,6 +300,7 @@ def _rate_job(args):
             explain=explain,
             quality=quality,
             alternatives=alternatives,
+            colouring=colouring,
         )
     except Exception as e:  # one bad puzzle must not sink the batch
         return {"error": f"{type(e).__name__}: {e}"}
@@ -312,6 +318,7 @@ def rate_many(
     explain=None,
     quality=None,
     alternatives=True,
+    colouring=False,
 ):
     """Cards for many puzzles, in input order.
 
@@ -321,7 +328,7 @@ def rate_many(
         Puzzles in any form `rate` accepts.
     jobs : int
         Worker processes; 1 rates in this process.
-    steps, max_seconds, mode, se, fields, allow_guessing, explain, quality, alternatives
+    steps, max_seconds, mode, se, fields, allow_guessing, explain, quality, alternatives, colouring
         As for `rate`.
 
     Returns
@@ -330,7 +337,10 @@ def rate_many(
         One card per puzzle. A puzzle that cannot be rated (not unique, no solution, unreadable) gives
         {"error": "..."} instead of raising.
     """
-    items = [(p, steps, max_seconds, mode, se, fields, allow_guessing, explain, quality, alternatives) for p in puzzles]
+    items = [
+        (p, steps, max_seconds, mode, se, fields, allow_guessing, explain, quality, alternatives, colouring)
+        for p in puzzles
+    ]
     if jobs <= 1:
         return [_rate_job(it) for it in items]
     with _mp_context().Pool(jobs, initializer=_one_route_thread) as pool:

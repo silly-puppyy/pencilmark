@@ -407,3 +407,17 @@ def test_params_follow_in_place_setting_changes():
     finally:
         m.route["colouring"] = old
         api._PARAMS = (None, None)
+
+
+
+def test_colouring_is_opt_in(variants):
+    """rate(colouring=True) puts kept colours on the route (Vudoku: Colour Fill / Single / Pair take it from Hard to
+    Medium); the default leaves the colour-only techniques out"""
+    import pencilmark
+
+    vudoku = next(v["puzzle"] for v in variants if v["name"].startswith("Vudoku"))
+    colour_only = {"CFL", "CSG", "CPR", "CTR", "CPT", "CFS", "CCM", "CCX"}
+    off = pencilmark.rate(vudoku, fields=["band", "contains"])
+    on = pencilmark.rate(vudoku, fields=["band", "contains"], colouring=True)
+    assert not colour_only & {c["code"] for c in off["contains"]}
+    assert colour_only & {c["code"] for c in on["contains"]} and on["band"] != off["band"]

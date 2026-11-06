@@ -100,7 +100,7 @@ def test_colouring_never_below_medium():
 
 @pytest.mark.slow
 def test_colouring_switch_leaves_easy_cards_alone():
-    """the solve path stays easiest-first: with colouring switched (off since it is on by default), Very Easy / Easy
+    """the solve path stays easiest-first: with colouring switched (on, since it is opt in), Very Easy / Easy
     golden cards keep their band and list"""
     from pencilmark import grader_model as GM
 

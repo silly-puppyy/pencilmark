@@ -206,31 +206,17 @@ def _log_to_stderr(level):
 
 
 def _rate_one(args):
-    """one input line -> its output text (runs in a worker process with -j)."""
+    """one input line -> its output text (runs in a worker process with -j). The card is api.rate's (fog under the fog,
+    Unknown with a reason where no route exists); a puzzle that is not unique, has no solution or is undecided prints
+    that instead."""
     k, obj, a = args
     _log_to_stderr(a.log)
+    from . import api
     from . import cpsat_verify as V
-    from .export import grade
+    from .export import card_fields
 
-    P = dict(
-        _params(),
-        search="computer" if a.computer else "human",
-        allow_guess=bool(a.allow_guessing),
-        quality=_quality_arg(a.quality),
-    )
     fmt = a.format or "%b\\t%d\\t%m\\t%h"
     try:
-        p = PJ.from_json(_ok(obj))
-        p.finalize()
-        sols, decided = V.decide(p, limit=2)
-        if len(sols) != 1 or not decided:
-            st = (
-                "not unique" if len(sols) > 1 else "undecided (" + V.VERIFY_HINT + ")" if not decided else "no solution"
-            )
-            return _fmt2(fmt, {"error": st}, k, False) if not a.json else json.dumps({"line": k, "error": st})
-        p._pm_solution = list(sols[0])  # proven unique: later stages reuse it
-        from .export import card_fields
-
         fl = a.fields.split(",") if a.fields else None
         if fl is None and "%p" in fmt:  # the %p placeholder asks for time_p80; the report shows pNN only on request
             fl = list(card_fields(None)) + ["time_p80"]
@@ -243,9 +229,27 @@ def _rate_one(args):
             if a.explain
             else (["notation", "short", "teach"][min(verbose, 3) - 1] if verbose else True if a.steps else None)
         )
-        g = grade(
-            p, P, max_seconds=a.max_seconds, fields=sorted(want), explain=explain, alternatives=not a.no_alternatives
-        )
+        try:
+            g = api.rate(
+                PJ.from_json(_ok(obj)),
+                max_seconds=a.max_seconds,
+                mode="computer" if a.computer else "human",
+                fields=sorted(want),
+                allow_guessing=bool(a.allow_guessing),
+                explain=explain,
+                quality=_quality_arg(a.quality),
+                alternatives=not a.no_alternatives,
+                colouring=bool(getattr(a, "colouring", False)),
+            )
+        except (api.NotUnique, api.NoSolution, api.Undecided) as e:
+            st = (
+                "not unique"
+                if isinstance(e, api.NotUnique)
+                else "no solution"
+                if isinstance(e, api.NoSolution)
+                else "undecided (" + V.VERIFY_HINT + ")"
+            )
+            return _fmt2(fmt, {"error": st}, k, False) if not a.json else json.dumps({"line": k, "error": st})
         return (
             json.dumps({"line": k, **g}, default=str)
             if a.json
@@ -406,6 +410,11 @@ def main(argv=None):
         "--computer",
         action="store_true",
         help="allow pure computer search (forcing chains / nets, trial); default: human mode",
+    )
+    r.add_argument(
+        "--colouring",
+        action="store_true",
+        help="opt in to colouring as a solving method (colours kept through the solve); off by default",
     )
     r.add_argument(
         "--no-alternatives",

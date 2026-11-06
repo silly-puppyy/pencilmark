@@ -7,9 +7,8 @@ What changes for you (details in the entries below):
 - **Difficulty values move.** The search part counts refutations in propagation rounds and the score map is refitted
   (easy puzzles a little higher, hard ones a little lower), and the difficulty is the expected effort of a human-like
   solver (bottleneck rollouts, +0.09 on average). Rank agreement with human times rises (fed +0.040, Wang 2024 +0.028).
-- **Some bands and technique lists move.** The band route is the human one, and colouring is on by default: a few
-  variant puzzles drop a band (Hard -> Medium where a colour step does the work). Few bands move overall (reference
-  cards: 1 of 227 from the human route, 2 of 55 from colouring).
+- **Some bands and technique lists move.** The band route is the human one (reference cards: 1 of 227 bands).
+  Colouring as a solving method is opt in (`rate(colouring=True)`, `--colouring`).
 - **Publishing checks.** `thin` replaces `spike`; the `unusual` ranges are re-measured; quality presets
   (`{"preset": "standard"}`) and opt-in checks are new.
 - **Breaking, no aliases** (nobody depends on them yet): fingerprints drop the `sha256:` prefix; `box_grid` needs `count`; colouring codes share the prefix C
@@ -47,8 +46,11 @@ What changes for you (details in the entries below):
   its table straight from the numbers).
 - Colour Algebra (colour the grid as unknown digits) comes before band set theory in the Very Hard study order: the
   route opens with the colouring that solvers describe on zero-given palindrome puzzles; grades unchanged.
-- Colouring is on by default (`colouring` 1): the identity layer's colour techniques are part of the human route. A few
-  cards change (golden: 2 of 55 bands Hard -> Medium, difficulty within 0.2 on 5; private 2 bands, 26 difficulties).
+- Colouring is opt in: `rate(puzzle, colouring=True)` (CLI `--colouring`, also `rate_many`) puts the identity layer's
+  colour techniques on the human route; the default leaves them out. Most solvers do not colour (sudoku.coach
+  comments mention it on 4% of classics, 10% overall, mostly palindromes and zero-given puzzles), and with it the
+  hardest variants grade 2-3x slower. The CLI's rate now goes through `rate()` (it graded fog, shading and unknowns
+  puzzles on its own path).
 - Publishing check `thin` replaces `spike`: a Medium or harder puzzle whose candidate steps carry less than 25% of
   its effort (singles around one hard step that changes little; Andrew Stuart: "too few candidates removed using
   candidate strategies"). `spike` flagged most published puzzles (83-92% of human-set Medium / Hard): concentrated

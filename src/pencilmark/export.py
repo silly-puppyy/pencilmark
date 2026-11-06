@@ -755,7 +755,7 @@ def grade_fog(p, source, P, fields=None):
     from . import fog as F
 
     want = card_fields(fields)
-    res = F.route(source)
+    res = F.route(source, overrides={k: P[k] for k in ("colouring",) if k in P})
     steps = res["steps"]
     solved = bool(res["solved"])
     top = max((s["band"] for s in steps), default=0)
@@ -770,7 +770,7 @@ def grade_fog(p, source, P, fields=None):
     }
     card = {"score": None, "effort_l1": None, "notes": []}
     if solved and steps:
-        sp = CS.score_parts(p, solve=F._FogView(source).solve)  # the card's routes under the fog
+        sp = CS.score_parts(p, solve=F._FogView(source).solve, overrides={k: P[k] for k in ("colouring",) if k in P})
         if sp is not None:
             card["score"], card["effort_l1"] = round(sp[0], 1), round(sp[1], 3)
     c = _CardContext(p, P, want, card, bp, False, [], base=bp)

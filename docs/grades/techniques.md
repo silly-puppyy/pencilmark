@@ -170,7 +170,8 @@ for the whole solve, so later steps build on it. Explanations name each colour w
 appears, such as *orange: an unknown digit (5 or 6)* or *blue: a low digit (1-4)*.
 
 Every colouring technique is Medium or harder: colouring is a concept to learn, not a first step. The route
-parameter `colouring` (on by default) keeps colours in the solve path: with it off, Same Colour and Chain Colour
+parameter `colouring` keeps colours in the solve path; it is opt in (`rate(puzzle, colouring=True)`, CLI
+`--colouring`), since most solvers do not colour (sudoku.coach comments: 4% of classics, 10% overall). Without it, Same Colour and Chain Colour
 still remove candidates but keep no colour, and Colour Fill, Colour Single, Colour Pointing, Colour Pair, Colour
 Trap, Colour Clash, Colour Fish and Complete Colours do not occur.
 

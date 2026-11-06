@@ -35,7 +35,10 @@ def grade_card(puzzle, P, band, check_rules=True):
         return {"status": "beyond human logic" if human else "beyond engine", "score": None, "effort_l1": None}
     from . import card_score as C3
 
-    r = C3.score_parts(puzzle)  # difficulty and time effort on the written route; None if it cannot grade
+    ovr = {k: P[k] for k in ("colouring",) if P and k in P}  # rate's switches reach the card's routes too
+    r = C3.score_parts(
+        puzzle, overrides=ovr
+    )  # difficulty and time effort on the written route; None if it cannot grade
     score, effort = r if r is not None else (None, None)
     from . import publish_flags as PF
 

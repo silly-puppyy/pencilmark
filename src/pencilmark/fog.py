@@ -757,7 +757,7 @@ class _FogView:
         return out, all(givens)
 
 
-def route(puzzle, max_rounds=400, rules_text=None):
+def route(puzzle, max_rounds=400, rules_text=None, overrides=None):
     """the fog route of a unique fog puzzle (module docstring): the human band route, round by round on what the fog
     shows. Raises ValueError when the puzzle has no fog rule. rules_text: the puzzle's rules (read from the input's
     metadata when not given): statements such as "arrows move orthogonally" and "arrows don't share cells" narrow the
@@ -766,7 +766,7 @@ def route(puzzle, max_rounds=400, rules_text=None):
     from . import band_path as BP
 
     V = _FogView(puzzle, rules_text)
-    P = api._params("human")
+    P = dict(api._params("human"), **(overrides or {}))  # overrides: rate's switches (colouring)
     sol, cols, givens0 = V.sol, V.cols, V.givens0
     givens = list(givens0)
     placed = set()
