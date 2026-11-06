@@ -28,6 +28,9 @@ What changes for you (details in the entries below):
   `from_ipuz`, `to_ipuz`, `rules_text` (now in `describe`'s result), the CLI `json` command, and the engine's internal
   JSON and sample-pack lines as inputs. A written document is kept as given (no longer rebuilt through the engine;
   fingerprints unchanged). Site links: the host names the reader, no options.
+- Command line: every command takes `--from FORMAT` (default: detected per line); `rate --print TEMPLATE` replaces
+  `--format` (which read like the input format); `convert --to pencilmark|plain|grid|sudokuwiki|ipuz` replaces
+  `export`; `generate --seed / --time` are gone (the spec's `limits` hold them).
 - Public functions take their options as keywords only and carry type hints. `rate` gives band Unknown with a `reason`
   (and `completed: false` under `max_seconds`) where it raised `Undecided`: the engine could not settle uniqueness,
   which is not an input mistake; `solve` still raises it. `solve(info=True)` is gone; `solve` and `count_solutions`

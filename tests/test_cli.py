@@ -49,7 +49,7 @@ def test_cli_parallel_same_output(variants):
 def test_cli_export_keeps_meta():
     exp = pencilmark.write.document(CLASSIC, solution=True, describe=True)
     exp["meta"].update(title="T", author="A")
-    out = json.loads(run(["export", "-"], json.dumps(exp) + "\n")[0])
+    out = json.loads(run(["convert", "-"], json.dumps(exp) + "\n")[0])
     assert out["meta"]["title"] == "T" and out["meta"]["author"] == "A"
     assert run(["fingerprint", "-"], json.dumps(exp) + "\n") == [pencilmark.fingerprint(exp)]
 
@@ -102,8 +102,9 @@ def test_cli_generate():
         "board": {"rows": 4, "cols": 4},
         "digits": 4,
         "rules": [{"type": "box_grid", "box": [2, 2], "count": [2, 2]}],
+        "limits": {"seed": 1},
     }
-    out = json.loads(run(["generate", "-", "--seed", "1", "--result"], json.dumps(spec))[0])
+    out = json.loads(run(["generate", "-", "--result"], json.dumps(spec))[0])
     assert out["puzzle"]["format"] == "pencilmark-puzzle" and out["info"]["seed"] == 1
 
 

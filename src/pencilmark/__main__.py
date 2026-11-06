@@ -1,9 +1,10 @@
 """Command-line front end (SE-style).
 
-  python -m pencilmark rate [FILE|-] [--format FMT] [--json] [--steps]
+  python -m pencilmark rate [FILE|-] [--print FMT] [--json] [--steps]
       One puzzle per line, in any format pencilmark reads (pencilmark.read: a plain string, a sudokuwiki packed string,
       a HoDoKu line, pencilmark JSON, an ipuz object, a site link), detected per line. A FILE ending in .json or .ipuz
-      that holds one JSON value (a puzzle, or a list of puzzles) is read whole. Prints one
+      that holds one JSON value (a puzzle, or a list of puzzles) is read whole; --from FORMAT names the format instead
+      (every command takes it). Prints one
       result line per puzzle. Card "pencilmark-grade": FMT fields %d difficulty (continuous, above 0, no ceiling; ~5 = typical medium),
       %m predicted median solve time in minutes, %p 80th-percentile minutes, %b band, %h hardest technique met,
       %c contents chips (band > 0, with uses), %n issue codes, %s status ("ok" or the error), %u unique?, %i line number.
@@ -12,10 +13,10 @@
       prints its error ({"line", "error"} with --json).
   python -m pencilmark solve [FILE|-]      the solution (or 'not unique' / 'no solution') per puzzle
   python -m pencilmark count [FILE|-] [--limit N]   how many solutions per puzzle (">=N" when it stops at N)
-  python -m pencilmark generate [SPEC|-] [--seed N] [--time S] [--result]
+  python -m pencilmark generate [SPEC|-] [--result]
                                        a puzzle for a "pencilmark-spec" request (docs/formats/generator-spec.md), as a pencilmark-puzzle file
-  python -m pencilmark export [FILE|-] [--pretty] [--no-solution] [--no-style]
-                                       each puzzle as a "pencilmark-puzzle" file (format_version 1, docs/formats/puzzle-format.md), canonical
+  python -m pencilmark convert [FILE|-] [--to pencilmark|plain|grid|sudokuwiki|ipuz] [--pretty] [--no-solution] [--no-style]
+                                       each puzzle in another format; pencilmark JSON (docs/formats/puzzle-format.md) by default, canonical
   python -m pencilmark fingerprint [FILE|-]  the content fingerprint (64 hex digits) per puzzle
   python -m pencilmark describe [FILE|-]     variant name and rules per puzzle (JSON)
 Every command takes --log info (pages fetched, what a reader read, time limits reached, the generator's result) or
@@ -46,19 +47,19 @@ def _whole_json(src):
     return obj if isinstance(obj, list) else [obj]
 
 
-def _inputs(src):
-    """(number, pencilmark-puzzle dict) per input, each read in its own format (detected); an input that cannot be read
-    gives (number, the exception), so the command reports it in place and goes on"""
+def _inputs(src, fmt=None):
+    """(number, pencilmark-puzzle dict) per input, each read in its own format (detected, or fmt: --from); an input
+    that cannot be read gives (number, the exception), so the command reports it in place and goes on"""
     whole = _whole_json(src)
     if whole is not None:
         for k, obj in enumerate(whole, 1):
-            yield k, _read(lambda: auto(obj))
+            yield k, _read(lambda: auto(obj, format=fmt))
         return
     fh = sys.stdin if src in (None, "-") else open(src, encoding="utf-8")
     for k, line in enumerate(fh, 1):
         line = line.strip()
         if line and not line.startswith("#"):
-            yield k, _read(lambda: auto(line))
+            yield k, _read(lambda: auto(line, format=fmt))
 
 
 def _read(fn):
@@ -77,7 +78,7 @@ def _ok(obj):
 
 def _each(a, fn):
     """fn(k, document) for every input; a failing input prints "error<TAB>k<TAB>message" and the rest go on"""
-    for k, obj in _inputs(a.file):
+    for k, obj in _inputs(a.file, a.input_format):
         try:
             fn(k, _ok(obj))
         except Exception as e:
@@ -200,7 +201,7 @@ def _rate_one(args):
     from . import api
     from .export import card_fields
 
-    fmt = a.format or "%b\\t%d\\t%m\\t%h"
+    fmt = a.print or "%b\\t%d\\t%m\\t%h"
     try:
         fl = a.fields.split(",") if a.fields else None
         if fl is None and "%p" in fmt:  # the %p placeholder asks for time_p80; the report shows pNN only on request
@@ -248,7 +249,7 @@ def cmd_rate(a):
         _quality_arg(a.quality)
     except ValueError as e:
         raise SystemExit(f"--quality: {e}")
-    items = ((k, obj, a) for k, obj in _inputs(a.file))
+    items = ((k, obj, a) for k, obj in _inputs(a.file, a.input_format))
     if a.jobs <= 1:
         for it in items:
             print(_rate_one(it), flush=True)
@@ -307,13 +308,6 @@ def cmd_generate(a):
     from .exchange import dumps
 
     spec = json.load(sys.stdin) if a.spec in (None, "-") else json.loads(Path(a.spec).read_text(encoding="utf-8"))
-    lim = dict(spec.get("limits") or {})
-    if a.seed is not None:
-        lim["seed"] = a.seed
-    if a.time is not None:
-        lim["time"] = a.time
-    if lim:
-        spec = dict(spec, limits=lim)
     r = generate(spec)
     if a.result:
         print(json.dumps(r, ensure_ascii=False, default=str))
@@ -325,16 +319,22 @@ def cmd_generate(a):
         print(f"note: {w}", file=sys.stderr)
 
 
-def cmd_export(a):
-    """`export` command: print each input puzzle in the pencilmark-puzzle format (--no-solution drops the solution, --no-style the rules' drawing styles)"""
+def cmd_convert(a):
+    """`convert` command: print each input puzzle in the --to format (pencilmark JSON by default: with its solution
+    unless --no-solution, the rules' drawing styles unless --no-style, one line unless --pretty)"""
+    from . import write
     from .exchange import dumps
-    from .write import document
 
     def one(k, obj):
-        d = document(obj, solution=not a.no_solution)
-        if a.no_style:
-            d = dict(d, rules=[{k2: v for k2, v in r.items() if k2 != "style"} for r in d["rules"]])
-        print(dumps(d, pretty=a.pretty), end="" if a.pretty else "\n", flush=True)
+        if a.to == "pencilmark":
+            d = write.document(obj, solution=not a.no_solution)
+            if a.no_style:
+                d = dict(d, rules=[{k2: v for k2, v in r.items() if k2 != "style"} for r in d["rules"]])
+            print(dumps(d, pretty=a.pretty), end="" if a.pretty else "\n", flush=True)
+        elif a.to == "ipuz":
+            print(json.dumps(write.ipuz(obj), ensure_ascii=False), flush=True)
+        else:
+            print(getattr(write, a.to)(obj), flush=True)
 
     _each(a, one)
 
@@ -367,10 +367,19 @@ def main(argv=None):
     common.add_argument(
         "--log", choices=("info", "debug"), help="write the pencilmark log to standard error at this level"
     )
+    from .read import READERS
+
+    common.add_argument(
+        "--from",
+        dest="input_format",
+        choices=list(READERS),
+        default=None,
+        help="the inputs' format (pencilmark.read); default: detected per line",
+    )
     sub = ap.add_subparsers(dest="cmd", required=True)
     r = sub.add_parser("rate", parents=[common])
     r.add_argument("file", nargs="?")
-    r.add_argument("--format", default=None)
+    r.add_argument("--print", default=None, help="the output line template (%%b band, %%d difficulty, ...)")
     r.add_argument("--json", action="store_true")
     r.add_argument("--report", action="store_true")
     r.add_argument(
@@ -442,16 +451,20 @@ def main(argv=None):
     g.add_argument(
         "spec", nargs="?", help="a pencilmark-spec file (docs/formats/generator-spec.md), or - for standard input"
     )
-    g.add_argument("--seed", type=int, help="override limits.seed")
-    g.add_argument("--time", type=float, help="override limits.time (seconds)")
     g.add_argument("--result", action="store_true", help='print {"puzzle", "card", "info"} as one JSON line')
     g.set_defaults(fn=cmd_generate)
-    e = sub.add_parser("export", parents=[common])
+    e = sub.add_parser("convert", parents=[common])
     e.add_argument("file", nargs="?")
+    e.add_argument(
+        "--to",
+        choices=("pencilmark", "plain", "grid", "sudokuwiki", "ipuz"),
+        default="pencilmark",
+        help="output format",
+    )
     e.add_argument("--pretty", action="store_true")
     e.add_argument("--no-solution", action="store_true", help="do not solve to add the solution")
     e.add_argument("--no-style", action="store_true", help="leave out how the source drew the rules (colours, shapes)")
-    e.set_defaults(fn=cmd_export)
+    e.set_defaults(fn=cmd_convert)
     f = sub.add_parser("fingerprint", parents=[common])
     f.add_argument("file", nargs="?")
     f.set_defaults(fn=cmd_fingerprint)

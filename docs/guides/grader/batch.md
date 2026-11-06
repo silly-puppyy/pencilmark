@@ -33,10 +33,10 @@ The columns are band, difficulty, time in minutes and the hardest technique.
 
 ## Choose the columns
 
-`--format` takes a template; `%i` is the line number, `%c` the techniques above Very Easy with how often each is used:
+`--print` takes a template; `%i` is the line number, `%c` the techniques above Very Easy with how often each is used:
 
 ```
-$ pencilmark rate puzzles.txt -j 4 --format '%i,%b,%d,%m,%c'
+$ pencilmark rate puzzles.txt -j 4 --print '%i,%b,%d,%m,%c'
 1,Very Easy,3.5,4.5,
 2,Easy,4.1,5.2,NSI
 3,Hard,5.8,10.6,NSI NPR/HPR XWG/KTE/CSM/MCH
