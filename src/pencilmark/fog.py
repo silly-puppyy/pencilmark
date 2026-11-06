@@ -539,6 +539,7 @@ def route(puzzle, max_rounds=400, rules_text=None):
     D = doc["digits"]
     grids = [k for k in doc["rules"] if k["type"] == "box_grid"]
     _BH[0] = tuple(grids[0]["box"]) if len(grids) == 1 and grids[0].get("origin", "r1c1") == "r1c1" else None
+    CB._C.cases_memo_clear()  # the engine's cases memo knows rules and domains, not this puzzle's houses
     givens = list(doc["givens"])
     givens0 = list(givens)
     placed = set()

@@ -720,6 +720,7 @@ PYBIND11_MODULE(_csolver, m) {
           py::arg("all_tiers") = false, py::arg("explain") = false, py::arg("colours") = py::none(),
           py::arg("cand") = py::none(), py::arg("stats") = false, py::arg("labels") = py::none(),
           py::arg("idc") = py::none());
+    m.def("cases_memo_clear", &cases_memo_clear, "forget the cases memo (another puzzle: other houses)");
     m.def("cases_alive", &py_cases_alive, py::arg("puzzle"), py::arg("cand"), py::arg("budget") = 200000,
           "the cases of each cases rule still possible on these candidates: [(spec index, [case indices])]");
     m.def("brute_solve", &py_brute, py::arg("puzzle"), py::arg("givens"), py::arg("limit"), py::arg("node_limit"),

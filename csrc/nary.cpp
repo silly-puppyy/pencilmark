@@ -1133,6 +1133,9 @@ void nary_gac_brute(const NConstraint& k, const uint32_t* dom, pm_long budget, i
 static void cases_gac_memo(const NConstraint& k, const uint32_t* dom, pm_long budget, int D, GacOut& out,
                            const std::vector<GacReq>& req);
 static thread_local std::unordered_map<std::string, GacOut> g_cases_memo;
+// the memo key holds the rule and the domains, not the puzzle's houses (the case search uses house peers): cleared
+// whenever another puzzle is routed
+void cases_memo_clear() { g_cases_memo.clear(); }
 
 void nary_gac(const NConstraint& k, const uint32_t* dom, const std::vector<GacReq>& req, pm_long budget, int D,
               GacOut& out) {

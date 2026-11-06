@@ -173,6 +173,7 @@ void nary_gac_plain(const NConstraint& k, const uint32_t* dom, const std::vector
 /// whether the rule can still be met at these domains: !(complete && !any) of nary_gac, by a matching search on
 /// all-different rules (sums with distinct digits, consecutive sets)
 bool nary_consistent(const NConstraint& k, const uint32_t* dom, pm_long budget, int D);
+void cases_memo_clear();  ///< forget the cases memo (its key does not hold the puzzle's houses)
 void nary_gac_brute(const NConstraint& k, const uint32_t* dom, pm_long budget, int D, GacOut& out);
 
 }  // namespace cs
