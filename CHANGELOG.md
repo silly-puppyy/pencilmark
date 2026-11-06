@@ -7,6 +7,8 @@
 - Opt-in quality checks (off unless named): `asymmetric`, `no_interplay`, `winding`, `short_lines`, `repetitive`,
   `monotone`, `desert`, `late_break`; limits near the edge of published Medium+ puzzles
   (1-27% of them flagged, per check).
+- Custom rules: a set of number literals (`concat(c) in {...}`) is built once, not once per digit tuple: a puzzle
+  with 64 such rules (global entropy) loaded in 6 s instead of 27 min.
 - Colour Algebra (colour the grid as unknown digits) comes before band set theory in the Very Hard study order: the
   route opens with the colouring that solvers describe on zero-given palindrome puzzles; grades unchanged.
 - Colouring is on by default (`colouring` 1): the identity layer's colour techniques are part of the human route. A few

@@ -463,3 +463,25 @@ def test_cases_rule_checks_each_case_against_the_candidates():
     p.constraints.append({"type": "cases", "cases": [{"cells": [0, 1], "circle": 0}, {"cells": [0, 1, 10], "circle": 0}]})
     elim = {e for m in cb.state_moves(p, assume_unique=False) for e in (m.get("elim") or [])}
     assert {(0, 1), (0, 2), (1, 9), (10, 9)} <= elim
+
+
+def test_literal_set_membership_is_fast():
+    """concat(c) in {...} over a 2x2 (global entropy as a custom rule): the literal set is built once, not per tuple
+    (64 such rules took 27 min to compile)"""
+    import itertools
+    import time
+
+    lo = lambda d: (d - 1) // 3
+    ok = sorted(
+        int("".join(map(str, t)))
+        for t in itertools.permutations(range(1, 10), 4)
+        if len({lo(d) for d in t}) == 3
+    )
+    src = "concat(c) in {" + ", ".join(map(str, ok)) + "}"
+    tree = parse(src)
+    grid = {"r1c1": 1, "r1c2": 4, "r2c1": 7, "r2c2": 2}
+    t = time.time()
+    for _ in range(2000):
+        assert holds(tree, {"c": ["r1c1", "r1c2", "r2c1", "r2c2"]}, grid) is True
+    assert time.time() - t < 2.0
+    assert holds(tree, {"c": ["r1c1", "r1c2", "r2c1", "r2c2"]}, {"r1c1": 1, "r1c2": 2, "r2c1": 3, "r2c2": 4}) is False

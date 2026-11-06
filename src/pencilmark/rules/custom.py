@@ -589,7 +589,13 @@ def evaluate(e, env):
     if op == "list":
         return [evaluate(x, env) for x in a]
     if op == "set":
-        return frozenset(num(evaluate(x, env)) for x in a)
+        c = getattr(e, "_const", None)  # a set of number literals: built once per node (a 64-rule global entropy as
+        if c is not None:  # concat(c) in {...} took 27 min at compile, each tuple re-reading every member)
+            return c
+        out = frozenset(num(evaluate(x, env)) for x in a)
+        if all(x.op == "num" for x in a):
+            object.__setattr__(e, "_const", out)
+        return out
     if op == "range":
         lo, hi = num(evaluate(a[0], env)), num(evaluate(a[1], env))
         if lo is ABSENT or hi is ABSENT:
@@ -647,7 +653,7 @@ def evaluate(e, env):
         x, S = evaluate(a[0], env), evaluate(a[1], env)
         if x is ABSENT or S is ABSENT:
             return False
-        hit = num(x) in {num(y) for y in _seq(S)}
+        hit = num(x) in (S if isinstance(S, frozenset) else {num(y) for y in _seq(S)})
         return hit if op == "in" else not hit
     if op in ("+", "-", "*", "/", "div", "mod", "**"):
         x, y = num(evaluate(a[0], env)), num(evaluate(a[1], env))
