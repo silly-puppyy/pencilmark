@@ -37,7 +37,10 @@ def _grade(row):
     out = {k: v for k, v in row.items() if k != "puzzle"}
     t = time.perf_counter()
     try:
-        card = pencilmark.rate(row["puzzle"], max_seconds=row.pop("_max_seconds", None))
+        # only the fields the report reads: the technique list (contains) costs several times the card itself
+        card = pencilmark.rate(
+            row["puzzle"], fields=["difficulty", "time", "band"], max_seconds=row.pop("_max_seconds", None)
+        )
         out.update(difficulty=card.get("difficulty"), time=card.get("time"), band=card.get("band"))
     except Exception as e:  # noqa: BLE001 -- recorded per puzzle, as rate_many does
         out["error"] = f"{type(e).__name__}: {e}"
