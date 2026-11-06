@@ -169,7 +169,9 @@ def validate_spec(doc):
         ):
             raise FormatError(f'a box_grid origin is a cell such as "r1c1" (the default), got {r.get("origin")!r}')
         elif r["type"] == "box_grid" and not (isinstance(r.get("box"), list) and isinstance(r.get("count"), list)):
-            raise FormatError('box_grid needs "box" (box size) and "count" (boxes down and across), e.g. [3, 3] and [3, 3]')
+            raise FormatError(
+                'box_grid needs "box" (box size) and "count" (boxes down and across), e.g. [3, 3] and [3, 3]'
+            )
     if doc.get("symmetry") is not None and not isinstance(doc["symmetry"], list):
         raise FormatError("symmetry must be a list of entries")
     for s in doc.get("symmetry") or []:

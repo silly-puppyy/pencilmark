@@ -203,7 +203,9 @@ def rate(
             "shading (yin-yang): the grader does not grade it yet; validate, describe, solve and count work (solve and "
             "count with OR-Tools)"
         )
-    if getattr(p, "fog", None):  # fog of war is a rule of play: a grade must follow what the fog shows (not yet in the engine)
+    if getattr(
+        p, "fog", None
+    ):  # fog of war is a rule of play: a grade must follow what the fog shows (not yet in the engine)
         from .exchange import NotSupportedError
 
         raise NotSupportedError(

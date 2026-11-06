@@ -297,7 +297,9 @@ def _c_monotone(c):
     fam = {t.name: t.family for t in R.techniques()}
     fams = {fam.get(k) or k for k, s in zip(names, single) if not s}
     if c.band_i >= 2 and fams and len(fams) < c.lim("monotone"):
-        return [("monotone", "note", f"candidate steps from {len(fams)} technique famil{'y' if len(fams) == 1 else 'ies'}")]
+        return [
+            ("monotone", "note", f"candidate steps from {len(fams)} technique famil{'y' if len(fams) == 1 else 'ies'}")
+        ]
     return []
 
 
@@ -311,7 +313,13 @@ def _c_desert(c):
         run = run + 1 if s else 0
         best = max(best, run)
     if best / max(len(single), 1) > c.lim("desert"):
-        return [("desert", "note", f"{best} singles in a row ({best / len(single):.0%} of the solve) after the first candidate step")]
+        return [
+            (
+                "desert",
+                "note",
+                f"{best} singles in a row ({best / len(single):.0%} of the solve) after the first candidate step",
+            )
+        ]
     return []
 
 
@@ -319,7 +327,13 @@ def _c_late_break(c):
     names, single = _candidate_steps(c)
     first = next((i for i, s in enumerate(single) if not s), None)
     if c.band_i >= 2 and first is not None and first / max(len(single) - 1, 1) > c.lim("late_break"):
-        return [("late_break", "note", f"the first candidate step comes at {first / max(len(single) - 1, 1):.0%} of the solve")]
+        return [
+            (
+                "late_break",
+                "note",
+                f"the first candidate step comes at {first / max(len(single) - 1, 1):.0%} of the solve",
+            )
+        ]
     return []
 
 

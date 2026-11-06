@@ -74,8 +74,12 @@ def refute_lr_cell(p):
         return 0.0
     model = GM.default()
     # rounds: independent of cell order
-    route = dict(model.route, **(model.score.get("card_notes") or {}), **(model.score.get("card_route") or {}),
-                 refute_rounds=int(model.score.get("refute_rounds", 0)))
+    route = dict(
+        model.route,
+        **(model.score.get("card_notes") or {}),
+        **(model.score.get("card_route") or {}),
+        refute_rounds=int(model.score.get("refute_rounds", 0)),
+    )
     pr = _CB._C.refute_profile(_CB.to_cpuzzle(p), list(p.givens.items()), route, [int(x) for x in bs[0]], 400)
     s = sum((math.log(C / R) if R else math.log(max(C, 1)) + 2) for C, R, d, dp, rel in pr)
     return math.log1p(s / max(p.N - len(p.givens), 1))
@@ -173,14 +177,28 @@ def _spot_params(P, cfg):
     base = dict(P)
     if sp:
         fam = dict(sp.get("fam") or {}, other=sp.get("other", 0.0))
-        base.update(locality=0.0, digit_cont=0.0, spot_w=list(sp.get("w") or []),
-                    spot_fam=_Scorer(dict(P, spot_fam=fam)).p["spot_fam"])  # by name -> by technique code
+        base.update(
+            locality=0.0,
+            digit_cont=0.0,
+            spot_w=list(sp.get("w") or []),
+            spot_fam=_Scorer(dict(P, spot_fam=fam)).p["spot_fam"],
+        )  # by name -> by technique code
     return [dict(base, spot_seed=k) for k in range(1, int(cfg["route_samples"]) + 1)]
 
 
 # score route_rollouts: the steps that are singles (or note taking); every other step is a bottleneck
-_SINGLE_NAMES = {"FullHouse", "HiddenSingle(direct)", "NakedSingle(direct)", "HiddenSingle(notes)", "NakedSingle(notes)",
-                 "LineSingle(direct)", "ConstraintSingle(direct)", "notes", "MentalSingle(direct)", "MentalNotesSingle"}
+_SINGLE_NAMES = {
+    "FullHouse",
+    "HiddenSingle(direct)",
+    "NakedSingle(direct)",
+    "HiddenSingle(notes)",
+    "NakedSingle(notes)",
+    "LineSingle(direct)",
+    "ConstraintSingle(direct)",
+    "notes",
+    "MentalSingle(direct)",
+    "MentalNotesSingle",
+}
 
 
 def _rollout_sum(p, P, cfg, w, seed, n_play):
@@ -241,8 +259,16 @@ def _rollout_sum(p, P, cfg, w, seed, n_play):
         mask = [cs_[c] if not vs[c] else 1 << (vs[c] - 1) for c in range(N)]
         acc = 0.0
         for k in range(n_play):
-            st2, _ = CB.solve(q, dict(P, spot_seed=1000 * seed + k + 1), disabled=dis | gate, cpuzzle=cp, cand=mask,
-                              max_steps=n, assume_unique=False, allow_direct=mode != "notes")
+            st2, _ = CB.solve(
+                q,
+                dict(P, spot_seed=1000 * seed + k + 1),
+                disabled=dis | gate,
+                cpuzzle=cp,
+                cand=mask,
+                max_steps=n,
+                assume_unique=False,
+                allow_direct=mode != "notes",
+            )
             r2, c2 = _record(q, st2)
             acc += sum(value(nm, d, f, cc) for (nm, d, f), cc in zip(r2, c2) if nm in _SINGLE_NAMES)
         total += acc / n_play
@@ -269,7 +295,10 @@ def score_parts(p, model=None):
 
     def values(path):
         return sorted(
-            (math.exp(cfg["beta"] * math.log(d) + cfg.get("delta", {}).get(nm, 0.0) + w * e) * f for nm, d, f, e in path),
+            (
+                math.exp(cfg["beta"] * math.log(d) + cfg.get("delta", {}).get(nm, 0.0) + w * e) * f
+                for nm, d, f, e in path
+            ),
             reverse=True,
         )
 
@@ -277,7 +306,10 @@ def score_parts(p, model=None):
     tot = sum(v)
     ro = cfg.get("route_rollouts")
     if ro:  # expected effort of a human-like solver: human routes' bottlenecks + playthroughs of the singles between
-        sums = [_rollout_sum(p, P_human, cfg, w, k, int(ro.get("playthroughs", 4))) for k in range(1, int(ro.get("routes", 2)) + 1)]
+        sums = [
+            _rollout_sum(p, P_human, cfg, w, k, int(ro.get("playthroughs", 4)))
+            for k in range(1, int(ro.get("routes", 2)) + 1)
+        ]
         sums = [x for x in sums if x is not None]
         if sums:
             tot = sum(sums) / len(sums)

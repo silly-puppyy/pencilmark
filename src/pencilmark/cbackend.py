@@ -11,6 +11,7 @@ Steps are real pencilmark.solver.Step / Move objects, so pencilmark.scoring.grad
 
 from __future__ import annotations
 
+import os as _os
 from collections import defaultdict
 
 from . import _csolver as _C  # noqa: E402  (the compiled C++ engine, sources in csrc/)
@@ -19,8 +20,6 @@ from . import registry as R  # noqa: E402
 from . import solver as S  # noqa: E402
 from .engine_records import _explain, _name  # noqa: E402
 from .scoring import Scorer  # noqa: E402
-
-import os as _os
 
 # diagnostics: PENCILMARK_SOLVE_STATS=1 sums the engine's per-strategy timings of every solve() call here
 SOLVE_STATS = {} if _os.environ.get("PENCILMARK_SOLVE_STATS") == "1" else None
@@ -427,9 +426,18 @@ def _cpuzzle_args(p):
         cons.append(d)
     aux = getattr(p, "aux", None)
     if aux:  # the file's unknowns and layers: read by the exhaustive search (brute_force.cpp); rate refuses them
-        cons.append({"type": "line", "kind": "palindrome", "cells": [], "skip": True,
-                     "aux_defs": {"unknowns": [u["values"] for u in aux["unknowns"]],
-                             "layers": [{"values": L["values"], "given": L["given"]} for L in aux["layers"]]}})
+        cons.append(
+            {
+                "type": "line",
+                "kind": "palindrome",
+                "cells": [],
+                "skip": True,
+                "aux_defs": {
+                    "unknowns": [u["values"] for u in aux["unknowns"]],
+                    "layers": [{"values": L["values"], "given": L["given"]} for L in aux["layers"]],
+                },
+            }
+        )
     extra = detect_lines(p)
     p._cextra = [f"{d['kind']} line (detected)" for d in extra]
     return (p.D, [tuple(xy) for xy in p.coords], groups, list(p.domains), rels, cons + extra)

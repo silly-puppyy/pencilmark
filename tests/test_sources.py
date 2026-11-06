@@ -1121,12 +1121,19 @@ def test_reading_that_breaks_the_embedded_solution_is_refused():
     """a reading the setter's embedded solution breaks is refused by default (one-off rules worded like standard
     ones); check_solution=False skips the check"""
     import pytest
+
     from pencilmark import sources
 
     sol = "123456789456789123789123456214365897365897214897214365531642978642978531978531642"
-    pj = {"numbers": "." * 81, "solution": sol, "rules": [{"type": "kropki", "color": "white", "cells": ["r1c1", "r1c3"]}]}
+    pj = {
+        "numbers": "." * 81,
+        "solution": sol,
+        "rules": [{"type": "kropki", "color": "white", "cells": ["r1c1", "r1c3"]}],
+    }
     assert sources.contradicts_solution(pj)  # 1 and 3 are not consecutive
-    assert not sources.contradicts_solution(dict(pj, rules=[{"type": "kropki", "color": "white", "cells": ["r1c1", "r1c2"]}]))
+    assert not sources.contradicts_solution(
+        dict(pj, rules=[{"type": "kropki", "color": "white", "cells": ["r1c1", "r1c2"]}])
+    )
     assert not sources.contradicts_solution({"numbers": "." * 81})  # no solution: nothing to check
     assert sources.contradicts_solution(dict(pj, solution="0" + sol[1:]))  # the setter's digits include 0
     with pytest.raises(sources.VerificationError):
@@ -1136,14 +1143,18 @@ def test_reading_that_breaks_the_embedded_solution_is_refused():
 
 def test_fog_payloads_keep_their_fog():
     """SudokuPad FOGLIGHT cages / triggers and f-puzzles foglight are read as the fog rule, not refused"""
-    from pencilmark.sources import _sp_translate as ST
     from pencilmark import model as M
+    from pencilmark.sources import _sp_translate as ST
 
     p = M.Puzzle(D=9, coords=M._grid_coords(9))
     idx = lambda rc: rc[0] * 9 + rc[1]
     inside = lambda rc: 0 <= rc[0] < 9 and 0 <= rc[1] < 9
-    P = {"cages": [{"cells": [[0, 0], [0, 1]], "value": "FOGLIGHT"}, {"value": "foglight: r5c5"}],
-         "triggereffect": [{"trigger": {"type": "cellvalue", "cell": "r1c1r1c2"}, "effect": {"type": "foglight", "cells": "r9c9"}}]}
+    P = {
+        "cages": [{"cells": [[0, 0], [0, 1]], "value": "FOGLIGHT"}, {"value": "foglight: r5c5"}],
+        "triggereffect": [
+            {"trigger": {"type": "cellvalue", "cell": "r1c1r1c2"}, "effect": {"type": "foglight", "cells": "r9c9"}}
+        ],
+    }
     fog = ST.fog_of(P, p, idx, inside)
     assert fog == {"lit": ["r1c1", "r1c2", "r5c5"], "triggers": [{"when": ["r1c1", "r1c2"], "light": ["r9c9"]}]}
     assert ST.fog_of({"cages": [{"cells": [[0, 0]], "value": 12}]}, p, idx, inside) is None
@@ -1156,12 +1167,22 @@ def test_fpuzzles_fog_cages():
     from pencilmark.sources import _fpuz_translate as FT
 
     grid = [[{} for _ in range(9)] for _ in range(9)]
-    fp = {"size": 9, "grid": grid, "ruleset": "Normal sudoku rules apply. The grid is covered with fog.",
-          "cage": [{"value": "FOW", "cells": ["R8C8"], "outlineC": "#00000000"},
-                   {"value": "foglight", "cells": ["R1C1", "R1C2"], "outlineC": "#000000"}]}
+    fp = {
+        "size": 9,
+        "grid": grid,
+        "ruleset": "Normal sudoku rules apply. The grid is covered with fog.",
+        "cage": [
+            {"value": "FOW", "cells": ["R8C8"], "outlineC": "#00000000"},
+            {"value": "foglight", "cells": ["R1C1", "R1C2"], "outlineC": "#000000"},
+        ],
+    }
     p, info = FT.translate(fp)
     assert p is not None, info
-    assert p.fog["lit"][:2] == ["r1c1", "r1c2"] and {"r7c7", "r8c8", "r9c9"} <= set(p.fog["lit"]) and len(p.fog["lit"]) == 11
+    assert (
+        p.fog["lit"][:2] == ["r1c1", "r1c2"]
+        and {"r7c7", "r8c8", "r9c9"} <= set(p.fog["lit"])
+        and len(p.fog["lit"]) == 11
+    )
     fp["ruleset"] += " Digits in column 1 indicate the column in which the digit 1 appears in that row."
     p, info = FT.translate(fp)
     assert p is None and "indexing" in info

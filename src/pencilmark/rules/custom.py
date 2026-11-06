@@ -1162,6 +1162,7 @@ def _const_reads(tree, name):
             elif isinstance(x, tuple):
                 for y in x:
                     walk(y)
+
     walk(tree)
     return None if whole or not found else sorted(found)
 
@@ -1186,7 +1187,14 @@ def _narrowed(tree, cells):
         if t.op == "index" and isinstance(t.args[0], N) and t.args[0].op == "name" and t.args[0].args[0] in keep:
             name = t.args[0].args[0]
             return dataclasses.replace(t, args=(t.args[0], N("num", (keep[name].index(t.args[1].args[0]) + 1,))))
-        return dataclasses.replace(t, args=tuple(re_ix(x) if isinstance(x, N) else tuple(re_ix(y) for y in x) if isinstance(x, tuple) else x for x in t.args))
+        return dataclasses.replace(
+            t,
+            args=tuple(
+                re_ix(x) if isinstance(x, N) else tuple(re_ix(y) for y in x) if isinstance(x, tuple) else x
+                for x in t.args
+            ),
+        )
+
     cells = dict(cells, **{n: [cells[n][i - 1] for i in ix] for n, ix in keep.items()})
     return re_ix(tree), cells
 
@@ -1199,7 +1207,13 @@ def compile_rule(rule, B, D, layers=()):
     hid = _hidden(tree, getattr(B, "unknowns", {}), getattr(B, "layers", {}))
     if hid:  # unknowns / layers: an expression constraint over cells and the engine's aux variables
         if rule.get("each"):
-            return [x for t in rule["cells"][rule["each"]] for x in compile_rule(dict(rule, each=None, cells=dict(rule["cells"], **{rule["each"]: t})), B, D, layers)]
+            return [
+                x
+                for t in rule["cells"][rule["each"]]
+                for x in compile_rule(
+                    dict(rule, each=None, cells=dict(rule["cells"], **{rule["each"]: t})), B, D, layers
+                )
+            ]
         sc = rule.get("scope") or {}
         if sc and set(sc) - {"pairs", "except"}:
             raise LangError("a scoped rule reading unknowns / layers takes a pairs scope only, for now")
@@ -1210,7 +1224,12 @@ def compile_rule(rule, B, D, layers=()):
                 na, nb = B.name(a), B.name(b)
                 if tuple(sorted((na, nb))) in skip:
                     continue
-                out.append(_expr({"cells": {"__a0": [na], "__a1": [nb]}, "holds": f"let __f = {rule['holds']}; __f(__a0, __a1)"}, B))
+                out.append(
+                    _expr(
+                        {"cells": {"__a0": [na], "__a1": [nb]}, "holds": f"let __f = {rule['holds']}; __f(__a0, __a1)"},
+                        B,
+                    )
+                )
             return out
         return [_expr(rule, B)]
     used = _layered(tree)

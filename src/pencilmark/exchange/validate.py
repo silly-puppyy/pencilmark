@@ -9,7 +9,6 @@ from ..rules.edge import EDGE, NEG_SELECTOR, edge_value_ok
 from ..rules.line import LINE
 from .board import Board, grid_area, grid_units
 from .common import (
-    with_origins,
     DIRECTED_OPS,
     FORMAT,
     FORMAT_VERSION,
@@ -20,6 +19,7 @@ from .common import (
     SIDES,
     FormatError,
     parse_cell,
+    with_origins,
 )
 
 # -------------------------------------------------------------------------------------------------------- validation
@@ -294,7 +294,9 @@ def _validate_rule(r, B):
         if len(set(sh)) != len(sh) or len(set(un)) != len(un) or set(sh) & set(un):
             raise FormatError("shaded / unshaded cells repeat or overlap")
         return
-    if t == "fog":  # fog of war (6.20): cells lit at the start; correct digits light their 3x3, or the setter's triggers
+    if (
+        t == "fog"
+    ):  # fog of war (6.20): cells lit at the start; correct digits light their 3x3, or the setter's triggers
         _cells(B, r["lit"], "lit", minlen=0)
         for x in r.get("triggers", []):
             if not isinstance(x, dict) or set(x) != {"when", "light"}:
@@ -536,11 +538,21 @@ def _values(spec, what):
         raise FormatError(f'{what} needs "values" (a list of integers) or "range" ([lo, hi])')
     if "range" in spec:
         r = spec["range"]
-        if not isinstance(r, list) or len(r) != 2 or any(not isinstance(x, int) or isinstance(x, bool) for x in r) or r[0] > r[1]:
+        if (
+            not isinstance(r, list)
+            or len(r) != 2
+            or any(not isinstance(x, int) or isinstance(x, bool) for x in r)
+            or r[0] > r[1]
+        ):
             raise FormatError(f"{what}: range must be [lo, hi] with lo <= hi")
         return list(range(r[0], r[1] + 1))
     v = spec["values"]
-    if not isinstance(v, list) or not v or any(not isinstance(x, int) or isinstance(x, bool) for x in v) or len(set(v)) != len(v):
+    if (
+        not isinstance(v, list)
+        or not v
+        or any(not isinstance(x, int) or isinstance(x, bool) for x in v)
+        or len(set(v)) != len(v)
+    ):
         raise FormatError(f"{what}: values must be a non-empty list of different integers")
     return list(v)
 
@@ -551,8 +563,14 @@ def _hidden_vars(doc, B):
     from ..rules import custom as CU
 
     def name_ok(n, what):
-        if not isinstance(n, str) or not re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]*", n) or re.fullmatch(r"r\d+c\d+", n) \
-                or n in CU.KEYWORDS or n in CU.BUILTINS or n in CU.LAYERS:
+        if (
+            not isinstance(n, str)
+            or not re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]*", n)
+            or re.fullmatch(r"r\d+c\d+", n)
+            or n in CU.KEYWORDS
+            or n in CU.BUILTINS
+            or n in CU.LAYERS
+        ):
             raise FormatError(f"{what} name {n!r} is not usable (an identifier that is no cell, keyword or built-in)")
 
     unk, lay = {}, {}

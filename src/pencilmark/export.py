@@ -582,9 +582,14 @@ def _f_trace(c):
 
     return {
         "trace": [
-            dict({"digits": [vals[x] for x in order], "candidates": {cn(x): digits(cand[x]) for x in order if not vals[x]}},
-                 **({"marks": marks(i)} if wm is not None else {}),
-                 **({"colours": colours(i)} if wc is not None else {}))
+            dict(
+                {
+                    "digits": [vals[x] for x in order],
+                    "candidates": {cn(x): digits(cand[x]) for x in order if not vals[x]},
+                },
+                **({"marks": marks(i)} if wm is not None else {}),
+                **({"colours": colours(i)} if wc is not None else {}),
+            )
             for i, (vals, cand) in enumerate(pos)
         ]
     }

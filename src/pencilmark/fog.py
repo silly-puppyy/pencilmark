@@ -24,6 +24,7 @@ fog hides.
 
 from __future__ import annotations
 
+import os as _os
 import re as _re
 
 OUTSIDE = {"sandwich", "xsum", "skyscraper", "rossini", "first_seen"}
@@ -63,8 +64,11 @@ def _diagonal(rule, D):
     return rc in ({(i, i) for i in range(D)}, {(i, D - 1 - i) for i in range(D)})
 
 
-ABOVE = _re.compile(r"[^.;\n]*(?:visible from the (?:outset|start)|visible through the fog|not (?:hidden|covered) by (?:the )?fog"
-                    r"|above the fog)[^.;\n]*", _re.I)
+ABOVE = _re.compile(
+    r"[^.;\n]*(?:visible from the (?:outset|start)|visible through the fog|not (?:hidden|covered) by (?:the )?fog"
+    r"|above the fog)[^.;\n]*",
+    _re.I,
+)
 _KINDS = [  # (rules-text words, does a rule belong to that clue kind)
     (r"\bV\b|\bV clues", lambda k: k.get("letter") == "V" or (k.get("op") == "not_sum" and k.get("sum") == 5)),
     (r"\bX\b|\bX clues", lambda k: k.get("letter") == "X" or (k.get("op") == "not_sum" and k.get("sum") == 10)),
@@ -93,14 +97,23 @@ def _renban_seen(k, L, n, rules, D):
     lit cell is involved, off other lines' seen cells): cells on every trace are seen too, and the digits lie within a
     window of n (CtC, Guess the Renban: "a 2 and an 8 can't share a 5-cell line")"""
     line = k["cells"]
-    seen = [c for i, c in enumerate(line) if c in L or (i > 0 and line[i - 1] in L) or (i + 1 < len(line) and line[i + 1] in L)]
+    seen = [
+        c
+        for i, c in enumerate(line)
+        if c in L or (i > 0 and line[i - 1] in L) or (i + 1 < len(line) and line[i + 1] in L)
+    ]
     if len(seen) < 2:
         return []
     out = []
     if n and len(seen) < n and all(line.index(seen[j + 1]) == line.index(seen[j]) + 1 for j in range(len(seen) - 1)):
         seg = _segments(rules)
-        others = {c for kk in rules if kk is not k and kk["type"] == "line" for i, c in enumerate(kk["cells"])
-                  if c in L or (i > 0 and kk["cells"][i - 1] in L) or (i + 1 < len(kk["cells"]) and kk["cells"][i + 1] in L)}
+        others = {
+            c
+            for kk in rules
+            if kk is not k and kk["type"] == "line"
+            for i, c in enumerate(kk["cells"])
+            if c in L or (i > 0 and kk["cells"][i - 1] in L) or (i + 1 < len(kk["cells"]) and kk["cells"][i + 1] in L)
+        }
         traces, todo = [], [list(seen)]
         while todo and len(traces) <= CASE_CAP:
             p = todo.pop()
@@ -109,7 +122,11 @@ def _renban_seen(k, L, n, rules, D):
                 continue
             for end in (0, -1):
                 r, c = _rc(p[end])
-                for y in [_name(r + a, c + b) for a, b in ((-1, 0), (1, 0), (0, -1), (0, 1)) if 0 <= r + a < D and 0 <= c + b < D]:
+                for y in [
+                    _name(r + a, c + b)
+                    for a, b in ((-1, 0), (1, 0), (0, -1), (0, 1))
+                    if 0 <= r + a < D and 0 <= c + b < D
+                ]:
                     lit_side = p[end] in L or y in L
                     if y in p or y in others or (lit_side and frozenset((p[end], y)) not in seg):
                         continue
@@ -143,7 +160,13 @@ def visible_rules(rules, lit, D, above=(), line_len=None):
         if t == "fog":
             continue
         cells = list(k.get("cells") or [])
-        if t in STATED or t in OUTSIDE or _diagonal(k, D) or (t == "neighbours" and "except" not in k) or any(f(k) for f in above):
+        if (
+            t in STATED
+            or t in OUTSIDE
+            or _diagonal(k, D)
+            or (t == "neighbours" and "except" not in k)
+            or any(f(k) for f in above)
+        ):
             out.append(k)
         elif t in ("neighbours", "negative"):  # "all dots are given": only where both cells are seen
             area = sorted(set(k["area"]) & L) if isinstance(k.get("area"), list) else sorted(L)
@@ -165,9 +188,13 @@ def visible_rules(rules, lit, D, above=(), line_len=None):
                         out.append(dict(k, cells=seen))
                     if k.get("kind") == "thermo":  # CtC: "the tip can't be 1": fogged cells below / above on the thermo
                         if a > 0:
-                            out.append({"type": "cell", "kind": "set", "values": list(range(2, D + 1)), "cells": [cells[a]]})
+                            out.append(
+                                {"type": "cell", "kind": "set", "values": list(range(2, D + 1)), "cells": [cells[a]]}
+                            )
                         if b < len(cells) - 1:
-                            out.append({"type": "cell", "kind": "set", "values": list(range(1, D)), "cells": [cells[b]]})
+                            out.append(
+                                {"type": "cell", "kind": "set", "values": list(range(1, D)), "cells": [cells[b]]}
+                            )
                 run = []
         elif t == "line" and k.get("kind") == "renban" and not all(c in L for c in cells):
             out += _renban_seen(k, L, line_len, rules, D)
@@ -177,14 +204,16 @@ def visible_rules(rules, lit, D, above=(), line_len=None):
             out += _partial_cage(k, L)
         elif t == "arrow" and len(k.get("bulb") or []) == 1 and k["bulb"][0] not in L:
             for ln in k.get("lines") or []:  # each lit stretch of a shaft whose circle is fogged sums to at most D
-                run = []                    # (D - 1 when the line runs on into fog at both ends: one end is more shaft)
+                run = []  # (D - 1 when the line runs on into fog at both ends: one end is more shaft)
                 for i, c in enumerate(ln + [None]):
                     if c is not None and c in L:
                         run.append(i)
                         continue
                     if run and len(run) <= 6:
                         cap = D - 1 if run[-1] + 1 < len(ln) else D
-                        out.append({"type": "custom", "cells": {"S": [ln[j] for j in run]}, "holds": f"sum(S) <= {cap}"})
+                        out.append(
+                            {"type": "custom", "cells": {"S": [ln[j] for j in run]}, "holds": f"sum(S) <= {cap}"}
+                        )
                     run = []
         elif t == "cell":
             cs = [c for c in cells if c in L]
@@ -261,11 +290,11 @@ def _partial_cage(k, L):
     return out
 
 
-import os as _os
-
 _NO_CASES = _os.environ.get("PENCILMARK_FOG_NO_CASES") == "1"  # diagnostics only
 _BH = [None]  # the box shape of a regular box grid (set per route); None: boxes not used in the bound
-CASE_CAP = int(_os.environ.get("PENCILMARK_FOG_CASE_CAP", "300"))   # an arrow with more possible hidden shapes than this gets no case rule (nothing claimed: sound)
+CASE_CAP = int(
+    _os.environ.get("PENCILMARK_FOG_CASE_CAP", "300")
+)  # an arrow with more possible hidden shapes than this gets no case rule (nothing claimed: sound)
 LEMMA = {"setup": 1.0, "use": 0.5}  # placeholder prices (coach fit: case lemmas are nearly free; to be fitted)
 
 
@@ -286,7 +315,9 @@ ORTHO = _re.compile(r"arrows?[^.]*orthogonal", _re.I)
 NO_SHARE = _re.compile(r"arrows?[^.]*(?:don.t|do not|may not|cannot|never) (?:share|overlap|cross)", _re.I)
 
 
-SINGLE_ARROW = _re.compile(r"(?:circles?|bulbs?) (?:each )?(?:emits?|has|have) (?:only )?(?:a single|exactly one|one) arrow", _re.I)
+SINGLE_ARROW = _re.compile(
+    r"(?:circles?|bulbs?) (?:each )?(?:emits?|has|have) (?:only )?(?:a single|exactly one|one) arrow", _re.I
+)
 
 
 def arrow_cases(rules, lit, rows, cols, ortho=False, no_share=False, forced=None, single=False, cand=None):
@@ -339,13 +370,19 @@ def arrow_cases(rules, lit, rows, cols, ortho=False, no_share=False, forced=None
             if len(out) > CASE_CAP:
                 return None
             if len(p) < most:
-                todo += [p + [y] for y in nbs(p[-1]) if y not in p and y not in block and y not in others and ok_step(p[-1], y)]
+                todo += [
+                    p + [y]
+                    for y in nbs(p[-1])
+                    if y not in p and y not in block and y not in others and ok_step(p[-1], y)
+                ]
         return out
 
     seen_on = {}  # arrow -> its cells a solver sees (lit ones), and cells every surviving case of it uses (forced):
     for n_, k in enumerate(rules):  # with no_share, no other arrow's shaft enters them
         if k["type"] == "arrow":
-            seen_on[n_] = {c for c in list(k.get("bulb") or []) + [x for ln in k.get("lines") or [] for x in ln] if c in L}
+            seen_on[n_] = {
+                c for c in list(k.get("bulb") or []) + [x for ln in k.get("lines") or [] for x in ln] if c in L
+            }
             seen_on[n_] |= (forced or {}).get(n_, set())
     out = []
     for n_, k in enumerate(rules):
@@ -377,8 +414,11 @@ def arrow_cases(rules, lit, rows, cols, ortho=False, no_share=False, forced=None
             else:
                 # "every circle emits a single arrow": a fogged cell both of whose shaft neighbours are lit is shaft
                 # (two drawn ends point at it; it is not a second circle), joining the stretches (CtC, Chasing Arrows)
-                bridge = {line[i] for i in range(1, len(line) - 1)
-                          if single and line[i] not in L and line[i - 1] in L and line[i + 1] in L}
+                bridge = {
+                    line[i]
+                    for i in range(1, len(line) - 1)
+                    if single and line[i] not in L and line[i - 1] in L and line[i + 1] in L
+                }
                 run = [i for i, c in enumerate(line) if c in L or c in bridge]
                 if not run:
                     continue
@@ -394,7 +434,19 @@ def arrow_cases(rules, lit, rows, cols, ortho=False, no_share=False, forced=None
                         cases = None
                         break
                     for cp in cps:
-                        tps = [[]] if not te else (paths(te[0], set(stretch) | set(cp), rows - 1 - len(stretch) - len(cp) + 1, stretch + cp[:-1]) or [])
+                        tps = (
+                            [[]]
+                            if not te
+                            else (
+                                paths(
+                                    te[0],
+                                    set(stretch) | set(cp),
+                                    rows - 1 - len(stretch) - len(cp) + 1,
+                                    stretch + cp[:-1],
+                                )
+                                or []
+                            )
+                        )
                         for tp in tps:
                             cells = cp + stretch + tp
                             cases.append({"cells": [ix(c) for c in cells], "circle": ix(cp[-1])})
@@ -407,14 +459,26 @@ def arrow_cases(rules, lit, rows, cols, ortho=False, no_share=False, forced=None
                         break
                 if not cases:
                     continue
-            out.append({"type": "cases", "cases": cases, "name": f"arrow {bulb}: {len(cases)} possible shafts",
-                        "lemma": {"id": 7000, **LEMMA}, "_arrow": n_})
+            out.append(
+                {
+                    "type": "cases",
+                    "cases": cases,
+                    "name": f"arrow {bulb}: {len(cases)} possible shafts",
+                    "lemma": {"id": 7000, **LEMMA},
+                    "_arrow": n_,
+                }
+            )
     return out
 
 
-CLUE_ALWAYS = _re.compile(r"clue is always given|all cages? (?:clues|totals) are given|every cage has a (?:clue|total)"
-                         r"|cages?[^.]*sum to (?:the )?(?:total|clue|number|small)", _re.I)
-SOME_UNCLUED = _re.compile(r"not all cages|some cages|cages? (?:without|with no) (?:a )?(?:total|clue|sum)|unclued cage", _re.I)
+CLUE_ALWAYS = _re.compile(
+    r"clue is always given|all cages? (?:clues|totals) are given|every cage has a (?:clue|total)"
+    r"|cages?[^.]*sum to (?:the )?(?:total|clue|number|small)",
+    _re.I,
+)
+SOME_UNCLUED = _re.compile(
+    r"not all cages|some cages|cages? (?:without|with no) (?:a )?(?:total|clue|sum)|unclued cage", _re.I
+)
 
 
 CAGE_SIZE = _re.compile(r"cages are (?:all )?(?:exactly )?(\d|one|two|three|four|five|six) cells", _re.I)
@@ -436,13 +500,21 @@ def cage_cases(rules, lit, rows, cols, clue_always, forced=None, size=None):
         if k["type"] == "cage" and k.get("sum") is not None:
             for c in k["cells"]:
                 cage_of[c] = n_
-    taken = {c for n_, k in enumerate(rules) if k["type"] == "cage" and k.get("sum") is not None
-             and all(c in L for c in k["cells"]) for c in k["cells"]}
+    taken = {
+        c
+        for n_, k in enumerate(rules)
+        if k["type"] == "cage" and k.get("sum") is not None and all(c in L for c in k["cells"])
+        for c in k["cells"]
+    }
     ix = lambda c: _rc(c)[0] * cols + _rc(c)[1]
 
     def nbs(c):
         r, q = _rc(c)
-        return [_name(r + a, q + b) for a, b in ((-1, 0), (1, 0), (0, -1), (0, 1)) if 0 <= r + a < rows and 0 <= q + b < cols]
+        return [
+            _name(r + a, q + b)
+            for a, b in ((-1, 0), (1, 0), (0, -1), (0, 1))
+            if 0 <= r + a < rows and 0 <= q + b < cols
+        ]
 
     same = lambda a, b: cage_of.get(a) is not None and cage_of.get(a) == cage_of.get(b)  # no wall drawn between them
     out = []
@@ -501,8 +573,15 @@ def cage_cases(rules, lit, rows, cols, clue_always, forced=None, size=None):
         if too_many or not shapes:
             continue
         cases = [{"cells": [ix(c) for c in sorted(sh, key=_rc)], "total": total, "distinct": True} for sh in shapes]
-        out.append({"type": "cases", "cases": cases, "name": f"cage {label}: {len(cases)} possible shapes",
-                    "lemma": {"id": 7100, **LEMMA}, "_cage": n_})
+        out.append(
+            {
+                "type": "cases",
+                "cases": cases,
+                "name": f"cage {label}: {len(cases)} possible shapes",
+                "lemma": {"id": 7100, **LEMMA},
+                "_cage": n_,
+            }
+        )
     return out
 
 
@@ -510,7 +589,9 @@ def route(puzzle, max_rounds=400, rules_text=None):
     """the fog route of a unique fog puzzle (module docstring). Raises ValueError when the puzzle has no fog rule.
     rules_text: the puzzle's rules (read from the input's metadata when not given): statements such as "arrows move
     orthogonally" and "arrows don't share cells" narrow the hidden shapes."""
-    from . import api, band_path as BP, cbackend as CB, inputs
+    from . import api, inputs
+    from . import band_path as BP
+    from . import cbackend as CB
     from .exchange.write import write as write_doc
 
     if rules_text is None and not hasattr(puzzle, "coords"):
@@ -556,9 +637,13 @@ def route(puzzle, max_rounds=400, rules_text=None):
         for c in cage_cases(doc["rules"], lit, rows, cols, clue_always, None, cage_size):
             if len(c["cases"]) == 1 and c["cases"][0]["total"] is not None:  # one shape left: the cage is known, as a
                 cs1 = c["cases"][0]["cells"]  # cage rule (set theory, combinations and the rest read it)
-                vis["rules"].append({"type": "cage", "cells": [_name(i // cols, i % cols) for i in cs1], "sum": c["cases"][0]["total"]})
+                vis["rules"].append(
+                    {"type": "cage", "cells": [_name(i // cols, i % cols) for i in cs1], "sum": c["cases"][0]["total"]}
+                )
         q = api.load(vis)
-        qdom = list(getattr(q, "domains", None) or ())  # the visible cell rules (parity squares, ...) narrow the candidates
+        qdom = list(
+            getattr(q, "domains", None) or ()
+        )  # the visible cell rules (parity squares, ...) narrow the candidates
         if len(qdom) == len(cand):
             cand = [m_ & qdom[i] if not givens[i] and m_ & qdom[i] else m_ for i, m_ in enumerate(cand)]
         base = list(q.constraints)
@@ -576,7 +661,9 @@ def route(puzzle, max_rounds=400, rules_text=None):
         for _ in range(6 if cand_cases else 0):  # hidden-content lemmas ("cases"), iterated while the closed cells grow
             fa = {n: cs for (t_, n), cs in forced.items() if t_ == "arrow"}
             fc = {n: cs for (t_, n), cs in forced.items() if t_ == "cage"}
-            cs = arrow_cases(doc["rules"], lit, rows, cols, ortho, no_share, fa, single, live) + cage_cases(doc["rules"], lit, rows, cols, clue_always, fc, cage_size)
+            cs = arrow_cases(doc["rules"], lit, rows, cols, ortho, no_share, fa, single, live) + cage_cases(
+                doc["rules"], lit, rows, cols, clue_always, fc, cage_size
+            )
             q.constraints = base + cs
             if not cs:
                 break
@@ -596,11 +683,21 @@ def route(puzzle, max_rounds=400, rules_text=None):
         q.domains = [m_ if not givens[i] else (1 << (givens[i] - 1)) for i, m_ in enumerate(cand)]
         route_ = BP.band_path(q, P, prefix=colours, keep_held=bool(colours) or bool(P.get("colouring")))
         progressed = False
-        for m in route_["steps"][len(colours):]:
+        for m in route_["steps"][len(colours) :]:
             if m.get("idfx"):  # its colour effects carry into the next round (the candidates carry the rest)
                 colours.append(dict(m, place=None, elims=[]))
-            steps.append({"technique": m["technique"], "code": m["code"], "band": m["band"], "difficulty": round(m["d"], 3),
-                          "round": rounds, "place": None if not m["place"] else [_name(m["place"][0] // cols, m["place"][0] % cols), m["place"][1]]})
+            steps.append(
+                {
+                    "technique": m["technique"],
+                    "code": m["code"],
+                    "band": m["band"],
+                    "difficulty": round(m["d"], 3),
+                    "round": rounds,
+                    "place": None
+                    if not m["place"]
+                    else [_name(m["place"][0] // cols, m["place"][0] % cols), m["place"][1]],
+                }
+            )
             for ci, dg in m["elims"] or ():
                 cand[ci] &= ~(1 << (dg - 1))
             if m["place"]:
@@ -621,8 +718,18 @@ def route(puzzle, max_rounds=400, rules_text=None):
         if not progressed and cand != before:
             continue  # eliminations only: the next round reads them
         if not progressed:
-            return {"solved": False, "rounds": rounds, "reveals": reveals, "steps": steps,
-                    "stuck": sum(1 for g in givens if g == 0),
-                    "state": {"givens": list(givens), "lit": sorted(_name(r, c) for r, c in lit), "candidates": list(cand)}}
-    return {"solved": False, "rounds": max_rounds, "reveals": reveals, "steps": steps,
-            "stuck": sum(1 for g in givens if g == 0)}
+            return {
+                "solved": False,
+                "rounds": rounds,
+                "reveals": reveals,
+                "steps": steps,
+                "stuck": sum(1 for g in givens if g == 0),
+                "state": {"givens": list(givens), "lit": sorted(_name(r, c) for r, c in lit), "candidates": list(cand)},
+            }
+    return {
+        "solved": False,
+        "rounds": max_rounds,
+        "reveals": reveals,
+        "steps": steps,
+        "stuck": sum(1 for g in givens if g == 0),
+    }

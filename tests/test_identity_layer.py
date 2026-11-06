@@ -137,5 +137,9 @@ def test_colour_pointing():
     idc = [0] * 81
     idc[m1] = idc[m2] = m1 + 1
     off = set(S.TECH_NAMES) - {S.CLASS_POINTING}
-    ms = [m for m in CB.state_moves(p, P, cand=cand, disabled=off, labels=(None, None, idc)) if m["tech"] == S.CLASS_POINTING]
+    ms = [
+        m
+        for m in CB.state_moves(p, P, cand=cand, disabled=off, labels=(None, None, idc))
+        if m["tech"] == S.CLASS_POINTING
+    ]
     assert len(ms) == 1 and ms[0]["idfx"] == [(NEQ, 54, 12), (NEQ, 63, 12), (NEQ, 72, 12), (USE, 12, 0)]

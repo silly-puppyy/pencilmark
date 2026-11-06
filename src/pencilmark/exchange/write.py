@@ -41,9 +41,13 @@ def write(p, meta=None, solution=None, provenance=False):
         if aux["unknowns"]:
             doc["unknowns"] = {u["name"]: {"values": list(u["values"])} for u in aux["unknowns"]}
         if aux["layers"]:
-            doc["layers"] = {L["name"]: dict({"values": list(L["values"])},
-                                             **({"given": {name(int(c)): v for c, v in L["given"].items()}} if L["given"] else {}))
-                             for L in aux["layers"]}
+            doc["layers"] = {
+                L["name"]: dict(
+                    {"values": list(L["values"])},
+                    **({"given": {name(int(c)): v for c, v in L["given"].items()}} if L["given"] else {}),
+                )
+                for L in aux["layers"]
+            }
     fog = getattr(p, "fog", None)
     if fog:  # fog of war: a rule of play, written after the constraints (not an engine constraint)
         doc["rules"].append({"type": "fog", **{k: fog[k] for k in ("lit", "triggers") if k in fog}})

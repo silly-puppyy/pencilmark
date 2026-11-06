@@ -374,8 +374,14 @@ def test_board_layers():
 
 
 def _hidden_doc(**extra):
-    base = {"format": "sudoku-puzzle", "format_version": 1, "board": {"rows": 4, "cols": 4}, "digits": 4,
-            "givens": [0] * 16, "rules": [{"type": "box_grid", "box": [2, 2], "count": [2, 2]}]}
+    base = {
+        "format": "sudoku-puzzle",
+        "format_version": 1,
+        "board": {"rows": 4, "cols": 4},
+        "digits": 4,
+        "givens": [0] * 16,
+        "rules": [{"type": "box_grid", "box": [2, 2], "count": [2, 2]}],
+    }
     base.update(extra)
     return base
 
@@ -383,16 +389,20 @@ def _hidden_doc(**extra):
 def test_unknowns_and_layers_read_check_write():
     import importlib
     import json
+
     import pytest
+
     import pencilmark
     from pencilmark.exchange import FormatError
     from pencilmark.rules import custom as CU
 
     V = importlib.import_module("pencilmark.exchange.validate")
     rule = {"type": "custom", "cells": {"c": ["r1c1", "r1c2"]}, "holds": "sum(c)+shift(r1c1)==X"}
-    doc = _hidden_doc(unknowns={"X": {"range": [1, 4]}, "T": {"values": [0, 1]}},
-                      layers={"shift": {"values": [-1, 0, 1], "given": {"r1c1": 0}}},
-                      rules=_hidden_doc()["rules"] + [rule])
+    doc = _hidden_doc(
+        unknowns={"X": {"range": [1, 4]}, "T": {"values": [0, 1]}},
+        layers={"shift": {"values": [-1, 0, 1], "given": {"r1c1": 0}}},
+        rules=_hidden_doc()["rules"] + [rule],
+    )
     V.validate(doc)
     out = json.loads(pencilmark.dumps(doc))  # writers keep them, the rule in canonical spelling
     assert out["unknowns"] == doc["unknowns"] and out["layers"] == doc["layers"]
@@ -400,12 +410,16 @@ def test_unknowns_and_layers_read_check_write():
     env = dict(box=(2, 2), layers={"shift": {"r1c1": 1}})
     assert CU.holds("sum(c) + shift(r1c1) == X", rule["cells"], {"r1c1": 1, "r1c2": 2}, unknowns={"X": 4}, **env)
     assert not CU.holds("sum(c) + shift(r1c1) == X", rule["cells"], {"r1c1": 1, "r1c2": 2}, unknowns={"X": 3}, **env)
-    for bad in (_hidden_doc(unknowns={"sum": {"range": [1, 2]}}),  # a built-in's name
-                _hidden_doc(layers={"mod": {"values": [0, 1]}}),  # a keyword
-                _hidden_doc(unknowns={"X": {"range": [3, 1]}}),
-                _hidden_doc(layers={"s": {"values": [1, 2], "given": {"r1c1": 5}}}),
-                _hidden_doc(unknowns={"X": {"range": [1, 2]}}, layers={"X": {"values": [0, 1]}}),
-                _hidden_doc(rules=_hidden_doc()["rules"] + [{"type": "custom", "cells": {"c": ["r1c1"]}, "holds": "sum(c) == Y"}])):
+    for bad in (
+        _hidden_doc(unknowns={"sum": {"range": [1, 2]}}),  # a built-in's name
+        _hidden_doc(layers={"mod": {"values": [0, 1]}}),  # a keyword
+        _hidden_doc(unknowns={"X": {"range": [3, 1]}}),
+        _hidden_doc(layers={"s": {"values": [1, 2], "given": {"r1c1": 5}}}),
+        _hidden_doc(unknowns={"X": {"range": [1, 2]}}, layers={"X": {"values": [0, 1]}}),
+        _hidden_doc(
+            rules=_hidden_doc()["rules"] + [{"type": "custom", "cells": {"c": ["r1c1"]}, "holds": "sum(c) == Y"}]
+        ),
+    ):
         with pytest.raises(FormatError):
             V.validate(bad)
     p = pencilmark.load(doc)  # the exhaustive search carries unknowns and layers (aux variables)
@@ -421,16 +435,24 @@ def test_unknowns_solve_a_small_cipher():
     doc = _hidden_doc(
         givens=[1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1],
         unknowns={"X": {"range": [1, 20]}},
-        rules=_hidden_doc()["rules"] + [
+        rules=_hidden_doc()["rules"]
+        + [
             {"type": "custom", "cells": {"c": ["r1c2", "r1c3"]}, "holds": "sum(c) == X"},
             {"type": "custom", "cells": {"c": ["r2c1", "r2c2"]}, "holds": "sum(c) == X"},
-            {"type": "custom", "cells": {}, "holds": "X == 5"}])
+            {"type": "custom", "cells": {}, "holds": "X == 5"},
+        ],
+    )
     p = pencilmark.load(doc)
     n = pencilmark.count_solutions(p, limit=3)
     sol = "".join(map(str, pencilmark.solve(p))) if n["count"] == 1 else None
-    plain = _hidden_doc(givens=doc["givens"], rules=_hidden_doc()["rules"] + [
-        {"type": "custom", "cells": {"c": ["r1c2", "r1c3"]}, "holds": "sum(c) == 5"},
-        {"type": "custom", "cells": {"c": ["r2c1", "r2c2"]}, "holds": "sum(c) == 5"}])
+    plain = _hidden_doc(
+        givens=doc["givens"],
+        rules=_hidden_doc()["rules"]
+        + [
+            {"type": "custom", "cells": {"c": ["r1c2", "r1c3"]}, "holds": "sum(c) == 5"},
+            {"type": "custom", "cells": {"c": ["r2c1", "r2c2"]}, "holds": "sum(c) == 5"},
+        ],
+    )
     q = pencilmark.load(plain)  # the same puzzle with X written in: the same answer
     assert n == pencilmark.count_solutions(q, limit=3)
     if sol is not None:
@@ -439,13 +461,24 @@ def test_unknowns_solve_a_small_cipher():
 
 def test_unknowns_and_layers_survive_export():
     import importlib
+
     import pencilmark
 
     V = importlib.import_module("pencilmark.exchange.validate")
-    doc = _hidden_doc(unknowns={"X": {"range": [1, 8]}}, layers={"shift": {"values": [-1, 0, 1], "given": {"r1c1": 0}}},
-                      rules=_hidden_doc()["rules"] + [
-                          {"type": "custom", "cells": {"c": ["r1c1", "r1c2"]}, "holds": "sum(c) + shift(r1c2) == X"},
-                          {"type": "custom", "cells": {}, "scope": {"pairs": "orthogonal"}, "holds": "(a, b) => shift(a) * shift(b) == 0"}])
+    doc = _hidden_doc(
+        unknowns={"X": {"range": [1, 8]}},
+        layers={"shift": {"values": [-1, 0, 1], "given": {"r1c1": 0}}},
+        rules=_hidden_doc()["rules"]
+        + [
+            {"type": "custom", "cells": {"c": ["r1c1", "r1c2"]}, "holds": "sum(c) + shift(r1c2) == X"},
+            {
+                "type": "custom",
+                "cells": {},
+                "scope": {"pairs": "orthogonal"},
+                "holds": "(a, b) => shift(a) * shift(b) == 0",
+            },
+        ],
+    )
     out = pencilmark.to_export(pencilmark.load(doc), describe=False, style=False, with_solution=False)
     V.validate(out)
     assert out["unknowns"] == {"X": {"values": list(range(1, 9))}}
@@ -460,7 +493,9 @@ def test_cases_rule_checks_each_case_against_the_candidates():
     from pencilmark import cbackend as cb
 
     p = pm.load("." * 81)
-    p.constraints.append({"type": "cases", "cases": [{"cells": [0, 1], "circle": 0}, {"cells": [0, 1, 10], "circle": 0}]})
+    p.constraints.append(
+        {"type": "cases", "cases": [{"cells": [0, 1], "circle": 0}, {"cells": [0, 1, 10], "circle": 0}]}
+    )
     elim = {e for m in cb.state_moves(p, assume_unique=False) for e in (m.get("elim") or [])}
     assert {(0, 1), (0, 2), (1, 9), (10, 9)} <= elim
 
@@ -473,9 +508,7 @@ def test_literal_set_membership_is_fast():
 
     lo = lambda d: (d - 1) // 3
     ok = sorted(
-        int("".join(map(str, t)))
-        for t in itertools.permutations(range(1, 10), 4)
-        if len({lo(d) for d in t}) == 3
+        int("".join(map(str, t))) for t in itertools.permutations(range(1, 10), 4) if len({lo(d) for d in t}) == 3
     )
     src = "concat(c) in {" + ", ".join(map(str, ok)) + "}"
     tree = parse(src)

@@ -33,7 +33,9 @@ def request(rng):
         from pencilmark import puzzle_json as PJ
 
         D, origins = 9, PJ._layouts()[layout]
-        rules = [{"type": "box_grid", "origin": f"r{r + 1}c{c + 1}", "box": [3, 3], "count": [3, 3]} for r, c in origins]
+        rules = [
+            {"type": "box_grid", "origin": f"r{r + 1}c{c + 1}", "box": [3, 3], "count": [3, 3]} for r, c in origins
+        ]
         if rng.random() < 0.4:
             r0, c0 = rng.choice(origins)
             rules.append(
@@ -99,7 +101,9 @@ def check(s, r):
     if r["info"].get("unique_verified") is False:
         out.append("not unique")
     C = p["board"]["cols"]
-    grids = sorted(tuple(int(x) - 1 for x in t.get("origin", "r1c1")[1:].split("c")) for t in s["rules"] if t["type"] == "box_grid")
+    grids = sorted(
+        tuple(int(x) - 1 for x in t.get("origin", "r1c1")[1:].split("c")) for t in s["rules"] if t["type"] == "box_grid"
+    )
     for (r0, c0), lim in zip(grids, (s.get("givens") or {}).get("grids") or []):
         lo, hi = (lim, lim) if isinstance(lim, int) else lim
         n = sum(1 for r in range(9) for c in range(9) if p["givens"][(r0 + r) * C + c0 + c])

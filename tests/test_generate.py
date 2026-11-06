@@ -299,7 +299,9 @@ def test_layout_generation():
     for layout in ("butterfly", "twodoku"):
         origins = PJ._layouts()[layout]
         rows, cols = max(r for r, _ in origins) + 9, max(c for _, c in origins) + 9
-        grids = [{"type": "box_grid", "origin": f"r{r + 1}c{c + 1}", "box": [3, 3], "count": [3, 3]} for r, c in origins]
+        grids = [
+            {"type": "box_grid", "origin": f"r{r + 1}c{c + 1}", "box": [3, 3], "count": [3, 3]} for r, c in origins
+        ]
         r = run(dict(spec(), board={"rows": rows, "cols": cols}, rules=grids, limits={"time": 60, "seed": 1}))
         assert r["info"]["givens"] == sum(1 for v in r["puzzle"]["givens"] if v)
         # the card is the one rate() gives the returned file: the generator numbers layout cells as the reader does
@@ -421,9 +423,18 @@ def test_untargeted_request_warns():
 
 def test_fingerprints_asked_for_in_the_spec():
     """a fingerprint / generated_from key in the spec's meta is filled in on the puzzle; without it, neither"""
-    doc = {"format": "sudoku-spec", "format_version": 1, "board": {"rows": 6, "cols": 6}, "digits": 6,
-           "rules": [{"type": "box_grid", "box": [2, 3], "count": [3, 2]}], "where": {"band": "Easy"},
-           "limits": {"seed": 1}, "meta": {"title": "t", "fingerprint": True, "generated_from": True}}
+    doc = {
+        "format": "sudoku-spec",
+        "format_version": 1,
+        "board": {"rows": 6, "cols": 6},
+        "digits": 6,
+        "rules": [{"type": "box_grid", "box": [2, 3], "count": [3, 2]}],
+        "where": {"band": "Easy"},
+        "limits": {"seed": 1},
+        "meta": {"title": "t", "fingerprint": True, "generated_from": True},
+    }
     meta = run(doc)["puzzle"]["meta"]
-    assert meta["fingerprint"] == pencilmark.fingerprint(run(doc)["puzzle"]) and meta["generated_from"].startswith("sha256:")
+    assert meta["fingerprint"] == pencilmark.fingerprint(run(doc)["puzzle"]) and meta["generated_from"].startswith(
+        "sha256:"
+    )
     assert meta["fingerprint"] != meta["generated_from"]

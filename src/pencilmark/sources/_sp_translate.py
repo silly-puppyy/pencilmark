@@ -133,11 +133,14 @@ def fog_of(P, p, idx, inside):
     for cg in P.get("cages") or []:
         v = str((cg or {}).get("value", "")) if isinstance(cg, dict) else ""
         if v.lower() == "foglight":
-            lit += cells([tuple(x) for x in cg.get("cells") or []]); have = True
+            lit += cells([tuple(x) for x in cg.get("cells") or []])
+            have = True
         elif v.lower().startswith("foglight:"):
-            lit += cells(v); have = True
+            lit += cells(v)
+            have = True
     if P.get("foglight"):
-        lit += cells(P["foglight"]); have = True
+        lit += cells(P["foglight"])
+        have = True
     triggers = []
     for t in P.get("triggereffect") or []:
         tr, ef = (t or {}).get("trigger") or {}, (t or {}).get("effect") or {}
@@ -148,7 +151,7 @@ def fog_of(P, p, idx, inside):
     if not have:
         return None
     lit += [name(i) for i in p.givens]  # SudokuPad: a given lights its own cell
-    fog = {"lit": sorted(set(lit), key=lambda c: (int(c[1:c.index("c")]), int(c[c.index("c") + 1:])))}
+    fog = {"lit": sorted(set(lit), key=lambda c: (int(c[1 : c.index("c")]), int(c[c.index("c") + 1 :])))}
     if triggers:  # the setter's reveals replace the 3x3 reveal
         fog["triggers"] = [t for t in triggers if t["when"] and t["light"]]
     return fog

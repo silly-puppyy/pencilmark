@@ -74,7 +74,7 @@ ignore = [
 
 [tool.codespell]
 # technique and code abbreviations (ALS = almost locked set, nd / bu / te ...) and regex stems ("givin", "necessar")
-ignore-words-list = "als,nd,bu,hsi,thi,lins,te,inh,nin,strat,necessar,multipl,givin,assum"
+ignore-words-list = "als,nd,bu,hsi,thi,lins,te,inh,nin,strat,necessar,multipl,givin,assum,boxe,differen"
 skip = "*.json,*.jsonl,*.csv,*.svg,./tests/fixtures,./tests/golden,./docs/reference,./docs/api.md,./website/node_modules,./website/build,./build"
 
 

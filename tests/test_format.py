@@ -646,7 +646,15 @@ def test_multigrid_written_compact():
         "board": {"rows": R, "cols": R},
         "digits": 9,
         "givens": giv,
-        "rules": [dict({"type": "box_grid"}, **({"origin": X.cell_name(r, c)} if (r, c) != (0, 0) else {}), box=[3, 3], count=[3, 3]) for r, c in grids],
+        "rules": [
+            dict(
+                {"type": "box_grid"},
+                **({"origin": X.cell_name(r, c)} if (r, c) != (0, 0) else {}),
+                box=[3, 3],
+                count=[3, 3],
+            )
+            for r, c in grids
+        ],
     }
     p = X.read(doc)
     p.groups.sort(key=lambda g: (g.kind != "box", g.kind != "row", g.cells))  # boxes first, then rows, then columns
@@ -722,7 +730,12 @@ def test_quality_limits():
     assert soft["issues"][0]["severity"] == "warning" and soft["reject"] is False and soft["warning"] is True
     d = pencilmark.from_string(CLASSIC)
     d["rules"].append({"type": "line", "kind": "thermo", "cells": ["r1c5", "r1c4"]})
-    assert pencilmark.rate(d, fields=["issues"], quality={"decorative": {"severity": "off"}, "unusual": {"severity": "off"}})["issues"] == []
+    assert (
+        pencilmark.rate(
+            d, fields=["issues"], quality={"decorative": {"severity": "off"}, "unusual": {"severity": "off"}}
+        )["issues"]
+        == []
+    )
     import pytest
 
     for bad in (
@@ -754,7 +767,10 @@ def test_describe_names_grids():
         for r in range(R)
         for c in range(R)
     ]
-    rules = [{"type": "box_grid", "origin": o, "box": [3, 3], "count": [3, 3]} for o in ("r1c1", "r1c13", "r7c7", "r13c1", "r13c13")]
+    rules = [
+        {"type": "box_grid", "origin": o, "box": [3, 3], "count": [3, 3]}
+        for o in ("r1c1", "r1c13", "r7c7", "r13c1", "r13c13")
+    ]
     rules += [
         {"type": "region", "kind": "diagonal", "cells": [X.cell_name(i, i) for i in range(9)]},
         {"type": "region", "kind": "diagonal", "cells": [X.cell_name(i, 8 - i) for i in range(9)]},
@@ -962,13 +978,23 @@ def test_fog_rule_reads_writes_and_is_not_graded():
     """fog of war (6.19): validated, carried through load / export, solved and counted as usual (fog changes no
     solution), and refused by rate (a fog puzzle is graded under the fog or not at all)"""
     import pytest
+
     import pencilmark as pm
     from pencilmark.exchange import FormatError, NotSupportedError
 
-    giv = [int(c) if c != "." else 0 for c in "4.....8.5.3..........7......2.....6.....8.4......1.......6.3.7.5..2.....1.4......"]
+    giv = [
+        int(c) if c != "." else 0
+        for c in "4.....8.5.3..........7......2.....6.....8.4......1.......6.3.7.5..2.....1.4......"
+    ]
     fog = {"type": "fog", "lit": ["r1c1", "r5c5"], "triggers": [{"when": ["r1c1"], "light": ["r9c9"]}]}
-    doc = {"format": "sudoku-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9, "givens": giv,
-           "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}, fog]}
+    doc = {
+        "format": "sudoku-puzzle",
+        "format_version": 1,
+        "board": {"rows": 9, "cols": 9},
+        "digits": 9,
+        "givens": giv,
+        "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}, fog],
+    }
     doc["solution"] = pm.solve(dict(doc, rules=doc["rules"][:1]))  # the same puzzle without its fog
     with pytest.raises(Exception, match="needs its solution"):
         pm.load(dict(doc, solution=None))
@@ -980,9 +1006,11 @@ def test_fog_rule_reads_writes_and_is_not_graded():
     assert [r for r in out["rules"] if r["type"] == "fog"] == [fog]
     with pytest.raises(NotSupportedError, match="fog of war"):
         pm.rate(p)
-    for bad in ({"type": "fog", "lit": ["r1c1"], "reveal": "3x3"},
-                {"type": "fog", "lit": "r1c1"},
-                {"type": "fog", "lit": ["r1c1"], "triggers": [{"when": ["r1c1"]}]}):
+    for bad in (
+        {"type": "fog", "lit": ["r1c1"], "reveal": "3x3"},
+        {"type": "fog", "lit": "r1c1"},
+        {"type": "fog", "lit": ["r1c1"], "triggers": [{"when": ["r1c1"]}]},
+    ):
         with pytest.raises(FormatError):
             pm.validate(dict(doc, rules=[doc["rules"][0], bad]))
 
@@ -993,9 +1021,18 @@ def test_fog_route_reveals_and_places_only_what_is_seen():
     import pencilmark as pm
     from pencilmark import fog
 
-    giv = [int(c) if c != "." else 0 for c in "53..7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8..79"]
-    base = {"format": "sudoku-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9, "givens": giv,
-            "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}]}
+    giv = [
+        int(c) if c != "." else 0
+        for c in "53..7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8..79"
+    ]
+    base = {
+        "format": "sudoku-puzzle",
+        "format_version": 1,
+        "board": {"rows": 9, "cols": 9},
+        "digits": 9,
+        "givens": giv,
+        "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}],
+    }
     base["solution"] = pm.solve(base)
     every = [f"r{r}c{c}" for r in range(1, 10) for c in range(1, 10)]
     res = fog.route(dict(base, rules=base["rules"] + [{"type": "fog", "lit": every}]))
@@ -1012,7 +1049,9 @@ def test_quality_preset():
     q = quality_limits({"preset": "standard"})
     assert {k for k, v in q.items() if v["severity"] != "off"} == {"decorative", "trivial", "trial", "thin", "unusual"}
     assert q["thin"]["severity"] == "reject" and q["tedious"]["severity"] == "off"
-    q = quality_limits({"preset": "standard", "thin": {"limit": 0.2, "severity": "warning"}, "tedious": {"severity": "warning"}})
+    q = quality_limits(
+        {"preset": "standard", "thin": {"limit": 0.2, "severity": "warning"}, "tedious": {"severity": "warning"}}
+    )
     assert q["thin"] == {"limit": 0.2, "severity": "warning"} and q["tedious"]["severity"] == "warning"
     with pytest.raises(ValueError):
         quality_limits({"preset": "lenient"})

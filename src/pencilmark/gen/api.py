@@ -209,8 +209,7 @@ def board_of(s):
         "board": {"rows": rows, "cols": cols},
         "digits": s.size,
         "givens": [0 if (r, c) in cells else None for r in range(rows) for c in range(cols)],
-        "rules": [SF._box_grid(o[0], o[1], b.bh, b.bw, s.size) for o in origins]
-        + list(s.locked),
+        "rules": [SF._box_grid(o[0], o[1], b.bh, b.bw, s.size) for o in origins] + list(s.locked),
     }
     try:
         exchange.validate(doc)
@@ -456,7 +455,9 @@ def generate(spec):
     p = PJ.from_json(r["puzzle"])  # with the solution the puzzle was dug from: exporting needs no search
     p._pm_solution = [PJ._val(ch) for ch in r["puzzle"]["solution"]]
     puzzle = to_export(p, meta=dict(r["puzzle"].get("meta") or {}, **meta))
-    if "fingerprint" in (doc.get("meta") or {}):  # asked for in the spec: the puzzle's own (meta is outside it: no loop)
+    if "fingerprint" in (
+        doc.get("meta") or {}
+    ):  # asked for in the spec: the puzzle's own (meta is outside it: no loop)
         from ..api import fingerprint
 
         puzzle["meta"]["fingerprint"] = fingerprint(puzzle)

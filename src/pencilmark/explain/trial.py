@@ -664,7 +664,6 @@ def _h_class_trap(ctx):
     return _result(ctx, J, short, teach, True, extra_cells=cells)
 
 
-
 def _h_chain_colour(ctx):
     """two cells forced to hold the same digit through a third cell tied to both by pair rules (a V / X / dot chain)"""
     nm, st = ctx.nm, ctx.st
@@ -704,7 +703,6 @@ def _h_colour_clash(ctx):
     return _result(ctx, J, short, teach, True, extra_cells=cells)
 
 
-
 def _h_colour_pointing(ctx):
     """identity layer: a colour's places in one house all lie in another house -> its other cells there are not that
     colour"""
@@ -728,7 +726,6 @@ def _h_colour_pointing(ctx):
     return _result(ctx, J, short, teach, True, extra_cells=cells)
 
 
-
 def _h_colour_fish(ctx):
     """identity layer: two houses confine a colour to two other houses -> the colour's other places there are not it"""
     nm = ctx.nm
@@ -749,7 +746,6 @@ def _h_colour_fish(ctx):
     )
     J = _J(ctx, base_units=[b1, b2], cover_units=[c1, c2], base_cells=ms + P)
     return _result(ctx, J, short, teach, True, extra_cells=cells)
-
 
 
 def _h_complete_colours(ctx):

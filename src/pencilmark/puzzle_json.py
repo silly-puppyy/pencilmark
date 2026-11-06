@@ -145,7 +145,20 @@ def _layout_regions(origins, D=9, bh=3, bw=3):
 
 
 # ---------------------------------------------------------------- decode
-KEYS = {"digits", "shape", "box", "layout", "numbers", "solution", "regions", "rules", "candidates", "meta", "title", "fog"}
+KEYS = {
+    "digits",
+    "shape",
+    "box",
+    "layout",
+    "numbers",
+    "solution",
+    "regions",
+    "rules",
+    "candidates",
+    "meta",
+    "title",
+    "fog",
+}
 KEYS |= {"hash", "v"}  # written by `pencilmark json` / by older files; ignored
 KEYS |= {"drawn"}  # how a source drew its elements (sources/_sp_style.py): the rules' styles on export
 KEYS |= {"unknowns", "layers"}  # the file's unknowns and layers (custom rules read them; the engine's aux variables)
@@ -437,6 +450,7 @@ def from_json(obj) -> M.Puzzle:
         B_ = None
         try:
             from .exchange.board import Board
+
             B_ = Board(coords, D)
         except Exception:  # noqa: BLE001
             pass
@@ -446,7 +460,10 @@ def from_json(obj) -> M.Puzzle:
             for c, x in (v.get("given") or {}).items():
                 giv[B_.idx(c) if B_ is not None else c] = x
             lay.append({"name": n, "values": list(v["values"]), "given": giv})
-        p.aux = {"unknowns": [{"name": n, "values": list(v)} for n, v in (d.get("unknowns") or {}).items()], "layers": lay}
+        p.aux = {
+            "unknowns": [{"name": n, "values": list(v)} for n, v in (d.get("unknowns") or {}).items()],
+            "layers": lay,
+        }
     return p
 
 

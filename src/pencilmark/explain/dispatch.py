@@ -51,15 +51,15 @@ from .singles import (
     _rule_from_move,
 )
 from .trial import (
+    _h_chain_colour,
     _h_class_pair,
     _h_class_propagation,
     _h_class_single,
     _h_class_trap,
-    _h_chain_colour,
     _h_colour_clash,
     _h_colour_fish,
-    _h_complete_colours,
     _h_colour_pointing,
+    _h_complete_colours,
     _h_digit_count,
     _h_either_way,
     _h_equal_digits,

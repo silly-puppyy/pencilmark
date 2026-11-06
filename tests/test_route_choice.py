@@ -2,12 +2,12 @@
 default route (the trace); the card's numbers read the single price-first route (score card_route); the recorded step
 prices never change; sampling is reproducible per seed; route_samples (opt-in) averages sampled routes."""
 
+from conftest import CLASSIC as GIVENS
+
+from pencilmark import api
 from pencilmark import cbackend as CB
 from pencilmark import grader_model as GM
 from pencilmark import solver as S
-from pencilmark import api
-
-from conftest import CLASSIC as GIVENS
 
 
 def _route(**ovr):
@@ -20,8 +20,13 @@ def _route(**ovr):
 def _spot(seed):
     fam = [-0.37] * (max(S.TECH_NAMES) + 1)
     fam[S.NAKED_D] = 1.36
-    return {"locality": 0, "digit_cont": 0, "spot_w": [-1.2, 0.89, 0.85, 0.74, 1.64, -0.88], "spot_fam": fam,
-            "spot_seed": seed}
+    return {
+        "locality": 0,
+        "digit_cont": 0,
+        "spot_w": [-1.2, 0.89, 0.85, 0.74, 1.64, -0.88],
+        "spot_fam": fam,
+        "spot_seed": seed,
+    }
 
 
 def test_closeness_model_is_the_default_route():
@@ -109,7 +114,7 @@ def test_trace_colours_layer():
     card = pencilmark.rate(GIVENS, fields=["trace"])
     tr = card["trace"]
     sol = pencilmark.solve(GIVENS)
-    idx = lambda cell: (int(cell[1:cell.index("c")]) - 1) * 9 + int(cell[cell.index("c") + 1:]) - 1
+    idx = lambda cell: (int(cell[1 : cell.index("c")]) - 1) * 9 + int(cell[cell.index("c") + 1 :]) - 1
     drawn = 0
     for t in tr:
         assert "colours" in t and len(t["colours"]) <= 6  # at most three colour pairs

@@ -78,7 +78,10 @@ def canonical(doc):
         out["board"] = _order(out["board"], ["rows", "cols"])
     if "rules" in out:
         out["rules"] = [  # a grid / box_grid / chaos origin at r1c1 is the default: left out
-            _order({k: v for k, v in r.items() if not (k == "origin" and v == "r1c1" and r.get("type") in GRID_TYPES)}, RULE_ORDER)
+            _order(
+                {k: v for k, v in r.items() if not (k == "origin" and v == "r1c1" and r.get("type") in GRID_TYPES)},
+                RULE_ORDER,
+            )
             if isinstance(r, dict)
             else r
             for r in out["rules"]

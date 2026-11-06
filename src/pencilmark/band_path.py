@@ -148,8 +148,19 @@ def variant_gate(p):
 _CACHE = None  # position -> state_moves, shared by the many routes of one contents() call (same openings)
 
 
-def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes=(), guard=None, prefix=(), max_band=6,
-              keep_held=False):
+def band_path(
+    p,
+    P,
+    max_steps=500,
+    disabled=(),
+    target=None,
+    rng=None,
+    ban_codes=(),
+    guard=None,
+    prefix=(),
+    max_band=6,
+    keep_held=False,
+):
     """solve band by band (see module doc). Moves are taken in full-notes mode: each placement clears its peers.
     target = a cell: stop once it is placed, preferring (within the current band) a move that places it -- "what does
     it take to place this cell from here". max_band: stop (unsolved) where only a harder move would continue -- contents()
@@ -443,7 +454,9 @@ def band_path(p, P, max_steps=500, disabled=(), target=None, rng=None, ban_codes
                 **({"idfx": list(m.get("idfx") or ())} if ids else {}),
             }
         )
-    if ids and steps and not keep_held:  # identity layer: identity-only steps no later step relied on cost nothing -- dropped, the
+    if (
+        ids and steps and not keep_held
+    ):  # identity layer: identity-only steps no later step relied on cost nothing -- dropped, the
         # route without them is the same proof (cbackend.id_held)
         held = CB.id_held(N, p.givens, [(st["place"], st["elims"], st.get("idfx")) for st in steps])
         steps[:] = [st for st, h in zip(steps, held) if not h]
@@ -1130,7 +1143,13 @@ def written_marks(p, steps, pos, P):
     res = [snap(*pos[0])]
     for st, (vals0, cand0), (vals, cand) in zip(steps, pos[:-1], pos[1:]):
         name = st.get("name") or S.TECH_NAMES.get(st.get("tech"), "")
-        if lazy and not notes_on and st.get("tech") not in MENTAL and name != "FullHouse" and not name.endswith("(direct)"):
+        if (
+            lazy
+            and not notes_on
+            and st.get("tech") not in MENTAL
+            and name != "FullHouse"
+            and not name.endswith("(direct)")
+        ):
             notes_on = True
             centre.update(c for c in range(p.N) if not vals0[c] and 0 < bin(cand0[c]).count("1") <= small)
         if notes_on:
@@ -1222,8 +1241,15 @@ def written_colours(p, pos, P):
                 names[key] = pair
             taken.add(pair)
             digits = [d for d in range(1, p.D + 1) if m >> (d - 1) & 1]
-            shown += [{"colour": pair[s], "cells": sorted(cols[s], key=lambda x: p.coords[x]), "digits": digits,
-                       "opposite": pair[1 - s]} for s in (0, 1)]
+            shown += [
+                {
+                    "colour": pair[s],
+                    "cells": sorted(cols[s], key=lambda x: p.coords[x]),
+                    "digits": digits,
+                    "opposite": pair[1 - s],
+                }
+                for s in (0, 1)
+            ]
         out.append(shown)
     return out
 

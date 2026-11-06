@@ -145,6 +145,7 @@ def normalise(fp):
 def translate(fp, line_kinds=None, join=True):
     """line_kinds: {colour: kind} reading for generic 'line' entries (see infer_lines). join: same-colour segments of a
     set rule (renban, line total) that share a cell are one line (info "_joined" when that merged any)."""
+
     # fog light written as generic cages (as SudokuPad imports them; often drawn invisible, which normalise drops): a
     # FOGLIGHT / "foglight: ..." cage's cells are lit, a one-cell FOW cage lights its 3x3 like a fogofwar cell
     def fog_kind(c):
@@ -154,7 +155,9 @@ def translate(fp, line_kinds=None, join=True):
     if fog_cages:
         fp = dict(fp, cage=[c for c in fp["cage"] if c not in fog_cages])
         for key, kind in (("foglight", "foglight"), ("fogofwar", "fow")):
-            fp[key] = list(fp.get(key) or []) + [x for c in fog_cages if fog_kind(c) == kind for x in c.get("cells") or []]
+            fp[key] = list(fp.get(key) or []) + [
+                x for c in fog_cages if fog_kind(c) == kind for x in c.get("cells") or []
+            ]
     fp = normalise(fp) if "_ineq" not in fp else fp
     n = fp.get("size", 9)
     ix = lambda name: (lambda r, c: r * n + c)(*rc(name, n))
@@ -178,7 +181,8 @@ def translate(fp, line_kinds=None, join=True):
             lit |= {(r0 + a, c0 + b) for a in (-1, 0, 1) for b in (-1, 0, 1) if 0 <= r0 + a < n and 0 <= c0 + b < n}
         fog = {"lit": [f"r{r + 1}c{c + 1}" for r, c in sorted(lit) if 0 <= r < n and 0 <= c < n]}
     refused = [
-        u for u in ST.unmodelled_rules(text0)
+        u
+        for u in ST.unmodelled_rules(text0)
         if not (u == "rule 'equality cage'" and ST.EQUALITY_TEXT.search(text0)) and not (u == "rule 'fog'" and fog)
     ]
     outside_texts = []  # numbers left outside the grid: clues for the SudokuPad reader's outside-clue reading
@@ -622,8 +626,10 @@ def translate(fp, line_kinds=None, join=True):
         if v and k not in DECORATIVE and k != "negative" and not k.startswith("_"):
             used.setdefault(k, len(v) if isinstance(v, list) else True)
     if fog:  # played in SudokuPad: a given lights its own cell
-        fog["lit"] = sorted(set(fog["lit"]) | {f"r{i // n + 1}c{i % n + 1}" for i in p.givens},
-                            key=lambda c: (int(c[1:c.index("c")]), int(c[c.index("c") + 1:])))
+        fog["lit"] = sorted(
+            set(fog["lit"]) | {f"r{i // n + 1}c{i % n + 1}" for i in p.givens},
+            key=lambda c: (int(c[1 : c.index("c")]), int(c[c.index("c") + 1 :])),
+        )
         p.fog = fog  # rate refuses it until the engine grades under fog
     return p, used
 
