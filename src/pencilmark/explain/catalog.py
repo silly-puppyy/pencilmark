@@ -306,7 +306,13 @@ CATALOG = {
             "other": ["Deadly pattern"],
         },
         3,
-        [SW + "Unique_Rectangles", HD + "tech_ur.php", SW + "Hidden_Unique_Rectangles"],
+        [
+            SW + "Unique_Rectangles",
+            HD + "tech_ur.php",
+            SW + "Hidden_Unique_Rectangles",
+            SW + "Extended_Unique_Rectangles",
+            SW + "Avoidable_Rectangles",
+        ],
         ["naked_pair"],
     ),
     "bug_plus_1": (
@@ -320,7 +326,7 @@ CATALOG = {
         "X-Chain",
         {"sudokuwiki": ["X-Cycles"], "HoDoKu": ["X-Chain"], "SE": ["X-Chain"], "other": ["Single-digit chain"]},
         4,
-        [SW + "X_Cycles", HD + "tech_chains.php#x"],
+        [SW + "X_Cycles", HD + "tech_chains.php#x", SW + "Grouped_X_Cycles"],
         ["simple_colouring", "skyscraper"],
     ),
     "xy_chain": (
@@ -341,7 +347,7 @@ CATALOG = {
         "Alternating Inference Chain",
         {"other": ["AIC"], "sudokuwiki": ["Alternating Inference Chains"], "HoDoKu": ["AIC"], "SE": ["Forcing Chain"]},
         4,
-        [SW + "Alternating_Inference_Chains", HD + "tech_chains.php#in"],
+        [SW + "Alternating_Inference_Chains", HD + "tech_chains.php#in", SW + "AIC_with_Groups"],
         ["x_chain", "xy_chain"],
     ),
     "nice_loop": (
@@ -352,7 +358,7 @@ CATALOG = {
             "SE": ["Cell/Region Forcing Chains"],
         },
         4,
-        [HD + "tech_chains.php#nl", SW + "X_Cycles"],
+        [HD + "tech_chains.php#nl", SW + "X_Cycles", SW + "X_Cycles_Part_2", SW + "Grouped_X_Cycles"],
         ["aic"],
     ),
     "als_xz": (
@@ -420,7 +426,13 @@ CATALOG = {
             "Sudoku Snake": ["Forcing Chains", "Unit Forcing Chains"],
         },
         6,
-        [SW + "Cell_Forcing_Chains", SW + "Unit_Forcing_Chains", HD + "tech_last.php#fc", SN + "forcingchains.php"],
+        [
+            SW + "Cell_Forcing_Chains",
+            SW + "Unit_Forcing_Chains",
+            SW + "Digit_Forcing_Chains",
+            HD + "tech_last.php#fc",
+            SN + "forcingchains.php",
+        ],
         ["naked_single", "hidden_single"],
     ),
     "guess": (
