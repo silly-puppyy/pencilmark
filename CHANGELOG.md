@@ -16,13 +16,20 @@ What changes for you (details in the entries below):
   (EQD -> CEQ, SCL -> CSM, MCL -> CMU, 3DM -> CMD, identity-layer codes CSG / CFL / CPR / CTR); generated puzzles carry
   `meta.generated_from` only when the spec asks.
 - **New in the format:** fog of war, regions to find (chaos), shading (yin-yang), custom-rule unknowns and layers.
-  `rate` refuses fog, shading and unknowns for now; they load, validate, solve and count.
+  `rate` grades fog under the fog; shading and unknowns give band Unknown with a `reason` for now (they load,
+  validate, solve and count). Errors are only for wrong inputs (unreadable, misread, not unique, no solution).
 
 - Quality presets: `quality={"preset": "standard"}` (`--quality preset=standard`) turns on decorative, trivial, trial,
   thin and unusual (all reject) and switches the other checks off; checks named next to the preset adjust it.
 - Opt-in quality checks (off unless named): `asymmetric`, `no_interplay`, `winding`, `short_lines`, `repetitive`,
   `monotone`, `desert`, `late_break`; limits near the edge of published Medium+ puzzles
   (1-27% of them flagged, per check).
+- `rate` grades fog-of-war puzzles under the fog: the band and techniques of the fog route (the human route on what
+  the fog shows, round by round), its steps priced like any card and put on the card scale by a line fitted on
+  puzzles graded both ways with nothing fogged (MAE 0.56). A card field `fog` tells what the fog did (lit at the
+  start, reveals, rounds, solved); where the fog stops the route, the band is Unknown with `stopped_at_step`, never
+  the revealed grade. Errors stay for inputs that are wrong. Fog visibility now includes pair relations and custom
+  rules (they were dropped, so a route could stall with nothing fogged).
 - Published ranges per band (`unusual`, the generator guide's table) re-measured on the 1.2 engine and the repaired
   development set (7,155 puzzles): variant Easy from 4.7 (was 4.4), variant Hard from 5.2 (was 4.6), variant Very Easy
   up to 5.9 (was 5.6); variant Extreme has too few puzzles for a range now. The guide recommends the standard preset.
@@ -76,8 +83,7 @@ What changes for you (details in the entries below):
   visible at the start (givens as the source shows them), and a fog puzzle must carry its solution. The SudokuPad
   reader fills it from FOGLIGHT cages, `foglight` and `triggereffect` (adding each given's own cell); the f-puzzles
   reader from `foglight` / `fogofwar`. Fog puzzles now load, validate, solve, count and
-  export with their fog; `rate` refuses them by name ("fog of war: the puzzle is solved under the fog ...") until the
-  engine grades under fog. Of the Cracking the Cryptic fog puzzles, 43 now load with their fog (none before).
+  export with their fog, and `rate` grades them under the fog (entry above). Of the Cracking the Cryptic fog puzzles, 43 now load with their fog (none before).
 - Engine rule kind `cases` (one of several cases holds; each case a set of cells with a circle = the sum of the
   others or a total, house peers different): the engine checks every case against the live candidates. The fog route
   uses it for arrows seen in part (the possible hidden shafts, with "arrows move orthogonally / don't share cells"
@@ -130,8 +136,8 @@ What changes for you (details in the entries below):
   (rules/custom.mdx, unknowns and layers; puzzle-format.md; schema). pencilmark reads, checks, writes and evaluates
   them, and the exhaustive search solves and counts such puzzles: the C++ model carries them as aux variables (a value
   set per unknown and per layer cell), a rule reading them is checked over its open hidden values once at most two of
-  its digits are open, and the search branches on them once the digits are fixed (uniqueness by digits). Grading
-  refuses them for now (no human technique reasons with them yet).
+  its digits are open, and the search branches on them once the digits are fixed (uniqueness by digits). `rate`
+  gives band Unknown with a `reason` (no human technique reasons with them yet).
 - Engine: lemma rules (internal, for derived facts; docs/research/engine_aux_lemma_design.md in the research notes).
   An internal table constraint may carry `lemma` {id, setup, use}: its moves cost `setup` the first time any rule of
   that lemma is used in a route and `use` afterwards; a constraint marked `gated` makes no human moves (combination
@@ -141,8 +147,8 @@ What changes for you (details in the entries below):
 - Shading (format: `"type": "yin_yang"`, optional given `shaded` / `unshaded` cells; whole-board-rules 6.19): shaded
   and unshaded cells each orthogonally connected, no 2x2 of one colour. Readers, writers, `fingerprint` and
   `describe` handle it; `solve` and `count_solutions` check it (the exhaustive search carries a colour per cell, agreeing with a
-  CP-SAT model on 700 random small puzzles); `rate` refuses it until the engine has
-  a shading layer.
+  CP-SAT model on 700 random small puzzles); `rate` gives band Unknown with a `reason`
+  until the engine has a shading layer.
 - Custom rules can read board layers: `region(c)` (regions to find) and `shaded(c)` (shading). `region()` rules are
   checked on chaos boards (uniqueness, solving, the human route's last resort), `shaded()` rules when solving and
   counting shading puzzles.

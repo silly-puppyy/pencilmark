@@ -424,8 +424,8 @@ def test_unknowns_and_layers_read_check_write():
             V.validate(bad)
     p = pencilmark.load(doc)  # the exhaustive search carries unknowns and layers (aux variables)
     assert pencilmark.count_solutions(p, limit=2)["count"] >= 1
-    with pytest.raises(Exception, match="does not grade them yet"):  # never graded with a rule ignored
-        pencilmark.rate(doc)
+    with pytest.raises(pencilmark.NotUnique):  # a wrong input is an error (this one has several solutions); a valid one
+        pencilmark.rate(doc)  # is band Unknown with its reason (test_rate_unknowns_is_unknown_with_reason)
 
 
 def test_unknowns_solve_a_small_cipher():
@@ -533,3 +533,18 @@ def test_concat_table_matches_enumeration():
     assert _concat_table(tree, cells, names, 4) == _table(lambda g: holds(tree, cells, g), names, 4)
     assert _concat_table(parse("concat(c) in {123} or true"), cells, names, 9) is None
     assert _concat_table(tree, {"c": names[::-1]}, names, 9) is None
+
+
+def test_rate_unknowns_is_unknown_with_reason():
+    """a puzzle with unknowns: no human technique reasons with them yet, so its card is band Unknown with the reason"""
+    doc = {
+        "format": "sudoku-puzzle", "format_version": 1, "board": {"rows": 4, "cols": 4}, "digits": 4,
+        "givens": [0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 4, 0, 0, 0], "unknowns": {"X": {"range": [3, 7]}},
+        "rules": [{"type": "box_grid", "box": [2, 2], "count": [2, 2]},
+                  {"type": "custom", "cells": {"a": ["r1c1", "r1c2"]}, "holds": "sum(a) == X"},
+                  {"type": "custom", "cells": {"b": ["r4c3", "r4c4"]}, "holds": "sum(b) == X"},
+                  {"type": "custom", "cells": {"c": ["r2c3", "r3c2"]}, "holds": "sum(c) == X"}],
+    }  # fmt: skip
+    card = pencilmark.rate(doc, fields=["band", "difficulty", "time", "band_index"])
+    assert card["band"] == "Unknown" and card["band_index"] is None and card["time"] is None
+    assert "unknowns" in card["reason"]

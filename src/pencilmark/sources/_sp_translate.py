@@ -1896,7 +1896,7 @@ def translate(sp, page_text=None, overrides=None):
         if kw in text_rules and not any(used[k] for k in ((key,) if isinstance(key, str) else key)):
             unknown.append(f"rule '{kw}'")
     fog = fog_of(P, p, idx, inside)
-    if fog is not None:  # fog of war: kept as the puzzle's fog rule (rate refuses it until the engine grades under fog)
+    if fog is not None:  # fog of war: kept as the puzzle's fog rule (rate grades under it)
         p.fog = fog
         unknown[:] = [u for u in unknown if u != "rule 'fog'"]
     elif P.get("foglight") or P.get("triggereffect"):

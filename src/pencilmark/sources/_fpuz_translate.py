@@ -630,7 +630,7 @@ def translate(fp, line_kinds=None, join=True):
             set(fog["lit"]) | {f"r{i // n + 1}c{i % n + 1}" for i in p.givens},
             key=lambda c: (int(c[1 : c.index("c")]), int(c[c.index("c") + 1 :])),
         )
-        p.fog = fog  # rate refuses it until the engine grades under fog
+        p.fog = fog  # rate grades it under the fog
     return p, used
 
 

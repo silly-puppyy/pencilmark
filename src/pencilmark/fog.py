@@ -219,6 +219,20 @@ def visible_rules(rules, lit, D, above=(), line_len=None):
             cs = [c for c in cells if c in L]
             if cs:
                 out.append(dict(k, cells=cs))
+        elif t == "relation":  # pair rules: the pairs whose two cells are lit
+            pairs = [pr for pr in k.get("pairs") or [] if all(c in L for c in pr)]
+            if pairs:
+                out.append(dict(k, pairs=pairs))
+        elif t == "custom":  # named cell lists; a rule without cells (a scoped whole-board rule) is stated, always seen
+            named = k.get("cells") or {}
+            every = [
+                c
+                for v in named.values()
+                for x in (v if isinstance(v, list) else [v])
+                for c in (x if isinstance(x, list) else [x])
+            ]
+            if not every or all(c in L for c in every):
+                out.append(k)
         else:
             every = cells + [c for x in (k.get("bulb") or []) for c in ([x] if isinstance(x, str) else x)]
             every += [c for ln in (k.get("lines") or []) for c in ln]
@@ -690,8 +704,12 @@ def route(puzzle, max_rounds=400, rules_text=None):
                 {
                     "technique": m["technique"],
                     "code": m["code"],
+                    "name": m.get("name") or m["technique"],
                     "band": m["band"],
                     "difficulty": round(m["d"], 3),
+                    # candidates left in the open cells before the step: the card's density factor (card_score)
+                    "cands": sum(bin(cand[i]).count("1") for i, g in enumerate(givens) if not g),
+                    "alts": m.get("alts", 1),
                     "round": rounds,
                     "place": None
                     if not m["place"]

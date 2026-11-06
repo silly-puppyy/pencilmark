@@ -413,7 +413,9 @@ def _cpuzzle_args(p):
             d = {"type": "line", "kind": d["kind"], "cells": [], "skip": True}  # carried by its n-ary part
         elif d.get("type") == "clone":  # compiled into 'eq' relations; keep the index
             d = {"type": "line", "kind": "palindrome", "cells": [], "skip": True}
-        elif d.get("type") == "yin_yang":  # shading: read by the exhaustive search (brute_force.cpp); rate refuses it
+        elif (
+            d.get("type") == "yin_yang"
+        ):  # shading: read by the exhaustive search (brute_force.cpp); rate: band Unknown with a reason
             d = {"type": "line", "kind": "palindrome", "cells": [], "skip": True, "shading": d}
         elif d.get("type") in ("chaos", "region_border", "same_region"):  # regions to find: read by the exhaustive
             d = {
@@ -425,7 +427,7 @@ def _cpuzzle_args(p):
             }  # search (brute_force.cpp)
         cons.append(d)
     aux = getattr(p, "aux", None)
-    if aux:  # the file's unknowns and layers: read by the exhaustive search (brute_force.cpp); rate refuses them
+    if aux:  # the file's unknowns and layers: read by the exhaustive search (brute_force.cpp); rate: band Unknown with a reason
         cons.append(
             {
                 "type": "line",

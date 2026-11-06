@@ -8,7 +8,8 @@ description: What pencilmark reads and does with fog-of-war puzzles today, and w
 A fog puzzle starts mostly hidden: only some cells are lit, and entering a correct digit lights more (the 3×3 block
 around it, or the setter's own reveal pattern). pencilmark reads fog as a rule of the puzzle
 ([format 6.20](../../formats/rules/other.mdx#620-fog-of-war)) and never grades the revealed grid instead: a fog
-puzzle is solved from what the fog shows, or not graded.
+puzzle is solved from what the fog shows. `rate` grades it that way; where the route the fog allows stops, the band is
+`Unknown`, never the grade of the revealed grid.
 
 Fog support is new and partial. This page says what works and what does not.
 
@@ -18,7 +19,7 @@ Fog support is new and partial. This page says what works and what does not.
 |---|---|
 | Reading | SudokuPad lit cells (FOGLIGHT cages, "foglight:" cage values, the puzzle's foglight list), the setter's reveal triggers; f-puzzles fog of war (foglight cells, fogofwar cells and FOW / FOGLIGHT cages); sudoku.coach fog |
 | Load, validate, solve, count solutions, export | yes: fog changes no solution |
-| `rate` | refuses a fog puzzle (`NotSupportedError: fog of war`) |
+| `rate` | grades the puzzle under the fog: the band, difficulty and time of the fog route, plus a `fog` field; band `Unknown` where the fog stops the route |
 | `pencilmark.fog.route(puzzle)` | experimental: the route a solver can take under the fog, step by step |
 
 `fog.route` reads what a solver sees: the lit cells, clues on the edge of a lit cell, outside clues, the parts of
@@ -29,8 +30,10 @@ walls, arrows whose circle is still fogged, thermometer and renban bounds. Each 
 
 ## What does not work yet
 
-- **Grading.** `rate` refuses fog puzzles until fog-specific prices are fitted (the cost of a reveal, of a deduction
-  about hidden content).
+- **Grading details.** A fog card prices the fog route's steps like any card and is put on the same scale by a line
+  fitted on puzzles graded both ways with nothing fogged. No cost per reveal and no price for reasoning about hidden
+  content are fitted (the data showed no gain from them). Publishing checks (`issues`), `steps`, `trace` and `se` are
+  null on a fog card for now.
 - **Stalls.** On the 24 Cracking the Cryptic fog puzzles pencilmark reads, the route solves 10 under the fog and stalls
   on 13, 8 of them before the first placement (one more ran out of time). A stall is a deduction the engine does not
   make yet; found so far: colouring steps a host makes (Restricted Access) and two hidden arrows checked together.
@@ -39,4 +42,3 @@ walls, arrows whose circle is still fogged, thermometer and renban bounds. Each 
   cells is refused.
 - **Speed.** A route can take minutes on variant puzzles with many cages (500 s for one; another ran over 15 minutes).
 
-`fog.route` keeps state between puzzles in one process: run one fog puzzle per process for now.

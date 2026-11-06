@@ -196,28 +196,15 @@ def rate(
     want = card_fields(fields, steps=steps, se=se)
     quality_limits(quality)
     p = load(puzzle)
-    if V.has_shading(p):  # before the uniqueness proof: grading shading is not in the engine yet
-        from .exchange import NotSupportedError
-
-        raise NotSupportedError(
-            "shading (yin-yang): the grader does not grade it yet; validate, describe, solve and count work (solve and "
-            "count with OR-Tools)"
-        )
-    if getattr(
-        p, "fog", None
-    ):  # fog of war is a rule of play: a grade must follow what the fog shows (not yet in the engine)
-        from .exchange import NotSupportedError
-
-        raise NotSupportedError(
-            "fog of war: the puzzle is solved under the fog, and the fog-aware grade is not in the engine yet; validate, "
-            "describe, solve and count work"
-        )
-    if getattr(p, "aux", None):  # unknowns / layers: the search solves them, no human technique reasons with them yet
-        from .exchange import NotSupportedError
-
-        raise NotSupportedError(
-            "unknowns / layers (custom rules): the grader does not grade them yet; validate, describe, solve and count work"
-        )
+    # rules no human technique reasons with yet: the puzzle is still proven unique (or refused as a wrong input), then
+    # its card is band Unknown with the reason (user 2026-11-06: "Unknown if unknown, error if a reader mistake")
+    no_route = (
+        "shading (yin-yang): no human technique for shading yet"
+        if V.has_shading(p)
+        else "unknowns / layers (custom rules): no human technique for them yet"
+        if getattr(p, "aux", None)
+        else None
+    )
     import time
 
     from . import cbackend as CB
@@ -245,6 +232,23 @@ def rate(
             raise NoSolution("no solution")
         p._pm_solution = list(sols[0])  # proven unique: later stages reuse it instead of searching again
         P = dict(_params(mode), allow_guess=bool(allow_guessing), quality=quality or {})
+        if no_route:
+            g = EX.unknown_card(want, no_route)
+            if "elapsed" in want:
+                g["elapsed"] = round(time.perf_counter() - t_call, 3)
+            return g
+        if getattr(p, "fog", None):  # a fog rule is part of the puzzle: graded under the fog (export.grade_fog)
+            g = EX.grade_fog(p, puzzle, P, fields=sorted(want))
+            if max_seconds is not None:  # the fog route stops at the engine deadline: Unknown, not completed
+                g["completed"] = not (timed and CB._C.deadline_hit())
+                if not g["completed"]:
+                    g.update(
+                        {k: None for k in ("difficulty", "time") if k in g},
+                        **({"band": "Unknown"} if "band" in g else {}),
+                    )
+            if "elapsed" in want:
+                g["elapsed"] = round(time.perf_counter() - t_call, 3)
+            return g
         g = grade(
             p,
             P,

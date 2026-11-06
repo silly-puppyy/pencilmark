@@ -325,6 +325,11 @@ def score_parts(p, model=None):
             paths = [_route(p, P_k, w) for P_k in Ps]
         sums = [sum(values(x or pth)) for x in paths]
         tot = sum(sums) / len(sums)
+    return _finish(p, cfg, tot, v, pth_time, w)
+
+
+def _finish(p, cfg, tot, v, pth_time, w):
+    """(card score, L1) from a route's step-value sum tot (v: its values, hardest first) and the route the time reads"""
     if cfg.get("stat") == "per_cell":  # average effort to discover one cell = step sum / empty cells
         empty = max(p.N - len(p.givens), 1)
         lpc = math.log(max(tot / empty, 1e-9))
@@ -351,3 +356,18 @@ def score_parts(p, model=None):
             1e-9,
         )
     )
+
+
+def score_path(p, path, model=None):
+    """(card score, L1) for a route given as [(technique name, price, F)] (F = density / alternatives, as _record):
+    the fog route's steps (rate under fog), priced with the card's value function, refutation term and map. None for
+    an empty route."""
+    model = model or GM.default()
+    cfg = model.score
+    if not path:
+        return None
+    v = sorted(
+        (math.exp(cfg["beta"] * math.log(max(d, 1e-3)) + cfg.get("delta", {}).get(nm, 0.0)) * f for nm, d, f in path),
+        reverse=True,
+    )
+    return _finish(p, cfg, sum(v), v, [(nm, max(d, 1e-3), f, 0.0) for nm, d, f in path], 0.0)

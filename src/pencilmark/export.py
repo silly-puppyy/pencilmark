@@ -736,3 +736,98 @@ def _grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expl
     if max_seconds is not None:  # with a limit only (always true without one): every stage finished within it
         g["completed"] = not (expired or bp_cut[0] or bool(bp.get("truncated")))
     return g, expired
+
+
+# rate under fog (docs/formats/rules/other.mdx 6.20; user 2026-11-06: "difficulty should always rate the input puzzle; if
+# fog is specified, use it; Unknown if unknown"). The fog route (fog.route: the human band route round by round on what
+# the fog shows) gives the band and the steps; its steps are priced with the card's value function (card_score.
+# score_path: price^beta x candidate density / tied alternatives) and put on the card's scale by a line fitted on
+# development puzzles graded both ways with nothing fogged (FOG_SCALE: difficulty, and the log effort the time reads;
+# 2026-11-06, 360 v12 dev puzzles, a fog rule lighting every cell: held-out MAE 0.56 difficulty, 0.75 log effort).
+FOG_SCALE = {"difficulty": (-0.714, 1.027), "effort_l1": (-5.554, 1.363)}  # (a, b): card = a + b x fog-route value
+# fields the fog route does not produce yet: null on a fog card
+FOG_NULL = ("issues", "reject", "warning", "steps", "trace", "se", "time_dist")
+
+
+def grade_fog(p, source, P, fields=None):
+    """the card of a fog puzzle (p loaded and proven unique; source: the input, for its rules text). A route that
+    stalls under the fog gives band Unknown with difficulty / time null and stopped_at_step; the "fog" field tells
+    what the fog route did."""
+    from . import band_path as BP
+    from . import card_score as CS
+    from . import fog as F
+
+    want = card_fields(fields)
+    res = F.route(source)
+    steps = res["steps"]
+    solved = bool(res["solved"])
+    top = max((s["band"] for s in steps), default=0)
+    bp = {
+        "solved": solved,
+        "band": BANDS[top] if solved else "Unknown",
+        "band_index": top if solved else None,
+        "steps": steps,
+        "profile": BP.fold(Counter(s["code"] for s in steps)),
+        "removed": [],
+        "alternatives": {},
+    }
+    card = {"score": None, "effort_l1": None, "notes": []}
+    if solved and steps:
+        sp = CS.score_path(
+            p, [(s["technique"], s["difficulty"], s["cands"] / 727 * 20 / max(s.get("alts", 1), 1)) for s in steps]
+        )
+        if sp is not None:
+            (a, b), (a2, b2) = FOG_SCALE["difficulty"], FOG_SCALE["effort_l1"]
+            card["score"] = round(max(a + b * sp[0], 0.1), 1)
+            card["effort_l1"] = round(a2 + b2 * sp[1], 3)
+    c = _CardContext(p, P, want, card, bp, False, [], base=bp)
+    g = {
+        "format": "sudoku-grade",
+        "format_version": FORMAT_VERSION,
+        "grader": {"name": GRADER_NAME, "version": GRADER_VERSION},
+    }
+    for name, build in FIELDS:
+        if name == "time_*":
+            for f in sorted(
+                (f for f in want if f.startswith("time_") and f != "time_dist"),
+                key=lambda f: (f != "time_mean", len(f), f),
+            ):
+                g[f] = build(c, f)
+        elif name in FOG_NULL and (name in want or (name == "issues" and want & {"reject", "warning"})):
+            g[name] = None
+        elif name in want:
+            g.update(build(c))
+    if solved:
+        g.pop("stopped_at_step", None)
+    else:
+        for k in ("difficulty", "time"):
+            if k in g:
+                g[k] = None
+    g["fog"] = {
+        "lit_start": len(getattr(p, "fog", {}).get("lit", []) or []),
+        "reveals": res["reveals"],
+        "rounds": res["rounds"],
+        "solved": solved,
+        **({} if solved else {"stuck_empty": res["stuck"]}),
+    }
+    if not solved:
+        g["reason"] = "fog: the route stops under the fog (no step a solver can make from what is lit)"
+    return g
+
+
+def unknown_card(want, reason):
+    """the card of a puzzle no human route can grade yet (shading, unknowns / layers): band Unknown, difficulty and
+    time null, no techniques, and the reason"""
+    g = {
+        "format": "sudoku-grade",
+        "format_version": FORMAT_VERSION,
+        "grader": {"name": GRADER_NAME, "version": GRADER_VERSION},
+    }
+    for name, _ in FIELDS:
+        if name == "time_*":
+            for f in sorted(f for f in want if f.startswith("time_") and f != "time_dist"):
+                g[f] = None
+        elif name in want or (name == "issues" and want & {"reject", "warning"}):
+            g[name] = {"band": "Unknown", "contains": []}.get(name)
+    g["reason"] = reason
+    return g

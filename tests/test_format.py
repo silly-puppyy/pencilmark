@@ -974,13 +974,13 @@ def test_malformed_values_are_format_errors():
             pencilmark.validate(bad)
 
 
-def test_fog_rule_reads_writes_and_is_not_graded():
+def test_fog_rule_reads_writes_and_is_graded_under_the_fog():
     """fog of war (6.19): validated, carried through load / export, solved and counted as usual (fog changes no
-    solution), and refused by rate (a fog puzzle is graded under the fog or not at all)"""
+    solution), and graded under the fog by rate: a route the fog stops is band Unknown, never the revealed grade"""
     import pytest
 
     import pencilmark as pm
-    from pencilmark.exchange import FormatError, NotSupportedError
+    from pencilmark.exchange import FormatError
 
     giv = [
         int(c) if c != "." else 0
@@ -1004,8 +1004,10 @@ def test_fog_rule_reads_writes_and_is_not_graded():
     out = pm.to_export(p)
     out = out.get("puzzle", out)
     assert [r for r in out["rules"] if r["type"] == "fog"] == [fog]
-    with pytest.raises(NotSupportedError, match="fog of war"):
-        pm.rate(p)
+    card = pm.rate(doc, fields=["band", "difficulty", "contains"])
+    assert card["fog"]["lit_start"] == 2 and "solved" in card["fog"]
+    if not card["fog"]["solved"]:  # stopped by the fog: Unknown, never the revealed grade
+        assert card["band"] == "Unknown" and card["difficulty"] is None and card["stopped_at_step"] >= 1
     for bad in (
         {"type": "fog", "lit": ["r1c1"], "reveal": "3x3"},
         {"type": "fog", "lit": "r1c1"},
@@ -1080,3 +1082,20 @@ def test_line_part_without_its_line_is_written():
     p.constraints.append({"type": "equal_sum", "segments": [[2], [3, 4]], "line_kind": "region_sum"})
     out = pencilmark.to_export(p, with_solution=False, describe=False)
     assert {"type": "line", "kind": "region_sum", "cells": ["r1c3", "r1c4", "r1c5"]} in out["rules"]
+
+
+def test_fog_card():
+    """a fog puzzle the route solves under the fog: its band, a difficulty and time, and what the fog did"""
+    import pencilmark as pm
+
+    doc = {
+        "format": "sudoku-puzzle", "format_version": 1, "board": {"rows": 4, "cols": 4}, "digits": 4,
+        "givens": [0, 0, 0, 0, 0, 0, 1, 0, 0, 2, 0, 3, 0, 3, 0, 0],
+        "solution": [2, 1, 3, 4, 3, 4, 1, 2, 1, 2, 4, 3, 4, 3, 2, 1],
+        "rules": [{"type": "box_grid", "box": [2, 2], "count": [2, 2]},
+                  {"type": "fog", "lit": ["r2c3", "r3c2", "r3c4", "r4c2"], "triggers": [{"when": ["r1c1"], "light": ["r1c2", "r2c1"]}]}],
+    }  # fmt: skip
+    card = pm.rate(doc, fields=["band", "difficulty", "time", "contains", "issues"])
+    assert card["band"] == "Very Easy" and card["difficulty"] > 0 and card["time"] > 0
+    assert card["fog"] == {"lit_start": 4, "reveals": 1, "rounds": 2, "solved": True}
+    assert card["issues"] is None  # publishing checks are not run under the fog yet
