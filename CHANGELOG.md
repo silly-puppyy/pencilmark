@@ -44,6 +44,10 @@ What changes for you (details in the entries below):
     type 2 (two cells with the same one extra digit).
   - Aligned Pair Exclusion also counts two cells sharing three digits that see both cells of the pair.
   Bands unchanged on the reference cards; times and difficulties move by up to 0.5 on 32 of 227.
+- Definitions follow the cited sources (docs/grades/techniques.md): WXYZ-Wing is any four cells holding four digits,
+  not all in one house, with one digit not confined to cells that see each other (sudokuwiki.org; before: only cells in
+  one box and one line); an almost locked set has any size (HoDoKu; before: at most 4 cells). Reference cards: bands
+  unchanged, difficulty within 0.1; speed unchanged (60 frozen puzzles, 978 s against 980 s).
 - Quality presets: `quality={"preset": "standard"}` (`--quality preset=standard`) turns on decorative, trivial, trial,
   thin and unusual (all reject) and switches the other checks off; checks named next to the preset adjust it.
 - Opt-in quality checks (off unless named): `asymmetric`, `no_interplay`, `winding`, `short_lines`, `repetitive`,

@@ -43,7 +43,9 @@ void Solver::build_als() {
                 for (int c : pick) sbit(bits.data(), c);
                 if (seen.insert(bits).second) als.push_back({bits, pick, U, gi});
             }
-            if (n == 4 || popc(U) > 5) return;
+            // any size (HoDoKu: N cells, N+1 digits, one house); the house's unsolved cells all together hold
+            // exactly their count of digits, so an ALS leaves one out. 8 cells at most (all of a 9x9 house but one)
+            if (n == std::min(nu - 1, 8) || popc(U) > std::min(nu - 1, 8) + 1) return;
             for (int i = st; i < nu; ++i) {
                 pick.push_back(u[i]);
                 rec(i + 1, U | cand[u[i]]);

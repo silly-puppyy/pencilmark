@@ -1,5 +1,5 @@
 // Named strategies from Andrew Stuart's inventory not covered by other engines:
-//   NWing (76): WXYZ / VWXYZ wings as bent sets: n connected cells holding exactly n digits, every
+//   NWing (76): WXYZ / VWXYZ wings: n cells (not all in one house) holding exactly n digits, every
 //     digit but Z confined to cells that see each other -> Z is in one of the set's Z cells;
 //   SueDeCoq (77): box-line intersection cells C (2-3) with digits V, a line set L and a box set B
 //     (1-2 cells each), digit sets disjoint, |V u VL u VB| = |C|+|L|+|B|;
@@ -39,29 +39,30 @@ void Solver::n_wing(MoveBuf& out) {
     if (disabled[N_WING]) return;
     const int N = p.N;
     std::set<std::vector<int>> seen;
-    // bent sets: n cells inside the union of two intersecting houses (a box and a line), n digits
-    std::vector<std::pair<int, int>> pairs;
-    for (size_t i = 0; i < p.houses.size(); ++i)
-        for (size_t j = i + 1; j < p.houses.size(); ++j) {
-            const int a = p.houses[i], b = p.houses[j];
-            if (p.group_overlap[(size_t)a * p.G + b] && (p.group_line[a] == 2) != (p.group_line[b] == 2))
-                pairs.push_back({a, b});
+    // n cells holding exactly n digits, not all in one house (sudokuwiki's definition: any cells; Sudopedia's pivot
+    // and wings are one case), per n-digit set: the cells whose candidates all lie in it
+    auto one_house = [&](const std::vector<int>& cs) {
+        for (int gi : p.groups_of[cs[0]]) {
+            bool all = p.groups[gi].complete;
+            for (size_t i = 1; i < cs.size() && all; ++i) all = tbit(p.gbits(gi), cs[i]);
+            if (all) return true;
         }
+        return false;
+    };
     for (int n = 4; n <= 5; ++n) {
-        for (auto& hb : pairs) {
+        for (uint32_t DS = 0; DS <= p.full; ++DS) {
+            if (popc(DS) != n || (DS & ~p.full)) continue;
             std::vector<int> pool;
-            for (int h : {hb.first, hb.second})
-                for (int c : p.groups[h].cells)
-                    if (!vals[c] && popc(cand[c]) >= 2 && popc(cand[c]) <= n &&
-                        std::find(pool.begin(), pool.end(), c) == pool.end())
-                        pool.push_back(c);
+            for (int c = 0; c < N; ++c)
+                if (!vals[c] && popc(cand[c]) >= 2 && !(cand[c] & ~DS)) pool.push_back(c);
+            if ((int)pool.size() > 24) continue;  // bounded (all-or-none per digit set)
             std::sort(pool.begin(), pool.end());
             const int m = (int)pool.size();
             if (m < n) continue;
             std::vector<int> set;
             std::function<void(int, uint32_t)> rec = [&](int st, uint32_t U) {
                 if ((int)set.size() == n) {
-                    if (popc(U) != n) return;
+                    if (popc(U) != n || one_house(set)) return;
                     std::vector<int> key = set;
                     if (!seen.insert(key).second) return;
                     int z = 0, nz = 0;

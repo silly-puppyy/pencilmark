@@ -141,7 +141,7 @@ def test_line_rule_substeps_and_facts():
 
 def test_wing_substeps():
     card = pencilmark.rate(
-        "053070008000000003001300000060800009040090060200007010000004600500000000700050290",
+        "000000006046800009005070000000105000000000090407009000020007860030600020900018300",  # generated (pencilmark)
         fields=["steps"],
         explain=["substeps"],
     )
