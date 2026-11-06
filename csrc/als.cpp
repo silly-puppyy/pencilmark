@@ -21,7 +21,7 @@ enum { CODE_AXZ = 3101, CODE_AXZ2, CODE_AXY, CODE_DBL, CODE_ALSAIC };
 
 // ------------------------------------------------------------------ ALS --
 // n unsolved cells of one AllDiff group (any group: houses, regions,
-// diagonals, cages) holding n+1 candidates; sizes 1..4.
+// diagonals, cages) holding n+1 candidates; any size up to 8 cells (HoDoKu: no limit).
 void Solver::build_als() {
     if (als_version == version) return;
     als_version = version;

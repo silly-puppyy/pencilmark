@@ -247,6 +247,19 @@ void Solver::fish(MoveBuf& out, int k) {
                     set_pattern(out, m, pc);
                 }
                 set_meta(m, nU, 2 * k, 1, 0, 1, 0, 0, 1, shp);
+                {  // shape: basic (rows against columns), Franken (a box among them), Mutant (rows and columns mixed)
+                    int bt = 0, ct = 0;
+                    for (int i = 0; i < k; ++i) {
+                        bt |= 1 << p.group_line[p.houses[combo[i]]];
+                        ct |= 1 << p.group_line[p.houses[cov[i]]];
+                    }
+                    const int kind = ((bt == 1 && ct == 2) || (bt == 2 && ct == 1)) ? 0
+                                     : (((bt & 2) == 0 && (ct & 1) == 0) || ((bt & 1) == 0 && (ct & 2) == 0)) ? 1
+                                                                                                                 : 2;
+                    m.code = 1000 + 100 * k + 10 * kind;
+                    pm_long xm[XM_N] = {k, 0, 0, kind, 0, v, nU, 0, 0, 0};
+                    std::copy(xm, xm + XM_N, m.xm);
+                }
                 return;
             }
             for (int i = start; i < (int)covers.size(); ++i) {

@@ -54,6 +54,11 @@ What changes for you (details in the entries below):
     type 2 (two cells with the same one extra digit).
   - Aligned Pair Exclusion also counts two cells sharing three digits that see both cells of the pair.
   Bands unchanged on the reference cards; times and difficulties move by up to 0.5 on 32 of 227.
+- More names checked against every cited source (docs/research, 2026-11-07): a Skyscraper's pairs must share a line at
+  their inner ends (else Turbot Fish, HoDoKu / Sudopedia); a chain-found Empty Rectangle needs the box's candidates on
+  one row and one column; an XY-Chain has the same digit at both ends (else AIC); Remote Pairs need 4+ cells; basic
+  X-Wings and Swordfish carry their shape, so Mutant fish are named Mutant (they were called Franken). Reference cards:
+  bands unchanged.
 - Names that match the pattern (checked against sudokuwiki.org's examples by their cited page, and against reference
   finders): a finned X-Wing / Swordfish is no longer named a Franken fish when its eliminations have a plain row /
   column spelling (the fish search lists line fish first; equal moves keep the plainer shape); Empty Rectangles are

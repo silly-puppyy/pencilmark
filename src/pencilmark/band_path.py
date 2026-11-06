@@ -81,13 +81,10 @@ def classify(m, p):
     if n == "MentalChain(direct)" and c in _NAMED_CHAINS:  # a short chain seen without notes
         code, name, band = _X_CHAIN[c]
         return code, name + " (in the head)", band
-    if n in ("X-Wing", "Swordfish") and m.get("pattern"):
-        k = 2 if n == "X-Wing" else 3
-        rows = {p.coords[x][0] for x in m["pattern"]}
-        cols = {p.coords[x][1] for x in m["pattern"]}
-        plain = min(len(rows), len(cols)) <= k and max(len(rows), len(cols)) <= k  # base and cover lines only
+    if n in ("X-Wing", "Swordfish") and c:  # the engine's shape: basic, Franken (a box) or Mutant (rows and columns)
+        plain = not any(w in str(c) for w in ("Franken", "Mutant"))
         code = ("XWG" if n == "X-Wing" else "SWF") if plain else "FRK"
-        return code, n if plain else f"Franken {n}", _shape_band(code)
+        return code, n if plain else str(c), _shape_band(code)
     if n == "LawOfLeftovers" and c in _LEFTOVERS:
         code, name = _LEFTOVERS[c]
         return code, name, _shape_band(code)

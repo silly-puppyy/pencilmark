@@ -682,10 +682,28 @@ void Solver::build_aic(int maxl, bool with_als) {
                 code = n_grp ? CODE_GXC : CODE_XCH;
                 // empty rectangle: 3 links, a grouped strong link inside a box (the box's digit
                 // cells form a row + column cross), the other strong link a conjugate pair
+                // (HoDoKu, Sudopedia, lisudoku: the cross is required; two parallel segments are a grouped X-chain)
+                auto cross_box = [&](int gi, int v) {
+                    std::vector<int> bc;
+                    for (int c : p.groups[gi].cells)
+                        if (!vals[c] && (cand[c] & bit(v))) bc.push_back(c);
+                    for (int a : bc)
+                        for (int b2 : bc) {
+                            const int r = p.coords[a].first, cc = p.coords[b2].second;
+                            bool cross = true, all_r = true, all_c = true;
+                            for (int c : bc) {
+                                cross &= p.coords[c].first == r || p.coords[c].second == cc;
+                                all_r &= p.coords[c].first == r;
+                                all_c &= p.coords[c].second == cc;
+                            }
+                            if (cross && !all_r && !all_c) return true;
+                        }
+                    return false;
+                };
                 if (n_grp && L == 3)
                     for (int i = 1; i <= L; ++i)
                         if (stype[i] == 2 && ssrc[i] >= 0 && ssrc[i] < p.G && p.group_line[ssrc[i]] == 2 &&
-                            (is_grp(chain[i]) || is_grp(chain[i - 1])))
+                            (is_grp(chain[i]) || is_grp(chain[i - 1])) && cross_box(ssrc[i], node[chain[0]].second))
                             code = CODE_ER, tech = EMPTY_RECT;
                 if (L == 3 && s_cnt[2] == 2 && !n_grp) {
                     auto ltype = [&](int a, int b) {
@@ -697,20 +715,21 @@ void Solver::build_aic(int maxl, bool with_als) {
                     int t1 = ltype(chain[0], chain[1]), t2 = ltype(chain[2], chain[3]);
                     int gw = share_group(node[chain[1]].first, node[chain[2]].first);
                     int tw = gw >= 0 ? p.group_line[gw] : 2;
-                    if (t1 == t2 && t1 < 2)
+                    if (t1 == t2 && t1 < 2 && tw == 1 - t1)  // parallel pairs whose inner ends share a line
                         code = CODE_SKY;
                     else if (t1 < 2 && t2 < 2 && t1 != t2 && tw == 2)
                         code = CODE_2SK;
                     else
                         code = CODE_TUR;
                 }
-            } else if (s_cnt[1] == (L + 1) / 2 && w_cell == 0 && w_rel == 0 && !n_grp) {
+            } else if (s_cnt[1] == (L + 1) / 2 && w_cell == 0 && w_rel == 0 && !n_grp &&
+                       node[chain[0]].second == node[chain[L]].second) {  // XY-chain: the same digit at both ends
                 tech = XY_CHAIN;
                 code = CODE_XYC;
                 uint32_t pair0 = cand[node[chain[0]].first];
                 bool same = true;
                 for (int i = 0; i <= L; ++i) same &= cand[node[chain[i]].first] == pair0;
-                if (same) {
+                if (same && (L + 1) / 2 >= 4) {  // remote pairs: 4+ cells (HoDoKu; 2 cells are a naked pair)
                     code = CODE_RMP;
                     tech = REMOTE_PAIRS;
                 }
