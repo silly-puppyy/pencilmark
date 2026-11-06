@@ -462,6 +462,9 @@ struct SolveOptions {
     /// human colouring (cell -> colour id, -1 none): a colour = "same digit" hypothesis seeding ColourAlgebra;
     /// with a solution it is used only where consistent with it, otherwise it is soft (moves flagged)
     std::vector<int> colours;
+    /// stop right after a step that places one of these cells (the fog: a placement that lights new cells ends the
+    /// round; solving on would be thrown away)
+    std::vector<int> stop_cells;
 };
 
 class Solver {

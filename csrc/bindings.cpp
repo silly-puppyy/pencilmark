@@ -450,10 +450,11 @@ static py::tuple py_solve(const Puzzle& p, const std::vector<std::pair<int, int>
                           const std::vector<int>& disabled, const py::object& solution, bool allow_direct,
                           int max_steps, bool assume_unique, bool all_tiers, bool explain,
                           const py::object& colours, const py::object& cand, bool stats, const py::object& labels,
-                          const py::object& idc) {
+                          const py::object& idc, const py::object& stop_cells) {
     Params P = params_from(params);
     const uint64_t phash = params_key(params);
     SolveOptions o;
+    if (!stop_cells.is_none()) o.stop_cells = stop_cells.cast<std::vector<int>>();
     if (!colours.is_none()) o.colours = colours.cast<std::vector<int>>();
     o.all_tiers = all_tiers;
     o.explain = explain;
@@ -719,7 +720,7 @@ PYBIND11_MODULE(_csolver, m) {
           py::arg("solution"), py::arg("allow_direct"), py::arg("max_steps"), py::arg("assume_unique") = true,
           py::arg("all_tiers") = false, py::arg("explain") = false, py::arg("colours") = py::none(),
           py::arg("cand") = py::none(), py::arg("stats") = false, py::arg("labels") = py::none(),
-          py::arg("idc") = py::none());
+          py::arg("idc") = py::none(), py::arg("stop_cells") = py::none());
     m.def("cases_memo_clear", &cases_memo_clear, "forget the cases memo (another puzzle: other houses)");
     m.def("cases_alive", &py_cases_alive, py::arg("puzzle"), py::arg("cand"), py::arg("budget") = 200000,
           "the cases of each cases rule still possible on these candidates: [(spec index, [case indices])]");

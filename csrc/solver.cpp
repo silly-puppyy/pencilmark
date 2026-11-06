@@ -1149,10 +1149,16 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
         compute_empties();
         take_notes(out, (int)empties.size());
     }
+    std::vector<char> stopc(p.N, 0);
+    for (int c : opt.stop_cells)
+        if (c >= 0 && c < p.N) stopc[c] = 1;
     for (int it = 0; it < opt.max_steps; ++it) {
         compute_empties();
         if (empties.empty()) break;
         if (deadline_passed()) break;      // max_seconds: stop with the steps so far (reported as band "Unknown")
+        if (!opt.stop_cells.empty() && !out.steps.empty() && out.steps.back().move.pc >= 0 &&
+            stopc[out.steps.back().move.pc])
+            break;  // stop_cells: the last step placed one
         const int n_empty = (int)empties.size();
         buf.clear();
         std::vector<int> entered;  // search order: stages tried this step (search-policy cost)

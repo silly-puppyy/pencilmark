@@ -731,7 +731,8 @@ class _FogView:
             fogged = len(lit) < N  # nothing hidden: the solver's own call, uniqueness and starting state as given
             st, _ = CB.solve(
                 q, params, disabled=disabled, cpuzzle=cp, cand=mask if (own or out or fogged) else None,
-                max_steps=max_steps - len(out), assume_unique=unique and not fogged, allow_direct=allow_direct, **kw,
+                max_steps=max_steps - len(out), assume_unique=unique and not fogged, allow_direct=allow_direct,
+                stop_cells=reveal, **kw,
             )  # fmt: skip
             moved = False
             for s_ in st:

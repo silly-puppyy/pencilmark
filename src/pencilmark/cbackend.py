@@ -532,6 +532,7 @@ def solve(
     colour_seeds=None,
     cand=None,
     labels=None,
+    stop_cells=None,
 ):
     """Run the C++ solver. Returns (steps, solved) with steps as
     pencilmark.solver.Step objects (alts = feature tuples, move.d set).
@@ -558,6 +559,8 @@ def solve(
     args.append(bool(explain))
     args.append(_colour_list(colour_seeds, puzzle.N))
     kw = _ann_kw(labels)  # regions to find / colour classes: mid-solve
+    if stop_cells:  # stop right after placing one of these cells (the fog route's reveal cells)
+        kw["stop_cells"] = sorted(int(c) for c in stop_cells)
     if SOLVE_STATS is not None:  # diagnostics: per-strategy (ms, calls, hits) summed into SOLVE_STATS
         kw["stats"] = True
     if cand is not None:

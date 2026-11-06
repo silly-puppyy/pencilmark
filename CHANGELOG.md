@@ -26,6 +26,8 @@ What changes for you (details in the entries below):
   (1-27% of them flagged, per check).
 - Fingerprints are the bare SHA-256 digest, 64 lowercase hex digits, without the `sha256:` prefix (puzzle and spec
   fingerprints, `meta.fingerprint`, `meta.generated_from`). The digest itself is unchanged. No alias.
+- Engine: `CB.solve(stop_cells=)` stops right after a step that places one of the cells; the fog card's routes stop at
+  each reveal inside the engine instead of solving the visible puzzle on (one fog card: over 120 s -> 21 s).
 - The fog route ends each round's band route at the first placement that lights new cells instead of solving on and
   discarding the rest: the same routes, up to 125x faster (265 s -> 2 s on one sudoku.coach puzzle).
 - `rate` grades fog-of-war puzzles under the fog: the band and techniques of the fog route (the human route on what
