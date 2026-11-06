@@ -88,14 +88,19 @@ The checks run only when the card is asked for `issues` (or `reject`); a default
 (0-based; for other inputs, of the puzzle as `to_export` writes it); `ids` lists those rules' `id`s where they have one.
 
 Each check can be adjusted with a **quality object** keyed by code. Every entry is an object with `limit` (checks that
-have one) and / or `severity` (`"reject"`, `"warning"`, or `"off"` to turn the check off):
+have one) and / or `severity` (`"reject"`, `"warning"`, or `"off"` to turn the check off).
+
+A **preset** turns on a named set of checks and switches the others off: `{"preset": "standard"}` rejects a rule
+family nobody needs (`decorative`), a puzzle that is mostly given (`trivial`), a solve that needs trial or forcing
+(`trial`), candidate steps that do little (`thin`) and a difficulty outside the published range for its band
+(`unusual`). Checks named next to the preset adjust it: `{"preset": "standard", "thin": {"limit": 0.2}}`.
 
 ```python
 pencilmark.rate(puzzle, fields=["issues", "reject", "warning"],
                 quality={"trivial": {"limit": 0.5}, "trial": {"severity": "reject"}, "tedious": {"severity": "off"}})
 ```
 
-CLI: `--quality trivial.limit=0.5,trial.severity=reject,tedious.severity=off`. The generator spec reserves a `quality` block
+CLI: `--quality trivial.limit=0.5,trial.severity=reject,tedious.severity=off`, or `--quality preset=standard`. The generator spec reserves a `quality` block
 of the same shape for a later version ([Generator spec](generator-spec.md), section 7).
 
 | Code | Severity when asked for | Meaning | Limit (default) |

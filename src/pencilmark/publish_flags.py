@@ -58,6 +58,12 @@ TYPICAL = {
                 "Very Hard": (8.0, 13.9), "Expert": (8.4, 14.2), "Extreme": (13.2, None)},
 }  # fmt: skip
 SEVERITIES = ("reject", "warning", "off")
+# presets (quality {"preset": name}): only these checks are on, at these severities; everything else is off; any check
+# named next to the preset overrides it. standard = a few common-sense rules (decorative, trivial, trial) and two
+# supported by published puzzles (thin: published Hard rarely below 0.26; unusual: outside the published range)
+PRESETS = {
+    "standard": {"decorative": "reject", "trivial": "reject", "trial": "reject", "thin": "reject", "unusual": "reject"},
+}
 
 
 def quality_limits(q=None):
@@ -67,7 +73,14 @@ def quality_limits(q=None):
     out = {k: {"limit": v, "severity": None} for k, v in QUALITY.items()}
     if q is not None and not isinstance(q, dict):
         raise ValueError(f'quality must be an object of checks, e.g. {{"trivial": {{"severity": "off"}}}}, got {q!r}')
-    for k, v in (q or {}).items():
+    q = dict(q or {})
+    if "preset" in q:
+        name = q.pop("preset")
+        if name not in PRESETS:
+            raise ValueError(f"unknown quality preset {name!r}; known: {list(PRESETS)}")
+        for k in out:
+            out[k]["severity"] = PRESETS[name].get(k, "off")
+    for k, v in q.items():
         if k not in QUALITY:
             raise ValueError(f"unknown quality check {k!r}; known: {list(QUALITY)}")
         if not isinstance(v, dict) or not v or set(v) - {"limit", "severity"}:

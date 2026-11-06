@@ -1002,3 +1002,16 @@ def test_fog_route_reveals_and_places_only_what_is_seen():
     res = fog.route(dict(base, rules=base["rules"] + [{"type": "fog", "lit": ["r1c1", "r1c2", "r1c3"]}]))
     assert res["solved"] and res["reveals"] > 0
     assert all(s["place"] is None or s["place"][0] for s in res["steps"])
+
+
+def test_quality_preset():
+    """quality {"preset": "standard"}: only its checks, at reject; a check named next to it overrides it"""
+    from pencilmark.publish_flags import quality_limits
+
+    q = quality_limits({"preset": "standard"})
+    assert {k for k, v in q.items() if v["severity"] != "off"} == {"decorative", "trivial", "trial", "thin", "unusual"}
+    assert q["thin"]["severity"] == "reject" and q["tedious"]["severity"] == "off"
+    q = quality_limits({"preset": "standard", "thin": {"limit": 0.2, "severity": "warning"}, "tedious": {"severity": "warning"}})
+    assert q["thin"] == {"limit": 0.2, "severity": "warning"} and q["tedious"]["severity"] == "warning"
+    with pytest.raises(ValueError):
+        quality_limits({"preset": "lenient"})

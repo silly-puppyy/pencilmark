@@ -174,7 +174,7 @@ def report2(g, k=None):
 
 
 def _quality_arg(text):
-    """--quality "trivial.limit=0.5,trial.severity=reject" -> {"trivial": {"limit": 0.5}, "trial": {"severity": "reject"}}"""
+    """--quality "preset=standard,trivial.limit=0.5" -> {"preset": "standard", "trivial": {"limit": 0.5}}"""
     if not text:
         return {}
     from .publish_flags import quality_limits
@@ -182,6 +182,9 @@ def _quality_arg(text):
     out = {}
     for part in text.split(","):
         k, _, v = part.partition("=")
+        if k.strip() == "preset":
+            out["preset"] = v.strip().lower()
+            continue
         check, dot, key = k.strip().partition(".")
         if not dot or key not in ("limit", "severity"):
             raise ValueError(f"{part!r}: expected check.limit=N or check.severity=reject|warning|off")

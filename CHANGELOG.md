@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Quality presets: `quality={"preset": "standard"}` (`--quality preset=standard`) turns on decorative, trivial, trial,
+  thin and unusual (all reject) and switches the other checks off; checks named next to the preset adjust it.
+- Colouring is on by default (`colouring` 1): the identity layer's colour techniques are part of the human route. A few
+  cards change (golden: 2 of 55 bands Hard -> Medium, difficulty within 0.2 on 5; private 2 bands, 26 difficulties).
 - Publishing check `thin` replaces `spike`: a Medium or harder puzzle whose candidate steps carry less than 25% of
   its effort (singles around one hard step that changes little; Andrew Stuart: "too few candidates removed using
   candidate strategies"). `spike` flagged most published puzzles (83-92% of human-set Medium / Hard): concentrated
