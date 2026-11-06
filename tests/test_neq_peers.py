@@ -18,7 +18,7 @@ BOX5 = [r * 9 + c for r in range(3, 6) for c in range(3, 6)]
 
 
 def _pointing(on):
-    p = pencilmark.load(DOC)
+    p = pencilmark.api._load(DOC)
     cand = [0x1FF] * 81
     for c in BOX5:
         if c not in (30, 31):  # 1 only in r4c4, r4c5

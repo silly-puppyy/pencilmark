@@ -37,8 +37,8 @@ def test_cli_default_format_and_solve():
     assert out == ["Hard\t5.8\t10.6\tX-Wing"]
     sol = run(["solve", "-"], CLASSIC + "\n" + "." * 81 + "\n" + "123\n{bad\n")  # bad lines are reported, not fatal
     assert sol[0] == "".join(map(str, pencilmark.solve(CLASSIC))) and sol[1] == "not unique"
-    assert sol[2] == "error\t3\tValueError: the grid has 3 symbols; expected 81"
-    assert sol[3].startswith("error\t4\tJSONDecodeError")
+    assert sol[2].startswith("error\t3\tFormatError: a plain string has 16, 36, 64, 81") and sol[2].endswith("has 3")
+    assert sol[3].startswith("error\t4\tFormatError: not JSON")
 
 
 def test_cli_parallel_same_output(variants):
@@ -46,10 +46,12 @@ def test_cli_parallel_same_output(variants):
     assert run(["rate", "-", "-j", "2"], puzzles) == run(["rate", "-"], puzzles)
 
 
-def test_cli_json_keeps_meta():
-    exp = pencilmark.to_export(CLASSIC, title="T", author="A")
-    out = json.loads(run(["json", "-"], json.dumps(exp) + "\n")[0])
-    assert out["meta"]["title"] == "T" and out["meta"]["author"] == "A" and out["hash"]
+def test_cli_export_keeps_meta():
+    exp = pencilmark.write.document(CLASSIC, solution=True, describe=True)
+    exp["meta"].update(title="T", author="A")
+    out = json.loads(run(["export", "-"], json.dumps(exp) + "\n")[0])
+    assert out["meta"]["title"] == "T" and out["meta"]["author"] == "A"
+    assert run(["fingerprint", "-"], json.dumps(exp) + "\n") == [pencilmark.fingerprint(exp)]
 
 
 def test_cli_parallel_spawn():
@@ -82,7 +84,7 @@ def test_cli_reads_whole_json_file(tmp_path, variants):
 
 def test_cli_reads_ipuz(tmp_path):
     f = tmp_path / "classic.ipuz"
-    f.write_text(json.dumps(pencilmark.to_ipuz(CLASSIC)))
+    f.write_text(json.dumps(pencilmark.write.ipuz(CLASSIC)))
     assert run(["solve", str(f)], "") == ["".join(map(str, pencilmark.solve(CLASSIC)))]
 
 

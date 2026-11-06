@@ -20,6 +20,16 @@ What changes for you (details in the entries below):
   `rate` grades fog under the fog; shading and unknowns give band Unknown with a `reason` for now (they load,
   validate, solve and count). Errors are only for wrong inputs (unreadable, misread, not unique, no solution).
 
+- Reading and writing, one function per format (no aliases): `pencilmark.read.plain / grid / pencil_marks /
+  candidates / hodoku / sudokuwiki / ipuz / pencilmark / link` each read one format strictly (FormatError otherwise);
+  `pencilmark.write.pencilmark / document / plain / grid / sudokuwiki / ipuz` write one. `rate`, `solve`,
+  `count_solutions`, `describe`, `fingerprint` and the command line take any of them, detected (`read.detect`,
+  `read.auto`), and `rate(format=...)` names it. Gone: `load`, `to_export`, `dumps`, `from_string`, `to_string`,
+  `from_ipuz`, `to_ipuz`, `rules_text` (now in `describe`'s result), the CLI `json` command, and the engine's internal
+  JSON and sample-pack lines as inputs. A written document is kept as given (no longer rebuilt through the engine;
+  fingerprints unchanged). Site links: the host names the reader, no options.
+- Step notation names houses by position for every input ("X-Wing: 3 r58 c68", "in b5"); pencilmark JSON inputs
+  printed group names ("row4 row7 col14").
 - One error family: every error is a `pencilmark.Error` (`FormatError`, `NotSupportedError`, `FetchError`,
   `ReadingMismatch`, `NotUnique`, `NoSolution`, `Undecided`, `GenerationFailed`), exported at the top level. The site
   readers' `SourceError`, `DecodeError` (now `FormatError`), `UnsupportedPuzzle` (now `NotSupportedError`, `.elements`

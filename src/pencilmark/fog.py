@@ -604,14 +604,14 @@ class _FogView:
     puzzle of a state. Shared by the band route (route) and the card's routes (solve, a CB.solve that sees the fog)."""
 
     def __init__(self, puzzle, rules_text=None):
-        from . import api, inputs
+        from . import api
         from . import cbackend as CB
         from .exchange.write import write as write_doc
+        from .read import auto
 
         if rules_text is None and not hasattr(puzzle, "coords"):
             try:
-                obj = inputs.read(puzzle)
-                obj = obj.get("puzzle", obj) if isinstance(obj.get("puzzle"), dict) else obj
+                obj = puzzle if isinstance(puzzle, dict) else auto(puzzle)
                 rules_text = (obj.get("meta") or {}).get("rules_text") or ""
             except Exception:  # noqa: BLE001 -- the load below reports a bad input
                 rules_text = ""
@@ -626,7 +626,7 @@ class _FogView:
         )
         m_ = CAGE_SIZE.search(t)
         self.cage_size = (int(m_.group(1)) if m_.group(1).isdigit() else _WORDS[m_.group(1).lower()]) if m_ else None
-        self.p = p = api.load(puzzle)
+        self.p = p = api._load(puzzle)
         self.fog = getattr(p, "fog", None)
         if not self.fog:
             raise ValueError("the puzzle has no fog rule")
@@ -659,7 +659,7 @@ class _FogView:
                 vis["rules"].append(
                     {"type": "cage", "cells": [_name(i // cols, i % cols) for i in cs1], "sum": c["cases"][0]["total"]}
                 )
-        q = api.load(vis)
+        q = api._load(vis)
         qdom = list(
             getattr(q, "domains", None) or ()
         )  # the visible cell rules (parity squares, ...) narrow the candidates
@@ -723,7 +723,7 @@ class _FogView:
             kw.pop("cpuzzle", None)
             # as CB.solve expects a mid-solve state: the puzzle with its ORIGINAL givens, compiled once, and the filled
             # cells as the state (the engine prices from what was given, not from what was placed)
-            q0 = api.load(dict(q._fog_vis, givens=self.givens0))
+            q0 = api._load(dict(q._fog_vis, givens=self.givens0))
             q0.constraints = q.constraints  # with this round's hidden-content cases
             cp = CB.to_cpuzzle(q0)
             q0.givens = {c: v for c, v in enumerate(givens) if v}

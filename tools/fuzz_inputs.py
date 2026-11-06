@@ -159,7 +159,7 @@ def fpuzzles_case(seed):
         lzstring.LZString().compressToBase64(json.dumps(d)), safe=""
     )
     try:
-        pm.load(FP.to_puzzle(url, rules_text="Normal sudoku rules apply.", fetch=False))
+        pm.api._load(FP.to_puzzle(url, rules_text="Normal sudoku rules apply.", fetch=False))
         return seed, "accepted", None
     except (Error, pm.FormatError, pm.NotSupportedError, ValueError):
         return seed, "clear error", None

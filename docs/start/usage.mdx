@@ -96,16 +96,18 @@ takes over if installed (`pip install "pencilmark[verify]"`), otherwise `solve` 
 ### Convert and check
 
 ```python
-exp = pencilmark.to_export(puzzle, title="Escargot", author="Arto Inkala")
-text = pencilmark.dumps(exp)
-pencilmark.validate(exp)
+doc = pencilmark.write.document(puzzle, solution=True, describe=True)
+doc["meta"].update(title="Escargot", author="Arto Inkala")
+text = pencilmark.write.pencilmark(doc)
+pencilmark.validate(doc)
 ```
 
-`to_export` gives the `pencilmark-puzzle` dict, with its solution and with `meta.type` and `meta.rules_text` filled in from
-`describe` when they are empty; `dumps` writes it in the canonical layout, one rule per line; `validate` raises
-`FormatError` with the exact problem. `describe(puzzle)` names the variant and its rules, `fingerprint(puzzle)` gives
-a fingerprint of the rules and grid (not the metadata), and `load(puzzle)` the engine's own object.
-`from_string`, `to_string`, `from_ipuz` and `to_ipuz` convert to and from [other formats](../formats/other-formats.md).
+`write.document` gives the puzzle as a pencilmark JSON dict, here with its solution and with `meta.type` and
+`meta.rules_text` filled in from `describe` when they are empty; `write.pencilmark` writes it in the canonical layout,
+one rule per line; `validate` raises `FormatError` with the exact problem. `describe(puzzle)` names the variant and its
+rules, `fingerprint(puzzle)` gives a fingerprint of the rules and grid (not the metadata).
+`pencilmark.read.<format>` and `pencilmark.write.<format>` read and write the [other formats](../formats/other-formats.md)
+one at a time.
 
 ### Generate
 

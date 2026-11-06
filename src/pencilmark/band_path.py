@@ -774,18 +774,19 @@ def _cells_notation(p, cells):
 
 def _unit_notation(p, gis):
     """houses in the solvers' notation: r58, c68, b9 (boxes numbered in reading order); other regions by name"""
-    boxes = [i for i, g in enumerate(p.groups) if str(g.name).startswith("b")]
+    boxes = [i for i, g in enumerate(p.groups) if g.kind == "box"]
     out, rows, cols = [], [], []
     for gi in gis:
-        nm = str(p.groups[gi].name)
-        if nm[:1] == "r" and nm[1:].isdigit():
-            rows.append(int(nm[1:]))
-        elif nm[:1] == "c" and nm[1:].isdigit():
-            cols.append(int(nm[1:]))
+        g = p.groups[gi]
+        rc = {p.coords[c] for c in g.cells}
+        if g.kind == "row" and len({r for r, _ in rc}) == 1:
+            rows.append(next(iter(rc))[0] + 1)
+        elif g.kind == "col" and len({c for _, c in rc}) == 1:
+            cols.append(next(iter(rc))[1] + 1)
         elif gi in boxes:
             out.append(f"b{boxes.index(gi) + 1}")
         else:
-            out.append(nm)
+            out.append(str(g.name))
     join = lambda xs: "".join(map(str, sorted(xs))) if p.D <= 9 else ",".join(map(str, sorted(xs)))
     return " ".join(([f"r{join(rows)}"] if rows else []) + ([f"c{join(cols)}"] if cols else []) + out)
 
@@ -820,7 +821,7 @@ def step_notation(p, st, just=None):
         pat = " ".join(parts)
     name = st["name"]
     if st.get("code") == "PPR" and j.get("base_units"):  # one step is pointing (box -> line) or claiming (line -> box)
-        boxes = {i for i, g in enumerate(p.groups) if str(g.name).startswith("b")}
+        boxes = {i for i, g in enumerate(p.groups) if g.kind == "box"}
         bu = j["base_units"][0]
         name = "Locked Candidates Type 1 (Pointing)" if bu in boxes else "Locked Candidates Type 2 (Claiming)"
         digs = j.get("digits") or []

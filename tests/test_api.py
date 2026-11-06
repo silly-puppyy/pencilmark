@@ -35,15 +35,16 @@ def test_classic_se_rating():
 def test_deterministic_and_input_forms(tmp_path):
     a = pencilmark.rate(CLASSIC)
     assert pencilmark.rate(CLASSIC) == a
-    exp = pencilmark.to_export(CLASSIC, title="t")
+    exp = pencilmark.write.document(CLASSIC, solution=True, describe=True)
+    exp["meta"]["title"] = "t"
     assert exp["format"] == "pencilmark-puzzle" and exp["givens"][4] == 4 and exp["givens"][0] == 0
     assert exp["meta"]["title"] == "t" and exp["meta"]["type"] == "Sudoku"  # empty type / rules_text filled by describe
     assert pencilmark.rate(exp) == a
-    assert pencilmark.rate(json.dumps({"numbers": CLASSIC})) == a
+    with pytest.raises(pencilmark.FormatError):  # the engine's own JSON is not a public format
+        pencilmark.rate(json.dumps({"numbers": CLASSIC}))
     f = tmp_path / "p.json"
     f.write_text(json.dumps(exp), encoding="utf-8")
     assert pencilmark.rate(str(f)) == a
-    assert pencilmark.rate({"puzzle": exp}) == a
 
 
 def test_steps_and_se():
@@ -100,7 +101,7 @@ def test_solve_matches_cpsat(variants):
     from pencilmark import cpsat_verify as V
 
     for pz in [CLASSIC] + [v["puzzle"] for v in variants]:
-        p = pencilmark.load(pz)
+        p = pencilmark.api._load(pz)
         assert V.cpsat_solutions(p, limit=2) == [pencilmark.solve(pz)]
 
 
@@ -140,14 +141,15 @@ def test_rate_without_ortools(variants):
 
 
 def test_meta_kept_and_ignored_for_rating():
-    exp = pencilmark.to_export(
-        CLASSIC, meta={"author": "someone", "x-custom": 1}, title="T", date="2026-10-25", describe=False
-    )
+    exp = pencilmark.write.document(CLASSIC, solution=True)
+    exp["meta"] = {"title": "T", "author": "someone", "date": "2026-10-25", "x-custom": 1}
     assert exp["meta"] == {"title": "T", "author": "someone", "date": "2026-10-25", "x-custom": 1}
     assert exp["format_version"] == 1 and exp["rules"] == [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}]
-    again = pencilmark.to_export(exp, describe=False)  # metadata already in the input is kept
+    again = pencilmark.write.document(exp, solution=True)  # metadata already in the input is kept
     assert again["meta"] == exp["meta"] and again["givens"] == exp["givens"]
-    filled = pencilmark.to_export(exp)  # an empty meta.type / rules_text is filled, nothing overwritten
+    filled = pencilmark.write.document(
+        exp, solution=True, describe=True
+    )  # an empty meta.type / rules_text is filled, nothing overwritten
     assert filled["meta"]["type"] == "Sudoku" and filled["meta"]["author"] == "someone"
     assert pencilmark.rate(exp) == pencilmark.rate(CLASSIC)
 
@@ -200,11 +202,11 @@ def test_uniqueness_search_time_bound():
     from pencilmark import cbackend as CB
     from pencilmark import cpsat_verify as V
 
-    sols, decided = V.decide(pencilmark.load(CLASSIC), time_limit=5.0)
+    sols, decided = V.decide(pencilmark.api._load(CLASSIC), time_limit=5.0)
     assert decided and len(sols) == 1 and not CB._C.deadline_on()
     CB._C.set_deadline(100.0)
     try:
-        V.decide(pencilmark.load(CLASSIC), time_limit=5.0)
+        V.decide(pencilmark.api._load(CLASSIC), time_limit=5.0)
         assert CB._C.deadline_on()  # rate()'s max_seconds stays in force
     finally:
         CB._C.set_deadline(0.0)
@@ -244,7 +246,7 @@ def test_timing_fields():
 def test_text_grids_and_pencilmarks():
     """docs/formats/other-formats.md: text grids with separators, trailing comments, pencil-mark grids, 729-character candidate strings"""
     s = "....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9......."
-    grid = pencilmark.to_string(s, "grid")
+    grid = pencilmark.write.grid(s)
     assert grid.count("\n") == 10 and "|" in grid
     framed = (
         "*-----------*\n"
@@ -258,19 +260,19 @@ def test_text_grids_and_pencilmarks():
         + "\n*-----------*"
     )
     for text in (grid, framed, s + "  # rated 5.9", s + ";5.9"):
-        assert pencilmark.to_string(pencilmark.from_string(text)) == s, text
+        assert pencilmark.write.plain(pencilmark.read.auto(text)) == s, text
     assert pencilmark.rate(framed)["band"] == pencilmark.rate(s)["band"]
     blank = s[:45] + "." * 9 + s[54:]
     dashes = "\n".join(blank[r * 9 : r * 9 + 9].replace(".", "-") for r in range(9))
-    assert pencilmark.to_string(pencilmark.from_string(dashes)) == blank  # a row of '-' empties is not a separator
-    assert pencilmark.from_string("*********\n" * 8 + "123456789")["givens"][:9] == [0] * 9
-    d = pencilmark.from_string(" ".join(["5", "1234", "6789"] + ["123456789"] * 78))
+    assert pencilmark.write.plain(pencilmark.read.auto(dashes)) == blank  # a row of '-' empties is not a separator
+    assert pencilmark.read.auto("*********\n" * 8 + "123456789")["givens"][:9] == [0] * 9
+    d = pencilmark.read.auto(" ".join(["5", "1234", "6789"] + ["123456789"] * 78))
     assert d["givens"][:3] == [5, 0, 0] and d["candidates"] == {"r1c2": [1, 2, 3, 4], "r1c3": [6, 7, 8, 9]}
     body = "".join("." * (i % 9) + str(i % 9 + 1) + "." * (8 - i % 9) if i % 2 == 0 else "123456789" for i in range(81))
-    d = pencilmark.from_string(body)
+    d = pencilmark.read.auto(body)
     assert d["givens"][:4] == [1, 0, 3, 0] and "candidates" not in d
-    d = pencilmark.from_string(":0901:4:" + s + ":412 413 512::r1c2 r1c3:")  # HoDoKu library line, removed candidates
-    assert d["givens"] == pencilmark.from_string(s)["givens"] and d["candidates"] == {
+    d = pencilmark.read.auto(":0901:4:" + s + ":412 413 512::r1c2 r1c3:")  # HoDoKu library line, removed candidates
+    assert d["givens"] == pencilmark.read.auto(s)["givens"] and d["candidates"] == {
         "r1c2": [1, 2, 3, 6, 7, 8, 9],
         "r1c3": [1, 2, 3, 5, 6, 7, 8, 9],
     }
@@ -294,14 +296,18 @@ def test_load_refuses_dicts_that_are_not_puzzles():
     """another app's dict, or a dict with no grid, size or rules, is refused instead of read as an empty 9x9 (8fbc403)"""
     for d in ({}, {"title": "x"}, {"foo": 1}, {"kind": ["http://ipuz.org/sudoku#1"], "puzzle": [[0] * 9] * 9}):
         with pytest.raises(ValueError, match="not a puzzle"):
-            pencilmark.load(d)
+            pencilmark.api._load(d)
 
 
 def test_ipuz_round_trip():
     """docs/formats/other-formats.md: from_ipuz reads what to_ipuz writes, with and without the embedded puzzle; candidates are refused"""
     import copy
 
-    base = pencilmark.to_export("....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9.......")
+    base = pencilmark.write.document(
+        "....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9.......",
+        solution=True,
+        describe=True,
+    )
     cn = lambda r, c: f"r{r + 1}c{c + 1}"
     killer = copy.deepcopy(base)
     killer["rules"].append({"type": "cage", "cells": ["r1c1", "r1c2"], "sum": 7})
@@ -317,12 +323,12 @@ def test_ipuz_round_trip():
         {"type": "box", "cells": [cn(r, c) for r in range(9) for c in range(9) if lab[r][c] == b]} for b in range(9)
     ]
     for doc in (base, killer, windoku, jigsaw):
-        ip = pencilmark.to_ipuz(doc)
-        assert pencilmark.from_ipuz(ip) == doc
+        ip = pencilmark.write.ipuz(doc)
+        assert pencilmark.read.ipuz(ip) == doc
         bare = {k: v for k, v in ip.items() if not k.startswith("io.")}
-        assert pencilmark.fingerprint(pencilmark.from_ipuz(json.dumps(bare))) == pencilmark.fingerprint(doc)
+        assert pencilmark.fingerprint(pencilmark.read.ipuz(json.dumps(bare))) == pencilmark.fingerprint(doc)
     with pytest.raises(pencilmark.NotSupportedError):
-        pencilmark.to_ipuz(pencilmark.from_string(" ".join(["5", "1234"] + ["123456789"] * 79)))
+        pencilmark.write.ipuz(pencilmark.read.auto(" ".join(["5", "1234"] + ["123456789"] * 79)))
 
 
 def test_issue_rules_follow_the_input_file():
@@ -337,12 +343,12 @@ def test_issue_rules_follow_the_input_file():
         for c in range(7)
         if v(r, c) < v(r, c + 1) < v(r, c + 2)
     )
-    doc = pencilmark.to_export(s)
+    doc = pencilmark.write.document(s, solution=True, describe=True)
     doc["rules"] = [{"type": "line", "kind": "thermo", "cells": th, "id": "T1", "label": "t"}] + doc["rules"]
     # the thermo is not needed: "decorative" if no step uses it, "redundant" if some step does
     dec = [i for i in pencilmark.rate(doc, fields=["issues"])["issues"] if i["code"] in ("decorative", "redundant")]
     assert dec and dec[0]["rules"] == [0] and dec[0]["ids"] == ["T1"], dec
-    out = pencilmark.to_export(doc)["rules"]
+    out = pencilmark.write.document(doc, solution=True, describe=True)["rules"]
     assert out[0]["type"] == "line" and out[0]["id"] == "T1" and out[0]["label"] == "t", out
 
 
@@ -377,7 +383,7 @@ def test_to_export_uses_a_known_solution(monkeypatch):
     (2026-11-01); an Undecided search leaves the solution out"""
     from pencilmark import api
 
-    p = pencilmark.load(CLASSIC)
+    p = pencilmark.api._load(CLASSIC)
     want = pencilmark.solve(CLASSIC)
     p._pm_solution = list(want)
 
@@ -385,8 +391,8 @@ def test_to_export_uses_a_known_solution(monkeypatch):
         raise pencilmark.Undecided("search limit")
 
     monkeypatch.setattr(api, "solve", undecided)
-    assert pencilmark.to_export(p)["solution"] == list(want)
-    assert "solution" not in pencilmark.to_export(CLASSIC)
+    assert pencilmark.write.document(p, solution=True, describe=True)["solution"] == list(want)
+    assert "solution" not in pencilmark.write.document(CLASSIC, solution=True, describe=True)
 
 
 def test_params_follow_in_place_setting_changes():

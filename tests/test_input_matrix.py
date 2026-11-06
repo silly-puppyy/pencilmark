@@ -1,5 +1,5 @@
 """Every offline input form, read exactly as recorded in tests/fixtures/input_matrix.jsonl: the safety net for moving
-the input readers into one registry (step 6 of the restructure). Each case records what pencilmark.load() and the CLI's
+the input readers into one registry (step 6 of the restructure). Each case records what pencilmark.api._load() and the CLI's
 line reader make of one input (the canonical pencilmark-puzzle text, or the error). Nothing is fetched or solved.
 Regenerate (only when a change is meant to alter it):
     python tests/test_input_matrix.py --write
@@ -32,7 +32,7 @@ def inputs():
     """(name, input) pairs; built here so the fixture holds names, not payloads"""
     import pencilmark
 
-    doc = pencilmark.from_string(CLASSIC)
+    doc = pencilmark.read.auto(CLASSIC)
     lz = lzstring.LZString().compressToBase64(json.dumps(_fp(CLASSIC, [(10, ["R1C1", "R1C2"])])))
     grid = "\n".join(" ".join(CLASSIC[r * 9 : r * 9 + 9]) for r in range(9))
     return [
@@ -44,13 +44,13 @@ def inputs():
         ("plain letters", "abc"),
         ("empty", ""),
         ("text grid", grid),
-        ("packed", pencilmark.to_string(CLASSIC, "sudokuwiki")),
+        ("packed", pencilmark.write.sudokuwiki(CLASSIC)),
         ("pencilmark-puzzle dict", doc),
         ("pencilmark-puzzle text", json.dumps(doc)),
         ("sample-pack line", {"puzzle": doc, "grade": {"difficulty": 1.0}}),
         ("puzzle json numbers", {"numbers": CLASSIC}),
-        ("ipuz dict", pencilmark.to_ipuz(CLASSIC)),
-        ("ipuz text", json.dumps(pencilmark.to_ipuz(CLASSIC))),
+        ("ipuz dict", pencilmark.write.ipuz(CLASSIC)),
+        ("ipuz text", json.dumps(pencilmark.write.ipuz(CLASSIC))),
         ("fpuzzles link", "https://f-puzzles.com/?load=" + urllib.parse.quote(lz, safe="")),
         ("fpuzzles payload", "fpuzzles" + lz),
         ("sudokupad fpuzzles link", "https://sudokupad.app/fpuzzles" + lz),
@@ -62,7 +62,6 @@ def inputs():
 
 def record(name, x):
     import pencilmark
-    from pencilmark import __main__ as CLI
     from pencilmark import exchange as X
 
     out = {"input": name}
@@ -70,13 +69,11 @@ def record(name, x):
     def canon(fn):
         try:
             p = fn()
-            return pencilmark.dumps(X.write(p), pretty=False)
+            return X.dumps(X.write(p), pretty=False)
         except Exception as e:
             return f"{type(e).__name__}: {e}"[:300]
 
-    out["load"] = canon(lambda: pencilmark.load(x))
-    if isinstance(x, str):
-        out["cli"] = canon(lambda: pencilmark.load(CLI._line_puzzle(x)))
+    out["read"] = canon(lambda: pencilmark.api._load(pencilmark.read.auto(x)))  # what rate and the command line read
     return out
 
 

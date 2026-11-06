@@ -81,8 +81,8 @@ def _record(pencilmark, cbackend, item):
                 for s in pencilmark.rate(puzzle, fields=["steps"], explain="notation")["steps"]
             ]
         out["describe"] = pencilmark.describe(puzzle)
-        out["export"] = pencilmark.dumps(pencilmark.to_export(puzzle))
-        out["engine_input"] = _digest(cbackend._cpuzzle_args(pencilmark.load(puzzle)))
+        out["export"] = pencilmark.write.pencilmark(puzzle, solution=True, describe=True)
+        out["engine_input"] = _digest(cbackend._cpuzzle_args(pencilmark.api._load(puzzle)))
     except LimitReached as e:
         return {"name": name, "limit_reached": str(e)}
     except Exception as e:  # an error is an output too (NotUnique, NoSolution, FormatError, ...)

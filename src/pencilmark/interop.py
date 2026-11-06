@@ -59,38 +59,92 @@ _SEPARATOR_LINE = re.compile(r"[\s|*]*[\-+=][\s\-+=|*]*")  # needs a - + or =: "
 _COMMENT = re.compile(r"\s*[#;].*$")
 
 
-def from_string(s, symbols=None):
-    """plain classic string, text grid, pencil-mark grid, 729-character candidate string or sudokuwiki packed string ->
-    pencilmark-puzzle dict (docs/formats/other-formats.md)"""
+def text_form(s):
+    """the text form of s: "sudokuwiki", "hodoku", "pencil_marks", "candidates", "grid" (rows on lines), "plain" (one
+    string, maybe followed by a comment), or None"""
     s = s or ""
     t = re.sub(r"\s+", "", s)
     m = _PACKED.fullmatch(t)
     if m and len(m.group(4)) == WIDTH[m.group(1)] * int(m.group(2)) ** 2:
-        return _from_sudokuwiki(m.group(1), int(m.group(2)), m.group(3), m.group(4).lower())
-    if symbols is None and s.lstrip().startswith(":") and s.count(":") >= 4:
-        return _from_hodoku_library(s.strip())
-    if symbols is None:
-        lines = [_COMMENT.sub("", ln) for ln in s.splitlines()]
-        rows = [ln for ln in lines if ln.strip() and not _SEPARATOR_LINE.fullmatch(ln)]
-        tokens = [tok for ln in rows for tok in ln.replace("|", " ").split()]
-        if len(tokens) in PJ.SIZES and any(len(tok) > 1 for tok in tokens) and all(tok.isalnum() for tok in tokens):
-            return _from_pencilmarks(tokens)
+        return "sudokuwiki"
+    if s.lstrip().startswith(":") and s.count(":") >= 4:
+        return "hodoku"
+    if _pencil_tokens(s) is not None:
+        return "pencil_marks"
+    body = _grid_body(s)
+    if len(body) == 729 and re.fullmatch(r"[0-9.]+", body):
+        return "candidates"
+    rows = [ln for ln in s.splitlines() if ln.strip()]
+    if len(body) in PJ.SIZES:
+        return "grid" if len(rows) > 1 else "plain"
+    first = s.split()[0] if s.split() else ""
+    if len(first) in PJ.SIZES and len(first) >= 16 and len(rows) == 1:  # "<81 chars> rating / comment"
+        return "plain"
+    return None
+
+
+def _pencil_tokens(s):
+    lines = [_COMMENT.sub("", ln) for ln in s.splitlines()]
+    rows = [ln for ln in lines if ln.strip() and not _SEPARATOR_LINE.fullmatch(ln)]
+    tokens = [tok for ln in rows for tok in ln.replace("|", " ").split()]
+    if len(tokens) in PJ.SIZES and any(len(tok) > 1 for tok in tokens) and all(tok.isalnum() for tok in tokens):
+        return tokens
+    return None
+
+
+def _grid_body(s):
+    lines = [_COMMENT.sub("", ln) for ln in s.splitlines()]
+    rows = [ln for ln in lines if ln.strip() and not _SEPARATOR_LINE.fullmatch(ln)]
+    body = "".join(re.sub(r"[\s|]+", "", ln) for ln in rows)
+    if (
+        len(body) not in PJ.SIZES and len(body) != 729
+    ):  # a row of '-' empties looks like a separator: keep bare dash rows
+        rows = [ln for ln in lines if ln.strip() and not (_SEPARATOR_LINE.fullmatch(ln) and re.search(r"[+=|*]", ln))]
         body = "".join(re.sub(r"[\s|]+", "", ln) for ln in rows)
-        if (
-            len(body) not in PJ.SIZES and len(body) != 729
-        ):  # a row of '-' empties looks like a separator: keep bare dash rows
-            rows = [
-                ln for ln in lines if ln.strip() and not (_SEPARATOR_LINE.fullmatch(ln) and re.search(r"[+=|*]", ln))
-            ]
-            body = "".join(re.sub(r"[\s|]+", "", ln) for ln in rows)
-        if len(body) == 729 and re.fullmatch(r"[0-9.]+", body):
-            return _from_candidate_string(body)
-        if len(body) in PJ.SIZES:
-            return _from_plain(body.replace("*", "."))
-        first = s.split()[0] if s.split() else ""
-        if len(first) in PJ.SIZES and len(first) >= 16 and len(s.splitlines()) == 1:  # "<81 chars> rating / comment"
-            return _from_plain(first)
-    return _from_plain(t, symbols)
+    return body
+
+
+def _need(s, form):
+    got = text_form(s)
+    if got != form:
+        raise FormatError(
+            f"not a {form.replace('_', ' ')} puzzle" + (f" (it reads as {got.replace('_', ' ')})" if got else "")
+        )
+
+
+def read_sudokuwiki(s):
+    _need(s, "sudokuwiki")
+    m = _PACKED.fullmatch(re.sub(r"\s+", "", s))
+    return _from_sudokuwiki(m.group(1), int(m.group(2)), m.group(3), m.group(4).lower())
+
+
+def read_hodoku(s):
+    _need(s, "hodoku")
+    return _from_hodoku_library(s.strip())
+
+
+def read_pencil_marks(s):
+    _need(s, "pencil_marks")
+    return _from_pencilmarks(_pencil_tokens(s))
+
+
+def read_candidates(s):
+    _need(s, "candidates")
+    return _from_candidate_string(_grid_body(s))
+
+
+def read_grid(s):
+    _need(s, "grid")
+    return _from_plain(_grid_body(s).replace("*", "."))
+
+
+def read_plain(s, symbols=None):
+    """one string of D x D characters, maybe followed by a comment; symbols: the symbol of each digit in order"""
+    if symbols is not None:
+        return _from_plain(re.sub(r"\s+", "", s), symbols)
+    _need(s, "plain")
+    body = _grid_body(s)
+    return _from_plain(body.replace("*", ".") if len(body) in PJ.SIZES else s.split()[0])
 
 
 def _from_hodoku_library(line):
@@ -312,9 +366,9 @@ def _cages_from_colours(D, col, clue, ops):
 
 # ------------------------------------------------------------------------------------------------------------ writing
 def _puzzle(x):
-    from .api import load
+    from .api import _load
 
-    return load(x)
+    return _load(x)
 
 
 def to_string(puzzle, form="plain"):
@@ -563,14 +617,14 @@ IPUZ_NS = "io.github.silly-puppyy.pencilmark"
 def to_ipuz(puzzle):
     """pencilmark-puzzle (or any accepted input) -> ipuz 2 dict, for classic / Latin square / diagonal / windoku / jigsaw /
     killer and their combinations; refuses everything else with NotSupportedError."""
-    from .api import to_export
+    from .write import document
 
     doc = (
         puzzle
         if isinstance(puzzle, dict)
         and puzzle.get("format") == FORMAT
         and puzzle.get("format_version") == FORMAT_VERSION
-        else to_export(puzzle)
+        else document(puzzle, solution=True)
     )
     from .exchange import validate
 

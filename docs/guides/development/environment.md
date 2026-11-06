@@ -71,7 +71,7 @@ import pencilmark
 from pencilmark import api, band_path, cbackend, _csolver
 
 puzzle = "....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9......."
-p = pencilmark.load(puzzle)
+p = api._load(puzzle)                                   # the engine's own puzzle object (internal)
 P = api._params("human")
 
 route = band_path.band_path(p, P)                       # the first route: easy to hard, simplest technique first

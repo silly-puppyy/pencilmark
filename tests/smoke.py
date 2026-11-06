@@ -13,7 +13,7 @@ CLASSIC = "....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..
 card = pencilmark.rate(CLASSIC)
 assert (card["band"], card["difficulty"]) == ("Hard", 5.9), card
 assert len(pencilmark.solve(CLASSIC)) == 81
-doc = pencilmark.to_export(CLASSIC)
+doc = pencilmark.write.document(CLASSIC, solution=True, describe=True)
 pencilmark.validate(doc)
 assert pencilmark.fingerprint(doc) == pencilmark.fingerprint(CLASSIC)
 v = json.load(open(Path(__file__).parent / "fixtures" / "variants.json", encoding="utf-8"))[0]

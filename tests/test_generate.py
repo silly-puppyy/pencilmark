@@ -36,7 +36,7 @@ def spec(D=9, box=None, where=None, rules=(), givens=None, symmetry=None, seed=N
 
 
 def unique(puzzle):
-    p = pencilmark.load(puzzle)
+    p = pencilmark.api._load(puzzle)
     sols = V.solutions(p, limit=2, time_limit=30)
     assert sols is not None, "uniqueness undecided"
     return len(sols) == 1 and list(sols[0]) == [v for v in puzzle["solution"] if v is not None]
@@ -310,7 +310,7 @@ def test_layout_generation():
         # a butterfly killer's card said 7.9, rate() 8.9)
         card = pencilmark.rate(r["puzzle"])
         assert (r["card"]["difficulty"], r["card"]["band"]) == (card["difficulty"], card["band"])
-        assert PJ.from_json({"layout": layout}).coords == pencilmark.load(r["puzzle"]).coords
+        assert PJ.from_json({"layout": layout}).coords == pencilmark.api._load(r["puzzle"]).coords
 
 
 @pytest.mark.slow  # about 20 s

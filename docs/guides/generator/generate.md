@@ -37,7 +37,7 @@ spec = {
 
 ```python
 r = pencilmark.generate(spec)
-print(pencilmark.to_string(r["puzzle"], "plain"))
+print(pencilmark.write.plain(r["puzzle"]))
 card = r["card"]
 print(card["band"], card["difficulty"], card["time"], [c["chip"] for c in card["contains"]])
 ```
@@ -78,11 +78,11 @@ spec = {
     "limits": {"time": 300, "seed": 3},
 }
 r = pencilmark.generate(spec)
-print(pencilmark.dumps(r["puzzle"]))
+print(pencilmark.write.pencilmark(r["puzzle"]))
 ```
 
 This asks for a 6×6 with exactly two thermometers, one to three Kropki dots and four to eight givens, graded Medium.
-The puzzle in [Write a variant puzzle file](../grader/variant-file.mdx) came from a request like this one. `pencilmark.dumps`
+The puzzle in [Write a variant puzzle file](../grader/variant-file.mdx) came from a request like this one. `pencilmark.write.pencilmark`
 writes the puzzle in the format's canonical layout, one rule per line.
 
 A template can also limit the shape of what it places: `"length": [8, null]` asks for lines of eight cells or more,

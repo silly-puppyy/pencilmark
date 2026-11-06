@@ -38,7 +38,7 @@ Add a thermometer to a classic, along three cells whose digits happen to increas
 ```python
 import pencilmark
 
-doc = pencilmark.to_export("....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9.......")
+doc = pencilmark.read.plain("....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9.......")
 doc["rules"].append({"type": "line", "kind": "thermo", "cells": ["r1c1", "r1c2", "r1c3"], "id": "extra-thermo"})
 pencilmark.rate(doc, fields=["issues", "reject"])["issues"]
 ```

@@ -11,7 +11,7 @@ from pencilmark import solver as S
 
 
 def _route(**ovr):
-    p = api.load(api.from_string(GIVENS))
+    p = api._load(GIVENS)
     steps, ok = CB.solve(p, dict(GM.default().price, **ovr))
     assert ok
     return [(s.move.place, round(s.move.d, 9)) for s in steps]
@@ -52,7 +52,7 @@ def test_spot_sampling_is_reproducible():
 def test_card_difficulty_from_bottleneck_rollouts():
     from pencilmark import card_score as CS
 
-    p = api.load(api.from_string(GIVENS))
+    p = api._load(GIVENS)
     m = GM.default()
     saved = dict(m.score)
     try:
@@ -70,7 +70,7 @@ def test_card_difficulty_from_bottleneck_rollouts():
 def test_card_reads_one_price_first_route():
     from pencilmark import card_score as CS
 
-    p = api.load(api.from_string(GIVENS))
+    p = api._load(GIVENS)
     m = GM.default()
     saved = dict(m.score)
     try:
@@ -88,7 +88,7 @@ def test_card_reads_one_price_first_route():
 
 
 def test_notes_live_writes_position_notes_only():
-    p = api.load(api.from_string(GIVENS))
+    p = api._load(GIVENS)
     P = dict(GM.default().price, snyder_max=3)
     assert P.get("notes_live")  # the trace's note model includes them
     a, _ = CB.solve(p, dict(P, notes_live=False))

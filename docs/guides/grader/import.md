@@ -32,7 +32,7 @@ pencilmark.rate(grid)["band"]       # 'Hard'
 ```
 
 The command line reads one puzzle per line, so give it the 81-character form there:
-`pencilmark.to_string(grid, "plain")`.
+`pencilmark.write.plain(grid)`.
 
 ## sudokuwiki.org strings
 
@@ -44,7 +44,7 @@ $ echo 'S9Bepepepep04ep08ep03ep06epepep08epep0209ep0806ep05epep01020305epepepepe
 Hard	5.8	10.6	X-Wing
 ```
 
-`pencilmark.to_string(puzzle, "sudokuwiki")` writes one, to open a puzzle in their solver.
+`pencilmark.write.sudokuwiki(puzzle)` writes one, to open a puzzle in their solver.
 
 ## Links
 
@@ -117,17 +117,6 @@ Not read:
 - **Several grids on one canvas**, unless the setter drew the houses explicitly.
 - **Shading, loop and path genres.**
 
-For those, `infer=True` lets the reader try the possible meanings of each unexplained element and keep the reading
-under which the puzzle has exactly one solution (and agrees with its embedded solution, when the link has one); the
-rules text breaks ties. It is slower, and opt-in because it is an inference, however well checked:
-
-```python
-from pencilmark import sources
-
-puzzle = sources.load("https://sudokupad.app/…", infer=True)   # a puzzle JSON dict
-card = pencilmark.rate(puzzle)
-```
-
 Hard variants from these sites sometimes end in `pencilmark.Undecided`: the engine's search could not prove the
 puzzle unique within its limits. Installing the `verify` extra (`pip install "pencilmark[verify]"`) adds OR-Tools,
 which settles most of them.
@@ -135,25 +124,25 @@ which settles most of them.
 ## ipuz files
 
 ```
-$ pencilmark rate killer.ipuz        # docs/examples/killer-4x4.json written with to_ipuz
+$ pencilmark rate killer.ipuz        # docs/examples/killer-4x4.json written with write.ipuz
 Very Easy	0.1	0.8	Hidden Single
 ```
 
-`pencilmark.from_ipuz` and `to_ipuz` convert in both directions for classic, diagonal, windoku, jigsaw and killer
-puzzles.
+`pencilmark.read.ipuz` and `pencilmark.write.ipuz` convert in both directions for classic, diagonal, windoku,
+jigsaw and killer puzzles.
 
 ## Save in the puzzle format
 
-`to_export` turns any of these inputs into a `pencilmark-puzzle` file, with the variant name and rules filled in, its
-solution, and the title and source a link carries:
+`pencilmark.write.pencilmark` turns any of these inputs into pencilmark JSON, here with the variant name and rules
+filled in, its solution, and the title and source a link carries:
 
 ```python
-exp = pencilmark.to_export("https://f-puzzles.com/?load=N4IgzglgXgpiBcAC…", title="Imported killer")
-open("killer.json", "w").write(pencilmark.dumps(exp))
+text = pencilmark.write.pencilmark("https://f-puzzles.com/?load=N4IgzglgXgpiBcAC…", solution=True, describe=True)
+open("killer.json", "w").write(text)
 ```
 
 On the command line, `pencilmark export links.txt --pretty` does the same for every line.
 
 A SudokuPad puzzle's look comes along: each rule takes the colour, width or shape of the element that draws it (a
 purple renban line stays purple) as its `style` ([Puzzle format](../../formats/puzzle-format.md) section 7), which
-renderers may use and solvers ignore. `to_export(..., style=False)` leaves it out.
+renderers may use and solvers ignore. `pencilmark export --no-style` leaves it out.

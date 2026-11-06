@@ -192,13 +192,13 @@ GRID = "....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7..
 
 
 def _doc_with(*rules):
-    doc = pencilmark.to_export(GRID)
+    doc = pencilmark.write.document(GRID, solution=True, describe=True)
     doc["rules"] += [copy.deepcopy(r) for r in rules]
     return doc
 
 
 def test_custom_rules_read_grade_and_round_trip():
-    sol = pencilmark.to_export(GRID)["solution"]
+    sol = pencilmark.write.document(GRID, solution=True, describe=True)["solution"]
     total = sol[0] + sol[1] + sol[9]  # r1c1, r1c2, r2c1
     cage = {"type": "custom", "cells": {"c": ["r1c1", "r1c2", "r2c1"]}, "holds": f"sum(c)=={total}", "label": "sum"}
     pairs = {"type": "custom", "holds": "(a, b) => a != b", "scope": {"pairs": "orthogonal"}}
@@ -206,7 +206,7 @@ def test_custom_rules_read_grade_and_round_trip():
     pencilmark.validate(doc)
     card = pencilmark.rate(doc)
     assert card["band"] in ("Hard", "Medium", "Easy") and card["difficulty"] > 0
-    out = pencilmark.to_export(doc)
+    out = pencilmark.write.document(doc, solution=True, describe=True)
     rules = [r for r in out["rules"] if r["type"] == "custom"]
     assert rules[0]["holds"] == f"sum(c) == {total}" and rules[0]["label"] == "sum"  # canonical spelling, label kept
     assert rules[1]["scope"] == {"pairs": "orthogonal"}
@@ -236,7 +236,7 @@ def test_malformed_custom_rules_are_format_errors():
 
 def test_custom_rule_over_many_cells_uses_the_engine_evaluator():
     """more than 5 cells: an expression constraint the engine checks (csrc/expr.cpp), not a digit table"""
-    doc = pencilmark.to_export(GRID)
+    doc = pencilmark.write.document(GRID, solution=True, describe=True)
     sol, row = doc["solution"], [f"r1c{c}" for c in range(1, 10)]
     doc["rules"].append({"type": "custom", "cells": {"r": row}, "holds": f"sum(take(r[1], r)) == {sum(sol[: sol[0]])}"})
     assert pencilmark.solve(doc) == sol and pencilmark.rate(doc)["difficulty"] > 0
@@ -367,10 +367,10 @@ def test_board_layers():
              "givens": [0] * 81, "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
                        rule("region(a) != region(b)")]}  # fmt: skip
     with pytest.raises(pencilmark.NotSupportedError, match="regions to find"):
-        pencilmark.load(plain)
+        pencilmark.api._load(plain)
     doc["rules"] = doc["rules"] + [dict(rule("x"), holds="not shaded(a) or odd(a)")]
     with pytest.raises(pencilmark.NotSupportedError, match="shading"):
-        pencilmark.load(doc)
+        pencilmark.api._load(doc)
 
 
 def _hidden_doc(**extra):
@@ -404,7 +404,7 @@ def test_unknowns_and_layers_read_check_write():
         rules=_hidden_doc()["rules"] + [rule],
     )
     V.validate(doc)
-    out = json.loads(pencilmark.dumps(doc))  # writers keep them, the rule in canonical spelling
+    out = json.loads(pencilmark.write.pencilmark(doc))  # writers keep them, the rule in canonical spelling
     assert out["unknowns"] == doc["unknowns"] and out["layers"] == doc["layers"]
     assert out["rules"][-1]["holds"] == "sum(c) + shift(r1c1) == X"
     env = dict(box=(2, 2), layers={"shift": {"r1c1": 1}})
@@ -422,7 +422,7 @@ def test_unknowns_and_layers_read_check_write():
     ):
         with pytest.raises(FormatError):
             V.validate(bad)
-    p = pencilmark.load(doc)  # the exhaustive search carries unknowns and layers (aux variables)
+    p = pencilmark.api._load(doc)  # the exhaustive search carries unknowns and layers (aux variables)
     assert pencilmark.count_solutions(p, limit=2)["count"] >= 1
     with pytest.raises(pencilmark.NotUnique):  # a wrong input is an error (this one has several solutions); a valid one
         pencilmark.rate(doc)  # is band Unknown with its reason (test_rate_unknowns_is_unknown_with_reason)
@@ -442,7 +442,7 @@ def test_unknowns_solve_a_small_cipher():
             {"type": "custom", "cells": {}, "holds": "X == 5"},
         ],
     )
-    p = pencilmark.load(doc)
+    p = pencilmark.api._load(doc)
     n = pencilmark.count_solutions(p, limit=3)
     sol = "".join(map(str, pencilmark.solve(p))) if n["count"] == 1 else None
     plain = _hidden_doc(
@@ -453,7 +453,7 @@ def test_unknowns_solve_a_small_cipher():
             {"type": "custom", "cells": {"c": ["r2c1", "r2c2"]}, "holds": "sum(c) == 5"},
         ],
     )
-    q = pencilmark.load(plain)  # the same puzzle with X written in: the same answer
+    q = pencilmark.api._load(plain)  # the same puzzle with X written in: the same answer
     assert n == pencilmark.count_solutions(q, limit=3)
     if sol is not None:
         assert sol == "".join(map(str, pencilmark.solve(q)))
@@ -479,7 +479,7 @@ def test_unknowns_and_layers_survive_export():
             },
         ],
     )
-    out = pencilmark.to_export(pencilmark.load(doc), describe=False, style=False, with_solution=False)
+    out = pencilmark.write.document(pencilmark.api._load(doc))
     V.validate(out)
     assert out["unknowns"] == {"X": {"values": list(range(1, 9))}}
     assert out["layers"]["shift"] == {"values": [-1, 0, 1], "given": {"r1c1": 0}}
@@ -492,7 +492,7 @@ def test_cases_rule_checks_each_case_against_the_candidates():
     import pencilmark as pm
     from pencilmark import cbackend as cb
 
-    p = pm.load("." * 81)
+    p = pm.api._load("." * 81)
     p.constraints.append(
         {"type": "cases", "cases": [{"cells": [0, 1], "circle": 0}, {"cells": [0, 1, 10], "circle": 0}]}
     )

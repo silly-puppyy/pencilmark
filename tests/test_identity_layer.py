@@ -44,7 +44,7 @@ def test_id_held_accounting():
 
 
 def test_class_pair_and_trap_listed():
-    p = pencilmark.load("." * 81)
+    p = pencilmark.api._load("." * 81)
     P = dict(api._params("human"), colouring=1)
     on = {S.CLASS_PAIR, S.CLASS_TRAP}
     off = set(S.TECH_NAMES) - on
@@ -65,7 +65,7 @@ def test_colour_legend_kept_for_the_solve():
     digits) the first time; a cell joining an existing colour says so, without a new legend"""
     from pencilmark import band_path as BP
 
-    p = pencilmark.load("." * 81)
+    p = pencilmark.api._load("." * 81)
     vals, cand, idc, colours = [0] * 81, [(1 << 9) - 1] * 81, [0] * 81, {}
     cand[0] = cand[30] = cand[40] = 0b110000  # 5 / 6
     ex = {"short": "r1c1 and r4c4 must hold the same digit"}
@@ -126,7 +126,7 @@ def test_colouring_switch_leaves_easy_cards_alone():
 def test_colour_pointing():
     """a colour's places in box 1 all lie in column 1 (CtC, Restricted Access: "orange is in one of these two
     positions"): the colour's other places in column 1 are not that colour"""
-    p = pencilmark.load("." * 81)
+    p = pencilmark.api._load("." * 81)
     P = dict(api._params("human"), colouring=1)
     full = (1 << 9) - 1
     cand = [full] * 81

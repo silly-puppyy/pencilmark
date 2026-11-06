@@ -36,7 +36,7 @@ def test_listing_cache_changes_nothing(name, monkeypatch):
                 return res
 
             monkeypatch.setattr(CB, "state_moves", listed)
-            BP.contents(pencilmark.load(doc), P)
+            BP.contents(pencilmark.api._load(doc), P)
             logs.append(log)
     finally:
         C.listing_cache(True)

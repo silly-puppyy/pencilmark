@@ -276,7 +276,7 @@ Per-rule `style` (optional, never semantic):
 `{"color": "#rrggbb" | palette index, "fill": "#rrggbb" | palette index, "opacity": 0..1, "width": cell units,
 "shape": "circle" | "square" | "diamond", "label_cell": "r1c1", "dash": true}`. The text a rule shows is its
 `label` (section 5); `label_cell` only says where to draw it. pencilmark's SudokuPad reader fills it from the
-element that draws the rule (`to_export(..., style=False)` leaves it out).
+element that draws the rule.
 
 Top-level `style`: puzzle-wide hints, such as `{"palette": [...], "cell_size": 64}`. Free-form.
 
@@ -292,7 +292,7 @@ Coordinates are cell units `[row, col]` with the origin at the top-left corner o
 
 ## 8. Canonical form, fingerprint, compression
 
-### 8.1 Canonical writer (`pencilmark.dumps`)
+### 8.1 Canonical writer (`pencilmark.write.pencilmark`)
 
 - Top-level key order: `format`, `format_version`, `$schema`, `meta`, `board`, `digits`, `givens`, `solution`,
   `candidates`, `rules`, `decorations`, `style`. Inside `board`: `rows`, then `cols`.
@@ -314,7 +314,7 @@ messy = {"rules": [{"cells": ["r1c2", "r1c1"], "sum": 3, "type": "cage"},
                    {"count": [2, 2], "box": [2, 2], "type": "box_grid", "origin": "r1c1"}],
          "digits": 4, "board": {"cols": 4, "rows": 4}, "format_version": 1, "format": "pencilmark-puzzle",
          "givens": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4]}
-print(pencilmark.dumps(messy))
+print(pencilmark.write.pencilmark(messy))
 ```
 
 ```json

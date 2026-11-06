@@ -60,13 +60,13 @@ def record(doc):
         out["error"] = f"{type(e).__name__}: {e}"
         return out
     try:
-        p = pencilmark.load(doc)
+        p = pencilmark.api._load(doc)
         out["constraints"] = json.loads(json.dumps(getattr(p, "constraints", []), default=repr, sort_keys=True))
         out["relations"] = len(getattr(p, "relations", []) or [])
         out["written"] = X.write(p)["rules"]
         out["describe"] = pencilmark.describe(doc)
         out["fingerprint"] = pencilmark.fingerprint(doc)
-        out["dumps"] = pencilmark.dumps(doc, pretty=False)
+        out["dumps"] = pencilmark.write.pencilmark(doc, pretty=False)
     except Exception as e:
         out["read_error"] = f"{type(e).__name__}: {e}"
     return out

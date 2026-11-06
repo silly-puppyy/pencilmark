@@ -164,7 +164,7 @@ python tools/benchmark.py grade puzzles.jsonl -o grades.jsonl --jobs 8
 python tools/benchmark.py report grades.jsonl
 ```
 
-One JSON object per line: `puzzle` (anything `pencilmark.load` reads), `source`, `group` (puzzles that are comparable:
+One JSON object per line: `puzzle` (anything `pencilmark.rate` reads), `source`, `group` (puzzles that are comparable:
 correlations are computed within each group and averaged), `target` (the human measure, higher = harder) and,
 optionally, `target_kind` (`"minutes"`, `"log minutes"`, `"seconds"` or `"log seconds"` add the time error) and `key`.
 Grading resumes where it stopped.

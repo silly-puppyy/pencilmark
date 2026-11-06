@@ -1,24 +1,29 @@
 ---
-description: "Reading and writing other sudoku formats: plain strings, text grids, sudokuwiki.org strings and ipuz."
+description: "One reader and one writer per format: pencilmark JSON, plain strings, text grids, HoDoKu, sudokuwiki.org strings, ipuz and site links."
 ---
 
-# Other formats
+# Readers and writers
 
-The `pencilmark-puzzle` format ([Puzzle format](puzzle-format.md)) is all a tool needs. pencilmark can also read and write a few
-other formats for convenience. None of them is part of the format or required by it.
+pencilmark JSON ([Puzzle format](puzzle-format.md)) is all a tool needs. pencilmark also reads and writes a few other
+formats, one function per format: `pencilmark.read.<format>` reads only its own format and raises `FormatError` for
+anything else, `pencilmark.write.<format>` writes one and raises `NotSupportedError` for what the format cannot carry.
+None of them is part of the format or required by it.
 
-| Function | Reads | Writes |
+| Format | Reader | Writer |
 |---|---|---|
-| `from_string(s)` / `to_string(puzzle, "plain")` | plain classic strings, also with a trailing comment | plain classic strings |
-| `from_string(s)` / `to_string(puzzle, "grid")` | text grids with `\|`, `-`, `+` separators (Simple Sudoku, forums) | text grids |
-| `from_string(s)` | pencil-mark grids, 729-character candidate strings | – |
-| `from_string(s)` / `to_string(puzzle, "sudokuwiki")` | [sudokuwiki.org](https://www.sudokuwiki.org/) packed strings | sudokuwiki.org packed strings |
-| `from_ipuz(ipuz)` / `to_ipuz(puzzle)` | [ipuz](http://www.ipuz.org/) 1 and 2 sudoku | [ipuz](http://www.ipuz.org/) 2 |
-| `pencilmark.sources.load(url)` | [f-puzzles](https://www.f-puzzles.com/), [SudokuPad](https://sudokupad.app/) (CSM / fpuz / ctc), [Penpa](https://swaroopg92.github.io/penpa-edit/)+, [Logic Masters](https://logic-masters.de/) links | – |
+| pencilmark JSON (a dict, JSON text or a `.json` path) | `read.pencilmark` | `write.pencilmark` (text), `write.document` (dict) |
+| plain classic strings, also with a trailing comment | `read.plain` | `write.plain` |
+| text grids with `\|`, `-`, `+` separators (Simple Sudoku, forums) | `read.grid` | `write.grid` |
+| pencil-mark grids | `read.pencil_marks` | – |
+| 729-character candidate strings | `read.candidates` | – |
+| [HoDoKu](https://hodoku.sourceforge.net/) library lines | `read.hodoku` | – |
+| [sudokuwiki.org](https://www.sudokuwiki.org/) packed strings | `read.sudokuwiki` | `write.sudokuwiki` |
+| [ipuz](http://www.ipuz.org/) 1 and 2 sudoku | `read.ipuz` | `write.ipuz` (ipuz 2) |
+| [f-puzzles](https://www.f-puzzles.com/), [SudokuPad](https://sudokupad.app/) (CSM / fpuz / ctc), [Penpa](https://swaroopg92.github.io/penpa-edit/)+, [Logic Masters](https://logic-masters.de/) links | `read.link` (the host names the site) | – |
 
-`from_string` returns a `pencilmark-puzzle` dict. `sources.load` returns pencilmark's internal puzzle JSON; `to_export`
-turns it into a `pencilmark-puzzle` file. Every entry point (`rate`, `solve`, `load`, `describe`, the command line) also
-accepts these strings and links directly.
+Every reader returns a pencilmark JSON dict. `rate`, `solve`, `describe`, `fingerprint` and the command line take any
+of these directly: `pencilmark.read.detect(x)` names the format (`read.auto(x)` reads it), and `format="sudokuwiki"`
+names it instead of detecting it.
 
 ## Plain classic string
 
@@ -26,7 +31,7 @@ accepts these strings and links directly.
 - Empty cell: `.`, `0`, `-` or `_`. Digits `1`–`9`, then `A`–`Z` for 10–35 (case-insensitive).
 - D = √length for D in {4, 6, 8, 9, 10, 12, 14, 15, 16, 20, 25}; boxes are the standard shape (4: 2×2, 6: 2 rows ×
   3 columns, 8: 2×4, 9: 3×3, 10: 2×5, 12: 3×4, 14: 2×7, 15: 3×5, 16: 4×4, 20: 4×5, 25: 5×5).
-- `to_string(…, "plain")` writes `.` for empty cells and refuses anything but a classic with standard boxes and no
+- `write.plain` writes `.` for empty cells and refuses anything but a classic with standard boxes and no
   other rules.
 
 ## Text grids
@@ -45,7 +50,7 @@ The same classic puzzle laid out on lines, as Simple Sudoku (`.ss`), SadMan (`.s
 - Lines made only of `-`, `+`, `=`, `|`, `*` and spaces, with at least one `-`, `+` or `=`, are separators and skipped; `|` and spaces inside a row are
   ignored; `*` is also an empty cell.
 - Text after `#` or `;` on a line is a comment (`<81 characters>  # rating 5.9`).
-- `to_string(…, "grid")` writes the left-hand form (refuses what a plain string cannot carry).
+- `write.grid` writes the left-hand form (refuses what a plain string cannot carry).
 
 ## Pencil marks
 
@@ -56,7 +61,7 @@ The same classic puzzle laid out on lines, as Simple Sudoku (`.ss`), SadMan (`.s
 - **HoDoKu library line** (`:0901:4:<81 characters>:<removed candidates>:…`): the puzzle and its removed candidates
   (tokens `drc` = digit d is not a candidate of rRcC); the fields describing the collected step are ignored.
 
-These are read only. A multi-line grid is one puzzle: pass it to `from_string` / `rate` as one string (the command line
+These are read only. A multi-line grid is one puzzle: pass it to `read.pencil_marks` / `rate` as one string (the command line
 reads one puzzle per line).
 
 ## sudokuwiki.org packed strings
@@ -81,14 +86,14 @@ pencilmark reads and writes these headers:
 
 In the non-killer forms each cell is Andrew Stuart's board-state code (as sudokuwiki.org writes it): a given digit d, a
 placed digit d + 9 (d + 6 on 6×6; read as a given), the candidate mask + 18 (bit i is digit i + 1; read as that cell's
-`candidates`), or 0 (nothing stored), so one string can carry a mid-solve board with its candidates; `to_string` writes
+`candidates`), or 0 (nothing stored), so one string can carry a mid-solve board with its candidates; `write.sudokuwiki` writes
 a puzzle's `candidates` the same way. Anything else (other puzzle types or versions, candidates or placed digits in the
-killer forms, 6×6 killer operators other than `+`) is refused when read. `to_string(puzzle, "sudokuwiki")` picks the header from the structure and refuses puzzles none of
+killer forms, 6×6 killer operators other than `+`) is refused when read. `write.sudokuwiki` picks the header from the structure and refuses puzzles none of
 these headers can express (a 6×6 jigsaw or X, killer-X, killer-windoku, anything above 9×9).
 
 ## ipuz
 
-`to_ipuz(puzzle)` writes [ipuz](http://www.ipuz.org) 2 ([sudoku kinds](http://www.ipuz.org/sudoku)) for the subset that maps cleanly and refuses the rest:
+`write.ipuz(puzzle)` writes [ipuz](http://www.ipuz.org) 2 ([sudoku kinds](http://www.ipuz.org/sudoku)) for the subset that maps cleanly and refuses the rest:
 
 | pencilmark | ipuz |
 |---|---|
@@ -105,15 +110,15 @@ object goes in `"io.github.silly-puppyy.pencilmark:puzzle"`, with
 `"volatile": {"io.github.silly-puppyy.pencilmark": "puzzle,solution,zones,cages"}`. Given candidates (Sukaku) are
 refused: ipuz has no field for them.
 
-`from_ipuz(ipuz)` (a dict or JSON text) reads the same subset back: `puzzle` and `solution` (numbers, digit strings or
+`read.ipuz(x)` (a dict, JSON text or a path) reads the same subset back: `puzzle` and `solution` (numbers, digit strings or
 `{"cell": …}` objects; `empty` as declared), `boxes`, `zones` (on a jigsaw, zones of D cells are its boxes; both main
 diagonals become `region` kind `diagonal`, `rect` zones `window`, any other zone `region`) and `cages` with a `value`.
-A file written by `to_ipuz` returns its embedded puzzle as long as the grid was not edited. Other kinds, omitted or
+A file written by `write.ipuz` returns its embedded puzzle as long as the grid was not edited. Other kinds, omitted or
 block cells, and cages without a sum are refused.
 
 ## Site loaders
 
-`pencilmark.sources` reads [f-puzzles](https://www.f-puzzles.com), [SudokuPad](https://sudokupad.app) (CSM / fpuz /
-ctc), [Penpa+](https://swaroopg92.github.io/penpa-edit/) and [Logic Masters](https://logic-masters.de) links, and `to_export`
-turns the result into a `pencilmark-puzzle` file. Writing those formats is not supported. Loaders that fetch pages identify
+`pencilmark.read.link` reads [f-puzzles](https://www.f-puzzles.com), [SudokuPad](https://sudokupad.app) (CSM / fpuz /
+ctc), [Penpa+](https://swaroopg92.github.io/penpa-edit/) and [Logic Masters](https://logic-masters.de) links into
+pencilmark JSON; the link's host names the site. Writing those formats is not supported. Loaders that fetch pages identify
 themselves, obey robots.txt and pause between requests.

@@ -123,7 +123,7 @@ META_KEYS = ("title", "author", "source", "id", "url", "date", "rules_text", "ty
 
 
 def read_meta(d):
-    """metadata from a dict: its "meta" object plus known top-level keys (the keyword form of to_export), empty values dropped."""
+    """metadata from a dict: its "meta" object plus known top-level keys (meta keys at the top level), empty values dropped."""
     m = {k: d[k] for k in META_KEYS if k in d}
     m.update(d.get("meta") or {})
     order = {k: i for i, k in enumerate(META_KEYS)}  # known keys first, in a fixed order; free-form keys after
@@ -332,7 +332,7 @@ def _noun(rules):
 
 def _issues(p, card, doc, prov):
     """card notes -> issues [{"code", "severity": "reject" | "warning", "text", "rules"?}] (docs/formats/grade-card.md 4). Rule notes
-    point at the exported file's rule indices (doc = exchange.write(p) as to_export writes it)."""
+    point at the exported file's rule indices (doc = exchange.write(p))."""
     out = []
     raw = card.get("notes") or []
     cls_map = None

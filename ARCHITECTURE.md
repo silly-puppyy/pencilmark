@@ -9,7 +9,7 @@ with each step.
 
 ```mermaid
 flowchart TD
-  IN[input: string, file,<br/>link, JSON] --> LOAD[api.load<br/>exchange / interop / sources]
+  IN[input: string, file,<br/>link, JSON] --> LOAD[read.auto, api._load<br/>exchange / interop / sources]
   LOAD --> UNI[cpsat_verify.decide<br/>one solution?]
   UNI --> BP[band_path<br/>route, band, contains]
   UNI --> CS[card_score<br/>difficulty]
@@ -22,8 +22,9 @@ flowchart TD
   UNI -. search .-> ENG
 ```
 
-1. **Read.** `api.load` turns any accepted input (string, JSON, file, link) into a `model.Puzzle`. The public format is
-   read by `exchange/` (`pencilmark-puzzle`, docs/formats/puzzle-format.md), text forms by `interop.py`, links by `sources/`.
+1. **Read.** `read.auto` detects the input's format and reads it into a pencilmark JSON dict (`read.py`: one reader per
+   format; text forms in `interop.py`, links in `sources/`); `api._load` builds the `model.Puzzle` from it through
+   `exchange/` (`pencilmark-puzzle`, docs/formats/puzzle-format.md).
 2. **Check uniqueness.** `cpsat_verify.decide` runs the C++ search (`cbackend.brute_solve`), with OR-Tools as an optional
    fallback; it raises `NotUnique` / `NoSolution` / `Undecided`.
 3. **Find the human route.** `band_path.band_path` solves band by band: at each position it asks the engine for every

@@ -91,7 +91,7 @@ def _simple_colouring(cand):
 
 
 def _state(pos):
-    p = pencilmark.load(pos["puzzle"])
+    p = pencilmark.api._load(pos["puzzle"])
     p.finalize()
     filled = {int(c): d for c, d in pos["givens"].items()}
     q = copy.copy(p)

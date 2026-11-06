@@ -482,14 +482,14 @@ def _sig(r):
 
 def describe(puzzle):
     """variant name and rules (an ordered key -> sentence map, like Logic Masters rule headers) from the rules alone."""
-    from .api import to_export
+    from .write import document
 
     doc = (
         puzzle
         if isinstance(puzzle, dict)
         and puzzle.get("format") == "pencilmark-puzzle"
         and puzzle.get("format_version") == 1
-        else to_export(puzzle, with_solution=False, describe=False)  # the rules alone: no search for the solution
+        else document(puzzle)  # the rules alone: no search for the solution
     )
     D = doc["digits"]
     rules = [r for r in doc["rules"]]

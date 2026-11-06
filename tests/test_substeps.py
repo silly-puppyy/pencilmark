@@ -21,9 +21,9 @@ def test_levels_on_request_only():
 
 
 def _whisper_row():
-    d = pencilmark.from_string("." * 81)
+    d = pencilmark.read.auto("." * 81)
     d["rules"].append({"type": "line", "kind": "whisper", "cells": ["r1c3", "r1c4", "r1c5", "r1c6", "r1c7"]})
-    p = pencilmark.load(d)
+    p = pencilmark.api._load(d)
     p.finalize()
     return p
 

@@ -1,9 +1,9 @@
 """Command-line front end (SE-style).
 
   python -m pencilmark rate [FILE|-] [--format FMT] [--json] [--steps]
-      One puzzle per line: a classic string ('.'/'0' blanks; 16 / 36 / 81 / 256 / 625 symbols), a JSON object in the
-      pencilmark.puzzle_json format or the pencilmark-puzzle format (pencilmark.to_export), or a path to a .json file. A
-      FILE ending in .json that holds one JSON value (a puzzle, or a list of puzzles) is read whole. Prints one
+      One puzzle per line, in any format pencilmark reads (pencilmark.read: a plain string, a sudokuwiki packed string,
+      a HoDoKu line, pencilmark JSON, an ipuz object, a site link), detected per line. A FILE ending in .json or .ipuz
+      that holds one JSON value (a puzzle, or a list of puzzles) is read whole. Prints one
       result line per puzzle. Card "pencilmark-grade": FMT fields %d difficulty (continuous, above 0, no ceiling; ~5 = typical medium),
       %m predicted median solve time in minutes, %p 80th-percentile minutes, %b band, %h hardest technique met,
       %c contents chips (band > 0, with uses), %n issue codes, %s status ("ok" or the error), %u unique?, %i line number.
@@ -14,12 +14,10 @@
   python -m pencilmark count [FILE|-] [--limit N]   how many solutions per puzzle (">=N" when it stops at N)
   python -m pencilmark generate [SPEC|-] [--seed N] [--time S] [--result]
                                        a puzzle for a "pencilmark-spec" request (docs/formats/generator-spec.md), as a pencilmark-puzzle file
-  python -m pencilmark json  [FILE|-]      validate + normalise to canonical JSON (adds "hash")
   python -m pencilmark export [FILE|-] [--pretty] [--no-solution] [--no-style]
                                        each puzzle as a "pencilmark-puzzle" file (format_version 1, docs/formats/puzzle-format.md), canonical
   python -m pencilmark fingerprint [FILE|-]  the content fingerprint (64 hex digits) per puzzle
   python -m pencilmark describe [FILE|-]     variant name and rules per puzzle (JSON)
-Inputs may also be sudokuwiki.org packed strings (S9B..., L9B..., J9B...).
 Every command takes --log info (pages fetched, what a reader read, time limits reached, the generator's result) or
 --log debug (also stage timings, the uniqueness check, each generator attempt and each reading a reader tried), written
 to standard error.
@@ -32,16 +30,8 @@ import json
 import sys
 from pathlib import Path
 
-from . import inputs
 from . import puzzle_json as PJ
-
-
-def _params():
-    """the engine parameters shipped with the package (data/params.json), completed with defaults."""
-    from . import grader_model as GM
-    from .scoring import copy_params
-
-    return copy_params(GM.default().route)
+from .read import auto
 
 
 def _whole_json(src):
@@ -57,18 +47,18 @@ def _whole_json(src):
 
 
 def _inputs(src):
-    """(number, puzzle JSON) per input; an input that cannot be read gives (number, the exception), so the command
-    reports it in place and goes on"""
+    """(number, pencilmark-puzzle dict) per input, each read in its own format (detected); an input that cannot be read
+    gives (number, the exception), so the command reports it in place and goes on"""
     whole = _whole_json(src)
     if whole is not None:
         for k, obj in enumerate(whole, 1):
-            yield k, _read(lambda: inputs.to_puzzle_json(obj))
+            yield k, _read(lambda: auto(obj))
         return
     fh = sys.stdin if src in (None, "-") else open(src, encoding="utf-8")
     for k, line in enumerate(fh, 1):
         line = line.strip()
         if line and not line.startswith("#"):
-            yield k, _read(lambda: _line_puzzle(line))
+            yield k, _read(lambda: auto(line))
 
 
 def _read(fn):
@@ -78,19 +68,15 @@ def _read(fn):
         return e
 
 
-def _line_puzzle(line):
-    return inputs.to_puzzle_json(inputs.read(line))
-
-
 def _ok(obj):
-    """the puzzle JSON of an input, raising the error of one that could not be read"""
+    """the document of an input, raising the error of one that could not be read"""
     if isinstance(obj, Exception):
         raise obj
     return obj
 
 
 def _each(a, fn):
-    """fn(k, puzzle JSON) for every input; a failing input prints "error<TAB>k<TAB>message" and the rest go on"""
+    """fn(k, document) for every input; a failing input prints "error<TAB>k<TAB>message" and the rest go on"""
     for k, obj in _inputs(a.file):
         try:
             fn(k, _ok(obj))
@@ -231,7 +217,7 @@ def _rate_one(args):
         )
         try:
             g = api.rate(
-                PJ.from_json(_ok(obj)),
+                _ok(obj),
                 max_seconds=a.max_seconds,
                 mode="computer" if a.computer else "human",
                 fields=sorted(want),
@@ -290,10 +276,11 @@ def cmd_rate(a):
 
 def cmd_solve(a):
     """`solve` command: print each input puzzle's solution, or not unique / undecided / no solution"""
+    from . import api
     from . import cpsat_verify as V
 
     def one(k, obj):
-        p = PJ.from_json(obj)
+        p = api._load(obj)
         p.finalize()
         sols, decided = V.decide(p, limit=2)
         print(
@@ -323,7 +310,8 @@ def cmd_count(a):
 
 def cmd_generate(a):
     """`generate` command: generate a puzzle from a spec (file or stdin); --result prints the whole result"""
-    from .api import dumps, generate
+    from .api import generate
+    from .exchange import dumps
 
     spec = json.load(sys.stdin) if a.spec in (None, "-") else json.loads(Path(a.spec).read_text(encoding="utf-8"))
     lim = dict(spec.get("limits") or {})
@@ -344,24 +332,15 @@ def cmd_generate(a):
         print(f"note: {w}", file=sys.stderr)
 
 
-def cmd_json(a):
-    """`json` command: print each input puzzle as one line of puzzle JSON with its hash"""
-    from .export import read_meta
-
-    def one(k, obj):
-        d = PJ.to_json(PJ.from_json(obj), meta=read_meta(obj))
-        d["hash"] = PJ.canonical_hash(d)
-        print(json.dumps(d, separators=(",", ":")), flush=True)
-
-    _each(a, one)
-
-
 def cmd_export(a):
     """`export` command: print each input puzzle in the pencilmark-puzzle format (--no-solution drops the solution, --no-style the rules' drawing styles)"""
-    from .api import dumps, to_export
+    from .exchange import dumps
+    from .write import document
 
     def one(k, obj):
-        d = to_export(obj, with_solution=not a.no_solution, style=not a.no_style)
+        d = document(obj, solution=not a.no_solution)
+        if a.no_style:
+            d = dict(d, rules=[{k2: v for k2, v in r.items() if k2 != "style"} for r in d["rules"]])
         print(dumps(d, pretty=a.pretty), end="" if a.pretty else "\n", flush=True)
 
     _each(a, one)
@@ -376,14 +355,9 @@ def cmd_fingerprint(a):
 
 def cmd_describe(a):
     """`describe` command: print the description of each input puzzle as one line of JSON"""
-    from .api import describe, to_export
+    from .api import describe
 
-    _each(
-        a,
-        lambda k, obj: print(
-            json.dumps(describe(to_export(obj, with_solution=False, describe=False)), ensure_ascii=False), flush=True
-        ),
-    )
+    _each(a, lambda k, obj: print(json.dumps(describe(obj), ensure_ascii=False), flush=True))
 
 
 def main(argv=None):
@@ -479,9 +453,6 @@ def main(argv=None):
     g.add_argument("--time", type=float, help="override limits.time (seconds)")
     g.add_argument("--result", action="store_true", help='print {"puzzle", "card", "info"} as one JSON line')
     g.set_defaults(fn=cmd_generate)
-    j = sub.add_parser("json", parents=[common])
-    j.add_argument("file", nargs="?")
-    j.set_defaults(fn=cmd_json)
     e = sub.add_parser("export", parents=[common])
     e.add_argument("file", nargs="?")
     e.add_argument("--pretty", action="store_true")

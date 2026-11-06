@@ -98,6 +98,13 @@ def default():
     return _DEFAULT
 
 
+def engine_params():
+    """the engine parameters of the model in use (data/params.json for the shipped one), completed with defaults"""
+    from .scoring import copy_params
+
+    return copy_params(default().route)
+
+
 @contextlib.contextmanager
 def use(model):
     """grade with `model` instead of the shipped one inside the block (research; not thread-safe)"""

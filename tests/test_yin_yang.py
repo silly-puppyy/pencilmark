@@ -26,16 +26,16 @@ def with_rule(rule):
 
 def test_read_write_describe():
     doc = with_rule({"type": "yin_yang", "shaded": ["r1c1"], "unshaded": ["r4c4"]})
-    out = pencilmark.to_export(doc)
+    out = pencilmark.write.document(doc, solution=True, describe=True)
     assert {"type": "yin_yang", "shaded": ["r1c1"], "unshaded": ["r4c4"]} in out["rules"]
     assert pencilmark.fingerprint(doc) != pencilmark.fingerprint(BASE)
     assert pencilmark.describe(doc)["type"] == "Tiny Yin Yang Sudoku"
     with pytest.raises(pencilmark.FormatError, match="overlap"):
-        pencilmark.load(with_rule({"type": "yin_yang", "shaded": ["r1c1"], "unshaded": ["r1c1"]}))
+        pencilmark.api._load(with_rule({"type": "yin_yang", "shaded": ["r1c1"], "unshaded": ["r1c1"]}))
     two = with_rule({"type": "yin_yang"})
     two["rules"].append({"type": "yin_yang"})
     with pytest.raises(pencilmark.FormatError, match="at most one"):
-        pencilmark.load(two)
+        pencilmark.api._load(two)
 
 
 def test_count_couplings_and_rate_unknown():
@@ -60,4 +60,4 @@ def test_shaded_in_custom_rules():
     doc["rules"].append({"type": "custom", "cells": {"a": ["r1c1"]}, "holds": "not shaded(a)"})
     assert pencilmark.count_solutions(doc)["count"] == 1  # r1c1 = 1: unshaded either way
     with pytest.raises(pencilmark.NotSupportedError, match="shading"):
-        pencilmark.load(dict(BASE, rules=BASE["rules"] + [rule("shaded(a)")]))
+        pencilmark.api._load(dict(BASE, rules=BASE["rules"] + [rule("shaded(a)")]))

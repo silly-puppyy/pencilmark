@@ -5,8 +5,9 @@ description: Grade a file of puzzles in parallel, choose the output columns, and
 
 # Grade many puzzles
 
-Put one puzzle per line in a file and pass the file to `pencilmark rate`. Each line can be a classic string, a puzzle
-JSON object on one line, or the path of a `.json` file; lines starting with `#` are skipped.
+Put one puzzle per line in a file and pass the file to `pencilmark rate`. Each line can be in any format pencilmark reads
+(a classic string, a sudokuwiki string, pencilmark JSON on one line, a link, the path of a `.json` file), detected per
+line; lines starting with `#` are skipped.
 
 ```
 $ cat puzzles.txt
@@ -72,7 +73,7 @@ A line that cannot be read is reported in place and the rest go on:
 
 ```
 $ printf '123\n' | pencilmark rate -
-error	1	ValueError: the grid has 3 symbols; expected 81
+error	1	FormatError: a plain string has 16, 36, 64, 81, 100, 144, 196, 225, 256, 400, 625 characters; this one has 3
 ```
 
 A puzzle with more than one solution prints `not unique` in the band column.

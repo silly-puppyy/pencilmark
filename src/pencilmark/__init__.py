@@ -9,6 +9,7 @@ __version__ = "1.1.0"
 
 import logging
 
+from . import read, write  # noqa: F401  (pencilmark.read.<format>, pencilmark.write.<format>)
 from .api import (
     Error,
     FetchError,
@@ -22,19 +23,11 @@ from .api import (
     __all__,  # noqa: F401
     count_solutions,
     describe,
-    dumps,  # noqa: F401
     fingerprint,
-    from_ipuz,
-    from_string,
     generate,
-    load,
     rate,
     rate_many,
-    rules_text,
     solve,
-    to_export,
-    to_ipuz,
-    to_string,
     validate,
 )
 

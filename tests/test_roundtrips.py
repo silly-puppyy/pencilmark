@@ -38,13 +38,16 @@ def puzzles():
 @pytest.mark.parametrize("name,puzzle", puzzles(), ids=[n for n, _ in puzzles()])
 def test_round_trips(name, puzzle):
     try:
-        doc = pencilmark.to_export(puzzle)
+        doc = pencilmark.write.document(puzzle, solution=True, describe=True)
     except pencilmark.exchange.FormatError:
         return  # inputs that are invalid on purpose (the golden corpus records their errors)
     fp = pencilmark.fingerprint(doc)
-    again = pencilmark.to_export(doc)
+    again = pencilmark.write.document(doc, solution=True, describe=True)
     assert again == doc, "to_export is not idempotent"
     assert pencilmark.fingerprint(again) == fp
-    text = pencilmark.dumps(doc)
+    text = pencilmark.write.pencilmark(doc)
     assert pencilmark.fingerprint(json.loads(text)) == fp, "dumps changes the fingerprint"
-    assert pencilmark.fingerprint(pencilmark.to_export(pencilmark.load(text))) == fp, "load(dumps) changes it"
+    assert (
+        pencilmark.fingerprint(pencilmark.write.document(pencilmark.api._load(text), solution=True, describe=True))
+        == fp
+    ), "load(dumps) changes it"

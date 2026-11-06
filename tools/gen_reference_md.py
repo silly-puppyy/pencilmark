@@ -24,7 +24,7 @@ PAGES = {
     "formats": (
         "Formats",
         "Reading, checking and writing puzzles and generator requests; the rule families and the variant names.",
-        ["inputs", "exchange/__init__", "exchange/common", "exchange/board", "exchange/validate", "exchange/read",
+        ["read", "write", "errors", "exchange/__init__", "exchange/common", "exchange/board", "exchange/validate", "exchange/read",
          "exchange/write", "exchange/canonical", "rules/__init__", "rules/line", "rules/edge", "rules/cell", "rules/custom",
          "puzzle_json", "interop", "spec_format", "variants"],
     ),

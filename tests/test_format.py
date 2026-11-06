@@ -15,13 +15,14 @@ import pytest
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
+from pencilmark.inputs import to_puzzle_json  # noqa: E402
+
 import pencilmark  # noqa: E402
 from pencilmark import exchange as X  # noqa: E402
 from pencilmark import interop as I  # noqa: E402
 from pencilmark import puzzle_json as PJ  # noqa: E402
 from pencilmark import spec_format as SF  # noqa: E402
 from pencilmark import variants as VR  # noqa: E402
-from pencilmark.inputs import to_puzzle_json  # noqa: E402
 
 FIXTURES = ROOT / "tests" / "fixtures" / "variants.json"
 SCHEMA = ROOT / "docs" / "pencilmark-puzzle.schema.json"
@@ -64,7 +65,7 @@ def pack():
                 {"type": "neighbours", "kind": "antiknight", "within": "box"},
             ],
         ):
-            d = json.loads(json.dumps(pencilmark.from_string(CLASSIC)))
+            d = json.loads(json.dumps(pencilmark.read.auto(CLASSIC)))
             d["rules"] += extra
             _pack.append(d)
     return _pack
@@ -123,12 +124,12 @@ def test_canonical_idempotent():
 def test_fixtures_are_valid():
     for v in json.load(open(FIXTURES, encoding="utf-8")):
         X.validate(v["puzzle"])
-        assert pencilmark.load(v["puzzle"]).N >= 16
+        assert pencilmark.api._load(v["puzzle"]).N >= 16
 
 
 # --------------------------------------------------------------------------------------------------------------- strict
 def _classic_doc():
-    return pencilmark.to_export(CLASSIC, with_solution=False, describe=False)
+    return pencilmark.write.document(CLASSIC)
 
 
 def _refuses(doc, needle):
@@ -215,7 +216,7 @@ def test_strict_refusal():
 
 
 def test_required_parameters_off_9x9():
-    d = pencilmark.from_string("1..." + "." * 12)  # 4x4
+    d = pencilmark.read.auto("1..." + "." * 12)  # 4x4
     d = copy.deepcopy(d)
     d["rules"].append({"type": "line", "kind": "whisper", "cells": ["r1c1", "r1c2"]})
     _refuses(d, "requires")
@@ -303,7 +304,7 @@ def test_fingerprint_stable():
 
 
 def test_dumps_layout():
-    t = pencilmark.dumps(_classic_doc())
+    t = pencilmark.write.pencilmark(_classic_doc())
     assert '"givens": [\n    7, 9, 0, 2, 1, 4, 0, 0, 0,\n' in t
     assert t.index('"format"') < t.index('"board"') < t.index('"givens"') < t.index('"rules"')
     assert json.loads(t) == X.canonical(_classic_doc())
@@ -311,8 +312,8 @@ def test_dumps_layout():
 
 # ---------------------------------------------------------------------------------------------------------------- interop
 def test_plain_string_round_trip():
-    d = pencilmark.from_string(CLASSIC)
-    assert pencilmark.to_string(d, "plain") == CLASSIC
+    d = pencilmark.read.auto(CLASSIC)
+    assert pencilmark.write.plain(d) == CLASSIC
     assert d["rules"] == [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}]
 
 
@@ -342,19 +343,19 @@ def test_sudokuwiki_round_trip():
     giv = "1" + "." * 79 + "9"
     synth = {"x": VR.x_sudoku(g9), "windoku": VR.windoku(g9), "colour": VR.disjoint(g9), "killer": [cage]}
     for k, extra in synth.items():
-        d = pencilmark.from_string(giv)
+        d = pencilmark.read.auto(giv)
         d["rules"] += extra
-        kinds.setdefault(k, pencilmark.load(d))
-    d = pencilmark.from_string(giv)
+        kinds.setdefault(k, pencilmark.api._load(d))
+    d = pencilmark.read.auto(giv)
     d["rules"] = [{"type": "grid"}] + boxes  # jigsaw
-    kinds["jigsaw"] = pencilmark.load(d)
+    kinds["jigsaw"] = pencilmark.api._load(d)
     d = copy.deepcopy(d)
     d["rules"].append(cage)
-    kinds["killer_jigsaw"] = pencilmark.load(d)
-    d = pencilmark.from_string("1" + "." * 35)
+    kinds["killer_jigsaw"] = pencilmark.api._load(d)
+    d = pencilmark.read.auto("1" + "." * 35)
     d["rules"].append({"type": "cage", "sum": 7, "cells": ["r2c2", "r2c3", "r3c2"]})
-    kinds["killer6"] = pencilmark.load(d)
-    gen4 = pencilmark.load(
+    kinds["killer6"] = pencilmark.api._load(d)
+    gen4 = pencilmark.api._load(
         {
             "digits": 4,
             "box": "2x2",
@@ -363,14 +364,14 @@ def test_sudokuwiki_round_trip():
         }
     )
     for k, p in kinds.items():
-        s = pencilmark.to_string(p, "sudokuwiki")
-        back = pencilmark.load(pencilmark.from_string(s))
+        s = pencilmark.write.sudokuwiki(p)
+        back = pencilmark.api._load(pencilmark.read.auto(s))
         assert I.analyse(back)[0] == k, (k, I.analyse(back))
         assert _semantic(back) == _semantic(p), f"{k}: {s[:12]}..."
-        again = pencilmark.to_string(back, "sudokuwiki")  # cage colours may differ; the puzzle may not
-        assert again[:3] == s[:3] and _semantic(pencilmark.load(pencilmark.from_string(again))) == _semantic(p)
+        again = pencilmark.write.sudokuwiki(back)  # cage colours may differ; the puzzle may not
+        assert again[:3] == s[:3] and _semantic(pencilmark.api._load(pencilmark.read.auto(again))) == _semantic(p)
     try:
-        pencilmark.to_string(gen4, "sudokuwiki")
+        pencilmark.write.sudokuwiki(gen4)
     except pencilmark.NotSupportedError:
         pass
     else:
@@ -381,17 +382,17 @@ def test_sudokuwiki_board_state():
     # Andrew Stuart's cell codes: given 5, placed 3 (3 + 9), candidates {1, 2} (mask 3 + 18), nothing stored (0)
     b = lambda n: I._b36(n, 2)
     s = "S9B" + b(5) + b(12) + b(21) + b(0) + b(511 + 18) * 77
-    d = pencilmark.from_string(s)
+    d = pencilmark.read.auto(s)
     assert d["givens"][:5] == [5, 3, 0, 0, 0] and d["candidates"] == {"r1c3": [1, 2]}
-    again = pencilmark.to_string(d, "sudokuwiki")
+    again = pencilmark.write.sudokuwiki(d)
     assert again == "S9B" + b(5) + b(3) + b(21) + b(529) * 78  # placed digits come back as givens
-    assert pencilmark.from_string(again)["candidates"] == {"r1c3": [1, 2]}
+    assert pencilmark.read.auto(again)["candidates"] == {"r1c3": [1, 2]}
 
 
 def test_sudokuwiki_refusals():
     s = "S9B" + "zz" * 81  # beyond the largest candidate mask
     try:
-        pencilmark.from_string(s)
+        pencilmark.read.auto(s)
     except pencilmark.NotSupportedError:
         return
     raise AssertionError("cell values above the candidate masks must be refused")
@@ -399,11 +400,11 @@ def test_sudokuwiki_refusals():
 
 # ------------------------------------------------------------------------------------------------------------------- ipuz
 def test_ipuz_export():
-    ip = pencilmark.to_ipuz(_classic_doc())
+    ip = pencilmark.write.ipuz(_classic_doc())
     assert ip["version"] == "http://ipuz.org/v2" and ip["kind"] == ["http://ipuz.org/sudoku#1"]
     assert ip["puzzle"][0][:3] == [7, 9, 0] and ip["boxes"] is True
     assert ip[f"{I.IPUZ_NS}:puzzle"]["format"] == "pencilmark-puzzle"
-    killer = pencilmark.load(
+    killer = pencilmark.api._load(
         {
             "digits": 4,
             "box": "2x2",
@@ -411,14 +412,14 @@ def test_ipuz_export():
             "regions": [{"kind": "cage", "cells": ["r1c1", "r1c2"], "sum": 3}],
         }
     )
-    ip = pencilmark.to_ipuz(killer)
+    ip = pencilmark.write.ipuz(killer)
     assert "http://ipuz.org/sudoku/killersudoku#1" in ip["kind"] and ip["cages"] == [
         {"cells": [[1, 1], [2, 1]], "value": 3}
     ]
     d = _classic_doc()
     d["rules"].append({"type": "line", "kind": "thermo", "cells": ["r1c3", "r2c3"]})
     try:
-        pencilmark.to_ipuz(d)
+        pencilmark.write.ipuz(d)
     except pencilmark.NotSupportedError as e:
         assert "line" in str(e)
     else:
@@ -427,14 +428,14 @@ def test_ipuz_export():
 
 # --------------------------------------------------------------------------------------------------------------- describe
 def _with(rules, D=9):
-    d = pencilmark.from_string("." * D * D)
+    d = pencilmark.read.auto("." * D * D)
     d["rules"] += rules
     return d
 
 
 def test_describe_names():
     assert pencilmark.describe(_classic_doc())["type"] == "Sudoku"
-    assert pencilmark.describe(pencilmark.from_string("." * 36))["type"] == "Mini Sudoku"
+    assert pencilmark.describe(pencilmark.read.auto("." * 36))["type"] == "Mini Sudoku"
     g9 = VR.Grid(9, (3, 3))
     assert pencilmark.describe(_with(VR.x_sudoku(g9)))["type"] == "X Sudoku"
     assert pencilmark.describe(_with(VR.windoku(g9)))["type"] == "Windoku Sudoku"
@@ -454,11 +455,13 @@ def test_describe_names():
     assert dsc["type"] == "XV Sudoku" and "All X's and V's are given." in dsc["rules"]["XV"]
     ak = _with([{"type": "neighbours", "kind": "antiknight", "within": "box"}])
     assert "within the same box" in pencilmark.describe(ak)["rules"]["Anti-Knight"]
-    assert pencilmark.describe(pencilmark.load({"layout": "samurai", "numbers": ""}))["type"] == "Samurai Sudoku"
-    assert pencilmark.describe(pencilmark.load({"layout": "butterfly", "numbers": ""}))["type"] == "Butterfly Sudoku"
+    assert pencilmark.describe(pencilmark.api._load({"layout": "samurai", "numbers": ""}))["type"] == "Samurai Sudoku"
+    assert (
+        pencilmark.describe(pencilmark.api._load({"layout": "butterfly", "numbers": ""}))["type"] == "Butterfly Sudoku"
+    )
     assert (
         pencilmark.describe(
-            pencilmark.load(
+            pencilmark.api._load(
                 {
                     "digits": 4,
                     "box": "2x2",
@@ -489,7 +492,7 @@ def test_card_fields():
         pass
     else:
         raise AssertionError("unknown field accepted")
-    d = pencilmark.from_string(CLASSIC)
+    d = pencilmark.read.auto(CLASSIC)
     d["rules"].append({"type": "line", "kind": "thermo", "cells": ["r1c5", "r1c4"]})  # true, but never needed
     i = pencilmark.rate(d, fields=["issues", "reject"])
     dec = next(x for x in i["issues"] if x["code"] == "decorative")
@@ -504,7 +507,7 @@ def _houses(doc):
 def test_houses():
     """grid gives rows and columns, box_grid adds regular boxes, box / row / column are explicit, nothing is inferred;
     the writer finds grids in any house order (docs/formats/puzzle-format.md 6.1)"""
-    classic = pencilmark.from_string(CLASSIC)
+    classic = pencilmark.read.auto(CLASSIC)
     h = _houses(classic)
     assert [k for k, _ in h] == ["row"] * 9 + ["col"] * 9 + ["box"] * 9
     boxes = [
@@ -535,7 +538,7 @@ def test_houses():
         + [{"type": "row", "cells": [X.cell_name(r, c) for c in range(9)]} for r in range(9)]
     )
     assert X.write(X.read(expl))["rules"] == [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}]
-    sam = pencilmark.load({"layout": "samurai", "numbers": ""})
+    sam = pencilmark.api._load({"layout": "samurai", "numbers": ""})
     d = X.write(sam)
     assert [r["type"] for r in d["rules"]] == ["box_grid"] * 5
     assert len(X.read(d).groups) == len(sam.groups)
@@ -728,7 +731,7 @@ def test_quality_limits():
         CLASSIC, fields=["issues", "reject", "warning"], quality={"trivial": {"limit": 0.2, "severity": "warning"}}
     )
     assert soft["issues"][0]["severity"] == "warning" and soft["reject"] is False and soft["warning"] is True
-    d = pencilmark.from_string(CLASSIC)
+    d = pencilmark.read.auto(CLASSIC)
     d["rules"].append({"type": "line", "kind": "thermo", "cells": ["r1c5", "r1c4"]})
     assert (
         pencilmark.rate(
@@ -798,7 +801,7 @@ def test_operators_named_parameters():
     sol = pencilmark.solve(s)
     v = lambda c: sol[(int(c[1]) - 1) * 9 + int(c[3]) - 1]
     a, b, c = "r1c1", "r3c3", "r5c9"
-    doc = pencilmark.to_export(s)
+    doc = pencilmark.write.document(s, solution=True, describe=True)
     doc["rules"] += [
         {"type": "relation", "op": "difference", "value": abs(v(a) - v(b)), "pairs": [[a, b]]},
         {
@@ -809,7 +812,7 @@ def test_operators_named_parameters():
         },
     ]
     X.validate(doc)
-    out = pencilmark.to_export(doc)["rules"]
+    out = pencilmark.write.document(doc, solution=True, describe=True)["rules"]
     assert {"type": "relation", "op": "difference", "value": abs(v(a) - v(b)), "pairs": [[a, b]]} in out, out
     assert pencilmark.rate(doc)["band"]
     for bad_rule in (
@@ -825,7 +828,7 @@ def test_operators_named_parameters():
 
 def test_tables_reserved():
     """docs/formats/puzzle-format.md 6.17: digit tables and the allowed operator are reserved for the planned custom rule type"""
-    d = pencilmark.from_string(CLASSIC)
+    d = pencilmark.read.auto(CLASSIC)
     for rule in (
         {"type": "table", "cells": ["r1c1", "r1c2"], "allowed": [[1, 2], [2, 1]]},
         {"type": "relation", "op": "allowed", "allowed": [[1, 2]], "pairs": [["r1c1", "r3c3"]]},
@@ -838,8 +841,8 @@ def test_tables_reserved():
 def test_canonical_board_key_order():
     """the canonical text does not depend on how board was written (docs/formats/puzzle-format.md 8.1)"""
     d = _classic_doc()
-    a = pencilmark.dumps(dict(d, board={"rows": 9, "cols": 9}), pretty=False)
-    b = pencilmark.dumps(dict(d, board={"cols": 9, "rows": 9}), pretty=False)
+    a = pencilmark.write.pencilmark(dict(d, board={"rows": 9, "cols": 9}), pretty=False)
+    b = pencilmark.write.pencilmark(dict(d, board={"cols": 9, "rows": 9}), pretty=False)
     assert a == b and '"board":{"rows":9,"cols":9}' in a
 
 
@@ -931,16 +934,16 @@ def test_cell_registry_matches_schema_docs():
 def test_region_sum_breaks_only_at_boxes():
     """an extra region overlapping a box does not split a region-sum line inside that box (it used to: the cell -> box
     map took the extra region for cells in both, imposing a sum equality the rule does not state)"""
-    d = pencilmark.to_export(CLASSIC)
+    d = pencilmark.write.document(CLASSIC, solution=True, describe=True)
     d["rules"].append({"type": "region", "kind": "extra", "cells": [f"r{r}c{c}" for r in (2, 3, 4) for c in (2, 3, 4)]})
     d["rules"].append({"type": "line", "kind": "region_sum", "cells": ["r1c1", "r2c2", "r3c3"]})
-    assert not [c for c in pencilmark.load(d).constraints if c.get("line_kind") == "region_sum"]
+    assert not [c for c in pencilmark.api._load(d).constraints if c.get("line_kind") == "region_sum"]
 
 
 def test_lockout_puzzle_grades():
     """a lockout line reaches the engine and grades (the line matrix only reads and writes: a build of the engine without
     the lockout line kind passed every other test)"""
-    d = pencilmark.to_export(CLASSIC)
+    d = pencilmark.write.document(CLASSIC, solution=True, describe=True)
     d["rules"].append({"type": "line", "kind": "lockout", "cells": ["r2c7", "r2c8", "r2c9"]})  # 9 . 4 in the solution
     card = pencilmark.rate(d)
     assert card["band"] and card["difficulty"] is not None
@@ -952,8 +955,11 @@ def test_entropic_groups_with_an_empty_third_round_trip():
     d = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 4, "cols": 4}, "digits": 4, "givens": [0] * 16,
          "rules": [{"type": "box_grid", "box": [2, 2], "count": [2, 2]},
                    {"type": "line", "kind": "entropic", "groups": [[1, 2, 3], [4], []], "cells": ["r1c1", "r1c2"]}]}  # fmt: skip
-    doc = pencilmark.to_export(d)
-    assert doc["rules"][1]["groups"] == [[1, 2, 3], [4], []] and pencilmark.to_export(doc) == doc
+    doc = pencilmark.write.document(d, solution=True, describe=True)
+    assert (
+        doc["rules"][1]["groups"] == [[1, 2, 3], [4], []]
+        and pencilmark.write.document(doc, solution=True, describe=True) == doc
+    )
 
 
 def test_malformed_values_are_format_errors():
@@ -997,11 +1003,11 @@ def test_fog_rule_reads_writes_and_is_graded_under_the_fog():
     }
     doc["solution"] = pm.solve(dict(doc, rules=doc["rules"][:1]))  # the same puzzle without its fog
     with pytest.raises(Exception, match="needs its solution"):
-        pm.load(dict(doc, solution=None))
+        pm.api._load(dict(doc, solution=None))
     pm.validate(doc)
-    p = pm.load(doc)
+    p = pm.api._load(doc)
     assert p.fog["lit"] == ["r1c1", "r5c5"] and len(pm.solve(p)) == 81
-    out = pm.to_export(p)
+    out = pm.write.document(p, solution=True, describe=True)
     out = out.get("puzzle", out)
     assert [r for r in out["rules"] if r["type"] == "fog"] == [fog]
     card = pm.rate(doc, fields=["band", "difficulty", "contains"])
@@ -1078,9 +1084,9 @@ def test_quality_opt_in_checks():
 def test_line_part_without_its_line_is_written():
     """a constraint tagged line_kind whose line is missing (a reader that built only the compiled part) is written as a
     rule, not dropped as the line's part"""
-    p = pencilmark.load(_classic_doc())
+    p = pencilmark.api._load(_classic_doc())
     p.constraints.append({"type": "equal_sum", "segments": [[2], [3, 4]], "line_kind": "region_sum"})
-    out = pencilmark.to_export(p, with_solution=False, describe=False)
+    out = pencilmark.write.document(p)
     assert {"type": "line", "kind": "region_sum", "cells": ["r1c3", "r1c4", "r1c5"]} in out["rules"]
 
 
@@ -1105,7 +1111,7 @@ def test_fog_lighting_everything_is_the_plain_card():
     """one algorithm for every card: a fog rule that lights every cell grades exactly like the puzzle without fog"""
     import pencilmark as pm
 
-    doc = pm.from_string(CLASSIC)
+    doc = pm.read.auto(CLASSIC)
     lit = [f"r{r}c{c}" for r in range(1, 10) for c in range(1, 10)]
     fogged = dict(
         doc, solution=[int(x) for x in pm.solve(doc)], rules=list(doc["rules"]) + [{"type": "fog", "lit": lit}]

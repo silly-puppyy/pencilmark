@@ -66,7 +66,7 @@ def test_fpuzzles_classic_roundtrip():
     pj = FP.to_puzzle(url, rules_text="Normal sudoku rules apply.")
     assert pj["numbers"].replace("0", ".") == CLASSIC
     assert sources.load(url, rules_text="Normal sudoku rules apply.", verify=True)["numbers"] == pj["numbers"]
-    assert pencilmark.rate(pj) == pencilmark.rate(CLASSIC)
+    assert pencilmark.rate(pencilmark.read._document(pj)) == pencilmark.rate(CLASSIC)
 
 
 def test_fpuzzles_killer_cage():
@@ -77,7 +77,7 @@ def test_fpuzzles_killer_cage():
     pj = FP.to_puzzle(
         fpuzzles_url(fpuzzles_json(CLASSIC, [(total, cells)])), rules_text="Normal sudoku and killer rules apply."
     )
-    p = pencilmark.load(pj)
+    p = pencilmark.api._load(pj)
     assert any(g.kind == "cage" and g.total == total for g in p.groups)
     assert pencilmark.solve(pj) == sol
 
@@ -87,7 +87,13 @@ def test_fpuzzles_lockout_written_back():
     rule can carry, so to_export and fingerprint failed on every imported lockout puzzle)"""
     d = fpuzzles_json(CLASSIC)
     d["lockout"] = [{"lines": [["R1C1", "R2C1", "R3C1", "R4C1"]], "value": "5"}]
-    doc = pencilmark.to_export(FP.to_puzzle(fpuzzles_url(d), rules_text="Lockout lines: ends differ by at least 5."))
+    doc = pencilmark.write.document(
+        pencilmark.read._document(
+            FP.to_puzzle(fpuzzles_url(d), rules_text="Lockout lines: ends differ by at least 5.")
+        ),
+        solution=True,
+        describe=True,
+    )
     assert {"type": "line", "kind": "lockout", "value": 5, "cells": ["r1c1", "r2c1", "r3c1", "r4c1"]} in doc["rules"]
     assert pencilmark.fingerprint(doc)
 
@@ -118,8 +124,10 @@ def test_links_accepted_everywhere():
     url = fpuzzles_url(fpuzzles_json(CLASSIC))
     assert pencilmark.solve(url) == pencilmark.solve(CLASSIC)
     assert pencilmark.rate(url, fields=["band"])["band"] == pencilmark.rate(CLASSIC, fields=["band"])["band"]
-    assert pencilmark.to_export(url)["meta"]["source"] == url  # the link's metadata is kept
-    with pytest.raises(ValueError, match="not a puzzle link"):
+    assert (
+        pencilmark.write.document(url, solution=True, describe=True)["meta"]["source"] == url
+    )  # the link's metadata is kept
+    with pytest.raises(pencilmark.FormatError, match="unrecognised puzzle link"):
         pencilmark.solve("https://example.com/puzzle")
 
 
@@ -539,19 +547,19 @@ def test_drawn_styles():
         "Digits on the line form a set of consecutive digits. Digits separated by a white dot are consecutive."
     )
     pj = SP.to_puzzle(sp, fetch=False)
-    doc = pm.to_export(pj, with_solution=False)
+    doc = pm.write.document(pm.read._document(pj), describe=True)
     style = {r.get("kind"): r.get("style") for r in doc["rules"]}
     assert style["renban"] == {"color": "#c060c0", "width": 0.2}
     assert style["kropki"] == {"fill": "#ffffff", "color": "#000000", "shape": "circle"}
-    plain = pm.to_export(pj, with_solution=False, style=False)
-    assert not any("style" in r for r in plain["rules"]) and pm.fingerprint(doc) == pm.fingerprint(plain)
+    plain = dict(doc, rules=[{k: v for k, v in r.items() if k != "style"} for r in doc["rules"]])
+    assert pm.fingerprint(doc) == pm.fingerprint(plain)  # styles are cosmetic
     # a SudokuPad thermometer stays a thermo line (with its colour), a board-sized fill is the background decoration
     thermo = {"color": "#a29b65ff", "thickness": 16, "wayPoints": [[0.5, 0.5], [1.5, 1.5], [1.5, 2.5]]}
     bulb = {"center": [0.5, 0.5], "width": 0.7, "height": 0.7, "rounded": True, "backgroundColor": "#a29b65ff"}
     bg = {"center": [2, 2], "width": 4, "height": 4, "backgroundColor": "#d3f2844f"}
     sp = _sp4(lines=[thermo], underlays=[bg, bulb])
     sp["meta"]["rules"] = "Along a thermometer, digits increase from the bulb."
-    doc = pm.to_export(SP.to_puzzle(sp, fetch=False), with_solution=False)
+    doc = pm.write.document(pm.read._document(SP.to_puzzle(sp, fetch=False)), describe=True)
     assert {
         "type": "line",
         "kind": "thermo",
@@ -847,12 +855,12 @@ def test_shape_clues_are_written_as_cell_rules():
     sq = lambda r, c: {"center": [r + 0.5, c + 0.5], "width": 0.8, "height": 0.8, "backgroundColor": "#0003"}
     sp = _sp4(underlays=[sq(0, 0), sq(1, 1)])
     sp["meta"]["rules"] = "Cells with a square contain an even number."
-    doc = pm.to_export(sudokupad.to_puzzle(sp, fetch=False), with_solution=False)
+    doc = pm.write.document(pm.read._document(sudokupad.to_puzzle(sp, fetch=False)), describe=True)
     cell = [r for r in doc["rules"] if r["type"] == "cell"]
     assert "candidates" not in doc and cell[0]["kind"] == "even" and cell[0]["cells"] == ["r1c1", "r2c2"]
     assert cell[0]["style"]["shape"] == "square"
     fp = {"size": 4, "grid": [[{} for _ in range(4)] for _ in range(4)], "odd": [{"cell": "R1C1"}]}
-    doc = pm.to_export(FP.to_puzzle(fp, fetch=False), with_solution=False)
+    doc = pm.write.document(pm.read._document(FP.to_puzzle(fp, fetch=False)), describe=True)
     assert "candidates" not in doc and any(r.get("kind") == "odd" for r in doc["rules"])
 
 

@@ -20,9 +20,9 @@ CHAOS = [{"type": "chaos"}, {"type": "region_border", "cells": ["r1c2", "r1c3"]}
 def test_read_write_fingerprint_describe():
     d = doc(CHAOS)
     pencilmark.validate(d)
-    p = pencilmark.load(d)
+    p = pencilmark.api._load(d)
     assert sorted({g.kind for g in p.groups}) == ["col", "row"]  # rows and columns; the regions are to be found
-    out = pencilmark.to_export(p, with_solution=False, describe=False)
+    out = pencilmark.write.document(p)
     assert out["rules"] == CHAOS
     assert pencilmark.fingerprint(out) == pencilmark.fingerprint(d)
     assert pencilmark.fingerprint(d) != pencilmark.fingerprint(doc([{"type": "grid"}]))
@@ -63,7 +63,7 @@ def test_engine_search(keep, borders, count):
     """the engine's search alone (no OR-Tools needed) counts regions-to-find puzzles"""
     givens = [v if (k not in keep if len(keep) == 4 else k in keep) else 0 for k, v in enumerate(SOL)]
     d = doc([{"type": "chaos"}] + [{"type": "region_border", "cells": b} for b in borders], givens)
-    sols, complete = cpsat_verify._engine(pencilmark.load(d), 100, 10**6)
+    sols, complete = cpsat_verify._engine(pencilmark.api._load(d), 100, 10**6)
     assert complete and len(sols) == count
     assert SOL in sols
 
@@ -89,7 +89,7 @@ def test_graded_with_region_steps():
     assert card["band"] != "Unknown" and card["difficulty"] is not None
     from pencilmark import cbackend as CB
 
-    steps, solved = CB.solve(pencilmark.load(d), pencilmark.api._params("human"), max_steps=100)
+    steps, solved = CB.solve(pencilmark.api._load(d), pencilmark.api._params("human"), max_steps=100)
     assert solved and all(SOL[c] != v for s in steps for c, v in (s.move.elim or ()))
 
 

@@ -1,13 +1,12 @@
 """Public Python API. Same inputs and outputs as the command line (`python -m pencilmark rate --json`).
 
     import pencilmark
-    card  = pencilmark.rate("....4.8.3.6...8..2...")            # classic string, puzzle JSON dict / str, pencilmark-puzzle dict,
-    card  = pencilmark.rate(puzzle, steps=True)                 #   a sample-pack line {"puzzle": ...}, or a path to a .json file
+    card  = pencilmark.rate("....4.8.3.6...8..2...")            # any format pencilmark reads (pencilmark.read), detected
+    card  = pencilmark.rate(text, format="sudokuwiki")           #   or named
     cards = pencilmark.rate_many(puzzles, jobs=4)               # parallel, input order kept
     sol   = pencilmark.solve(puzzle)                            # list of digits; raises NotUnique / NoSolution
-    exp   = pencilmark.to_export(puzzle, title=..., author=..., date=...)  # -> "pencilmark-puzzle" dict (docs/formats/puzzle-format.md)
-    text  = pencilmark.dumps(exp); pencilmark.fingerprint(puzzle); pencilmark.describe(puzzle)
-    pencilmark.to_ipuz(puzzle); pencilmark.from_string("S9B..."); pencilmark.to_string(puzzle, "sudokuwiki")  # -> "pencilmark-puzzle" dict, metadata under "meta"
+    doc   = pencilmark.read.plain("....4.8.3.6...8..2...")      # -> pencilmark-puzzle dict (docs/formats/puzzle-format.md)
+    text  = pencilmark.write.pencilmark(doc, solution=True)     # pencilmark JSON; write.sudokuwiki / plain / grid / ipuz
 
 `rate` returns the "pencilmark-grade" card: difficulty, time (minutes), band, contains (+ issues / reject,
 time_pNN, ... with fields=[...], + steps with steps=True, + "se": {er, ep, ed, scale} with se=True).
@@ -24,26 +23,18 @@ __all__ = [
     "rate_many",
     "solve",
     "count_solutions",
-    "to_export",
-    "load",
-    "NotUnique",
-    "NoSolution",
-    "Undecided",
-    "dumps",
+    "describe",
     "fingerprint",
     "validate",
-    "describe",
-    "rules_text",
-    "to_ipuz",
-    "from_ipuz",
-    "from_string",
-    "to_string",
     "generate",
     "Error",
     "FormatError",
     "NotSupportedError",
     "FetchError",
     "ReadingMismatch",
+    "NotUnique",
+    "NoSolution",
+    "Undecided",
     "GenerationFailed",
 ]
 
@@ -81,47 +72,36 @@ def _params(mode):
 
     key = _model_key(GM.default())
     if _PARAMS[0] is None or _PARAMS[0][0] is not key[0] or _PARAMS[0][1:] != key[1:]:  # the shipped model, the one
-        from .__main__ import _params as load_params  # grader_model.use() put in place, or changed settings
-
-        _PARAMS = (key, load_params())
+        _PARAMS = (key, GM.engine_params())  # grader_model.use() put in place, or changed settings
     return dict(_PARAMS[1], search="computer" if mode == "computer" else "human")
 
 
-def load(puzzle):
-    """Any accepted input -> a finalised engine Puzzle.
-
-    Parameters
-    ----------
-    puzzle : str, dict, Path or Puzzle
-        A classic string (81 characters, with or without a trailing comment), a text or pencil-mark grid, a sudokuwiki
-        packed string, a pencilmark-puzzle dict or JSON text, an ipuz file, a .json path, a SudokuPad / f-puzzles / Penpa /
-        Logic Masters link, or an engine Puzzle (returned as it is).
-
-    Returns
-    -------
-    Puzzle
-        The engine's puzzle.
-
-    Raises
-    ------
-    FormatError
-        A pencilmark-puzzle document that breaks the format.
-    TypeError
-        An input of no known form.
-    """
-    from . import inputs
+def _load(puzzle, format=None):  # noqa: A002
+    """any input pencilmark.read reads (detected, or named by format), or an engine Puzzle -> a finalised engine
+    Puzzle; the input's rules are kept in the file's order (written back and counted in that order)"""
     from . import puzzle_json as PJ
+    from .export import import_puzzle
+    from .read import auto
 
     if hasattr(puzzle, "groups") and hasattr(puzzle, "coords"):  # already an engine Puzzle
         if not hasattr(puzzle, "groups_of"):
             puzzle.finalize()
         return puzzle
-    obj = inputs.read(puzzle)
-    p = PJ.from_json(inputs.to_puzzle_json(obj))
+    if (
+        isinstance(puzzle, dict)
+        and format is None
+        and "format" not in puzzle
+        and ("numbers" in puzzle or "layout" in puzzle)
+    ):
+        # the engine's own JSON (internal callers; not a public format: rate reads through pencilmark.read first)
+        p = PJ.from_json(puzzle)
+        p.finalize()
+        return p
+    doc = auto(puzzle, format=format)
+    p = PJ.from_json(import_puzzle(doc))
     p.finalize()
-    src = obj.get("puzzle") if isinstance(obj.get("puzzle"), dict) else obj
-    if src.get("format") == "pencilmark-puzzle" and isinstance(src.get("rules"), list):
-        p._pm_input_rules = src["rules"]  # written back and counted (issues) in the file's own order
+    if isinstance(doc.get("rules"), list):
+        p._pm_input_rules = doc["rules"]
     return p
 
 
@@ -137,14 +117,15 @@ def rate(
     quality=None,
     alternatives=True,
     colouring=False,
+    format=None,  # noqa: A002
 ):
     """The "pencilmark-grade" card of one puzzle (docs/formats/grade-card.md), with only the fields you ask for.
 
     Parameters
     ----------
     puzzle : str, dict, Path or Puzzle
-        Anything `load` accepts: an 81-character string, a pencilmark-puzzle dict or JSON text, a .json file, an ipuz file, a
-        SudokuPad / f-puzzles / Penpa / Logic Masters link.
+        Any format pencilmark.read reads, detected (an 81-character string, a text grid, a sudokuwiki string, pencilmark
+        JSON as a dict, text or .json path, an ipuz file, a SudokuPad / f-puzzles / Penpa / Logic Masters link).
     steps : bool
         Shorthand for the `steps` field with every explanation level.
     max_seconds : float, optional
@@ -175,6 +156,10 @@ def rate(
         Pair, ...; docs/grades/techniques.md, Colouring). Off by default: most solvers do not colour, and with it
         the hardest puzzles take much longer to grade.
 
+    format : str, optional
+        The input's format (a pencilmark.read reader: "plain", "sudokuwiki", "pencilmark", "link", ...) instead of
+        detecting it.
+
     Returns
     -------
     dict
@@ -196,7 +181,11 @@ def rate(
 
     want = card_fields(fields, steps=steps, se=se)
     quality_limits(quality)
-    p = load(puzzle)
+    if not hasattr(puzzle, "coords"):  # read once: the fog view reads the document too
+        from .read import auto
+
+        puzzle = auto(puzzle, format=format)
+    p = _load(puzzle)
     # rules no human technique reasons with yet: the puzzle is still proven unique (or refused as a wrong input), then
     # its card is band Unknown with the reason (user 2026-11-06: "Unknown if unknown, error if a reader mistake")
     no_route = (
@@ -351,7 +340,7 @@ def solve(puzzle, info=False):
     Parameters
     ----------
     puzzle : str, dict, Path or Puzzle
-        Anything `load` accepts.
+        Any format pencilmark.read reads (detected), or its document.
     info : bool
         Return {"solution": [...], "seconds": wall-clock seconds of the search} instead of the bare list.
 
@@ -374,7 +363,7 @@ def solve(puzzle, info=False):
     from . import cpsat_verify as V
 
     t0 = time.perf_counter()
-    sols, decided = V.decide(load(puzzle), limit=2)
+    sols, decided = V.decide(_load(puzzle), limit=2)
     if len(sols) > 1:
         raise NotUnique("more than one solution")
     if not decided:
@@ -395,7 +384,7 @@ def count_solutions(puzzle, limit=1000):
     Parameters
     ----------
     puzzle : str, dict, Path or Puzzle
-        Anything `load` accepts.
+        Any format pencilmark.read reads (detected), or its document.
     limit : int
         Stop counting here.
 
@@ -409,94 +398,8 @@ def count_solutions(puzzle, limit=1000):
 
     if limit < 1:
         raise ValueError("limit must be at least 1")
-    sols, decided = V.decide(load(puzzle), limit=limit)
+    sols, decided = V.decide(_load(puzzle), limit=limit)
     return {"count": len(sols), "exact": decided and len(sols) < limit}
-
-
-def to_export(puzzle, meta=None, with_solution=True, describe=True, style=True, **meta_kw):
-    """The pencilmark-puzzle dict of a puzzle (format_version 1, docs/formats/puzzle-format.md).
-
-    Canonical: houses and rules with "r1c1" cells, keys in a fixed order. Metadata already in a JSON input is kept.
-
-    Parameters
-    ----------
-    puzzle : str, dict, Path or Puzzle
-        Anything `load` accepts.
-    meta : dict, optional
-        Metadata for the "meta" object, e.g. {"title": ..., "author": ..., "date": ...}.
-    with_solution : bool
-        Include the solution.
-    describe : bool
-        Fill an empty meta.type / meta.rules_text from `describe`; never overwrites them.
-    style : bool
-        Keep how the source drew each rule (SudokuPad colours, widths, shapes) as the rule's cosmetic `style`.
-    **meta_kw
-        Metadata as keywords: title, author, source, id, url, date, rules_text.
-
-    Returns
-    -------
-    dict
-        The pencilmark-puzzle document.
-    """
-    from . import inputs
-    from .export import export_puzzle, read_meta
-
-    if isinstance(puzzle, str):  # read once, keeping the title / source a link or JSON text carries
-        puzzle = inputs.read(puzzle)
-    p = load(puzzle)
-    sol = None
-    if with_solution:
-        sol = getattr(p, "_pm_solution", None)  # known already (rate(), the generator): no second search
-        try:
-            sol = sol if sol is not None else solve(p)
-        except (ValueError, Undecided):  # no solution, several, or none found in the search limit: left out
-            sol = None
-    m = {}
-    if isinstance(puzzle, dict):
-        m.update(read_meta(puzzle.get("puzzle") if isinstance(puzzle.get("puzzle"), dict) else puzzle))
-    m.update(meta or {})
-    m.update({k: v for k, v in meta_kw.items() if v not in (None, "")})
-    doc = export_puzzle(p, meta=m, solution=sol)
-    if style and getattr(p, "drawn", None):
-        from .sources._sp_style import apply as _apply_style
-
-        doc = _apply_style(doc, p.drawn)
-    if describe and not (m.get("type") and m.get("rules_text")):
-        from .variants import describe as _describe
-        from .variants import rules_text as _rt
-
-        dsc = _describe(doc)
-        meta2 = dict(doc.get("meta") or {})
-        meta2.setdefault("type", dsc["type"])
-        meta2.setdefault("rules_text", _rt(dsc))
-        from .export import read_meta as _rm
-
-        doc = dict(doc)
-        doc["meta"] = _rm({"meta": meta2})
-        from .exchange import canonical
-
-        doc = canonical(doc)
-    return doc
-
-
-def dumps(doc, pretty=True):
-    """Canonical JSON text of a pencilmark-puzzle dict: fixed key order; pretty: one grid row per line, one rule per line.
-
-    Parameters
-    ----------
-    doc : dict
-        A pencilmark-puzzle document.
-    pretty : bool
-        Readable layout (True) or one line (False).
-
-    Returns
-    -------
-    str
-        The text.
-    """
-    from .exchange import dumps as d
-
-    return d(doc, pretty=pretty)
 
 
 def fingerprint(puzzle):
@@ -508,7 +411,7 @@ def fingerprint(puzzle):
     Parameters
     ----------
     puzzle : str, dict, Path or Puzzle
-        Anything `load` accepts.
+        Any format pencilmark.read reads (detected), or its document.
 
     Returns
     -------
@@ -516,8 +419,9 @@ def fingerprint(puzzle):
         64 lowercase hex digits (SHA-256).
     """
     from .exchange import fingerprint_of_doc
+    from .write import _rebuilt
 
-    return fingerprint_of_doc(to_export(puzzle, with_solution=False, describe=False))
+    return fingerprint_of_doc(_rebuilt(puzzle))
 
 
 def validate(doc):
@@ -550,113 +454,18 @@ def describe(puzzle):
     Parameters
     ----------
     puzzle : str, dict, Path or Puzzle
-        Anything `load` accepts.
+        Any format pencilmark.read reads (detected), or its document.
 
     Returns
     -------
     dict
-        {"type": variant name, "rules": {short name: one-sentence rule, ...}}.
+        {"type": variant name, "rules": {short name: one-sentence rule, ...}, "rules_text": the rules as one text}.
     """
     from .variants import describe as d
+    from .variants import rules_text
 
-    return d(puzzle)
-
-
-def rules_text(described):
-    from .variants import rules_text as r
-
-    return r(described)
-
-
-def to_ipuz(puzzle):
-    """A puzzle as an ipuz 2 dict (docs/formats/other-formats.md).
-
-    ipuz expresses classic, Latin square, diagonal, windoku, jigsaw and killer sudoku.
-
-    Parameters
-    ----------
-    puzzle : str, dict, Path or Puzzle
-        Anything `load` accepts.
-
-    Returns
-    -------
-    dict
-        The ipuz document.
-
-    Raises
-    ------
-    NotSupportedError
-        The puzzle uses rules ipuz cannot express.
-    """
-    from .interop import to_ipuz as t
-
-    return t(puzzle)
-
-
-def from_ipuz(ipuz):
-    """An ipuz sudoku -> pencilmark-puzzle dict (docs/formats/other-formats.md).
-
-    Parameters
-    ----------
-    ipuz : dict or str
-        The ipuz document, or its JSON text.
-
-    Returns
-    -------
-    dict
-        The pencilmark-puzzle document.
-    """
-    from .interop import from_ipuz as f
-
-    return f(ipuz)
-
-
-def from_string(s, symbols=None):
-    """A puzzle as text -> pencilmark-puzzle dict (docs/formats/other-formats.md).
-
-    Reads plain classic strings (with or without a trailing comment), text grids with separators, pencil-mark grids,
-    729-character candidate strings, HoDoKu library lines and sudokuwiki.org packed strings.
-
-    Parameters
-    ----------
-    s : str
-        The text.
-    symbols : str, optional
-        For a plain string, the symbol of each digit in order (e.g. "ABCDEFGHI" reads A as 1); default 1-9, then A-Z.
-
-    Returns
-    -------
-    dict
-        The pencilmark-puzzle document.
-    """
-    from .interop import from_string as f
-
-    return f(s, symbols=symbols)
-
-
-def to_string(puzzle, form="plain"):
-    """A puzzle as text (docs/formats/other-formats.md).
-
-    Parameters
-    ----------
-    puzzle : str, dict, Path or Puzzle
-        Anything `load` accepts.
-    form : str
-        "plain" (81 characters), "grid" (rows with separators) or "sudokuwiki" (packed string).
-
-    Returns
-    -------
-    str
-        The text.
-
-    Raises
-    ------
-    NotSupportedError
-        The form cannot carry the puzzle (e.g. a variant in "plain").
-    """
-    from .interop import to_string as t
-
-    return t(puzzle, form)
+    out = d(puzzle)
+    return dict(out, rules_text=rules_text(out))
 
 
 def generate(spec):

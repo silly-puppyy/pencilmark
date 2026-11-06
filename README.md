@@ -45,11 +45,13 @@ card["band"], card["difficulty"], card["time"]          # ('Hard', 5.8, 10.6)
 card  = pencilmark.rate(puzzle, steps=True)             # add the step-by-step solve with explanations
 cards = pencilmark.rate_many(puzzles, jobs=4)           # several puzzles in parallel, input order kept
 sol   = pencilmark.solve(puzzle)                        # list of digits; raises NotUnique / NoSolution
-exp   = pencilmark.to_export(puzzle, title="My puzzle") # the pencilmark-puzzle format
+doc   = pencilmark.read.plain(puzzle)                  # one format, strictly; read.sudokuwiki, .ipuz, .link, ...
+text  = pencilmark.write.pencilmark(doc, solution=True) # pencilmark JSON; pencilmark.write.sudokuwiki, .ipuz, ...
 ```
 
-A puzzle can be a classic string (`.` or `0` for blanks), a `pencilmark-puzzle` dict, a puzzle JSON dict or string, or a
-path to a `.json` file.
+A puzzle can be in any format pencilmark reads, detected: a classic string (`.` or `0` for blanks), a text grid, a
+sudokuwiki.org string, a HoDoKu line, pencilmark JSON (a dict, its text or a `.json` path), an ipuz file, or a SudokuPad,
+f-puzzles, Penpa or Logic Masters link. `rate(x, format="sudokuwiki")` names the format instead.
 
 Command line:
 
@@ -75,7 +77,7 @@ Every field is in [Grade card](https://silly-puppyy.github.io/pencilmark/formats
 
 ## Puzzle format
 
-`to_export` writes, and every entry point reads, the `"pencilmark-puzzle"` format, format_version 1: every constraint is a
+Every entry point reads, and `pencilmark.write.pencilmark` writes, pencilmark JSON (`"format": "pencilmark-puzzle"`, format_version 1): every constraint is a
 rule, houses included, each with one exact meaning and a default drawing, and an unknown key makes the reader refuse
 the file instead of dropping a rule.
 
@@ -133,7 +135,7 @@ different digits. Every result is checked for uniqueness.
 
 ```python
 card = pencilmark.rate("https://sudokupad.app/...")  # SudokuPad, f-puzzles, Penpa+, Logic Masters, short links
-exp = pencilmark.to_export("https://sudokupad.app/...")  # the same puzzle as a pencilmark-puzzle file
+doc = pencilmark.read.link("https://sudokupad.app/...")  # the same puzzle as pencilmark JSON (a dict)
 ```
 
 The command line takes links too: `pencilmark rate links.txt`, one link per line.

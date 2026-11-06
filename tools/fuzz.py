@@ -5,7 +5,7 @@ accepted by the referee, then
   - with every cell given, the engine finds exactly one solution (else it over-constrains a rule);
   - with some givens, if unique, the solution is the true one (else it under-constrains);
   - a unique case is graded: every placement and elimination agrees with the solution;
-  - to_export / dumps / fingerprint round trips hold;
+  - write.document / write.pencilmark / fingerprint round trips hold;
   - the transposed puzzle (rows <-> columns, sides swapped) gets the same band and nearly the same difficulty (ties
     between equally priced steps are broken in reading order, so its route can differ: 0.3 or 5% allowed).
 Failures are grouped by symptom with the seed that reproduces them; `--seed S` reruns one case and prints its file.
@@ -324,8 +324,10 @@ def case(seed):
                 r_, cc = map(int, c_[1:].split("c"))
                 if flat[(r_ - 1) * D + cc - 1] == int(val):
                     return fail("ELIMINATES THE SOLUTION", f"{s['code']} {e}")
-        ex = pm.to_export(part)
-        if pm.to_export(ex) != ex or pm.fingerprint(ex) != pm.fingerprint(json.loads(pm.dumps(ex))):
+        ex = pm.write.document(part, solution=True, describe=True)
+        if pm.write.document(ex, solution=True, describe=True) != ex or pm.fingerprint(ex) != pm.fingerprint(
+            json.loads(pm.write.pencilmark(ex))
+        ):
             return fail("round trip")
         return seed, "ok", part
     except Exception as e:  # noqa: BLE001

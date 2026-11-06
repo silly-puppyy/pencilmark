@@ -425,7 +425,7 @@ def generate(spec):
     from pathlib import Path
 
     from .. import spec_format as SF
-    from ..api import to_export
+    from ..write import document
 
     doc = spec
     if isinstance(spec, Path) or (isinstance(spec, str) and not spec.lstrip().startswith("{")):
@@ -454,7 +454,12 @@ def generate(spec):
     meta.pop("fingerprint", None)  # filled in below, from the finished puzzle
     p = PJ.from_json(r["puzzle"])  # with the solution the puzzle was dug from: exporting needs no search
     p._pm_solution = [PJ._val(ch) for ch in r["puzzle"]["solution"]]
-    puzzle = to_export(p, meta=dict(r["puzzle"].get("meta") or {}, **meta))
+    from ..exchange import canonical
+    from ..export import read_meta
+
+    puzzle = document(p, solution=True, describe=True)
+    m = dict(puzzle.get("meta") or {}, **dict(r["puzzle"].get("meta") or {}, **meta))
+    puzzle = canonical(dict(puzzle, meta=read_meta({"meta": m})))
     if "fingerprint" in (
         doc.get("meta") or {}
     ):  # asked for in the spec: the puzzle's own (meta is outside it: no loop)
