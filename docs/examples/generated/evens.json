@@ -40,7 +40,7 @@
    "title": "generated 9x9 36 parity, 10 givens",
    "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nOdd-Even: A digit in a grey square is even.",
    "type": "Odd-Even Sudoku",
-   "generated_from": "sha256:3a756f98f51ee7326c4f96f4127c1ec348851d2284ecb0be57123ffedc30b9ca"
+   "generated_from": "3a756f98f51ee7326c4f96f4127c1ec348851d2284ecb0be57123ffedc30b9ca"
   },
   "board": {
    "rows": 9,

@@ -61,7 +61,7 @@
    "title": "generated 9x9 1 palindrome, 3 quadruple, 3 sandwich, 3 givens",
    "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nSandwich: Clues outside the grid give the sum of the digits between the 1 and the 9 in that row or column.\nPalindrome: A palindrome line reads the same from either end.\nQuadruple: Digits in a circle appear at least once among the cells around it.\nAnti-Knight: Cells a knight's move apart don't contain the same digit.",
    "type": "Variant Sudoku",
-   "generated_from": "sha256:879d63fcd0dce37fddc8e25e25dd1632ae8efff0bbc1193e0d97d1e44b331677"
+   "generated_from": "879d63fcd0dce37fddc8e25e25dd1632ae8efff0bbc1193e0d97d1e44b331677"
   },
   "board": {
    "rows": 9,

@@ -5,7 +5,7 @@
     read(doc) -> Puzzle                                 sudoku-puzzle dict -> engine Puzzle (not finalized)
     validate(doc)                                       strict reading checks (docs/formats/puzzle-format.md section 4); raises FormatError
     dumps(doc, pretty=True) -> str                      canonical JSON text (docs/formats/puzzle-format.md 8.1)
-    fingerprint(doc) -> "sha256:..."                    content fingerprint (docs/formats/puzzle-format.md 8.2)
+    fingerprint(doc) -> "<64 hex>"                       content fingerprint (docs/formats/puzzle-format.md 8.2)
 
 The format is a transport layer: read(write(p)) builds the same engine structure as p (groups in order, relations and
 constraints in order, domains, givens, coordinates), except for the normalisations listed in docs/library/engine-mapping.md (each

@@ -498,7 +498,7 @@ def dumps(doc, pretty=True):
 
 
 def fingerprint(puzzle):
-    """Content fingerprint of a puzzle: "sha256:<hex>" of its canonical form.
+    """Content fingerprint of a puzzle: the SHA-256 of its canonical form, 64 hex digits.
 
     Covers the rules, grid, givens and candidates; not meta, style or the solution. Two files of the same puzzle get the
     same fingerprint.
@@ -511,7 +511,7 @@ def fingerprint(puzzle):
     Returns
     -------
     str
-        "sha256:" followed by 64 hex digits.
+        64 lowercase hex digits (SHA-256).
     """
     from .exchange import fingerprint_of_doc
 

@@ -69,7 +69,7 @@
    "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nKiller: Digits in a cage sum to its small clue and don't repeat within the cage.\nGerman Whispers: Adjacent digits on a whisper line differ by at least 5.",
    "type": "Variant Sudoku",
    "description": "Cages and whisper lines, exactly two givens, Hard.",
-   "generated_from": "sha256:e8d807e3904906ba079fe090e4e028f2cf797513070fc44ca72cd07d7d6a91a5"
+   "generated_from": "e8d807e3904906ba079fe090e4e028f2cf797513070fc44ca72cd07d7d6a91a5"
   },
   "board": {
    "rows": 9,

@@ -44,7 +44,7 @@
    "title": "generated 9x9 23 cage, 0 givens",
    "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nKiller: Digits in a cage sum to its small clue and don't repeat within the cage.",
    "type": "Killer Sudoku",
-   "generated_from": "sha256:d13b8c5c5c23a13d23cab613ac35c1bf1bbd54b7a82d007e1d076b56af7ab8ad"
+   "generated_from": "d13b8c5c5c23a13d23cab613ac35c1bf1bbd54b7a82d007e1d076b56af7ab8ad"
   },
   "board": {
    "rows": 9,

@@ -41,7 +41,7 @@
    "title": "generated 4x4 classic, 4 givens",
    "rules_text": "Tiny Sudoku: Place 1–4 in every row, column and 2×2 box.",
    "type": "Tiny Sudoku",
-   "generated_from": "sha256:ce54f514783fc586d4b228040aaabbed601701c9fedc0f5997cb6916712738e4"
+   "generated_from": "ce54f514783fc586d4b228040aaabbed601701c9fedc0f5997cb6916712738e4"
   },
   "board": {
    "rows": 4,

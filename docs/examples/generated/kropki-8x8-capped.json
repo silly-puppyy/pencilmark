@@ -45,7 +45,7 @@
    "title": "generated 8x8 6 kropki, 13 givens",
    "rules_text": "8x8 Sudoku: Place 1–8 in every row, column and 2×4 box.\nKropki: Digits separated by a white dot are consecutive; digits separated by a black dot are in a 1:2 ratio.",
    "type": "8x8 Kropki Sudoku",
-   "generated_from": "sha256:6fc93d4ca3534c64ddcb46a0e2af28d0597da64076bf29addc8fa872e30b3746"
+   "generated_from": "6fc93d4ca3534c64ddcb46a0e2af28d0597da64076bf29addc8fa872e30b3746"
   },
   "board": {
    "rows": 8,

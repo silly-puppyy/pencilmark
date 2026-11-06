@@ -39,7 +39,7 @@
    "title": "generated 6x6 10 cage, 0 givens",
    "rules_text": "Mini Sudoku: Place 1–6 in every row, column and 2×3 box.\nKiller: Digits in a cage sum to its small clue and don't repeat within the cage.",
    "type": "Mini Killer Sudoku",
-   "generated_from": "sha256:4e614d775a2a5c811a76a56d6bc51ed33c6e6e85829dccefa24314753d08b5ac"
+   "generated_from": "4e614d775a2a5c811a76a56d6bc51ed33c6e6e85829dccefa24314753d08b5ac"
   },
   "board": {
    "rows": 6,

@@ -89,7 +89,7 @@
    "title": "generated 9x9 classic, 108 givens",
    "rules_text": "Samurai: Each 9×9 grid follows normal sudoku rules: place 1–9 in every row, column and box; shared cells belong to both grids.",
    "type": "Samurai Sudoku",
-   "generated_from": "sha256:cc283ea9db99f7f700bd86b6d5c4bc374c565198ecadc3afe61db913b2631e52"
+   "generated_from": "cc283ea9db99f7f700bd86b6d5c4bc374c565198ecadc3afe61db913b2631e52"
   },
   "board": {
    "rows": 21,

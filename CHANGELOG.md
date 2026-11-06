@@ -12,7 +12,7 @@ What changes for you (details in the entries below):
   cards: 1 of 227 from the human route, 2 of 55 from colouring).
 - **Publishing checks.** `thin` replaces `spike`; the `unusual` ranges are re-measured; quality presets
   (`{"preset": "standard"}`) and opt-in checks are new.
-- **Breaking, no aliases** (nobody depends on them yet): `box_grid` needs `count`; colouring codes share the prefix C
+- **Breaking, no aliases** (nobody depends on them yet): fingerprints drop the `sha256:` prefix; `box_grid` needs `count`; colouring codes share the prefix C
   (EQD -> CEQ, SCL -> CSM, MCL -> CMU, 3DM -> CMD, identity-layer codes CSG / CFL / CPR / CTR); generated puzzles carry
   `meta.generated_from` only when the spec asks.
 - **New in the format:** fog of war, regions to find (chaos), shading (yin-yang), custom-rule unknowns and layers.
@@ -24,6 +24,8 @@ What changes for you (details in the entries below):
 - Opt-in quality checks (off unless named): `asymmetric`, `no_interplay`, `winding`, `short_lines`, `repetitive`,
   `monotone`, `desert`, `late_break`; limits near the edge of published Medium+ puzzles
   (1-27% of them flagged, per check).
+- Fingerprints are the bare SHA-256 digest, 64 lowercase hex digits, without the `sha256:` prefix (puzzle and spec
+  fingerprints, `meta.fingerprint`, `meta.generated_from`). The digest itself is unchanged. No alias.
 - The fog route ends each round's band route at the first placement that lights new cells instead of solving on and
   discarding the rest: the same routes, up to 125x faster (265 s -> 2 s on one sudoku.coach puzzle).
 - `rate` grades fog-of-war puzzles under the fog: the band and techniques of the fog route (the human route on what

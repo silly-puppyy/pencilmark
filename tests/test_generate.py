@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -434,7 +435,7 @@ def test_fingerprints_asked_for_in_the_spec():
         "meta": {"title": "t", "fingerprint": True, "generated_from": True},
     }
     meta = run(doc)["puzzle"]["meta"]
-    assert meta["fingerprint"] == pencilmark.fingerprint(run(doc)["puzzle"]) and meta["generated_from"].startswith(
-        "sha256:"
+    assert meta["fingerprint"] == pencilmark.fingerprint(run(doc)["puzzle"]) and re.fullmatch(
+        r"[0-9a-f]{64}", meta["generated_from"]
     )
     assert meta["fingerprint"] != meta["generated_from"]

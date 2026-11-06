@@ -410,7 +410,7 @@
    "title": "generated 9x9 classic, 199 givens",
    "rules_text": "Super Samurai: Each 9×9 grid follows normal sudoku rules: place 1–9 in every row, column and box; shared cells belong to both grids.\nX: Digits don't repeat on either of the two main diagonals. Only in the grid at r1c1, grid at r1c13 and grid at r1c25.\nWindoku: Digits don't repeat in any of the shaded 3×3 windows. Only in the grid at r7c7 and grid at r7c19.\nExtra Regions: Digits don't repeat in a shaded region.",
    "type": "Variant Super Samurai Sudoku",
-   "generated_from": "sha256:f86396a578d68928ce8cf25430e27e7814132fd38d4ef2caa36d660e1c892ead"
+   "generated_from": "f86396a578d68928ce8cf25430e27e7814132fd38d4ef2caa36d660e1c892ead"
   },
   "board": {
    "rows": 21,

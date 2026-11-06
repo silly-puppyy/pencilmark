@@ -47,7 +47,7 @@
    "title": "generated 9x9 24 xv, 9 givens",
    "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nXV: Digits separated by an X sum to 10.",
    "type": "XV Sudoku",
-   "generated_from": "sha256:e0da35539d764ef280bb2e39684f0f38a33ef1c93faea0509a142aac9bbbecc5"
+   "generated_from": "e0da35539d764ef280bb2e39684f0f38a33ef1c93faea0509a142aac9bbbecc5"
   },
   "board": {
    "rows": 9,

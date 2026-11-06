@@ -117,7 +117,7 @@ agree on the common ones:
 | `type` | Display name of the variant, such as `"Killer Sudoku"`. Variant names live **only** here; they never change the rules. `describe()` ([How variants are named](../library/variant-naming.md)) fills it when it is empty. |
 | `license` | Licence of the puzzle. |
 | `tags` | List of strings. |
-| `fingerprint` | Optional: the puzzle's [fingerprint](#82-fingerprint), `sha256:...`. `meta` is outside the fingerprint, so a file can carry its own. |
+| `fingerprint` | Optional: the puzzle's [fingerprint](#82-fingerprint), 64 hex digits. `meta` is outside the fingerprint, so a file can carry its own. |
 | `generated_from` | Optional: fingerprint of the `sudoku-spec` that produced the puzzle ([Generator spec](generator-spec.md)). |
 
 ## 3. Cells, outside clues and ordering
@@ -338,7 +338,7 @@ keep their order.
 
 ### 8.2 Fingerprint
 
-`pencilmark.fingerprint(puzzle) -> "sha256:<64 hex>"`:
+`pencilmark.fingerprint(puzzle) -> "<64 hex>"` (SHA-256, lowercase):
 
 1. Read the puzzle and write it canonically (8.1).
 2. Keep only `format`, `format_version`, `board`, `digits`, `givens`, `candidates`, `rules`; in every rule drop `id`,

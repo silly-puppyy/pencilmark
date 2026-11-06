@@ -135,7 +135,7 @@ A part of a request the generator cannot meet in time is never ignored: the run 
 
 ## 6. Fingerprint
 
-`sha256:` of the canonical JSON of `board`, `digits`, `givens`, `rules`, `symmetry`, `where` and `quality` (the parts that decide
+The SHA-256 (64 lowercase hex digits) of the canonical JSON of `board`, `digits`, `givens`, `rules`, `symmetry`, `where` and `quality` (the parts that decide
 which puzzles qualify; `meta`, `limits` and `fields` do not).
 
 ## 7. Reserved for later versions

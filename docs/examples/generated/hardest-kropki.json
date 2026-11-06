@@ -51,7 +51,7 @@
    "rules_text": "Mini Sudoku: Place 1–6 in every row, column and 2×3 box.\nKropki: Digits separated by a white dot are consecutive; digits separated by a black dot are in a 1:2 ratio.",
    "type": "Mini Kropki Sudoku",
    "description": "No givens, a minimal set of kropki dots, as hard as the search can find in the time.",
-   "generated_from": "sha256:e9fa87944263e5c94abbd6587273d8f332d225c6cae6e019a4e5f386d799c5b9"
+   "generated_from": "e9fa87944263e5c94abbd6587273d8f332d225c6cae6e019a4e5f386d799c5b9"
   },
   "board": {
    "rows": 6,

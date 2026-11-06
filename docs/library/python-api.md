@@ -18,7 +18,7 @@ Everything below is importable from `pencilmark` directly (`pencilmark.rate`, `p
 | def [`generate`](#generate) | One puzzle for a "sudoku-spec" request ([Generator spec](../formats/generator-spec.md)). |
 | def [`load`](#load) | Any accepted input -> a finalised engine Puzzle. |
 | def [`validate`](#validate) | Strict reading checks of a format_version 1 dict ([Puzzle format](../formats/puzzle-format.md) section 4). |
-| def [`fingerprint`](#fingerprint) | Content fingerprint of a puzzle: "sha256:&lt;hex>" of its canonical form. |
+| def [`fingerprint`](#fingerprint) | Content fingerprint of a puzzle: the SHA-256 of its canonical form, 64 hex digits. |
 | def [`to_export`](#to_export) | The sudoku-puzzle dict of a puzzle (format_version 1, [Puzzle format](../formats/puzzle-format.md)). |
 | def [`dumps`](#dumps) | Canonical JSON text of a sudoku-puzzle dict: fixed key order; pretty: one grid row per line, one rule per… |
 | def [`from_string`](#from_string) | A puzzle as text -> sudoku-puzzle dict ([Other formats](../formats/other-formats.md)). |
@@ -62,7 +62,7 @@ The "sudoku-grade" card of one puzzle ([Grade card](../formats/grade-card.md)), 
 
 ### `def rate_many(puzzles, jobs=1, steps=False, max_seconds=None, mode='human', se=False, fields=None, allow_guessing=False, explain=None, quality=None, alternatives=True)` {#rate_many}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L297)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L303)
 
 Cards for many puzzles, in input order.
 
@@ -78,7 +78,7 @@ Cards for many puzzles, in input order.
 
 ### `def describe(puzzle)` {#describe}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L539)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L545)
 
 The variant name and its rules in words, from the rules alone (pencilmark/variants.py).
 
@@ -94,7 +94,7 @@ The variant name and its rules in words, from the rules alone (pencilmark/varian
 
 ### `def solve(puzzle, info=False)` {#solve}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L338)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L344)
 
 The unique solution of a puzzle.
 
@@ -117,7 +117,7 @@ Uses the engine's exhaustive C++ search; CP-SAT (OR-Tools, optional) only when t
 
 ### `def count_solutions(puzzle, limit=1000)` {#count_solutions}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L384)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L390)
 
 How many solutions a puzzle has, counting up to a limit.
 
@@ -134,7 +134,7 @@ How many solutions a puzzle has, counting up to a limit.
 
 ### `def generate(spec)` {#generate}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L654)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L660)
 
 One puzzle for a "sudoku-spec" request ([Generator spec](../formats/generator-spec.md)).
 
@@ -173,7 +173,7 @@ Any accepted input -> a finalised engine Puzzle.
 
 ### `def validate(doc)` {#validate}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L515)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L521)
 
 Strict reading checks of a format_version 1 dict ([Puzzle format](../formats/puzzle-format.md) section 4).
 
@@ -191,9 +191,9 @@ Strict reading checks of a format_version 1 dict ([Puzzle format](../formats/puz
 
 ### `def fingerprint(puzzle)` {#fingerprint}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L494)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L500)
 
-Content fingerprint of a puzzle: "sha256:&lt;hex>" of its canonical form.
+Content fingerprint of a puzzle: the SHA-256 of its canonical form, 64 hex digits.
 
 Covers the rules, grid, givens and candidates; not meta, style or the solution. Two files of the same puzzle get the same fingerprint.
 
@@ -203,11 +203,11 @@ Covers the rules, grid, givens and candidates; not meta, style or the solution. 
 
 **Returns**
 
-- *str* — "sha256:" followed by 64 hex digits.
+- *str* — 64 lowercase hex digits (SHA-256).
 
 ### `def to_export(puzzle, meta=None, with_solution=True, describe=True, style=True, **meta_kw)` {#to_export}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L408)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L414)
 
 The sudoku-puzzle dict of a puzzle (format_version 1, [Puzzle format](../formats/puzzle-format.md)).
 
@@ -228,7 +228,7 @@ Canonical: houses and rules with "r1c1" cells, keys in a fixed order. Metadata a
 
 ### `def dumps(doc, pretty=True)` {#dumps}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L474)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L480)
 
 Canonical JSON text of a sudoku-puzzle dict: fixed key order; pretty: one grid row per line, one rule per line.
 
@@ -243,7 +243,7 @@ Canonical JSON text of a sudoku-puzzle dict: fixed key order; pretty: one grid r
 
 ### `def from_string(s, symbols=None)` {#from_string}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L606)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L612)
 
 A puzzle as text -> sudoku-puzzle dict ([Other formats](../formats/other-formats.md)).
 
@@ -260,7 +260,7 @@ Reads plain classic strings (with or without a trailing comment), text grids wit
 
 ### `def to_string(puzzle, form='plain')` {#to_string}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L629)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L635)
 
 A puzzle as text ([Other formats](../formats/other-formats.md)).
 
@@ -279,7 +279,7 @@ A puzzle as text ([Other formats](../formats/other-formats.md)).
 
 ### `def from_ipuz(ipuz)` {#from_ipuz}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L588)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L594)
 
 An ipuz sudoku -> sudoku-puzzle dict ([Other formats](../formats/other-formats.md)).
 
@@ -293,7 +293,7 @@ An ipuz sudoku -> sudoku-puzzle dict ([Other formats](../formats/other-formats.m
 
 ### `def to_ipuz(puzzle)` {#to_ipuz}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L563)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L569)
 
 A puzzle as an ipuz 2 dict ([Other formats](../formats/other-formats.md)).
 
@@ -327,6 +327,6 @@ the puzzle has no solution
 
 ### `class Undecided(RuntimeError)` {#Undecided}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L334)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L340)
 
 the exhaustive search hit its node or time limit and OR-Tools (pip install "pencilmark[verify]") is not available

@@ -50,7 +50,7 @@
    "title": "generated 9x9 classic, 39 givens",
    "rules_text": "Twodoku: Each 9×9 grid follows normal sudoku rules: place 1–9 in every row, column and box; shared cells belong to both grids.",
    "type": "Twodoku",
-   "generated_from": "sha256:959b000457270fff295a4ae752f919e438ef4516fe991e4f549af46ad87767e9"
+   "generated_from": "959b000457270fff295a4ae752f919e438ef4516fe991e4f549af46ad87767e9"
   },
   "board": {
    "rows": 15,

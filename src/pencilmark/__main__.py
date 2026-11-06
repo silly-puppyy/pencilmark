@@ -17,7 +17,7 @@
   python -m pencilmark json  [FILE|-]      validate + normalise to canonical JSON (adds "hash")
   python -m pencilmark export [FILE|-] [--pretty] [--no-solution] [--no-style]
                                        each puzzle as a "sudoku-puzzle" file (format_version 1, docs/formats/puzzle-format.md), canonical
-  python -m pencilmark fingerprint [FILE|-]  the content fingerprint ("sha256:...") per puzzle
+  python -m pencilmark fingerprint [FILE|-]  the content fingerprint (64 hex digits) per puzzle
   python -m pencilmark describe [FILE|-]     variant name and rules per puzzle (JSON)
 Inputs may also be sudokuwiki.org packed strings (S9B..., L9B..., J9B...).
 Every command takes --log info (pages fetched, what a reader read, time limits reached, the generator's result) or

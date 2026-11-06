@@ -43,7 +43,7 @@
    "title": "generated 9x9 classic, 26 givens",
    "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.",
    "type": "Sudoku",
-   "generated_from": "sha256:ed56d4f85e071469647e902380a5f366ad2dd3f68f90e60247f51ed3b54fb26c"
+   "generated_from": "ed56d4f85e071469647e902380a5f366ad2dd3f68f90e60247f51ed3b54fb26c"
   },
   "board": {
    "rows": 9,

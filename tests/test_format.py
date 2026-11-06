@@ -276,7 +276,7 @@ def test_format_md_examples():
 def test_fingerprint_stable():
     d = _classic_doc()
     f = pencilmark.fingerprint(d)
-    assert f == "sha256:a96eb0bb99b3f4a588d8d3f97dd28eaf321a4f453de36e60b4bab8f5eac239a6", f
+    assert f == "a96eb0bb99b3f4a588d8d3f97dd28eaf321a4f453de36e60b4bab8f5eac239a6", f
     # metadata, style and solution do not matter; another spelling of the same houses does not matter
     d2 = copy.deepcopy(d)
     d2["meta"] = {"title": "x"}

@@ -78,7 +78,7 @@
    "title": "generated 9x9 18 cage, 2 givens",
    "rules_text": "Butterfly: Each 9×9 grid follows normal sudoku rules: place 1–9 in every row, column and box; shared cells belong to both grids.\nKiller: Digits in a cage sum to its small clue and don't repeat within the cage.",
    "type": "Killer Butterfly Sudoku",
-   "generated_from": "sha256:d6328f45af54f6c9e977bb147ade3d4879fa1d247fd36bc3b65557d5c78f572e"
+   "generated_from": "d6328f45af54f6c9e977bb147ade3d4879fa1d247fd36bc3b65557d5c78f572e"
   },
   "board": {
    "rows": 12,

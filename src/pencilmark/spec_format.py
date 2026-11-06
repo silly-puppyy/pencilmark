@@ -535,7 +535,7 @@ def spec_from_gen(spec):
 
 def spec_fingerprint(doc):
     keep = {k: doc[k] for k in ("board", "digits", "givens", "rules", "symmetry", "where", "quality") if k in doc}
-    return "sha256:" + hashlib.sha256(jcs(keep).encode()).hexdigest()
+    return hashlib.sha256(jcs(keep).encode()).hexdigest()
 
 
 def _box_grid(r, c, bh, bw, D):

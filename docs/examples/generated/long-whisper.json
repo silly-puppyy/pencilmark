@@ -50,7 +50,7 @@
    "title": "generated 9x9 1 whisper, 12 givens",
    "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nGerman Whispers: Adjacent digits on a whisper line differ by at least 5.",
    "type": "German Whispers Sudoku",
-   "generated_from": "sha256:a66e1d814df5869eec6c180ed9bfb09eee185de60ea4d9e41c849f931a0cfb1f"
+   "generated_from": "a66e1d814df5869eec6c180ed9bfb09eee185de60ea4d9e41c849f931a0cfb1f"
   },
   "board": {
    "rows": 9,
