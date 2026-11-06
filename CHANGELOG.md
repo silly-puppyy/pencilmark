@@ -7,6 +7,8 @@
 - Opt-in quality checks (off unless named): `asymmetric`, `no_interplay`, `winding`, `short_lines`, `repetitive`,
   `monotone`, `desert`, `late_break`; limits near the edge of published Medium+ puzzles
   (1-27% of them flagged, per check).
+- Export: a rule part tagged with its line kind is dropped only when its line is there too; a reader that built only
+  the part (an equal sum for a region-sum line) no longer loses the rule on export.
 - Custom rules: a set of number literals (`concat(c) in {...}`) is built once, not once per digit tuple: a puzzle
   with 64 such rules (global entropy) loaded in 27 min; now 1.7 s (`concat(c) in {...}` over one list of cells reads
   its table straight from the numbers).

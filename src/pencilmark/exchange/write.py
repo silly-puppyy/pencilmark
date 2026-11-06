@@ -364,9 +364,14 @@ class _Writer:
                 if cc[key] > 0:
                     cc[key] -= 1
                     drop_con[k] = True
+        # the compiled parts of a line (finalize appends them, tagged line_kind) are written with their line; one whose
+        # line is missing (a reader that built only the part) is kept and written on its own, never dropped
+        line_cells = [set(c.get("cells") or ()) for c in cons if c.get("type") == "line"]
         for k, c in enumerate(cons):
             if c.get("line_kind"):
-                drop_con[k] = True
+                own = set(c.get("cells") or ()) | {x for s_ in c.get("segments") or () for x in s_}
+                if any(own <= L for L in line_cells):
+                    drop_con[k] = True
         # named rules (puzzle_json.add_named / from_json): their relations and constraints
         named_items = []
         used = [False] * len(rels)

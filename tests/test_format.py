@@ -1031,3 +1031,12 @@ def test_quality_opt_in_checks():
     assert [i["code"] for i in c["issues"]] == ["asymmetric"]  # its givens have no symmetry
     c = pm.rate(grid, fields=["issues"])
     assert not any(i["code"] in OPT_IN for i in c["issues"])
+
+
+def test_line_part_without_its_line_is_written():
+    """a constraint tagged line_kind whose line is missing (a reader that built only the compiled part) is written as a
+    rule, not dropped as the line's part"""
+    p = pencilmark.load(_classic_doc())
+    p.constraints.append({"type": "equal_sum", "segments": [[2], [3, 4]], "line_kind": "region_sum"})
+    out = pencilmark.to_export(p, with_solution=False, describe=False)
+    assert {"type": "line", "kind": "region_sum", "cells": ["r1c3", "r1c4", "r1c5"]} in out["rules"]
