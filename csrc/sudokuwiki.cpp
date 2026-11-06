@@ -468,6 +468,96 @@ void Solver::pattern_overlay(MoveBuf& out) {
     }
 }
 
+// ------------------------------------------------- PatternOverlay rule 2 --
+// The digits' solution templates partition the board, so a template of v that meets every template of some other digit
+// w cannot be v's. Bounded: every digit's templates are listed (at most CAP each, all-or-none), else nothing.
+void Solver::pattern_overlay2(MoveBuf& out) {
+    if (disabled[POM]) return;
+    std::vector<int> rows;
+    for (int orient = 0; orient < 2 && (int)rows.size() != p.D; ++orient) {
+        rows.clear();
+        for (int gi : p.houses)
+            if (p.group_line[gi] == orient && (int)p.groups[gi].cells.size() == p.D) rows.push_back(gi);
+    }
+    if ((int)rows.size() != p.D || p.D * p.D != p.N || p.D > 16) return;
+    const size_t CAP = 1000;
+    const int R = (int)rows.size(), W = p.W;
+    std::vector<std::vector<std::vector<uint64_t>>> tm(p.D + 1);  // templates per digit, as cell bitsets
+    for (int v = 1; v <= p.D; ++v) {
+        const uint32_t b = bit(v);
+        std::vector<std::vector<int>> opts(R);
+        for (int r = 0; r < R; ++r)
+            for (int c : p.groups[rows[r]].cells)
+                if (vals[c] == v || (!vals[c] && (cand[c] & b))) opts[r].push_back(c);
+        std::vector<int> pick;
+        bool over = false;
+        std::function<void(int)> rec = [&](int r) {
+            if (over) return;
+            if (r == R) {
+                for (int gi : p.houses) {  // every complete group exactly once
+                    int k = 0;
+                    for (int c : pick) k += tbit(p.gbits(gi), c);
+                    if (k != 1) return;
+                }
+                std::vector<uint64_t> t(W, 0);
+                for (int c : pick) sbit(t.data(), c);
+                tm[v].push_back(std::move(t));
+                over = tm[v].size() > CAP;
+                return;
+            }
+            for (int c : opts[r]) {
+                bool ok = true;
+                for (int q : pick) ok &= !tbit(p.peers(c), q);
+                if (!ok) continue;
+                pick.push_back(c);
+                rec(r + 1);
+                pick.pop_back();
+            }
+        };
+        rec(0);
+        if (over || tm[v].empty()) return;
+    }
+    for (int v = 1; v <= p.D; ++v) {
+        std::vector<char> alive(tm[v].size(), 1);
+        int blocker = 0;
+        for (int w = 1; w <= p.D; ++w) {
+            if (w == v) continue;
+            for (size_t i = 0; i < tm[v].size(); ++i) {
+                if (!alive[i]) continue;
+                bool fits = false;  // some template of w misses this one
+                for (size_t j = 0; j < tm[w].size() && !fits; ++j) {
+                    bool dis = true;
+                    for (int k = 0; k < W && dis; ++k) dis = !(tm[v][i][k] & tm[w][j][k]);
+                    fits = dis;
+                }
+                if (!fits) alive[i] = 0, blocker = blocker ? blocker : w;
+            }
+        }
+        std::vector<uint64_t> cover(W, 0);
+        size_t n = 0;
+        for (size_t i = 0; i < tm[v].size(); ++i)
+            if (alive[i]) {
+                ++n;
+                for (int k = 0; k < W; ++k) cover[k] |= tm[v][i][k];
+            }
+        if (!n) continue;  // an inconsistent state: left to the other techniques
+        std::vector<uint32_t> el;
+        for (int c = 0; c < p.N; ++c)
+            if (!vals[c] && (cand[c] & bit(v)) && !tbit(cover.data(), c)) el.push_back((uint32_t)c * 32u + v);
+        if (el.empty()) continue;
+        std::vector<int> pc;
+        for (int c = 0; c < p.N; ++c)
+            if (!vals[c] && (cand[c] & (bit(v) | bit(blocker)))) pc.push_back(c);
+        Move& m = new_move(out, POM, 1.0, (int)tm[v].size());
+        for (uint32_t e : el) addel(out, m, (int)(e / 32), (int)(e % 32));
+        set_pattern(out, m, pc);
+        meta_set(m, std::min(p.N, (int)pc.size()), p.D, 2, p.D, 0, 0, 0, 1, pspread(pc));
+        m.code = 5002;
+        pm_long xm[XM_N] = {v, (pm_long)n, (pm_long)el.size(), blocker, 0, 0, 0, 0, 0, 0};
+        std::copy(xm, xm + XM_N, m.xm);
+    }
+}
+
 // ---------------------------------------------------------------- Gurth --
 void Solver::gurth(MoveBuf& out) {
     // grid symmetries are tested on coordinates (rot180 / transposes / rot90), which a relabelling

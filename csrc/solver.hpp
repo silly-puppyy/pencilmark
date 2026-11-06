@@ -708,6 +708,9 @@ public:
     void chute_remote_pairs(MoveBuf& out);
     /// pattern overlay: per-digit templates over the rows; candidates in no template (or all) are eliminated (placed)
     void pattern_overlay(MoveBuf& out);
+    /// pattern overlay rule 2 (sudokuwiki): a template of one digit that overlaps every template of another digit is
+    /// not part of the solution; candidates left in no surviving template are eliminated
+    void pattern_overlay2(MoveBuf& out);
     /// Gurth's symmetrical placement: a grid symmetry forces digits (uniqueness; opt-in by params)
     void gurth(MoveBuf& out);
     /// min / max (triangular number) bounds of sums, cages and arrows; eliminates digits beyond the bounds

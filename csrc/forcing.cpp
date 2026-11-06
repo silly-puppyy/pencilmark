@@ -27,7 +27,7 @@ bool fc_skip(const char* n) {
     // colour steps (params colouring: kept colours are not branch state, and running them at every node of every
     // branch made forcing ~7x slower for the same grades, 2026-11-06)
     static const char* bad[] = {"ur", "xur", "bug", "shorttrial", "eitherway", "trial", "forcing", "dynforcing",
-                                "nestedforcing", "nishio", "gurth", "pom", "whatif", "humancase",
+                                "nestedforcing", "nishio", "gurth", "pom", "pom2", "whatif", "humancase",
                                 "idprop", "classsingle", "classpair", "classtrap"};
     for (const char* b : bad)
         if (!std::strcmp(n, b)) return true;

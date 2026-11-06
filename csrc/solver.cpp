@@ -282,6 +282,7 @@ std::vector<Tier> default_notes_tiers() {
          S("whatif", [](Solver& s, MoveBuf& b) { s.what_if(b, false); }),
          S("forcing", [](Solver& s, MoveBuf& b) { s.forcing(b, 0); })},
         {S("pom", [](Solver& s, MoveBuf& b) { s.pattern_overlay(b); })},
+        {S("pom2", [](Solver& s, MoveBuf& b) { s.pattern_overlay2(b); })},
         {S("dynforcing", [](Solver& s, MoveBuf& b) { s.forcing(b, 1); })},
         {S("nestedforcing", [](Solver& s, MoveBuf& b) { s.forcing(b, 2); })},
         {S("trial", [](Solver& s, MoveBuf& b) { s.trial(b); })},

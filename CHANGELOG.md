@@ -54,6 +54,9 @@ What changes for you (details in the entries below):
     type 2 (two cells with the same one extra digit).
   - Aligned Pair Exclusion also counts two cells sharing three digits that see both cells of the pair.
   Bands unchanged on the reference cards; times and difficulties move by up to 0.5 on 32 of 227.
+- Pattern Overlay rule 2 (sudokuwiki.org): a template of one digit that meets every template of another digit is not
+  the solution's; candidates left in no surviving template go. Bounded (1,000 templates per digit); reference cards
+  unchanged.
 - Definitions follow the cited sources (docs/grades/techniques.md): WXYZ-Wing is any four cells holding four digits,
   not all in one house, with one digit not confined to cells that see each other (sudokuwiki.org; before: only cells in
   one box and one line); an almost locked set has any size (HoDoKu; before: at most 4 cells). Reference cards: bands

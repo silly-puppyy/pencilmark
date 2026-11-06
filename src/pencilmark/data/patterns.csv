@@ -113,6 +113,7 @@ cpp_code,engine_code,technique,code,step_name,explain_name,catalog_key
 4801,APE,,,,,
 4901,chute remote pairs,,,,,
 5001,pattern overlay,,,,,
+5002,pattern overlay (rule 2),,,,,
 5101,Gurth rot180,,,,,
 5102,Gurth diagonal,,,,,
 5103,Gurth anti-diagonal,,,,,
