@@ -58,6 +58,17 @@
     "minimum": 0
    }
   },
+  "placed": {
+   "type": "object",
+   "description": "digits filled in after the start (a mid-solve board); cells empty in givens",
+   "propertyNames": {
+    "$ref": "#/$defs/cell"
+   },
+   "additionalProperties": {
+    "type": "integer",
+    "minimum": 1
+   }
+  },
   "solution": {
    "type": "array",
    "items": {

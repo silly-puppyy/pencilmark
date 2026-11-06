@@ -31,7 +31,10 @@ def to_internal(doc):
     B = validate(doc)
     D = B.D
     R, C = doc["board"]["rows"], doc["board"]["cols"]
-    giv = doc["givens"]
+    giv = list(doc["givens"])
+    for k, v in (doc.get("placed") or {}).items():  # placed digits: solved like givens, written back as placed
+        r, c = parse_cell(k)
+        giv[r * C + c] = v
     sym = lambda v: "." if not v else PJ._sym(v)
     out = {"digits": D, "numbers": "".join("#" if v is None else sym(v) for v in giv)}
     plain = R == C == D and None not in giv
@@ -59,6 +62,8 @@ def to_internal(doc):
         internal += ctx.rule(i, r, done)
     if internal:
         out["rules"] = internal
+    if doc.get("placed"):
+        out["placed"] = sorted(k.lower() for k in doc["placed"])
     if doc.get("candidates"):
         out["candidates"] = {
             k.lower(): "".join(PJ._sym(v) for v in sorted(set(vs))) for k, vs in doc["candidates"].items()

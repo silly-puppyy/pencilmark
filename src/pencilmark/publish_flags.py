@@ -180,7 +180,7 @@ def _c_thin(c):
 
 
 def _c_trivial(c):
-    given_share = len(c.puzzle.givens) / max(c.puzzle.N, 1)
+    given_share = (len(c.puzzle.givens) - len(getattr(c.puzzle, "placed", None) or ())) / max(c.puzzle.N, 1)
     return (
         [("trivial", "reject", f"{given_share:.0%} of the cells are given")] if given_share > c.lim("trivial") else []
     )

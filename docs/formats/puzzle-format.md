@@ -72,6 +72,7 @@ are optional for readers: cosmetic layers may be ignored, and only a writer that
  "board": {"rows": 9, "cols": 9},
  "digits": 9,
  "givens": [ …R*C entries… ],
+ "placed": {"r2c5": 4},
  "solution": [ …R*C entries… ],
  "candidates": {"r1c1": [1, 3, 7]},
  "rules": [ … ],
@@ -88,6 +89,7 @@ are optional for readers: cosmetic layers may be ignored, and only a writer that
 | `board` | yes | `{"rows": R, "cols": C}`: the bounding rectangle of the board. No other keys. |
 | `digits` | yes | Integer D ≥ 1: cells hold the digits 1..D. (Other digit sets and display symbols are reserved for a later version; see [Reserved names (6.17)](rules/other.mdx#617-reserved)). |
 | `givens` | yes | Flat list of R×C entries in reading order (row by row). `0` = empty cell, `null` = no cell at that position (the gaps of multi-grid boards), otherwise the given digit as a number (so 10..D work). This is the **only** representation: no text rows, no digit strings, no per-cell objects. |
+| `placed` | no | Digits filled in after the start, as on a mid-solve board: `{"r2c5": 4, …}`, cells empty (`0`) in `givens`. Solved and graded like givens (so the rest of the solve is graded), but not clues: publishing checks, symmetry and given counts leave them out. |
 | `solution` | no | Same shape as `givens`, every existing cell filled, `null` exactly where `givens` has `null`. |
 | `candidates` | no | Given pencil marks (Sukaku): `{"r1c1": [1, 3, 7], …}`, ascending integer lists. **Semantic**: each listed cell's digit is one of its list; unlisted cells are unrestricted. Graphical cell clues (odd, even, …) are `cell` rules, never candidates. |
 | `rules` | yes | Every constraint, houses included (section 6). Nothing is implied: a board without house rules has no houses. |
@@ -294,7 +296,7 @@ Coordinates are cell units `[row, col]` with the origin at the top-left corner o
 
 ### 8.1 Canonical writer (`pencilmark.write.pencilmark`)
 
-- Top-level key order: `format`, `format_version`, `$schema`, `meta`, `board`, `digits`, `givens`, `solution`,
+- Top-level key order: `format`, `format_version`, `$schema`, `meta`, `board`, `digits`, `givens`, `placed`, `solution`,
   `candidates`, `rules`, `decorations`, `style`. Inside `board`: `rows`, then `cols`.
 - Rule key order: `type`, `kind`, `of`, then the parameters (`op`, `any_of`, `color`, `letter`, `value`, `sum`, `split`,
   `values`, `digits`, `groups`, `each`, `counts`, `arrow`, `size`, `repeat`, `box`, `where`, `within`, `area`, `closed`),

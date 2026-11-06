@@ -274,7 +274,12 @@ class _Writer:
         m = read_meta({"meta": meta or {}})
         if m:
             d["meta"] = m
+        placed = getattr(p, "placed", None) or ()
+        for i in placed:  # digits filled in after the start: written apart from the givens
+            givens[flat[i]] = 0
         d.update({"board": {"rows": R, "cols": C}, "digits": D, "givens": givens})
+        if placed:
+            d["placed"] = {B.name(i): p.givens[i] for i in sorted(placed, key=lambda i: B.coords[i])}
         if solution is not None:
             sol = [None] * (R * C)
             for i, v in enumerate(list(solution)[: len(B.coords)]):

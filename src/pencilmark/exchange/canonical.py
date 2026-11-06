@@ -18,6 +18,7 @@ KEY_ORDER = [
     "board",
     "digits",
     "givens",
+    "placed",
     "solution",
     "candidates",
     "rules",
@@ -94,6 +95,8 @@ def canonical(doc):
             return (r, c)
 
         out["candidates"] = {k: sorted(v) for k, v in sorted(out["candidates"].items(), key=lambda kv: rc(kv[0]))}
+    if "placed" in out:
+        out["placed"] = dict(sorted(out["placed"].items(), key=lambda kv: parse_cell(kv[0])))
     return out
 
 
@@ -172,11 +175,11 @@ def _norm_rule(r, D):
 
 
 def semantic_subset(doc):
-    """the fingerprinted content: board, digits, givens, candidates and rules, with the houses replaced by the houses they
+    """the fingerprinted content: board, digits, givens, placed digits, candidates and rules, with the houses replaced by the houses they
     state (grid, box_grid, box / row / column rules), so every spelling of the same houses gives
     the same result, and set-like cell lists sorted"""
     doc = with_origins(doc)
-    keep = {k: doc[k] for k in ("format", "format_version", "digits", "givens", "candidates") if k in doc}
+    keep = {k: doc[k] for k in ("format", "format_version", "digits", "givens", "placed", "candidates") if k in doc}
     keep["board"] = {"rows": doc["board"]["rows"], "cols": doc["board"]["cols"]}
     D = doc.get("digits")
     B = Board([divmod(k, doc["board"]["cols"]) for k, v in enumerate(doc["givens"]) if v is not None], D)

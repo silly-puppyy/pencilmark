@@ -15,12 +15,9 @@ import pytest
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from pencilmark.inputs import to_puzzle_json  # noqa: E402
-
 import pencilmark  # noqa: E402
 from pencilmark import exchange as X  # noqa: E402
 from pencilmark import interop as I  # noqa: E402
-from pencilmark import puzzle_json as PJ  # noqa: E402
 from pencilmark import spec_format as SF  # noqa: E402
 from pencilmark import variants as VR  # noqa: E402
 
@@ -72,7 +69,7 @@ def pack():
 
 
 def engine(entry):
-    p = PJ.from_json(to_puzzle_json(entry))
+    p = X.read(entry["puzzle"] if isinstance(entry.get("puzzle"), dict) else entry)  # the engine order (no file order)
     p.finalize()
     return p
 
@@ -383,9 +380,9 @@ def test_sudokuwiki_board_state():
     b = lambda n: I._b36(n, 2)
     s = "S9B" + b(5) + b(12) + b(21) + b(0) + b(511 + 18) * 77
     d = pencilmark.read.auto(s)
-    assert d["givens"][:5] == [5, 3, 0, 0, 0] and d["candidates"] == {"r1c3": [1, 2]}
+    assert d["givens"][:5] == [5, 0, 0, 0, 0] and d["placed"] == {"r1c2": 3} and d["candidates"] == {"r1c3": [1, 2]}
     again = pencilmark.write.sudokuwiki(d)
-    assert again == "S9B" + b(5) + b(3) + b(21) + b(529) * 78  # placed digits come back as givens
+    assert again == "S9B" + b(5) + b(12) + b(21) + b(529) * 78  # placed digits come back as placed
     assert pencilmark.read.auto(again)["candidates"] == {"r1c3": [1, 2]}
 
 
@@ -1120,3 +1117,23 @@ def test_fog_lighting_everything_is_the_plain_card():
     b = pm.rate(fogged, fields=["band", "difficulty", "time"])
     assert (a["band"], a["difficulty"], a["time"]) == (b["band"], b["difficulty"], b["time"])
     assert b["fog"]["solved"] and b["fog"]["reveals"] == 0
+
+
+def test_placed_digits():
+    """a mid-solve board: placed digits read and write apart from the givens (sudokuwiki codes d + 9), solve like
+    givens, are not clues for the publishing checks, and a placed cell cannot also be given"""
+    sol = pencilmark.solve(CLASSIC)
+    doc = pencilmark.read.plain(CLASSIC)
+    empty = [k for k, v in enumerate(doc["givens"]) if v == 0][:5]
+    doc["placed"] = {X.cell_name(*divmod(k, 9)): sol[k] for k in empty}
+    pencilmark.validate(doc)
+    s = pencilmark.write.sudokuwiki(doc)
+    back = pencilmark.read.sudokuwiki(s)
+    assert back["placed"] == X.canonical(doc)["placed"] and back["givens"] == doc["givens"]
+    assert all(int(s[3 + 2 * k : 5 + 2 * k], 36) == 9 + sol[k] for k in empty)
+    assert pencilmark.write.document(doc)["placed"] == back["placed"]
+    assert pencilmark.solve(doc) == sol
+    assert pencilmark.fingerprint(doc) != pencilmark.fingerprint(CLASSIC)
+    bad = dict(doc, placed={"r1c5": 4})  # r1c5 is given
+    with pytest.raises(pencilmark.FormatError, match="given or placed"):
+        pencilmark.validate(bad)

@@ -393,7 +393,7 @@ def symmetry_of(p):
     R = max(r for r, _ in co) + 1
     C = max(c for _, c in co) + 1
     cells = set(co)
-    giv = {co[i] for i in p.givens}
+    giv = {co[i] for i in p.givens if i not in (getattr(p, "placed", None) or ())}  # clues only, not placed digits
     tf = {
         ("rot180", None): lambda r, c: (R - 1 - r, C - 1 - c),
         ("mirror", "vertical"): lambda r, c: (r, C - 1 - c),

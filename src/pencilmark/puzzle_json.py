@@ -155,6 +155,7 @@ KEYS = {
     "regions",
     "rules",
     "candidates",
+    "placed",
     "meta",
     "title",
     "fog",
@@ -264,6 +265,8 @@ def from_json(obj) -> M.Puzzle:
         else:
             want = " or ".join(str(n) for n in sorted({width * height, len(coords)}))  # whole board, or cells only
             raise ValueError(f"the grid has {len(nums)} symbols; expected {want}")
+    if d.get("placed"):  # cells whose digit was filled in after the start (in numbers too): written back as placed
+        p.placed = {ci(cell) for cell in d["placed"]}
     for cell, s in (d.get("candidates") or {}).items():
         m = 0
         for ch in s:

@@ -28,6 +28,9 @@ What changes for you (details in the entries below):
   `from_ipuz`, `to_ipuz`, `rules_text` (now in `describe`'s result), the CLI `json` command, and the engine's internal
   JSON and sample-pack lines as inputs. A written document is kept as given (no longer rebuilt through the engine;
   fingerprints unchanged). Site links: the host names the reader, no options.
+- `placed` (pencilmark JSON): digits filled in after the start, as on a mid-solve board. Solved and graded like givens
+  (the rest of the solve is graded), not clues for the publishing checks and symmetry. The sudokuwiki reader keeps
+  Andrew Stuart's placed digits (code d + 9) as placed and the writer writes them back.
 - Step notation names houses by position for every input ("X-Wing: 3 r58 c68", "in b5"); pencilmark JSON inputs
   printed group names ("row4 row7 col14").
 - One error family: every error is a `pencilmark.Error` (`FormatError`, `NotSupportedError`, `FetchError`,

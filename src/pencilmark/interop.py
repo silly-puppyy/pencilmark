@@ -11,7 +11,7 @@
 The sudokuwiki encodings are checked against sudokuwiki.org's solver; the decoder reads exactly what the encoder writes
 and refuses anything else (candidates and placed digits in killer forms, 6x6 killer operators other than '+'). In the
 non-killer forms a cell is Andrew Stuart's board-state code (sudokuwiki.org makePackedStringVB): a given digit d, a
-placed digit d + D (read as a given), candidate mask m + 18 (bit i = digit i + 1; read as the cell's candidates), or 0
+placed digit d + D (read as placed), candidate mask m + 18 (bit i = digit i + 1; read as the cell's candidates), or 0
 (nothing stored, an empty cell), so one string carries a whole mid-solve board.
 """
 
@@ -36,11 +36,13 @@ def _b36(n, width):
     return s.rjust(width, "0")
 
 
-def _doc(D, givens, rules, meta=None, candidates=None):
+def _doc(D, givens, rules, meta=None, candidates=None, placed=None):
     d = {"format": FORMAT, "format_version": FORMAT_VERSION}
     if meta:
         d["meta"] = meta
     d.update({"board": {"rows": D, "cols": D}, "digits": D, "givens": givens, "rules": rules})
+    if placed:
+        d["placed"] = placed
     if candidates:
         d["candidates"] = candidates
     return d
@@ -251,7 +253,7 @@ def _from_sudokuwiki(kind, D, ver, body):
     full = (1 << D) - 1
     killer = kind in ("L", "M")
     empty = full + 18 if not (kind == "L" and D == 6) else 75  # the encoder's empty-cell values (S6B 81, L6C 75)
-    givens, box_lab, col, clue, cands = [], [], [], [], {}
+    givens, box_lab, col, clue, cands, placed = [], [], [], [], {}, {}
     for i, v in enumerate(vals):
         if kind in ("S", "X", "W", "C"):
             n = v
@@ -273,8 +275,11 @@ def _from_sudokuwiki(kind, D, ver, body):
             col.append(col_)
         if n == empty or (not killer and n == 0):
             givens.append(0)
-        elif not killer and 1 <= n <= 2 * D:  # a given, or a placed digit (+ D)
-            givens.append(n - D if n > D else n)
+        elif not killer and 1 <= n <= D:  # a given
+            givens.append(n)
+        elif not killer and D < n <= 2 * D:  # a placed digit (+ D)
+            givens.append(0)
+            placed[cell_name(*divmod(i, D))] = n - D
         elif not killer and 18 < n < full + 18:  # candidate mask + 18 (the full mask is an empty cell)
             givens.append(0)
             cands[cell_name(*divmod(i, D))] = [d + 1 for d in range(D) if (n - 18) >> d & 1]
@@ -320,7 +325,7 @@ def _from_sudokuwiki(kind, D, ver, body):
             rules.append({"type": "region", "kind": "disjoint", "cells": [nm(i) for i in groups[ch]]})
     if killer:
         rules += _cages_from_colours(D, col, clue, kind == "L" and D == 6)
-    return _doc(D, givens, rules, meta={"source": "sudokuwiki.org"}, candidates=cands)
+    return _doc(D, givens, rules, meta={"source": "sudokuwiki.org"}, candidates=cands, placed=placed)
 
 
 def _cages_from_colours(D, col, clue, ops):
@@ -442,6 +447,7 @@ def analyse(p):
     if p.relations or getattr(p, "constraints", None):
         return None, {"why": "extra rules (relations / constraints)"}
     to_rc = lambda i: p.coords[i][0] * D + p.coords[i][1]
+    placed = {to_rc(i) for i in getattr(p, "placed", None) or ()}
     givens = {to_rc(i): v for i, v in p.givens.items()}
     masks = {
         to_rc(i): m for i, m in enumerate(p.domains or ()) if i not in p.givens and m not in (None, 0) and m != p.full
@@ -474,6 +480,7 @@ def analyse(p):
             rest = {frozenset(map(T, s)) for s in rest}
             givens = {T(c): v for c, v in givens.items()}
             masks = {T(c): m for c, m in masks.items()}
+            placed = {T(c) for c in placed}
             cages = [(t, sorted(map(T, cs))) for t, cs in cages]
     if std <= rest:
         extra = rest - std
@@ -499,7 +506,15 @@ def analyse(p):
     )
     winall = _sets(WINDOKU_COL, 81) if D == 9 else set()
     colour = _sets(COLOUR_COL, 81) if D == 9 else set()
-    info = {"boxes": boxlab, "cages": cages, "givens": givens, "masks": masks, "D": D, "transposed": transposed}
+    info = {
+        "boxes": boxlab,
+        "cages": cages,
+        "givens": givens,
+        "placed": placed,
+        "masks": masks,
+        "D": D,
+        "transposed": transposed,
+    }
     if cages and masks:
         return None, dict(info, why="candidates in a killer")
     if cages:
@@ -525,9 +540,10 @@ def analyse(p):
 
 
 def _cell_code(info, i):
-    """Andrew Stuart's cell code: a given digit, or the candidate mask + 18 (all digits for an unrestricted cell)"""
+    """Andrew Stuart's cell code: a given digit, a placed digit + D, or the candidate mask + 18 (all digits for an
+    unrestricted cell)"""
     if i in info["givens"]:
-        return info["givens"][i]
+        return info["givens"][i] + (info["D"] if i in info.get("placed", ()) else 0)
     return info["masks"].get(i, (1 << info["D"]) - 1) + 18
 
 

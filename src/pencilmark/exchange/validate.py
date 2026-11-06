@@ -83,6 +83,7 @@ TOP_KEYS = {
     "board",
     "digits",
     "givens",
+    "placed",
     "solution",
     "candidates",
     "rules",
@@ -143,6 +144,17 @@ def validate(doc):
             bad = w is not None and (not isinstance(w, int) or isinstance(w, bool) or not 1 <= w <= D)
             if (v is None) != (w is None) or bad:
                 raise FormatError(f"solution entry {k} does not match givens (null where givens is null, else 1..{D})")
+    placed = doc.get("placed")
+    if placed is not None:
+        if not isinstance(placed, dict):
+            raise FormatError("placed must be an object")
+        for k, v in placed.items():
+            i = B.idx(k)
+            if not isinstance(v, int) or isinstance(v, bool) or not 1 <= v <= D:
+                raise FormatError(f"placed {k} must be a digit 1..{D}")
+            r, c = B.coords[i]
+            if giv[r * C + c]:
+                raise FormatError(f"placed {k} is a given cell (a cell is given or placed, not both)")
     cands = doc.get("candidates")
     if cands is not None:
         if not isinstance(cands, dict):
