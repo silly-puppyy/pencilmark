@@ -45,7 +45,7 @@ def test_detect():
     assert sources.detect("https://tinyurl.com/22zwurtg") == "short"
     assert sources.detect({"numbers": "." * 81}) == "puzzle_json"
     assert sources.detect("https://example.com/") is None
-    with pytest.raises(sources.DecodeError):
+    with pytest.raises(sources.FormatError):
         sources.load("https://sudokupad.app/wjgxgaji9a", fetch=False)
 
 
@@ -128,7 +128,7 @@ def test_malformed_fpuzzles_is_a_decode_error():
     AttributeError / IndexError from the translator; the readers now say the data is malformed"""
     for broken in ({"killercage": [{"value": "10"}]}, {"thermometer": [{"lines": 5}]}, {"odd": ["R1C1"]}):
         d = dict(fpuzzles_json(CLASSIC), **broken)
-        with pytest.raises(sources.DecodeError, match="malformed f-puzzles"):
+        with pytest.raises(sources.FormatError, match="malformed f-puzzles"):
             FP.to_puzzle(fpuzzles_url(d), rules_text="Normal sudoku rules apply.")
 
 
@@ -152,7 +152,7 @@ def test_sudokupad_numbers_and_nulls_in_real_files():
     }
     try:
         pj = SP.to_puzzle(sp, fetch=False)
-    except sources.UnsupportedPuzzle:  # the grey line may not be read; the point is that nothing crashes
+    except sources.NotSupportedError:  # the grey line may not be read; the point is that nothing crashes
         return
     assert pj["numbers"].startswith("1234")
 
@@ -232,7 +232,7 @@ def test_unmodelled_rules_refused():
         assert unmodelled_rules(text) == [], text
     fp = fpuzzles_json(CLASSIC)
     fp["ruleset"] = "Normal sudoku rules apply. Clones: boxes 1 and 5 are clones of each other."
-    with pytest.raises(sources.UnsupportedPuzzle, match="clone"):
+    with pytest.raises(sources.NotSupportedError, match="clone"):
         FP.to_puzzle(fpuzzles_url(fp))
 
 
@@ -1136,7 +1136,7 @@ def test_reading_that_breaks_the_embedded_solution_is_refused():
     )
     assert not sources.contradicts_solution({"numbers": "." * 81})  # no solution: nothing to check
     assert sources.contradicts_solution(dict(pj, solution="0" + sol[1:]))  # the setter's digits include 0
-    with pytest.raises(sources.VerificationError):
+    with pytest.raises(sources.ReadingMismatch):
         sources.load(pj)
     assert sources.load(pj, check_solution=False)["solution"] == sol
 

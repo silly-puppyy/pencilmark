@@ -21,7 +21,7 @@ cells), killer cages (killercages + their corner sums from numberS / small numbe
 bulb first), arrows (the arrow tool starting in a cell that carries a circle symbol), drawn main diagonals when the
 rules text mentions diagonals. Everything else -- generic lines, shading, other symbols, edge / outside / vertex
 numbers, pencil marks, free lines, cage outlines without a killer-cage grouping, rules-text keywords for variants
-that are not drawn with a supported tool -- raises UnsupportedPuzzle listing the elements. Non-square grid types
+that are not drawn with a supported tool -- raises NotSupportedError listing the elements. Non-square grid types
 (hex, tri, iso, ...) and pre-v2 links are refused.
 
     decode(link_or_payload) -> dict      to_puzzle(link_or_payload_or_decoded) -> puzzle JSON dict
@@ -36,7 +36,7 @@ import urllib.parse
 import zlib
 from collections import Counter, defaultdict
 
-from ._common import DecodeError, UnsupportedPuzzle, _read_summary, reads, to_puzzle_json
+from ._common import FormatError, _read_summary, reads, to_puzzle_json, unsupported
 
 COMPRESS_SUB = [
     ["z", "zZ"],
@@ -154,7 +154,7 @@ def _b64inflate(s):
         raw = base64.b64decode(s + "=" * (-len(s) % 4))
         return zlib.decompress(raw, -15).decode("utf-8")
     except Exception as e:  # noqa: BLE001
-        raise DecodeError(f"penpa data is not base64 raw-deflate ({type(e).__name__}: {e})") from e
+        raise FormatError(f"penpa data is not base64 raw-deflate ({type(e).__name__}: {e})") from e
 
 
 def is_penpa_url(s):
@@ -196,17 +196,17 @@ def decode(link_or_payload):
     if isinstance(link_or_payload, dict) and link_or_payload.get("format") == "penpa":
         return link_or_payload
     if not isinstance(link_or_payload, str) or not link_or_payload.strip():
-        raise DecodeError("empty penpa link")
+        raise FormatError("empty penpa link")
     s = link_or_payload.strip()
     prm = params(s) if ("://" in s or "p=" in s[:12]) else {"p": s}
     if not prm.get("p"):
-        raise DecodeError("penpa link without a p= parameter")
+        raise FormatError("penpa link without a p= parameter")
     if prm["p"].startswith("http"):
-        raise DecodeError("penpa link imports another URL (puzz.link); not decodable offline")
+        raise FormatError("penpa link imports another URL (puzz.link); not decodable offline")
     text = _unsub(_b64inflate(prm["p"]))
     lines = text.split("\n")
     if lines and lines[0][:1].isdigit():
-        raise DecodeError("pre-v2 penpa link format (loadver1) is not supported")
+        raise FormatError("pre-v2 penpa link format (loadver1) is not supported")
     h = lines[0].split(",")
     head = {k: (h[i] if i < len(h) else "") for i, k in enumerate(HEADER)}
 
@@ -227,7 +227,7 @@ def decode(link_or_payload):
     if prm.get("a"):
         try:
             sol_raw = _b64inflate(prm["a"])
-        except DecodeError:
+        except FormatError:
             sol_raw = None
     mode = prm.get("m", "edit")
     return {
@@ -286,14 +286,14 @@ def _nonempty(v):
 def translate(x, rules_text=None):
     """-> (engine Puzzle, info, decoded). rules_text: the rules from the page that links the puzzle (used together
     with the rules stored in the link). A rules text is required (hidden rules cannot be excluded otherwise); killer
-    cages are read as sums only when it speaks of sums / totals / killer. Raises UnsupportedPuzzle with every
+    cages are read as sums only when it speaks of sums / totals / killer. Raises NotSupportedError with every
     element it cannot map exactly."""
     from .. import model as M
 
     d = decode(x)
     gt = d["gridtype"]
     if gt not in ("square", "sudoku"):
-        raise UnsupportedPuzzle([f"grid type {gt!r}"], "penpa")
+        raise unsupported([f"grid type {gt!r}"], "penpa")
     nx, ny = d["nx"], d["ny"]
     nx0, ny0 = nx + 4, ny + 4
     N = nx0 * ny0
@@ -313,11 +313,9 @@ def translate(x, rules_text=None):
         or rows != list(range(rows[0], rows[0] + D))
         or cols != list(range(cols[0], cols[0] + D))
     ):
-        raise UnsupportedPuzzle(
-            [f"board is not a full square ({len(board)} cells in {len(rows)}x{len(cols)})"], "penpa"
-        )
+        raise unsupported([f"board is not a full square ({len(board)} cells in {len(rows)}x{len(cols)})"], "penpa")
     if D < 4 or D > 16:
-        raise UnsupportedPuzzle([f"board size {D}"], "penpa")
+        raise unsupported([f"board size {D}"], "penpa")
     r0, c0 = rows[0], cols[0]
     inboard = set(board)
     cid = {k: (k // nx0 - r0) * D + (k % nx0 - c0) for k in board}  # penpa cell index -> our cell id
@@ -582,7 +580,7 @@ def translate(x, rules_text=None):
         if re.search(rx, tl) or re.search(rx, tl_title):
             bad.append(f"rule '{name}' (rules text)")
     if bad:
-        raise UnsupportedPuzzle(sorted(set(bad)), "penpa")
+        raise unsupported(sorted(set(bad)), "penpa")
     info = dict(used)
     if ignored:
         info["_ignored"] = dict(ignored)

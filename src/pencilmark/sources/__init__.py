@@ -14,8 +14,8 @@ load() recognises
     shorteners   tinyurl / bit.ly / git.io / is.gd links are resolved (one HEAD request) and dispatched
     puzzle JSON  a dict / JSON text already in pencilmark.puzzle_json format is returned as is
 Modules: sudokupad, fpuzzles, penpa, lmd (each with decode / to_puzzle; see their docstrings for coverage).
-Errors: SourceError > DecodeError (unrecognised / undecodable), FetchError (network, robots.txt), UnsupportedPuzzle
-(.elements = what could not be mapped exactly; nothing is silently dropped), VerificationError (verify=True).
+Errors: Error > FormatError (unrecognised / undecodable), FetchError (network, robots.txt), NotSupportedError
+(.elements = what could not be mapped exactly; nothing is silently dropped), ReadingMismatch (verify=True).
 """
 
 from __future__ import annotations
@@ -23,12 +23,7 @@ from __future__ import annotations
 import json
 import re
 
-from ._common import USER_AGENT, DecodeError, FetchError, SourceError, UnsupportedPuzzle
-
-
-class VerificationError(SourceError):
-    """The reading contradicts the setter's embedded solution (checked by default), or with verify=True: the
-    translated puzzle is not unique."""
+from ._common import USER_AGENT, Error, FetchError, FormatError, NotSupportedError, ReadingMismatch
 
 
 def detect(x):
@@ -81,28 +76,28 @@ def load(x, rules_text=None, infer=False, fetch=True, verify=False, time_limit=3
     """Link / payload / decoded dict -> puzzle JSON dict. rules_text: the rules from the page that links the puzzle
     (used where the puzzle file has none, and for penpa's rule screening). infer=True lets SudokuPad / f-puzzles
     search line readings with the solver (slow). fetch=False refuses anything that needs a network request.
-    verify=True checks uniqueness (and the embedded solution) with CP-SAT and raises VerificationError otherwise.
+    verify=True checks uniqueness (and the embedded solution) with CP-SAT and raises ReadingMismatch otherwise.
     check_solution=True (default): when the puzzle embeds the setter's solution, a reading that the solution breaks
-    is refused (VerificationError) -- a rule was read differently from what the setter meant (usually a one-off rule
+    is refused (ReadingMismatch) -- a rule was read differently from what the setter meant (usually a one-off rule
     worded like a standard one: "digits may repeat in a cage", digits 0-8, rounded cage sums)."""
     from . import fpuzzles, lmd, penpa, sudokupad
 
     kind = detect(x)
     s = x.strip() if isinstance(x, str) else x
     if kind is None:
-        raise DecodeError(f"unrecognised puzzle link / payload: {str(x)[:80]!r}")
+        raise FormatError(f"unrecognised puzzle link / payload: {str(x)[:80]!r}")
     if kind == "puzzle_json":
         pj = json.loads(s) if isinstance(s, str) else dict(s)
     elif kind == "short":
         if not fetch:
-            raise DecodeError(f"{s} is a shortened link; resolving it needs a request (fetch=True)")
+            raise FormatError(f"{s} is a shortened link; resolving it needs a request (fetch=True)")
         target = lmd.resolve_short(s)
         if not target or detect(target) in (None, "short"):
-            raise DecodeError(f"{s} does not resolve to a supported puzzle link ({str(target)[:80]})")
+            raise FormatError(f"{s} does not resolve to a supported puzzle link ({str(target)[:80]})")
         pj = load(target, rules_text=rules_text, infer=infer, fetch=fetch)
     elif kind == "lmd":
         if not fetch:
-            raise DecodeError("an LMD puzzle needs a page request (fetch=True)")
+            raise FormatError("an LMD puzzle needs a page request (fetch=True)")
         pid = s[4:].strip() if s.lower().startswith("lmd:") else lmd.lmd_id_of(s)
         pj = lmd.to_puzzle(pid, infer=infer)
     elif kind == "sudokupad":
@@ -118,7 +113,7 @@ def load(x, rules_text=None, infer=False, fetch=True, verify=False, time_limit=3
     if verify:
         check(pj, time_limit=time_limit)
     elif check_solution and contradicts_solution(pj):
-        raise VerificationError(
+        raise ReadingMismatch(
             "the reading contradicts the setter's embedded solution: some rule was not read as the setter meant "
             "(one-off rules worded like standard ones are the usual cause; see docs/reference/sources.md)"
         )
@@ -146,22 +141,22 @@ def contradicts_solution(pj, node_limit=200_000):
 
 
 def check(pj, time_limit=30.0):
-    """Unique solution (and equal to pj['solution'] when present) or VerificationError. Returns the solution string."""
+    """Unique solution (and equal to pj['solution'] when present) or ReadingMismatch. Returns the solution string."""
     from .. import cpsat_verify, puzzle_json
 
     p = puzzle_json.from_json(pj)
     p.finalize()
     sols = cpsat_verify.solutions(p, limit=2, time_limit=time_limit)
     if sols is None:
-        raise VerificationError(
+        raise ReadingMismatch(
             "uniqueness could not be decided (unsupported constraint or search limit)"
             + ("" if cpsat_verify.have_ortools() else "; " + cpsat_verify.VERIFY_HINT)
         )
     if len(sols) != 1:
-        raise VerificationError(f"{len(sols)} solutions")
+        raise ReadingMismatch(f"{len(sols)} solutions")
     got = "".join(puzzle_json._sym(v) for v in sols[0])
     if pj.get("solution") and pj["solution"] != got:
-        raise VerificationError("unique solution differs from the embedded solution")
+        raise ReadingMismatch("unique solution differs from the embedded solution")
     return got
 
 
@@ -170,11 +165,11 @@ __all__ = [
     "contradicts_solution",
     "detect",
     "check",
-    "SourceError",
-    "DecodeError",
+    "Error",
+    "FormatError",
     "FetchError",
-    "UnsupportedPuzzle",
-    "VerificationError",
+    "NotSupportedError",
+    "ReadingMismatch",
     "USER_AGENT",
     "sudokupad",
     "fpuzzles",

@@ -27,6 +27,8 @@ import re
 from dataclasses import dataclass
 from fractions import Fraction
 
+from ..errors import FormatError
+
 # ---------------------------------------------------------------------------------------------------- lexer
 TOKEN = re.compile(
     r"\s*(?:(?P<num>\d+)|(?P<name>[A-Za-z_][A-Za-z_0-9]*)|(?P<op>=>|\.\.|\?\?|==|!=|<=|>=|\*\*|[-+*/<>()\[\]{},;=]))"
@@ -34,7 +36,7 @@ TOKEN = re.compile(
 KEYWORDS = {"let", "if", "then", "else", "and", "or", "not", "in", "for", "div", "mod", "true", "false"}
 
 
-class LangError(ValueError):
+class LangError(FormatError):
     """a malformed expression: the message names the position"""
 
 

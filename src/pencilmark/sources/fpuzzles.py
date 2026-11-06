@@ -7,7 +7,7 @@ Link forms
 Translation (_fpuz_translate) is exact for typed constraints (killer cages,
 thermometers, arrows, whispers, renban, palindromes, between lines, kropki / XV (+ negative), odd / even, diagonals,
 anti-knight / anti-king, disjoint groups, nonconsecutive, little killers, sandwiches, quadruples, min / max).
-Generic 'line' / 'cage' / 'circle' entries (meaning only in the rules text), fog of war, indexers -> UnsupportedPuzzle,
+Generic 'line' / 'cage' / 'circle' entries (meaning only in the rules text), fog of war, indexers -> NotSupportedError,
 unless reading= gives the line kinds per colour or infer=True searches them with the solver (slow).
 
     payload_of(url) -> 'fpuzzles...' | None      decode(x, fetch=False) -> f-puzzles dict
@@ -20,7 +20,7 @@ from __future__ import annotations
 import re
 import urllib.parse
 
-from ._common import DecodeError, Http, _read_summary, reads, to_puzzle_json, unsupported_from_reason
+from ._common import FormatError, Http, _read_summary, reads, to_puzzle_json, unsupported_from_reason
 
 HTTP = Http(min_gap=1.0)
 
@@ -50,9 +50,9 @@ def decode(x, fetch=False):
             return x["puzzle"]
         if "grid" in x or "size" in x:
             return x
-        raise DecodeError("dict is not an f-puzzles puzzle")
+        raise FormatError("dict is not an f-puzzles puzzle")
     if not isinstance(x, str) or not x.strip():
-        raise DecodeError("empty f-puzzles link / payload")
+        raise FormatError("empty f-puzzles link / payload")
     s = x.strip()
     if "://" in s:
         if is_fpuzzles_url(s):
@@ -61,10 +61,10 @@ def decode(x, fetch=False):
                 if short_id(s):
                     if fetch:
                         return globals()["fetch"](s)
-                    raise DecodeError(
+                    raise FormatError(
                         f"{s!r} is an f-puzzles short link (TinyURL alias); resolve it with fpuzzles.fetch()"
                     )
-                raise DecodeError(f"no puzzle in f-puzzles link {s[:80]!r}")
+                raise FormatError(f"no puzzle in f-puzzles link {s[:80]!r}")
         else:  # e.g. a SudokuPad link carrying an f-puzzles payload
             from .sudokupad import payload_key
 
@@ -73,7 +73,7 @@ def decode(x, fetch=False):
         pl = s if s.startswith(("fpuzzles", "fpuz")) else "fpuzzles" + s
     fp = decode_fpuz(pl) if pl.startswith(("fpuzzles", "fpuz")) else None
     if fp is None:
-        raise DecodeError("undecodable f-puzzles payload")
+        raise FormatError("undecodable f-puzzles payload")
     return fp
 
 
@@ -81,17 +81,17 @@ def fetch(short_link, http=None):
     """f-puzzles ?id=<alias> -> resolve tinyurl.com/<alias> (one HEAD request, not followed) -> decoded dict."""
     sid = short_id(short_link) if "://" in short_link else short_link
     if not sid or not re.fullmatch(r"[0-9A-Za-z_-]+", sid):
-        raise DecodeError(f"not an f-puzzles short link: {short_link[:80]!r}")
+        raise FormatError(f"not an f-puzzles short link: {short_link[:80]!r}")
     target = (http or HTTP).redirect_target(f"https://tinyurl.com/{sid}")
     if not target or "load=" not in target:
-        raise DecodeError(f"TinyURL alias {sid} did not resolve to an f-puzzles ?load= link ({str(target)[:80]})")
+        raise FormatError(f"TinyURL alias {sid} did not resolve to an f-puzzles ?load= link ({str(target)[:80]})")
     return decode(target)
 
 
 @reads("f-puzzles")
 def translate(x, rules_text=None, reading=None, infer=False, fetch=True):
     """-> (engine Puzzle (not finalized), info). rules_text fills a missing 'ruleset' (it is read for negative
-    constraints and line keywords), or gives generic lines a second wording. Raises UnsupportedPuzzle / DecodeError."""
+    constraints and line keywords), or gives generic lines a second wording. Raises NotSupportedError / FormatError."""
     from . import _fpuz_translate as FT
 
     fp = dict(decode(x, fetch=fetch))

@@ -20,14 +20,7 @@ UNIFY_TABLE_EDGES = True
 NUMBERED_PAIR_FORM = "table"
 
 
-class FormatError(ValueError):
-    """the file breaks the format (unknown key / rule type, bad cell, failed structural check)."""
-
-
-class NotSupportedError(ValueError):
-    """the file is valid, but uses something the pencilmark engine cannot build (or an engine puzzle the format cannot
-    express)."""
-
+from ..errors import FormatError, NotSupportedError  # noqa: E402,F401
 
 # ---------------------------------------------------------------------------------------------------------------- cells
 _CELL = re.compile(r"r([1-9]\d*)c([1-9]\d*)")

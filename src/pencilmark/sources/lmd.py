@@ -20,7 +20,7 @@ import html as _html
 import re
 import urllib.parse
 
-from ._common import FetchError, Http, SourceError, UnsupportedPuzzle
+from ._common import Error, FetchError, Http, unsupported
 
 BASE = "https://logic-masters.de/Raetselportal"
 HTTP = Http(min_gap=2.5, respect_robots=True)
@@ -138,9 +138,9 @@ def listing(page=0, sort="oft", http=None):
 
 
 def fetch_page(lmd_id, http=None):
-    """HTML of a puzzle page; SourceError for an id that is not an LMD puzzle id"""
+    """HTML of a puzzle page; Error for an id that is not an LMD puzzle id"""
     if not ID_RE.match(str(lmd_id)):
-        raise SourceError(f"not an LMD puzzle id: {lmd_id!r}")
+        raise Error(f"not an LMD puzzle id: {lmd_id!r}")
     return (http or HTTP).get_text(f"{BASE}/Raetsel/zeigen.php?id={lmd_id}&chlang=en")
 
 
@@ -148,7 +148,7 @@ def puzzle(lmd_id, solvers=False, http=None):
     """Fetch and parse one puzzle page (+ the solver list when solvers=True: one more request)."""
     r = parse_puzzle(lmd_id, fetch_page(lmd_id, http))
     if r is None:
-        raise SourceError(f"LMD {lmd_id}: no puzzle on this page")
+        raise Error(f"LMD {lmd_id}: no puzzle on this page")
     if solvers and r["solved"]:
         r["solvers"] = parse_solvers((http or HTTP).get_text(f"{BASE}/Raetsel/loeserliste.php?id={lmd_id}&chlang=en"))
     return r
@@ -185,18 +185,18 @@ def candidate_links(rec, resolve_short_links=True, http=None):
 
 def to_puzzle(lmd_id_or_record, resolve_short=True, infer=False, http=None):
     """LMD id (fetches the page) or a parsed record -> puzzle JSON of the first linked puzzle that converts, with the
-    page text as the rules text. Raises UnsupportedPuzzle with every link's reason when none converts."""
+    page text as the rules text. Raises NotSupportedError with every link's reason when none converts."""
     from . import load
 
     rec = lmd_id_or_record if isinstance(lmd_id_or_record, dict) else puzzle(lmd_id_or_record, http=http)
     cands = candidate_links(rec, resolve_short, http)
     if not cands:
-        raise UnsupportedPuzzle(["no SudokuPad / f-puzzles / penpa link on the page"], f"LMD {rec.get('id')}")
+        raise unsupported(["no SudokuPad / f-puzzles / penpa link on the page"], f"LMD {rec.get('id')}")
     reasons = []
     for u in cands:
         try:
             pj = load(u, rules_text=rec.get("text") or None, infer=infer)
-        except SourceError as e:
+        except Error as e:
             reasons.append(f"{u[:60]}: {e}")
             continue
         m = pj.setdefault("meta", {})
@@ -209,7 +209,7 @@ def to_puzzle(lmd_id_or_record, resolve_short=True, infer=False, http=None):
             m.setdefault("date", rec["published"])
         m["lmd"] = {k: rec.get(k) for k in ("id", "difficulty", "rating", "solved", "published")}
         return pj
-    raise UnsupportedPuzzle(reasons, f"LMD {rec.get('id')}")
+    raise unsupported(reasons, f"LMD {rec.get('id')}")
 
 
 __all__ = [

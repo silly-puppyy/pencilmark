@@ -39,29 +39,25 @@ __all__ = [
     "from_string",
     "to_string",
     "generate",
-    "GenerationFailed",
+    "Error",
     "FormatError",
     "NotSupportedError",
+    "FetchError",
+    "ReadingMismatch",
+    "GenerationFailed",
 ]
 
-from .exchange import FormatError, NotSupportedError  # noqa: E402
-
-
-class NotUnique(ValueError):
-    """the puzzle has more than one solution"""
-
-
-class NoSolution(ValueError):
-    """the puzzle has no solution"""
-
-
-class GenerationFailed(RuntimeError):
-    """no puzzle met the spec within the time limit (or the spec is infeasible); str(e) says why."""
-
-    def __init__(self, reason, stats=None):
-        super().__init__(reason)
-        self.reason, self.stats = reason, stats or {}
-
+from .errors import (  # noqa: E402
+    Error,
+    FetchError,
+    FormatError,
+    GenerationFailed,
+    NoSolution,
+    NotSupportedError,
+    NotUnique,
+    ReadingMismatch,
+    Undecided,
+)
 
 _PARAMS = (None, None)  # ((grader model, its settings), its engine params)
 
@@ -345,10 +341,6 @@ def rate_many(
         return [_rate_job(it) for it in items]
     with _mp_context().Pool(jobs, initializer=_one_route_thread) as pool:
         return pool.map(_rate_job, items, chunksize=1)
-
-
-class Undecided(RuntimeError):
-    """the exhaustive search hit its node or time limit and OR-Tools (pip install "pencilmark[verify]") is not available"""
 
 
 def solve(puzzle, info=False):

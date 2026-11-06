@@ -10,7 +10,7 @@ decode() returns {"format": "scl"|"ctc"|"fpuzzles"|"json", "meta": {title, autho
 to_puzzle() translates with _sp_translate: line meanings come from the
 rules text (colour words, keywords) and SudokuPad's default palette; pass reading= (an inferred reading, e.g. from
 data/sudokupad/_inferred.jsonl) to reproduce a stored translation, or infer=True to search readings with the solver
-(slow: several CP-SAT runs). Rules the translator cannot model raise UnsupportedPuzzle (never silently dropped).
+(slow: several CP-SAT runs). Rules the translator cannot model raise NotSupportedError (never silently dropped).
 
     decode(link_or_payload, fetch=False) -> dict        fetch(short_link) -> dict (one polite request)
     translate(x, page_text=None, reading=None, infer=False) -> (engine Puzzle, info)
@@ -24,10 +24,10 @@ import re
 import urllib.parse
 
 from ._common import (
-    DecodeError,
     FetchError,
+    FormatError,
     Http,
-    UnsupportedPuzzle,
+    NotSupportedError,
     _read_summary,
     reads,
     to_puzzle_json,
@@ -236,14 +236,14 @@ def _meta_of(d, fmt):
 
 def decode(link_or_payload, fetch=False):
     """Link / payload / already-decoded dict -> {"format", "meta", "puzzle"}. Short links need a request: pass
-    fetch=True (or call fetch()); otherwise DecodeError."""
+    fetch=True (or call fetch()); otherwise FormatError."""
     x = link_or_payload
     if isinstance(x, dict):  # expanded again: a dict decoded before an abbreviation was known (c1, c2) reads the same
         if "puzzle" in x and "format" in x:
             return x if x.get("format") == "fpuzzles" else dict(x, puzzle=expand(x["puzzle"]))
         return {"format": "json", "meta": {}, "puzzle": expand(x)}
     if not isinstance(x, str) or not x.strip():
-        raise DecodeError("empty SudokuPad link / payload")
+        raise FormatError("empty SudokuPad link / payload")
     key = payload_key(x)
     if "f-puzzles.com" in x:  # an f-puzzles link handed to the SudokuPad decoder
         from . import fpuzzles
@@ -254,15 +254,15 @@ def decode(link_or_payload, fetch=False):
         try:
             d = decode_payload(key)
         except Exception as e:  # noqa: BLE001
-            raise DecodeError(f"undecodable SudokuPad payload ({type(e).__name__}: {e})") from e
+            raise FormatError(f"undecodable SudokuPad payload ({type(e).__name__}: {e})") from e
         if d is None:
-            raise DecodeError("undecodable SudokuPad payload")
+            raise FormatError("undecodable SudokuPad payload")
         return d
     if re.fullmatch(r"[A-Za-z0-9_-]{4,}", key):
         if fetch:
             return globals()["fetch"](x)
-        raise DecodeError(f"{x!r} is a SudokuPad short link; resolve it with sudokupad.fetch() (one request)")
-    raise DecodeError(f"not a SudokuPad link or payload: {x[:80]!r}")
+        raise FormatError(f"{x!r} is a SudokuPad short link; resolve it with sudokupad.fetch() (one request)")
+    raise FormatError(f"not a SudokuPad link or payload: {x[:80]!r}")
 
 
 def fetch(short_link, http=None):
@@ -273,13 +273,13 @@ def fetch(short_link, http=None):
         return decode(key)
     key = key.split("?")[0].strip("/")
     if not re.fullmatch(r"[A-Za-z0-9_-]{4,}|[A-Za-z0-9_-]+/[A-Za-z0-9_.-]+", key):  # an id, or an author/slug alias
-        raise DecodeError(f"not a SudokuPad short id: {key[:80]!r}")
+        raise FormatError(f"not a SudokuPad short id: {key[:80]!r}")
     payload = (http or HTTP).get_text(API + urllib.parse.quote(key, safe="/")).strip()
     if not payload:
         raise FetchError(f"empty SudokuPad API response for {key}")
     d = decode_payload(payload)
     if d is None:
-        raise DecodeError(f"undecodable SudokuPad API response for {key}")
+        raise FormatError(f"undecodable SudokuPad API response for {key}")
     return d
 
 
@@ -294,7 +294,7 @@ def _rules_fallback(sp, page_text):
 
 @reads("SudokuPad")
 def translate(x, page_text=None, reading=None, infer=False, fetch=True):
-    """-> (engine Puzzle (not finalized), info dict). Raises UnsupportedPuzzle / DecodeError."""
+    """-> (engine Puzzle (not finalized), info dict). Raises NotSupportedError / FormatError."""
     sp = decode(x, fetch=fetch)
     if sp["format"] == "fpuzzles":
         from . import fpuzzles
@@ -372,5 +372,5 @@ __all__ = [
     "is_sudokupad_url",
     "compact_to_json",
     "expand",
-    "UnsupportedPuzzle",
+    "NotSupportedError",
 ]

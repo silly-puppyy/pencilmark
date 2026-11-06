@@ -20,6 +20,10 @@ What changes for you (details in the entries below):
   `rate` grades fog under the fog; shading and unknowns give band Unknown with a `reason` for now (they load,
   validate, solve and count). Errors are only for wrong inputs (unreadable, misread, not unique, no solution).
 
+- One error family: every error is a `pencilmark.Error` (`FormatError`, `NotSupportedError`, `FetchError`,
+  `ReadingMismatch`, `NotUnique`, `NoSolution`, `Undecided`, `GenerationFailed`), exported at the top level. The site
+  readers' `SourceError`, `DecodeError` (now `FormatError`), `UnsupportedPuzzle` (now `NotSupportedError`, `.elements`
+  kept) and `VerificationError` (now `ReadingMismatch`) are gone; a custom-rule `LangError` is a `FormatError`.
 - Techniques checked against Andrew Stuart's sudokuwiki.org strategy examples (141 positions, every move sound) and
   independent reference finders; what was missing is added:
   - XY-Chain: a second chain search over bivalue cells only, so an XY-chain is no longer named (and priced) AIC when an

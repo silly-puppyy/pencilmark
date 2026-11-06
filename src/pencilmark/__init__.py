@@ -10,11 +10,14 @@ __version__ = "1.1.0"
 import logging
 
 from .api import (
+    Error,
+    FetchError,
     FormatError,
     GenerationFailed,
     NoSolution,
     NotSupportedError,
     NotUnique,
+    ReadingMismatch,
     Undecided,
     __all__,  # noqa: F401
     count_solutions,

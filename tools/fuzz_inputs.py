@@ -3,7 +3,7 @@ replaced by other types, list entries dropped or doubled). Reading a broken file
 NotSupportedError or ValueError that says what is wrong, never another exception; a request must do the same (or
 GenerationFailed), within its two-second limit. Prints counts per outcome and the seeds of anything else.
 An f-puzzles document with most of its features is broken the same way (--fpuzzles): the reader must translate it or
-raise a SourceError.
+raise a Error.
   python tools/fuzz_inputs.py N [--jobs J] [--specs | --fpuzzles]"""
 
 import collections
@@ -151,7 +151,7 @@ def fpuzzles_case(seed):
     import lzstring
 
     import pencilmark as pm
-    from pencilmark.sources import SourceError
+    from pencilmark.sources import Error
     from pencilmark.sources import fpuzzles as FP
 
     d = mutate(random.Random(seed), fpuzzles_base())
@@ -161,7 +161,7 @@ def fpuzzles_case(seed):
     try:
         pm.load(FP.to_puzzle(url, rules_text="Normal sudoku rules apply.", fetch=False))
         return seed, "accepted", None
-    except (SourceError, pm.FormatError, pm.NotSupportedError, ValueError):
+    except (Error, pm.FormatError, pm.NotSupportedError, ValueError):
         return seed, "clear error", None
     except Exception as e:  # noqa: BLE001
         return seed, type(e).__name__, where(e)

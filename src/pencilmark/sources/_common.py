@@ -24,17 +24,12 @@ TIMEOUT = 30.0
 _log = logging.getLogger(__name__)
 
 
-class SourceError(Exception):
-    """Base class for every error raised by pencilmark.sources."""
-
-
-class DecodeError(SourceError):
-    """The link / payload could not be recognised or decoded."""
+from ..errors import Error, FetchError, FormatError, NotSupportedError, ReadingMismatch, unsupported  # noqa: E402,F401
 
 
 def reads(source):
     """decorator for a reader: a crash on malformed data (a missing key, a value of the wrong type, a short list) becomes a
-    DecodeError naming the source and the problem"""
+    FormatError naming the source and the problem"""
 
     def wrap(fn):
         @functools.wraps(fn)
@@ -42,33 +37,19 @@ def reads(source):
             try:
                 return fn(*args, **kwargs)
             except (TypeError, AttributeError, KeyError, IndexError) as e:
-                raise DecodeError(f"malformed {source} data ({type(e).__name__}: {e})") from e
+                raise FormatError(f"malformed {source} data ({type(e).__name__}: {e})") from e
 
         return inner
 
     return wrap
 
 
-class FetchError(SourceError):
-    """A network request failed (or robots.txt forbids it)."""
-
-
-class UnsupportedPuzzle(SourceError):
-    """The puzzle decoded, but it uses elements / rules the translation cannot model exactly.
-    .elements lists them (nothing is silently dropped)."""
-
-    def __init__(self, elements, source=""):
-        self.elements = [elements] if isinstance(elements, str) else list(elements)
-        self.source = source
-        super().__init__((f"{source}: " if source else "") + "unsupported: " + ", ".join(self.elements))
-
-
 def unsupported_from_reason(reason, source=""):
-    """Translator failure reason ('unsupported: a, b' or a plain reason) -> UnsupportedPuzzle."""
+    """Translator failure reason ('unsupported: a, b' or a plain reason) -> NotSupportedError."""
     r = str(reason)
     if r.startswith("unsupported: "):
-        return UnsupportedPuzzle([x.strip() for x in r[len("unsupported: ") :].split(", ") if x.strip()], source)
-    return UnsupportedPuzzle([r], source)
+        return unsupported([x.strip() for x in r[len("unsupported: ") :].split(", ") if x.strip()], source)
+    return unsupported([r], source)
 
 
 def _read_summary(source, info):

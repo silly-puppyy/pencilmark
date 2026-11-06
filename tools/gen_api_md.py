@@ -14,14 +14,18 @@ GROUPS = {  # section -> public names, in reading order
     "Generating": ["generate"],
     "Reading and writing": ["load", "validate", "fingerprint", "to_export", "dumps", "from_string", "to_string",
                             "from_ipuz", "to_ipuz"],
-    "Errors": ["NotUnique", "NoSolution", "Undecided"],
+    "Errors": ["Error", "FormatError", "NotSupportedError", "FetchError", "ReadingMismatch", "NotUnique", "NoSolution",
+               "Undecided", "GenerationFailed"],
 }  # fmt: skip
-PATH = "src/pencilmark/api.py"
+PATHS = ("src/pencilmark/api.py", "src/pencilmark/errors.py")
 
 
 def main():
-    tree = ast.parse((ROOT / PATH).read_text(encoding="utf-8"))
-    defs = {n.name: n for n in tree.body if isinstance(n, (ast.FunctionDef, ast.ClassDef))}
+    defs, where = {}, {}
+    for path in PATHS:
+        for n in ast.parse((ROOT / path).read_text(encoding="utf-8")).body:
+            if isinstance(n, (ast.FunctionDef, ast.ClassDef)):
+                defs[n.name], where[n.name] = n, path
     L = [
         "---",
         "title: Python API",
@@ -43,7 +47,7 @@ def main():
         L += [f"## {group}", ""]
         for name in names:
             n = defs[name]
-            src = apidoc.source(PATH, n.lineno)
+            src = apidoc.source(where[name], n.lineno)
             if isinstance(n, ast.ClassDef):
                 bases = ", ".join(ast.unparse(b) for b in n.bases)
                 L.append(apidoc.heading(3, name, "class", name, f"({bases})" if bases else "", src=src))
