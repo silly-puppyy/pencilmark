@@ -70,7 +70,8 @@ def render(doc, dark=False, cell=48, annotate=False, labels=False, background=Tr
     # ---- board, houses
     for r, c in B.coords:
         add("shade", f'<rect x="{m + c * u}" y="{m + r * u}" width="{u}" height="{u}" fill="{T["board"]}"/>')
-    # ---- annotation colours: one per cell fills it; several split it into equal wedges from the centre, as
+    # ---- annotation colours, over the board, region shading and cell shapes (they show through) and under every line,
+    # arrow, cage, dot, clue and digit (drawn later, so they stay readable). One per cell fills it; several split it into equal wedges from the centre, as
     # SudokuPad draws them: wedge i spans 25 + i * 360 / n to 25 + (i + 1) * 360 / n "degrees", each mapped to a point
     # that far round the cell's outline (clockwise from the top centre; 360 = once round), not to a true angle
     shades, alpha = ANNOTATION["dark" if dark else "light"], ANNOTATION["opacity"]["dark" if dark else "light"]

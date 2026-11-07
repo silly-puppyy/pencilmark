@@ -80,7 +80,8 @@ def page():
     L += ["## Annotation colours", "",
           "The named colours of step annotations and of the trace's colour layer ([Grade card](../formats/grade-card.md) "
           f"sections 5 and 6), drawn over the cell at opacity {A['opacity']['light']} (light) / {A['opacity']['dark']} "
-          "(dark), under the lines, cages, clues and digits. A cell with several colours is split into wedges from its "
+          "(dark), over region shading and shaded cell shapes (odd / even, low / high: they show through) and under "
+          "lines, arrows, cages, dots, clues and digits. A cell with several colours is split into wedges from its "
           "centre, as SudokuPad draws them: n colours cut the cell's outline into n equal lengths, the first cut 25/360 of "
           "the way round clockwise from the top centre (two colours: a near-vertical diagonal).", "",
           "| Name | Light | Dark |", "|---|---|---|"]  # fmt: skip

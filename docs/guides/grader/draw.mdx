@@ -38,7 +38,8 @@ svg = render_svg.render(doc, dark=False, cell=48)
 
 A card's `trace` ([Grade card](../../formats/grade-card.md) section 6) holds the board after each step, with the colours
 an expert would have painted. `--card` and `--position` draw one position: its placed digits in the solver's ink and
-its colours over the cells, under the lines, cages and digits. A cell in two colours is split along a near-vertical
+its colours over the cells: over region shading and shaded cell shapes (odd / even circles and squares show
+through), under lines, arrows, cages, dots, clues and digits. A cell in two colours is split along a near-vertical
 diagonal, in three into three wedges, and so on, as SudokuPad draws several colours in one cell:
 
 ```
