@@ -1,0 +1,1978 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "https://silly-puppyy.github.io/pencilmark/schema/pencilmark-puzzle-1.json",
+ "title": "pencilmark-puzzle format_version 1",
+ "description": "pencilmark exchange format (docs/formats/puzzle-format.md). Checks that need the board (cells exist, adjacency, outside-clue geometry, digits within 1..D, givens length) are made by the reference reader (pencilmark.validate).",
+ "type": "object",
+ "required": [
+  "format",
+  "format_version",
+  "board",
+  "digits",
+  "givens",
+  "rules"
+ ],
+ "additionalProperties": false,
+ "properties": {
+  "$schema": {
+   "type": "string"
+  },
+  "format": {
+   "const": "pencilmark-puzzle"
+  },
+  "format_version": {
+   "const": 1
+  },
+  "meta": {
+   "type": "object"
+  },
+  "board": {
+   "type": "object",
+   "required": [
+    "rows",
+    "cols"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "rows": {
+     "type": "integer",
+     "minimum": 1
+    },
+    "cols": {
+     "type": "integer",
+     "minimum": 1
+    }
+   }
+  },
+  "digits": {
+   "type": "integer",
+   "minimum": 1
+  },
+  "givens": {
+   "type": "array",
+   "items": {
+    "type": [
+     "integer",
+     "null"
+    ],
+    "minimum": 0
+   }
+  },
+  "placed": {
+   "type": "object",
+   "description": "digits filled in after the start (a mid-solve board); cells empty in givens",
+   "propertyNames": {
+    "$ref": "#/$defs/cell"
+   },
+   "additionalProperties": {
+    "type": "integer",
+    "minimum": 1
+   }
+  },
+  "solution": {
+   "type": "array",
+   "items": {
+    "type": [
+     "integer",
+     "null"
+    ],
+    "minimum": 1
+   }
+  },
+  "candidates": {
+   "type": "object",
+   "propertyNames": {
+    "$ref": "#/$defs/cell"
+   },
+   "additionalProperties": {
+    "type": "array",
+    "items": {
+     "type": "integer",
+     "minimum": 1
+    },
+    "uniqueItems": true
+   }
+  },
+  "rules": {
+   "type": "array",
+   "items": {
+    "$ref": "#/$defs/rule"
+   }
+  },
+  "unknowns": {
+   "type": "object",
+   "description": "named unknown numbers custom rules read (rules/custom.mdx, unknowns and layers)",
+   "propertyNames": {
+    "pattern": "^[A-Za-z_][A-Za-z_0-9]*$"
+   },
+   "additionalProperties": {
+    "type": "object",
+    "properties": {
+     "values": {
+      "type": "array",
+      "items": {
+       "type": "integer"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+     },
+     "range": {
+      "type": "array",
+      "items": {
+       "type": "integer"
+      },
+      "minItems": 2,
+      "maxItems": 2
+     }
+    },
+    "additionalProperties": false
+   }
+  },
+  "layers": {
+   "type": "object",
+   "description": "named values per cell custom rules read (rules/custom.mdx, unknowns and layers)",
+   "propertyNames": {
+    "pattern": "^[A-Za-z_][A-Za-z_0-9]*$"
+   },
+   "additionalProperties": {
+    "type": "object",
+    "properties": {
+     "values": {
+      "type": "array",
+      "items": {
+       "type": "integer"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+     },
+     "range": {
+      "type": "array",
+      "items": {
+       "type": "integer"
+      },
+      "minItems": 2,
+      "maxItems": 2
+     },
+     "given": {
+      "type": "object",
+      "propertyNames": {
+       "pattern": "^r[0-9]+c[0-9]+$"
+      },
+      "additionalProperties": {
+       "type": "integer"
+      }
+     }
+    },
+    "additionalProperties": false
+   }
+  },
+  "decorations": {
+   "type": "array",
+   "items": {
+    "$ref": "#/$defs/decoration"
+   }
+  },
+  "style": {
+   "type": "object"
+  }
+ },
+ "$defs": {
+  "cell": {
+   "type": "string",
+   "pattern": "^[rR][1-9][0-9]*[cC][1-9][0-9]*$"
+  },
+  "cells": {
+   "type": "array",
+   "items": {
+    "$ref": "#/$defs/cell"
+   },
+   "minItems": 1
+  },
+  "style": {
+   "type": "object"
+  },
+  "rule_grid": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "grid"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "origin": {
+     "$ref": "#/$defs/cell",
+     "description": "the grid's top-left cell; default r1c1"
+    }
+   },
+   "required": [
+    "type"
+   ],
+   "additionalProperties": false
+  },
+  "rule_chaos": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "chaos"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "origin": {
+     "$ref": "#/$defs/cell",
+     "description": "the grid's top-left cell; default r1c1"
+    }
+   },
+   "required": [
+    "type"
+   ],
+   "additionalProperties": false,
+   "description": "a grid whose boxes are to be found: D orthogonally connected regions of D cells, each holding every digit once (docs/formats/rules/houses-and-regions.mdx 6.3)"
+  },
+  "rule_region_border": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "region_border"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "cells": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/cell"
+     },
+     "minItems": 2,
+     "maxItems": 2
+    }
+   },
+   "required": [
+    "type",
+    "cells"
+   ],
+   "additionalProperties": false
+  },
+  "rule_same_region": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "same_region"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "cells": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/cell"
+     },
+     "minItems": 2
+    }
+   },
+   "required": [
+    "type",
+    "cells"
+   ],
+   "additionalProperties": false
+  },
+  "rule_box_grid": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "box_grid"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "box": {
+     "type": "array",
+     "items": {
+      "type": "integer",
+      "minimum": 1
+     },
+     "minItems": 2,
+     "maxItems": 2,
+     "description": "[box height, box width]"
+    },
+    "count": {
+     "type": "array",
+     "items": {
+      "type": "integer",
+      "minimum": 1
+     },
+     "minItems": 2,
+     "maxItems": 2,
+     "description": "[boxes down, boxes across]: box x count = D x D"
+    },
+    "origin": {
+     "$ref": "#/$defs/cell",
+     "description": "the grid's top-left cell; default r1c1"
+    }
+   },
+   "required": [
+    "type",
+    "box",
+    "count"
+   ],
+   "additionalProperties": false
+  },
+  "rule_box": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "box"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "cells": {
+     "$ref": "#/$defs/cells"
+    }
+   },
+   "required": [
+    "type",
+    "cells"
+   ],
+   "additionalProperties": false
+  },
+  "rule_row": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "row"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "cells": {
+     "$ref": "#/$defs/cells"
+    }
+   },
+   "required": [
+    "type",
+    "cells"
+   ],
+   "additionalProperties": false
+  },
+  "rule_column": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "column"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "cells": {
+     "$ref": "#/$defs/cells"
+    }
+   },
+   "required": [
+    "type",
+    "cells"
+   ],
+   "additionalProperties": false
+  },
+  "rule_region": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "region"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "cells": {
+     "$ref": "#/$defs/cells"
+    },
+    "kind": {
+     "enum": [
+      "colour",
+      "diagonal",
+      "disjoint",
+      "extra",
+      "region",
+      "window"
+     ]
+    }
+   },
+   "required": [
+    "type",
+    "cells",
+    "kind"
+   ],
+   "additionalProperties": false
+  },
+  "rule_cage": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "cage"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "cells": {
+     "$ref": "#/$defs/cells"
+    },
+    "sum": {
+     "type": "integer",
+     "minimum": 0
+    }
+   },
+   "required": [
+    "type",
+    "cells"
+   ],
+   "additionalProperties": false
+  },
+  "rule_line": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "line"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "cells": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/cell"
+     },
+     "minItems": 2
+    },
+    "closed": {
+     "type": "boolean"
+    },
+    "groups": {
+     "type": "array",
+     "items": {
+      "type": "array",
+      "items": {
+       "type": "integer",
+       "minimum": 1
+      },
+      "minItems": 1
+     }
+    },
+    "kind": {
+     "enum": [
+      "between",
+      "double_arrow",
+      "entropic",
+      "lockout",
+      "modular",
+      "palindrome",
+      "parity",
+      "region_sum",
+      "renban",
+      "slow_thermo",
+      "thermo",
+      "whisper",
+      "zipper"
+     ]
+    },
+    "value": {
+     "type": "integer"
+    }
+   },
+   "required": [
+    "type",
+    "cells",
+    "kind"
+   ],
+   "additionalProperties": false
+  },
+  "rule_arrow": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "arrow"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "bulb": {
+     "$ref": "#/$defs/cells"
+    },
+    "lines": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/cells"
+     },
+     "minItems": 1
+    }
+   },
+   "required": [
+    "type",
+    "bulb",
+    "lines"
+   ],
+   "additionalProperties": false
+  },
+  "rule_edge": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "edge"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "cells": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/cell"
+     },
+     "minItems": 2,
+     "maxItems": 2
+    },
+    "color": {
+     "enum": [
+      "white",
+      "black"
+     ]
+    },
+    "kind": {
+     "enum": [
+      "difference",
+      "greater",
+      "kropki",
+      "product",
+      "ratio",
+      "sum",
+      "xv"
+     ]
+    },
+    "letter": {
+     "enum": [
+      "X",
+      "V"
+     ]
+    },
+    "sum": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "value": {
+     "type": "integer"
+    }
+   },
+   "required": [
+    "type",
+    "cells",
+    "kind"
+   ],
+   "additionalProperties": false
+  },
+  "rule_corner": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "corner"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "cells": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/cell"
+     },
+     "minItems": 4,
+     "maxItems": 4
+    },
+    "kind": {
+     "enum": [
+      "battenburg",
+      "exclude",
+      "mathrax"
+     ]
+    },
+    "op": {
+     "enum": [
+      "+",
+      "-",
+      "x",
+      "/",
+      "even",
+      "odd"
+     ]
+    },
+    "value": {
+     "type": "integer"
+    }
+   },
+   "required": [
+    "type",
+    "cells",
+    "kind"
+   ],
+   "additionalProperties": false
+  },
+  "rule_sum": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "sum"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "cells": {
+     "$ref": "#/$defs/cells"
+    },
+    "kind": {
+     "enum": [
+      "corner",
+      "frame",
+      "group",
+      "little_killer"
+     ]
+    },
+    "side": {
+     "enum": [
+      "top",
+      "bottom",
+      "left",
+      "right"
+     ]
+    },
+    "sum": {
+     "type": "integer",
+     "minimum": 0
+    }
+   },
+   "required": [
+    "type",
+    "cells",
+    "kind",
+    "sum"
+   ],
+   "additionalProperties": false
+  },
+  "rule_sandwich": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "sandwich"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "cells": {
+     "$ref": "#/$defs/cells"
+    },
+    "side": {
+     "enum": [
+      "top",
+      "bottom",
+      "left",
+      "right"
+     ]
+    },
+    "sum": {
+     "type": "integer",
+     "minimum": 0
+    }
+   },
+   "required": [
+    "type",
+    "cells",
+    "side",
+    "sum"
+   ],
+   "additionalProperties": false
+  },
+  "rule_xsum": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "xsum"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "cells": {
+     "$ref": "#/$defs/cells"
+    },
+    "side": {
+     "enum": [
+      "top",
+      "bottom",
+      "left",
+      "right"
+     ]
+    },
+    "sum": {
+     "type": "integer",
+     "minimum": 0
+    }
+   },
+   "required": [
+    "type",
+    "cells",
+    "side",
+    "sum"
+   ],
+   "additionalProperties": false
+  },
+  "rule_skyscraper": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "skyscraper"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "cells": {
+     "$ref": "#/$defs/cells"
+    },
+    "side": {
+     "enum": [
+      "top",
+      "bottom",
+      "left",
+      "right"
+     ]
+    },
+    "value": {
+     "type": "integer"
+    }
+   },
+   "required": [
+    "type",
+    "cells",
+    "side",
+    "value"
+   ],
+   "additionalProperties": false
+  },
+  "rule_rossini": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "rossini"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "arrow": {
+     "enum": [
+      "in",
+      "out"
+     ]
+    },
+    "cells": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/cell"
+     },
+     "minItems": 3,
+     "maxItems": 3
+    },
+    "side": {
+     "enum": [
+      "top",
+      "bottom",
+      "left",
+      "right"
+     ]
+    }
+   },
+   "required": [
+    "type",
+    "arrow",
+    "cells",
+    "side"
+   ],
+   "additionalProperties": false
+  },
+  "rule_first_seen": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "first_seen"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "cells": {
+     "$ref": "#/$defs/cells"
+    },
+    "digits": {
+     "type": "array",
+     "items": {
+      "type": "integer",
+      "minimum": 1
+     },
+     "minItems": 1
+    },
+    "side": {
+     "enum": [
+      "top",
+      "bottom",
+      "left",
+      "right"
+     ]
+    },
+    "value": {
+     "type": "integer"
+    }
+   },
+   "required": [
+    "type",
+    "cells",
+    "digits",
+    "side",
+    "value"
+   ],
+   "additionalProperties": false
+  },
+  "rule_neighbours": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "neighbours"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "area": {
+     "$ref": "#/$defs/area"
+    },
+    "except": {
+     "type": "array",
+     "items": {
+      "type": "array",
+      "items": {
+       "$ref": "#/$defs/cell"
+      },
+      "minItems": 2,
+      "maxItems": 2
+     }
+    },
+    "kind": {
+     "enum": [
+      "antiking",
+      "antiknight",
+      "nonconsecutive"
+     ]
+    },
+    "op": {
+     "enum": [
+      "any_of",
+      "difference",
+      "difference_at_least",
+      "difference_at_most",
+      "different",
+      "different_mod3",
+      "different_third",
+      "equal",
+      "less",
+      "less_equal",
+      "not_consecutive",
+      "not_difference",
+      "not_ratio",
+      "not_sum",
+      "parity_differs",
+      "ratio",
+      "same_mod3",
+      "same_third",
+      "sum"
+     ]
+    },
+    "where": {
+     "enum": [
+      "diagonal",
+      "king",
+      "knight",
+      "orthogonal"
+     ]
+    },
+    "within": {
+     "enum": [
+      "box",
+      "region"
+     ]
+    },
+    "value": {
+     "type": "integer"
+    },
+    "sum": {
+     "type": "integer"
+    },
+    "any_of": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "type": "object",
+      "required": [
+       "op"
+      ],
+      "additionalProperties": false,
+      "properties": {
+       "op": {
+        "enum": [
+         "any_of",
+         "difference",
+         "difference_at_least",
+         "difference_at_most",
+         "different",
+         "different_mod3",
+         "different_third",
+         "equal",
+         "less",
+         "less_equal",
+         "not_consecutive",
+         "not_difference",
+         "not_ratio",
+         "not_sum",
+         "parity_differs",
+         "ratio",
+         "same_mod3",
+         "same_third",
+         "sum"
+        ]
+       },
+       "value": {
+        "type": "integer"
+       },
+       "sum": {
+        "type": "integer"
+       }
+      }
+     }
+    }
+   },
+   "required": [
+    "type"
+   ],
+   "additionalProperties": false,
+   "oneOf": [
+    {
+     "required": [
+      "kind"
+     ],
+     "not": {
+      "anyOf": [
+       {
+        "required": [
+         "op"
+        ]
+       },
+       {
+        "required": [
+         "where"
+        ]
+       },
+       {
+        "required": [
+         "value"
+        ]
+       },
+       {
+        "required": [
+         "sum"
+        ]
+       },
+       {
+        "required": [
+         "any_of"
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "required": [
+      "op",
+      "where"
+     ],
+     "not": {
+      "required": [
+       "kind"
+      ]
+     }
+    }
+   ]
+  },
+  "rule_relation": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "relation"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "op": {
+     "enum": [
+      "any_of",
+      "difference",
+      "difference_at_least",
+      "difference_at_most",
+      "different",
+      "different_mod3",
+      "different_third",
+      "equal",
+      "less",
+      "less_equal",
+      "not_consecutive",
+      "not_difference",
+      "not_ratio",
+      "not_sum",
+      "parity_differs",
+      "ratio",
+      "same_mod3",
+      "same_third",
+      "sum"
+     ]
+    },
+    "pairs": {
+     "type": "array",
+     "items": {
+      "type": "array",
+      "items": {
+       "$ref": "#/$defs/cell"
+      },
+      "minItems": 2,
+      "maxItems": 2
+     },
+     "minItems": 1
+    },
+    "value": {
+     "type": "integer"
+    },
+    "sum": {
+     "type": "integer"
+    },
+    "any_of": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "type": "object",
+      "required": [
+       "op"
+      ],
+      "additionalProperties": false,
+      "properties": {
+       "op": {
+        "enum": [
+         "any_of",
+         "difference",
+         "difference_at_least",
+         "difference_at_most",
+         "different",
+         "different_mod3",
+         "different_third",
+         "equal",
+         "less",
+         "less_equal",
+         "not_consecutive",
+         "not_difference",
+         "not_ratio",
+         "not_sum",
+         "parity_differs",
+         "ratio",
+         "same_mod3",
+         "same_third",
+         "sum"
+        ]
+       },
+       "value": {
+        "type": "integer"
+       },
+       "sum": {
+        "type": "integer"
+       }
+      }
+     }
+    }
+   },
+   "required": [
+    "type",
+    "op",
+    "pairs"
+   ],
+   "additionalProperties": false
+  },
+  "rule_cell": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "cell"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "cells": {
+     "$ref": "#/$defs/cells"
+    },
+    "kind": {
+     "enum": [
+      "even",
+      "exclude",
+      "high",
+      "low",
+      "odd",
+      "set"
+     ]
+    },
+    "split": {
+     "type": "integer",
+     "minimum": 1
+    },
+    "values": {
+     "type": "array",
+     "items": {
+      "type": "integer",
+      "minimum": 1
+     },
+     "minItems": 1
+    }
+   },
+   "required": [
+    "type",
+    "cells",
+    "kind"
+   ],
+   "additionalProperties": false
+  },
+  "rule_contains": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "contains"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "cells": {
+     "$ref": "#/$defs/cells"
+    },
+    "digits": {
+     "type": "array",
+     "items": {
+      "type": "integer",
+      "minimum": 1
+     },
+     "minItems": 1
+    }
+   },
+   "required": [
+    "type",
+    "cells",
+    "digits"
+   ],
+   "additionalProperties": false
+  },
+  "rule_appears": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "appears"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "cells": {
+     "$ref": "#/$defs/cells"
+    },
+    "source": {
+     "$ref": "#/$defs/cell"
+    }
+   },
+   "required": [
+    "type",
+    "cells",
+    "source"
+   ],
+   "additionalProperties": false
+  },
+  "rule_clone": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "clone"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "regions": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/cells"
+     },
+     "minItems": 2
+    }
+   },
+   "required": [
+    "type",
+    "regions"
+   ],
+   "additionalProperties": false
+  },
+  "rule_isomorphic": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "isomorphic"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "regions": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/cells"
+     },
+     "minItems": 2
+    }
+   },
+   "required": [
+    "type",
+    "regions"
+   ],
+   "additionalProperties": false
+  },
+  "rule_count": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "count"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "cells": {
+     "$ref": "#/$defs/cells"
+    },
+    "counts": {
+     "type": "array",
+     "items": {
+      "type": "array",
+      "items": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "minItems": 2,
+      "maxItems": 2
+     }
+    },
+    "each": {
+     "type": "integer",
+     "minimum": 1
+    },
+    "kind": {
+     "enum": [
+      "circles"
+     ]
+    }
+   },
+   "required": [
+    "type",
+    "cells"
+   ],
+   "additionalProperties": false,
+   "oneOf": [
+    {
+     "required": [
+      "kind"
+     ]
+    },
+    {
+     "required": [
+      "each"
+     ]
+    },
+    {
+     "required": [
+      "counts"
+     ]
+    }
+   ]
+  },
+  "rule_distinct_count": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "distinct_count"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "cells": {
+     "$ref": "#/$defs/cells"
+    },
+    "side": {
+     "enum": [
+      "top",
+      "bottom",
+      "left",
+      "right"
+     ]
+    },
+    "value": {
+     "type": "integer"
+    }
+   },
+   "required": [
+    "type",
+    "cells",
+    "value"
+   ],
+   "additionalProperties": false
+  },
+  "rule_global_entropy": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "global_entropy"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    }
+   },
+   "required": [
+    "type"
+   ],
+   "additionalProperties": false
+  },
+  "rule_equal_sum": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "equal_sum"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "segments": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/cells"
+     },
+     "minItems": 2
+    }
+   },
+   "required": [
+    "type",
+    "segments"
+   ],
+   "additionalProperties": false
+  },
+  "rule_vudoku": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "vudoku"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "cells": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/cell"
+     },
+     "minItems": 3,
+     "maxItems": 3
+    }
+   },
+   "required": [
+    "type",
+    "cells"
+   ],
+   "additionalProperties": false
+  },
+  "rule_negative": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "negative"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "area": {
+     "$ref": "#/$defs/area"
+    },
+    "color": {
+     "enum": [
+      "white",
+      "black"
+     ]
+    },
+    "kind": {
+     "enum": [
+      "odd",
+      "even",
+      "low",
+      "high"
+     ]
+    },
+    "letter": {
+     "enum": [
+      "X",
+      "V"
+     ]
+    },
+    "of": {
+     "enum": [
+      "battenburg",
+      "cell",
+      "difference",
+      "kropki",
+      "product",
+      "ratio",
+      "rossini",
+      "sum",
+      "xv"
+     ]
+    },
+    "split": {
+     "type": "integer",
+     "minimum": 1
+    },
+    "sum": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "value": {
+     "type": "integer"
+    }
+   },
+   "required": [
+    "type",
+    "of"
+   ],
+   "additionalProperties": false
+  },
+  "rule": {
+   "oneOf": [
+    {
+     "$ref": "#/$defs/rule_grid"
+    },
+    {
+     "$ref": "#/$defs/rule_chaos"
+    },
+    {
+     "$ref": "#/$defs/rule_yin_yang"
+    },
+    {
+     "$ref": "#/$defs/rule_region_border"
+    },
+    {
+     "$ref": "#/$defs/rule_same_region"
+    },
+    {
+     "$ref": "#/$defs/rule_box_grid"
+    },
+    {
+     "$ref": "#/$defs/rule_box"
+    },
+    {
+     "$ref": "#/$defs/rule_row"
+    },
+    {
+     "$ref": "#/$defs/rule_column"
+    },
+    {
+     "$ref": "#/$defs/rule_region"
+    },
+    {
+     "$ref": "#/$defs/rule_cage"
+    },
+    {
+     "$ref": "#/$defs/rule_line"
+    },
+    {
+     "$ref": "#/$defs/rule_arrow"
+    },
+    {
+     "$ref": "#/$defs/rule_edge"
+    },
+    {
+     "$ref": "#/$defs/rule_corner"
+    },
+    {
+     "$ref": "#/$defs/rule_sum"
+    },
+    {
+     "$ref": "#/$defs/rule_sandwich"
+    },
+    {
+     "$ref": "#/$defs/rule_xsum"
+    },
+    {
+     "$ref": "#/$defs/rule_skyscraper"
+    },
+    {
+     "$ref": "#/$defs/rule_rossini"
+    },
+    {
+     "$ref": "#/$defs/rule_first_seen"
+    },
+    {
+     "$ref": "#/$defs/rule_neighbours"
+    },
+    {
+     "$ref": "#/$defs/rule_relation"
+    },
+    {
+     "$ref": "#/$defs/rule_cell"
+    },
+    {
+     "$ref": "#/$defs/rule_contains"
+    },
+    {
+     "$ref": "#/$defs/rule_appears"
+    },
+    {
+     "$ref": "#/$defs/rule_clone"
+    },
+    {
+     "$ref": "#/$defs/rule_isomorphic"
+    },
+    {
+     "$ref": "#/$defs/rule_count"
+    },
+    {
+     "$ref": "#/$defs/rule_distinct_count"
+    },
+    {
+     "$ref": "#/$defs/rule_global_entropy"
+    },
+    {
+     "$ref": "#/$defs/rule_equal_sum"
+    },
+    {
+     "$ref": "#/$defs/rule_vudoku"
+    },
+    {
+     "$ref": "#/$defs/rule_negative"
+    },
+    {
+     "$ref": "#/$defs/rule_custom"
+    },
+    {
+     "$ref": "#/$defs/rule_fog"
+    }
+   ]
+  },
+  "decoration": {
+   "type": "object",
+   "required": [
+    "kind"
+   ],
+   "properties": {
+    "kind": {
+     "enum": [
+      "line",
+      "arrow",
+      "rect",
+      "circle",
+      "text"
+     ]
+    }
+   }
+  },
+  "area": {
+   "description": "the origin of a grid / box_grid rule, or a list of cells",
+   "oneOf": [
+    {
+     "$ref": "#/$defs/cell"
+    },
+    {
+     "$ref": "#/$defs/cells"
+    }
+   ]
+  },
+  "rule_custom": {
+   "type": "object",
+   "required": [
+    "type",
+    "holds"
+   ],
+   "properties": {
+    "type": {
+     "const": "custom"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "holds": {
+     "type": "string",
+     "description": "the condition: an expression over the named cells (docs/formats/rules/custom.mdx)"
+    },
+    "cells": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+       "anyOf": [
+        {
+         "$ref": "#/$defs/cell"
+        },
+        {
+         "type": "array",
+         "items": {
+          "$ref": "#/$defs/cell"
+         },
+         "minItems": 1
+        }
+       ]
+      }
+     }
+    },
+    "each": {
+     "type": "string"
+    },
+    "scope": {
+     "type": "object",
+     "properties": {
+      "pairs": {
+       "enum": [
+        "orthogonal",
+        "diagonal",
+        "king",
+        "knight"
+       ]
+      },
+      "windows": {
+       "type": "array",
+       "items": {
+        "type": "integer",
+        "minimum": 1
+       },
+       "minItems": 2,
+       "maxItems": 2
+      },
+      "neighbours": {
+       "enum": [
+        "orthogonal",
+        "diagonal",
+        "king",
+        "knight"
+       ]
+      },
+      "cells": {
+       "type": "string"
+      },
+      "within": {
+       "const": "box"
+      },
+      "except": {
+       "type": "array",
+       "items": {
+        "type": "array",
+        "items": {
+         "$ref": "#/$defs/cell"
+        }
+       }
+      }
+     },
+     "additionalProperties": false
+    }
+   },
+   "additionalProperties": false
+  },
+  "rule_yin_yang": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "yin_yang"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "shaded": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/cell"
+     }
+    },
+    "unshaded": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/cell"
+     }
+    }
+   },
+   "required": [
+    "type"
+   ],
+   "additionalProperties": false,
+   "description": "shading: shaded and unshaded cells each orthogonally connected, no 2x2 of one colour; optional given colours (docs/formats/rules/whole-board-rules.mdx 6.19)"
+  },
+  "rule_fog": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "fog"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "type": "object"
+    },
+    "lit": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/cell"
+     }
+    },
+    "triggers": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "when": {
+        "type": "array",
+        "items": {
+         "$ref": "#/$defs/cell"
+        }
+       },
+       "light": {
+        "type": "array",
+        "items": {
+         "$ref": "#/$defs/cell"
+        }
+       }
+      },
+      "required": [
+       "when",
+       "light"
+      ],
+      "additionalProperties": false
+     }
+    }
+   },
+   "required": [
+    "type",
+    "lit"
+   ],
+   "additionalProperties": false
+  }
+ }
+}

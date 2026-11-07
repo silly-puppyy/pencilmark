@@ -1,0 +1,524 @@
+{
+  "docs": [
+    {
+      "type": "doc",
+      "id": "index",
+      "label": "Overview"
+    },
+    {
+      "type": "category",
+      "label": "Get started",
+      "collapsed": false,
+      "className": "pm-ico pm-ico-start",
+      "link": {
+        "type": "generated-index",
+        "slug": "/start/",
+        "description": "Install pencilmark, grade a first puzzle, and the everyday commands."
+      },
+      "items": [
+        {
+          "type": "doc",
+          "id": "start/first-puzzle",
+          "className": "pm-ico-first-puzzle",
+          "label": "Grade your first puzzle"
+        },
+        {
+          "type": "doc",
+          "id": "start/usage",
+          "className": "pm-ico-usage",
+          "label": "Usage"
+        }
+      ]
+    },
+    {
+      "type": "category",
+      "label": "Guides",
+      "collapsed": true,
+      "className": "pm-ico pm-ico-guides",
+      "link": {
+        "type": "generated-index",
+        "slug": "/guides/",
+        "description": "Step by step: grading and checking puzzles, generating them, and working on the code."
+      },
+      "items": [
+        {
+          "type": "category",
+          "label": "Grader",
+          "collapsed": true,
+          "className": "pm-ico-grader",
+          "description": "Grade many puzzles, check one before publishing, write, import and draw puzzles.",
+          "link": {
+            "type": "generated-index",
+            "slug": "/guides/grader/",
+            "description": "Grade many puzzles, check one before publishing, write, import and draw puzzles."
+          },
+          "items": [
+            {
+              "type": "doc",
+              "id": "guides/grader/batch",
+              "className": "pm-ico-batch",
+              "label": "Grade many puzzles"
+            },
+            {
+              "type": "doc",
+              "id": "guides/grader/publish-checks",
+              "className": "pm-ico-publish-checks",
+              "label": "Check a puzzle before publishing"
+            },
+            {
+              "type": "doc",
+              "id": "guides/grader/variant-file",
+              "className": "pm-ico-variant-file",
+              "label": "Write a variant puzzle file"
+            },
+            {
+              "type": "doc",
+              "id": "guides/grader/import",
+              "className": "pm-ico-import",
+              "label": "Import puzzles from other apps"
+            },
+            {
+              "type": "doc",
+              "id": "guides/grader/fog",
+              "className": "pm-ico-fog",
+              "label": "Fog of war: what works"
+            },
+            {
+              "type": "doc",
+              "id": "guides/grader/draw",
+              "className": "pm-ico-draw",
+              "label": "Draw a puzzle"
+            }
+          ]
+        },
+        {
+          "type": "category",
+          "label": "Generator",
+          "collapsed": true,
+          "className": "pm-ico-generator",
+          "description": "Make puzzles to order: a first request, examples of every kind, and puzzles for learners.",
+          "link": {
+            "type": "generated-index",
+            "slug": "/guides/generator/",
+            "description": "Make puzzles to order: a first request, examples of every kind, and puzzles for learners."
+          },
+          "items": [
+            {
+              "type": "doc",
+              "id": "guides/generator/generate",
+              "className": "pm-ico-generate",
+              "label": "Generate a puzzle"
+            },
+            {
+              "type": "doc",
+              "id": "guides/generator/generator-examples",
+              "className": "pm-ico-spec-examples",
+              "label": "Generator examples"
+            },
+            {
+              "type": "doc",
+              "id": "guides/generator/generate-for-learning",
+              "className": "pm-ico-learning",
+              "label": "Generate for learning"
+            }
+          ]
+        },
+        {
+          "type": "category",
+          "label": "Development",
+          "collapsed": true,
+          "className": "pm-ico-development",
+          "description": "Build from source, find your way around the code, and add techniques or rules.",
+          "link": {
+            "type": "generated-index",
+            "slug": "/guides/development/",
+            "description": "Build from source, find your way around the code, and add techniques or rules."
+          },
+          "items": [
+            {
+              "type": "doc",
+              "id": "guides/development/environment",
+              "className": "pm-ico-environment",
+              "label": "Development environment"
+            },
+            {
+              "type": "doc",
+              "id": "guides/development/architecture",
+              "className": "pm-ico-architecture",
+              "label": "Architecture"
+            },
+            {
+              "type": "doc",
+              "id": "guides/development/add-technique",
+              "className": "pm-ico-add-technique",
+              "label": "Add a technique"
+            },
+            {
+              "type": "doc",
+              "id": "guides/development/add-rule-kind",
+              "className": "pm-ico-add-rule-kind",
+              "label": "Add a rule kind"
+            },
+            {
+              "type": "doc",
+              "id": "guides/development/parameters",
+              "className": "pm-ico-parameters",
+              "label": "Grader parameters"
+            },
+            {
+              "type": "doc",
+              "id": "guides/development/engine-mapping",
+              "className": "pm-ico-engine-mapping",
+              "label": "Engine mapping"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "category",
+      "label": "Formats",
+      "collapsed": true,
+      "className": "pm-ico pm-ico-formats",
+      "link": {
+        "type": "generated-index",
+        "slug": "/formats/",
+        "description": "The three formats (a puzzle, its grade card, a request to the generator) and the readers and writers of other formats."
+      },
+      "items": [
+        {
+          "type": "category",
+          "label": "Puzzle format",
+          "collapsed": true,
+          "className": "pm-ico-puzzle-format",
+          "description": "pencilmark JSON, the puzzle file: the format, complete examples and a quick reference.",
+          "link": {
+            "type": "doc",
+            "id": "formats/puzzle-format"
+          },
+          "items": [
+            {
+              "type": "doc",
+              "id": "formats/examples",
+              "label": "Examples"
+            },
+            {
+              "type": "doc",
+              "id": "formats/quick-reference",
+              "label": "Quick reference"
+            }
+          ]
+        },
+        {
+          "type": "category",
+          "label": "Rule families",
+          "collapsed": true,
+          "className": "pm-ico-rules",
+          "description": "Every rule type of the puzzle format, family by family.",
+          "link": {
+            "type": "generated-index",
+            "slug": "/formats/rules/",
+            "description": "Every rule type of the puzzle format, family by family, with what it means and how it is drawn."
+          },
+          "items": [
+            {
+              "type": "doc",
+              "id": "formats/rules/houses-and-regions",
+              "className": "pm-ico-houses",
+              "label": "Houses and regions"
+            },
+            {
+              "type": "doc",
+              "id": "formats/rules/cages-and-sums",
+              "className": "pm-ico-cages",
+              "label": "Cages and sums"
+            },
+            {
+              "type": "doc",
+              "id": "formats/rules/lines-and-arrows",
+              "className": "pm-ico-lines",
+              "label": "Lines and arrows"
+            },
+            {
+              "type": "doc",
+              "id": "formats/rules/edges-and-corners",
+              "className": "pm-ico-edges",
+              "label": "Edges and corners"
+            },
+            {
+              "type": "doc",
+              "id": "formats/rules/outside-clues",
+              "className": "pm-ico-outside",
+              "label": "Outside clues"
+            },
+            {
+              "type": "doc",
+              "id": "formats/rules/whole-board-rules",
+              "className": "pm-ico-board",
+              "label": "Whole-board rules"
+            },
+            {
+              "type": "doc",
+              "id": "formats/rules/cell-clues",
+              "className": "pm-ico-cells",
+              "label": "Cell clues"
+            },
+            {
+              "type": "doc",
+              "id": "formats/rules/other",
+              "className": "pm-ico-other",
+              "label": "Other rules"
+            },
+            {
+              "type": "doc",
+              "id": "formats/rules/custom",
+              "className": "pm-ico-custom",
+              "label": "Custom rules"
+            }
+          ]
+        },
+        {
+          "type": "doc",
+          "id": "formats/grade-card",
+          "className": "pm-ico-grade-card",
+          "label": "Grade card"
+        },
+        {
+          "type": "doc",
+          "id": "formats/generator-spec",
+          "className": "pm-ico-generator-spec",
+          "label": "Generator spec"
+        },
+        {
+          "type": "doc",
+          "id": "formats/other-formats",
+          "className": "pm-ico-other-formats",
+          "label": "Readers and writers"
+        }
+      ]
+    },
+    {
+      "type": "category",
+      "label": "Library",
+      "collapsed": true,
+      "className": "pm-ico pm-ico-library",
+      "link": {
+        "type": "generated-index",
+        "slug": "/library/",
+        "description": "The Python library: its public API, the variant names it gives, and how it draws puzzles. Internals are under Development and in the Code reference."
+      },
+      "items": [
+        {
+          "type": "doc",
+          "id": "library/python-api",
+          "className": "pm-ico-python-api",
+          "label": "Python API"
+        },
+        {
+          "type": "doc",
+          "id": "library/variant-catalogue",
+          "className": "pm-ico-variant-catalogue",
+          "label": "Variant catalogue"
+        },
+        {
+          "type": "doc",
+          "id": "library/variant-naming",
+          "className": "pm-ico-variant-naming",
+          "label": "How variants are named"
+        },
+        {
+          "type": "doc",
+          "id": "library/drawing-style",
+          "className": "pm-ico-drawing-style",
+          "label": "Drawing and style"
+        },
+        {
+          "type": "doc",
+          "id": "library/palette",
+          "className": "pm-ico-palette",
+          "label": "Palette"
+        }
+      ]
+    },
+    {
+      "type": "category",
+      "label": "How the grades work",
+      "collapsed": true,
+      "className": "pm-ico pm-ico-grades",
+      "link": {
+        "type": "generated-index",
+        "slug": "/grades/",
+        "description": "What the numbers mean, how they are computed and measured, and what we tried on the way."
+      },
+      "items": [
+        {
+          "type": "doc",
+          "id": "grades/philosophy",
+          "className": "pm-ico-philosophy",
+          "label": "Philosophy"
+        },
+        {
+          "type": "doc",
+          "id": "grades/model",
+          "className": "pm-ico-model",
+          "label": "How a card is computed"
+        },
+        {
+          "type": "doc",
+          "id": "grades/techniques",
+          "className": "pm-ico-techniques",
+          "label": "Techniques"
+        },
+        {
+          "type": "doc",
+          "id": "grades/benchmark",
+          "className": "pm-ico-benchmark",
+          "label": "Benchmark"
+        },
+        {
+          "type": "doc",
+          "id": "grades/experiments",
+          "className": "pm-ico-experiments",
+          "label": "Experiment log"
+        },
+        {
+          "type": "doc",
+          "id": "grades/glossary",
+          "className": "pm-ico-glossary",
+          "label": "Glossary"
+        }
+      ]
+    },
+    {
+      "type": "category",
+      "label": "Code reference",
+      "collapsed": true,
+      "className": "pm-ico pm-ico-code-reference",
+      "link": {
+        "type": "generated-index",
+        "slug": "/reference/",
+        "description": "Every module, function and class, generated from the docstrings and the C++ header comments: the internals, for tinkering. The stable public API is Library > Python API."
+      },
+      "items": [
+        {
+          "type": "category",
+          "label": "Python",
+          "collapsed": true,
+          "description": "The package: the card, formats, the engine interface, explanations, the generator, sources and the command line.",
+          "items": [
+            {
+              "type": "doc",
+              "id": "reference/card",
+              "label": "The card"
+            },
+            {
+              "type": "doc",
+              "id": "reference/formats",
+              "label": "Formats"
+            },
+            {
+              "type": "doc",
+              "id": "reference/engine",
+              "label": "The engine interface"
+            },
+            {
+              "type": "doc",
+              "id": "reference/explain",
+              "label": "Explanations"
+            },
+            {
+              "type": "doc",
+              "id": "reference/fog",
+              "label": "Fog of war"
+            },
+            {
+              "type": "doc",
+              "id": "reference/generator",
+              "label": "The generator"
+            },
+            {
+              "type": "doc",
+              "id": "reference/sources",
+              "label": "Puzzle sources"
+            },
+            {
+              "type": "doc",
+              "id": "reference/cli",
+              "label": "The command line"
+            }
+          ]
+        },
+        {
+          "type": "category",
+          "label": "C++ engine",
+          "collapsed": true,
+          "description": "The engine in csrc/: the solver, the puzzle model, n-ary constraints and utilities.",
+          "items": [
+            {
+              "type": "doc",
+              "id": "reference/cpp-files",
+              "label": "Source files"
+            },
+            {
+              "type": "doc",
+              "id": "reference/cpp-solver",
+              "label": "The solver"
+            },
+            {
+              "type": "doc",
+              "id": "reference/cpp-model",
+              "label": "The puzzle model"
+            },
+            {
+              "type": "doc",
+              "id": "reference/cpp-nary",
+              "label": "N-ary constraints"
+            },
+            {
+              "type": "doc",
+              "id": "reference/cpp-util",
+              "label": "Utilities"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "category",
+      "label": "Contributing",
+      "collapsed": true,
+      "className": "pm-ico pm-ico-dev",
+      "link": {
+        "type": "generated-index",
+        "slug": "/dev/",
+        "description": "Sending a change to pencilmark: how to propose it, the code and writing style, and releases."
+      },
+      "items": [
+        {
+          "type": "doc",
+          "id": "dev/contributing",
+          "className": "pm-ico-contributing",
+          "label": "Contributing"
+        },
+        {
+          "type": "doc",
+          "id": "dev/code-style",
+          "className": "pm-ico-code-style",
+          "label": "Code style"
+        },
+        {
+          "type": "doc",
+          "id": "dev/writing-style",
+          "className": "pm-ico-writing-style",
+          "label": "Writing style"
+        },
+        {
+          "type": "doc",
+          "id": "dev/release",
+          "className": "pm-ico-release",
+          "label": "Release a version"
+        }
+      ]
+    }
+  ]
+}

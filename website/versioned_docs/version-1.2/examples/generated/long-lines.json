@@ -1,0 +1,430 @@
+{
+ "title": "Long whispers and renbans",
+ "shows": "lengths on two templates at once: whispers of 7 cells or more, renbans of at least 5 (\"auto\": as many as needed)",
+ "spec": {
+  "format": "pencilmark-spec",
+  "format_version": 1,
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "count": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "length": [
+     7,
+     null
+    ],
+    "count": 2
+   },
+   {
+    "type": "line",
+    "kind": "renban",
+    "length": [
+     5,
+     null
+    ],
+    "count": "auto"
+   }
+  ],
+  "limits": {
+   "time": 600,
+   "seed": 1
+  }
+ },
+ "puzzle": {
+  "format": "pencilmark-puzzle",
+  "format_version": 1,
+  "meta": {
+   "title": "generated 9x9 6 renban, 2 whisper, 6 givens",
+   "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nGerman Whispers: Adjacent digits on a whisper line differ by at least 5.\nRenban: A renban line holds a set of consecutive digits in any order, without repeats.",
+   "type": "Variant Sudoku"
+  },
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "givens": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   1,
+   0,
+   0,
+   0,
+   8,
+   0,
+   0,
+   0,
+   0,
+   5,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   6,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   9,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   4,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "solution": [
+   4,
+   9,
+   5,
+   7,
+   6,
+   2,
+   3,
+   8,
+   1,
+   7,
+   2,
+   3,
+   8,
+   9,
+   1,
+   4,
+   6,
+   5,
+   1,
+   8,
+   6,
+   5,
+   3,
+   4,
+   7,
+   9,
+   2,
+   9,
+   4,
+   2,
+   6,
+   5,
+   7,
+   1,
+   3,
+   8,
+   6,
+   3,
+   8,
+   4,
+   1,
+   9,
+   2,
+   5,
+   7,
+   5,
+   7,
+   1,
+   3,
+   2,
+   8,
+   6,
+   4,
+   9,
+   3,
+   6,
+   7,
+   2,
+   8,
+   5,
+   9,
+   1,
+   4,
+   8,
+   1,
+   4,
+   9,
+   7,
+   6,
+   5,
+   2,
+   3,
+   2,
+   5,
+   9,
+   1,
+   4,
+   3,
+   8,
+   7,
+   6
+  ],
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "count": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "value": 5,
+    "cells": [
+     "r9c4",
+     "r9c3",
+     "r8c3",
+     "r8c4",
+     "r7c4",
+     "r7c3",
+     "r6c3",
+     "r5c3",
+     "r4c3"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "value": 5,
+    "cells": [
+     "r1c1",
+     "r1c2",
+     "r2c2",
+     "r2c1",
+     "r3c1",
+     "r4c1",
+     "r4c2"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "renban",
+    "cells": [
+     "r5c1",
+     "r4c1",
+     "r4c2",
+     "r3c2",
+     "r2c2",
+     "r2c3",
+     "r1c3",
+     "r1c4"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "renban",
+    "cells": [
+     "r8c1",
+     "r8c2",
+     "r8c3",
+     "r8c4",
+     "r7c4",
+     "r7c3",
+     "r7c2",
+     "r7c1",
+     "r6c1"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "renban",
+    "cells": [
+     "r2c8",
+     "r2c7",
+     "r3c7",
+     "r4c7",
+     "r4c8",
+     "r4c9",
+     "r3c9",
+     "r2c9"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "renban",
+    "cells": [
+     "r3c6",
+     "r4c6",
+     "r5c6",
+     "r5c5",
+     "r4c5",
+     "r4c4",
+     "r4c3",
+     "r5c3",
+     "r5c2"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "renban",
+    "cells": [
+     "r5c7",
+     "r6c7",
+     "r7c7",
+     "r7c6",
+     "r7c5",
+     "r8c5",
+     "r9c5",
+     "r9c6"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "renban",
+    "cells": [
+     "r6c9",
+     "r7c9",
+     "r7c8",
+     "r8c8",
+     "r8c7",
+     "r9c7",
+     "r9c8",
+     "r9c9",
+     "r8c9"
+    ]
+   }
+  ]
+ },
+ "card": {
+  "band": "Medium",
+  "difficulty": 9.9,
+  "time": 41.2,
+  "contains": [
+   {
+    "code": "HSI",
+    "chip": "HSI",
+    "name": "Hidden Single",
+    "band": 0
+   },
+   {
+    "code": "LSI",
+    "chip": "LSI",
+    "name": "Line / dot read without notes",
+    "band": 0
+   },
+   {
+    "code": "CSI",
+    "chip": "CSI",
+    "name": "Last cell of a cage / line",
+    "band": 0
+   },
+   {
+    "code": "NSI",
+    "chip": "NSI",
+    "name": "Naked Single",
+    "band": 1
+   },
+   {
+    "code": "PPR",
+    "chip": "PPR",
+    "name": "Pointing / Box-Line Reduction",
+    "band": 1,
+    "uses": 15
+   },
+   {
+    "code": "LNR",
+    "chip": "LNR",
+    "name": "Line ranges (thermo / whisper bounds)",
+    "band": 1,
+    "uses": 12
+   },
+   {
+    "code": "DGC",
+    "chip": "DGC",
+    "name": "Digit counting",
+    "band": 2,
+    "uses": 15
+   },
+   {
+    "code": "RUL",
+    "chip": "RUL",
+    "name": "Two rules together",
+    "band": 2,
+    "uses": 5
+   }
+  ]
+ },
+ "info": {
+  "seconds": 402.8,
+  "attempts": 5,
+  "found": null,
+  "givens": 6,
+  "elements": {
+   "renban": 6,
+   "whisper": 2
+  },
+  "rejected": {
+   "kind pruned: whisper": 4
+  }
+ }
+}

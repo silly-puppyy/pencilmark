@@ -1,0 +1,29 @@
+---
+description: "Clues written outside the grid: sandwich, x-sum, skyscraper, rossini and first seen."
+title: Outside clues
+---
+
+
+import Swatch from '@site/src/components/Swatch';
+
+# Outside clues
+
+This page covers the clues written outside the grid: sandwich, xsum, skyscraper, rossini and first_seen (6.9).
+
+## 6.9 Outside clues: `sandwich`, `xsum`, `skyscraper`, `rossini`, `first_seen`
+
+All take `side` and ordered `cells` starting next to the clue (3.2).
+
+<div className="pm-kinds">
+
+| `type` | Fields | Meaning | Drawing |
+|---|---|---|---|
+| `sandwich` | `sum` | The digits strictly between the 1 and the D in `cells` sum to `sum` (0 when they are adjacent). The 1 and the D must both be among `cells`. | <Swatch name="sandwich" /> |
+| `xsum` | `sum` | X = the digit in `cells[0]`; the first X cells sum to `sum`. X must not exceed the number of cells. | <Swatch name="xsum" /> |
+| `skyscraper` | `value` | Reading `cells` in order, exactly `value` cells are higher than every earlier cell (the first cell always counts). | <Swatch name="skyscraper" /> |
+| `rossini` | `arrow`: `"in"` \| `"out"` | The first 3 cells are monotone: increasing inwards for `in` (the arrow points into the grid, towards the highest digit), decreasing inwards for `out`. `cells` lists those 3 cells. |  |
+| `first_seen` | `value`, `digits` (list) | Reading `cells` in order, the first digit that is in `digits` is `value` (the "123" clue). |  |
+
+</div>
+
+"Every arrow is shown" for rossini is a `negative` rule (6.14).

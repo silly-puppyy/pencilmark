@@ -1,0 +1,123 @@
+{
+ "$comment": "pencilmark default drawing (docs/library/drawing-style.md): sizes in cell units, digit weights in font weight; colours per theme. Line colours are the community defaults measured on 6,217 LMD puzzles.",
+ "format": "pencilmark-palette",
+ "format_version": 1,
+ "sizes": {
+  "thin": 0.031,
+  "box": 0.07,
+  "frame": 0.07,
+  "box_dark": 0.09,
+  "digit": 0.7,
+  "given_w": 450,
+  "placed_w": 360,
+  "halo_light": 0.034,
+  "halo_dark": 0.05,
+  "line": 0.15,
+  "thermo": 0.3,
+  "bulb": 0.375
+ },
+ "themes": {
+  "light": {
+   "page": "#f8f6f1",
+   "board": "#fffdf8",
+   "ink": "#1a1a1a",
+   "thin": "#1a1a1a",
+   "given": "#111111",
+   "placed": "#2357c7",
+   "cand": "#5f5a54",
+   "shade": "#d8d8d8",
+   "diag": "#9a958e",
+   "clue_bg": "#fffdf8",
+   "odd": "#c9c5bf",
+   "even": "#c9c5bf",
+   "low": "#e2ded8",
+   "high": "#a9a49d",
+   "text": "#1f1e1d"
+  },
+  "dark": {
+   "page": "#1b1916",
+   "board": "#23201d",
+   "ink": "#e8e6e3",
+   "thin": "#e8e6e3",
+   "given": "#f2f0ed",
+   "placed": "#8fb6ff",
+   "cand": "#b3afa9",
+   "shade": "#55504a",
+   "diag": "#c99a5b",
+   "clue_bg": "#23201d",
+   "odd": "#4a4640",
+   "even": "#4a4640",
+   "low": "#3a3732",
+   "high": "#5e5953",
+   "text": "#ecebe8"
+  }
+ },
+ "lines": {
+  "whisper": "#67f067",
+  "renban": "#f067f0",
+  "region_sum": "#2ecbff",
+  "entropic": "#ffccaa",
+  "modular": "#33bbaa",
+  "parity": "#ff6666",
+  "palindrome": "#aaaaaa",
+  "zipper": "#c8adeb",
+  "thermo": "#cccccc",
+  "slow_thermo": "#cfcfcf",
+  "between": "#aaaaaa",
+  "lockout": "#aaaaaa",
+  "double_arrow": "#aaaaaa",
+  "dutch_whisper": "#ffa600"
+ },
+ "region_palette": [
+  "#f4cccc",
+  "#fce5cd",
+  "#fff2cc",
+  "#d9ead3",
+  "#d0e0e3",
+  "#c9daf8",
+  "#d9d2e9",
+  "#ead1dc",
+  "#e6e6e6"
+ ],
+ "bands": {
+  "Very Easy": "#7ccf6b",
+  "Easy": "#2f9e44",
+  "Medium": "#f2b705",
+  "Hard": "#ee6a1a",
+  "Very Hard": "#c92a2a",
+  "Expert": "#9c36b5",
+  "Extreme": "#e665c0",
+  "Unknown": "#9a958e"
+ },
+ "annotation": {
+  "$comment": "named colours of step annotations and the trace's colour layer (grade-card.md 5, 6), drawn over the cell at this opacity; a cell with n colours is split into n wedges from its centre whose ends cut the cell's outline into n equal lengths, the first cut 25/360 of the way round clockwise from the top centre (as SudokuPad draws several colours in one cell)",
+  "opacity": {
+   "light": 0.65,
+   "dark": 0.5
+  },
+  "light": {
+   "yellow": "#e0c644",
+   "blue": "#4685d3",
+   "green": "#51a85c",
+   "purple": "#9370c2",
+   "orange": "#d88835",
+   "pink": "#d5829e",
+   "cyan": "#46b4c5",
+   "grey": "#959595",
+   "brown": "#9e7746",
+   "red": "#ca3f37"
+  },
+  "dark": {
+   "yellow": "#e0c22e",
+   "blue": "#3b7fd6",
+   "green": "#43a350",
+   "purple": "#8f66c4",
+   "orange": "#d9802a",
+   "pink": "#d67a9b",
+   "cyan": "#35b2c4",
+   "grey": "#8a8a8a",
+   "brown": "#9a7040",
+   "red": "#cc3a32"
+  }
+ }
+}

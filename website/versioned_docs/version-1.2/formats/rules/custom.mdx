@@ -1,0 +1,152 @@
+---
+description: "Custom rules: a rule written in the file as an expression over cell digits, for mechanics no rule family covers."
+title: Custom rules
+---
+
+# Custom rules
+
+Since pencilmark 1.2. A custom rule states a condition over the digits of named cells, for a mechanic that no rule
+family (6.1 to 6.13) covers. Where a family exists, files use the family: readers, writers and drawings stay simple.
+
+## 6.18 Custom rules
+
+```json
+{"type": "custom", "cells": {"c": ["r1c1", "r1c2", "r2c1", "r2c2"]}, "holds": "any(2 * x == sum(c) for x in c)"}
+{"type": "custom", "holds": "(a, b) => abs(a - b) != 4", "scope": {"pairs": "orthogonal"}, "label": "No fours"}
+{"type": "custom", "cells": {"ray": ["r1c1", "r1c2", "r1c3", "r1c4", "r1c5"]}, "holds": "sum(take(ray[1], ray)) == 12"}
+```
+
+| Key | Meaning |
+|---|---|
+| `holds` | REQUIRED. The condition, an expression (below). With a `scope`, a predicate over each instance. |
+| `cells` | Named cell lists, `{"name": ["r1c1", …]}`. A one-cell list is a number in the expression (`o == 9`, no `o[1]`). A value may also be a list of cell lists (every cage of a set, for distinct totals). |
+| `scope` | Apply the predicate to every instance instead of one fixed set of cells (below). |
+| `each` | The name of a list of cell lists: the rule holds for each tuple, bound to that name. |
+| `label` | The author's words for the rule (optional; descriptions are generated from the expression). |
+
+The expression is the rule: no text is needed beside it. `describe` renders it in words, after the label when there is
+one ("No fours: for every pair of orthogonal neighbours a, b: the difference between a and b differs from 4").
+
+### Expressions
+
+```
+let s = sum(c); s in {10, 15, 20}                  bindings; several: let a = 1, b = a + 1; ...
+count(x for x in c if odd(x)) == 2                 a value per element: f(e for x in L if P)
+all(x != 5 for x in c)                             all / any take conditions
+sum(upto(ray, x => x == 9)) == 15                  predicates are lambdas: x => ..., (a, b) => ...
+ray[ray[1]] == 5                                   indexes start at 1; a digit may be the index
+(if odd(c[1]) then c[2] else c[3]) == 4            if ... then ... else ...
+```
+
+Operators, loosest first: `let`, lambdas, `if`; `??` (a default for an absent value); `or`; `and`; `not`; comparisons
+`== != < <= > >=`, `in`, `not in` (they do not chain: write `1 < x and x < 3`); `+ -`; `* / div mod`; unary `-`;
+`**`. Lists `[a, b]`, sets `{a, b}`, ranges `{1..n}`, slices `L[2..4]`.
+
+Built-ins: `sum`, `product`, `min`, `max` (of a list, or of two numbers), `count`, `len`, `all`, `any`, `sort`,
+`reverse`, `median`, `abs`, `odd`, `even`, `prime`, `num` (a condition as 0 / 1), `defined`, `all_different`,
+`count_distinct`, `concat` (digits read as one number), `seen` (the digits visible from the start: each higher than all
+before), `upto(L, p)` (the prefix through the first element meeting p), `take_while(L, p)`, `take(n, L)`,
+`position(L, p)`, and `row`, `col`, `box` of a cell.
+
+Board layers (reserved for a later version with the rules they read: refused in pencilmark 1.2): `region(c)` is the number of the region a cell is in, on a board whose regions are found by the solver
+(chaos construction, 6.3; regions numbered by their first cell in reading order); `shaded(c)` is true when a cell is
+shaded, on a board with shading. A rule that uses either on a board without that layer is refused. pencilmark checks
+`region()` rules once the cells' digits and regions are known (uniqueness, solving, and the last resort of the human
+route); no named technique reasons with them yet, so such puzzles tend to grade high. `shaded()` rules are checked the
+same way when solving and counting (puzzles with shading are not graded yet). Rules with either are unscoped (no
+`scope` or `each`).
+
+Values are exact (`7 / 2` is 3.5; `div` and `mod` are floor division and a non-negative remainder). An index beyond a
+list, or a division by zero, is absent: arithmetic with it is absent and a comparison with it is false (`!=` too), so
+a rule about "the next cell" simply does not hold at the end of a row; `defined(x)` and `x ?? 0` handle edges.
+
+### Scopes
+
+| `scope` | The predicate takes |
+|---|---|
+| `{"pairs": "orthogonal" \| "diagonal" \| "king" \| "knight"}` | `(a, b)`: every pair of neighbours of that kind |
+| `{"windows": [h, w]}` | `w`: the cells of every h x w block, in reading order |
+| `{"neighbours": kind, "cells": name, "within": "box"}` | `(x, N)`: each cell of `name` (every cell without it) and the list of its neighbours (`within` keeps those in its box) |
+
+Each scope takes `"except": [[cells], …]`, instances to skip.
+
+### Unknowns and layers
+
+Some one-off rules talk about numbers that are not digits in cells: a value shared by several clues ("X is the same
+in every cage marked X"), a choice ("exactly two of these three clues are true"), or a second value per cell ("one cell
+in every row, column and box counts one more or one less than its digit"). The file declares them at the top level and
+custom rules read them:
+
+```json
+"unknowns": {"X": {"range": [1, 9]}, "T1": {"values": [0, 1]}},
+"layers": {"shift": {"values": [-1, 0, 1]}}
+```
+
+A complete 4×4 puzzle with one shared unknown: three marked pairs have the same sum X (one solution, X included):
+
+```json
+{"format": "pencilmark-puzzle", "format_version": 1,
+ "board": {"rows": 4, "cols": 4},
+ "digits": 4,
+ "givens": [
+    0, 0, 0, 1,
+    0, 0, 0, 0,
+    0, 2, 0, 0,
+    4, 0, 0, 0],
+ "unknowns": {"X": {"range": [3, 7]}},
+ "rules": [
+   {"type": "box_grid", "box": [2, 2], "count": [2, 2]},
+   {"type": "custom", "cells": {"a": ["r1c1", "r1c2"]}, "holds": "sum(a) == X"},
+   {"type": "custom", "cells": {"b": ["r4c3", "r4c4"]}, "holds": "sum(b) == X"},
+   {"type": "custom", "cells": {"c": ["r2c3", "r3c2"]}, "holds": "sum(c) == X"}]}
+```
+
+A complete 4×4 puzzle with a layer: one cell in every row is shifted (counts one more than its digit), and four pairs give the sum of what their cells count (one solution, digits and shifts):
+
+```json
+{"format": "pencilmark-puzzle", "format_version": 1,
+ "board": {"rows": 4, "cols": 4},
+ "digits": 4,
+ "givens": [
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    0, 3, 1, 0,
+    0, 0, 0, 0],
+ "layers": {"shift": {"values": [0, 1]}},
+ "rules": [
+   {"type": "box_grid", "box": [2, 2], "count": [2, 2]},
+   {"type": "custom", "cells": {"r": ["r1c1", "r1c2", "r1c3", "r1c4"]}, "holds": "sum([shift(x) for x in r]) == 1"},
+   {"type": "custom", "cells": {"r": ["r2c1", "r2c2", "r2c3", "r2c4"]}, "holds": "sum([shift(x) for x in r]) == 1"},
+   {"type": "custom", "cells": {"r": ["r3c1", "r3c2", "r3c3", "r3c4"]}, "holds": "sum([shift(x) for x in r]) == 1"},
+   {"type": "custom", "cells": {"r": ["r4c1", "r4c2", "r4c3", "r4c4"]}, "holds": "sum([shift(x) for x in r]) == 1"},
+   {"type": "custom", "cells": {"a": ["r1c3", "r1c4"]}, "holds": "sum([x + shift(x) for x in a]) == 3"},
+   {"type": "custom", "cells": {"a": ["r2c3", "r3c3"]}, "holds": "sum([x + shift(x) for x in a]) == 6"},
+   {"type": "custom", "cells": {"a": ["r3c2", "r4c2"]}, "holds": "sum([x + shift(x) for x in a]) == 6"},
+   {"type": "custom", "cells": {"a": ["r1c1", "r2c1"]}, "holds": "sum([x + shift(x) for x in a]) == 7"}]}
+```
+
+- An unknown is read by its name, as a number: `sum(c) == X`. A choice is an unknown with values 0 / 1, used as
+  `T1 == 1 or sum(c) == 10` or counted with `T1 + T2 + T3 == 2`.
+- A layer gives each cell one of its values; a rule reads it as a function of a cell named after the layer:
+  `shift(c) != 0`, `c + shift(c)`. `"given": {"r1c1": 0}` fixes a cell's value. A rule about the layer itself
+  ("one shifted cell per row") is another custom rule.
+- Unknowns that must all differ (ciphers) are a custom rule too: `all_different([A, B, C])`.
+- Names are identifiers that are no cell name, keyword or built-in (so not `mod`, `sum`, `region`), and an unknown
+  and a layer cannot share a name. Values are integers, given as `range` [lo, hi] (inclusive) or a list of `values`.
+
+They are part of the solution: a reader that cannot solve them refuses the puzzle rather than ignoring a rule.
+pencilmark reads, checks and writes them, evaluates rules with them, and its exhaustive search solves and counts such
+puzzles (uniqueness is by digits; the hidden values only have to exist). The search can be slow where the hidden values
+say little until most digits are known. `rate` gives them band Unknown with a `reason`: no human technique reasons with them yet.
+
+### Reading, writing, limits
+
+A reader refuses a custom rule that does not parse or type-check (unknown names or functions, arithmetic on a
+condition, `all(x for x in L if P)` instead of `all(P for x in L)`), naming the problem. Writers keep the rule as
+given, with the expression in its canonical spelling (single spaces around operators, minimal parentheses), which is
+also what `fingerprint` reads: `2*max(c)==sum(c)` and `2 * max(c) == sum(c)` are the same rule.
+
+pencilmark grades a custom rule through the engine's generic rule reading (no named technique of its own). A rule
+over up to 5 cells becomes a table of the digit combinations it allows, and so does `concat(cells) in {...}` over any
+number of cells (its rows are the listed numbers); a larger one is checked by the engine's own evaluator of the
+expression, which gives the same answers.

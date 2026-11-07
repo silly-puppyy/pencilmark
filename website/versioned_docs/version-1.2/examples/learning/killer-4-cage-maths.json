@@ -1,0 +1,508 @@
+{
+ "title": "Cage maths",
+ "spec": {
+  "format": "pencilmark-spec",
+  "format_version": 1,
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "count": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "cage",
+    "count": "tile"
+   }
+  ],
+  "givens": {
+   "count": 0
+  },
+  "where": {
+   "contains": {
+    "codes": [
+     "IOU"
+    ],
+    "strict": true
+   }
+  },
+  "limits": {
+   "time": 600,
+   "seed": 4
+  }
+ },
+ "puzzle": {
+  "format": "pencilmark-puzzle",
+  "format_version": 1,
+  "meta": {
+   "title": "generated 9x9 26 cage, 0 givens",
+   "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nKiller: Digits in a cage sum to its small clue and don't repeat within the cage.",
+   "type": "Killer Sudoku"
+  },
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "givens": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "solution": [
+   2,
+   4,
+   8,
+   6,
+   7,
+   9,
+   5,
+   1,
+   3,
+   7,
+   1,
+   6,
+   5,
+   3,
+   4,
+   2,
+   8,
+   9,
+   3,
+   5,
+   9,
+   2,
+   8,
+   1,
+   6,
+   4,
+   7,
+   1,
+   7,
+   5,
+   3,
+   9,
+   6,
+   4,
+   2,
+   8,
+   6,
+   8,
+   4,
+   1,
+   2,
+   7,
+   9,
+   3,
+   5,
+   9,
+   2,
+   3,
+   4,
+   5,
+   8,
+   7,
+   6,
+   1,
+   8,
+   6,
+   7,
+   9,
+   1,
+   2,
+   3,
+   5,
+   4,
+   4,
+   3,
+   1,
+   7,
+   6,
+   5,
+   8,
+   9,
+   2,
+   5,
+   9,
+   2,
+   8,
+   4,
+   3,
+   1,
+   7,
+   6
+  ],
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "count": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 8,
+    "cells": [
+     "r8c1",
+     "r8c2",
+     "r8c3"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 15,
+    "cells": [
+     "r2c3",
+     "r3c3"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 16,
+    "cells": [
+     "r8c8",
+     "r9c8"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 15,
+    "cells": [
+     "r6c6",
+     "r6c7"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 14,
+    "cells": [
+     "r9c1",
+     "r9c2"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 15,
+    "cells": [
+     "r4c5",
+     "r4c6"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 8,
+    "cells": [
+     "r2c4",
+     "r2c5"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 12,
+    "cells": [
+     "r5c2",
+     "r5c3"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 13,
+    "cells": [
+     "r4c9",
+     "r5c9"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 16,
+    "cells": [
+     "r7c4",
+     "r8c4"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 9,
+    "cells": [
+     "r1c7",
+     "r1c8",
+     "r1c9"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 13,
+    "cells": [
+     "r8c6",
+     "r8c7"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 9,
+    "cells": [
+     "r3c5",
+     "r3c6"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 10,
+    "cells": [
+     "r2c1",
+     "r3c1"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 5,
+    "cells": [
+     "r3c4",
+     "r4c4"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 20,
+    "cells": [
+     "r3c8",
+     "r4c8",
+     "r5c8",
+     "r6c8",
+     "r7c8"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 30,
+    "cells": [
+     "r6c1",
+     "r7c1",
+     "r7c2",
+     "r7c3"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 30,
+    "cells": [
+     "r2c6",
+     "r2c7",
+     "r2c8",
+     "r2c9",
+     "r3c9"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 18,
+    "cells": [
+     "r9c3",
+     "r9c4",
+     "r9c5",
+     "r9c6",
+     "r9c7"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 19,
+    "cells": [
+     "r4c1",
+     "r4c2",
+     "r4c3",
+     "r5c1"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 30,
+    "cells": [
+     "r1c3",
+     "r1c4",
+     "r1c5",
+     "r1c6"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 12,
+    "cells": [
+     "r7c5",
+     "r7c6",
+     "r7c7",
+     "r8c5"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 10,
+    "cells": [
+     "r5c4",
+     "r6c2",
+     "r6c3",
+     "r6c4"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 13,
+    "cells": [
+     "r6c9",
+     "r7c9",
+     "r8c9",
+     "r9c9"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 33,
+    "cells": [
+     "r3c7",
+     "r4c7",
+     "r5c5",
+     "r5c6",
+     "r5c7",
+     "r6c5"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 12,
+    "cells": [
+     "r1c1",
+     "r1c2",
+     "r2c2",
+     "r3c2"
+    ]
+   }
+  ]
+ },
+ "card": {
+  "band": "Easy",
+  "difficulty": 6.6,
+  "time": 24.9,
+  "contains": [
+   {
+    "code": "HSI",
+    "chip": "HSI",
+    "name": "Hidden Single",
+    "band": 0
+   },
+   {
+    "code": "CSI",
+    "chip": "CSI",
+    "name": "Last cell of a cage / line",
+    "band": 0
+   },
+   {
+    "code": "MSI",
+    "chip": "MSI",
+    "name": "Pair / triple in the head",
+    "band": 1,
+    "uses": 8
+   },
+   {
+    "code": "IOU",
+    "chip": "IOU",
+    "name": "Innies & outies (rule of 45)",
+    "band": 1,
+    "uses": 1
+   }
+  ]
+ },
+ "tries": 4
+}

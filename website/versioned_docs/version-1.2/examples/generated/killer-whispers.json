@@ -1,0 +1,503 @@
+{
+ "title": "Killer with German whispers and two givens",
+ "shows": "",
+ "spec": {
+  "format": "pencilmark-spec",
+  "format_version": 1,
+  "meta": {
+   "title": "Killer with German whispers and two givens",
+   "description": "Cages and whisper lines, exactly two givens, Hard."
+  },
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "givens": {
+   "count": 2
+  },
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "count": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "cage",
+    "count": [
+     1,
+     null
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "count": [
+     1,
+     null
+    ],
+    "value": 5
+   }
+  ],
+  "where": {
+   "band": "Hard"
+  },
+  "quality": {},
+  "limits": {
+   "results": 1,
+   "time": 900,
+   "seed": 3
+  },
+  "fields": [
+   "difficulty",
+   "band",
+   "contains",
+   "issues"
+  ]
+ },
+ "puzzle": {
+  "format": "pencilmark-puzzle",
+  "format_version": 1,
+  "meta": {
+   "title": "Killer with German whispers and two givens",
+   "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nKiller: Digits in a cage sum to its small clue and don't repeat within the cage.\nGerman Whispers: Adjacent digits on a whisper line differ by at least 5.",
+   "type": "Variant Sudoku",
+   "description": "Cages and whisper lines, exactly two givens, Hard."
+  },
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "givens": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   7,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   8,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "solution": [
+   3,
+   1,
+   2,
+   5,
+   9,
+   8,
+   6,
+   4,
+   7,
+   4,
+   9,
+   7,
+   6,
+   1,
+   2,
+   8,
+   3,
+   5,
+   8,
+   5,
+   6,
+   3,
+   7,
+   4,
+   9,
+   1,
+   2,
+   2,
+   3,
+   1,
+   8,
+   5,
+   6,
+   7,
+   9,
+   4,
+   7,
+   6,
+   4,
+   9,
+   3,
+   1,
+   2,
+   5,
+   8,
+   5,
+   8,
+   9,
+   2,
+   4,
+   7,
+   3,
+   6,
+   1,
+   9,
+   7,
+   8,
+   4,
+   6,
+   5,
+   1,
+   2,
+   3,
+   6,
+   2,
+   5,
+   1,
+   8,
+   3,
+   4,
+   7,
+   9,
+   1,
+   4,
+   3,
+   7,
+   2,
+   9,
+   5,
+   8,
+   6
+  ],
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "count": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 11,
+    "cells": [
+     "r9c5",
+     "r9c6"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 6,
+    "cells": [
+     "r2c6",
+     "r3c6"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 8,
+    "cells": [
+     "r1c2",
+     "r1c3",
+     "r1c4"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 14,
+    "cells": [
+     "r7c5",
+     "r8c5"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 14,
+    "cells": [
+     "r2c2",
+     "r3c2"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 16,
+    "cells": [
+     "r7c1",
+     "r7c2"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 8,
+    "cells": [
+     "r2c8",
+     "r2c9"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 11,
+    "cells": [
+     "r7c6",
+     "r7c7",
+     "r7c8",
+     "r8c6"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 12,
+    "cells": [
+     "r5c7",
+     "r6c7",
+     "r6c8",
+     "r6c9"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 16,
+    "cells": [
+     "r8c1",
+     "r8c2",
+     "r9c1",
+     "r9c2",
+     "r9c3"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "value": 5,
+    "cells": [
+     "r3c3",
+     "r4c3",
+     "r4c4",
+     "r3c4"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "value": 5,
+    "cells": [
+     "r5c1",
+     "r4c1"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "value": 5,
+    "cells": [
+     "r8c9",
+     "r7c9"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "value": 5,
+    "cells": [
+     "r6c8",
+     "r6c9",
+     "r5c9"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "value": 5,
+    "cells": [
+     "r5c7",
+     "r4c7"
+    ]
+   }
+  ]
+ },
+ "card": {
+  "band": "Hard",
+  "difficulty": 9.6,
+  "time": null,
+  "contains": [
+   {
+    "code": "HSI",
+    "chip": "HSI",
+    "name": "Hidden Single",
+    "band": 0
+   },
+   {
+    "code": "LSI",
+    "chip": "LSI",
+    "name": "Line / dot read without notes",
+    "band": 0
+   },
+   {
+    "code": "CSI",
+    "chip": "CSI",
+    "name": "Last cell of a cage / line",
+    "band": 0
+   },
+   {
+    "code": "NSI",
+    "chip": "NSI",
+    "name": "Naked Single",
+    "band": 1
+   },
+   {
+    "code": "PPR",
+    "chip": "PPR",
+    "name": "Pointing / Box-Line Reduction",
+    "band": 1,
+    "uses": 14
+   },
+   {
+    "code": "MSI",
+    "chip": "MSI",
+    "name": "Pair / triple in the head",
+    "band": 1,
+    "uses": 3
+   },
+   {
+    "code": "CGC",
+    "chip": "CGC",
+    "name": "Killer cage combinations",
+    "band": 1,
+    "uses": 20
+   },
+   {
+    "code": "PWC",
+    "chip": "PWC/LNR",
+    "name": "Pair rules (dots, whispers, anti-knight...)",
+    "band": 1,
+    "alternatives": [
+     "LNR"
+    ],
+    "uses": 14
+   },
+   {
+    "code": "DGC",
+    "chip": "DGC/NPR/HPR/HQD/IOV/IOM/CBL",
+    "name": "Digit counting",
+    "band": 2,
+    "alternatives": [
+     "NPR",
+     "HPR",
+     "HQD",
+     "IOV",
+     "IOM",
+     "CBL"
+    ],
+    "uses": 14
+   },
+   {
+    "code": "RUL",
+    "chip": "RUL",
+    "name": "Two rules together",
+    "band": 2,
+    "uses": 12
+   },
+   {
+    "code": "SKY",
+    "chip": "SKY/CSM",
+    "name": "Skyscraper",
+    "band": 3,
+    "alternatives": [
+     "CSM"
+    ],
+    "uses": 1
+   }
+  ]
+ },
+ "info": {
+  "seconds": 445.0,
+  "attempts": 13,
+  "found": null,
+  "givens": 2,
+  "elements": {
+   "cage": 10,
+   "whisper": 5
+  },
+  "rejected": {
+   "band too low (logic pre-check)": 7,
+   "too many givens": 3,
+   "band too high": 2
+  }
+ }
+}

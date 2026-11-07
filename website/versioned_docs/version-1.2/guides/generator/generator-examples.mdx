@@ -1,0 +1,402 @@
+---
+title: Generator examples
+description: "Generator requests and what they produced: curiosities and larger requests (multi-grid layouts among them), each with its card and how long the run took."
+---
+
+import Swatch from '@site/src/components/Swatch';
+
+# Generator examples
+
+Requests in the [generator spec](../../formats/generator-spec.md) language, each with the puzzle it produced, its card and
+how long the run took on one core of a desktop machine. The seed fixes the result: the same request on the same version
+gives the same puzzle. A run that searches for the most of something, or the hardest or easiest puzzle, always uses
+its whole `limits.time` and returns the best it found. The times include grading the result in full, which for a hard
+variant can take longer than the search itself. The requests below leave out the two keys every request starts
+with, `"format": "pencilmark-spec", "format_version": 1`; add them to run one. Written by
+`tools/gen_generator_examples.py`; the request files (complete) are in [`docs/examples/specs/`](https://github.com/silly-puppyy/pencilmark/tree/main/docs/examples/specs).
+
+## Curiosities
+
+Each shows another side of the spec.
+
+### As many 10-cages as fit
+
+Shows a cage `sum` and the count `"max"`: the run uses its whole time and keeps the result with the most cages.
+
+```json
+{"board": {"rows": 9, "cols": 9},
+ "digits": 9,
+ "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+  {"type": "cage", "sum": 10, "count": "max"}],
+ "limits": {"time": 300, "seed": 1}}
+```
+
+<Swatch name="generated-tens" />
+
+19 cages, 2 givens. **Expert**, difficulty 17.2, about 77.9 min. Contains: Hidden Single, Last cell of a cage / line, Naked Single, Pointing / Box-Line Reduction, Notes in the head, Killer cage combinations, Naked Pair, Digit counting, Innies & outies as a virtual cage, Must-contain digits (cage / line), Two rules together, Finned X-Wing, Band set theory with cages, Case analysis. Generated in 466 s, the best of 3 found (time limit 300 s).
+
+### One whisper, 25 cells or more
+
+Shows a line `length` with no upper bound, and 180° symmetry of the givens.
+
+```json
+{"board": {"rows": 9, "cols": 9},
+ "digits": 9,
+ "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+  {"type": "line", "kind": "whisper", "length": [25, null], "count": 1}],
+ "symmetry": [{"kind": "rot180", "of": "givens"}],
+ "limits": {"time": 300, "seed": 1}}
+```
+
+<Swatch name="generated-long-whisper" />
+
+1 whisper, 12 givens. **Easy**, difficulty 6.8, about 27.4 min. Contains: Hidden Single, Line / dot read without notes, Naked Single, Pointing / Box-Line Reduction, Notes in the head, Pair rules (dots, whispers, anti-knight...). Generated in 37 s, 7 attempts (time limit 300 s).
+
+### Long whispers and renbans
+
+Shows lengths on two templates at once: whispers of 7 cells or more, renbans of at least 5 ("auto": as many as needed).
+
+```json
+{"board": {"rows": 9, "cols": 9},
+ "digits": 9,
+ "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+  {"type": "line", "kind": "whisper", "length": [7, null], "count": 2},
+  {"type": "line", "kind": "renban", "length": [5, null], "count": "auto"}],
+ "limits": {"time": 600, "seed": 1}}
+```
+
+<Swatch name="generated-long-lines" />
+
+6 renbans, 2 whispers, 6 givens. **Medium**, difficulty 9.9, about 41.2 min. Contains: Hidden Single, Line / dot read without notes, Last cell of a cage / line, Naked Single, Pointing / Box-Line Reduction, Line ranges (thermo / whisper bounds), Digit counting, Two rules together. Generated in 403 s, 5 attempts (time limit 600 s).
+
+### Three tall thermometers
+
+Shows an exact count with a length range: three thermos of 7 to 9 cells.
+
+```json
+{"board": {"rows": 9, "cols": 9},
+ "digits": 9,
+ "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+  {"type": "line", "kind": "thermo", "length": [7, 9], "count": 3}],
+ "limits": {"time": 180, "seed": 1}}
+```
+
+<Swatch name="generated-tall-thermos" />
+
+3 thermos, 13 givens. **Very Easy**, difficulty 5.4, about 12.0 min. Contains: Hidden Single, Line / dot read without notes. Generated in 73 s, 5 attempts (time limit 180 s).
+
+### The gentlest X-Wing
+
+Shows difficulty `"min"` with a required technique: the easiest puzzle found in the time that still needs an X-Wing.
+
+```json
+{"board": {"rows": 9, "cols": 9},
+ "digits": 9,
+ "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}],
+ "where": {"difficulty": "min", "contains": {"codes": ["XWG"], "strict": true}},
+ "limits": {"time": 300, "seed": 1}}
+```
+
+<Swatch name="generated-gentlest-xwing" />
+
+24 givens. **Hard**, difficulty 5.4, about 11.9 min. Contains: Hidden Single, Naked Single, X-Wing. Generated in 300 s, the best of 14 found (time limit 300 s); the publishing checks refused 3 other candidates (thin).
+
+### The hardest 0-clue 6×6 kropki
+
+Shows difficulty `"max"`: no givens, a minimal set of dots (count `"min"`), the hardest found in the time.
+
+```json
+{"board": {"rows": 6, "cols": 6},
+ "digits": 6,
+ "givens": {"count": 0},
+ "rules": [{"type": "box_grid", "box": [2, 3], "count": [3, 2]},
+  {"type": "edge", "kind": "kropki", "count": "min"}],
+ "where": {"difficulty": "max"},
+ "quality": {},
+ "limits": {"time": 600, "seed": 5}}
+```
+
+<Swatch name="generated-hardest-kropki" />
+
+11 white dots, 1 black dot, 0 givens. **Expert**, difficulty 14.9, about 24.4 min. Contains: Hidden Single, Pointing / Box-Line Reduction, Pair rules (dots, whispers, anti-knight...), Line ranges (thermo / whisper bounds), Naked Pair, Two rules together, 2-String Kite, Band set theory with cages, Case analysis. Generated in 612 s, the best of 48 found (time limit 600 s).
+
+### Every even cell shaded
+
+Shows the count `"max"` on a cell template: every even cell is marked, and the run keeps the result with the fewest givens.
+
+```json
+{"board": {"rows": 9, "cols": 9},
+ "digits": 9,
+ "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+  {"type": "cell", "kind": "even", "count": "max"}],
+ "limits": {"time": 300, "seed": 1}}
+```
+
+<Swatch name="generated-evens" />
+
+36 even cells, 11 givens. **Easy**, difficulty 5.4, about 12.0 min. Contains: Hidden Single, Pointing Pair (in the head). Generated in 300 s, the best of 150 found (time limit 300 s); the publishing checks refused 55 other candidates (thin, thin/unusual, trivial, unusual).
+
+### Only X, no V
+
+Shows an exact count of 0 forbids a letter: as many X clues as fit and no V.
+
+```json
+{"board": {"rows": 9, "cols": 9},
+ "digits": 9,
+ "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+  {"type": "edge", "kind": "xv", "letter": "X", "count": "max"},
+  {"type": "edge", "kind": "xv", "letter": "V", "count": 0}],
+ "limits": {"time": 300, "seed": 1}}
+```
+
+<Swatch name="generated-x-only" />
+
+23 Xs, 9 givens. **Easy**, difficulty 6.8, about 21.7 min. Contains: Hidden Single, Line / dot read without notes, Naked Single, Notes in the head. Generated in 304 s, the best of 21 found (time limit 300 s); the publishing checks refused 2 other candidates (unusual).
+
+### A 6×6 killer tiled by cages
+
+Shows the count `"tile"`: cages cover the whole board.
+
+```json
+{"board": {"rows": 6, "cols": 6},
+ "digits": 6,
+ "rules": [{"type": "box_grid", "box": [2, 3], "count": [3, 2]},
+  {"type": "cage", "count": "tile"}],
+ "limits": {"time": 180, "seed": 1}}
+```
+
+<Swatch name="generated-tiled-6x6" />
+
+10 cages, 0 givens. **Easy**, difficulty 5.6, about 9.3 min. Contains: Hidden Single, Last cell of a cage / line, Pointing / Box-Line Reduction, Notes in the head, Killer cage combinations. Generated in 2 s, 5 attempts (time limit 180 s).
+
+### A 4×4 with quarter-turn symmetry
+
+Shows the smallest board; 90° symmetry (it needs square boxes).
+
+```json
+{"board": {"rows": 4, "cols": 4},
+ "digits": 4,
+ "rules": [{"type": "box_grid", "box": [2, 2], "count": [2, 2]}],
+ "symmetry": [{"kind": "rot90", "of": "givens"}],
+ "limits": {"time": 180, "seed": 1}}
+```
+
+<Swatch name="generated-tiny-4x4-rot90" />
+
+4 givens. **Very Easy**, difficulty 0.4, about 0.7 min. Contains: Hidden Single. Generated in 0 s, 1 attempt (time limit 180 s).
+
+### A sampler of the newer rule kinds
+
+Shows outside clues, corner clues, a newer line kind and a locked rule in one request: sandwiches, quadruples, a palindrome and anti-knight, aimed at Medium.
+
+```json
+{"board": {"rows": 9, "cols": 9},
+ "digits": 9,
+ "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+  {"type": "neighbours", "kind": "antiknight"},
+  {"type": "sandwich", "count": [2, 4]},
+  {"type": "contains", "count": [1, 3]},
+  {"type": "line", "kind": "palindrome", "count": 1}],
+ "where": {"band": "Medium"},
+ "limits": {"time": 600, "seed": 1}}
+```
+
+<Swatch name="generated-newer-kinds" />
+
+4 sandwich clues, 3 quadruples, 1 palindrome, 7 givens. **Medium**, difficulty 10.7, about 52.5 min. Contains: Hidden Single, Line / dot read without notes, Naked Single, Pointing / Box-Line Reduction, Pair rules (dots, whispers, anti-knight...), Sandwich sums, Digit counting, Two rules together. Generated in 16 s, 1 attempt (time limit 600 s).
+
+### An 8×8 with at most six dots
+
+Shows an 8×8 board and the element cap (`where.elements`).
+
+```json
+{"board": {"rows": 8, "cols": 8},
+ "digits": 8,
+ "rules": [{"type": "box_grid", "box": [2, 4], "count": [4, 2]},
+  {"type": "edge", "kind": "kropki", "count": "auto"}],
+ "where": {"elements": {"max": 6}},
+ "limits": {"time": 180, "seed": 1}}
+```
+
+<Swatch name="generated-kropki-8x8-capped" />
+
+5 white dots, 1 black dot, 14 givens. **Hard**, difficulty 8.2, about 17.5 min. Contains: Hidden Single, Line / dot read without notes, Pointing / Box-Line Reduction, Notes in the head, Pair rules (dots, whispers, anti-knight...), Hidden Pair, Two rules together, X-Wing, Skyscraper. Generated in 13 s, 1 attempt (time limit 180 s).
+
+
+## Larger requests
+
+Multi-grid layouts, a request is a puzzle file with blanks: one `box_grid` rule per grid (the origins of a named
+layout: samurai, super-samurai, twodoku, butterfly, ...), locked rules every result carries (diagonals, extra regions,
+windoku windows, anti-knight, anti-king: rules of different digits), and givens per grid (`givens.grids`, the grids in
+reading order of their origins). Then requests kept as files in `docs/examples/specs/`; run one with
+`pencilmark generate FILE`.
+
+### A super samurai: a variant per row, harder to the right
+
+Shows eight overlapping grids (box_grid rules at the super-samurai origins), locked rules per row of grids (X diagonals on top, windoku windows in the middle, an asterisk at the bottom) and a given floor per grid (`givens.grids`) that thins out from left to right.
+
+```json
+{"board": {"rows": 21, "cols": 33},
+ "digits": 9,
+ "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r1c13", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r1c25", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r7c7", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r7c19", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r13c1", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r13c13", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r13c25", "box": [3, 3], "count": [3, 3]},
+  {"type": "region", "kind": "diagonal", "cells": ["r1c1", "r2c2", "r3c3", "r4c4", "r5c5", "r6c6", "r7c7", "r8c8", "r9c9"]},
+  {"type": "region", "kind": "diagonal", "cells": ["r1c9", "r2c8", "r3c7", "r4c6", "r5c5", "r6c4", "r7c3", "r8c2", "r9c1"]},
+  {"type": "region", "kind": "diagonal", "cells": ["r1c13", "r2c14", "r3c15", "r4c16", "r5c17", "r6c18", "r7c19", "r8c20", "r9c21"]},
+  {"type": "region", "kind": "diagonal", "cells": ["r1c21", "r2c20", "r3c19", "r4c18", "r5c17", "r6c16", "r7c15", "r8c14", "r9c13"]},
+  {"type": "region", "kind": "diagonal", "cells": ["r1c25", "r2c26", "r3c27", "r4c28", "r5c29", "r6c30", "r7c31", "r8c32", "r9c33"]},
+  {"type": "region", "kind": "diagonal", "cells": ["r1c33", "r2c32", "r3c31", "r4c30", "r5c29", "r6c28", "r7c27", "r8c26", "r9c25"]},
+  {"type": "region", "kind": "window", "cells": ["r8c8", "r8c9", "r8c10", "r9c8", "r9c9", "r9c10", "r10c8", "r10c9", "r10c10"]},
+  {"type": "region", "kind": "window", "cells": ["r8c12", "r8c13", "r8c14", "r9c12", "r9c13", "r9c14", "r10c12", "r10c13", "r10c14"]},
+  {"type": "region", "kind": "window", "cells": ["r12c8", "r12c9", "r12c10", "r13c8", "r13c9", "r13c10", "r14c8", "r14c9", "r14c10"]},
+  {"type": "region", "kind": "window", "cells": ["r12c12", "r12c13", "r12c14", "r13c12", "r13c13", "r13c14", "r14c12", "r14c13", "r14c14"]},
+  {"type": "region", "kind": "window", "cells": ["r8c20", "r8c21", "r8c22", "r9c20", "r9c21", "r9c22", "r10c20", "r10c21", "r10c22"]},
+  {"type": "region", "kind": "window", "cells": ["r8c24", "r8c25", "r8c26", "r9c24", "r9c25", "r9c26", "r10c24", "r10c25", "r10c26"]},
+  {"type": "region", "kind": "window", "cells": ["r12c20", "r12c21", "r12c22", "r13c20", "r13c21", "r13c22", "r14c20", "r14c21", "r14c22"]},
+  {"type": "region", "kind": "window", "cells": ["r12c24", "r12c25", "r12c26", "r13c24", "r13c25", "r13c26", "r14c24", "r14c25", "r14c26"]},
+  {"type": "region", "kind": "extra", "cells": ["r14c5", "r15c2", "r15c8", "r17c1", "r17c5", "r17c9", "r19c2", "r19c8", "r20c5"]},
+  {"type": "region", "kind": "extra", "cells": ["r14c17", "r15c14", "r15c20", "r17c13", "r17c17", "r17c21", "r19c14", "r19c20", "r20c17"]},
+  {"type": "region", "kind": "extra", "cells": ["r14c29", "r15c26", "r15c32", "r17c25", "r17c29", "r17c33", "r19c26", "r19c32", "r20c29"]}],
+ "givens": {"grids": [[38, null], [27, null], [0, null], [32, null], [23, null], [38, null], [27, null], [0, null]]},
+ "limits": {"time": 3600, "seed": 1}}
+```
+
+<Swatch name="generated-super-samurai" />
+
+194 givens. **Hard**, difficulty 4.2, about 69.3 min. Contains: Hidden Single, Naked Single, Pointing / Box-Line Reduction, Notes in the head, Naked Pair, Skyscraper, Turbot Fish, Short chain in the head. Generated in 40 s, 1 attempt (time limit 3600 s).
+
+### A samurai
+
+Shows a named layout: five grids sharing their corner boxes, 180° symmetry of the givens.
+
+```json
+{"board": {"rows": 21, "cols": 21},
+ "digits": 9,
+ "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r1c13", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r7c7", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r13c1", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r13c13", "box": [3, 3], "count": [3, 3]}],
+ "symmetry": [{"kind": "rot180", "of": "givens"}],
+ "limits": {"time": 1800, "seed": 1}}
+```
+
+<Swatch name="generated-samurai" />
+
+105 givens. **Hard**, difficulty 5.0, about 47.4 min. Contains: Hidden Single, Naked Single, Pointing / Box-Line Reduction, Naked Pair, Hidden Pair, Skyscraper, Short chain in the head. Generated in 9 s, 2 attempts (time limit 1800 s); the publishing checks refused 1 other candidates (thin).
+
+### Twodoku, Hard
+
+Shows two grids sharing a box, with a band target.
+
+```json
+{"board": {"rows": 15, "cols": 15},
+ "digits": 9,
+ "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r7c7", "box": [3, 3], "count": [3, 3]}],
+ "where": {"band": "Hard"},
+ "limits": {"time": 900, "seed": 1}}
+```
+
+<Swatch name="generated-twodoku" />
+
+39 givens. **Hard**, difficulty 6.2, about 22.1 min. Contains: Hidden Single, Naked Single, Pointing / Box-Line Reduction, Hidden Pair, Skyscraper. Generated in 1 s, 1 attempt (time limit 900 s).
+
+### A butterfly killer
+
+Shows four grids overlapping on a 12 × 12 board, with cages.
+
+```json
+{"board": {"rows": 12, "cols": 12},
+ "digits": 9,
+ "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r1c4", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r4c1", "box": [3, 3], "count": [3, 3]},
+  {"type": "box_grid", "origin": "r4c4", "box": [3, 3], "count": [3, 3]},
+  {"type": "cage", "count": [6, null]}],
+ "limits": {"time": 1800, "seed": 1}}
+```
+
+<Swatch name="generated-butterfly" />
+
+17 cages, 2 givens. **Medium**, difficulty 11.0, about 68.8 min. Contains: Hidden Single, Last cell of a cage / line, Naked Single, Pointing / Box-Line Reduction, Notes in the head, Killer cage combinations, Digit counting, Must-contain digits (cage / line), Two rules together. Generated in 34 s, 1 attempt (time limit 1800 s).
+
+### Killer with German whispers and two givens
+
+Cages and whisper lines, exactly two givens, Hard.
+
+```json
+{"board": {"rows": 9, "cols": 9},
+ "digits": 9,
+ "givens": {"count": 2},
+ "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+  {"type": "cage", "count": [1, null]},
+  {"type": "line", "kind": "whisper", "count": [1, null], "value": 5}],
+ "where": {"band": "Hard"},
+ "quality": {},
+ "limits": {"results": 1, "time": 900, "seed": 3},
+ "fields": ["difficulty", "band", "contains", "issues"]}
+```
+
+<Swatch name="generated-killer-whispers" />
+
+10 cages, 5 whispers, 2 givens. **Hard**, difficulty 9.6. Contains: Hidden Single, Line / dot read without notes, Last cell of a cage / line, Naked Single, Pointing / Box-Line Reduction, Pair / triple in the head, Killer cage combinations, Pair rules (dots, whispers, anti-knight...), Digit counting, Two rules together, Skyscraper. Generated in 445 s, 13 attempts (time limit 900 s).
+
+### A 0-clue 6×6 kropki
+
+No givens, a minimal set of kropki dots, difficulty at least 3.
+
+```json
+{"board": {"rows": 6, "cols": 6},
+ "digits": 6,
+ "givens": {"count": 0},
+ "rules": [{"type": "box_grid", "box": [2, 3], "count": [3, 2]},
+  {"type": "edge", "kind": "kropki", "count": "min"}],
+ "where": {"difficulty": [3, 99]},
+ "quality": {},
+ "limits": {"time": 600, "seed": 5}}
+```
+
+<Swatch name="generated-zero-clue-kropki" />
+
+8 white dots, 3 black dots, 0 givens. **Expert**, difficulty 13.0, about 27.1 min. Contains: Hidden Single, Pointing / Box-Line Reduction, Pair rules (dots, whispers, anti-knight...), Line ranges (thermo / whisper bounds), Naked Pair, Hidden Pair, Two rules together, Simple Colouring, Band set theory with cages, Alternating Inference Chain, Case analysis. Generated in 17 s, 1 attempt (time limit 600 s).
+
+### Nine variants on one 9×9
+
+At least one cage, thermo, whisper, renban, between line, arrow, kropki dot, XV clue and odd / even cell, each needed by the solve.
+
+```json
+{"board": {"rows": 9, "cols": 9},
+ "digits": 9,
+ "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+  {"type": "cage", "count": [1, null]},
+  {"type": "line", "kind": "thermo", "count": [1, null]},
+  {"type": "line", "kind": "whisper", "count": [1, null]},
+  {"type": "line", "kind": "renban", "count": [1, null]},
+  {"type": "line", "kind": "between", "count": [1, null]},
+  {"type": "arrow", "count": [1, null]},
+  {"type": "edge", "kind": "kropki", "count": [1, null]},
+  {"type": "edge", "kind": "xv", "count": [1, null]},
+  {"type": "cell", "kind": "parity", "count": [1, null]}],
+ "where": {"elements": {"max": 20}},
+ "quality": {},
+ "limits": {"time": 1800, "seed": 9}}
+```
+
+<Swatch name="generated-nine-variants" />
+
+5 between lines, 4 arrows, 3 thermos, 1 cage, 1 even cell, 1 white dot, 1 renban, 1 whisper, 1 X, 1 given. **Expert**, difficulty 13.6, about 68.2 min. Contains: Hidden Single, Line / dot read without notes, Naked Single, Pointing / Box-Line Reduction, Killer cage combinations, Arrow sums, Pair rules (dots, whispers, anti-knight...), Line ranges (thermo / whisper bounds), Naked Pair, Hidden Pair, Two rules together, Band set theory with cages, Case analysis. Generated in 1462 s, 4 attempts (time limit 1800 s); the publishing checks refused 3 other candidates (unusual).
+
+
+## Not possible yet
+
+`docs/examples/specs/reserved/` holds requests that use parts reserved for later versions of the spec
+([Generator spec](../../formats/generator-spec.md), section 7); the generator refuses them today: a classic with
+exactly one X-Wing, givens in the shape of a heart and a displaced jigsaw. A 16×16 killer with exactly 32 cages and no
+givens is also out of reach: the uniqueness search does not finish.

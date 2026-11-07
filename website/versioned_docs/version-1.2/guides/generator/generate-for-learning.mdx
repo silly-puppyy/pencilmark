@@ -1,0 +1,121 @@
+---
+title: Generate for learning
+description: "Puzzles for practice: one new technique at a time, and the same kind of puzzle at rising bands."
+---
+
+import Swatch from '@site/src/components/Swatch';
+
+# Generate for learning
+
+A learner needs puzzles that ask for one new idea at a time. The generator can target a band and require a technique;
+a short loop does the rest. Two recipes: a technique ladder, where each puzzle adds exactly one new technique to what
+the earlier rungs taught, and a progression, the same kind of puzzle at rising bands. The puzzles below were made this way by
+`tools/gen_learning_examples.py`.
+
+## 1. One new technique at a time
+
+Ask for the technique (`"strict": true`, so it must appear as itself, not only as an alternative) and the band it
+belongs to, then keep the first puzzle whose card lists nothing beyond singles and what the learner already knows. The
+band caps what the solver may need, but other techniques of the same band can still turn up, hence the check:
+
+```python
+import pencilmark
+
+SINGLES = {"FHS", "HSI", "NSI"}
+
+def practice(code, band, known=(), tries=24):
+    for seed in range(1, tries + 1):
+        spec = {"format": "pencilmark-spec", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
+                "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}],
+                "where": {"band": band, "contains": {"codes": [code], "strict": True}},
+                "limits": {"time": 120, "seed": seed}}
+        try:
+            result = pencilmark.generate(spec)
+        except pencilmark.GenerationFailed:
+            continue
+        codes = {c["code"] for c in result["card"]["contains"]}
+        if code in codes and codes <= SINGLES | set(known) | {code}:
+            return result["puzzle"]
+
+# puzzle = practice("XWG", "Hard", known=["PPR", "NPR"])   # an X-Wing, nothing new besides (a few minutes)
+```
+
+[Techniques](../../grades/techniques.md) lists every code with its band. A ladder for classic sudoku, easiest first:
+
+### Pointing / box-line reduction (`PPR`, Easy)
+
+<Swatch name="learning-ladder-1-pointing" />
+
+**Easy**, difficulty 5.3, about 8.6 min (seed 1). Contains: Hidden Single, Pointing / Box-Line Reduction.
+
+### Naked pair (`NPR`, Medium)
+
+<Swatch name="learning-ladder-2-naked-pair" />
+
+**Medium**, difficulty 6.5, about 12.5 min (seed 1). Contains: Hidden Single, Naked Single, Pointing / Box-Line Reduction, Naked Pair.
+
+### Hidden pair (`HPR`, Medium)
+
+<Swatch name="learning-ladder-3-hidden-pair" />
+
+**Medium**, difficulty 6.6, about 12.5 min (seed 1). Contains: Hidden Single, Pointing / Box-Line Reduction, Hidden Pair.
+
+### Naked triple (`NTR`, Medium)
+
+<Swatch name="learning-ladder-4-naked-triple" />
+
+**Medium**, difficulty 6.1, about 12.4 min (seed 1). Contains: Hidden Single, Pointing / Box-Line Reduction, Naked Triple.
+
+### X-Wing (`XWG`, Hard)
+
+<Swatch name="learning-ladder-5-x-wing" />
+
+**Hard**, difficulty 5.8, about 10.0 min (seed 1). Contains: Hidden Single, Naked Single, Pointing / Box-Line Reduction, Hidden Pair, X-Wing.
+
+### Swordfish (`SWF`, Very Hard)
+
+<Swatch name="learning-ladder-6-swordfish" />
+
+**Very Hard**, difficulty 7.1, about 13.9 min (seed 15). Contains: Hidden Single, Naked Single, Pointing / Box-Line Reduction, Swordfish.
+
+
+## 2. A killer curriculum
+
+Killers start with one idea: the digits in a cage add up to its total, so when all but one are known, the last is the
+total minus the others. The first stage teaches just that, with small cages, low totals (easy mental arithmetic) and
+givens inside the cages; the second makes the cages longer; the third lets the cages' digit sets do the work (a 3 in
+two cells is 1 and 2, which acts like a pointing pair); the fourth is cage maths, the rule of 45, on a board of cages
+with no givens. Each stage asks for its technique (`"strict": true`) and keeps small totals where the arithmetic is
+new:
+
+```json
+{"rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+           {"type": "cage", "size": [2, 3], "sum": [3, 15], "count": [8, 14]}],
+ "givens": {"count": [30, 46]}, "where": {"band": "Very Easy", "contains": {"codes": ["CSI"], "strict": true}}}
+```
+
+Every stage passes the standard publishing checks (the generator's default), so even the first is not mostly given.
+
+### Last cell of a cage: a cage's last cell is its total minus the digits already in it
+
+<Swatch name="learning-killer-1-last-cell" />
+
+**Very Easy**, difficulty 4.0, about 6.3 min. Contains: Hidden Single, Last cell of a cage / line.
+
+### Bigger cages: longer cages and fewer givens: add up more digits before the last one
+
+<Swatch name="learning-killer-2-bigger-cages" />
+
+**Very Easy**, difficulty 4.2, about 8.0 min. Contains: Hidden Single, Last cell of a cage / line.
+
+### Cage combinations: a cage's digit sets do the work: a 3 in two cells is 1 and 2
+
+<Swatch name="learning-killer-3-combinations" />
+
+**Easy**, difficulty 5.8, about 17.7 min. Contains: Hidden Single, Last cell of a cage / line, Killer cage combinations.
+
+### Cage maths: the rule of 45: a house's total minus the cages inside it gives the rest
+
+<Swatch name="learning-killer-4-cage-maths" />
+
+**Easy**, difficulty 6.6, about 24.9 min. Contains: Hidden Single, Last cell of a cage / line, Pair / triple in the head, Innies & outies (rule of 45).
