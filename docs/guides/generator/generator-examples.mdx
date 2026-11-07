@@ -11,8 +11,9 @@ Requests in the [generator spec](../../formats/generator-spec.md) language, each
 how long the run took on one core of a desktop machine. The seed fixes the result: the same request on the same version
 gives the same puzzle. A run that searches for the most of something, or the hardest or easiest puzzle, always uses
 its whole `limits.time` and returns the best it found. The times include grading the result in full, which for a hard
-variant can take longer than the search itself. Written by `tools/gen_generator_examples.py`; the request files
-are in [`docs/examples/specs/`](https://github.com/silly-puppyy/pencilmark/tree/main/docs/examples/specs).
+variant can take longer than the search itself. The requests below leave out the two keys every request starts
+with, `"format": "pencilmark-spec", "format_version": 1`; add them to run one. Written by
+`tools/gen_generator_examples.py`; the request files (complete) are in [`docs/examples/specs/`](https://github.com/silly-puppyy/pencilmark/tree/main/docs/examples/specs).
 
 ## Curiosities
 

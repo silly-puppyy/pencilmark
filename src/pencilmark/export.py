@@ -8,7 +8,7 @@ puzzle (format "pencilmark-puzzle", format_version 1): specified in docs/formats
   named "r{row}c{col}"; "meta" is free-form information that never changes solving. Unknown keys / rule types are refused.
 
 grade (format "pencilmark-grade", format_version 1):
-  grader      {"name": "pencilmark", "version": "1.1.0"}: the engine that made the card; a card from another version can differ
+  grader      {"name": "pencilmark", "version": "1.2.0"}: the engine that made the card; a card from another version can differ
   difficulty  what a human feels per cell: continuous, above 0 (a nearly finished grid ~0.2), no ceiling; classic medians track Andrew Stuart's
               scale (data/card_score.json "map")
   time        minutes for today's median player (classic units x minutes_per_unit, data/time_model.json); on request

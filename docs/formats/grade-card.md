@@ -14,7 +14,7 @@ What `rate()` returns and `pencilmark rate --json` prints: one JSON object per p
 
 ```json
 {"format": "pencilmark-grade", "format_version": 1,
- "grader": {"name": "pencilmark", "version": "1.1.0"},
+ "grader": {"name": "pencilmark", "version": "1.2.0"},
  "difficulty": 5.8, "time": 10.7, "band": "Hard",
  "contains": [{"code": "HSI", "chip": "HSI", "name": "Hidden Single", "band": 0},
               {"code": "NSI", "chip": "NSI", "name": "Naked Single", "band": 1},

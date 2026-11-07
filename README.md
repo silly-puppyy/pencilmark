@@ -176,14 +176,14 @@ the `PENCILMARK_UA` environment variable.
 ## Benchmark
 
 On a frozen held-out set of 7,623 puzzles with real human solve data from seven sources, pencilmark's difficulty ranks
-puzzles by human solve time at Spearman 0.61 to 0.80 within each group, closer than four established graders on the same
+puzzles by human solve time at Spearman 0.62 to 0.81 within each group, closer than four established graders on the same
 classics. Details: [docs/grades/benchmark.mdx](https://github.com/silly-puppyy/pencilmark/blob/main/docs/grades/benchmark.mdx).
 
 ## Known issues
 
 Being worked on:
 
-- **Speed.** Grading takes a median 0.49 s per puzzle on the benchmark (classics 0.04 s; 90th percentile 3.8 s), and
+- **Speed.** Grading takes a median 0.15 s per puzzle on the benchmark (classics 0.03 s; 90th percentile 2.4 s), and
   the slowest few percent take 10 s to minutes. Sudoku Explainer and HoDoKu answer in under a millisecond (they do not
   model human solving), Rangsk's solver in 0.07-0.13 s. Use `max_seconds` to bound a call.
 - **Generator speed and range.** About 20-70 s per puzzle that meets a spec (HoDoKu: 0.05-1 s), and classic Extreme puzzles

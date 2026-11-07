@@ -52,7 +52,7 @@ $ pencilmark rate puzzles.txt -j 4 --print '%i,%b,%d,%m,%c'
 ```
 $ pencilmark rate puzzles.txt -j 4 --json > cards.jsonl
 $ head -c 120 cards.jsonl
-{"line": 1, "format": "pencilmark-grade", "format_version": 1, "grader": {"name": "pencilmark", "version": "1.1.0"}, "di
+{"line": 1, "format": "pencilmark-grade", "format_version": 1, "grader": {"name": "pencilmark", "version": "1.2.0"}, "di
 ```
 
 ## Grade faster

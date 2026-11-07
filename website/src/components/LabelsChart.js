@@ -7,7 +7,9 @@ import {useColorMode} from '@docusaurus/theme-common';
 import * as Plot from '@observablehq/plot';
 
 // medians (and quartiles where measured) of pencilmark's difficulty per site label; aggregates of the benchmark sets
-const LABELS = [
+// one data set per docs version (a frozen version's page passes version="1.1"); 1.2: the frozen benchmark's fed tabs
+// and Logic Masters stars, and 1,818 sudoku.coach classics outside it, graded on 1.2.0
+const LABELS_BY = {'1.1': [
   {site: 'fed-sudoku.eu', label: 'easy', median: 3.9, q1: 3.4, q3: 4.3},
   {site: 'fed-sudoku.eu', label: 'medium', median: 5.1, q1: 4.6, q3: 5.9},
   {site: 'fed-sudoku.eu', label: 'hard', median: 6.5, q1: 6.2, q3: 7.0},
@@ -17,10 +19,20 @@ const LABELS = [
   {site: 'Logic Masters', label: '2 stars', median: 11.1, q1: 10.1, q3: 12.6},
   {site: 'Logic Masters', label: '3 stars', median: 13.0, q1: 11.5, q3: 13.7},
   {site: 'Logic Masters', label: '4-5 stars', median: 13.8, q1: 12.6, q3: 14.9},
-];
+], '1.2': [
+  {site: 'fed-sudoku.eu', label: 'easy', median: 4.3, q1: 4.1, q3: 4.6},
+  {site: 'fed-sudoku.eu', label: 'medium', median: 5.4, q1: 5.0, q3: 5.8},
+  {site: 'fed-sudoku.eu', label: 'hard', median: 6.4, q1: 6.2, q3: 6.8},
+  ...[0.1, 1.6, 2.8, 3.7, 5.2, 5.8, 6.2, 6.8, 7.3, 8.8, 11.7, 12.3].map((m, i) => (
+    {site: 'sudoku.coach', label: `level ${i}`, median: m})),
+  {site: 'Logic Masters', label: '1 star', median: 8.0, q1: 6.5, q3: 9.2},
+  {site: 'Logic Masters', label: '2 stars', median: 10.2, q1: 9.5, q3: 11.6},
+  {site: 'Logic Masters', label: '3 stars', median: 12.0, q1: 10.7, q3: 13.4},
+  {site: 'Logic Masters', label: '4-5 stars', median: 13.6, q1: 12.3, q3: 14.8},
+]};
 const NOTES = {'sudoku.coach': 'classics', 'Logic Masters': 'variants; one star is already hard'};
 
-function SiteChart({site}) {
+function SiteChart({site, LABELS}) {
   const ref = useRef(null);
   const {colorMode} = useColorMode();
   useEffect(() => {
@@ -52,7 +64,7 @@ function SiteChart({site}) {
   );
 }
 
-function Table() {
+function Table({LABELS}) {
   return (
     <table>
       <thead><tr><th>Site</th><th>Label</th><th>pencilmark difficulty: median (quartiles)</th></tr></thead>
@@ -68,15 +80,16 @@ function Table() {
   );
 }
 
-export default function LabelsChart() {
+export default function LabelsChart({version = '1.2'}) {
+  const LABELS = LABELS_BY[version];
   const [table, setTable] = useState(false);
   const sites = Array.from(new Set(LABELS.map((d) => d.site)));
   return (
     <div>
       <div className={table ? 'pm-alt-hidden' : 'pm-graphic'}>
-        {sites.map((s) => <SiteChart key={s} site={s}/>)}
+        {sites.map((s) => <SiteChart key={s} site={s} LABELS={LABELS}/>)}
       </div>
-      <div className={table ? '' : 'pm-alt-table'}><Table/></div>
+      <div className={table ? '' : 'pm-alt-table'}><Table LABELS={LABELS}/></div>
       <button type="button" className="button button--sm button--secondary pm-graphic" onClick={() => setTable(!table)}>
         {table ? 'Show the charts' : 'Show the table'}
       </button>

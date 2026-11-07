@@ -117,5 +117,6 @@ A complete 4×4 yin-yang sudoku (one solution, digits and shading):
 | `shaded`, `unshaded` | Optional: cells whose shading is given. |
 
 At most one `yin_yang` rule per puzzle; it covers the whole board. Rules may read the shading with `shaded(c)` in a
-[custom rule (6.18)](custom.mdx). A puzzle is unique when its digits are; the shading itself need not be. pencilmark
-validates, describes, solves and counts these puzzles but does not grade them yet.
+[custom rule (6.18)](custom.mdx). A puzzle is unique when its digits are; the shading itself need not be. Shading is
+reserved in pencilmark 1.2 (see the note above): `describe` names such a puzzle, while solving, counting and grading it
+are refused until a later version.

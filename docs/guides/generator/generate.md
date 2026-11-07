@@ -43,19 +43,20 @@ print(card["band"], card["difficulty"], card["time"], [c["chip"] for c in card["
 ```
 
 ```
-.74.1...6........4..24..59....18.9...1.9.2.5...9.64....91..73..8........5...9.82.
-Hard 6.6 13.0 ['HSI', 'PPR/MSI', 'XWG/CSM/MCH']
+8..1.9...3...5..2..2.7....6....8.1..192...768..8.7....4....8.9..5..9...4...4.7..5
+Hard 5.7 8.6 ['HSI', 'NSI/MSI', 'XWG/MCH']
 ```
 
-The run took under a second. The result has three parts:
+The run took about a minute. The result has three parts:
 
 - `r["puzzle"]`: a `pencilmark-puzzle` with its solution, ready to save as a file;
 - `r["card"]`: its grade card, as `pencilmark.rate` would give it;
-- `r["info"]`: how the run went, for example `{'givens': 28, 'attempts': 9, 'rejected': {'band too low (logic pre-check)': 8}, ...}`.
+- `r["info"]`: how the run went, for example `{'givens': 28, 'attempts': 833, 'rejected': {'band too low (logic pre-check)': 831, 'publishing check: thin': 1}, ...}`.
   `info.warnings` lists hints about the request: without `where.band` or `where.difficulty` the search is the broadest
   (every technique, up to Extreme) and can be slow on sparse variants, so it suggests aiming it (the command line prints
   these as notes).
-  The generator tried nine puzzles; eight were too easy.
+  The generator tried 833 puzzles: 831 were too easy, and one was Hard but failed the publishing check `thin` (its
+  hard step did too little), which every request passes unless its `quality` says otherwise.
 
 Change `seed` for a different puzzle. With the same seed and request, the result is the same every time.
 

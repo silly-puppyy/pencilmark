@@ -2,11 +2,15 @@
 
 ## Unreleased
 
+## 1.2.0 (2026-11-07)
+
 ### What changes for you
 
 - **Difficulty values move.** The search part of the score counts refutations in propagation rounds, the score map is
   refitted, and the difficulty is the expected effort of a human-like solver. Easy puzzles score a little higher, hard
-  ones a little lower; rank agreement with human solve times rises (fed +0.040, Wang 2024 +0.028).
+  ones a little lower. On the frozen benchmark, rank agreement with human solve times: fed 0.670 -> 0.709, grandgames
+  0.752 -> 0.766, sudoku.coach 0.799 -> 0.805, sudoku.today 0.608 -> 0.619, Logic Masters 0.721 -> 0.713, Wang 2024
+  0.663 -> 0.653; 99.8% of the puzzles get a card (99.5%), and the median card takes 0.15 s (0.49 s).
 - **Technique names follow their cited sources** ([Techniques](docs/grades/techniques.md)), and the forms those sources
   describe are found. Some bands move: wider WXYZ-Wings put some Expert puzzles at Very Hard.
 - **New in the format:** fog of war, custom rules (expressions over cell digits, with unknowns and layers), and
