@@ -107,6 +107,50 @@ def _load(puzzle, format=None):  # noqa: A002
     return p
 
 
+def known_techniques(codes):
+    """engine technique ids a solver knowing these technique codes uses: every technique of a listed code or found by a
+    listed pattern code, and the singles (always known). Raises ValueError for an unknown code."""
+    from . import registry as R
+    from .export import SINGLE_CODES
+
+    codes = set(codes)
+    bad = sorted(codes - set(R.codes()))
+    if bad:
+        raise ValueError(f"unknown technique code(s) {bad} (docs/grades/techniques.md lists them)")
+    from .export import chip_of
+
+    by_name = R.by_name()
+    known = codes | SINGLE_CODES  # as the card lists them: a technique counts under its chip (a single helped by a
+    out = {t.id for t in R.techniques() if t.family == "singles" or chip_of(t.id)[0] in known}  # pointing is a single)
+    return out | {by_name[p.technique].id for p in R.patterns() if p.code in codes and p.technique in by_name}
+
+
+def _rate_known(puzzle, techniques, kw):
+    """rate(techniques=...): the grader model with every other technique switched off (route and prices alike) and no
+    fallback to trial and error, so a puzzle needing more stops: band Unknown, with that reason"""
+    import copy
+
+    from . import grader_model as GM
+    from . import registry as R
+    from . import solver as S
+
+    off = {t.id for t in R.techniques()} - known_techniques(techniques) - set(S.NOTE_TECHS)
+    m = copy.deepcopy(GM.default())
+    for part in (m.route, m.price):
+        part["disabled_techniques"] = sorted(set(part.get("disabled_techniques") or ()) | off | {S.TRIAL})
+    global _PARAMS
+    with GM.use(m):
+        _PARAMS = (None, None)  # the cached engine params belong to the shipped model
+        try:
+            card = rate(puzzle, allow_guessing=True, **kw)
+        finally:
+            _PARAMS = (None, None)
+    if card.get("band") == "Unknown" and card.get("completed") is not False:
+        card["reason"] = "needs a technique outside the techniques given"
+        card.update({k: None for k in ("difficulty", "time", "band_index") if k in card})  # as every Unknown card
+    return card
+
+
 def rate(
     puzzle: str | dict | Path,
     *,
@@ -118,6 +162,7 @@ def rate(
     quality: dict | None = None,
     alternatives: bool = True,
     coloring: bool = False,
+    techniques: list[str] | None = None,
     format: str | None = None,  # noqa: A002
 ) -> dict:
     """The "pencilmark-grade" card of one puzzle (docs/formats/grade-card.md), with only the fields you ask for.
@@ -155,6 +200,10 @@ def rate(
         Opt in to coloring as a solving method: colors kept through the solve (Color Fill, Color Single, Color
         Pair, ...; docs/grades/techniques.md, Coloring). Off by default: most solvers do not color, and with it
         the hardest puzzles take much longer to grade.
+    techniques : list of str, optional
+        Grade for a solver who knows only these techniques: a whitelist of technique codes (docs/grades/techniques.md),
+        singles always included. A puzzle that needs more gets band "Unknown" with the reason. A code found by a wider
+        engine search (Skyscraper by the X-Chain search) allows that search.
 
     format : str, optional
         The input's format (a pencilmark.read reader: "plain", "sudokuwiki", "pencilmark", "link", ...) instead of
@@ -180,6 +229,9 @@ def rate(
     from .export import card_fields, grade
     from .publish_flags import quality_limits
 
+    if techniques is not None:  # the same grading with a model that knows only these techniques
+        return _rate_known(puzzle, techniques, dict(max_seconds=max_seconds, mode=mode, fields=fields, explain=explain,
+                           quality=quality, alternatives=alternatives, coloring=coloring, format=format))  # fmt: skip
     want = card_fields(fields)
     quality_limits(quality)
     if not hasattr(puzzle, "coords"):  # read once: the fog view reads the document too
@@ -276,7 +328,7 @@ def _one_route_thread():
 
 
 def _rate_job(args):
-    puzzle, max_seconds, mode, fields, allow_guessing, explain, quality, alternatives, coloring = args
+    puzzle, max_seconds, mode, fields, allow_guessing, explain, quality, alternatives, coloring, techniques = args
     try:
         return rate(
             puzzle,
@@ -288,6 +340,7 @@ def _rate_job(args):
             quality=quality,
             alternatives=alternatives,
             coloring=coloring,
+            techniques=techniques,
         )
     except Exception as e:  # one bad puzzle must not sink the batch
         return {"error": f"{type(e).__name__}: {e}"}
@@ -305,6 +358,7 @@ def rate_many(
     quality: dict | None = None,
     alternatives: bool = True,
     coloring: bool = False,
+    techniques: list[str] | None = None,
 ) -> list[dict]:
     """Cards for many puzzles, in input order.
 
@@ -314,7 +368,7 @@ def rate_many(
         Puzzles in any form `rate` accepts.
     jobs : int
         Worker processes; 1 rates in this process.
-    max_seconds, mode, fields, allow_guessing, explain, quality, alternatives, coloring
+    max_seconds, mode, fields, allow_guessing, explain, quality, alternatives, coloring, techniques
         As for `rate`.
 
     Returns
@@ -323,7 +377,10 @@ def rate_many(
         One card per puzzle. A puzzle that cannot be rated (not unique, no solution, unreadable) gives
         {"error": "..."} instead of raising.
     """
-    items = [(p, max_seconds, mode, fields, allow_guessing, explain, quality, alternatives, coloring) for p in puzzles]
+    items = [
+        (p, max_seconds, mode, fields, allow_guessing, explain, quality, alternatives, coloring, techniques)
+        for p in puzzles
+    ]
     if jobs <= 1:
         return [_rate_job(it) for it in items]
     with _mp_context().Pool(jobs, initializer=_one_route_thread) as pool:

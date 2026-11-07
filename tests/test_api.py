@@ -424,3 +424,16 @@ def test_colouring_is_opt_in(variants):
     on = pencilmark.rate(vudoku, fields=["band", "contains"], coloring=True)
     assert not colour_only & {c["code"] for c in off["contains"]}
     assert colour_only & {c["code"] for c in on["contains"]} and on["band"] != off["band"]
+
+
+def test_techniques_whitelist():
+    """rate(techniques=[...]): grade for a solver who knows only these (singles always); a puzzle needing more is
+    Unknown with the reason; unknown codes are refused (user 2026-11-08: a whitelist)"""
+    xwing = json.loads((ROOT / "docs/examples/generated/gentlest-xwing.json").read_text(encoding="utf-8"))["puzzle"]
+    c = pencilmark.rate(xwing, fields=["band", "difficulty", "contains"], techniques=["XWG"])
+    assert c["band"] == "Hard" and [x["code"] for x in c["contains"]][-1] == "XWG"
+    assert c["difficulty"] >= pencilmark.rate(xwing, fields=["difficulty"])["difficulty"]  # fewer moves on offer
+    c = pencilmark.rate(xwing, fields=["band", "difficulty"], techniques=[])
+    assert c["band"] == "Unknown" and c["difficulty"] is None and "outside the techniques" in c["reason"]
+    with pytest.raises(ValueError):
+        pencilmark.rate(xwing, techniques=["NOPE"])

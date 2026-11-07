@@ -46,6 +46,7 @@ $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7..
 | `--mode computer` | allow computer-style search (forcing chains, trial) as well as human techniques (default: `human`) |
 | `--allow-guessing` | guess where no technique applies (band Unknown), instead of proving by full search (Extreme) |
 | `--coloring` | allow coloring as a solving method: colors kept through the solve (off by default) |
+| `--techniques XWG,SKY` | grade for a solver who knows only these techniques (codes from [Techniques](../grades/techniques.md); singles always known): a puzzle needing more is band Unknown |
 | `--no-alternatives` | keep `contains` but skip the search for interchangeable techniques (faster) |
 | `--quality ...` | tune the publishing checks ([Check a puzzle before publishing](../guides/grader/publish-checks.md)) |
 
@@ -78,7 +79,8 @@ card["band"], card["difficulty"], card["time"], card["contains"]
 `explain=["short", "substeps"]` for steps told as sub-steps, each with its reason and drawing annotations; see
 [the grade card](../formats/grade-card.md#5-steps)),
 `mode="computer"` (the default is `"human"`), `allow_guessing=True`, `coloring=True`,
-`quality={...}`. `rate_many(puzzles, jobs=4)` grades a list in parallel and keeps its order; a puzzle that fails gives
+`quality={...}`, `techniques=["XWG", "SKY"]` (a whitelist: the solver knows only these and the singles; a
+puzzle needing more gets band Unknown with the reason, and difficulty can rise because fewer moves are on offer). `rate_many(puzzles, jobs=4)` grades a list in parallel and keeps its order; a puzzle that fails gives
 `{"error": ...}` in its place.
 
 ### Solve and count

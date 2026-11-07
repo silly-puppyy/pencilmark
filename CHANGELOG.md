@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Technique whitelist**: `rate(puzzle, techniques=["XWG", "SKY"])` / `--techniques XWG,SKY` grades for a solver who
+  knows only these techniques (and the singles); a puzzle needing more gets band Unknown with the reason. Difficulty
+  can be higher than the full card's: a solver with fewer techniques has fewer moves on offer at each step.
 - **SudokuPad reader fixes** (Cracking the Cryptic screen): bare all-digit hex colors (`c:020202`) no longer break
   decoding, `[null]` regions are skipped, and a 0 digit (digits 0..8) is refused clearly instead of failing as a
   format error.

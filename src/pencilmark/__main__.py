@@ -227,6 +227,7 @@ def _rate_one(args):
                 quality=_quality_arg(a.quality),
                 alternatives=not a.no_alternatives,
                 coloring=bool(getattr(a, "coloring", False)),
+                techniques=a.techniques.split(",") if getattr(a, "techniques", None) is not None else None,
             )
         except (api.NotUnique, api.NoSolution) as e:
             st = "not unique" if isinstance(e, api.NotUnique) else "no solution"
@@ -391,6 +392,11 @@ def main(argv=None):
         "--coloring",
         action="store_true",
         help="opt in to coloring as a solving method (colors kept through the solve); off by default",
+    )
+    r.add_argument(
+        "--techniques",
+        default=None,
+        help="grade for a solver who knows only these technique codes (comma-separated; singles always known)",
     )
     r.add_argument(
         "--no-alternatives",
