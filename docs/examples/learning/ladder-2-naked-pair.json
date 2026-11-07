@@ -41,11 +41,7 @@
  "puzzle": {
   "format": "pencilmark-puzzle",
   "format_version": 1,
-  "meta": {
-   "title": "generated 9x9 classic, 24 givens",
-   "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.",
-   "type": "Sudoku"
-  },
+  "meta": {},
   "board": {
    "rows": 9,
    "cols": 9
@@ -233,8 +229,8 @@
  },
  "card": {
   "band": "Medium",
-  "difficulty": 6.5,
-  "time": 12.5,
+  "difficulty": 6.6,
+  "time": 12.2,
   "contains": [
    {
     "code": "HSI",

@@ -202,9 +202,9 @@ def validate_spec(doc):
     d = w.get("difficulty")
     real = lambda x: isinstance(x, (int, float)) and not isinstance(x, bool)
     if d is not None and not (
-        d in ("max", "min", "any") or (isinstance(d, list) and len(d) == 2 and all(map(real, d)))
+        d in ("max", "min", "typical") or (isinstance(d, list) and len(d) == 2 and all(map(real, d)))
     ):
-        raise FormatError(f'where.difficulty must be [lo, hi], "max", "min" or "any", got {d!r}')
+        raise FormatError(f'where.difficulty must be [lo, hi], "max", "min" or "typical", got {d!r}')
     c = w.get("contains")
     codes = c.get("codes") if isinstance(c, dict) else c
     reserved = isinstance(c, dict) and set(c) - {"codes", "strict"}  # only / uses: spec_to_gen names them as reserved
@@ -405,7 +405,7 @@ def spec_to_gen(doc):
         out["target_band"] = w["band"]
     if "difficulty" in w:
         dv = w["difficulty"]
-        if dv not in ("max", "min", "any") and not (isinstance(dv, list) and len(dv) == 2):
+        if dv not in ("max", "min", "typical") and not (isinstance(dv, list) and len(dv) == 2):
             raise FormatError('where.difficulty must be [lo, hi], "max" or "min"')
         out["target_difficulty"] = dv if isinstance(dv, str) else list(dv)
     if "contains" in w:

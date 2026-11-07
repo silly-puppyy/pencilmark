@@ -12,12 +12,11 @@
 - **Style format**: rule `style` gains `size`, `angle`, `outline`, `outline_width` and `layer`; new decorations
   `polygon` (any closed shape), `fill` (cell colours, several per cell) and `image`; named top-level style keys. The spec
   says how much of it a renderer needs (13,451 sudoku.coach and 19,074 SudokuPad puzzles measured).
-- **A band request aims where published puzzles of the band lie.** With a band and no difficulty range, the seed
-  draws a window from the band's spread (a bell curve fitted to published puzzles; `info.aimed_at`) and digging stops
-  inside it. Classic Very Easy centres on 3.3 (2.7-3.9; it came back at about 4.5 with 25 givens before), as
-  generated sites' easy tiers do (sudoku.com easy / medium / hard: 2.5 / 3.1 / 3.6). A range of your own replaces it;
-  `"difficulty": "any"` opts out (the deepest dig within the band). The aim never fails a request: with nothing in the
-  window by half of the time limit, any difficulty in the band will do (`info.aim_relaxed`).
+- **`"difficulty": "typical"`** (with a band): the seed draws a window from where published puzzles of the band lie
+  (a bell curve fitted to them; `info.aimed_at`) and digging stops inside it; classic Very Easy centres on 3.3
+  (2.7-3.9), as generated sites' easy tiers do (sudoku.com easy / medium / hard: 2.5 / 3.1 / 3.6). It never fails a
+  request: with nothing in the window by half of the time limit, any difficulty in the band will do
+  (`info.aim_relaxed`). Opt in; without it a band request digs as far as the band allows, as before.
 - **Generator publishing checks are opt in.** A request without `quality`, or with `{}` (dropped when a spec is
   written), runs no checks; `{"preset": "standard"}` turns on the standard set; without a preset only the checks named
   run. 1.2 used the standard preset by default and `{}` meant every check at its own severity. The examples and guides

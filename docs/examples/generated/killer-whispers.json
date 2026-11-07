@@ -46,7 +46,8 @@
    }
   ],
   "where": {
-   "band": "Hard"
+   "band": "Hard",
+   "difficulty": "typical"
   },
   "quality": {
    "preset": "standard"

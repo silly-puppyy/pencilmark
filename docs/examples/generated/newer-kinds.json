@@ -46,7 +46,8 @@
    }
   ],
   "where": {
-   "band": "Medium"
+   "band": "Medium",
+   "difficulty": "typical"
   },
   "quality": {
    "preset": "standard"

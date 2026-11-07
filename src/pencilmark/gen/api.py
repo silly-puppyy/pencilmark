@@ -52,7 +52,8 @@ class Spec:
                       cage or line, the shaft of an arrow; sum: cages); None = no limit on that side
     kinds             shorthand: every listed kind keeps >= 1 needed element (each-kind mode)
     target_band       "Very Easy" .. "Extreme" (or 0..6): the card's band must equal it
-    target_difficulty [lo, hi] on the card's difficulty scale, or "any" (with a band: no aim, the deepest dig), or
+    target_difficulty [lo, hi] on the card's difficulty scale, or "typical" (with a band: aim where published puzzles of
+                      the band lie, band_aim), or
                       "max" / "min": the hardest / easiest result found in
                       the whole time
     require           technique codes the card must contain (e.g. ["XWG"]); strict_require = listed as the code itself,
@@ -268,7 +269,7 @@ def feasibility(spec):
     except ValueError as e:
         probs.append(str(e))
         tb = None
-    if isinstance(s.target_difficulty, str) and s.target_difficulty not in ("max", "min", "any"):
+    if isinstance(s.target_difficulty, str) and s.target_difficulty not in ("max", "min", "typical"):
         probs.append(f"target_difficulty must be [low, high], 'max' or 'min', got {s.target_difficulty!r}")
     elif s.target_difficulty is not None and not isinstance(s.target_difficulty, str):
         try:
@@ -574,8 +575,7 @@ def _generate(spec):
     most, shape = _most(s), _shape(s)
     hunt = s.target_difficulty if s.target_difficulty in ("max", "min") else ("count" if most else None)
     aim = None
-    if s.target_difficulty is None and hunt is None and tb is not None:  # a band alone: aim where published ones lie
-        # ("any" opts out: dig as far as the band allows)
+    if s.target_difficulty == "typical" and tb is not None:  # asked for: aim where published puzzles of the band lie
         aim = td = band_aim(s, mode)
     best = None  # best-so-far search (count "max", difficulty "max" / "min"): (score, result)
     req = list(s.require or [])

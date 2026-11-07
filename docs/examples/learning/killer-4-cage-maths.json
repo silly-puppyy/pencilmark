@@ -47,11 +47,7 @@
  "puzzle": {
   "format": "pencilmark-puzzle",
   "format_version": 1,
-  "meta": {
-   "title": "generated 9x9 26 cage, 0 givens",
-   "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nKiller: Digits in a cage sum to its small clue and don't repeat within the cage.",
-   "type": "Killer Sudoku"
-  },
+  "meta": {},
   "board": {
    "rows": 9,
    "cols": 9

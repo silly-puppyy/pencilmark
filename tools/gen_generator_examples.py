@@ -27,7 +27,8 @@ def spec(size=9, rules=(), where=None, givens=None, symmetry=None, seed=1, time=
     if symmetry:
         s["symmetry"] = [dict(symmetry, of="givens")]
     if where:
-        s["where"] = where
+        # a band alone aims where published puzzles of the band lie (on 9x9): the examples show that ("typical")
+        s["where"] = dict(where, difficulty="typical") if size == 9 and "band" in where and "difficulty" not in where else where
     if quality:
         s["quality"] = quality
     s["limits"] = {"time": time, "seed": seed}
@@ -48,7 +49,8 @@ def layout_spec(layout, rules=(), locked=(), where=None, givens=None, symmetry=N
     if symmetry:
         s["symmetry"] = [dict(symmetry, of="givens")]
     if where:
-        s["where"] = where
+        # a band alone aims where published puzzles of the band lie (on 9x9): the examples show that ("typical")
+        s["where"] = dict(where, difficulty="typical") if size == 9 and "band" in where and "difficulty" not in where else where
     s["limits"] = {"time": time, "seed": seed}
     return s
 

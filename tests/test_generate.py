@@ -493,22 +493,22 @@ def test_meta_requests():
             meta_requests(bad, None)
 
 
-def test_band_alone_aims_where_published_puzzles_lie():
-    """a band without a difficulty range: a window drawn from the band's spread (publish_flags.AIM), the same for the
-    same seed, reported as info.aimed_at; classic Very Easy within 2.7-3.9 (+-0.4); a range of the user's replaces it"""
+def test_typical_difficulty_aims_where_published_puzzles_lie():
+    """difficulty "typical" with a band: a window drawn from the band's spread (publish_flags.AIM), the same for the
+    same seed, reported as info.aimed_at; classic Very Easy within 2.7-3.9 (+-0.4); opt in: a band alone digs deepest"""
     from pencilmark.gen.api import Spec, band_aim
 
     wins = [band_aim(Spec(size=9, target_band="Very Easy", seed=k), "classic") for k in range(1, 30)]
     assert all(2.3 <= lo < hi <= 4.3 for lo, hi in wins) and len(set(wins)) > 5
     assert band_aim(Spec(size=9, target_band="Very Easy", seed=3), "classic") == wins[2]
     assert band_aim(Spec(size=6, target_band="Very Easy", seed=3), "classic") is None
-    s = spec(9, where={"band": "Very Easy"}, seed=2, time_limit=60)
+    s = spec(9, where={"band": "Very Easy", "difficulty": "typical"}, seed=2, time_limit=60)
     s["quality"] = {"preset": "standard"}
     r = run(s)
     lo, hi = r["info"]["aimed_at"]
     assert lo <= r["card"]["difficulty"] <= hi and r["card"]["band"] == "Very Easy"
     assert "aimed_at" not in run(spec(9, where={"band": "Very Easy", "difficulty": [3.5, 4.5]}, seed=2))["info"]
-    deep = run(spec(9, where={"band": "Very Easy", "difficulty": "any"}, seed=2))  # opted out: the deepest dig
+    deep = run(spec(9, where={"band": "Very Easy"}, seed=2))  # not asked for: the deepest dig
     assert "aimed_at" not in deep["info"] and deep["info"]["givens"] < r["info"]["givens"]
 
 
@@ -526,6 +526,6 @@ def test_aim_relaxes_at_half_time(monkeypatch):
     from pencilmark.gen import api as GA
 
     monkeypatch.setattr(GA, "band_aim", lambda s, mode: (0.0, 0.1))  # no puzzle is this easy
-    s = spec(9, where={"band": "Very Easy"}, seed=2, time_limit=8)
+    s = spec(9, where={"band": "Very Easy", "difficulty": "typical"}, seed=2, time_limit=8)
     r = run(s)
     assert r["info"]["aim_relaxed"] and r["card"]["band"] == "Very Easy"

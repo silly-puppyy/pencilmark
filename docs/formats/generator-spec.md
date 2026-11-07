@@ -111,8 +111,8 @@ Conditions on the result's card, using the card's keys ([Grade card](grade-card.
 
 | Key | Value |
 |---|---|
-| `band` | one band name. Without `difficulty`, the run aims at a window drawn (from the seed) from where published puzzles of the band lie, on 9×9 boards; `info.aimed_at` reports it. The aim is a preference: with nothing in the window by half of `limits.time`, any difficulty in the band will do (`info.aim_relaxed`). `"difficulty": "any"` opts out |
-| `difficulty` | `[lo, hi]`, or `"max"` / `"min"`: the hardest / easiest result found in `limits.time` (the run uses all of it), or `"any"`: no aim within the band (the generator digs as far as the band allows) |
+| `band` | one band name |
+| `difficulty` | `[lo, hi]`; or `"max"` / `"min"`: the hardest / easiest result found in `limits.time` (the run uses all of it); or `"typical"` (with a band, 9×9): aim at a window drawn from the seed where published puzzles of the band lie, reported in `info.aimed_at`; it is a preference, so with nothing in the window by half of `limits.time` any difficulty in the band will do (`info.aim_relaxed`). Without `difficulty` the generator digs as far as the band allows |
 | `contains` | technique codes that must appear in `contains`; `{"codes": [...], "strict": true}` = as the code itself, not only as an alternative in a chip |
 | `elements` | `{"max": n}`: at most n placed rule elements in total |
 

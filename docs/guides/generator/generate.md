@@ -119,17 +119,22 @@ symmetry, board sizes), with the puzzle each produced and how long it took.
 
 ## 4. Typical difficulty
 
-A request with a band and no difficulty range aims where published puzzles of that band lie: the seed draws a
-difficulty window from the band's spread (a bell curve fitted to published puzzles), and the generator stops digging
-inside it, so many seeds spread like real puzzles. `info.aimed_at` shows the window drawn; when nothing lands in it
-by half of the time limit, any difficulty in the band will do (`info.aim_relaxed`). Classic Very Easy centres on
-3.3 (2.7 to 3.9), where generated sites' easy puzzles lie (sudoku.com's easy, medium and hard tiers: 2.5, 3.1 and 3.6
-on this scale); the other bands, and 9×9 variants, follow the development set below. Without a band or a range the
-generator removes every given it can, and few givens make even a singles-only puzzle slow to scan; `"difficulty":
-"any"` keeps the band and switches the aim off. A range of your own replaces the aim:
+Without a difficulty range the generator removes every given it can, and few givens make even a singles-only puzzle
+slow to scan: a Very Easy request comes back at about 4.5, the hard end of the band. Two ways to steer it. A range of
+your own:
 
 ```json
 "where": {"band": "Very Easy", "difficulty": [3.2, 4.0]}
+```
+
+or `"difficulty": "typical"`: the seed draws a window from where published puzzles of the band lie (a bell curve
+fitted to them), so many seeds spread like real puzzles; `info.aimed_at` shows the window. Classic Very Easy centres
+on 3.3 (2.7 to 3.9), where generated sites' easy puzzles lie (sudoku.com's easy, medium and hard tiers: 2.5, 3.1 and
+3.6 on this scale); the other bands, and 9×9 variants, follow the development set below. When nothing lands in the
+window by half of the time limit, any difficulty in the band will do (`info.aim_relaxed`).
+
+```json
+"where": {"band": "Very Easy", "difficulty": "typical"}
 ```
 
 The middle half of published puzzles per band (development set: 7,155 puzzles from seven sources with human data):
