@@ -28,7 +28,7 @@ The reconstruction works on the replayed grid (placed digits + candidates, the C
 candidate maintenance), so it needs nothing but the step stream.
 """
 
-from .base import ANNOTATION, CONCEPTS, EXTRA_FAMILY, FAMILY_DISPLAY, LINE_NAMES, Ctx, Namer, fmt_elims, rel_label  # noqa: F401
+from .base import ANNOTATION, CONCEPTS, FAMILY_DISPLAY, LINE_NAMES, Ctx, Namer, fmt_elims, rel_label  # noqa: F401
 from .catalog import CATALOG, HD, SHAPE_NOTES, SN, SW, candidate_urls, chain_shape, fish_shape, technique_info  # noqa: F401
 from .dispatch import HANDLERS, check, explain, explain_all  # noqa: F401
 from .grid import (  # noqa: F401

@@ -230,7 +230,6 @@ CONCEPTS = {
 }
 
 # techniques newer than metrics.FAMILIES (used only while FAMILIES doesn't list them)
-EXTRA_FAMILY = {S.MENTAL_CHAIN: "chains", S.EITHER_WAY: "trial", S.LINE_CLASS: "intersections+combos"}
 
 FAMILY_DISPLAY = {
     "singles": "Singles",

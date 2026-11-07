@@ -7,7 +7,7 @@ import re
 from .. import solver as S
 from ..metrics import FAMILIES, family_of
 from ..model import bit
-from .base import ANNOTATION, CONCEPTS, EXTRA_FAMILY, FAMILY_DISPLAY, Ctx, Namer, _an, _generic, rel_label
+from .base import ANNOTATION, CONCEPTS, FAMILY_DISPLAY, Ctx, Namer, _an, _generic, rel_label
 from .catalog import _LINE_KEY, _REL_KEY, _VARIANT_LESSONS, CATALOG, SW, _confirmed, technique_info
 from .chains import _h_als_xywing, _h_als_xz, _h_chain, _h_death_blossom, _h_mental_chain
 from .combos import _h_combo, _h_combo_lock, _h_innie, _h_lol
@@ -166,7 +166,6 @@ for _code, _h, _name, _lesson in (
 ):
     HANDLERS[getattr(S, _code)] = _h
     CONCEPTS.setdefault(getattr(S, _code), (_name, _lesson))
-    EXTRA_FAMILY.setdefault(getattr(S, _code), "fish+wings" if _code == "DIGIT_COUNT" else "intersections+combos")
 HANDLERS[S.LINE_CLASS] = _h_line_class
 CONCEPTS.setdefault(
     S.LINE_CLASS,
@@ -200,7 +199,6 @@ _X_HANDLERS = {
     "CLASS_SINGLE": (
         _h_class_single,
         "equal_cells",
-        "intersections+combos",
         (
             "Color class single",
             "A color (cells holding one unknown digit) must appear in every house: when only one "
@@ -210,7 +208,6 @@ _X_HANDLERS = {
     "ID_PROPAGATE": (
         _h_class_propagation,
         "equal_cells",
-        "singles",
         (
             "Color class propagation",
             "Cells of one color hold one digit: a candidate one of them loses, all lose; one placed places them all.",
@@ -219,7 +216,6 @@ _X_HANDLERS = {
     "CLASS_PAIR": (
         _h_class_pair,
         "equal_cells",
-        "intersections+combos",
         (
             "Color pair",
             "Two cells that can only be the same two digits and must differ hold them in some order: give them two "
@@ -229,7 +225,6 @@ _X_HANDLERS = {
     "CHAIN_COLOUR": (
         _h_chain_colour,
         "equal_cells",
-        "intersections+combos",
         (
             "Chain color",
             "A cell tied to two others by pair rules (V / X dominoes, dots) can force them to hold the same digit: "
@@ -239,7 +234,6 @@ _X_HANDLERS = {
     "CLASS_COMPLETE": (
         _h_complete_colours,
         "equal_cells",
-        "subsets",
         (
             "Complete colors",
             "A color with a cell in every row holds every copy of its digit. When some complete colors can only be as "
@@ -249,7 +243,6 @@ _X_HANDLERS = {
     "CLASS_FISH": (
         _h_colour_fish,
         "equal_cells",
-        "fish+wings",
         (
             "Color fish",
             "An X-Wing for a color: two houses that each need the color, with all its places in two other houses, "
@@ -259,7 +252,6 @@ _X_HANDLERS = {
     "CLASS_POINTING": (
         _h_colour_pointing,
         "equal_cells",
-        "intersections+combos",
         (
             "Color pointing",
             "Pointing for a color: when a color's places in one house all lie in another house, the color is there, "
@@ -269,7 +261,6 @@ _X_HANDLERS = {
     "COLOUR_CLASH": (
         _h_colour_clash,
         "equal_cells",
-        "chains",
         (
             "Color clash",
             "Two colors tied by a rule (one fixes the other): a cell that would leave the second color no digit if it "
@@ -279,7 +270,6 @@ _X_HANDLERS = {
     "CLASS_TRAP": (
         _h_class_trap,
         "equal_cells",
-        "chains",
         (
             "Color pair trap",
             "Two colors hold the two digits of a pair, one each: a cell that sees both colors can be neither.",
@@ -288,13 +278,11 @@ _X_HANDLERS = {
     "CLUE_FACTS": (
         _h_clue_facts,
         "clue_facts",
-        "intersections+combos",
         ("Clue facts", "Some digits are ruled out by the clues alone, before any digit of the grid is used."),
     ),
     "CLUE_SHAPE": (
         _h_clue_facts,
         "clue_shape",
-        "intersections+combos",
         (
             "Clue shape",
             "Cells of one rule that share a house need different digits; when the rule leaves too few, some go.",
@@ -303,7 +291,6 @@ _X_HANDLERS = {
     "CLASS_COLOUR": (
         _h_class_colour,
         "class_colouring",
-        "chains",
         (
             "Low / high and odd / even coloring",
             "Rules that always join a low and a high digit (or an odd and an even one) color cells in two classes; a "
@@ -313,31 +300,26 @@ _X_HANDLERS = {
     "REGION_CAP": (
         _h_region,
         "region_size_cap",
-        "intersections+combos",
         ("Region size", "A region to find holds exactly as many cells as digits: once they are known it is closed."),
     ),
     "REGION_REACH": (
         _h_region,
         "region_reach",
-        "intersections+combos",
         ("Region cannot reach", "A region has only so many cells left: cells beyond them are in other regions."),
     ),
     "DEAD_END": (
         _h_region,
         "dead_end",
-        "singles",
         ("Dead end", "No region has one cell: a cell takes only a region one of its neighbors can join."),
     ),
     "REGION_EXIT": (
         _h_region,
         "region_exit",
-        "intersections+combos",
         ("Region exit", "A region still short of cells with a single way out must take it."),
     ),
     "REGION_DIGIT": (
         _h_region,
         "region_digit",
-        "intersections+combos",
         (
             "Region needs a digit",
             "A region holds every digit: a missing one with a single reachable place puts it there.",
@@ -346,19 +328,16 @@ _X_HANDLERS = {
     "POCKET": (
         _h_region,
         "pocket_counting",
-        "intersections+combos",
         ("Pocket counting", "A pocket too small for a region of its own belongs to the unfinished region around it."),
     ),
     "REGION_EXCL": (
         _h_region,
         "region_exclusion",
-        "singles",
         ("Region exclusion", "A digit appears once in a region: equal digits lie in different regions."),
     ),
     "WEIGHTED_SUMS": (
         _h_weighted_sums,
         "weighted_sums",
-        "intersections+combos",
         (
             "Weighted sums",
             "Add and "
@@ -369,13 +348,11 @@ _X_HANDLERS = {
     "LINE_CLUES": (
         _h_line_clues,
         "outside_clues_together",
-        "subsets",
         ("Outside clues together", "A line with clues at both ends: its fillings must satisfy every clue at once."),
     ),
     "LINE_SETS": (
         _h_line_sets,
         "renban_sets",
-        "subsets",
         (
             "Renban sets",
             "Renbans meeting in a house use different "
@@ -385,7 +362,6 @@ _X_HANDLERS = {
     "CLIQUE_HOUSE": (
         _h_clique_house,
         "clique_house",
-        "subsets",
         (
             "Clique house",
             "Cells that must all differ from "
@@ -395,7 +371,6 @@ _X_HANDLERS = {
     "COMBO_POS": (
         _h_combo_positions,
         "combo_positions",
-        "subsets",
         (
             "Cage combination positions",
             "A cage's possible "
@@ -405,7 +380,6 @@ _X_HANDLERS = {
     "HUMAN_CASE": (
         _h_forcing,
         "case_analysis",
-        "chains",
         (
             "Case analysis",
             "Try a digit (or each option of a cell or "
@@ -416,7 +390,6 @@ _X_HANDLERS = {
     "FIREWORKS": (
         _h_fireworks,
         "fireworks",
-        "fish+wings",
         (
             "Fireworks",
             "A digit with one spot in a row and one in a "
@@ -427,7 +400,6 @@ _X_HANDLERS = {
     "BAND_LOGIC": (
         _h_band_logic,
         "band_logic",
-        "chains",
         (
             "Band logic",
             "Take a band's rows (or columns), its "
@@ -438,7 +410,6 @@ _X_HANDLERS = {
     "SNYDER_D": (
         _h_snyder,
         "snyder_single",
-        "intersections+combos",
         (
             "Snyder marks",
             "Mark only digits confined "
@@ -448,7 +419,6 @@ _X_HANDLERS = {
     "SUM_ALGEBRA": (
         _h_sum_algebra,
         "sum_algebra",
-        "intersections+combos",
         (
             "Sum algebra",
             "Add up whole houses (45 each) and compare with the totals of the rules inside them; the "
@@ -458,7 +428,6 @@ _X_HANDLERS = {
     "RULE_INTERSECT": (
         _h_rule_intersect,
         "rule_intersection",
-        "intersections+combos",
         (
             "Rules together",
             "Take two overlapping rules (or a rule and a house) together: only digit combinations that "
@@ -474,7 +443,6 @@ _X_HANDLERS = {
             "colors of the other coloring is false.",
         ),
         "multi_colouring",
-        "chains",
         (
             "Multi-Colouring",
             "Color two separate conjugate-pair networks of a digit and use how their colors see each other.",
@@ -483,7 +451,6 @@ _X_HANDLERS = {
     "WHAT_IF": (
         _h_forcing,
         "what_if",
-        "trial",
         (
             "What if",
             "Try both options of a two-way choice with simple logic "
@@ -493,7 +460,6 @@ _X_HANDLERS = {
     "MENTAL_NOTES": (
         _h_mental_notes,
         "notes_in_head",
-        "subsets",
         (
             "Notes in your head",
             "Do a pair, pointing or "
@@ -503,7 +469,6 @@ _X_HANDLERS = {
     "FORCING": (
         _h_forcing,
         "forcing_chain",
-        "trial",
         (
             "Forcing Chain",
             "Try every option of a cell or every place of "
@@ -513,7 +478,6 @@ _X_HANDLERS = {
     "DYN_FORCING": (
         _h_forcing,
         "dynamic_forcing_chain",
-        "trial",
         (
             "Dynamic Forcing Chain",
             "Case analysis where each case is followed with ordinary techniques, not only singles.",
@@ -522,7 +486,6 @@ _X_HANDLERS = {
     "NESTED_FORCING": (
         _h_forcing,
         "nested_forcing_chain",
-        "trial",
         (
             "Nested Forcing Chain",
             "Case analysis whose cases use further case analyses inside them -- a computer-strength technique.",
@@ -531,7 +494,6 @@ _X_HANDLERS = {
     "NISHIO": (
         _h_nishio,
         "nishio_forcing_net",
-        "trial",
         (
             "Nishio Forcing Net",
             "Assume one digit in a cell and follow "
@@ -541,7 +503,6 @@ _X_HANDLERS = {
     "MEDUSA": (
         _h_medusa,
         "3d_medusa",
-        "chains",
         (
             "3D Medusa",
             "Coloring across several digits: bivalue cells and two-place digits form one two-colored network.",
@@ -550,7 +511,6 @@ _X_HANDLERS = {
     "COLOUR_ALGEBRA": (
         _h_colour_classes,
         "colour_algebra",
-        "chains",
         (
             "Color Algebra",
             "Cells forced to be equal share one color; the color's possible digits are what all its cells allow.",
@@ -559,7 +519,6 @@ _X_HANDLERS = {
     "SUM_BOUND": (
         _h_sum_bound,
         "sum_bounds",
-        "intersections+combos",
         (
             "Min/max bounds",
             "Smallest and largest "
@@ -569,13 +528,11 @@ _X_HANDLERS = {
     "CLASS_COUNT": (
         _h_class_count,
         "class_counting",
-        "intersections+combos",
         ("Odd/even counting", "Count digits by class (odd/even, low/high): houses need fixed numbers of each."),
     ),
     "DOMINO": (
         _h_domino,
         "domino_logic",
-        "intersections+combos",
         (
             "Domino logic",
             "Reason about pairs of cells "
@@ -585,7 +542,6 @@ _X_HANDLERS = {
     "N_WING": (
         _h_nwing,
         "wxyz_wing",
-        "fish+wings",
         ("WXYZ-Wing", "Bent sets of 4+ cells generalizing XY- and XYZ-Wings."),
     ),
     "SUE_DE_COQ": (
@@ -595,25 +551,21 @@ _X_HANDLERS = {
             "with disjoint digits lock as many digits as cells.",
         ),
         "sue_de_coq",
-        "fish+wings",
         ("Sue de Coq", "Two-sector disjoint subsets around a box-line intersection."),
     ),
     "APE": (
         _h_ape,
         "aligned_pair_exclusion",
-        "fish+wings",
         ("Aligned Pair Exclusion", "Test the value pairs of two cells against the cells they both see."),
     ),
     "CHUTE_RP": (
         _h_chute_rp,
         "chute_remote_pairs",
-        "chains",
         ("Chute Remote Pairs", "Remote pairs inside a band or stack."),
     ),
     "POM": (
         _h_pom,
         "pattern_overlay",
-        "trial",
         ("Pattern Overlay", "List all templates of a digit and keep only cells some template uses."),
     ),
     "GURTH": (
@@ -623,19 +575,14 @@ _X_HANDLERS = {
             "unique solution is too; candidates breaking the symmetry go.",
         ),
         "gurth",
-        "fish+wings",
         ("Gurth's Theorem", "Symmetric placement: a symmetric puzzle has a symmetric solution."),
     ),
 }
 
-for _code, (_h, _key, _fam, _concept) in _X_HANDLERS.items():
+for _code, (_h, _key, _concept) in _X_HANDLERS.items():  # the family comes from data/techniques.csv
     HANDLERS[getattr(S, _code)] = _h
     CONCEPTS.setdefault(getattr(S, _code), _concept)
-    EXTRA_FAMILY.setdefault(getattr(S, _code), _fam)
-
-_FAM_IDX = {"singles": 0, "intersections+combos": 1, "subsets": 2, "fish+wings": 3, "chains": 4, "ALS": 5, "trial": 6}
-for _code, (_h, _key, _fam, _concept) in _X_HANDLERS.items():
-    CATALOG.setdefault(_key, (_concept[0], {"other": []}, _FAM_IDX[_fam], [], []))
+    CATALOG.setdefault(_key, (_concept[0], {"other": []}, family_of(getattr(S, _code)), [], []))
 CATALOG["forcing_chain"][1]["sudokuwiki"] = ["Cell Forcing Chains", "Unit Forcing Chains"]
 CATALOG["forcing_chain"][3].extend([SW + "Cell_Forcing_Chains", SW + "Unit_Forcing_Chains"])
 CATALOG["dynamic_forcing_chain"][1]["HoDoKu"] = ["Dynamic Forcing Chain"]
@@ -674,8 +621,6 @@ CONCEPTS.setdefault(
         "where the two meet.",
     ),
 )
-EXTRA_FAMILY.setdefault(S.REMOTE_PAIRS, "chains")
-EXTRA_FAMILY.setdefault(S.EMPTY_RECT, "chains")
 
 
 def _engine_override(ctx, out):
@@ -720,8 +665,6 @@ def explain(step, puzzle, state):
         if ctx.tech not in (S.TAKE_NOTES, S.GUESS, S.SNYDER_MARKS)
         else ("trial" if ctx.tech == S.GUESS else "setup")
     )
-    if not any(ctx.tech in ts for _, ts in FAMILIES) and ctx.tech in EXTRA_FAMILY:
-        fam = EXTRA_FAMILY[ctx.tech]
     try:
         tkey = _technique_key(ctx, out)
     except Exception:
@@ -985,7 +928,7 @@ _technique_key_base = _technique_key
 
 
 def _technique_key(ctx, out):  # noqa: F811 -- extended for 68-82 and the new codes
-    for _code, (_h, _key, _fam, _concept) in _X_HANDLERS.items():
+    for _code, (_h, _key, _concept) in _X_HANDLERS.items():
         if ctx.tech == getattr(S, _code, -99):
             return _key
     if ctx.tech == S.EMPTY_RECT or (ctx.tech == S.X_CHAIN and ctx.code == "ER"):
