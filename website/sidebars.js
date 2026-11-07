@@ -38,6 +38,7 @@ module.exports = {
         page('guides/development/add-technique', 'add-technique', 'Add a technique'),
         page('guides/development/add-rule-kind', 'add-rule-kind', 'Add a rule kind'),
         page('guides/development/parameters', 'parameters', 'Grader parameters'),
+        page('guides/development/engine-mapping', 'engine-mapping', 'Engine mapping'),
       ]),
     ]),
     section('Formats', '/formats/', 'The three formats (a puzzle, its grade card, a request to the generator) and the readers and writers of other formats.', [
@@ -64,13 +65,12 @@ module.exports = {
       page('formats/generator-spec', 'generator-spec', 'Generator spec'),
       page('formats/other-formats', 'other-formats', 'Readers and writers'),
     ]),
-    section('Library', '/library/', 'The Python library: its public API, the variant names it gives, and how it draws puzzles. The internals are in the Code reference.', [
+    section('Library', '/library/', 'The Python library: its public API, the variant names it gives, and how it draws puzzles. Internals are under Development and in the Code reference.', [
       {type: 'doc', id: 'library/python-api', className: 'pm-ico-python-api', label: 'Python API'},
       {type: 'doc', id: 'library/variant-catalogue', className: 'pm-ico-variant-catalogue', label: 'Variant catalogue'},
       {type: 'doc', id: 'library/variant-naming', className: 'pm-ico-variant-naming', label: 'How variants are named'},
       {type: 'doc', id: 'library/drawing-style', className: 'pm-ico-drawing-style', label: 'Drawing and style'},
       {type: 'doc', id: 'library/palette', className: 'pm-ico-palette', label: 'Palette'},
-      {type: 'doc', id: 'library/engine-mapping', className: 'pm-ico-engine-mapping', label: 'Engine mapping'},
     ]),
     section('How the grades work', '/grades/', 'What the numbers mean, how they are computed and measured, and what we tried on the way.', [
       {type: 'doc', id: 'grades/philosophy', className: 'pm-ico-philosophy', label: 'Philosophy'},

@@ -11,7 +11,7 @@ FORMAT_VERSION = 1
 SCHEMA_URL = "https://silly-puppyy.github.io/pencilmark/schema/pencilmark-puzzle-1.json"
 
 
-# normalisation 8 (docs/library/engine-mapping.md): 2-cell tables that are an edge clue (differences / sums / products / quotients) and mathrax
+# normalisation 8 (docs/guides/development/engine-mapping.md): 2-cell tables that are an edge clue (differences / sums / products / quotients) and mathrax
 # corner tables are written as edge / corner rules. False keeps such tables as "table" rules.
 UNIFY_TABLE_EDGES = True
 # Engine form of NUMBERED pair clues (edge difference / sum / product / ratio, mathrax corners) -- one form for every source.

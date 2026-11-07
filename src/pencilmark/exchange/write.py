@@ -101,7 +101,7 @@ class _Writer:
 
     # ---------------------------------------------------------------- groups
     def eff_groups(self):
-        """(kind, cells, total) per engine group, with the normalised kinds (docs/library/engine-mapping.md: jigsaw pieces stored as regions ->
+        """(kind, cells, total) per engine group, with the normalised kinds (docs/guides/development/engine-mapping.md: jigsaw pieces stored as regions ->
         box; SudokuPad explicit houses -> row / column / box / region)."""
         p, B, D = self.p, self.B, self.D
         gs = [g for g in p.groups if not (self.key and set(g.cells) & self.key)]

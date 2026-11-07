@@ -23,6 +23,21 @@ The engine is written in C++ ([pybind11](https://github.com/pybind/pybind11)). R
 > ([Claude](https://claude.ai)), directed and reviewed by its maintainer. If you object to AI-written software, take that
 > into account before you use it or contribute.
 
+## Features
+
+- **Grade** classic and variant sudoku the way people solve them: band, difficulty, predicted solve time and the
+  techniques needed, each step explained in words, with sub-steps and drawing annotations on request.
+- **Check before publishing**: decorative rules, mostly-given grids, trial and error, thin logic and an unusual
+  difficulty for the band, with presets and adjustable limits.
+- **Solve and count**: the solution, uniqueness proofs (with OR-Tools for hard variants), solution counts.
+- **Generate** puzzles to a band, a difficulty range or a required technique, with rule elements (cages, every line
+  kind, dots, outside clues, ...) and multi-grid layouts; every result passes the standard publishing checks.
+- **Read and write** pencilmark JSON, plain strings, text grids, sudokuwiki strings and ipuz, and read SudokuPad,
+  f-puzzles, Penpa+ and Logic Masters links, with the setter's embedded solution checked.
+- **Variants**: 4×4 to 25×25, irregular regions, multi-grid boards, killers, lines, arrows, dots, outside clues, fog of
+  war, and custom rules written as expressions.
+- **Command line and Python**, one call each; deterministic results; a C++ engine.
+
 ## Install
 
 ```
@@ -102,7 +117,7 @@ The specification is [Puzzle format](https://silly-puppyy.github.io/pencilmark/f
 For convenience pencilmark also reads and writes [sudokuwiki.org](https://www.sudokuwiki.org/) packed strings, text grids and [ipuz](http://www.ipuz.org/), reads pencil-mark grids, and loads SudokuPad,
 f-puzzles, [Penpa+](https://swaroopg92.github.io/penpa-edit/) and Logic Masters links. None of these is needed to use the `pencilmark-puzzle` format; see
 [docs/formats/other-formats.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/formats/other-formats.md). How rules map onto the engine is in
-[docs/library/engine-mapping.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/library/engine-mapping.md); how to add
+[docs/guides/development/engine-mapping.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/guides/development/engine-mapping.md); how to add
 one, in [Add a rule kind](https://silly-puppyy.github.io/pencilmark/guides/development/add-rule-kind/).
 
 ## Supported rules
