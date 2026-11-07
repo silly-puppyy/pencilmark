@@ -622,8 +622,11 @@ def _generate(spec):
         p.finalize()
         return E2.grade(p, P, with_steps=False, max_seconds=cap, alternatives=alternatives, fields=fields)
 
+    relaxed = False
     while time.time() < deadline:
         stats["attempts"] += 1
+        if aim and not relaxed and time.time() > t0 + s.time_limit / 2:  # the aim is a preference, the band the
+            td, relaxed = None, True  # request: after half the time any difficulty in the band will do
         if mode in ("classic", "dig"):
             few = (
                 not s.layout and s.max_givens is not None and s.max_givens < CLASSIC_MIN_GIVENS.get(s.size, 0)
@@ -774,6 +777,7 @@ def _generate(spec):
             "unique_verified": verified,
             "seed": s.seed,
             **({"aimed_at": list(aim)} if aim else {}),  # a band alone: the difficulty window drawn for this run
+            **({"aim_relaxed": True} if relaxed else {}),  # nothing in the window by half time: any in the band
         }
         if hunt is None:
             _log.info(

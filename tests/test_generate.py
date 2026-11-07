@@ -519,3 +519,13 @@ def test_no_seed_draws_a_fresh_one():
     assert a["info"]["seed"] != b["info"]["seed"]
     again = run(dict(s, limits=dict(s["limits"], seed=a["info"]["seed"])))
     assert again["puzzle"]["givens"] == a["puzzle"]["givens"]
+
+
+def test_aim_relaxes_at_half_time(monkeypatch):
+    """an aim nothing can meet does not fail the request: after half the time any difficulty in the band will do"""
+    from pencilmark.gen import api as GA
+
+    monkeypatch.setattr(GA, "band_aim", lambda s, mode: (0.0, 0.1))  # no puzzle is this easy
+    s = spec(9, where={"band": "Very Easy"}, seed=2, time_limit=8)
+    r = run(s)
+    assert r["info"]["aim_relaxed"] and r["card"]["band"] == "Very Easy"

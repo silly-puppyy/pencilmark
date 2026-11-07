@@ -121,7 +121,8 @@ symmetry, board sizes), with the puzzle each produced and how long it took.
 
 A request with a band and no difficulty range aims where published puzzles of that band lie: the seed draws a
 difficulty window from the band's spread (a bell curve fitted to published puzzles), and the generator stops digging
-inside it, so many seeds spread like real puzzles. `info.aimed_at` shows the window drawn. Classic Very Easy centres on
+inside it, so many seeds spread like real puzzles. `info.aimed_at` shows the window drawn; when nothing lands in it
+by half of the time limit, any difficulty in the band will do (`info.aim_relaxed`). Classic Very Easy centres on
 3.3 (2.7 to 3.9), where generated sites' easy puzzles lie (sudoku.com's easy, medium and hard tiers: 2.5, 3.1 and 3.6
 on this scale); the other bands, and 9×9 variants, follow the development set below. Without a band or a range the
 generator removes every given it can, and few givens make even a singles-only puzzle slow to scan; `"difficulty":
