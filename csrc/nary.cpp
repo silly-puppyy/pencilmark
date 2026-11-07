@@ -1178,9 +1178,52 @@ static void cases_gac_memo(const NConstraint& k, const uint32_t* dom, pm_long bu
     if (out.complete) g_cases_memo.emplace(std::move(key), out);  // an aborted search is not cached
 }
 
+// counting circles, one digit set at a time: the circles use the digits of a set S with sum(S) = circles, each digit d
+// exactly d times -- an exact count (NT_COUNT), which prunes far better than "0 or v times". The result is the union
+// over the sets that work.
+static void circles_gac(const NConstraint& k, const uint32_t* dom, const std::vector<GacReq>& req, pm_long budget,
+                        int D, GacOut& out) {
+    const int nv = k.nv();
+    uint32_t uni = 0;
+    for (int i = 0; i < nv; ++i) uni |= dom[i];
+    NConstraint c = k;
+    c.type = NT_COUNT;
+    c.quota.assign(D + 1, 0);
+    out = GacOut();
+    for (int i = 0; i < nv; ++i) out.sup[i] = 0;
+    out.must = ~0u;
+    int sets = 0;
+    uint32_t d2[64];
+    for (uint32_t S = 1; S < (1u << D); ++S) {
+        int sum = 0;
+        for (uint32_t m = S; m; m &= m - 1) sum += __builtin_ctz(m) + 1;
+        if (sum != nv || (S & ~uni)) continue;
+        bool empty = false;
+        for (int i = 0; i < nv && !empty; ++i) empty = !(d2[i] = dom[i] & S);
+        if (empty) continue;
+        for (int v = 1; v <= D; ++v) c.quota[v] = (S >> (v - 1) & 1) ? v : 0;
+        GacOut o;
+        nary_gac_plain(c, d2, req, budget, D, o);
+        out.complete &= o.complete;
+        out.count += o.count;
+        if (!o.any) continue;
+        out.any = true;
+        ++sets;
+        for (int i = 0; i < nv; ++i) out.sup[i] |= o.sup[i];
+        out.must &= S;  // every digit of the set appears
+        out.set_unique = o.set_unique;
+    }
+    if (sets != 1) out.set_unique = false;
+    if (!out.any || !out.complete) out.must = 0;
+}
+
 void nary_gac_plain(const NConstraint& k, const uint32_t* dom, const std::vector<GacReq>& req, pm_long budget, int D,
                     GacOut& out) {
     const int nv = k.nv();
+    if (k.type == NT_CIRCLES && D <= 16) {
+        circles_gac(k, dom, req, budget, D, out);
+        return;
+    }
     if (((k.type == NT_ARROW && k.ncircle >= 1 && k.ncircle <= 3) || (k.type == NT_SUM && !k.distinct)) &&
         (int)k.pvar.size() > 12) {
         linear_dp_gac(k, dom, req, out);
