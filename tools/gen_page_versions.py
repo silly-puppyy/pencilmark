@@ -55,6 +55,10 @@ def main():
             rel = f.relative_to(base).as_posix()
             if any(git("cat-file", "-e", f"{t}:docs/{rel}") is not None for _, t in upto):
                 out[v][rel] = as_of(rel, f.read_bytes(), upto, v)
+    for v in out.values():  # keys as the URL path the page is served at: no extension, an index page as its folder
+        for rel in list(v):
+            key = re.sub(r"\.mdx?$", "", rel)
+            v[key.removesuffix("/index") if key.endswith("/index") else key] = v.pop(rel)
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(out, indent=1, sort_keys=True) + "\n", encoding="utf-8")
     print(f"wrote {OUT} ({sum(len(v) for v in out.values())} pages)")
