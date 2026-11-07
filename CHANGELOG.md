@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Unique Rectangle type 1 also when the fourth corner holds only one of the pair (HoDoKu's variant): that digit
+  goes, as it would complete the deadly pattern. Found by HoDoKu's regression library (all 17 type 1 cases match now).
+  Reference cards: one difficulty 12.2 -> 12.3, two times move.
+
 ## 1.2.0 (2026-11-07)
 
 ### What changes for you

@@ -157,6 +157,16 @@ def _ur(cd):
             cells = [r1 * 9 + c1, r1 * 9 + c2, r2 * 9 + c1, r2 * 9 + c2]
             if len({box(c) for c in cells}) != 2 or any(len(cd[c]) < 2 for c in cells):
                 continue
+            for t in cells:  # type 1 with the fourth corner holding only one of the pair (HoDoKu 0600-2)
+                rest = [c for c in cells if c != t]
+                xy = set(cd[rest[0]])
+                if (
+                    len(xy) == 2
+                    and all(set(cd[c]) == xy for c in rest)
+                    and len(set(cd[t]) & xy) == 1
+                    and len(cd[t]) > 1
+                ):
+                    out |= {(t, d) for d in set(cd[t]) & xy}
             common = set.intersection(*[set(cd[c]) for c in cells])
             for x, y in itertools.combinations(sorted(common), 2):
                 xy = {x, y}

@@ -127,6 +127,23 @@ void Solver::unique_rect(MoveBuf& out) {
                     el.push_back((uint32_t)q * 32 + z);
             emit(3011, el, c, x, y, 0);
         }
+    // type 1 with a fourth corner holding only one of the pair (HoDoKu 0600-2): three corners are exactly {x, y};
+    // the fourth taking that digit would leave the deadly pattern, so it goes (the loop below needs x and y in all four)
+    for (const auto& r : rects) {
+        const int* c = r.c;
+        if (vals[c[0]] || vals[c[1]] || vals[c[2]] || vals[c[3]]) continue;
+        for (int t = 0; t < 4; ++t) {
+            const int a = (t + 1) % 4, b = (t + 2) % 4, d = (t + 3) % 4;
+            const uint32_t xy = cand[c[a]];
+            if (popc(xy) != 2 || cand[c[b]] != xy || cand[c[d]] != xy) continue;
+            const uint32_t one = cand[c[t]] & xy;
+            if (popc(one) != 1 || cand[c[t]] == one) continue;  // both digits: the loop below; only it: a single
+            const int x = lowdigit(xy), y = lowdigit(xy & (xy - 1));
+            if (!rel_inv(c, x, y)) continue;
+            std::vector<uint32_t> el{(uint32_t)c[t] * 32 + lowdigit(one)};
+            emit(CODE_UR1, el, c, x, y, 0);
+        }
+    }
     for (const auto& r : rects) {
         const int* c = r.c;
         if (vals[c[0]] || vals[c[1]] || vals[c[2]] || vals[c[3]]) continue;
