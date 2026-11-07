@@ -44,6 +44,10 @@ def golden():
     return run(PY, "tools/golden.py", "check")
 
 
+def smoke():  # the wheels workflow's test of every built wheel (tests/smoke.py)
+    return run(PY, "tests/smoke.py")
+
+
 def check():
     return test() or slow() or golden()
 
@@ -105,10 +109,10 @@ def release(version):
         print("not ready:", p)
     if problems:
         return 1
-    return check() or docs()
+    return check() or smoke() or lint() or docs()
 
 
-TASKS = {"test": test, "slow": slow, "golden": golden, "check": check, "lint": lint, "fixtures": fixtures,
+TASKS = {"test": test, "slow": slow, "golden": golden, "smoke": smoke, "check": check, "lint": lint, "fixtures": fixtures,
          "docs": docs, "serve": serve, "prepare": prepare}  # fmt: skip
 
 

@@ -32,8 +32,8 @@ before the last step.
    version menu reaches the others, and the next release's docs stay under `/next/`.
 4. Commit, then on a fresh install (`pip install -e .`) run `python tools/tasks.py release 1.1.0`. It checks that both
    version numbers say 1.1.0, that the CHANGELOG has its section and an empty "Unreleased", and that nothing is
-   uncommitted; then it runs the quick suite, the doc examples, the golden check and the docs build (which fails on a
-   broken link). It changes nothing; fix what it reports and run it again.
+   uncommitted; then it runs the quick suite, the doc examples, the golden check, the wheels' smoke test (`tests/smoke.py`),
+   lint (ruff and codespell, as CI) and the docs build (which fails on a broken link). It changes nothing; fix what it reports and run it again.
 5. Push to main.
 
 ## 3. Test on every platform
