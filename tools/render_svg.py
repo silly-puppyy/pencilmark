@@ -63,11 +63,39 @@ def render(
     cy = lambda r: m + (r + 0.5) * u
     ctr = lambda name: (cx(rc(name)[1]), cy(rc(name)[0]))
     exists = {(r, c) for r, c in B.coords}
-    layers = {k: [] for k in ("shade", "colour", "marks", "lines", "cages", "grid", "clues", "digits", "outside")}
+    layers = {
+        k: [] for k in ("shade", "colour", "marks", "lines", "cages", "grid", "clues", "digits", "outside", "over")
+    }
     cur = [None]  # the rule being drawn (annotate)
     labelled = set()  # cells with a cage total in their top-left corner (corner marks start elsewhere there)
 
+    palette = (doc.get("style") or {}).get("palette") or []
+
+    def colour_of(v, default=None):
+        """a style colour: "#rrggbb", or an index into the top-level style palette"""
+        if isinstance(v, int) and not isinstance(v, bool):
+            return palette[v] if 0 <= v < len(palette) else default
+        return v if isinstance(v, str) and v else default
+
+    def restyle(k, s, st):
+        """a rule's own style over its family's look (section 7): colour on strokes, fill on shapes, width on lines,
+        opacity on everything; digits and clue text keep their ink"""
+        if not st or k == "digits":
+            return s
+        col, fil = colour_of(st.get("color")), colour_of(st.get("fill"))
+        if col:
+            s = re.sub(r'stroke="(?!none)[^"]*"', f'stroke="{col}"', s)
+        if fil:
+            s = re.sub(r'(<(?:rect|circle|ellipse|polygon|path)\b[^>]*?)fill="(?!none)[^"]*"', rf'\1fill="{fil}"', s)
+        if k == "lines" and isinstance(st.get("width"), (int, float)):
+            s = re.sub(r'stroke-width="[^"]*"', f'stroke-width="{st["width"] * u:.1f}"', s)
+        if isinstance(st.get("opacity"), (int, float)):
+            s = re.sub(r"<(rect|circle|ellipse|polygon|polyline|path|line)\b", rf'<\1 opacity="{st["opacity"]}"', s)
+        return s
+
     def add(k, s):
+        if cur[0] is not None:
+            s = restyle(k, s, rules[cur[0]].get("style"))
         if annotate and cur[0] is not None:
             s = re.sub(r"<(\w+)", lambda mt: f'<{mt.group(1)} data-rule="{cur[0]}"', s)
         layers[k].append(s)
@@ -81,7 +109,7 @@ def render(
     # that far round the cell's outline (clockwise from the top centre; 360 = once round), not to a true angle
     shades, alpha = ANNOTATION["dark" if dark else "light"], ANNOTATION["opacity"]["dark" if dark else "light"]
 
-    def outline(x0, y0, a):
+    def perim(x0, y0, a):
         """the point a / 360 of the way round the cell's outline, clockwise from the top centre"""
         t = (a % 360) / 90  # in sides: 0.5 = top-right corner, 1.5 = bottom-right, 2.5 = bottom-left, 3.5 = top-left
         if t < 0.5:
@@ -95,21 +123,36 @@ def render(
         return x0 + (t - 3.5) * u, y0
 
     corners = (45, 135, 225, 315)  # the corners, in the same measure
-    for name, cols in (colours or {}).items():
+
+    def cell_colours(name, cols, opacity, pattern="wedges"):
+        """one colour fills the cell; k split it into k wedges from the centre (SudokuPad) or k slanted stripes
+        (sudoku.coach)"""
         r, c = rc(name)
         x0, y0 = m + c * u, m + r * u
         if len(cols) == 1:
             add(
                 "colour",
-                f'<rect x="{x0}" y="{y0}" width="{u}" height="{u}" fill="{shades[cols[0]]}" fill-opacity="{alpha}"/>',
+                f'<rect x="{x0}" y="{y0}" width="{u}" height="{u}" fill="{cols[0]}" fill-opacity="{opacity}"/>',
             )
-            continue
+            return
+        if pattern == "stripes":  # parallelograms leaning right, cut to the cell
+            lean, w = 0.25 * u, (u + 0.5 * u) / len(cols)
+            cid = f"cc{r}_{c}"
+            add("colour", f'<clipPath id="{cid}"><rect x="{x0}" y="{y0}" width="{u}" height="{u}"/></clipPath>')
+            for i, col in enumerate(cols):
+                xa = x0 - lean + i * w
+                d = f"{xa + lean:.1f},{y0:.1f} {xa + lean + w:.1f},{y0:.1f} {xa + w:.1f},{y0 + u:.1f} {xa:.1f},{y0 + u:.1f}"
+                add("colour", f'<polygon points="{d}" fill="{col}" fill-opacity="{opacity}" clip-path="url(#{cid})"/>')
+            return
         for i, col in enumerate(cols):
             a1, a2 = 25 + i * 360 / len(cols), 25 + (i + 1) * 360 / len(cols)
             turn = [k for k in corners for k in (k, k + 360) if a1 < k < a2]
-            pts = [(x0 + u / 2, y0 + u / 2)] + [outline(x0, y0, a) for a in (a1, *sorted(turn), a2)]
+            pts = [(x0 + u / 2, y0 + u / 2)] + [perim(x0, y0, a) for a in (a1, *sorted(turn), a2)]
             d = " ".join(f"{x:.1f},{y:.1f}" for x, y in pts)
-            add("colour", f'<polygon points="{d}" fill="{shades[col]}" fill-opacity="{alpha}"/>')
+            add("colour", f'<polygon points="{d}" fill="{col}" fill-opacity="{opacity}"/>')
+
+    for name, cols in (colours or {}).items():
+        cell_colours(name, [shades[x] for x in cols], alpha)
     houses, _ = X.read_houses([x for x in rules if x["type"] in ("grid", "box_grid", "box", "row", "column")], B)
     box_of = {}
     for k, (kind, cells, _) in enumerate(houses):
@@ -518,6 +561,55 @@ def render(
         for c in range(C):
             add("outside", small_text(cx(c), lab * 0.55, f"c{c + 1}", size=0.26, col=T["cand"], weight=400))
 
+    cur[0] = None  # decorations belong to no rule
+    # ---- decorations (artwork, no rules; section 7): cell fills with the annotation colours; shapes, lines, text and
+    # images under the lines and clues, or over everything with layer "over" (text defaults to over)
+    P = lambda yx: (m + yx[1] * u, m + yx[0] * u)  # noqa: E731  [row, col] cell units from the board's corner -> px
+    for dec in doc.get("decorations") or []:
+        kind, st = dec.get("kind"), dec.get("style") or {}
+        lay = "over" if dec.get("layer", "over" if kind == "text" else "under") == "over" else "colour"
+        op = st.get("opacity", 1)
+        stroke, fill = colour_of(st.get("color"), T["given"]), colour_of(st.get("fill"), "none")
+        sw = (st.get("width") or 0.05) * u
+        if kind == "fill":
+            for name, cols in (dec.get("cells") or {}).items():
+                cols = [colour_of(x) for x in (cols if isinstance(cols, list) else [cols])]
+                cell_colours(name, [x for x in cols if x], op, st.get("pattern", "wedges"))
+        elif kind in ("polygon", "line", "arrow") and dec.get("points"):
+            pts = " ".join(f"{x:.1f},{y:.1f}" for x, y in map(P, dec["points"]))
+            tag = "polygon" if kind == "polygon" else "polyline"
+            f = fill if kind == "polygon" else "none"
+            add(lay, f'<{tag} points="{pts}" fill="{f}" stroke="{stroke}" stroke-width="{sw:.1f}" opacity="{op}" '
+                     f'stroke-linecap="round" stroke-linejoin="round"/>')  # fmt: skip
+            if kind == "arrow" and len(dec["points"]) >= 2:
+                (xa, ya), (xb, yb) = P(dec["points"][-2]), P(dec["points"][-1])
+                ang, h = math.atan2(yb - ya, xb - xa), 0.18 * u
+                wing = [(xb - h * math.cos(ang + s_), yb - h * math.sin(ang + s_)) for s_ in (0.5, -0.5)]
+                d = " ".join(f"{x:.1f},{y:.1f}" for x, y in (wing[0], (xb, yb), wing[1]))
+                add(
+                    lay,
+                    f'<polyline points="{d}" fill="none" stroke="{stroke}" stroke-width="{sw:.1f}" opacity="{op}"/>',
+                )
+        elif kind in ("rect", "circle", "image") and dec.get("center"):
+            x, y = P(dec["center"])
+            h, w = (dec.get("size") or [1, 1])[0] * u, (dec.get("size") or [1, 1])[-1] * u
+            if kind == "rect":
+                add(lay, f'<rect x="{x - w / 2:.1f}" y="{y - h / 2:.1f}" width="{w:.1f}" height="{h:.1f}" fill="{fill}" '
+                         f'stroke="{stroke}" stroke-width="{sw:.1f}" opacity="{op}"/>')  # fmt: skip
+            elif kind == "circle":
+                add(lay, f'<ellipse cx="{x:.1f}" cy="{y:.1f}" rx="{w / 2:.1f}" ry="{h / 2:.1f}" fill="{fill}" '
+                         f'stroke="{stroke}" stroke-width="{sw:.1f}" opacity="{op}"/>')  # fmt: skip
+            elif dec.get("href"):
+                add(lay, f'<image href="{esc(dec["href"])}" x="{x - w / 2:.1f}" y="{y - h / 2:.1f}" width="{w:.1f}" '
+                         f'height="{h:.1f}" opacity="{op}" preserveAspectRatio="none"/>')  # fmt: skip
+        elif kind == "text" and dec.get("center") and dec.get("text") is not None:
+            x, y = P(dec["center"])
+            add(
+                lay,
+                small_text(
+                    x, y, esc(str(dec["text"])), size=st.get("size", 0.3), col=colour_of(st.get("color"), T["given"])
+                ),
+            )
     # ---- digits and candidates (halo in the board colour)
     halo = (S["halo_dark"] if dark else S["halo_light"]) * u
     for i, v in enumerate(doc["givens"]):
@@ -558,7 +650,8 @@ def render(
             y = m + r * u + u * (((d - 1) // 3) + 0.5) / 3
             add("digits", small_text(x, y, d, size=0.24, col=T["cand"], weight=400))
     body = "".join(
-        "".join(layers[k]) for k in ("shade", "colour", "marks", "lines", "cages", "grid", "clues", "digits", "outside")
+        "".join(layers[k])
+        for k in ("shade", "colour", "marks", "lines", "cages", "grid", "clues", "digits", "outside", "over")
     )
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{W:.0f}" height="{H:.0f}" viewBox="0 0 {W:.1f} {H:.1f}">'
