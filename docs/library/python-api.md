@@ -47,7 +47,7 @@ toc_max_heading_level: 2
 
 ## Grading
 
-### `def rate(puzzle: str | dict | Path, *, steps: bool=False, max_seconds: float | None=None, mode: str='human', se: bool=False, fields: list[str] | None=None, allow_guessing: bool=False, explain: bool | str | list[str] | None=None, quality: dict | None=None, alternatives: bool=True, colouring: bool=False, format: str | None=None) -> dict` {#rate}
+### `def rate(puzzle: str | dict | Path, *, max_seconds: float | None=None, mode: str='human', fields: list[str] | None=None, allow_guessing: bool=False, explain: bool | str | list[str] | None=None, quality: dict | None=None, alternatives: bool=True, colouring: bool=False, format: str | None=None) -> dict` {#rate}
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L110)
 
@@ -56,11 +56,9 @@ The "pencilmark-grade" card of one puzzle ([Grade card](../formats/grade-card.md
 **Parameters**
 
 - `puzzle` *str, dict, Path or Puzzle* — Any format pencilmark.read reads, detected (an 81-character string, a text grid, a sudokuwiki string, pencilmark JSON as a dict, text or .json path, an ipuz file, a SudokuPad / f-puzzles / Penpa / Logic Masters link).
-- `steps` *bool* — Shorthand for the `steps` field with every explanation level.
 - `max_seconds` *float, optional* — One wall-clock limit for the whole call. When it passes, the card says band "Unknown", difficulty and time are null and `completed` is false.
 - `mode` *str* — "human" (default): human techniques only, a proof by full search where they stop; "computer": also forcing chains and nets, Nishio and trial.
-- `se` *bool* — Shorthand for the `se` field (Sudoku Explainer-style ratings; classic sudoku only).
-- `fields` *list of str, optional* — The top-level fields to return. Default: difficulty, time, band, contains. Optional: band_index, issues, reject, warning (publishing checks), time_mean, time_pNN (any percentile 1-99, e.g. time_p80), time_dist, elapsed (wall seconds of the call), se, steps, trace (the board before and after each step), describe, symmetry. format, format_version and grader are always present.
+- `fields` *list of str, optional* — The top-level fields to return. Default: difficulty, time, band, contains. Optional: band_index, issues, reject, warning (publishing checks), time_mean, time_pNN (any percentile 1-99, e.g. time_p80), time_dist, elapsed (wall seconds of the call), se (Sudoku Explainer-style ratings; classic sudoku only), steps (with `explain` for their explanations), trace (the board before and after each step), describe, symmetry. format, format_version and grader are always present.
 - `allow_guessing` *bool* — Guess where no technique applies (band "Unknown") instead of proving by full search (Trial and error, Extreme).
 - `explain` *str, list of str or bool, optional* — Explanation levels for the steps: "notation", "short", "teach", or True for all three; "substeps" (only by name) tells each step as sub-steps with reasons and drawing annotations ([Grade card](../formats/grade-card.md) 5).
 - `quality` *dict, optional* — Settings of the issue checks, e.g. {"trivial": {"limit": 0.5}, "trial": {"severity": "off"}} ([Grade card](../formats/grade-card.md) 4).
@@ -79,9 +77,9 @@ The "pencilmark-grade" card of one puzzle ([Grade card](../formats/grade-card.md
 - *A puzzle whose uniqueness the engine cannot settle (max_seconds passed first, or the search hit its limit without*
 - *OR-Tools) is not an error: its card has band "Unknown" and a `reason`.*
 
-### `def rate_many(puzzles: list, *, jobs: int=1, steps: bool=False, max_seconds: float | None=None, mode: str='human', se: bool=False, fields: list[str] | None=None, allow_guessing: bool=False, explain: bool | str | list[str] | None=None, quality: dict | None=None, alternatives: bool=True, colouring: bool=False) -> list[dict]` {#rate_many}
+### `def rate_many(puzzles: list, *, jobs: int=1, max_seconds: float | None=None, mode: str='human', fields: list[str] | None=None, allow_guessing: bool=False, explain: bool | str | list[str] | None=None, quality: dict | None=None, alternatives: bool=True, colouring: bool=False) -> list[dict]` {#rate_many}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L302)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L294)
 
 Cards for many puzzles, in input order.
 
@@ -89,7 +87,7 @@ Cards for many puzzles, in input order.
 
 - `puzzles` *iterable* — Puzzles in any form `rate` accepts.
 - `jobs` *int* — Worker processes; 1 rates in this process.
-- `steps, max_seconds, mode, se, fields, allow_guessing, explain, quality, alternatives, colouring` — As for `rate`.
+- `max_seconds, mode, fields, allow_guessing, explain, quality, alternatives, colouring` — As for `rate`.
 
 **Returns**
 
@@ -97,7 +95,7 @@ Cards for many puzzles, in input order.
 
 ### `def describe(puzzle: str | dict | Path) -> dict` {#describe}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L455)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L445)
 
 The variant name and its rules in words, from the rules alone (pencilmark/variants.py).
 
@@ -113,7 +111,7 @@ The variant name and its rules in words, from the rules alone (pencilmark/varian
 
 ### `def solve(puzzle: str | dict | Path, *, format: str | None=None) -> list[int]` {#solve}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L344)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L334)
 
 The unique solution of a puzzle.
 
@@ -136,7 +134,7 @@ Uses the engine's exhaustive C++ search; CP-SAT (OR-Tools, optional) only when t
 
 ### `def count_solutions(puzzle: str | dict | Path, *, limit: int=1000, format: str | None=None) -> dict` {#count_solutions}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L385)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L375)
 
 How many solutions a puzzle has, counting up to a limit.
 
@@ -153,7 +151,7 @@ How many solutions a puzzle has, counting up to a limit.
 
 ### `def generate(spec: str | dict | Path) -> dict` {#generate}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L475)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L465)
 
 One puzzle for a "pencilmark-spec" request ([Generator spec](../formats/generator-spec.md)).
 
@@ -279,7 +277,7 @@ An ipuz 2 dict (classic, Latin square, diagonal, windoku, jigsaw and killer sudo
 
 ### `def validate(doc: dict) -> bool` {#validate}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L431)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L421)
 
 Strict reading checks of a format_version 1 dict ([Puzzle format](../formats/puzzle-format.md) section 4).
 
@@ -297,7 +295,7 @@ Strict reading checks of a format_version 1 dict ([Puzzle format](../formats/puz
 
 ### `def fingerprint(puzzle: str | dict | Path) -> str` {#fingerprint}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L409)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L399)
 
 Content fingerprint of a puzzle: the SHA-256 of its canonical form, 64 hex digits.
 
