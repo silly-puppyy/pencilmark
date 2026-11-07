@@ -66,8 +66,13 @@ What changes for you (details in the entries below):
 - Lines over 12 cells whose rule is only neighbour (or mirror) relations (thermo, slow thermo, whispers, palindrome,
   parity, kropki chain) skip the whole-line search; the pair relations still propagate them. 18 frozen puzzles with
   such lines: 677 s -> 389 s, bands unchanged but one (a 49-cell palindrome: Unknown at 300 s -> Easy 9.1 in 55 s);
-  difficulty moves within the band (up to 3 points on one). Reference cards: one palindrome uses its line in one step
-  fewer (difficulty 12.6 -> 12.5).
+  difficulty moves within the band (up to 3 points on one). Their house-forcing step (a house's digit confined to the
+  line) is skipped too: the 18 puzzles take 32 s in all (was 677 s); a 43-cell parity line Unknown -> Medium 10.5 in
+  1.2 s, the 49-cell palindrome Medium 10.2 in 0.5 s. Reference cards: 1 difficulty 9.7 -> 9.9 (same band).
+- Publishing checks count rule use more faithfully: pair relations a line generated count for that line, and
+  different-digit links (anti-knight, no-touch ...) count where they erase notes without a step naming them (writing
+  notes, placements). Reference cards: 8 false "used in only 0 steps" rejects go (anti-knight, no-touch); the anti-knight
+  rule no longer borrows thermo-line uses.
 - Custom rules `concat(cells) in {numbers}` over more than 5 cells become engine tables like the smaller ones (the
   rows are in the rule; before: an expression evaluated by enumeration). A puzzleduel Antidiagonal sudoku: 271 s ->
   0.5 s, and its card Easy 7.7 -> Very Easy 5.7 (table pricing, as every rule of up to 5 cells already gets).

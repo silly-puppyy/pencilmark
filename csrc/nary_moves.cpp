@@ -187,6 +187,7 @@ void Solver::combo_lock(MoveBuf& out) {
         const std::vector<NConstraint>& list = pass == 0 ? p.nary : pass == 1 ? p.cage_nary : p.innie_nary;
         for (const NConstraint& k : list) {
             if (k.type == NT_SAMESET) continue;  // leftover equalities: no combinations to lock
+            if (long_tree_line(k)) continue;  // no whole-line search there (nary.cpp)
             int unplaced = 0;
             for (int c : k.vars) unplaced += !vals[c];
             if (!unplaced) continue;

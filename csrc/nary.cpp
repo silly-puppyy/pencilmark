@@ -541,8 +541,7 @@ static bool alldiff_path_ok(const NConstraint& k) {
     return true;
 }
 
-// a line over more than 12 cells whose rule is only its neighbour (or mirror) relations: those relations form a tree
-static bool long_tree_line(const NConstraint& k) {
+bool long_tree_line(const NConstraint& k) {
     if (k.type != NT_LINE || k.nv() <= 12) return false;
     switch (k.line_kind) {
         case LK_THERMO: case LK_SLOW_THERMO: case LK_WHISPER: case LK_DUTCH: case LK_PALINDROME: case LK_PARITY:

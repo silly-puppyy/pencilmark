@@ -163,6 +163,9 @@ struct GacOut {
     bool any = false;
 };
 
+/// a line over more than 12 cells whose rule is only its neighbour (or mirror) relations: those relations form a tree,
+/// the whole-line search gives no information (too costly)
+bool long_tree_line(const NConstraint& k);
 /// dom[i]: allowed digits of var i (placed vars: their single digit)
 void nary_gac(const NConstraint& k, const uint32_t* dom, const std::vector<GacReq>& req, pm_long budget, int D,
               GacOut& out);

@@ -384,7 +384,8 @@ def _rule_notes(puzzle, P, q=None):
         return out
     # pair relations are often credited under derived labels (chains of signs become detected lines; bounds are
     # reported as "thermo / inequality") -- an x-sums + greater-than card said "lt relation used in only 0 steps" while 8 steps
-    # used the signs as a detected line. Relation classes count those labels too.
+    # used the signs as a detected line. Relation classes count those labels too, except different-digit links
+    # (anti-knight ...), which no line stands for.
     rel_aliases = (
         "line from pair relations",
         "pair relation",
@@ -398,7 +399,9 @@ def _rule_notes(puzzle, P, q=None):
         n_used = sum(
             v
             for k, v in use.items()
-            if str(k) == c or str(k).startswith(c) or (c.endswith(" relation") and str(k) in rel_aliases)
+            if str(k) == c
+            or str(k).startswith(c)
+            or (c.endswith(" relation") and c != "neq relation" and str(k) in rel_aliases)
         )
         needed = need.get(c)
         # (code, severity, text, element class, uses): the card names the rules of the class (export.grade "issues")

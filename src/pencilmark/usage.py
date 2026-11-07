@@ -70,9 +70,11 @@ def _unit_element(kind):
     }.get(kind, kind)
 
 
-def step_elements(p, step, gk=None):
-    """Set of element classes one explained step uses."""
+def step_elements(p, step, gk=None, rel_lines=None):
+    """Set of element classes one explained step uses. rel_lines (_relation_lines): relations a line generated are
+    credited to that line."""
     gk = gk if gk is not None else _group_kinds(p)
+    rel_lines = rel_lines or {}
     e = getattr(step.move, "explain", None) or {}
     out = set()
     for c in e.get("constraints") or []:
@@ -97,9 +99,11 @@ def step_elements(p, step, gk=None):
                 out.add(x)
         elif k in ("relation", "relation arc", "relation lock"):
             rel = r.get("relation")
-            out.add(f"{rel} relation" if rel else "pair relation")
+            c = r.get("cell")
+            line = rel_lines.get((rel, _rc(p, c) if isinstance(c, int) else None, r.get("by")))
+            out.add(line or (f"{rel} relation" if rel else "pair relation"))
         elif k in ("neq cell", "neq lock"):
-            out.add("different-digit link (anti-knight / anti-king ...)")
+            out.add("neq relation")  # anti-knight / anti-king ... links
         elif k == "domain":
             out.add("shading (odd / even ...)")
         elif k == "cage sum":
@@ -127,13 +131,57 @@ def rule_usage(puzzle, params, solution=None):
 
     steps, solved = CB.solve(puzzle, params, solution=solution, explain=True)
     gk = _group_kinds(puzzle)
-    per = [step_elements(puzzle, st, gk) for st in steps]
+    rl = _relation_lines(puzzle)
+    per = [step_elements(puzzle, st, gk, rl) for st in steps]
+    _implicit_links(puzzle, steps, per)
     counts, first = Counter(), {}
     for i, s in enumerate(per):
         for x in s:
             counts[x] += 1
             first.setdefault(x, i)
     return {"steps": per, "counts": counts, "first_use": first, "solved": bool(solved), "n_steps": len(steps)}
+
+
+def _implicit_links(p, steps, per):
+    """different-digit links (anti-knight ...) also act where no step names them: writing notes and erasing notes
+    after a placement. Credit them to the note-taking steps and placements that erase a note through a link: a linked
+    cell outside the placed cell's houses, still empty, whose houses and links do not hold the digit yet (later
+    eliminations by techniques are not tracked: may overcount)."""
+    links = defaultdict(set)
+    for r in p.relations:
+        if r[0] == "neq":
+            links[r[1]].add(r[2])
+            links[r[2]].add(r[1])
+    if not links:
+        return
+    peers = defaultdict(set)
+    for g in p.groups:
+        for c in g.cells:
+            peers[c].update(g.cells)
+    filled = dict(p.givens)
+
+    def erases(c):
+        d = filled[c]
+        return any(
+            o not in filled
+            and o not in peers[c]
+            and all(filled.get(q) != d for q in peers[o] if q != c)
+            and all(filled.get(q) != d for q in links[o] if q != c)
+            for o in links.get(c, ())
+        )
+
+    for st, s in zip(steps, per):
+        e = getattr(st.move, "explain", None) or {}
+        if e.get("technique") == "TakeNotes":
+            if any(erases(c) for c in list(filled)):
+                s.add("neq relation")
+            continue
+        pl = e.get("placement") or {}
+        if pl.get("cell") is None:
+            continue
+        filled[pl["cell"]] = pl.get("digit")
+        if st.mode == "notes" and erases(pl["cell"]):
+            s.add("neq relation")
 
 
 def element_classes(p):
@@ -165,12 +213,30 @@ def element_classes(p):
     return dict(cls)
 
 
-def _line_relations(p):
-    """Pair relations that finalize() generated from the line / clone constraints (multiset)."""
+def _rc(p, c):
+    r, k = p.coords[c]
+    return f"r{r + 1}c{k + 1}"
+
+
+def _relation_lines(p):
+    """(relation or None, cell name, other cell name) -> "<kind> line" for the pair relations each line generated
+    (None: reasons that do not name the relation)"""
+    out = {}
+    for c in getattr(p, "constraints", ()) or ():
+        if c.get("type") == "line":
+            for kind, a, b in _line_relations(p, [c]):
+                for k in (kind, None):
+                    out[(k, _rc(p, a), _rc(p, b))] = out[(k, _rc(p, b), _rc(p, a))] = f"{c.get('kind')} line"
+    return out
+
+
+def _line_relations(p, only=None):
+    """Pair relations that finalize() generated from the line / clone constraints (multiset); only: these
+    constraints"""
     from . import model as M
 
     cons = []
-    for c in getattr(p, "constraints", ()) or ():
+    for c in only if only is not None else getattr(p, "constraints", ()) or ():
         if c.get("type") in ("line", "clone"):
             d = copy.deepcopy(c)
             d.pop("_compiled", None)
