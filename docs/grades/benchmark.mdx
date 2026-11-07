@@ -83,17 +83,18 @@ so most of its gap is noise. On the other three the human signal is clean and th
 Not part of the frozen protocol, and never a fitting target. The Cracking the Cryptic solves in Sakana AI's
 [Sudoku-CTC-Reasoning](https://huggingface.co/datasets/SakanaAI/Sudoku-CTC-Reasoning) dataset (MIT) give one expert
 solve time per puzzle: Simon Anthony's or Mark Goodliffe's, from the first to the last action of the recorded solve.
-All 1,351 puzzles were read with pencilmark's own readers; 337 read and graded (the rest use rules pencilmark does not
-model, such as fog of war, loops and shading, or read with several solutions). For the 327 with a usable time (2
-minutes to 4 hours), measured on 2026-11-03:
+All 1,351 puzzles were read with pencilmark's own readers and graded with a 60 s limit; 330 get a card (the rest use
+rules pencilmark does not model, such as loops, shading and one-off mechanics, or read with several solutions). For the
+284 with a usable solve time (2 minutes to 4 hours, the times of the 1.1 measurement), measured on 2026-11-07 with
+1.2.0:
 
 | | Puzzles | Rank correlation with solve time |
 |---|---|---|
-| `difficulty` | 327 | 0.57 |
-| Simon's solves | 148 | 0.50 |
-| Mark's solves | 177 | 0.49 |
+| `difficulty` | 284 | 0.55 |
+| Simon's solves | 116 | 0.54 |
+| Mark's solves | 166 | 0.47 |
 
-Median solve minutes by band: Easy 15, Medium 25, Hard 21 (18 puzzles), Very Hard 32, Expert 39, Extreme 42.
+Median solve minutes by band: Easy 15, Medium 26, Hard 21 (18 puzzles), Very Hard 31, Expert 36, Extreme 42 (5 puzzles).
 One solver per puzzle on one day, so the ceiling is unknown and lower than for the sources above. Among the hardest
 puzzles (Expert and Extreme) the order is weak: more steps there use computer-style search than the hosts' own solves.
 
