@@ -765,7 +765,8 @@ def _alsxz_render(ctx, A, Bs, x, z):
     short = f"{fmt_elims(nm, ctx.elims)}: ALS-XZ, X={x}, Z={zt}"
     teach = (
         f"Two almost-locked sets: A = {desc(A)} and B = {desc(Bs)} -- each has one more digit than cells. "
-        f"Their {x}s all see each other, so at most one set holds {x}; the set without {x} is locked onto its "
+        + (f"They share {nm.cells(sorted(set(ca) & set(cb)))}, which has no {x}. " if set(ca) & set(cb) else "")
+        + f"Their {x}s all see each other, so at most one set holds {x}; the set without {x} is locked onto its "
         f"other digits, which include {zt}. So "
         + ("a " + str(zs[0]) + " is" if len(zs) == 1 else "each of " + zt + " is")
         + f" in A or B, and {nm.cells(tg)}, seeing every copy of {'it' if len(zs) == 1 else 'them'} in both "

@@ -63,6 +63,8 @@ What changes for you (details in the entries below):
   on the engine's own rectangle (before: a hidden-UR text, sometimes on another rectangle); Aligned Pair Exclusion names
   the base pair and the witness that rules out each value pair; BUG+1 with a 4+ candidate cell has its own text.
   Tests: each added rule's explanation names its pattern and every removed candidate.
+- ALS-XZ with overlapping almost locked sets when the restricted common has no place in the overlap (HoDoKu); the
+  explanation names the shared cells. Reference cards: bands unchanged (Vudoku 8.3 -> 8.2); 60 frozen puzzles +2% time.
 - XY-Chains up to 12 cells (sudokuwiki's solver; before: 8, the chain search's 15-link cap). Same speed and cards on
   the reference sets.
 - Unique Rectangle type 3: naked subsets of any size with the roof (HoDoKu; before: up to 3 more cells).

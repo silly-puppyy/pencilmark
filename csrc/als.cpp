@@ -106,7 +106,10 @@ void Solver::als_xz(MoveBuf& out) {
     for (int a = 0; a < K; ++a)
         for (int b = a + 1; b < K; ++b) {
             uint32_t common = als[a].cand & als[b].cand;
-            if (popc(common) < 2 || !disjoint(als[a].cells, als[b].cells)) continue;
+            if (popc(common) < 2) continue;
+            // the sets may overlap when the restricted common has no candidate there (HoDoKu; als_rcc refuses an
+            // x cell in the overlap: a cell does not see itself); overlapping sets are only singly linked
+            const bool overlap = !disjoint(als[a].cells, als[b].cells);
             uint32_t rcc = 0;
             for (uint32_t dm = common; dm; dm &= dm - 1)
                 if (als_rcc(a, b, lowdigit(dm))) rcc |= dm & (~dm + 1);
@@ -115,6 +118,9 @@ void Solver::als_xz(MoveBuf& out) {
             const std::vector<int> both = {a, b};
             if (popc(rcc) == 1) {
                 for (uint32_t dm = common & ~rcc; dm; dm &= dm - 1) targets(both, lowdigit(dm), both);
+            } else if (overlap) {  // each restricted common alone, singly linked
+                for (uint32_t xm = rcc; xm; xm &= xm - 1)
+                    for (uint32_t dm = common & ~(xm & (~xm + 1)); dm; dm &= dm - 1) targets(both, lowdigit(dm), both);
             } else {  // doubly linked: both ALS become locked sets minus the RCCs
                 for (uint32_t dm = common & ~rcc; dm; dm &= dm - 1) targets(both, lowdigit(dm), both);
                 for (uint32_t dm = rcc; dm; dm &= dm - 1) targets(both, lowdigit(dm), both);
@@ -137,7 +143,7 @@ void Solver::als_xz(MoveBuf& out) {
             for (int s : both) add_als_expl(out, m, s, als[s].cand, als[s].list);
             add_expl(out, m, EX_LINKS, {(int)rcc});  // restricted common digits (mask)
             meta9(m, ncell, 2, popc(als[a].cand | als[b].cand), popc(rcc), 0, 0, 0, 1, shp);
-            m.code = popc(rcc) == 1 ? CODE_AXZ : CODE_AXZ2;
+            m.code = popc(rcc) == 1 || overlap ? CODE_AXZ : CODE_AXZ2;
             pm_long xm[XM_N] = {2, (pm_long)als[a].list.size(), (pm_long)als[b].list.size(), popc(rcc), (pm_long)el.size(),
                              0, 0, 0, 0, 0};
             std::copy(xm, xm + XM_N, m.xm);

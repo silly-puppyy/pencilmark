@@ -341,11 +341,11 @@ def _als_xz(cd, filled):
     out = set()
     A = _alss(cd, filled)
     for (ca, da), (cb, db) in itertools.combinations(A, 2):
-        if ca & cb:
-            continue
         common = da & db
         for x in common:
             xs = [c for c in ca | cb if x in cd[c]]
+            if any(x in cd[c] for c in ca & cb):  # overlapping sets: the restricted common has no place in the overlap
+                continue
             if not all(b in PEERS[a] for a, b in itertools.combinations(xs, 2)):
                 continue
             for z in common - {x}:
