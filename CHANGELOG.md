@@ -54,6 +54,10 @@ What changes for you (details in the entries below):
     type 2 (two cells with the same one extra digit).
   - Aligned Pair Exclusion also counts two cells sharing three digits that see both cells of the pair.
   Bands unchanged on the reference cards; times and difficulties move by up to 0.5 on 32 of 227.
+- Explanations: hidden unique rectangles (types 1 and 2) and extended unique rectangles (types 1 and 2) are explained
+  on the engine's own rectangle (before: a hidden-UR text, sometimes on another rectangle); Aligned Pair Exclusion names
+  the base pair and the witness that rules out each value pair; BUG+1 with a 4+ candidate cell has its own text.
+  Tests: each added rule's explanation names its pattern and every removed candidate.
 - BUG+1 also when the odd cell has 4+ candidates (Sudopedia: the two digits a BUG would leave there go); doubly-linked
   ALS-XZ eliminates inside the other set and ALS-XY-Wing inside the pivot (HoDoKu). Reference cards: bands unchanged.
 - Gaps the cited sources show, filled: WXYZ-Wing type 2 (every digit restricted: each leaves the cells seeing all its

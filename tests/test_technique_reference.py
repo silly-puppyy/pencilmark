@@ -377,3 +377,36 @@ def test_more_reference_finders(pos):
         ref = {e for e in ref_fn(cd, filled) if e[0] not in filled}
         assert ours >= ref if rel == "superset" else ours == ref, (tech, sorted(ref - ours)[:3], sorted(ours - ref)[:3])
         assert all(sol[c] != d for c, d in ours), tech
+
+
+WORDS = {
+    "hur2": "hidden unique rectangle",
+    "xur2": "extended unique rectangle",
+    "ape_als": "aligned pair exclusion",
+    "colour_unit": "colouring",
+    "medusa_unit": "two-colour chain",
+    "xy": "XY-Chain",
+}
+
+
+@pytest.mark.parametrize("pos", POS, ids=lambda x: x["id"])
+def test_explanation_names_the_pattern(pos):
+    """the English explanation of the technique's step at the position: verified, the pattern's own wording (not
+    another type's or the generic fallback), every eliminated cell named"""
+    from pencilmark.explain import explain, replay
+    from pencilmark.explain.grid import State
+
+    tech = KINDS.get(pos["kind"], "XY-Chain")
+    p, q, mask, cand, filled = _state(pos)
+    keep = {k for k, v in S.TECH_NAMES.items() if v == tech}
+    steps, _ = CB.solve(q, api._params("computer"), disabled=set(S.TECH_NAMES) - keep - {S.TAKE_NOTES}, cand=mask,
+                        max_steps=3, cpuzzle=CB.to_cpuzzle(p), assume_unique=True, explain=True)  # fmt: skip
+    vals = [filled.get(c, 0) for c in range(81)]
+    st0 = State(p, vals, [0 if vals[c] else m for c, m in enumerate(mask)], "notes")
+    st0.givens = set(p.givens)
+    step, state = next((s, t) for _, s, t in replay(p, steps, st0) if s.move.feat[0] in keep)
+    e = explain(step, p, state)
+    assert e["verified"] and "error" not in e, e
+    assert WORDS[pos["kind"]].lower() in e["short"].lower(), e["short"]
+    names = {f"r{c // 9 + 1}c{c % 9 + 1}" for c, _ in step.move.elim}
+    assert all(n in e["teach"] or n in e["short"] for n in names), (names, e["teach"])

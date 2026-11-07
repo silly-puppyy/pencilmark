@@ -12,7 +12,7 @@ from .catalog import _LINE_KEY, _REL_KEY, _VARIANT_LESSONS, CATALOG, SW, _confir
 from .chains import _h_als_xywing, _h_als_xz, _h_chain, _h_death_blossom, _h_mental_chain
 from .combos import _h_combo, _h_combo_lock, _h_innie, _h_lol
 from .grid import Rule, State, _as_state, derived, replay
-from .notes import _h_bug, _h_coloring, _h_fish, _h_locked, _h_pairarc, _h_subset, _h_ur, _h_wing
+from .notes import _h_ape, _h_bug, _h_coloring, _h_fish, _h_locked, _h_pairarc, _h_subset, _h_ur, _h_wing
 from .records import (
     _h_band_logic,
     _h_chute_rp,
@@ -590,12 +590,7 @@ _X_HANDLERS = {
         ("Sue de Coq", "Two-sector disjoint subsets around a box-line intersection."),
     ),
     "APE": (
-        _h_pattern_named(
-            "aligned pair exclusion",
-            "Every combination of the two cells' digits is checked; a "
-            "digit with no combination that leaves the cells seeing both alive (a cell, or two cells "
-            "sharing three digits) goes.",
-        ),
+        _h_ape,
         "aligned_pair_exclusion",
         "fish+wings",
         ("Aligned Pair Exclusion", "Test the value pairs of two cells against the cells they both see."),

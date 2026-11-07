@@ -820,8 +820,68 @@ def _h_ur(ctx):
         teach += " Uniqueness techniques rely on the puzzle having exactly one solution."
         J = _J(ctx, digits=[x, y], base_cells=pc, cover_cells=sorted(tcells))
         return _result(ctx, J, short, teach, bool(pc))
+    pc = list((ctx.raw_engine or {}).get("pattern_cells") or [])
+    if ctx.code in ("XUR1", "XUR2") and len(pc) == 6:
+        ds = list(digits_of(ctx.xm.get("x") or 0))
+        trio = "/".join(map(str, ds))
+        if ctx.code == "XUR1":
+            t = next(iter(tcells))
+            short = f"{fmt_elims(nm, ctx.elims)}: extended unique rectangle ({trio})"
+            teach = (
+                f"{nm.cells(pc)} lie in two rows (or columns) and three boxes; all but {nm.cell(t)} hold only "
+                f"{trio}. If {nm.cell(t)} took one of them too, the six cells could swap their digits within each "
+                f"column -- two solutions. So {fmt_elims(nm, ctx.elims)}."
+            )
+        else:
+            w = next(iter({d for _, d in ctx.elims}))
+            two = [c for c in pc if st.cand[c] & bit(w)]
+            short = f"{fmt_elims(nm, ctx.elims)}: extended unique rectangle type 2 ({trio}, extra {w})"
+            teach = (
+                f"{nm.cells(pc)} lie in two rows (or columns) and three boxes and hold only {trio}, except that "
+                f"{nm.cells(two)} also hold {w}. Without {w} the six cells could swap their digits -- two solutions -- "
+                f"so one of {nm.cells(two)} is {w}, and every cell seeing both loses it: {fmt_elims(nm, ctx.elims)}."
+            )
+        teach += " Uniqueness techniques rely on the puzzle having exactly one solution."
+        J = _J(ctx, digits=ds, base_cells=pc, cover_cells=sorted(tcells))
+        return _result(ctx, J, short, teach, True)
+    if ctx.code == "HUR" and len(pc) == 4 and x and y:
+        xy = bit(x) | bit(y)
+        floor = [c for c in pc if st.cand[c] == xy]
+        t, b = next(iter(ctx.elims))
+        a = x if b == y else y
+        side = len(floor) == 2 and (
+            p.coords[floor[0]][0] == p.coords[floor[1]][0] or p.coords[floor[0]][1] == p.coords[floor[1]][1]
+        )
+        if side and t not in floor:  # type 2: a strong link from the floor to the roof corner beside it
+            rf = next(c for c in pc if c not in floor and c != t)
+            f = next(c for c in floor if p.coords[c][0] == p.coords[rf][0] or p.coords[c][1] == p.coords[rf][1])
+            g = next(c for c in floor if c != f)
+            short = f"{fmt_elims(nm, ctx.elims)}: hidden unique rectangle type 2 ({x}/{y})"
+            teach = (
+                f"{nm.cells(pc)} form a rectangle over two rows, two columns and two boxes; {nm.cells(floor)} hold "
+                f"just {{{x},{y}}}. {a} has only two places in the house of {nm.cell(f)} and {nm.cell(rf)}. If "
+                f"{nm.cell(t)} were {b}, {nm.cell(g)} would be {a}, {nm.cell(f)} {b}, so {nm.cell(rf)} {a}: the "
+                f"{x}s and {y}s could be swapped -- two solutions. So {nm.cell(t)} is not {b}."
+            )
+        else:  # type 1: a bivalue corner, and the far corner with strong links on both its sides
+            corner = next(
+                (c for c in floor if p.coords[c][0] != p.coords[t][0] and p.coords[c][1] != p.coords[t][1]), None
+            )
+            short = f"{fmt_elims(nm, ctx.elims)}: hidden unique rectangle ({x}/{y})"
+            teach = (
+                f"{nm.cells(pc)} form a rectangle over two rows, two columns and two boxes"
+                + (f"; {nm.cell(corner)} holds just {{{x},{y}}}" if corner is not None else "")
+                + f". In the row and the column of {nm.cell(t)}, {a} has only its two rectangle places. If "
+                f"{nm.cell(t)} were {b}, both of those places would take {a}, and the corners would form an "
+                f"interchangeable {x}/{y} rectangle -- two solutions. So {nm.cell(t)} is not {b}."
+            )
+        teach += " Uniqueness techniques rely on the puzzle having exactly one solution."
+        J = _J(ctx, digits=[x, y], base_cells=pc, cover_cells=sorted(tcells))
+        return _result(ctx, J, short, teach, True)
     for cs in _rects(p):
         if any(st.vals[c] for c in cs):
+            continue
+        if pc and sorted(cs) != sorted(pc):  # the engine's rectangle, not another one on the same digits
             continue
         common = st.cand[cs[0]] & st.cand[cs[1]] & st.cand[cs[2]] & st.cand[cs[3]]
         pairs = [(x, y)] if x and y else [(a, b) for a, b in combinations(digits_of(common), 2)]
@@ -929,3 +989,58 @@ def _h_bug(ctx):
     )
     J = _J(ctx, digits=[v], base_cells=[c])
     return _result(ctx, J, short, teach, ok)
+
+
+def _h_ape(ctx):
+    """Aligned Pair Exclusion: every value pair of the two base cells, each ruled out by a witness that would be left
+    short of digits (a cell with no other candidate, or an almost locked set holding both digits)"""
+    nm, p, st = ctx.nm, ctx.p, ctx.st
+    X, Y = ctx.xm.get("cell_a"), ctx.xm.get("cell_b")
+    if X is None or Y is None:
+        return _generic(ctx)
+    aligned = Y in p.peers[X]
+    common = [q for q in p.peers[X] & p.peers[Y] if not st.vals[q]]
+    sets = []  # (cells, digit mask) of the almost locked sets among the common cells, one house each
+    for gi in {g for q in common for g in p.groups_of[q] if p.groups[g].complete}:
+        cs = [q for q in common if q in p.groups[gi].cells]
+        for k in range(1, len(cs) + 1):
+            for sub in combinations(cs, k):
+                m = 0
+                for q in sub:
+                    m |= st.cand[q]
+                if popcount(m) == k + 1 and (sub, m) not in sets:
+                    sets.append((sub, m))
+
+    def killer(x, y):
+        for q in common:
+            if st.cand[q] & ~(bit(x) | bit(y)) == 0:
+                return f"{nm.cell(q)} would have no digit left"
+        if x != y:
+            for sub, m in sorted(sets, key=lambda s: len(s[0])):
+                if m & (bit(x) | bit(y)) == bit(x) | bit(y):
+                    return f"{nm.cells(list(sub))} would have {len(sub)} cells for {len(sub) - 1} digits"
+        return None
+
+    lines = []
+    for c, d in ctx.elims:
+        other = Y if c == X else X
+        by = defaultdict(list)  # witness text -> partner values it rules out
+        for e in digits_of(st.cand[other]):
+            if e == d and aligned:
+                continue
+            k = killer(d, e) if c == X else killer(e, d)
+            if k is None:
+                return _generic(ctx)
+            by[k].append(str(e))
+        why = [f"with {nm.cell(other)} = {_join(vs, 'or')}, {k}" for k, vs in by.items()]
+        lines.append(f"If {nm.cell(c)} were {d}: " + "; ".join(why) + ".")
+    short = f"{fmt_elims(nm, ctx.elims)}: aligned pair exclusion"
+    teach = (
+        f"Test every pair of values for {nm.cell(X)} and {nm.cell(Y)}"
+        + (" (they see each other, so the values differ)" if aligned else " (they do not see each other)")
+        + " against the cells both of them see. "
+        + " ".join(lines)
+        + f" No value of the partner survives, so {fmt_elims(nm, ctx.elims)}."
+    )
+    J = _J(ctx, digits=sorted({d for _, d in ctx.elims}), base_cells=[X, Y], cover_cells=common)
+    return _result(ctx, J, short, teach, True)
