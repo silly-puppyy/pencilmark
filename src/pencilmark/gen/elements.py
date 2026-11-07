@@ -218,6 +218,7 @@ LENGTHS = {"cage": (2, 5), "thermo": (2, 6), "slow_thermo": (2, 6), "whisper": (
            "region_sum": (3, 8), "lockout": (3, 6), "double_arrow": (5, 7), "arrow": (1, 4)}  # fmt: skip
 # lines always grown by _walk (each step checks the cells before it)
 WALKED = ("slow_thermo", "entropic", "modular", "parity_line")
+PATHS = tuple(k for k in LENGTHS if k != "cage")  # elements drawn as a path (lines, arrows): no two cross diagonally
 CENTRED = ("palindrome", "zipper")  # grown from the center cell, one cell at each end per step
 WHOLE = ("region_sum", "lockout", "double_arrow")  # a random walk, kept at its longest prefix that holds
 

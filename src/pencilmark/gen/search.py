@@ -74,8 +74,10 @@ def dig(
         bk = EL.base_kind(kind)
         if bk in EL.SHARED:
             return set(blocked)
-        same = [x for x in els if x[0] == bk]  # and their diagonal steps, so a line of the kind does not cross one
-        return set(blocked) | {c for x in same for c in x[1]} | {s for x in same for s in EL.diagonal_steps(b, x[1])}
+        # the cells of the same kind, and every path's diagonal steps: lines of different kinds may share a cell, but
+        # two lines crossing diagonally read as one crossing (humans avoid it)
+        cells = {c for x in els if x[0] == bk for c in x[1]}
+        return set(blocked) | cells | {s for x in els if x[0] in EL.PATHS for s in EL.diagonal_steps(b, x[1])}
 
     def fresh(e):
         return all(x[1] != e[1] for x in els)
