@@ -96,11 +96,11 @@ symmetry, board sizes), with the puzzle each produced and how long it took.
 
 Without a difficulty range the generator removes every given it can. A puzzle with few givens takes long to scan even
 when it needs only singles, so a Very Easy request comes back at about 4-5, the hard end of published Very Easy
-puzzles. For a gentle puzzle, add a range, and the standard publishing checks (`"quality": {"preset": "standard"}`,
-recommended):
+puzzles. For a gentle puzzle, add a range (every request passes the standard publishing checks unless its `quality`
+says otherwise):
 
 ```json
-"where": {"band": "Very Easy", "difficulty": [3.2, 4.0]}, "quality": {"preset": "standard"}
+"where": {"band": "Very Easy", "difficulty": [3.2, 4.0]}
 ```
 
 The middle half of published puzzles per band (development set: 7,155 puzzles from seven sources with human data):

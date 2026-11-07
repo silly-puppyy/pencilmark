@@ -26,7 +26,8 @@ def spec(size=9, rules=(), where=None, givens=None, symmetry=None, seed=1, time=
         s["symmetry"] = [dict(symmetry, of="givens")]
     if where:
         s["where"] = where
-    s["quality"] = quality if quality is not None else {}  # every example: the default publishing checks
+    if quality is not None:  # without it: the standard preset, as every request
+        s["quality"] = quality
     s["limits"] = {"time": time, "seed": seed}
     return s
 
@@ -46,7 +47,6 @@ def layout_spec(layout, rules=(), locked=(), where=None, givens=None, symmetry=N
         s["symmetry"] = [dict(symmetry, of="givens")]
     if where:
         s["where"] = where
-    s["quality"] = {}  # every example: the default publishing checks
     s["limits"] = {"time": time, "seed": seed}
     return s
 

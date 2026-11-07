@@ -124,12 +124,15 @@
   `late_break`, with limits near the edge of published puzzles.
 - `thin` replaces `spike`: a Medium or harder puzzle whose candidate steps carry less than 25% of its effort.
   `spike` flagged most published puzzles.
-- The `unusual` ranges per band are re-measured on this engine (7,155 puzzles).
+- The `unusual` ranges per band are re-measured on this engine (7,155 puzzles). They apply to 9×9 boards only (they were
+  measured there).
 - Rule use counts the steps where a rule acts without being named: a line's own pair relations, and anti-knight or
   no-touch links erasing notes. Eight false "used in only 0 steps" rejects on the reference cards go.
 
 ### Generator
 
+- Every request passes the standard publishing checks unless its `quality` says otherwise (`{"preset": "none"}`
+  switches them off; `{}` gives each check its own default severity, as `rate` does).
 - Every line kind the engine grades: slow thermo, entropic, modular, parity, palindrome, zipper, region sum, lockout
   and double arrow, besides thermo, whisper, renban and between.
 - Corner clues (quadruples, mathrax), outside clues (sandwich, x-sum, skyscraper, little killer), and locked

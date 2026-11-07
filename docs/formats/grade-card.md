@@ -94,7 +94,8 @@ have one) and / or `severity` (`"reject"`, `"warning"`, or `"off"` to turn the c
 A **preset** turns on a named set of checks and switches the others off: `{"preset": "standard"}` rejects a rule
 family nobody needs (`decorative`), a puzzle that is mostly given (`trivial`), a solve that needs trial or forcing
 (`trial`), candidate steps that do little (`thin`) and a difficulty outside the published range for its band
-(`unusual`). Checks named next to the preset adjust it: `{"preset": "standard", "thin": {"limit": 0.2}}`.
+(`unusual`); `{"preset": "none"}` switches every check off. Checks named next to the preset adjust it:
+`{"preset": "standard", "thin": {"limit": 0.2}}`.
 
 ```python
 pencilmark.rate(puzzle, fields=["issues", "reject", "warning"],
@@ -102,7 +103,8 @@ pencilmark.rate(puzzle, fields=["issues", "reject", "warning"],
 ```
 
 CLI: `--quality trivial.limit=0.5,trial.severity=reject,tedious.severity=off`, or `--quality preset=standard`. The generator spec's `quality` block
-has the same shape and filters the candidates it generates ([Generator spec](generator-spec.md), section 4).
+has the same shape and filters the candidates it generates; without it a request uses the standard preset ([Generator
+spec](generator-spec.md), section 4).
 
 | Code | Severity when asked for | Meaning | Limit (default) |
 |---|---|---|---|
@@ -114,7 +116,7 @@ has the same shape and filters the candidates it generates ([Generator spec](gen
 | `tedious` | warning | Very Easy or Easy, but over *limit* minutes of routine work. | minutes (60) |
 | `uniqueness` | warning | Needs a uniqueness-based technique (relies on assuming one solution). | – |
 | `trial` | warning | Needs trial and error or forcing chains. | – |
-| `unusual` | reject | A difficulty outside the middle 80% of published puzzles of the same band (classic 9×9 and variants apart; Very Easy has no floor, Extreme no ceiling; [Generate a puzzle](../guides/generator/generate.md#4-typical-difficulty) has the ranges). | – |
+| `unusual` | reject | A difficulty outside the middle 80% of published puzzles of the same band (classic 9×9 and 9×9 variants apart; other board sizes have no range; Very Easy has no floor, Extreme no ceiling; [Generate a puzzle](../guides/generator/generate.md#4-typical-difficulty) has the ranges). | – |
 
 **Opt-in checks** run only when the quality object names them (a `severity`, or a `limit`, which turns the check on);
 no preset uses them. They describe taste rather than faults, so their limits sit near the edge of what published Medium

@@ -39,7 +39,7 @@ KILLERS = {
 
 
 # a first stage is mostly given by design: the publishing check for too many givens is off there
-QUALITY = {"killer-1-first-cages": {"trivial": {"severity": "off"}}}
+QUALITY = {"killer-1-first-cages": {"preset": "standard", "trivial": {"severity": "off"}}}
 KILLER_SEED = {}  # name -> seed, where seed 1 found nothing in the time
 
 
@@ -72,7 +72,8 @@ def run(name):
         seed=KILLER_SEED.get(name, list(KILLERS).index(name) + 1),  # a seed per stage: one seed gives one grid
         time=600,
     )
-    s["quality"] = QUALITY.get(name, {})
+    if name in QUALITY:
+        s["quality"] = QUALITY[name]
     try:
         r = pencilmark.generate(s)
     except pencilmark.GenerationFailed as e:
@@ -117,7 +118,7 @@ def practice(code, band, known=(), tries=24):
     for seed in range(1, tries + 1):
         spec = {"format": "pencilmark-spec", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
                 "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}],
-                "where": {"band": band, "contains": {"codes": [code], "strict": True}}, "quality": {},
+                "where": {"band": band, "contains": {"codes": [code], "strict": True}},
                 "limits": {"time": 120, "seed": seed}}
         try:
             result = pencilmark.generate(spec)

@@ -84,6 +84,7 @@ SEVERITIES = ("reject", "warning", "off")
 # supported by published puzzles (thin: published Hard rarely below 0.26; unusual: outside the published range)
 PRESETS = {
     "standard": {"decorative": "reject", "trivial": "reject", "trial": "reject", "thin": "reject", "unusual": "reject"},
+    "none": {},  # every check off (a generator request that wants no filtering)
 }
 
 
@@ -204,6 +205,8 @@ def _c_unusual(c):
         return []
     from .interop import is_classic9
 
+    if c.puzzle.D != 9 or c.puzzle.N != 81:  # the ranges were measured on 9x9 puzzles: no range for other sizes
+        return []
     kind = "classic" if is_classic9(c.puzzle) else "variant"
     lo_hi = TYPICAL[kind].get(c.tier)
     if lo_hi is None:

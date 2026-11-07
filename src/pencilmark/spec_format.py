@@ -26,6 +26,7 @@ from .rules.line import LINE
 FORMAT = "pencilmark-spec"
 FORMAT_VERSION = 1
 NS = "io.github.silly-puppyy.pencilmark"
+DEFAULT_QUALITY = {"preset": "standard"}  # a request without "quality" (generator-spec.md 4)
 # generator element kind <-> template (type, kind)
 GEN_KINDS = {
     "cage": ("cage", None),
@@ -422,8 +423,9 @@ def spec_to_gen(doc):
         if set(w["elements"]) != {"max"}:
             raise NotSupportedError('where.elements takes {"max": n}')
         out["max_elements"] = w["elements"]["max"]
-    if doc.get("quality") is not None:  # the publishing checks: a candidate with a reject issue is not returned
-        out["quality"] = dict(doc["quality"])
+    # the publishing checks: a candidate with a reject issue is not returned; without "quality" the standard preset
+    # (user 2026-11-07: every generation passes the quality checks; {"preset": "none"} switches them off)
+    out["quality"] = dict(doc["quality"]) if doc.get("quality") is not None else dict(DEFAULT_QUALITY)
     lim = doc.get("limits") or {}
     if lim.get("results", 1) != 1:
         raise NotSupportedError("the generator returns one puzzle per run (limits.results 1; run several seeds)")
@@ -525,7 +527,7 @@ def spec_from_gen(spec):
         lim["seed"] = s.seed
     if lim:
         doc["limits"] = lim
-    if s.quality is not None:  # {} = the default checks
+    if s.quality is not None and s.quality != DEFAULT_QUALITY:  # the default (standard preset) is left out
         doc["quality"] = dict(s.quality)
     ext = {k: getattr(s, k) for k in ("solver", "grade_seconds") if getattr(s, k) != DEFAULTS[k]}
     if ext:

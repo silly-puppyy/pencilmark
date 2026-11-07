@@ -44,6 +44,8 @@ def unique(puzzle):
 
 def run(doc, budget=150):  # a runaway guard; CI on Windows is about 2x slower than Linux
     t = time.time()
+    if isinstance(doc, dict) and "quality" not in doc:  # these tests check generation, not the checks (preset off)
+        doc = dict(doc, quality={"preset": "none"})
     r = pencilmark.generate(doc)
     assert time.time() - t < budget
     asked = (doc.get("meta") or {}) if isinstance(doc, dict) else {}
@@ -439,3 +441,13 @@ def test_fingerprints_asked_for_in_the_spec():
         r"[0-9a-f]{64}", meta["generated_from"]
     )
     assert meta["fingerprint"] != meta["generated_from"]
+
+
+def test_standard_preset_by_default():
+    """a request without quality uses the standard preset (its checks reject); {"preset": "none"} turns them off"""
+    from pencilmark import spec_format as SF
+
+    base = {"format": "pencilmark-spec", "format_version": 1, "board": {"rows": 4, "cols": 4}, "digits": 4,
+            "rules": [{"type": "box_grid", "box": [2, 2], "count": [2, 2]}]}  # fmt: skip
+    assert SF.spec_to_gen(base)["quality"] == {"preset": "standard"}
+    assert SF.spec_to_gen(dict(base, quality={"preset": "none"}))["quality"] == {"preset": "none"}
