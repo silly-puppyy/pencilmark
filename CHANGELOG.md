@@ -39,9 +39,9 @@
   new ones.
   - The quadruple rule is `{"type": "quadruple", ...}` (was `contains`, the community name is quadruple), so
     `contains` now only means the card's technique list and its `where.contains` target.
-  - `color` everywhere in keys and values: region kind `color` (was `color`), card annotations and trace layers
-    `color` / `colors` / `center` (were `color` / `colors` / `center`), `rate(coloring=True)` and `--coloring`
-    (were `coloring`). Prose keeps British spelling.
+  - `color` everywhere in keys and values: region kind `color` (was `colour`), card annotations and trace layers
+    `color` / `colors` / `center` (were `colour` / `colours` / `centre`), `rate(coloring=True)` and `--coloring`
+    (were `colouring`).
   - The card's `contains` and `steps` entries give `band_index` (was `band`, an integer next to the card's band
     name); trace positions give `grid` (was `digits`).
   - `neighbors` takes `step` for its pairs (`"step": "knight"`; was `where`, which also named the spec's targets).
@@ -100,7 +100,7 @@
   by restricted common digits, listed under ALS-AIC.
 - **Grouped chain ends**: an AIC, X-chain or ALS chain may end on a box-line group (HoDoKu's grouped AICs and nice
   loops). Speed on 419 classic-source cards: within noise.
-- **Multi-Colouring type 2**: a color that sees both colors of another cluster is false.
+- **Multi-Coloring type 2**: a color that sees both colors of another cluster is false.
 - **Sue de Coq** with line and box sets of up to 3 cells, without the almost-locked restriction (HoDoKu's form).
 - HoDoKu's regression library: missing 193 -> 64 cases over this pass, 0 unsound moves.
 
