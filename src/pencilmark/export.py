@@ -629,6 +629,12 @@ FIELDS = [
 ]
 
 
+def _cell(p, c):
+    """a cell index -> its name (r3c7), for the log"""
+    r, k = p.coords[c]
+    return f"r{r + 1}c{k + 1}"
+
+
 def grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, explain=None, alternatives=True):
     """grade() under max_seconds, stage by stage: the technique list (contains) truncates at the limit as before; the difficulty
     route stops at its own limit (engine deadline) and the card is then band "Unknown" with difficulty / time null, the
@@ -729,6 +735,12 @@ def _grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expl
             card = make_card(bp)
             expired = hit()
             stage("card with publishing checks", t)
+        if _log.isEnabledFor(5):  # trace: the card's route step by step
+            for i, st in enumerate(bp["steps"], 1):
+                el = len(st.get("elims") or ())
+                _log.log(5, "step %d: %s (%s, band %s)%s%s", i, st["name"], st["code"], st["band"],
+                         f" places {_cell(p, st['place'][0])}={st['place'][1]}" if st.get("place") else "",
+                         f", removes {el} candidate{'s' if el != 1 else ''}" if el else "")  # fmt: skip
     finally:
         if own:
             CB._C.set_deadline(0.0)

@@ -183,14 +183,10 @@ def _quality_arg(text):
 
 def _log_to_stderr(level):
     """--log: the "pencilmark" logger to standard error at this level (once per process: -j workers call it too)"""
-    import logging
+    if level:
+        from . import log
 
-    log = logging.getLogger("pencilmark")
-    if level and not any(isinstance(h, logging.StreamHandler) for h in log.handlers):
-        h = logging.StreamHandler(sys.stderr)
-        h.setFormatter(logging.Formatter("%(name)s: %(message)s"))
-        log.addHandler(h)
-        log.setLevel(level.upper())
+        log(level)
 
 
 def _rate_one(args):
@@ -365,7 +361,7 @@ def main(argv=None):
     )
     common = argparse.ArgumentParser(add_help=False)
     common.add_argument(
-        "--log", choices=("info", "debug"), help="write the pencilmark log to standard error at this level"
+        "--log", choices=("info", "debug", "trace"), help="write the pencilmark log to standard error at this level"
     )
     from .read import READERS
 

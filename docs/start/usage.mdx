@@ -133,27 +133,36 @@ other sites' difficulty labels fall on pencilmark's scale: [Benchmark](../grades
 ## Logging
 
 pencilmark writes what it is doing to the standard Python logger `pencilmark`, which is silent until you switch it on.
-On the command line every command takes `--log info` or `--log debug`, written to standard error:
+On the command line every command takes `--log info`, `--log debug` or `--log trace`, written to standard error, each
+line with the milliseconds since the program started, so the log alone shows where the time goes:
 
 ```
-$ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9.......' | pencilmark rate - --log debug 2>&1
-pencilmark.cpsat_verify: uniqueness: 1 solution(s), by the C++ search, 0.005 s
-pencilmark.export: band route: 0.007 s
-pencilmark.export: card: 0.013 s
-pencilmark.export: technique list and alternatives: 0.027 s
-pencilmark.export: graded in 0.048 s: Hard 5.9
+$ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9.......' | pencilmark rate - --log trace 2>&1
+     255 ms  pencilmark.cpsat_verify: uniqueness: 1 solution(s), by the C++ search, 0.188 s
+     264 ms  pencilmark.export: band route: 0.007 s
+     296 ms  pencilmark.export: card: 0.032 s
+     299 ms  pencilmark.band_path: technique list: without XWG needed (0.003 s)
+     304 ms  pencilmark.band_path: technique list: without PPR still solves: removed (0.005 s)
+     …
+     326 ms  pencilmark.band_path: alternatives: MCH instead of XWG works (0.002 s)
+     326 ms  pencilmark.export: technique list and alternatives: 0.030 s
+     326 ms  pencilmark.export: step 1: Hidden Single (HSI, band 0) places r2c7=9
+     …
+     327 ms  pencilmark.export: step 59: Full House (FHS, band 0) places r4c4=4
+     327 ms  pencilmark.export: graded in 0.071 s: Hard 5.9
 Hard	5.9	10.7	X-Wing
 ```
 
 | Level | What it shows |
 |---|---|
 | `info` | pages fetched, what a reader read from a link, a reading it inferred, a time limit reached, the generator's result |
-| `debug` | also the stage timings above, each uniqueness check, each generator attempt and why it was rejected, and the meaning a reader gave each line color (and why) |
+| `debug` | also each stage's time (uniqueness, band route, card, technique list), each uniqueness check, each generator attempt and why it was rejected, and the meaning a reader gave each line color (and why) |
+| `trace` | also every step of the route the card shows (technique, band, placement or how many candidates it removes) and every test of the technique-list search (which technique was tried without, or as an alternative, the verdict and its time) |
 
-In Python, configure it as any other logger, for example `logging.basicConfig()` and
-`logging.getLogger("pencilmark").setLevel("DEBUG")`. Logger names follow the modules (`pencilmark.gen`,
-`pencilmark.sources`, …), so one part can be switched on alone. With `rate_many(jobs=N)` on Windows and macOS the
-worker processes start without your configuration (the command line's `-j` passes `--log` on).
+In Python, `pencilmark.log("debug")` does the same (`"info"`, `"debug"`, `"trace"`; `None` switches it off), or
+configure the logger as any other: logger names follow the modules (`pencilmark.gen`, `pencilmark.sources`, …), so one
+part can be switched on alone, and `pencilmark.TRACE` is the trace level's number. With `rate_many(jobs=N)` on Windows
+and macOS the worker processes start without your configuration (the command line's `-j` passes `--log` on).
 
 ## Speed
 

@@ -31,5 +31,29 @@ from .api import (
     validate,
 )
 
-# the "pencilmark" logger is silent unless the application configures logging (docs: Logging)
+# the "pencilmark" logger is silent unless the application configures logging, or calls log() (docs: Logging)
 logging.getLogger(__name__).addHandler(logging.NullHandler())
+TRACE = 5  # below debug: every step of the card's route and every test of the technique-list search
+logging.addLevelName(TRACE, "TRACE")
+
+
+def log(level="info", stream=None):
+    """Write pencilmark's log to stderr (or stream) at level "info", "debug" or "trace", each line with the
+    milliseconds since the program started: info says what happened (pages read, limits reached, generator results),
+    debug adds each stage's time (uniqueness, band route, card, technique list) and generator attempts, trace adds
+    every route step and every technique-list test. A second call changes the level. None switches it off."""
+    import sys
+
+    lg = logging.getLogger(__name__)
+    h = next((h for h in lg.handlers if getattr(h, "_pencilmark", False)), None)
+    if level is None:
+        if h:
+            lg.removeHandler(h)
+        lg.setLevel(logging.NOTSET)
+        return
+    if h is None:
+        h = logging.StreamHandler(stream or sys.stderr)
+        h._pencilmark = True
+        h.setFormatter(logging.Formatter("%(relativeCreated)8.0f ms  %(name)s: %(message)s"))
+        lg.addHandler(h)
+    lg.setLevel(TRACE if str(level).lower() == "trace" else str(level).upper())

@@ -13,6 +13,7 @@ a technique also covers its special cases (covered(), lesson()).
 """
 
 import copy
+import logging
 from collections import Counter
 
 from . import cbackend as CB
@@ -22,6 +23,7 @@ from . import solver as S
 from .layers import CLASS_COLORS, COLOR_PAIRS, REGION_COLORS
 
 BANDS = E2.BANDS
+_log = logging.getLogger(__name__)  # trace (level 5): each technique-list test with its time
 # costly techniques late in their band's study order: a listing first runs without their strategies, and runs them only
 # when the best move found could still lose to one of theirs (see _late_bound; exact)
 LATE = ("CaseAnalysis", "WhatIf", "EitherWay")
@@ -647,8 +649,12 @@ def _contents(p, P, alternatives, deadline=None, base=None):
                 truncated = True
                 break
             g_, _ = _check(bp, code, ban | {code})
+            t0 = time.perf_counter()
             alt = band_path(p, P, ban_codes=ban | {code}, guard=g_, max_band=bp["band_index"])
-            if _route_ok(bp, alt, code):
+            ok = _route_ok(bp, alt, code)
+            _log.log(5, "technique list: without %s %s (%.3f s)", code, "still solves: removed" if ok else "needed",
+                     time.perf_counter() - t0)  # fmt: skip
+            if ok:
                 ban.add(code)
                 removed.append(code)
                 bp, changed = alt, True
@@ -706,8 +712,12 @@ def _contents(p, P, alternatives, deadline=None, base=None):
                 # the route may have taken another candidate first; ban the others to test y alone
                 others = seen - {y, code} - set(bp["profile"])
                 g_, _ = _check(bp, code, base | others, extra={y})
+                t0 = time.perf_counter()
                 alt = band_path(p, P, ban_codes=base | others, guard=g_, max_band=bp["band_index"])
-                if alt["profile"].get(y) and _route_ok(bp, alt, code, extra={y}):
+                ok = bool(alt["profile"].get(y)) and _route_ok(bp, alt, code, extra={y})
+                _log.log(5, "alternatives: %s instead of %s %s (%.3f s)", y, code, "works" if ok else "does not",
+                         time.perf_counter() - t0)  # fmt: skip
+                if ok:
                     alts.setdefault(code, []).append(y)
     for code, ys in list(alts.items()):  # keep the most specific: drop an alternative that generalizes another
         chip = [code] + ys  # one in the same chip (a mental subset working implies NPR works)

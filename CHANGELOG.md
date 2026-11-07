@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Logging you can time and follow**: `--log trace` (and `pencilmark.log("trace")` in Python) writes every step of the
+  card's route and every test of the technique-list search; every level's lines carry the milliseconds since start.
+  `pencilmark.log(level)` switches the log on from Python.
 - **Reusable custom rules**: a top-level `"definitions"` object names a custom rule once (`holds`, optional
   `scope`, `each`, `label`, `style`, `draw`); `{"type": "custom", "use": name, "cells": {...}}` places it, with its own
   style if wanted. A placement means the rule it spells out (same fingerprint and card). Custom rules also take `draw`

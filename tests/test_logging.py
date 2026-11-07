@@ -42,3 +42,24 @@ def test_generator_logs(caplog):
     with caplog.at_level(logging.INFO, logger="pencilmark.gen"):
         pencilmark.generate(spec)
     assert any(r.getMessage().startswith("found: Very Easy") for r in caplog.records)
+
+
+def test_trace_follows_the_route():
+    """pencilmark.log("trace"): every route step and every technique-list test, each line with its ms clock; log(None)
+    switches it off (user 2026-11-08: time by the logs, see what happens step by step)"""
+    import io
+    import re
+
+    buf = io.StringIO()
+    pencilmark.log("trace", stream=buf)
+    try:
+        card = pencilmark.rate(CLASSIC, fields=["steps", "contains"])
+    finally:
+        pencilmark.log(None)
+    lines = buf.getvalue().splitlines()
+    assert all(re.match(r"\s*\d+ ms  pencilmark", x) for x in lines)
+    steps = [x for x in lines if "pencilmark.export: step " in x]
+    assert len(steps) == len(card["steps"]) and "Hidden Single" in steps[0]
+    assert any("technique list: without XWG needed" in x for x in lines)
+    pencilmark.rate(CLASSIC)
+    assert buf.getvalue().splitlines() == lines  # switched off: nothing more
