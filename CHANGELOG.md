@@ -54,6 +54,11 @@ What changes for you (details in the entries below):
     type 2 (two cells with the same one extra digit).
   - Aligned Pair Exclusion also counts two cells sharing three digits that see both cells of the pair.
   Bands unchanged on the reference cards; times and difficulties move by up to 0.5 on 32 of 227.
+- Explanations name the pattern found: WXYZ / VWXYZ-Wing (types 1 and 2, with Z) instead of "bent set wing"; Pattern
+  Overlay rules 1 and 2; Death Blossom with several common digits; doubly-linked ALS-XZ including eliminations inside
+  the other set; Empty Rectangles with a single cell or a group on either side. Empty Rectangles come only from the
+  direct finder (HoDoKu's definition): chains are X-chains (the chain classification named some grouped X-chains ER).
+  Tests: every added rule's explanation on a generated position (pattern words, every removed candidate named).
 - Explanations: hidden unique rectangles (types 1 and 2) and extended unique rectangles (types 1 and 2) are explained
   on the engine's own rectangle (before: a hidden-UR text, sometimes on another rectangle); Aligned Pair Exclusion names
   the base pair and the witness that rules out each value pair; BUG+1 with a 4+ candidate cell has its own text.

@@ -680,31 +680,7 @@ void Solver::build_aic(int maxl, bool with_als) {
             } else if (ndig == 1) {
                 tech = X_CHAIN;
                 code = n_grp ? CODE_GXC : CODE_XCH;
-                // empty rectangle: 3 links, a grouped strong link inside a box (the box's digit
-                // cells form a row + column cross), the other strong link a conjugate pair
-                // (HoDoKu, Sudopedia, lisudoku: the cross is required; two parallel segments are a grouped X-chain)
-                auto cross_box = [&](int gi, int v) {
-                    std::vector<int> bc;
-                    for (int c : p.groups[gi].cells)
-                        if (!vals[c] && (cand[c] & bit(v))) bc.push_back(c);
-                    for (int a : bc)
-                        for (int b2 : bc) {
-                            const int r = p.coords[a].first, cc = p.coords[b2].second;
-                            bool cross = true, all_r = true, all_c = true;
-                            for (int c : bc) {
-                                cross &= p.coords[c].first == r || p.coords[c].second == cc;
-                                all_r &= p.coords[c].first == r;
-                                all_c &= p.coords[c].second == cc;
-                            }
-                            if (cross && !all_r && !all_c) return true;
-                        }
-                    return false;
-                };
-                if (n_grp && L == 3)
-                    for (int i = 1; i <= L; ++i)
-                        if (stype[i] == 2 && ssrc[i] >= 0 && ssrc[i] < p.G && p.group_line[ssrc[i]] == 2 &&
-                            (is_grp(chain[i]) || is_grp(chain[i - 1])) && cross_box(ssrc[i], node[chain[0]].second))
-                            code = CODE_ER, tech = EMPTY_RECT;
+                // empty rectangles are found directly (empty_rect, HoDoKu's definition); chains stay X-chains
                 if (L == 3 && s_cnt[2] == 2 && !n_grp) {
                     auto ltype = [&](int a, int b) {
                         int ca = node[a].first, cb = node[b].first;

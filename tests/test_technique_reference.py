@@ -356,6 +356,45 @@ def _als_xz(cd, filled):
     return out
 
 
+def _er(cd, filled):
+    out = set()
+    rowc = lambda r: [r * 9 + c for c in range(9)]
+    colc = lambda c: [r * 9 + c for r in range(9)]
+    for d in range(1, 10):
+        has = lambda x: x not in filled and d in cd[x]
+        for br in (0, 3, 6):
+            for bc in (0, 3, 6):
+                box = [(br + i) * 9 + bc + j for i in range(3) for j in range(3) if has((br + i) * 9 + bc + j)]
+                if len(box) < 2:
+                    continue
+                for r in range(br, br + 3):
+                    for c in range(bc, bc + 3):
+                        if not all(x // 9 == r or x % 9 == c for x in box):
+                            continue
+                        if all(x // 9 == r for x in box) or all(x % 9 == c for x in box):
+                            continue  # pointing
+                        # conjugate pair in a column c2 outside the stack, one end in row r
+                        for c2 in range(9):
+                            if bc <= c2 < bc + 3:
+                                continue
+                            cs = [x for x in colc(c2) if has(x)]
+                            if len(cs) == 2 and r * 9 + c2 in cs:
+                                other = cs[0] if cs[1] == r * 9 + c2 else cs[1]
+                                z = (other // 9) * 9 + c
+                                if has(z) and not (br <= z // 9 < br + 3):
+                                    out.add((z, d))
+                        for r2 in range(9):
+                            if br <= r2 < br + 3:
+                                continue
+                            rs = [x for x in rowc(r2) if has(x)]
+                            if len(rs) == 2 and r2 * 9 + c in rs:
+                                other = rs[0] if rs[1] == r2 * 9 + c else rs[1]
+                                z = r * 9 + other % 9
+                                if has(z) and not (bc <= z % 9 < bc + 3):
+                                    out.add((z, d))
+    return out
+
+
 # reference == engine (or the engine a superset: it has forms the reference leaves out, every one sound)
 REFS = [
     ("UniqueRectangle", lambda cd, filled: _ur(cd), "superset"),
@@ -363,6 +402,7 @@ REFS = [
     ("3DMedusa", _medusa, "equal"),
     ("PatternOverlay", lambda cd, filled: set().union(*_pom(cd)), "equal"),
     ("ALS-XZ", _als_xz, "superset"),
+    ("EmptyRectangle", _er, "equal"),
 ]
 
 
@@ -371,42 +411,63 @@ def test_more_reference_finders(pos):
     p, q, mask, cand, filled = _state(pos)
     cd = {c: ([filled[c]] if c in filled else cand[c]) for c in range(81)}
     sol = [int(x) for x in pencilmark.solve(pos["puzzle"])]
-    for tech, ref_fn, rel in REFS:
-        mv, _, _ = _moves(pos, {tech})
+    for tech, ref_fn, rel in REFS + [("EmptyRectangle", _er, "equal-canonical")]:
+        mv, _, _ = _moves(pos, {tech, "CanonicalEnumeration"} if rel == "equal-canonical" else {tech})
+        mv = [m for m in mv if S.TECH_NAMES[m["tech"]] == tech]
         ours = {tuple(e) for m in mv for e in m["elim"]}
         ref = {e for e in ref_fn(cd, filled) if e[0] not in filled}
         assert ours >= ref if rel == "superset" else ours == ref, (tech, sorted(ref - ours)[:3], sorted(ours - ref)[:3])
         assert all(sol[c] != d for c, d in ours), tech
 
 
-WORDS = {
-    "hur2": "hidden unique rectangle",
-    "xur2": "extended unique rectangle",
-    "ape_als": "aligned pair exclusion",
-    "colour_unit": "colouring",
-    "medusa_unit": "two-colour chain",
-    "xy": "XY-Chain",
+# kind -> (technique, which listed move, words its explanation must use)
+EXPLAINED = {
+    "hur2": ("UniqueRectangle", lambda m: m["code"] == "HUR", "hidden unique rectangle"),
+    "xur2": ("UniqueRectangle", lambda m: m["code"] == "XUR2", "extended unique rectangle type 2"),
+    "ape_als": ("AlignedPairExclusion", lambda m: True, "aligned pair exclusion"),
+    "colour_unit": ("Coloring", lambda m: True, "colouring"),
+    "medusa_unit": ("3DMedusa", lambda m: m["code"] == "medusa wrap (emptied house)", "no place for"),
+    "xy": ("XY-Chain", lambda m: True, "XY-Chain"),
+    "wxyz2": ("WXYZ-Wing", lambda m: m["code"] in ("WXYZ-Wing (type 2)", "VWXYZ-Wing (type 2)"), "type 2"),
+    "pom2": ("PatternOverlay", lambda m: m["code"] == "pattern overlay (rule 2)", "rule 2"),
+    "er": ("EmptyRectangle", lambda m: True, "empty rectangle"),
+    "db": ("DeathBlossom", lambda m: True, "death blossom"),
+    "finned": ("FinnedFish", lambda m: not any(w in str(m["code"]) for w in ("Franken", "Mutant")), "finned|sashimi"),
+    # a Franken spelling's eliminations: the explainer may name the plainer fish that makes them (preferred)
+    "franken": (
+        "FinnedFish",
+        lambda m: any(w in str(m["code"]) for w in ("Franken", "Mutant")),
+        "x-wing|swordfish|jellyfish",
+    ),
+    "alsxz2": ("ALS-XZ", lambda m: m["code"] == "AXZ2", "doubly linked"),
+    "alsxy": ("ALS-XY-Wing", lambda m: True, "ALS-XY-Wing"),
 }
 
 
 @pytest.mark.parametrize("pos", POS, ids=lambda x: x["id"])
 def test_explanation_names_the_pattern(pos):
-    """the English explanation of the technique's step at the position: verified, the pattern's own wording (not
-    another type's or the generic fallback), every eliminated cell named"""
-    from pencilmark.explain import explain, replay
+    """the English explanation of the rule's move at the position: verified, the pattern's own wording (not another
+    type's or the generic fallback), every eliminated cell named"""
+    from types import SimpleNamespace as NS
+
+    from pencilmark.explain import explain
     from pencilmark.explain.grid import State
 
-    tech = KINDS.get(pos["kind"], "XY-Chain")
+    tech, which, words = EXPLAINED[pos["kind"]]
     p, q, mask, cand, filled = _state(pos)
+    cp = CB.to_cpuzzle(p)
     keep = {k for k, v in S.TECH_NAMES.items() if v == tech}
-    steps, _ = CB.solve(q, api._params("computer"), disabled=set(S.TECH_NAMES) - keep - {S.TAKE_NOTES}, cand=mask,
-                        max_steps=3, cpuzzle=CB.to_cpuzzle(p), assume_unique=True, explain=True)  # fmt: skip
+    mv = CB.state_moves(q, api._params("computer"), cpuzzle=cp, cand=mask, limit_per_tech=0, details=True,
+                        assume_unique=True, disabled=list(set(S.TECH_NAMES) - keep))  # fmt: skip
+    m = next(m for m in mv if m["tech"] in keep and which(m))
     vals = [filled.get(c, 0) for c in range(81)]
-    st0 = State(p, vals, [0 if vals[c] else m for c, m in enumerate(mask)], "notes")
+    st0 = State(p, vals, [0 if vals[c] else x for c, x in enumerate(mask)], "notes")
     st0.givens = set(p.givens)
-    step, state = next((s, t) for _, s, t in replay(p, steps, st0) if s.move.feat[0] in keep)
-    e = explain(step, p, state)
+    move = NS(feat=(m["tech"],), place=tuple(m["place"]) if m["place"] else None, elim=tuple(map(tuple, m["elim"])),
+              code=m["code"], xmeta=m["xmeta"], explain=CB.explain_record(p, m, cp))  # fmt: skip
+    e = explain(NS(move=move, mode="notes"), p, st0)
     assert e["verified"] and "error" not in e, e
-    assert WORDS[pos["kind"]].lower() in e["short"].lower(), e["short"]
-    names = {f"r{c // 9 + 1}c{c % 9 + 1}" for c, _ in step.move.elim}
+    text = (e["short"] + " " + e["teach"]).lower()
+    assert any(w.lower() in text for w in words.split("|")), (e["short"], e["teach"])
+    names = {f"r{c // 9 + 1}c{c % 9 + 1}" for c, _ in m["elim"]}
     assert all(n in e["teach"] or n in e["short"] for n in names), (names, e["teach"])

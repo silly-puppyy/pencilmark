@@ -1044,3 +1044,73 @@ def _h_ape(ctx):
     )
     J = _J(ctx, digits=sorted({d for _, d in ctx.elims}), base_cells=[X, Y], cover_cells=common)
     return _result(ctx, J, short, teach, True)
+
+
+def _h_nwing(ctx):
+    """WXYZ / VWXYZ-Wing: n cells holding n digits; one unrestricted digit Z is in the wing (type 1), or none and every
+    digit is there once (type 2)"""
+    nm, p, st = ctx.nm, ctx.p, ctx.st
+    cells = list((ctx.raw_engine or {}).get("pattern_cells") or [])
+    if not cells:
+        return _generic(ctx)
+    U = 0
+    for c in cells:
+        U |= st.cand[c]
+    ds = list(digits_of(U))
+    n = len(cells)
+    name = {4: "WXYZ-Wing", 5: "VWXYZ-Wing"}.get(n, f"{n}-cell wing")
+    restricted = [
+        d for d in ds if all(b in p.peers[a] for a, b in combinations([c for c in cells if st.cand[c] & bit(d)], 2))
+    ]
+    free = [d for d in ds if d not in restricted]
+    gone = sorted({d for _, d in ctx.elims})
+    lead = f"{nm.cells(cells)} hold only {_join(ds)}: {n} cells, {n} digits."
+    if not free:
+        short = f"{fmt_elims(nm, ctx.elims)}: {name} type 2"
+        teach = (
+            f"{lead} Every digit's cells in the wing see each other, so each digit is there at most once; with {n} "
+            f"cells and {n} digits each is there exactly once. A cell that sees every place of a digit in the wing "
+            f"loses it: {fmt_elims(nm, ctx.elims)}."
+        )
+    else:
+        z = free[0]
+        zc = [c for c in cells if st.cand[c] & bit(z)]
+        short = f"{fmt_elims(nm, ctx.elims)}: {name} (Z = {z})"
+        teach = (
+            f"{lead} Every digit but {z} has its cells in the wing seeing each other, so it is there at most once; "
+            f"those {n - 1} digits fill at most {n - 1} cells, so {z} is in the wing, in {nm.cells(zc, 'or')}. "
+            f"{_subj(nm, sorted({c for c, _ in ctx.elims}))} "
+            f"{'sees' if len({c for c, _ in ctx.elims}) == 1 else 'see'} all of them: no {z} there."
+        )
+    if free and gone != [free[0]]:
+        return _generic(ctx)
+    J = _J(ctx, digits=gone, base_cells=cells, cover_cells=sorted({c for c, _ in ctx.elims}))
+    return _result(ctx, J, short, teach, True)
+
+
+def _h_pom(ctx):
+    """Pattern Overlay: a digit's templates (one cell per row, column and box); rule 1 drops candidates no template
+    uses, rule 2 (code 'pattern overlay (rule 2)') first drops templates that meet every template of another digit"""
+    nm = ctx.nm
+    d = ctx.xm.get("digit") or next(iter({v for _, v in ctx.elims}))
+    k = ctx.xm.get("templates")
+    tg = sorted({c for c, _ in ctx.elims})
+    if ctx.code == "pattern overlay (rule 2)":
+        w = ctx.xm.get("blocker")
+        short = f"{fmt_elims(nm, ctx.elims)}: pattern overlay (rule 2) on {d}"
+        teach = (
+            f"List every way to place the {d}s (one per row, column and box) that the candidates allow. The digits' "
+            f"placements share no cell, so a placement of {d} that collides with every possible placement of another "
+            f"digit cannot be the solution's"
+            + (f" (here {w} blocks some)" if w else "")
+            + f". In the {k} placements left, {nm.cells(tg)} never hold {d}: {fmt_elims(nm, ctx.elims)}."
+        )
+    else:
+        short = f"{fmt_elims(nm, ctx.elims)}: pattern overlay on {d}"
+        teach = (
+            f"List every way to place the {d}s (one per row, column and box) that the candidates allow"
+            + (f": {k} placements" if k else "")
+            + f". None of them uses {nm.cells(tg)}, so {fmt_elims(nm, ctx.elims)}."
+        )
+    J = _J(ctx, digits=[d], cover_cells=tg)
+    return _result(ctx, J, short, teach, True)

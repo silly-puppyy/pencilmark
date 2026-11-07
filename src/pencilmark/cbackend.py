@@ -142,7 +142,7 @@ XMETA_KEYS = {
     S.SUE_DE_COQ: ("n_inter", "n_line", "n_box", "digit_mask", "n_elims"),
     S.APE: ("cell_a", "cell_b", "n_single", "n_elims", "n_als"),
     S.CHUTE_RP: ("cell_a", "cell_b", "absent", "eliminated", "n_elims"),
-    S.POM: ("digit", "templates", "n_elims"),
+    S.POM: ("digit", "templates", "n_elims", "blocker"),
     S.GURTH: ("symmetry", "n_elims"),
     S.NISHIO: ("digit", "rounds", "placements", "empty_house"),
     S.FORCING: _FORCING_KEYS,

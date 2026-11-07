@@ -985,22 +985,23 @@ def _h_empty_rect(ctx):
     line through the box's column (or row), and the cell where the pair's other end and the box's row meet."""
     nm = ctx.nm
     ch = (ctx.raw_engine or {}).get("chain") or []
-    if len(ch) != 4 or not ctx.elims or "group" not in ch[1] or "cell" not in ch[0] or "cell" not in ch[3]:
+    cells_of = lambda n: list(n["group"]) if "group" in n else [n["cell"]] if "cell" in n else None  # noqa: E731
+    if len(ch) != 4 or not ctx.elims or cells_of(ch[0]) is None or cells_of(ch[1]) is None or "cell" not in ch[3]:
         return _h_chain(ctx)
     d = ch[0]["digit"]
-    a, grp, c, e = ch[0]["cell"], ch[1]["group"], ch[2].get("cell"), ch[3]["cell"]
+    ends, grp, c, e = cells_of(ch[0]), cells_of(ch[1]), ch[2].get("cell"), ch[3]["cell"]
     box_g, line_g = ctx.gi(ch[1].get("via")), ctx.gi(ch[3].get("via"))
     if box_g is None or line_g is None or c is None:
         return _h_chain(ctx)
     box, pair_line = nm.unit(box_g), nm.unit(line_g)
     tgt = sorted({x for x, _ in ctx.elims})
-    in_box = sorted([a] + list(grp), key=lambda x: nm.p.coords[x])
+    in_box = sorted(set(ends) | set(grp), key=lambda x: nm.p.coords[x])
     teach = (
         f"In {box}, the {d}s can only go in {nm.cells(in_box, 'or')}: all on one row and one column of the box "
         f"(the rest of the box is an 'empty rectangle'). {_cap(pair_line)} has only two places for {d}: "
         f"{nm.cell(c)} and {nm.cell(e)}. If {nm.cell(e)} is not {d}, then {nm.cell(c)} is, which removes {d} from "
-        f"{nm.cells(sorted(grp))} (they see {nm.cell(c)}), so {box}'s {d} must be {nm.cell(a)}. "
-        f"Either {nm.cell(e)} or {nm.cell(a)} holds {d}, and {nm.cells(tgt)} "
+        f"{nm.cells(sorted(grp))} ({'it sees' if len(grp) == 1 else 'they see'} {nm.cell(c)}), so {box}'s {d} must be "
+        f"in {nm.cells(sorted(ends), 'or')}. Either {nm.cell(e)} or {nm.cells(sorted(ends), 'or')} holds {d}, and {nm.cells(tgt)} "
         f"{'sees' if len(tgt) == 1 else 'see'} both, so {fmt_elims(nm, ctx.elims)}."
     )
     J = _J(ctx, digits=[d], base_units=[box_g], cover_units=[line_g], base_cells=in_box, cover_cells=[c, e])

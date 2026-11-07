@@ -8,7 +8,7 @@ from itertools import combinations
 from .. import registry as R
 from .. import solver as S
 from ..model import bit, digits_of, popcount
-from .base import _J, CONCEPTS, _cap, _elim_digits, _elim_list, _generic, _result, _subj, fmt_elims, rel_label
+from .base import _J, CONCEPTS, _cap, _elim_digits, _elim_list, _generic, _join, _result, _subj, fmt_elims, rel_label
 from .catalog import CATALOG, SHAPE_NOTES, chain_shape
 from .grid import _rule_dom, enum_rule, mental_view, rules
 
@@ -807,12 +807,13 @@ def _als_xz_double(ctx, als, pair=None):
             x1, x2 = rcc[:2]
             el = set()
             for q in range(p.N):
-                if st.vals[q] or q in A[0] or q in B[0]:
+                if st.vals[q]:
                     continue
                 for x in (x1, x2):
-                    if st.cand[q] & bit(x) and sees_all(q, A[0] + B[0], x):
+                    if q not in A[0] and q not in B[0] and st.cand[q] & bit(x) and sees_all(q, A[0] + B[0], x):
                         el.add((q, x))
-                for S_ in (A, B):
+                for S_ in (A, B):  # a digit locked in one set leaves every cell outside it seeing all its places
+                    # (cells of the other set too)
                     for d in digits_of(S_[1] & ~bit(x1) & ~bit(x2)):
                         if st.cand[q] & bit(d) and sees_all(q, S_[0], d):
                             el.add((q, d))
@@ -953,12 +954,12 @@ def _h_death_blossom(ctx):
     zs = _elim_digits(ctx)
     ea = _engine_als(ctx)
     pc = ctx.engine.get("pattern_cells") or []
-    if ea and pc and len(zs) == 1:
+    if ea and pc and zs:
         inals = {c for a in ea for c in a[0]}
         stems = [c for c in pc if c not in inals and not st.vals[c]]
         if len(stems) == 1:
-            stem, z = stems[0], zs[0]
-            sds = [d for d in digits_of(st.cand[stem]) if d != z]
+            stem, z = stems[0], (zs[0] if len(zs) == 1 else list(zs))
+            sds = [d for d in digits_of(st.cand[stem]) if d not in zs]
             petals = []
             for d in sds:
                 pt = next(
@@ -1034,6 +1035,21 @@ def _h_death_blossom(ctx):
 
 def _db_render(ctx, stem, sds, petals, z):
     nm, st = ctx.nm, ctx.st
+    if isinstance(z, list):  # several common digits: each, separately, leaves the cells seeing all its petal places
+        pt = "; ".join(
+            f"if it is {d}, petal {_als_desc(nm, a)} loses its {d} and is locked" for d, a in zip(sds, petals)
+        )
+        short = f"{fmt_elims(nm, ctx.elims)}: death blossom on stem {nm.cell(stem)}"
+        teach = (
+            f"The stem {nm.cell(stem)} {nm.cset(st.cand[stem])} decides everything: {pt}. A locked petal must use "
+            f"all its remaining digits, and every petal contains {_join(z)} -- so whatever the stem is, each of them "
+            f"ends up in some petal, and a cell seeing all of a digit's places in the petals loses it: "
+            f"{fmt_elims(nm, ctx.elims)}."
+        )
+        J = _J(ctx, digits=sds + z, base_cells=[stem] + [c for a in petals for c in a[0]],
+               als=[{"cells": list(a[0]), "digits": list(digits_of(a[1]))} for a in petals],
+               cover_cells=sorted({c for c, _ in ctx.elims}))  # fmt: skip
+        return _result(ctx, J, short, teach, True)
     tz = {t for t in ctx.elims if t[1] == z}
     tg = sorted({c for c, _ in tz})
     pt = "; ".join(f"if it is {d}, petal {_als_desc(nm, a)} loses its {d} and is locked" for d, a in zip(sds, petals))

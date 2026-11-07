@@ -12,7 +12,19 @@ from .catalog import _LINE_KEY, _REL_KEY, _VARIANT_LESSONS, CATALOG, SW, _confir
 from .chains import _h_als_xywing, _h_als_xz, _h_chain, _h_death_blossom, _h_mental_chain
 from .combos import _h_combo, _h_combo_lock, _h_innie, _h_lol
 from .grid import Rule, State, _as_state, derived, replay
-from .notes import _h_ape, _h_bug, _h_coloring, _h_fish, _h_locked, _h_pairarc, _h_subset, _h_ur, _h_wing
+from .notes import (
+    _h_ape,
+    _h_bug,
+    _h_coloring,
+    _h_fish,
+    _h_locked,
+    _h_nwing,
+    _h_pairarc,
+    _h_pom,
+    _h_subset,
+    _h_ur,
+    _h_wing,
+)
 from .records import (
     _h_band_logic,
     _h_chute_rp,
@@ -570,11 +582,7 @@ _X_HANDLERS = {
         ),
     ),
     "N_WING": (
-        _h_pattern_named(
-            "bent set wing",
-            "A wing of several cells holding exactly as many digits: all digits "
-            "but one are confined to cells that see each other, so the last one is forced into the wing.",
-        ),
+        _h_nwing,
         "wxyz_wing",
         "fish+wings",
         ("WXYZ-Wing", "Bent sets of 4+ cells generalising XY- and XYZ-Wings."),
@@ -602,11 +610,7 @@ _X_HANDLERS = {
         ("Chute Remote Pairs", "Remote pairs inside a band or stack."),
     ),
     "POM": (
-        _h_pattern_named(
-            "pattern overlay",
-            "Every placement pattern of this digit (one per row, column and box) "
-            "consistent with the candidates was listed; these candidates are in none of them.",
-        ),
+        _h_pom,
         "pattern_overlay",
         "trial",
         ("Pattern Overlay", "List all templates of a digit and keep only cells some template uses."),
