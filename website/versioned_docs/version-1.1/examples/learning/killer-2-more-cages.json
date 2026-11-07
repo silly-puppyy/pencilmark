@@ -1,0 +1,381 @@
+{
+ "title": "More cages",
+ "spec": {
+  "format": "sudoku-spec",
+  "format_version": 1,
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "rules": [
+   {
+    "type": "box_grid",
+    "origin": "r1c1",
+    "box": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "cage",
+    "count": "tile"
+   }
+  ],
+  "givens": {
+   "count": [
+    28,
+    40
+   ]
+  },
+  "where": {
+   "band": "Very Easy",
+   "difficulty": [
+    2,
+    4.5
+   ]
+  },
+  "quality": {},
+  "limits": {
+   "time": 600,
+   "seed": 2
+  }
+ },
+ "puzzle": {
+  "format": "sudoku-puzzle",
+  "format_version": 1,
+  "meta": {
+   "title": "generated 9x9 14 cage, 33 givens",
+   "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nKiller: Digits in a cage sum to its small clue and don't repeat within the cage.",
+   "type": "Killer Sudoku",
+   "generated_from": "sha256:39279d4fd6531d03b23bfdce856b0809896fdaa964974c0ba650924e7f7cfde3"
+  },
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "givens": [
+   0,
+   4,
+   8,
+   3,
+   0,
+   1,
+   2,
+   7,
+   0,
+   0,
+   0,
+   0,
+   2,
+   0,
+   4,
+   9,
+   8,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   4,
+   1,
+   0,
+   5,
+   9,
+   0,
+   0,
+   0,
+   0,
+   3,
+   0,
+   2,
+   0,
+   0,
+   4,
+   5,
+   0,
+   8,
+   6,
+   0,
+   0,
+   0,
+   0,
+   6,
+   1,
+   0,
+   0,
+   0,
+   2,
+   0,
+   0,
+   0,
+   5,
+   3,
+   7,
+   4,
+   0,
+   0,
+   0,
+   0,
+   5,
+   0,
+   0,
+   2,
+   3,
+   0,
+   0,
+   4,
+   0,
+   0,
+   0,
+   0,
+   6,
+   5,
+   0,
+   0
+  ],
+  "solution": [
+   9,
+   4,
+   8,
+   3,
+   6,
+   1,
+   2,
+   7,
+   5,
+   5,
+   6,
+   1,
+   2,
+   7,
+   4,
+   9,
+   8,
+   3,
+   7,
+   2,
+   3,
+   8,
+   9,
+   5,
+   6,
+   4,
+   1,
+   6,
+   5,
+   9,
+   7,
+   2,
+   8,
+   1,
+   3,
+   4,
+   2,
+   1,
+   7,
+   4,
+   5,
+   3,
+   8,
+   6,
+   9,
+   3,
+   8,
+   4,
+   6,
+   1,
+   9,
+   7,
+   5,
+   2,
+   1,
+   9,
+   6,
+   5,
+   3,
+   7,
+   4,
+   2,
+   8,
+   8,
+   7,
+   5,
+   1,
+   4,
+   2,
+   3,
+   9,
+   6,
+   4,
+   3,
+   2,
+   9,
+   8,
+   6,
+   5,
+   1,
+   7
+  ],
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "origin": "r1c1"
+   },
+   {
+    "type": "cage",
+    "sum": 8,
+    "cells": [
+     "r1c9",
+     "r2c9"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 8,
+    "cells": [
+     "r5c2",
+     "r5c3"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 13,
+    "cells": [
+     "r1c5",
+     "r2c5"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 8,
+    "cells": [
+     "r2c2",
+     "r3c2"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 13,
+    "cells": [
+     "r4c9",
+     "r5c9"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 11,
+    "cells": [
+     "r7c8",
+     "r8c8"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 21,
+    "cells": [
+     "r3c5",
+     "r3c6",
+     "r3c7",
+     "r4c7"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 22,
+    "cells": [
+     "r8c4",
+     "r8c5",
+     "r9c4",
+     "r9c5"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 20,
+    "cells": [
+     "r8c1",
+     "r8c2",
+     "r9c2",
+     "r9c3"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 22,
+    "cells": [
+     "r7c9",
+     "r8c9",
+     "r9c8",
+     "r9c9"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 34,
+    "cells": [
+     "r4c5",
+     "r4c6",
+     "r5c6",
+     "r6c6",
+     "r6c7",
+     "r6c8"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 19,
+    "cells": [
+     "r2c3",
+     "r3c3",
+     "r3c4",
+     "r4c4"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 27,
+    "cells": [
+     "r1c1",
+     "r2c1",
+     "r3c1",
+     "r4c1"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 31,
+    "cells": [
+     "r6c1",
+     "r6c2",
+     "r6c3",
+     "r7c1",
+     "r7c2",
+     "r7c3"
+    ]
+   }
+  ]
+ },
+ "card": {
+  "band": "Very Easy",
+  "difficulty": 2.4,
+  "time": 3.8,
+  "contains": [
+   {
+    "code": "HSI",
+    "chip": "HSI",
+    "name": "Hidden Single",
+    "band": 0
+   }
+  ]
+ },
+ "tries": 2
+}

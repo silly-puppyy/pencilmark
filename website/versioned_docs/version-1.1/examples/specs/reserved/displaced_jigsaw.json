@@ -1,0 +1,36 @@
+{
+ "format": "sudoku-spec",
+ "format_version": 1,
+ "meta": {
+  "title": "Displaced jigsaw",
+  "description": "Boxes made from the regular 3x3 boxes with 2-3 cells moved out of each."
+ },
+ "board": {
+  "rows": 9,
+  "cols": 9
+ },
+ "digits": 9,
+ "rules": [
+  {
+   "type": "grid",
+   "origin": "r1c1"
+  },
+  {
+   "type": "box",
+   "count": "tile",
+   "size": 9,
+   "displaced": [
+    2,
+    3
+   ]
+  }
+ ],
+ "where": {
+  "band": "Medium",
+  "issues": "no_reject"
+ },
+ "limits": {
+  "time": 900,
+  "seed": 4
+ }
+}

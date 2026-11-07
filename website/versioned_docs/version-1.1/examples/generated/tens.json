@@ -1,0 +1,520 @@
+{
+ "title": "As many 10-cages as fit",
+ "shows": "a cage `sum` and the count `\"max\"`: the run uses its whole time and keeps the result with the most cages",
+ "spec": {
+  "format": "sudoku-spec",
+  "format_version": 1,
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "rules": [
+   {
+    "type": "box_grid",
+    "origin": "r1c1",
+    "box": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 10,
+    "count": "max"
+   }
+  ],
+  "quality": {},
+  "limits": {
+   "time": 300,
+   "seed": 1
+  }
+ },
+ "puzzle": {
+  "format": "sudoku-puzzle",
+  "format_version": 1,
+  "meta": {
+   "title": "generated 9x9 24 cage, 1 givens",
+   "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nKiller: Digits in a cage sum to its small clue and don't repeat within the cage.",
+   "type": "Killer Sudoku",
+   "generated_from": "sha256:660954cf3b3b6c6af6c077aef7879f361abc1177f8c5a984db55127203c1af12"
+  },
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "givens": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   2,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "solution": [
+   4,
+   9,
+   6,
+   7,
+   3,
+   1,
+   5,
+   2,
+   8,
+   8,
+   2,
+   7,
+   5,
+   4,
+   6,
+   9,
+   3,
+   1,
+   5,
+   1,
+   3,
+   2,
+   9,
+   8,
+   4,
+   6,
+   7,
+   1,
+   5,
+   4,
+   8,
+   6,
+   9,
+   2,
+   7,
+   3,
+   3,
+   7,
+   9,
+   4,
+   1,
+   2,
+   8,
+   5,
+   6,
+   6,
+   8,
+   2,
+   3,
+   5,
+   7,
+   1,
+   9,
+   4,
+   9,
+   4,
+   1,
+   6,
+   7,
+   5,
+   3,
+   8,
+   2,
+   2,
+   6,
+   5,
+   1,
+   8,
+   3,
+   7,
+   4,
+   9,
+   7,
+   3,
+   8,
+   9,
+   2,
+   4,
+   6,
+   1,
+   5
+  ],
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "origin": "r1c1"
+   },
+   {
+    "type": "cage",
+    "sum": 10,
+    "cells": [
+     "r7c8",
+     "r7c9"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 10,
+    "cells": [
+     "r3c4",
+     "r4c4"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 10,
+    "cells": [
+     "r5c6",
+     "r6c6",
+     "r6c7"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 10,
+    "cells": [
+     "r9c6",
+     "r9c7"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 10,
+    "cells": [
+     "r2c5",
+     "r2c6"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 10,
+    "cells": [
+     "r2c1",
+     "r2c2"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 10,
+    "cells": [
+     "r7c2",
+     "r8c2"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 10,
+    "cells": [
+     "r9c1",
+     "r9c2"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 10,
+    "cells": [
+     "r6c4",
+     "r7c3",
+     "r7c4"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 10,
+    "cells": [
+     "r8c5",
+     "r9c5"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 10,
+    "cells": [
+     "r5c4",
+     "r5c5",
+     "r6c5"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 10,
+    "cells": [
+     "r4c1",
+     "r5c1",
+     "r6c1"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 10,
+    "cells": [
+     "r1c7",
+     "r1c8",
+     "r2c8"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 10,
+    "cells": [
+     "r6c2",
+     "r6c3"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 10,
+    "cells": [
+     "r4c7",
+     "r5c7"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 10,
+    "cells": [
+     "r8c8",
+     "r9c8",
+     "r9c9"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 10,
+    "cells": [
+     "r8c4",
+     "r9c4"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 10,
+    "cells": [
+     "r3c2",
+     "r4c2",
+     "r4c3"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 10,
+    "cells": [
+     "r2c3",
+     "r3c3"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 10,
+    "cells": [
+     "r3c7",
+     "r3c8"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 10,
+    "cells": [
+     "r7c7",
+     "r8c7"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 10,
+    "cells": [
+     "r5c9",
+     "r6c9"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 10,
+    "cells": [
+     "r1c4",
+     "r1c5"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 10,
+    "cells": [
+     "r3c9",
+     "r4c9"
+    ]
+   }
+  ]
+ },
+ "card": {
+  "band": "Very Hard",
+  "difficulty": 13.1,
+  "time": 59.0,
+  "contains": [
+   {
+    "code": "HSI",
+    "chip": "HSI",
+    "name": "Hidden Single",
+    "band": 0
+   },
+   {
+    "code": "NSI",
+    "chip": "NSI",
+    "name": "Naked Single",
+    "band": 1
+   },
+   {
+    "code": "PPR",
+    "chip": "PPR",
+    "name": "Pointing / Box-Line Reduction",
+    "band": 1,
+    "uses": 20
+   },
+   {
+    "code": "CGC",
+    "chip": "CGC",
+    "name": "Killer cage combinations",
+    "band": 1,
+    "uses": 67
+   },
+   {
+    "code": "HPR",
+    "chip": "HPR/NPR/DGC/HQD/CBL",
+    "name": "Hidden Pair",
+    "band": 2,
+    "alternatives": [
+     "NPR",
+     "DGC",
+     "HQD",
+     "CBL"
+    ],
+    "uses": 6
+   },
+   {
+    "code": "NQD",
+    "chip": "NQD/HQD/CBL",
+    "name": "Naked Quad",
+    "band": 2,
+    "alternatives": [
+     "HQD",
+     "CBL"
+    ],
+    "uses": 1
+   },
+   {
+    "code": "IOV",
+    "chip": "IOV",
+    "name": "Innies & outies as a virtual cage",
+    "band": 2,
+    "uses": 2
+   },
+   {
+    "code": "IOM",
+    "chip": "IOM",
+    "name": "Innies & outies over several houses",
+    "band": 2,
+    "uses": 4
+   },
+   {
+    "code": "RUL",
+    "chip": "RUL",
+    "name": "Two rules together",
+    "band": 2,
+    "uses": 12
+   },
+   {
+    "code": "BAN",
+    "chip": "BAN",
+    "name": "Band set theory with cages",
+    "band": 4,
+    "uses": 5
+   }
+  ]
+ },
+ "info": {
+  "seconds": 426.5,
+  "attempts": 2,
+  "found": 5,
+  "givens": 1,
+  "elements": {
+   "cage": 24
+  },
+  "rejected": {
+   "publishing check: unusual": 2
+  }
+ }
+}

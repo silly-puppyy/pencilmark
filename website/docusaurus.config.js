@@ -38,7 +38,7 @@ module.exports = async function createConfig() {
   trailingSlash: true,
   onBrokenLinks: 'throw',
   markdown: {format: 'detect', mermaid: true, hooks: {onBrokenMarkdownLinks: 'throw'}},
-  clientModules: [require.resolve('./src/clientModules/graphics.js')],
+  clientModules: [require.resolve('./src/clientModules/graphics.js'), require.resolve('./src/clientModules/navActive.js')],
   // the reader's graphics choice, set before the first paint (as the theme sets data-theme): set only by the client
   // module above, graphics a reader turned off would flash in on every page load until the scripts ran
   headTags: [{tagName: 'script', attributes: {}, innerHTML:
@@ -57,7 +57,13 @@ module.exports = async function createConfig() {
         sidebarPath: require.resolve('./sidebars.js'),
         // "Edit this page": copies point to their source at the repository root; generated pages (tools/gen_*.py) have
         // no link, since an edit there is overwritten
-        editUrl: ({docPath}) => {
+        // versions: the released one (versions.json) at the root; the docs of the next release under /next/ until it is
+        // released (then lastVersion becomes 'current' and the released one is frozen with docs:version)
+        lastVersion: '1.1',
+        versions: {current: {label: '1.2-dev', path: 'next', banner: 'unreleased'},
+                   '1.1': {label: '1.1'}},
+        editUrl: ({docPath, version}) => {
+          if (version !== 'current') return undefined;  // a released version's pages are frozen
           const copies = {'index.md': 'README.md', 'guides/development/architecture.md': 'ARCHITECTURE.md',
                           'dev/contributing.md': 'CONTRIBUTING.md'};
           const generated = ['library/python-api.md', 'grades/techniques.md', 'library/palette.md', 'guides/development/parameters.md'];
@@ -85,11 +91,12 @@ module.exports = async function createConfig() {
       title: 'pencilmark',
       logo: {alt: 'pencilmark', src: 'img/favicon.svg'},
       items: [
-        {to: '/start/usage/', label: 'Usage', position: 'left'},
-        {to: '/formats/puzzle-format/', label: 'Puzzle format', position: 'left'},
-        {to: '/formats/grade-card/', label: 'Grade card', position: 'left'},
-        {to: '/library/python-api/', label: 'Python API', position: 'left'},
-        {href: `${GH}/releases/tag/v${VERSION}`, label: `v${VERSION}`, position: 'right', title: 'Release notes'},
+        // doc links: they follow the version being read (the dropdown on the right)
+        {type: 'doc', docId: 'start/usage', label: 'Usage', position: 'left'},
+        {type: 'doc', docId: 'formats/puzzle-format', label: 'Puzzle format', position: 'left'},
+        {type: 'doc', docId: 'formats/grade-card', label: 'Grade card', position: 'left'},
+        {type: 'doc', docId: 'library/python-api', label: 'Python API', position: 'left'},
+        {type: 'docsVersionDropdown', position: 'right'},
         {href: 'https://pypi.org/project/pencilmark/', position: 'right', className: 'pm-nav-icon pm-nav-pypi',
          label: 'PyPI', title: 'pencilmark on PyPI'},
         {href: GH, position: 'right', className: 'pm-nav-icon pm-nav-github', label: 'GitHub', title: 'GitHub repository'},

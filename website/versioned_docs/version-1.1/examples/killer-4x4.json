@@ -1,0 +1,24 @@
+{"format": "sudoku-puzzle",
+ "format_version": 1,
+ "meta": {"title": "Example 4x4 killer"},
+ "board": {"rows": 4, "cols": 4},
+ "digits": 4,
+ "givens": [
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 0],
+ "solution": [
+    1, 2, 3, 4,
+    4, 3, 1, 2,
+    2, 1, 4, 3,
+    3, 4, 2, 1],
+ "rules": [
+  {"type": "box_grid", "box": [2, 2], "origin": "r1c1"},
+  {"type": "cage", "sum": 3, "cells": ["r1c1", "r1c2"]},
+  {"type": "cage", "sum": 4, "cells": ["r1c3", "r2c3"]},
+  {"type": "cage", "sum": 6, "cells": ["r1c4", "r2c4"]},
+  {"type": "cage", "sum": 6, "cells": ["r2c1", "r3c1"]},
+  {"type": "cage", "sum": 4, "cells": ["r2c2", "r3c2"]},
+  {"type": "cage", "sum": 10, "cells": ["r3c3", "r3c4", "r4c3", "r4c4"]},
+  {"type": "cage", "sum": 7, "cells": ["r4c1", "r4c2"]}]}

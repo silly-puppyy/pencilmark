@@ -1,0 +1,325 @@
+{
+ "title": "First cages",
+ "spec": {
+  "format": "sudoku-spec",
+  "format_version": 1,
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "rules": [
+   {
+    "type": "box_grid",
+    "origin": "r1c1",
+    "box": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "cage",
+    "count": "tile"
+   }
+  ],
+  "givens": {
+   "count": [
+    50,
+    null
+   ]
+  },
+  "where": {
+   "band": "Very Easy",
+   "difficulty": [
+    0,
+    3
+   ]
+  },
+  "quality": {
+   "trivial": {
+    "severity": "off"
+   }
+  },
+  "limits": {
+   "time": 600,
+   "seed": 1
+  }
+ },
+ "puzzle": {
+  "format": "sudoku-puzzle",
+  "format_version": 1,
+  "meta": {
+   "title": "generated 9x9 9 cage, 63 givens",
+   "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nKiller: Digits in a cage sum to its small clue and don't repeat within the cage.",
+   "type": "Killer Sudoku",
+   "generated_from": "sha256:f7571988014ed0c618c4ba7eff647eb35966786cfe23770589cd1cff3ef5e508"
+  },
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "givens": [
+   0,
+   5,
+   8,
+   7,
+   4,
+   3,
+   0,
+   1,
+   2,
+   0,
+   4,
+   1,
+   2,
+   5,
+   9,
+   0,
+   8,
+   6,
+   9,
+   0,
+   0,
+   6,
+   8,
+   1,
+   5,
+   4,
+   7,
+   5,
+   3,
+   6,
+   8,
+   2,
+   4,
+   0,
+   9,
+   1,
+   4,
+   1,
+   9,
+   3,
+   6,
+   7,
+   0,
+   5,
+   8,
+   2,
+   0,
+   0,
+   1,
+   9,
+   5,
+   6,
+   3,
+   4,
+   8,
+   9,
+   5,
+   4,
+   7,
+   6,
+   1,
+   2,
+   3,
+   0,
+   0,
+   2,
+   0,
+   1,
+   8,
+   4,
+   0,
+   0,
+   1,
+   7,
+   4,
+   0,
+   3,
+   2,
+   8,
+   0,
+   0
+  ],
+  "solution": [
+   6,
+   5,
+   8,
+   7,
+   4,
+   3,
+   9,
+   1,
+   2,
+   7,
+   4,
+   1,
+   2,
+   5,
+   9,
+   3,
+   8,
+   6,
+   9,
+   2,
+   3,
+   6,
+   8,
+   1,
+   5,
+   4,
+   7,
+   5,
+   3,
+   6,
+   8,
+   2,
+   4,
+   7,
+   9,
+   1,
+   4,
+   1,
+   9,
+   3,
+   6,
+   7,
+   2,
+   5,
+   8,
+   2,
+   8,
+   7,
+   1,
+   9,
+   5,
+   6,
+   3,
+   4,
+   8,
+   9,
+   5,
+   4,
+   7,
+   6,
+   1,
+   2,
+   3,
+   3,
+   6,
+   2,
+   5,
+   1,
+   8,
+   4,
+   7,
+   9,
+   1,
+   7,
+   4,
+   9,
+   3,
+   2,
+   8,
+   6,
+   5
+  ],
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "origin": "r1c1"
+   },
+   {
+    "type": "cage",
+    "sum": 5,
+    "cells": [
+     "r3c2",
+     "r3c3"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 16,
+    "cells": [
+     "r8c8",
+     "r8c9"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 13,
+    "cells": [
+     "r1c1",
+     "r2c1"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 12,
+    "cells": [
+     "r1c7",
+     "r2c7"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 15,
+    "cells": [
+     "r6c2",
+     "r6c3"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 11,
+    "cells": [
+     "r9c8",
+     "r9c9"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 9,
+    "cells": [
+     "r4c7",
+     "r5c7"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 9,
+    "cells": [
+     "r8c1",
+     "r8c2"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 14,
+    "cells": [
+     "r8c4",
+     "r9c4"
+    ]
+   }
+  ]
+ },
+ "card": {
+  "band": "Very Easy",
+  "difficulty": 0.6,
+  "time": 1.2,
+  "contains": [
+   {
+    "code": "HSI",
+    "chip": "HSI",
+    "name": "Hidden Single",
+    "band": 0
+   }
+  ]
+ },
+ "tries": 1
+}

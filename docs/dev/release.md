@@ -25,11 +25,16 @@ before the last step.
    Cards read it from `__version__`; the golden records leave it out, so they do not change. The reference cards in
    `tests/fixtures/variants.json` keep it: change their `"version"` too.
 2. In `CHANGELOG.md`, rename "## Unreleased" to "## 1.1.0 (date)" and start a new empty "## Unreleased" above it.
-3. Commit, then on a fresh install (`pip install -e .`) run `python tools/tasks.py release 1.1.0`. It checks that both
+3. Freeze the docs of this release: `python tools/tasks.py prepare` (the generated pages are part of a version), then
+   in `website/`, `npx docusaurus docs:version 1.2` (it copies `docs/` to `versioned_docs/version-1.2` and the sidebar to
+   `versioned_sidebars/`). In `website/docusaurus.config.js` set `lastVersion: '1.2'`, add `'1.2': {label: '1.2'}` to
+   `versions`, and label the current docs as the next one (`'1.3-dev'`). Readers then land on the released docs; the
+   version menu reaches the others, and the next release's docs stay under `/next/`.
+4. Commit, then on a fresh install (`pip install -e .`) run `python tools/tasks.py release 1.1.0`. It checks that both
    version numbers say 1.1.0, that the CHANGELOG has its section and an empty "Unreleased", and that nothing is
    uncommitted; then it runs the quick suite, the doc examples, the golden check and the docs build (which fails on a
    broken link). It changes nothing; fix what it reports and run it again.
-4. Push to main.
+5. Push to main.
 
 ## 3. Test on every platform
 

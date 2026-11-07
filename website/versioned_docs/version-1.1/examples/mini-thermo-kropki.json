@@ -1,0 +1,17 @@
+{"format": "sudoku-puzzle", "format_version": 1,
+ "board": {"rows": 6, "cols": 6},
+ "digits": 6,
+ "givens": [
+    0, 0, 0, 0, 0, 0,
+    0, 1, 0, 0, 0, 0,
+    0, 0, 0, 0, 3, 0,
+    0, 2, 0, 0, 0, 0,
+    0, 0, 0, 5, 0, 0,
+    0, 0, 0, 0, 0, 0],
+ "rules": [
+  {"type": "box_grid", "origin": "r1c1", "box": [2, 3]},
+  {"type": "line", "kind": "thermo", "cells": ["r4c4", "r3c4", "r2c4", "r2c3"]},
+  {"type": "line", "kind": "thermo", "cells": ["r6c3", "r5c3", "r4c3", "r3c3", "r3c2"]},
+  {"type": "edge", "kind": "kropki", "color": "white", "cells": ["r1c3", "r1c4"]},
+  {"type": "edge", "kind": "kropki", "color": "white", "cells": ["r1c5", "r1c6"]},
+  {"type": "edge", "kind": "kropki", "color": "black", "cells": ["r5c5", "r6c5"]}]}

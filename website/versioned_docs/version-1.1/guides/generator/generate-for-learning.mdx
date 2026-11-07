@@ -1,0 +1,119 @@
+---
+title: Generate for learning
+description: "Puzzles for practice: one new technique at a time, and the same kind of puzzle at rising bands."
+---
+
+import Swatch from '@site/src/components/Swatch';
+
+# Generate for learning
+
+A learner needs puzzles that ask for one new idea at a time. The generator can target a band and require a technique;
+a short loop does the rest. Two recipes: a technique ladder, where each puzzle adds exactly one new technique to what
+the earlier rungs taught, and a progression, the same kind of puzzle at rising bands. The puzzles below were made this way by
+`tools/gen_learning_examples.py`.
+
+## 1. One new technique at a time
+
+Ask for the technique (`"strict": true`, so it must appear as itself, not only as an alternative) and the band it
+belongs to, then keep the first puzzle whose card lists nothing beyond singles and what the learner already knows. The
+band caps what the solver may need, but other techniques of the same band can still turn up, hence the check:
+
+```python
+import pencilmark
+
+SINGLES = {"FHS", "HSI", "NSI"}
+
+def practice(code, band, known=(), tries=24):
+    for seed in range(1, tries + 1):
+        spec = {"format": "sudoku-spec", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
+                "rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}],
+                "where": {"band": band, "contains": {"codes": [code], "strict": True}}, "quality": {},
+                "limits": {"time": 120, "seed": seed}}
+        try:
+            result = pencilmark.generate(spec)
+        except pencilmark.GenerationFailed:
+            continue
+        codes = {c["code"] for c in result["card"]["contains"]}
+        if code in codes and codes <= SINGLES | set(known) | {code}:
+            return result["puzzle"]
+
+# puzzle = practice("XWG", "Hard", known=["PPR", "NPR"])   # an X-Wing, nothing new besides (a few minutes)
+```
+
+[Techniques](../../grades/techniques.md) lists every code with its band. A ladder for classic sudoku, easiest first:
+
+### Pointing / box-line reduction (`PPR`, Easy)
+
+<Swatch name="learning-ladder-1-pointing" />
+
+**Easy**, difficulty 5.0, about 8.6 min (seed 1). Contains: Hidden Single, Pointing / Box-Line Reduction.
+
+### Naked pair (`NPR`, Medium)
+
+<Swatch name="learning-ladder-2-naked-pair" />
+
+**Medium**, difficulty 6.9, about 12.7 min (seed 1). Contains: Hidden Single, Naked Single, Pointing / Box-Line Reduction, Naked Pair.
+
+### Hidden pair (`HPR`, Medium)
+
+<Swatch name="learning-ladder-3-hidden-pair" />
+
+**Medium**, difficulty 7.5, about 12.5 min (seed 1). Contains: Hidden Single, Pointing / Box-Line Reduction, Hidden Pair.
+
+### Naked triple (`NTR`, Medium)
+
+<Swatch name="learning-ladder-4-naked-triple" />
+
+**Medium**, difficulty 6.4, about 12.4 min (seed 1). Contains: Hidden Single, Pointing / Box-Line Reduction, Naked Triple.
+
+### X-Wing (`XWG`, Hard)
+
+<Swatch name="learning-ladder-5-x-wing" />
+
+**Hard**, difficulty 5.4, about 10.0 min (seed 1). Contains: Hidden Single, Naked Single, Pointing / Box-Line Reduction, Hidden Pair, X-Wing.
+
+### Swordfish (`SWF`, Very Hard)
+
+<Swatch name="learning-ladder-6-swordfish" />
+
+**Very Hard**, difficulty 7.6, about 14.0 min (seed 15). Contains: Hidden Single, Naked Single, Pointing / Box-Line Reduction, Swordfish.
+
+
+## 2. A killer curriculum
+
+Someone starting out with killers first meets a cage or two that are needed for simple singles; then the cages
+multiply; then the cages' digit sets do the work (a 3 in two cells is 1 and 2, which acts like a pointing pair); and at
+last there are no number clues at all. Each stage below is a killer whose cages cover every cell that is not a given
+(a cell left alone becomes a given: a 1-cell cage is a given in disguise), with a given range and a target:
+
+```json
+{"rules": [{"type": "box_grid", "origin": "r1c1", "box": [3, 3]}, {"type": "cage", "count": "tile"}],
+ "givens": {"count": [28, 40]}, "where": {"band": "Very Easy", "difficulty": [2, 4.5]}}
+```
+
+Without a difficulty range the generator removes every given it can, and a grid with few givens takes long to scan
+even when it needs only singles: a Very Easy puzzle then scores about 4-5. The range keeps the first stages gentle.
+
+### First cages: a mostly filled grid where a cage or two give the last singles
+
+<Swatch name="learning-killer-1-first-cages" />
+
+**Very Easy**, difficulty 0.6, about 1.2 min. Contains: Hidden Single.
+
+### More cages: fewer givens, so more of the grid is read through cage sums
+
+<Swatch name="learning-killer-2-more-cages" />
+
+**Very Easy**, difficulty 2.4, about 3.8 min. Contains: Hidden Single.
+
+### Cage combinations: a cage's digit sets do the work: a 3 in two cells is 1 and 2
+
+<Swatch name="learning-killer-3-combinations" />
+
+**Easy**, difficulty 5.9, about 15.7 min. Contains: Hidden Single, Killer cage combinations.
+
+### No givens: the cages alone: no number clue to start from
+
+<Swatch name="learning-killer-4-no-givens" />
+
+**Easy**, difficulty 8.6, about 39.9 min. Contains: Hidden Single, Pair / triple in the head, Innies & outies (rule of 45).
