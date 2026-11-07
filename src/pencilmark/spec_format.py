@@ -25,7 +25,6 @@ from .rules.line import LINE
 
 FORMAT = "pencilmark-spec"
 FORMAT_VERSION = 1
-NS = "io.github.silly-puppyy.pencilmark"
 # generator element kind <-> template (type, kind)
 GEN_KINDS = {
     "cage": ("cage", None),
@@ -66,7 +65,7 @@ SPEC_KEYS = {
     "fields",
 }
 WHERE_KEYS = {"band", "difficulty", "time", "contains", "not_contains", "issues", "areas", "elements"}
-LIMIT_KEYS = {"results", "attempts", "time", "seed"}
+LIMIT_KEYS = {"results", "attempts", "seconds", "seed", "grade_seconds", "solver"}
 TEMPLATE_KEYS = {
     "type",
     "kind",
@@ -206,16 +205,17 @@ def validate_spec(doc):
     ):
         raise FormatError(f'where.difficulty must be [lo, hi], "max", "min" or "typical", got {d!r}')
     c = w.get("contains")
-    codes = c.get("codes") if isinstance(c, dict) else c
-    reserved = isinstance(c, dict) and set(c) - {"codes", "strict"}  # only / uses: spec_to_gen names them as reserved
-    if c is not None and not reserved and not (isinstance(codes, list) and all(isinstance(x, str) for x in codes)):
-        raise FormatError('where.contains must be a list of technique codes or {"codes": [...], "strict": true}')
+    if c is not None and not (isinstance(c, list) and all(isinstance(x, str) for x in c)):
+        raise FormatError("where.contains must be a list of technique codes")
     if "elements" in w and not (isinstance(w["elements"], dict) and set(w["elements"]) <= {"max"}):
         raise FormatError('where.elements takes {"max": n}')
     if "elements" in w and "max" in w["elements"]:
         _n_or_range(w["elements"]["max"], "where.elements.max")
-    if "time" in lim and not (real(lim["time"]) and lim["time"] > 0):
-        raise FormatError(f"limits.time must be a number of seconds > 0, got {lim['time']!r}")
+    for k in ("seconds", "grade_seconds"):
+        if k in lim and not (real(lim[k]) and lim[k] > 0):
+            raise FormatError(f"limits.{k} must be a number of seconds > 0, got {lim[k]!r}")
+    if "solver" in lim and lim["solver"] not in ("logic", "cpsat"):
+        raise FormatError(f'limits.solver must be "logic" or "cpsat", got {lim["solver"]!r}')
     if "seed" in lim and not (isinstance(lim["seed"], int) and not isinstance(lim["seed"], bool)):
         raise FormatError(f"limits.seed must be a whole number, got {lim['seed']!r}")
     if doc.get("fields") is not None:
@@ -408,18 +408,9 @@ def spec_to_gen(doc):
         if dv not in ("max", "min", "typical") and not (isinstance(dv, list) and len(dv) == 2):
             raise FormatError('where.difficulty must be [lo, hi], "max" or "min"')
         out["target_difficulty"] = dv if isinstance(dv, str) else list(dv)
-    if "contains" in w:
-        c = w["contains"]
-        if isinstance(c, list):
-            out["require"] = list(c)
-        elif isinstance(c, dict) and set(c) <= {"codes", "strict"}:
-            out["require"] = list(c["codes"])
-            if c.get("strict"):
-                out["strict_require"] = True
-        else:
-            raise NotSupportedError(
-                "contains 'only' / per-code uses are reserved for a later version of the spec (docs/formats/generator-spec.md 7)"
-            )
+    if "contains" in w:  # needed: each code on the route as its own entry, with no alternative there
+        out["require"] = list(w["contains"])
+        out["strict_require"] = True
     if "elements" in w:
         if set(w["elements"]) != {"max"}:
             raise NotSupportedError('where.elements takes {"max": n}')
@@ -431,14 +422,12 @@ def spec_to_gen(doc):
     if lim.get("results", 1) != 1:
         raise NotSupportedError("the generator returns one puzzle per run (limits.results 1; run several seeds)")
     if "attempts" in lim:
-        raise NotSupportedError("limits.attempts is not supported (use limits.time)")
-    if "time" in lim:
-        out["time_limit"] = lim["time"]
-    if "seed" in lim:
-        out["seed"] = lim["seed"]
-    out.update(
-        ((doc.get("meta") or {}).get(NS) or {})
-    )  # pencilmark's own generator knobs live in meta (docs/formats/puzzle-format.md 2.1)
+        raise NotSupportedError("limits.attempts is not supported (use limits.seconds)")
+    if "seconds" in lim:
+        out["time_limit"] = lim["seconds"]
+    for k in ("seed", "grade_seconds", "solver"):
+        if k in lim:
+            out[k] = lim[k]
     return out
 
 
@@ -516,23 +505,23 @@ def spec_from_gen(spec):
         td = s.target_difficulty
         w["difficulty"] = td if isinstance(td, str) else list(td)
     if s.require:
-        w["contains"] = {"codes": list(s.require), "strict": True} if s.strict_require else list(s.require)
+        if not s.strict_require:
+            raise NotSupportedError("a require met by an alternative has no spec spelling (where.contains is strict)")
+        w["contains"] = list(s.require)
     if s.max_elements is not None:
         w["elements"] = {"max": s.max_elements}
     if w:
         doc["where"] = w
     lim = {}
     if s.time_limit != DEFAULTS["time_limit"]:
-        lim["time"] = s.time_limit
-    if s.seed != DEFAULTS["seed"]:
-        lim["seed"] = s.seed
+        lim["seconds"] = s.time_limit
+    for k in ("seed", "grade_seconds", "solver"):
+        if getattr(s, k) != DEFAULTS[k]:
+            lim[k] = getattr(s, k)
     if lim:
         doc["limits"] = lim
     if s.quality:  # {} = no checks = no block
         doc["quality"] = dict(s.quality)
-    ext = {k: getattr(s, k) for k in ("solver", "grade_seconds") if getattr(s, k) != DEFAULTS[k]}
-    if ext:
-        doc.setdefault("meta", {})[NS] = ext
     return doc
 
 

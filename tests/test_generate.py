@@ -32,7 +32,7 @@ def spec(D=9, box=None, where=None, rules=(), givens=None, symmetry=None, seed=N
         d["symmetry"] = [{"kind": symmetry, "of": "givens"}]
     if where:
         d["where"] = where
-    d["limits"] = {"time": time_limit, **({"seed": seed} if seed is not None else {})}
+    d["limits"] = {"seconds": time_limit, **({"seed": seed} if seed is not None else {})}
     return d
 
 
@@ -306,7 +306,7 @@ def test_layout_generation():
         grids = [
             {"type": "box_grid", "origin": f"r{r + 1}c{c + 1}", "box": [3, 3], "count": [3, 3]} for r, c in origins
         ]
-        r = run(dict(spec(), board={"rows": rows, "cols": cols}, rules=grids, limits={"time": 60, "seed": 1}))
+        r = run(dict(spec(), board={"rows": rows, "cols": cols}, rules=grids, limits={"seconds": 60, "seed": 1}))
         assert r["info"]["givens"] == sum(1 for v in r["puzzle"]["givens"] if v)
         # the card is the one rate() gives the returned file: the generator numbers layout cells as the reader does
         # (row by row) and the refutation profile no longer falls to 0 when a capped search gave up (2026-11-01:

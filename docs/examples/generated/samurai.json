@@ -78,7 +78,7 @@
    }
   ],
   "limits": {
-   "time": 1800,
+   "seconds": 1800,
    "seed": 1
   }
  },

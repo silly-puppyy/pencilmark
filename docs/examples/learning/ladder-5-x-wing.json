@@ -23,18 +23,15 @@
   ],
   "where": {
    "band": "Hard",
-   "contains": {
-    "codes": [
-     "XWG"
-    ],
-    "strict": true
-   }
+   "contains": [
+    "XWG"
+   ]
   },
   "quality": {
    "preset": "standard"
   },
   "limits": {
-   "time": 120,
+   "seconds": 120,
    "seed": 1
   }
  },

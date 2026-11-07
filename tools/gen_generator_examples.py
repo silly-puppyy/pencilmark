@@ -31,7 +31,7 @@ def spec(size=9, rules=(), where=None, givens=None, symmetry=None, seed=1, time=
         s["where"] = dict(where, difficulty="typical") if size == 9 and "band" in where and "difficulty" not in where else where
     if quality:
         s["quality"] = quality
-    s["limits"] = {"time": time, "seed": seed}
+    s["limits"] = {"seconds": time, "seed": seed}
     return s
 
 
@@ -50,7 +50,7 @@ def layout_spec(layout, rules=(), locked=(), where=None, givens=None, symmetry=N
         s["symmetry"] = [dict(symmetry, of="givens")]
     if where:
         s["where"] = where
-    s["limits"] = {"time": time, "seed": seed}
+    s["limits"] = {"seconds": time, "seed": seed}
     return s
 
 
@@ -129,7 +129,7 @@ CURIOSITIES = {
     "gentlest-xwing": (
         "The gentlest X-Wing",
         'difficulty `"min"` with a required technique: the easiest puzzle found in the time that still needs an X-Wing',
-        spec(where={"difficulty": "min", "contains": {"codes": ["XWG"], "strict": True}}, time=300),
+        spec(where={"difficulty": "min", "contains": ["XWG"]}, time=300),
     ),
     "hardest-kropki": (
         "The hardest 0-clue 6×6 kropki",
@@ -252,7 +252,7 @@ import Swatch from '@site/src/components/Swatch';
 Requests in the [generator spec](../../formats/generator-spec.md) language, each with the puzzle it produced, its card and
 how long the run took on one core of a desktop machine. The seed fixes the result: the same request on the same version
 gives the same puzzle. A run that searches for the most of something, or the hardest or easiest puzzle, always uses
-its whole `limits.time` and returns the best it found. The times include grading the result in full, which for a hard
+its whole `limits.seconds` and returns the best it found. The times include grading the result in full, which for a hard
 variant can take longer than the search itself. The requests below leave out the two keys every request starts
 with, `"format": "pencilmark-spec", "format_version": 1`; add them to run one. Written by
 `tools/gen_generator_examples.py`; the request files (complete) are in [`docs/examples/specs/`](https://github.com/silly-puppyy/pencilmark/tree/main/docs/examples/specs).

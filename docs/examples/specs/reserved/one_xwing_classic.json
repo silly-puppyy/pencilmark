@@ -46,7 +46,7 @@
  },
  "limits": {
   "results": 5,
-  "time": 600,
+  "seconds": 600,
   "seed": 1
  }
 }

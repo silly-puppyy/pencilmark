@@ -75,7 +75,7 @@ def request(rng):
         "board": {"rows": D, "cols": D},
         "digits": D,
         "rules": rules,
-        "limits": {"time": 25, "seed": rng.randint(1, 99)},
+        "limits": {"seconds": 25, "seed": rng.randint(1, 99)},
     }
     if layout:
         s["board"] = {"rows": max(r for r, _ in origins) + 9, "cols": max(c for _, c in origins) + 9}

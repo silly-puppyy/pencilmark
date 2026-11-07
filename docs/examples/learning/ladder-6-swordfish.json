@@ -23,18 +23,15 @@
   ],
   "where": {
    "band": "Very Hard",
-   "contains": {
-    "codes": [
-     "SWF"
-    ],
-    "strict": true
-   }
+   "contains": [
+    "SWF"
+   ]
   },
   "quality": {
    "preset": "standard"
   },
   "limits": {
-   "time": 120,
+   "seconds": 120,
    "seed": 15
   }
  },

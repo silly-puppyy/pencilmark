@@ -26,7 +26,7 @@ spec = {
     "symmetry": [{"kind": "rot180", "of": "givens"}],
     "where": {"band": "Hard", "contains": ["XWG"]},
     "quality": {"preset": "standard"},
-    "limits": {"time": 120, "seed": 21},
+    "limits": {"seconds": 120, "seed": 21},
 }
 ```
 
@@ -100,7 +100,7 @@ spec = {
     ],
     "where": {"band": "Medium"},
     "quality": {"preset": "standard"},
-    "limits": {"time": 300, "seed": 3},
+    "limits": {"seconds": 300, "seed": 3},
 }
 r = pencilmark.generate(spec)
 print(pencilmark.write.pencilmark(r["puzzle"]))
@@ -162,7 +162,7 @@ A request the generator cannot meet in time raises `pencilmark.GenerationFailed`
 puzzle that misses the request:
 
 ```python
-pencilmark.generate(dict(spec, where={"band": "Extreme"}, limits={"time": 10, "seed": 1}))
+pencilmark.generate(dict(spec, where={"band": "Extreme"}, limits={"seconds": 10, "seed": 1}))
 ```
 
 A message like this one (the counts depend on the machine):

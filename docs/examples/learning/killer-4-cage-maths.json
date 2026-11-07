@@ -29,18 +29,15 @@
    "count": 0
   },
   "where": {
-   "contains": {
-    "codes": [
-     "IOU"
-    ],
-    "strict": true
-   }
+   "contains": [
+    "IOU"
+   ]
   },
   "quality": {
    "preset": "standard"
   },
   "limits": {
-   "time": 600,
+   "seconds": 600,
    "seed": 4
   }
  },

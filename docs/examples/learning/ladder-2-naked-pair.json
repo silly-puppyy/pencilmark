@@ -23,18 +23,15 @@
   ],
   "where": {
    "band": "Medium",
-   "contains": {
-    "codes": [
-     "NPR"
-    ],
-    "strict": true
-   }
+   "contains": [
+    "NPR"
+   ]
   },
   "quality": {
    "preset": "standard"
   },
   "limits": {
-   "time": 120,
+   "seconds": 120,
    "seed": 1
   }
  },

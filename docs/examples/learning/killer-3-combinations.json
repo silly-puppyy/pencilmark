@@ -33,18 +33,15 @@
   },
   "where": {
    "band": "Easy",
-   "contains": {
-    "codes": [
-     "CGC"
-    ],
-    "strict": true
-   }
+   "contains": [
+    "CGC"
+   ]
   },
   "quality": {
    "preset": "standard"
   },
   "limits": {
-   "time": 600,
+   "seconds": 600,
    "seed": 3
   }
  },

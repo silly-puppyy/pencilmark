@@ -54,7 +54,7 @@
   },
   "limits": {
    "results": 1,
-   "time": 900,
+   "seconds": 900,
    "seed": 3
   },
   "fields": [

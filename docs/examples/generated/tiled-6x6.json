@@ -30,7 +30,7 @@
    "preset": "standard"
   },
   "limits": {
-   "time": 180,
+   "seconds": 180,
    "seed": 1
   }
  },

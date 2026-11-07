@@ -30,7 +30,7 @@
   "issues": "no_reject"
  },
  "limits": {
-  "time": 900,
+  "seconds": 900,
   "seed": 4
  }
 }

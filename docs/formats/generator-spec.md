@@ -26,7 +26,7 @@ mistakes it for a puzzle), plus blocks that say what the result must satisfy and
   {"type": "line", "kind": "whisper", "count": [1, null]}],
  "where": {"band": "Hard"},
  "quality": {"preset": "standard"},
- "limits": {"time": 900, "seed": 3},
+ "limits": {"seconds": 900, "seed": 3},
  "fields": ["difficulty", "time", "band", "contains", "issues"]}
 ```
 
@@ -74,7 +74,7 @@ One template per variety, each with its own `count`:
 | `"all"` | kropki only: every true dot drawn, with the matching `negative` (no dot = neither relation) |
 | `"min"` | kropki only: a minimal set of dots |
 | `"tile"` | cages only: every cell that is not a given is in a cage; a cell left alone becomes a given when the request allows givens |
-| `"max"` | as many as fit: the run uses its whole `limits.time` and returns the result with the most of them |
+| `"max"` | as many as fit: the run uses its whole `limits.seconds` and returns the result with the most of them |
 
 Elements of one kind never share cells (two cages, two whispers); elements of different kinds may, so the rules
 interact (a whisper through a cage, a dot on a thermo). Dots and XV marks may share cells, never an edge.
@@ -112,8 +112,8 @@ Conditions on the result's card, using the card's keys ([Grade card](grade-card.
 | Key | Value |
 |---|---|
 | `band` | one band name |
-| `difficulty` | `[lo, hi]`; or `"max"` / `"min"`: the hardest / easiest result found in `limits.time` (the run uses all of it); or `"typical"` (with a band, 9×9): aim at a window drawn from the seed where published puzzles of the band lie, reported in `info.aimed_at`; it is a preference, so with nothing in the window by half of `limits.time` any difficulty in the band will do (`info.aim_relaxed`). Without `difficulty` the generator digs as far as the band allows |
-| `contains` | technique codes that must appear in `contains`; `{"codes": [...], "strict": true}` = as the code itself, not only as an alternative in a chip |
+| `difficulty` | `[lo, hi]`; or `"max"` / `"min"`: the hardest / easiest result found in `limits.seconds` (the run uses all of it); or `"typical"` (with a band, 9×9): aim at a window drawn from the seed where published puzzles of the band lie, reported in `info.aimed_at`; it is a preference, so with nothing in the window by half of `limits.seconds` any difficulty in the band will do (`info.aim_relaxed`). Without `difficulty` the generator digs as far as the band allows |
+| `contains` | technique codes the puzzle needs: each is an entry of the card's `contains` with no `alternatives` (no other technique gets through at that point) |
 | `elements` | `{"max": n}`: at most n placed rule elements in total |
 
 ### 4.1 Publishing checks: `quality`
@@ -132,14 +132,15 @@ each check refused. The checks and their limits are those of the grade card ([Gr
 
 ## 5. Limits, fields and program data
 
-- `limits`: `time` (seconds for the whole run, default 120), `seed` (the same seed and request give the same puzzle;
-  without one each run draws a fresh seed, reported in `info.seed`). The run returns one
-  puzzle or fails with the reason after `time`; an attempt still digging when the time is up is given up. Grading the
-  returned puzzle in full comes on top.
+- `limits`: `seconds` (for the whole run, default 120), `seed` (the same seed and request give the same puzzle;
+  without one each run draws a fresh seed, reported in `info.seed`), `grade_seconds` (how long each candidate may be
+  graded, default 60; the returned puzzle's card is always graded in full) and `solver` (`"logic"`, the default: every
+  step is solvable by human logic within the band, so the puzzle is unique by construction; or `"cpsat"`: uniqueness
+  only, for minimal kropki). The run returns one puzzle or fails with the reason after
+  `seconds`; an attempt still digging when the time is up is given up. Grading the returned puzzle in full comes on
+  top.
 - `fields`: which card fields to return with the result ([Grade card](grade-card.md)); default fields without it.
-- `meta`: copied to the puzzle, with the requests of 5.1 filled in. pencilmark reads its own knobs from
-  `meta["io.github.silly-puppyy.pencilmark"]`: `{"solver": "logic" | "cpsat", "grade_seconds": s}` (`grade_seconds`:
-  how long each candidate may be graded, default 60; the returned puzzle's card is always graded in full).
+- `meta`: copied to the puzzle, with the requests of 5.1 filled in.
 
 A part of a request the generator cannot meet in time is never ignored: the run fails and says why.
 
@@ -173,6 +174,5 @@ Refused by format_version 1 readers with a message naming the part:
 - givens in puzzle form, `mask`, `values` (locked digits);
 - template shape limits `displaced` and `area`; other whisper gaps;
 - more symmetry entries, symmetry of rules (`of: "all"` or a rule selector);
-- targets: a list of bands, `time`, `issues`, `not_contains`,
-  `contains` `only` / `uses`, per-area targets;
+- targets: a list of bands, `time`, `issues`, `not_contains`, per-area targets;
 - `limits.results` above 1 and `limits.attempts`.

@@ -98,9 +98,11 @@
    "max": 20
   }
  },
- "quality": {"preset": "standard"},
+ "quality": {
+  "preset": "standard"
+ },
  "limits": {
-  "time": 1800,
+  "seconds": 1800,
   "seed": 9
  }
 }

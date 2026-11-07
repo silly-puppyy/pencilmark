@@ -23,18 +23,15 @@
   ],
   "where": {
    "band": "Easy",
-   "contains": {
-    "codes": [
-     "PPR"
-    ],
-    "strict": true
-   }
+   "contains": [
+    "PPR"
+   ]
   },
   "quality": {
    "preset": "standard"
   },
   "limits": {
-   "time": 120,
+   "seconds": 120,
    "seed": 1
   }
  },

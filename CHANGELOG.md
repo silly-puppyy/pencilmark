@@ -14,6 +14,12 @@
   - `neighbours` takes `step` for its pairs (`"step": "knight"`; was `where`, which also named the spec's targets).
   - `mathrax` uses the pair-operator names of numbered edges: `"op": "sum"` with `sum`, `"difference"` / `"product"` /
     `"ratio"` with `value` (was `+ - x /`, all with `value`).
+  - Spec `limits.seconds` (was `limits.time`, which read like the card's minutes); `grade_seconds` and `solver` move
+    from `meta["io.github.silly-puppyy.pencilmark"]` into `limits` and are checked like every other key (the meta
+    pass-through is gone).
+  - `where.contains` has one shape, a list of codes the puzzle needs (each an entry of the card's `contains` with no
+    alternative); the `{"codes": [...], "strict": true}` form is gone, and a lenient "an alternative will do" request
+    is no longer offered (nothing used it).
 - **sudoku.coach reader**: `pencilmark.read.link("https://sudoku.coach/en/s/<id>")` and raw `SCv7_...` payloads, with
   the setter's colours and widths as style and cell colours as a `fill` decoration; the embedded solution is checked.
   Of 16,436 coach puzzles, 13,407 read, 0 crash; refused: extra rules written only in the description (2,293), older

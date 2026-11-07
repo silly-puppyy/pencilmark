@@ -41,7 +41,7 @@
    "preset": "standard"
   },
   "limits": {
-   "time": 300,
+   "seconds": 300,
    "seed": 1
   }
  },

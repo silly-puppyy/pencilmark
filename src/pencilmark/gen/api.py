@@ -526,7 +526,7 @@ def generate(spec):
 
     puzzle = document(p, solution=True)
     card = r["card"]
-    req = {k: v for k, v in (doc.get("meta") or {}).items() if k != SF.NS}
+    req = dict(doc.get("meta") or {})
     filled = meta_requests(
         req,
         {

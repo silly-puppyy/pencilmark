@@ -29,7 +29,7 @@ LADDER = {
 # the digits in it; then bigger cages; then the cages' digit sets (combinations); then cage maths (the rule of 45).
 # Early stages keep the totals low (easy mental arithmetic). name -> (title, what it teaches, cage template, givens,
 # where); every stage asks for the standard publishing checks (spec() in gen_generator_examples)
-CSI = {"codes": ["CSI"], "strict": True}
+CSI = ["CSI"]
 KILLERS = {
     "killer-1-last-cell": ("Last cell of a cage", "a cage's last cell is its total minus the digits already in it",
                            {"size": [2, 3], "sum": [3, 15], "count": [8, 14]}, [30, 46],
@@ -38,9 +38,9 @@ KILLERS = {
                               {"size": [3, 5], "sum": [6, 25], "count": [8, 14]}, [24, 36],
                               {"band": "Very Easy", "contains": CSI}),
     "killer-3-combinations": ("Cage combinations", "a cage's digit sets do the work: a 3 in two cells is 1 and 2",
-                              {"count": "tile"}, [8, 22], {"band": "Easy", "contains": {"codes": ["CGC"], "strict": True}}),
+                              {"count": "tile"}, [8, 22], {"band": "Easy", "contains": ["CGC"]}),
     "killer-4-cage-maths": ("Cage maths", "the rule of 45: a house's total minus the cages inside it gives the rest",
-                            {"count": "tile"}, 0, {"contains": {"codes": ["IOU"], "strict": True}}),
+                            {"count": "tile"}, 0, {"contains": ["IOU"]}),
 }  # fmt: skip
 
 QUALITY = {}  # name -> a quality object instead of the standard preset
@@ -60,7 +60,7 @@ def run(name):
         title, code, band = LADDER[name]
         earlier = [c for n, (_t, c, _b) in LADDER.items() if n < name]
         for seed in range(1, 25):
-            s = spec(where={"band": band, "contains": {"codes": [code], "strict": True}}, seed=seed, time=120)
+            s = spec(where={"band": band, "contains": [code]}, seed=seed, time=120)
             try:
                 r = pencilmark.generate(s)
             except pencilmark.GenerationFailed:
@@ -109,7 +109,7 @@ the earlier rungs taught, and a progression, the same kind of puzzle at rising b
 
 ## 1. One new technique at a time
 
-Ask for the technique (`"strict": true`, so it must appear as itself, not only as an alternative) and the band it
+Ask for the technique (`where.contains`: the puzzle needs it, no other technique gets through there) and the band it
 belongs to, then keep the first puzzle whose card lists nothing beyond singles and what the learner already knows. The
 band caps what the solver may need, but other techniques of the same band can still turn up, hence the check:
 
@@ -122,8 +122,8 @@ def practice(code, band, known=(), tries=24):
     for seed in range(1, tries + 1):
         spec = {"format": "pencilmark-spec", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
                 "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}],
-                "where": {"band": band, "contains": {"codes": [code], "strict": True}},
-                "quality": {"preset": "standard"}, "limits": {"time": 120, "seed": seed}}
+                "where": {"band": band, "contains": [code]},
+                "quality": {"preset": "standard"}, "limits": {"seconds": 120, "seed": seed}}
         try:
             result = pencilmark.generate(spec)
         except pencilmark.GenerationFailed:
@@ -144,7 +144,7 @@ Killers start with one idea: the digits in a cage add up to its total, so when a
 total minus the others. The first stage teaches just that, with small cages, low totals (easy mental arithmetic) and
 givens inside the cages; the second makes the cages longer; the third lets the cages' digit sets do the work (a 3 in
 two cells is 1 and 2, which acts like a pointing pair); the fourth is cage maths, the rule of 45, on a board of cages
-with no givens. Each stage asks for its technique (`"strict": true`).
+with no givens. Each stage asks for its technique (`where.contains`).
 
 The low cage totals of the first two stages are on purpose: a learner's first cages should be sums they can do at a
 glance, so the first stage asks for totals of 3 to 15 in 2- or 3-cell cages and the second for 6 to 25 in 3- to 5-cell
@@ -155,7 +155,7 @@ and their totals are whatever the solution gives.
 ```json
 {"rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
            {"type": "cage", "size": [2, 3], "sum": [3, 15], "count": [8, 14]}],
- "givens": {"count": [30, 46]}, "where": {"band": "Very Easy", "contains": {"codes": ["CSI"], "strict": true}},
+ "givens": {"count": [30, 46]}, "where": {"band": "Very Easy", "contains": ["CSI"]},
  "quality": {"preset": "standard"}}
 ```
 

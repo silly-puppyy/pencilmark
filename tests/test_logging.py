@@ -37,7 +37,7 @@ def test_generator_logs(caplog):
         "digits": 4,
         "rules": [{"type": "box_grid", "box": [2, 2], "count": [2, 2]}],
         "where": {"band": "Very Easy"},
-        "limits": {"seed": 1, "time": 30},
+        "limits": {"seed": 1, "seconds": 30},
     }
     with caplog.at_level(logging.INFO, logger="pencilmark.gen"):
         pencilmark.generate(spec)

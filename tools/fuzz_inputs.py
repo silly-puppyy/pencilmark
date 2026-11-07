@@ -99,7 +99,7 @@ def spec_case(seed):
     rng = random.Random(seed)
     d = mutate(rng, rng.choice(specs()))
     if isinstance(d, dict):
-        d["limits"] = {"time": 2, "seed": 1}
+        d["limits"] = {"seconds": 2, "seed": 1}
     try:
         pm.generate(d)
         return seed, "generated", None

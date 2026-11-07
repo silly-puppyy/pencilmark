@@ -24,18 +24,15 @@
   ],
   "where": {
    "difficulty": "min",
-   "contains": {
-    "codes": [
-     "XWG"
-    ],
-    "strict": true
-   }
+   "contains": [
+    "XWG"
+   ]
   },
   "quality": {
    "preset": "standard"
   },
   "limits": {
-   "time": 300,
+   "seconds": 300,
    "seed": 1
   }
  },
