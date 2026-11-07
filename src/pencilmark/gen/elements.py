@@ -227,16 +227,89 @@ def length_of(e):
     return len(e[1]) - 1 if e[0] == "arrow" else len(e[1])
 
 
-def fits(e, shape):
-    """does the element meet its template's shape limits? shape {kind: {"length": (lo, hi), "sum": (lo, hi)}}"""
+def turns(b, cells):
+    """direction changes along a line's cells (a diagonal step after an orthogonal one is a turn)"""
+    rc = [b.coords[c] for c in cells]
+    steps = [(y[0] - x[0], y[1] - x[1]) for x, y in zip(rc, rc[1:])]
+    return sum(1 for s, t in zip(steps, steps[1:]) if s != t)
+
+
+def fits(e, shape, b=None):
+    """does the element meet its template's shape limits? shape {kind: {"length": (lo, hi), "sum": (lo, hi), "turns":
+    (lo, hi)}}; turns are checked when the board b is given"""
     lim = (shape or {}).get(e[0])
     if not lim:
         return True
     lo, hi = lim.get("length", (None, None))
     if (lo is not None and length_of(e) < lo) or (hi is not None and length_of(e) > hi):
         return False
+    tlo, thi = lim.get("turns", (None, None))
+    if b is not None and (tlo is not None or thi is not None):
+        t = turns(b, e[1])
+        if (tlo is not None and t < tlo) or (thi is not None and t > thi):
+            return False
     slo, shi = lim.get("sum", (None, None))
     return e[0] != "cage" or ((slo is None or e[2] >= slo) and (shi is None or e[2] <= shi))
+
+
+# how a generated line chooses its next cell (king steps): human lines (development set, 17,838 inner cells) turn at
+# 54% of their inner cells and take 31% of their steps diagonally; 1.2 drew orthogonal steps only and turned at about
+# 67%. An orthogonal step weighs ORTHO, a diagonal one 1, and going straight on is STRAIGHT times as likely; on free
+# random walks these give 55% turns and 32% diagonal steps
+ORTHO, STRAIGHT = 1.5, 5.0
+# lines whose digits the solution fixes first bend to fit them (a thermo must climb): of the candidates through a
+# cell, a turn counts as TURN_COST cells less length and a diagonal step as DIAG_COST
+TURN_COST, DIAG_COST = 1.5, 0.3
+
+
+def _step_weight(b, prev, cur, nxt):
+    """the weight of drawing a line on from cur to nxt (prev: the cell before cur, or None)"""
+    (r1, c1), (r2, c2) = b.coords[cur], b.coords[nxt]
+    w = ORTHO if r1 == r2 or c1 == c2 else 1.0
+    if prev is not None:
+        r0, c0 = b.coords[prev]
+        if (r2 - r1, c2 - c1) == (r1 - r0, c1 - c0):
+            w *= STRAIGHT
+    return w
+
+
+def _by_hand(rng, items, weight):
+    """items in a random order drawn by weight (heavier first more often): Efraimidis-Spirakis keys, largest first"""
+    return sorted(items, key=lambda x: math.log(1.0 - rng.random()) / weight(x), reverse=True)
+
+
+def diagonal_steps(b, cells):
+    """the diagonal steps of a line, as ("x", a, b) markers (a < b): a line that would cross one is refused"""
+    out = set()
+    for a, c in zip(cells, cells[1:]):
+        (r1, c1), (r2, c2) = b.coords[a], b.coords[c]
+        if r1 != r2 and c1 != c2:
+            out.add(("x", min(a, c), max(a, c)))
+    return out
+
+
+def _free_steps(b, path, cur, taken):
+    """cells a line through `path` may step to from its end `cur`: king steps, not on the line or taken, and a
+    diagonal step never crossing a diagonal step of the line itself or of a line of the same kind (in taken)"""
+    out = []
+    for j in b.nb8[cur]:
+        if j in path or j in taken:
+            continue
+        (r1, c1), (r2, c2) = b.coords[cur], b.coords[j]
+        if r1 != r2 and c1 != c2:
+            u, v = b.cid.get((r1, c2)), b.cid.get((r2, c1))
+            if u is not None and v is not None:
+                x = ("x", min(u, v), max(u, v))
+                if x in taken or x in diagonal_steps(b, path) or x in diagonal_steps(b, path[::-1]):
+                    continue
+        out.append(j)
+    return out
+
+
+def _line_step(b, rng, path, cands):
+    """the next cell of a line growing at its end (cands: free cells next to path[-1])"""
+    prev = path[-2] if len(path) > 1 else None
+    return _by_hand(rng, cands, lambda j: _step_weight(b, prev, path[-1], j))[0]
 
 
 def grow(b, kind, sol, start, taken, rng, n=40, shape=None):
@@ -290,10 +363,10 @@ def grow(b, kind, sol, start, taken, rng, n=40, shape=None):
         if kind == "between":
             path = [start]
             for _s in range(rng.randint(lo, hi) - 1):
-                nxt = [j for j in NB[path[-1]] if j not in path and j not in taken]
+                nxt = _free_steps(b, path, path[-1], taken)
                 if not nxt:
                     break
-                path.append(rng.choice(nxt))
+                path.append(_line_step(b, rng, path, nxt))
             if len(path) < max(3, lo):
                 continue
             a_, z_ = sorted((sol[path[0]], sol[path[-1]]))
@@ -329,10 +402,10 @@ def grow(b, kind, sol, start, taken, rng, n=40, shape=None):
         if kind in WHOLE:
             path = [start]
             for _s in range(rng.randint(lo, hi) - 1):
-                nxt = [j for j in NB[path[-1]] if j not in path and j not in taken]
+                nxt = _free_steps(b, path, path[-1], taken)
                 if not nxt:
                     break
-                path.append(rng.choice(nxt))
+                path.append(_line_step(b, rng, path, nxt))
             while len(path) >= lo and not line_holds(b, kind, path, [sol[c] for c in path]):
                 path.pop()
             if len(path) >= lo:
@@ -351,7 +424,7 @@ def grow(b, kind, sol, start, taken, rng, n=40, shape=None):
             ends = [path[0], path[-1]] if kind != "cage" else path
             opts = []
             for e_ in ends:
-                for j in NB[e_]:
+                for j in NB[e_] if kind == "cage" else _free_steps(b, path, e_, taken):
                     if j in path or j in taken:
                         continue
                     if kind in ("cage", "renban") and sol[j] in {sol[x] for x in path}:
@@ -371,7 +444,11 @@ def grow(b, kind, sol, start, taken, rng, n=40, shape=None):
                     opts.append((j, 1 if e_ == path[-1] else 0))  # grow at the end it touches (a renban is a line)
             if not opts:
                 break
-            j, back = rng.choice(opts)
+            if kind == "cage":
+                j, back = rng.choice(opts)
+            else:  # a line grows at either end, drawn as a hand would (_step_weight)
+                end = lambda o: (path[-2] if o[1] else path[1]) if len(path) > 1 else None  # noqa: E731
+                j, back = _by_hand(rng, opts, lambda o: _step_weight(b, end(o), path[-1] if o[1] else path[0], o[0]))[0]
             path = path + [j] if back else [j] + path
         if len(path) < lo:
             continue
@@ -387,9 +464,9 @@ def grow(b, kind, sol, start, taken, rng, n=40, shape=None):
     def info(e):
         if e[0] == "cage":
             return (ncomb(b.n, len(e[1]), e[2]), len(e[1]))
-        return (-len(e[1]),)
+        return (TURN_COST * turns(b, e[1]) + DIAG_COST * len(diagonal_steps(b, e[1])) - len(e[1]),)  # longer first
 
-    return sorted(_stable(e for e in out if fits(e, shape)), key=lambda e: (info(e), rng.random()))
+    return sorted(_stable(e for e in out if fits(e, shape, b)), key=lambda e: (info(e), rng.random()))
 
 
 def _centred(b, kind, sol, start, taken, rng, target):
@@ -398,14 +475,19 @@ def _centred(b, kind, sol, start, taken, rng, target):
     while len(path) + 2 <= target:
         pairs = [
             (j, k)
-            for j in b.nb[path[0]]
-            for k in b.nb[path[-1]]
+            for j in _free_steps(b, path, path[0], taken)
+            for k in _free_steps(b, path, path[-1], taken)
             if j != k and j not in path and k not in path and j not in taken and k not in taken
             and (sol[j] == sol[k] if kind == "palindrome" else sol[j] + sol[k] == sol[start])
         ]  # fmt: skip
         if not pairs:
             break
-        j, k = rng.choice(pairs)
+        p0, p1 = (path[1], path[-2]) if len(path) > 1 else (None, None)
+
+        def both(x, p0=p0, p1=p1, path=path):  # the two ends are drawn on together
+            return _step_weight(b, p0, path[0], x[0]) * _step_weight(b, p1, path[-1], x[1])
+
+        j, k = _by_hand(rng, pairs, both)[0]
         path = [j] + path + [k]
     return path
 
@@ -441,11 +523,12 @@ def _walk(b, kind, sol, start, taken, rng, target, budget=None):
         if len(path) >= target or steps > budget:
             return len(path) >= target
         steps += 1
-        nxt = [j for j in b.nb[path[-1]] if j not in path and j not in taken and ok(path, j)]
-        rng.shuffle(nxt)
+        nxt = [j for j in _free_steps(b, path, path[-1], taken) if ok(path, j)]
+        prev = path[-2] if len(path) > 1 else None
+        nxt = _by_hand(rng, nxt, lambda j: _step_weight(b, prev, path[-1], j))  # tried as a hand would draw on
         return any(dfs(path + [j]) for j in nxt)
 
-    if kind == "whisper" and not any(abs(sol[start] - sol[j]) >= gap for j in b.nb[start]):
+    if kind == "whisper" and not any(abs(sol[start] - sol[j]) >= gap for j in b.nb8[start]):
         return None
     dfs([start])
     if kind == "renban":  # the digits must form a run

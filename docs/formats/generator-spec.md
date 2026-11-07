@@ -86,13 +86,17 @@ Shape limits, each a number or `[min, max]` (`max` `null` = no cap):
 | `size` | cage | cells per cage |
 | `sum` | cage | the cage total |
 | `length` | line, arrow | cells per line; for an arrow, cells in the shaft (the circle not counted) |
+| `turns` | line | direction changes along the line (`0` = straight; a diagonal step after an orthogonal one counts). Human-set lines turn at about half their inner cells; the generator draws its lines to match. |
 
 ```json
 {"type": "cage", "sum": 10, "count": "max"}
 {"type": "line", "kind": "whisper", "length": [12, null], "count": 1}
+{"type": "line", "kind": "thermo", "length": [4, 6], "turns": [0, 1], "count": 3}
 ```
 
-Shape limits do not combine with `"tile"` or with a zero-given cage count.
+With `"tile"` or a zero-given cage count, the tiling keeps to them: no cage is built over a maximum, cages under a
+minimum are merged first, and a tiling that leaves one under is drawn again (`{"type": "cage", "count": "tile",
+"sum": [null, 20]}` caps every cage at 20).
 
 ## 3. Givens and symmetry
 

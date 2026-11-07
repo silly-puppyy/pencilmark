@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- **Cage limits work with tiled killers**: `{"type": "cage", "count": "tile", "sum": [null, 20]}` (and `size`, and
+  a zero-given cage count): the tiling builds no cage over a maximum, merges cages under a minimum first, and draws
+  again when one stays under.
+- **Line `turns` limit and hand-drawn lines**: line templates take `turns` (`[min, max]`, `0` = straight). Generated
+  lines may now step diagonally (never crossing a line of their kind) and are drawn as people draw them: human lines
+  (5,520 on the development set) turn at 54% of their inner cells, take 31% of their steps diagonally and are
+  straight 30% of the time; 1.2's were orthogonal only and turned at about 67%; now 58%, 34% and 22%.
 - **American English throughout** (format and text): the rule type is `neighbors` (was `neighbours`), the custom
   rule scope key `neighbors`, the palette name `gray` (was `grey`), `render_svg.render(colors=...)`, technique names
   (Simple Coloring, Multi-Coloring, ...), explanations, rules text and the docs. Names of other sites' pages keep

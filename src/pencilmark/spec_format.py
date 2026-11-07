@@ -73,6 +73,7 @@ TEMPLATE_KEYS = {
     "size",
     "length",
     "sum",
+    "turns",
     "value",
     "displaced",
     "area",
@@ -148,7 +149,7 @@ def validate_spec(doc):
             for k in ("color", "letter"):
                 if k in r and not isinstance(r[k], str):
                     raise FormatError(f"template {r['type']}: {k} must be a string, got {r[k]!r}")
-            for k in ("size", "length", "sum"):
+            for k in ("size", "length", "sum", "turns"):
                 if k in r:
                     _n_or_range(r[k], f"template {r['type']}: {k}")
             bad = set(r) - TEMPLATE_KEYS
@@ -323,20 +324,22 @@ def spec_to_gen(doc):
                 )
         kind = RULE_KIND[key]
         lim = {}
-        for k in ("size", "length", "sum"):  # n or [min, max] (max null = open)
+        for k in ("size", "length", "sum", "turns"):  # n or [min, max] (max null = open)
             if k not in r:
                 continue
             v = r[k]
             if not (isinstance(v, int) or (isinstance(v, list) and len(v) == 2)):
                 raise FormatError(f"template {r['type']}: {k} must be a number or [min, max]")
             want = "size" if kind == "cage" else "length"
-            if k != "sum" and k != want:
+            if k == "turns" and r["type"] != "line":
+                raise NotSupportedError(f"template {r['type']}: 'turns' applies to lines")
+            if k not in ("sum", "turns") and k != want:
                 raise NotSupportedError(
                     f"template {r['type']}: use {want!r} for its {'cells' if want == 'size' else 'length'}"
                 )
             if k == "sum" and kind != "cage":
                 raise NotSupportedError(f"template {r['type']}: 'sum' applies to cages")
-            lim["sum" if k == "sum" else "length"] = [v, v] if isinstance(v, int) else list(v)
+            lim[k if k in ("sum", "turns") else "length"] = [v, v] if isinstance(v, int) else list(v)
         if lim:
             out.setdefault("shape", {})[kind] = lim
         # one color / letter / parity of a kind is its own element class (counted separately)
@@ -468,7 +471,7 @@ def spec_from_gen(spec):
             r["kind"] = "odd" if sel else "even"
         r["count"] = count
         for key, (lo, hi) in ((s.shape or {}).get(base) or {}).items():
-            name = "sum" if key == "sum" else "size" if base == "cage" else "length"
+            name = key if key in ("sum", "turns") else "size" if base == "cage" else "length"
             r[name] = lo if lo == hi else [lo, hi]
         return r
 

@@ -530,3 +530,27 @@ def test_aim_relaxes_at_half_time(monkeypatch):
     s = spec(9, where={"band": "Very Easy", "difficulty": "typical"}, seed=2, time_limit=8)
     r = run(s)
     assert r["info"]["aim_relaxed"] and r["card"]["band"] == "Very Easy"
+
+
+def test_turns_and_tiled_limits_round_trip():
+    """line templates take turns [min, max]; cage limits combine with count "tile" (user 2026-11-07)"""
+    from pencilmark import spec_format as SF
+
+    rules = [{"type": "line", "kind": "thermo", "count": 3, "length": [4, 6], "turns": [0, 1]},
+             {"type": "cage", "count": "tile", "sum": [None, 20]}]  # fmt: skip
+    doc = spec(rules=rules)
+    assert SF.spec_from_gen(SF.spec_to_gen(doc))["rules"][1:] == rules
+    with pytest.raises(pencilmark.NotSupportedError):
+        SF.spec_to_gen(spec(rules=[{"type": "cage", "count": 3, "turns": [0, 1]}]))
+
+
+@pytest.mark.slow  # about 20 s
+def test_turns_limit():
+    """a thermo template with turns [0, 1]: every thermo placed turns at most once"""
+    r = run(spec(rules=[{"type": "line", "kind": "thermo", "length": [4, 6], "turns": [0, 1], "count": 3}],
+                 where={"band": "Medium"}, seed=2, time_limit=120))  # fmt: skip
+    for x in r["puzzle"]["rules"]:
+        if x["type"] == "line":
+            rc = [(int(c[1]), int(c[3])) for c in x["cells"]]
+            steps = [(q[0] - p[0], q[1] - p[1]) for p, q in zip(rc, rc[1:])]
+            assert sum(s != t for s, t in zip(steps, steps[1:])) <= 1, x

@@ -285,8 +285,12 @@ def feasibility(spec):
         if k not in EL.LENGTHS:
             probs.append(f"{k}: no length or sum limits (cages, lines and arrows have them)")
             continue
-        if set(lim) - ({"length", "sum"} if k == "cage" else {"length"}):
-            probs.append(f"{k}: limits {sorted(set(lim) - {'length'})} only apply to cages (sum)")
+        ok = {"length", "sum"} if k == "cage" else {"length"} if k == "arrow" else {"length", "turns"}
+        if set(lim) - ok:
+            probs.append(f"{k}: limits {sorted(set(lim) - ok)} do not apply (sum: cages; turns: lines)")
+        tlo, thi = lim.get("turns", (None, None))
+        if (tlo is not None and tlo < 0) or (tlo is not None and thi is not None and tlo > thi):
+            probs.append(f"{k}: turns {[tlo, thi]} impossible")
         if (lo is not None and lo < least) or (hi is not None and lo is not None and lo > hi):
             probs.append(f"{k}: length {[lo, hi]} impossible (at least {least}, minimum <= maximum)")
         if k in ("cage", "renban") and lo is not None and lo > s.size:
@@ -296,8 +300,6 @@ def feasibility(spec):
             top = s.size * (s.size + 1) // 2
             if (slo is not None and slo > top) or (shi is not None and shi < 3):
                 probs.append(f"cage sum {[slo, shi]} impossible (a cage of 2..{s.size} cells sums to 3..{top})")
-        if mode in ("partition", "cage_count"):
-            probs.append(f"{k}: length / sum limits are not supported with count 'tile' or a zero-given cage count")
     if s.symmetry is not None:
         try:
             b.orbit(0, s.symmetry)
@@ -668,9 +670,9 @@ def _generate(spec):
                 keep=best is not None,  # that has a result already, kept as dug so far
             )
         elif mode == "partition":
-            r = SR.partition(b, rng, chk, n_givens=s.min_givens)
+            r = SR.partition(b, rng, chk, n_givens=s.min_givens, lim=_shape(s).get("cage"))
         elif mode == "cage_count":
-            r = SR.cage_count(b, value, rng, deadline=deadline)
+            r = SR.cage_count(b, value, rng, deadline=deadline, lim=_shape(s).get("cage"))
         elif mode == "kropki_full":
             r = SR.full_kropki(b, rng)
         else:

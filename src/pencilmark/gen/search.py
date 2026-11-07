@@ -74,7 +74,8 @@ def dig(
         bk = EL.base_kind(kind)
         if bk in EL.SHARED:
             return set(blocked)
-        return set(blocked) | {c for x in els if x[0] == bk for c in x[1]}
+        same = [x for x in els if x[0] == bk]  # and their diagonal steps, so a line of the kind does not cross one
+        return set(blocked) | {c for x in same for c in x[1]} | {s for x in same for s in EL.diagonal_steps(b, x[1])}
 
     def fresh(e):
         return all(x[1] != e[1] for x in els)
@@ -221,26 +222,93 @@ def dig(
     return sol, givens, els
 
 
-def partition(b, rng, chk, n_givens=0, min_els=0, cover=True):
+def _cage_limits(lim):
+    """(within_max(cells, total), below_min(cage)) for a cage template's limits {"length": (lo, hi), "sum": (lo, hi)}:
+    pairing and merging never build a cage over a maximum, and cages under a minimum are merged first"""
+    llo, lhi = (lim or {}).get("length", (None, None))
+    slo, shi = (lim or {}).get("sum", (None, None))
+
+    def within_max(n, total):
+        return (lhi is None or n <= lhi) and (shi is None or total <= shi)
+
+    def below_min(e):
+        return (llo is not None and len(e[1]) < llo) or (slo is not None and e[2] < slo)
+
+    return within_max, below_min
+
+
+def _tile_sized(b, sol, cells, rng, size_lo, size_hi, within_max):
+    """cages of a template minimum size: grow each from a random free cell to a size drawn in [size_lo, size_hi]
+    (distinct digits, within the maxima); leftovers stay smaller (_lift_minima merges them)"""
+    free, els = set(cells), []
+    room = lambda j: sum(1 for k in b.nb[j] if k in free)  # noqa: E731
+    while free:  # the most cornered free cell first, and grow into cornered cells (no cell left stranded)
+        c = min(free, key=lambda j: (room(j), rng.random()))
+        cage, total, want = [c], sol[c], rng.randint(size_lo, size_hi)
+        free.discard(c)
+        while len(cage) < want:
+            opts = [j for x in cage for j in b.nb[x] if j in free and sol[j] not in {sol[y] for y in cage}]
+            opts = [j for j in opts if within_max(len(cage) + 1, total + sol[j])]
+            if not opts:
+                break
+            j = min(opts, key=lambda j: (room(j), rng.random()))
+            cage.append(j)
+            total += sol[j]
+            free.discard(j)
+        els.append(("cage", tuple(sorted(cage)), total))
+    return els
+
+
+def _lift_minima(b, sol, els, rng, within_max, below):
+    """merge every cage under its template's minimum into a neighboring cage (distinct digits, within the maxima),
+    smallest neighbor first; None when one cannot grow"""
+    els = list(els)
+    while True:
+        under = [e for e in els if below(e)]
+        if not under:
+            return els
+        e = min(under, key=lambda x: (len(x[1]), rng.random()))
+        own = {c: k for k, x in enumerate(els) for c in x[1]}
+        hosts = [
+            els[k]
+            for k in sorted({own[j] for c in e[1] for j in b.nb[c] if j in own} - {els.index(e)})
+            if not {sol[x] for x in e[1]} & {sol[x] for x in els[k][1]}
+            and within_max(len(e[1]) + len(els[k][1]), e[2] + els[k][2])
+        ]
+        if not hosts:
+            return None
+        h = min(hosts, key=lambda x: (len(x[1]), rng.random()))
+        els = [x for x in els if x is not e and x is not h] + [("cage", tuple(sorted(e[1] + h[1])), e[2] + h[2])]
+
+
+def partition(b, rng, chk, n_givens=0, min_els=0, cover=True, lim=None):
     """killer covering the board: keep `n_givens` random givens, tile the other cells with 2-cell informative cages,
     then merge neighboring cages (distinct digits, <= 6 cells) -- or delete cages if cover=False -- while the puzzle
     stays solvable within the checker's cap. A cell left alone becomes a given (a 1-cell cage is a given in disguise)
-    when there are givens; with none it joins a neighboring cage."""
+    when there are givens; with none it joins a neighboring cage. lim: the cage template's length / sum limits (the
+    pairing and the merges keep under the maxima, cages under a minimum merge first; a result missing one is None)."""
+    within_max, below = _cage_limits(lim)
+    cap = max(6, (lim or {}).get("length", (None, None))[0] or 0)
     sol = b.solution(rng)
     NB = b.nb
     givens = {i: sol[i] for i in sorted(range(b.N), key=lambda _: rng.random())[:n_givens]}
     owner, els = dict.fromkeys(givens, 0), []
     cells = list(range(b.N))
     rng.shuffle(cells)
+    llo, lhi = (lim or {}).get("length", (None, None))
+    if llo is not None and llo > 2:  # cages of at least llo cells: built that size, not merged up from pairs
+        els = _tile_sized(b, sol, [c for c in cells if c not in owner], rng, llo, min(lhi or llo + 2, b.n), within_max)
+        owner.update(dict.fromkeys(cells, 1))
     for c in cells:
         if c in owner:
             continue
-        opts = [j for j in NB[c] if j not in owner and sol[j] != sol[c]]
+        opts = [j for j in NB[c] if j not in owner and sol[j] != sol[c] and within_max(2, sol[c] + sol[j])]
         if not opts:
             els.append(("cage", (c,), sol[c]))
             owner[c] = 1
             continue
-        j = min(opts, key=lambda j: (EL.ncomb(b.n, 2, sol[c] + sol[j]), rng.random()))
+        pair = lambda j: ("cage", (c, j), sol[c] + sol[j])  # noqa: E731
+        j = min(opts, key=lambda j: (below(pair(j)), EL.ncomb(b.n, 2, sol[c] + sol[j]), rng.random()))
         els.append(("cage", tuple(sorted((c, j))), sol[c] + sol[j]))
         owner[c] = owner[j] = 1
     for e in [e for e in els if len(e[1]) == 1]:  # a single cell: a given, or absorbed into a neighboring cage
@@ -252,19 +320,27 @@ def partition(b, rng, chk, n_givens=0, min_els=0, cover=True):
         hosts = [
             x
             for x in els
-            if x is not e and len(x[1]) < 4 and any(j in x[1] for j in NB[c]) and sol[c] not in {sol[y] for y in x[1]}
+            if x is not e
+            and len(x[1]) < max(4, cap)
+            and any(j in x[1] for j in NB[c])
+            and sol[c] not in {sol[y] for y in x[1]}
+            and within_max(len(x[1]) + 1, x[2] + sol[c])
         ]
         if not hosts:
+            if lim:  # the minima pass below merges it, or the tiling is drawn again
+                continue
             return None
         h = min(hosts, key=lambda x: (EL.ncomb(b.n, len(x[1]) + 1, x[2] + sol[c]), rng.random()))
         els[els.index(h)] = ("cage", tuple(sorted(h[1] + (c,))), h[2] + sol[c])
         els.remove(e)
-    if not chk.ok(givens, els):
+    els = _lift_minima(b, sol, els, rng, within_max, below)  # cages under a minimum grow first, checked below
+    if els is None or not chk.ok(givens, els):
         return None
     for _ in range(400):
         changed = False
         order = list(range(len(els)))
         rng.shuffle(order)
+        order.sort(key=lambda i: not below(els[i]))  # cages under a minimum merge first
         for a in order:
             if a >= len(els):
                 continue
@@ -274,11 +350,13 @@ def partition(b, rng, chk, n_givens=0, min_els=0, cover=True):
             moves = []
             for k in sorted(nbrs):
                 eb = els[k]
-                if {sol[x] for x in ea[1]} & {sol[x] for x in eb[1]} or len(ea[1]) + len(eb[1]) > min(6, b.n):
+                if {sol[x] for x in ea[1]} & {sol[x] for x in eb[1]} or len(ea[1]) + len(eb[1]) > min(cap, b.n):
+                    continue
+                if not within_max(len(ea[1]) + len(eb[1]), ea[2] + eb[2]):
                     continue
                 m = ("cage", tuple(sorted(ea[1] + eb[1])), ea[2] + eb[2])
                 moves.append([e for i_, e in enumerate(els) if i_ not in (a, k)] + [m])
-            if not cover:
+            if not cover and not below(ea):
                 moves.append([e for i_, e in enumerate(els) if i_ != a])
             rng.shuffle(moves)
             for cand in moves[:4]:
@@ -290,15 +368,19 @@ def partition(b, rng, chk, n_givens=0, min_els=0, cover=True):
             break
     if any(len(e[1]) == 1 for e in els) or len(els) < min_els:  # a 1-cell cage is a given in disguise
         return None
+    if any(below(e) for e in els):
+        return None
     return sol, givens, els
 
 
-def cage_count(b, n_cages, rng, time_limit=30.0, deadline=None):
+def cage_count(b, n_cages, rng, time_limit=30.0, deadline=None, lim=None):
     """killer with EXACTLY n_cages cages and no givens: tile with 2-cell cages, then merge neighboring cages (distinct
     digits) in batches while the puzzle stays UNIQUE (CP-SAT oracle with a counterexample cache; a failed batch is
-    bisected). No human-solvability cap: the card grades whatever results."""
+    bisected). No human-solvability cap: the card grades whatever results. lim: the cage template's length / sum
+    limits, as in partition."""
     import time as _t
 
+    within_max, below = _cage_limits(lim)
     sol = b.solution(rng)
     NB = b.nb
     owner, els = {}, []
@@ -307,14 +389,18 @@ def cage_count(b, n_cages, rng, time_limit=30.0, deadline=None):
     for c in cells:
         if c in owner:
             continue
-        opts = [j for j in NB[c] if j not in owner and sol[j] != sol[c]]
+        opts = [j for j in NB[c] if j not in owner and sol[j] != sol[c] and within_max(2, sol[c] + sol[j])]
         if not opts:
             els.append(("cage", (c,), sol[c]))
             owner[c] = 1
             continue
-        j = min(opts, key=lambda j: (EL.ncomb(b.n, 2, sol[c] + sol[j]), rng.random()))
+        pair = lambda j: ("cage", (c, j), sol[c] + sol[j])  # noqa: E731
+        j = min(opts, key=lambda j: (below(pair(j)), EL.ncomb(b.n, 2, sol[c] + sol[j]), rng.random()))
         els.append(("cage", tuple(sorted((c, j))), sol[c] + sol[j]))
         owner[c] = owner[j] = 1
+    els = _lift_minima(b, sol, els, rng, within_max, below)
+    if els is None:
+        return None
     orc = Oracle(b, sol, time_limit=time_limit)
     unique = lambda e: orc.unique({}, e)
     if not unique(els):
@@ -322,7 +408,7 @@ def cage_count(b, n_cages, rng, time_limit=30.0, deadline=None):
 
     def pick_merges(els, k):
         own = {c: i for i, e in enumerate(els) for c in e[1]}
-        order = sorted(range(len(els)), key=lambda i: (len(els[i][1]), rng.random()))
+        order = sorted(range(len(els)), key=lambda i: (not below(els[i]), len(els[i][1]), rng.random()))
         used, out = set(), []
         for i in order:
             if len(out) >= k:
@@ -336,6 +422,8 @@ def cage_count(b, n_cages, rng, time_limit=30.0, deadline=None):
             for j in nb:
                 eb = els[j]
                 if {sol[x] for x in ea[1]} & {sol[x] for x in eb[1]}:
+                    continue
+                if not within_max(len(ea[1]) + len(eb[1]), ea[2] + eb[2]):
                     continue
                 out.append((i, j))
                 used |= {i, j}
@@ -378,7 +466,7 @@ def cage_count(b, n_cages, rng, time_limit=30.0, deadline=None):
             stall, els = 0, new_
             batch = min(16, batch * 2)
         _log.debug("%d cages (CP-SAT calls %d, cache rejections %d)", len(els), orc.calls, orc.hits)
-    if len(els) != n_cages or any(len(e[1]) == 1 for e in els):
+    if len(els) != n_cages or any(len(e[1]) == 1 or below(e) for e in els):
         return None
     return sol, {}, els
 

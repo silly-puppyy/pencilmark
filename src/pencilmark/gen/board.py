@@ -81,6 +81,11 @@ class Board:
             [j for j in (step(i, -1, 0), step(i, 1, 0), step(i, 0, -1), step(i, 0, 1)) if j >= 0] for i in range(self.N)
         ]
         self.edges = sorted({(min(i, j), max(i, j)) for i in range(self.N) for j in self.nb[i]})
+        # king-step neighbors: a line may step diagonally (31% of the steps of human-set lines)
+        self.nb8 = [
+            [j for dr in (-1, 0, 1) for dc in (-1, 0, 1) if (dr or dc) and (j := step(i, dr, dc)) >= 0]
+            for i in range(self.N)
+        ]
 
     def rc(self, i):
         r, c = self.coords[i]
