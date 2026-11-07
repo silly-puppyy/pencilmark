@@ -37,7 +37,7 @@ walls, arrows whose circle is still fogged, thermometer and renban bounds. Each 
   and `se` are null on a fog card for now.
 - **Stalls.** On the 24 Cracking the Cryptic fog puzzles pencilmark reads, the route solves 10 under the fog and stalls
   on 13, 8 of them before the first placement (one more ran out of time). A stall is a deduction the engine does not
-  make yet; found so far: colouring steps a host makes (Restricted Access) and two hidden arrows checked together.
+  make yet; found so far: coloring steps a host makes (Restricted Access) and two hidden arrows checked together.
 - **Reading.** Fog puzzles use unusual rules more than most: of 114 fog puzzles from Cracking the Cryptic, readers
   refuse about half for a rule or drawing they do not model. A file whose rules mention fog without marking the lit
   cells is refused.

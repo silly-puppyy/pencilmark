@@ -14,4 +14,4 @@
     0, 0, 0, 0, 0, 0, 0, 0, 0],
  "rules": [
   {"type": "box_grid", "box": [3, 3], "count": [3, 3]},
-  {"type": "neighbours", "kind": "antiknight", "within": "box"}]}
+  {"type": "neighbors", "kind": "antiknight", "within": "box"}]}

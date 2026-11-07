@@ -164,11 +164,11 @@ def visible_rules(rules, lit, D, above=(), line_len=None):
             t in STATED
             or t in OUTSIDE
             or _diagonal(k, D)
-            or (t == "neighbours" and "except" not in k)
+            or (t == "neighbors" and "except" not in k)
             or any(f(k) for f in above)
         ):
             out.append(k)
-        elif t in ("neighbours", "negative"):  # "all dots are given": only where both cells are seen
+        elif t in ("neighbors", "negative"):  # "all dots are given": only where both cells are seen
             area = sorted(set(k["area"]) & L) if isinstance(k.get("area"), list) else sorted(L)
             if len(area) > 1:
                 out.append(dict(k, area=area))
@@ -243,7 +243,7 @@ def visible_rules(rules, lit, D, above=(), line_len=None):
 
 def _partial_region_sum(line, L, box_of):
     """A region-sum line seen in part (CtC, Regions in the Fog: the dominoes around box 5). A fogged cell both of whose
-    neighbours on the line are lit joins them (the drawn ends point at it; lines do not branch). In a seen stretch, a
+    neighbors on the line are lit joins them (the drawn ends point at it; lines do not branch). In a seen stretch, a
     piece inside one box is complete when the line is seen crossing the box border at both ends (or ending there);
     the complete pieces of one stretch have equal sums."""
     if not box_of:
@@ -426,7 +426,7 @@ def arrow_cases(rules, lit, rows, cols, ortho=False, no_share=False, forced=None
                     continue
                 cases = [{"cells": [ix(bulb)] + [ix(c) for c in seen + p], "circle": ix(bulb)} for p in ps]
             else:
-                # "every circle emits a single arrow": a fogged cell both of whose shaft neighbours are lit is shaft
+                # "every circle emits a single arrow": a fogged cell both of whose shaft neighbors are lit is shaft
                 # (two drawn ends point at it; it is not a second circle), joining the stretches (CtC, Chasing Arrows)
                 bridge = {
                     line[i]
@@ -766,7 +766,7 @@ def route(puzzle, max_rounds=400, rules_text=None, overrides=None):
     from . import band_path as BP
 
     V = _FogView(puzzle, rules_text)
-    P = dict(api._params("human"), **(overrides or {}))  # overrides: rate's switches (colouring)
+    P = dict(api._params("human"), **(overrides or {}))  # overrides: rate's switches (coloring)
     sol, cols, givens0 = V.sol, V.cols, V.givens0
     givens = list(givens0)
     placed = set()
@@ -774,7 +774,7 @@ def route(puzzle, max_rounds=400, rules_text=None, overrides=None):
     full = (1 << V.D) - 1
     cand = [full if not g else 1 << (g - 1) for g in givens]
     steps, reveals = [], 0
-    colours = []  # colouring on: the colour work so far (class joins / differences), kept across reveals
+    colours = []  # coloring on: the color work so far (class joins / differences), kept across reveals
     for rounds in range(1, max_rounds + 1):
         if all(g or g is None for g in givens):
             return {"solved": True, "rounds": rounds - 1, "reveals": reveals, "steps": steps, "stuck": 0}
@@ -789,7 +789,7 @@ def route(puzzle, max_rounds=400, rules_text=None, overrides=None):
         )
         progressed = False
         for m in route_["steps"][len(colours) :]:
-            if m.get("idfx"):  # its colour effects carry into the next round (the candidates carry the rest)
+            if m.get("idfx"):  # its color effects carry into the next round (the candidates carry the rest)
                 colours.append(dict(m, place=None, elims=[]))
             steps.append(
                 {

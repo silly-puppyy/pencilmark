@@ -96,7 +96,7 @@ RELATIONS = {
 }
 
 # line rules (Puzzle.constraints {"type": "line", "kind": ..., "cells": [ordered], params}); compiled
-# by finalize() into pair relations / n-ary constraints, recognised as lines by the C++ core
+# by finalize() into pair relations / n-ary constraints, recognized as lines by the C++ core
 LINE_KINDS = (
     "thermo",
     "slow_thermo",
@@ -439,7 +439,7 @@ def add_cages(p: Puzzle, cages) -> Puzzle:
 
 
 def subgrid_ids(p: Puzzle, k: int) -> list:
-    """Row-major cell ids of samurai sub-grid k (0=TL,1=TR,2=centre,3=BL,4=BR)."""
+    """Row-major cell ids of samurai sub-grid k (0=TL,1=TR,2=center,3=BL,4=BR)."""
     orr, oc = p.origins[k]
     return [p.cell_id[(orr + r, oc + c)] for r in range(9) for c in range(9)]
 
@@ -482,8 +482,8 @@ def apply_variant_to_subgrid(p: Puzzle, k: int, variant: str) -> Puzzle:
 
 def samurai(grids: list[str] | None = None, name="") -> Puzzle:
     """Five overlapping 9x9 grids on a 21x21 canvas (corner grids share a box
-    with the centre grid). grids: optional 5 x 81-char strings in order
-    TL, TR, centre, BL, BR."""
+    with the center grid). grids: optional 5 x 81-char strings in order
+    TL, TR, center, BL, BR."""
     origins = [(0, 0), (0, 12), (6, 6), (12, 0), (12, 12)]
     cell_id = {}
     coords = []
@@ -521,8 +521,8 @@ def add_predicate(p: Puzzle, cells, fn, name="custom", max_tuples=200_000) -> Pu
     """Generic custom rule over a small group of cells: fn(*digits) -> bool, compiled to an n-ary
     table constraint (allowed tuples) by enumerating the cells' domains. Every engine path that
     understands tables (TableCombination, brute force, featurize) and the CP-SAT verifier then
-    handle it, with no new solver code. Example (diamond: centre digit divides the sum of its
-    four orthogonal neighbours): add_predicate(p, [ctr, n, e, s, w], lambda c, *v: sum(v) % c == 0, "diamond").
+    handle it, with no new solver code. Example (diamond: center digit divides the sum of its
+    four orthogonal neighbors): add_predicate(p, [ctr, n, e, s, w], lambda c, *v: sum(v) % c == 0, "diamond").
     Keep groups small (domain product <= max_tuples); larger sums should use sum constraints."""
     import itertools
 

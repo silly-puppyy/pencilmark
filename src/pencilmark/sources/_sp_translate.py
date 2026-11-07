@@ -302,7 +302,7 @@ COLOR_WORDS = [
     "maroon",
     "crimson",
 ]
-# reference hues for colour words in rules text (lines are matched to the nearest named colour)
+# reference hues for color words in rules text (lines are matched to the nearest named color)
 COLOR_HUES = {
     "red": 0,
     "orange": 30,
@@ -337,7 +337,7 @@ COLOR_HUES = {
     "crimson": 350,
 }
 # empirical setter conventions (709 verified readings): green whisper 98%, pink renban 93%, cyan region sum 80%,
-# orange dutch 79%, grey thermo 61% / palindrome 29%, red parity ~50%, purple zipper ~57%
+# orange dutch 79%, gray thermo 61% / palindrome 29%, red parity ~50%, purple zipper ~57%
 DEFAULT_LINE = {
     "green": "whisper",
     "purple": "zipper",
@@ -351,7 +351,7 @@ DEFAULT_LINE = {
     "red": "parity",
 }
 # what a rules text says when it describes a default meaning without naming it ("a pink line holds consecutive digits");
-# a default colour is used only when the text says this much (a line rule the engine does not know, drawn blue, read
+# a default color is used only when the text says this much (a line rule the engine does not know, drawn blue, read
 # as a region sum: Quiet Room, 000TBF)
 DEFAULT_EVIDENCE = {
     "whisper": r"whisper|(?:least|minimum difference of|difference of) (?:5|five)\b|\b(?:5|five) or (?:more|greater)",
@@ -387,8 +387,8 @@ def _alpha(hexcol):
 
 
 def color_name(hexcol):
-    h = str(hexcol or "#000").lstrip("#")  # a colour typed without "#" (777777) can arrive as a JSON number
-    if len(h) in (1, 2):  # newer files' grey shorthand: "#F" white, "#0" black, a second digit the alpha
+    h = str(hexcol or "#000").lstrip("#")  # a color typed without "#" (777777) can arrive as a JSON number
+    if len(h) in (1, 2):  # newer files' gray shorthand: "#F" white, "#0" black, a second digit the alpha
         h = h[0] * 3 + h[1:]
     alpha = int(h[3] * 2, 16) / 255 if len(h) == 4 else int(h[6:8], 16) / 255 if len(h) == 8 else 1.0
     if len(h) in (3, 4):
@@ -403,7 +403,7 @@ def color_name(hexcol):
     if light > 0.92:
         return "white"
     if light < 0.12:
-        return "grey" if alpha < 0.6 else "black"  # mostly transparent black (#0003) is drawn grey
+        return "grey" if alpha < 0.6 else "black"  # mostly transparent black (#0003) is drawn gray
     if sat < 0.18:
         return "grey"
     if hue < 15 or hue >= 345:
@@ -505,7 +505,7 @@ def diff_rule(sent):
 
 
 # a line rule described without its name ("a purple line contains a set of consecutive digits"); counted only in a
-# sentence about a line or thread, so a cage or dot described the same way does not colour a line
+# sentence about a line or thread, so a cage or dot described the same way does not color a line
 RULE_DESCRIPTIONS = {
     "renban": [r"sets? of (?:non-repeating,? )?consecutive", r"arranged into a consecutive (?:sequence|set|run)", r"consecutive set", r"consecutive and non-repeating",
                r"\(non-repeating\) consecutive",
@@ -628,7 +628,7 @@ def custom_line(p, rule, ids):
 
     name = lambda i: f"r{p.coords[i][0] + 1}c{p.coords[i][1] + 1}"
     if rule == "shifter":
-        # shifter line: within a box neighbours share parity and polarity (low / high); across a box border exactly one
+        # shifter line: within a box neighbors share parity and polarity (low / high); across a box border exactly one
         # of the two changes; the middle digit (5 on 9x9) never on the line
         box = {c: gi for gi, g in enumerate(p.groups) if g.kind == "box" for c in g.cells}
         mid = (p.D + 1) // 2 if p.D % 2 else None
@@ -719,10 +719,10 @@ def every_line_rule(rules):
     return None
 
 
-# yin-yang: the frame (each colour connected, no 2x2 of one colour) and the couplings between shading and digits that
+# yin-yang: the frame (each color connected, no 2x2 of one color) and the couplings between shading and digits that
 # recur in setters' texts; any other sentence about shading leaves the puzzle refused
 YY_WORD = re.compile(r"\byin(?:[- ]?yang)?\b")
-YY_BOTH = re.compile(  # both colours connected (nurikabe / heyawake / caves connect one colour only)
+YY_BOTH = re.compile(  # both colors connected (nurikabe / heyawake / caves connect one color only)
     r"shaded (?:cells )?and (?:the |all )?unshaded cells|unshaded cells and (?:the |all )?shaded cells|"
     r"(?:each|both|every) colou?r|cells of (?:the same|each) colou?r|as do (?:all )?(?:the )?unshaded"
 )
@@ -746,7 +746,7 @@ def yin_yang_reading(rules):
             r" colou?rs?\b|\bcolou?r (?:every|each|all|some|the (?:grid|cells))|\b(?:dark|light) cells?\b",
             sent,
         ):
-            continue  # not about the shading (clue colours such as "a green line" are not)
+            continue  # not about the shading (clue colors such as "a green line" are not)
         if re.search(r"connected|2 ?x ?2|2 by 2|two by two", sent) and not _YY_PAIR.search(sent):
             continue  # the frame
         if re.fullmatch(r"\W*yin[- ]?yang\W*(?:rules?\W*)?(?:apply\W*)?", sent.strip()):
@@ -845,7 +845,7 @@ def rules_color_map(rules):
         if not rules_here:
             rules_here = _described(sent)
         cols = [c for c in COLOR_WORDS if re.search(rf"\b{c}", sent)]
-        if not re.search(r"\blines?\b", sent):  # "the gray cell with arrows pointing outward": not a line colour
+        if not re.search(r"\blines?\b", sent):  # "the gray cell with arrows pointing outward": not a line color
             cols = [
                 c
                 for c in cols
@@ -880,7 +880,7 @@ def _marker_types(clause):
         out.add("white")
     if re.search(r"\bblack\s+(?:kropki|dots?|circles?)|\bblack\b.{0,25}\bkropki", s):
         out.add("black")
-    # generic "dots"/"kropki" (no colour qualifier) = both colours
+    # generic "dots"/"kropki" (no color qualifier) = both colors
     other_col = re.search(
         r"\b(?:red|gold|golden|yellow|gr[ae]y|blue|green|orange|purple|pink)\s+(?:and\s+\w+\s+)?(?:kropki|dots?)", s
     )
@@ -949,7 +949,7 @@ def negative_markers(rules):
         ):
             neg.add(
                 "white"
-            )  # "in all cases where two neighbouring cells contain consecutive digits, a circle is placed"
+            )  # "in all cases where two neighboring cells contain consecutive digits, a circle is placed"
     if pending:  # a bare "negative constraint(s)" that never says which markers: all of them
         neg |= set(MARKER_TYPES)
     # "all possible dots are given" covers only dot kinds the text talks about (a black-dot puzzle has no white rule)
@@ -1042,14 +1042,14 @@ def line_rule_from_text(hexcol, cmap, drawn=()):
             d = min(d, 360 - d)
             if d < bd:
                 best, bd = rk, d
-    if best is None:  # a shade the text names by a neighbouring word (a pinkish line called purple): one such word only
+    if best is None:  # a shade the text names by a neighboring word (a pinkish line called purple): one such word only
         near = [cmap[w] for w in COLOR_NEAR.get(cname, ()) if w in cmap and w not in drawn]
         if len(set(near)) == 1:
             best = near[0]
     return best
 
 
-# colour words a drawn colour class is also called by
+# color words a drawn color class is also called by
 COLOR_NEAR = {
     "pink": ("purple", "magenta", "violet", "red", "salmon"),
     "purple": ("pink", "magenta", "violet", "lavender"),
@@ -1337,7 +1337,7 @@ def translate(sp, page_text=None, overrides=None):
             p.groups.append(M.Group(f"k{len(p.groups)}", tuple(sorted(cs)), "cage", len(cs) == n, total))
             used["killer"] += 1
     # interior arrows (SudokuPad "arrows" with heads). The shaft starts on the circle's EDGE (e.g. 4.218 for a
-    # circle centred at 3.5), so attach it to the nearest circle; a 2-3 cell pill = multi-digit circle.
+    # circle centered at 3.5), so attach it to the nearest circle; a 2-3 cell pill = multi-digit circle.
     rcirc = []
     for lay in (P.get("underlays") or []) + (P.get("overlays") or []):
         if (
@@ -1440,7 +1440,7 @@ def translate(sp, page_text=None, overrides=None):
         if lay.get("rounded") and w >= 0.6 and not on_edge and inside(cell_of((cx, cy))):
             circles[cell_of((cx, cy))] = color_name(lay.get("backgroundColor") or lay.get("borderColor"))
         elif txt and not on_edge and w < 0.6 and inside(cell_of((cx, cy))):
-            # text inside a cell away from its centre is a clue of some kind (run sums in a corner, 000V90): no reading
+            # text inside a cell away from its center is a clue of some kind (run sums in a corner, 000V90): no reading
             # handles it, so refuse rather than drop it; near a cell corner it may be a quadruple digit (quadruples())
             centred = abs(cx - math.floor(cx) - 0.5) < 0.15 and abs(cy - math.floor(cy) - 0.5) < 0.15
             near_corner = abs(cx - round(cx)) < 0.3 and abs(cy - round(cy)) < 0.3
@@ -1478,7 +1478,7 @@ def translate(sp, page_text=None, overrides=None):
                     and re.search(r"white (?:dot|circle|kropki)", low)
                     and not re.search(r"black (?:dot|circle|kropki)", low)
                 ):
-                    bg = "white"  # a dot without a colour where the rules know only white dots (Easy Arrows, 000930)
+                    bg = "white"  # a dot without a color where the rules know only white dots (Easy Arrows, 000930)
                 if bg == "white":
                     p.relations.append(("diff", idx(a), idx(b), 1))
                     used["kropki_white"] += 1
@@ -1496,7 +1496,7 @@ def translate(sp, page_text=None, overrides=None):
                     PJ.add_named(p, {"type": "custom", "cells": {"a": [nm(idx(a))], "b": [nm(idx(b))]}, "holds": holds,
                                      "label": "Shifter dot"})  # fmt: skip
                     used["shifter_dot"] += 1
-                else:  # a dot of another colour: its meaning is in the text, which no reading took
+                else:  # a dot of another color: its meaning is in the text, which no reading took
                     unknown.append(f"{bg} dot")
             elif re.fullmatch(r"\d{1,2}", txt):
                 kind = (overrides or {}).get("_edgenum") or edge_number_rule(rules)
@@ -1505,7 +1505,7 @@ def translate(sp, page_text=None, overrides=None):
                     lay.get("rounded")
                     and re.search(r"white (?:dot|circle)[^.]{0,80}differen", low_)
                     and re.search(r"black (?:dot|circle)[^.]{0,80}ratio", low_)
-                ):  # difference / ratio pairs: the dot's colour says which
+                ):  # difference / ratio pairs: the dot's color says which
                     kind = "ratio" if color_name(lay.get("backgroundColor")) in ("black", "grey") else "diff"
                 k_ = int(txt)
                 if kind == "sum":
@@ -1546,10 +1546,10 @@ def translate(sp, page_text=None, overrides=None):
     ):
         text_mentions = (text_mentions - {"thermo", "slow_thermo"}) | {"slow_thermo"}
     if len({cn for cn, _, _ in line_items(P, n)} - {"diagonal", "offcentre"}) == 1:
-        text_mentions |= described_line_rules(rules)  # "digits on a line form a consecutive set", one line colour
+        text_mentions |= described_line_rules(rules)  # "digits on a line form a consecutive set", one line color
     all_lines = every_line_rule(rules)
     box_of = {c: gi for gi, g in enumerate(p.groups) if g.kind == "box" for c in g.cells}
-    told = set()  # line colours whose meaning is logged (once per colour and reading)
+    told = set()  # line colors whose meaning is logged (once per color and reading)
     drawn_classes = {ci for ci, _, _ in line_items(P, n)}
     renban_pieces = []
     for cname, hexcol, lc in line_items(P, n):
@@ -1585,12 +1585,12 @@ def translate(sp, page_text=None, overrides=None):
             and rule in (None, "arrow", "thermo", "between")
         ):
             rule, how = "double_arrow", "circles at both ends and double arrows in the rules text"
-        bulb = [x for x in (lc[0], lc[-1]) if circles.get(x) == cname]  # a circle in the line's own colour at one end
+        bulb = [x for x in (lc[0], lc[-1]) if circles.get(x) == cname]  # a circle in the line's own color at one end
         if (
             rule not in (None, "thermo", "slow_thermo", "arrow", "double_arrow", "between")
             and len(bulb) == 1
             and "thermo" in rules.lower()
-        ):  # grey thermometers beside grey palindromes (German Beetles, 000JH3): the bulb tells them apart
+        ):  # gray thermometers beside gray palindromes (German Beetles, 000JH3): the bulb tells them apart
             rule, how = "thermo", f"a bulb in its colour (the rules text gives {cname} lines without one)"
         if rule is None and lc[0] in circles and lc[-1] in circles and "between" in text_mentions:
             rule, how = "between", "circles at both ends and between lines in the rules text"
@@ -1675,7 +1675,7 @@ def translate(sp, page_text=None, overrides=None):
         elif rule == "same_parity":  # no rule family: a custom rule, kept by name
             from .. import puzzle_json as PJ
 
-            # neighbours along the line share a parity (the same rule as "all odd or all even", in 2-cell instances: the
+            # neighbors along the line share a parity (the same rule as "all odd or all even", in 2-cell instances: the
             # engine reads small rules as digit tables, which propagate as the cells fill)
             name = lambda i: f"r{p.coords[i][0] + 1}c{p.coords[i][1] + 1}"
             PJ.add_named(
@@ -1715,7 +1715,7 @@ def translate(sp, page_text=None, overrides=None):
             m_ = re.search(r"lockout.{0,200}?(?:at least|by|difference of) (\d)", rules.lower(), re.S)
             k_ = int(m_.group(1)) if m_ else 4
             p.constraints.append({"type": "line", "kind": "lockout", "cells": ids, "k": k_})  # compiled by finalize
-        elif rule == "consecutive_line":  # neighbours along the line differ by 1 (repeats allowed off the houses)
+        elif rule == "consecutive_line":  # neighbors along the line differ by 1 (repeats allowed off the houses)
             p.relations += [("diff", a, b, 1) for a, b in zip(ids, ids[1:])]
         elif rule.startswith("linesum") or rule == "shifter":  # "numbers on blue lines sum to 20"; shifter lines
             custom_line(p, rule, ids)
@@ -1791,7 +1791,7 @@ def translate(sp, page_text=None, overrides=None):
     neg &= ({"white", "black"} if used["kropki_white"] or used["kropki_black"] else set()) | (
         {"x", "v"} if used["xv"] or xv_def else set()
     )
-    # ... but a dot colour neither drawn nor defined by the text is not meant ("KROPKI: cells separated by a black dot
+    # ... but a dot color neither drawn nor defined by the text is not meant ("KROPKI: cells separated by a black dot
     # are a 1:2 ratio. ALL dots are given!": no white negative; 000MXK)
     if (
         "white" in neg
@@ -1853,21 +1853,21 @@ def translate(sp, page_text=None, overrides=None):
                 if not (u == "rule 'equality cage'" and EQUALITY_TEXT.search(text_rules))]  # fmt: skip
     if EQUALITY_TEXT.search(text_rules):
         used["equality_cage"] += equality_cages(p, n)
-    if CLONE_TEXT.search(text_rules):  # clones drawn as coloured shapes
+    if CLONE_TEXT.search(text_rules):  # clones drawn as colored shapes
         colour_of = {}
         for lay in P.get("underlays") or []:
             if not isinstance(lay, dict) or "center" not in lay or lay.get("rounded"):
                 continue
             col = str(lay.get("backgroundColor") or "")
             if not col or col.lower().endswith("00") and len(col) == 9 or color_name(col) == "white":
-                continue  # transparent or white: not a clone colour
+                continue  # transparent or white: not a clone color
             (cy, cx), w, h = lay["center"], lay.get("width", 1) or 1, lay.get("height", 1) or 1
             for r in range(int(round(cy - h / 2)), int(round(cy + h / 2))):
                 for c in range(int(round(cx - w / 2)), int(round(cx + w / 2))):
                     if inside((r, c)):
                         colour_of[(r, c)] = col.lower()
         groups = clone_groups(colour_of) if colour_of else None
-        if not groups and colour_of:  # clones in different colours ("each coloured shape"): one class
+        if not groups and colour_of:  # clones in different colors ("each colored shape"): one class
             groups = clone_groups(dict.fromkeys(colour_of, "any"))
         if groups:
             for comps in groups:
@@ -1939,7 +1939,7 @@ def translate(sp, page_text=None, overrides=None):
             PJ.add_named(p, {"type": "custom", "cells": {"K": K}, "holds":
                              "let e = count(x for x in K if even(x)); e == 0 or e == len(K) or 2 * e == len(K)"})  # fmt: skip
             used["full_or_half"] += 1
-    if FADED_TEXT.search(text_rules.lower()):  # a dot is consecutive OR double, whatever its colour
+    if FADED_TEXT.search(text_rules.lower()):  # a dot is consecutive OR double, whatever its color
         from .. import puzzle_json as PJ
 
         dots = [
@@ -2427,7 +2427,7 @@ def rossini_arrows(P, n, p, rules, used):
 
 
 # one-off clues on marked cells (GAS): the marked cell's digit x against the cells N around it, as custom rules.
-# kind -> (wording, marker, which cells: "orth" / "king" / "diag" neighbours or "ray" in the arrow's direction,
+# kind -> (wording, marker, which cells: "orth" / "king" / "diag" neighbors or "ray" in the arrow's direction,
 # condition; {N} is N, or [N] when N is a single cell)
 MARKED_CUSTOM = {
     "sum_adjacent": (r"circled number[^.]{0,40}equal the sum of (?:all )?(?:the )?orthogonally adjacent", "circle", "orth",
@@ -2617,7 +2617,7 @@ def global_custom(n, p, rules, used=None):
                     "scope": {"pairs": "orthogonal"},
                 },
             )
-        )  # as pairs: a neighbours table is 9^5 rows a cell
+        )  # as pairs: a neighbors table is 9^5 rows a cell
     if re.search(
         r"(?:may not|cannot|can't|must not) (?:exist )?(?:be )?a run of three or more cells[^.]{0,120}same parity", t
     ):
@@ -2663,7 +2663,7 @@ def global_custom(n, p, rules, used=None):
     ):
         caged = {c for g in p.groups if g.kind == "cage" for c in g.cells}
         at = {p.coords[i]: i for i in range(p.N)}
-        for i in sorted(caged):  # a caged digit and its orthogonal neighbours are not consecutive
+        for i in sorted(caged):  # a caged digit and its orthogonal neighbors are not consecutive
             r, c = p.coords[i]
             for q in (at.get((r, c + 1)), at.get((r + 1, c)), at.get((r, c - 1)), at.get((r - 1, c))):
                 if q is not None and (q not in caged or q > i):
@@ -2675,7 +2675,7 @@ def global_custom(n, p, rules, used=None):
     if m and re.search(r"may not repeat in any 3 ?x ?3 area", t):
         d = int(m.group(1) or m.group(2))
         found.append(
-            ("no_repeat_around", {"holds": f"(x, N) => x != {d} or all_different(N)", "scope": {"neighbours": "king"}})
+            ("no_repeat_around", {"holds": f"(x, N) => x != {d} or all_different(N)", "scope": {"neighbors": "king"}})
         )
     for kind, rule in found:
         if rule is None:
@@ -2818,7 +2818,7 @@ def parity_shapes(P, n, p, rules, used, idx, inside):
             r"\b(?:are|must be|contain (?:digits|numbers)) (greater|larger|higher|bigger|less|smaller|lower) than (\d)",
             sent,
         )
-        if gt and not dset:  # "red cells are greater than 5": a digit set by colour or shape
+        if gt and not dset:  # "red cells are greater than 5": a digit set by color or shape
             k_ = int(gt.group(2))
             ds_ = [
                 v
@@ -2845,7 +2845,7 @@ def parity_shapes(P, n, p, rules, used, idx, inside):
         cols = {{"gray": "grey"}.get(c, c) for c in COLOR_WORDS if re.search(rf"\b{c}\b", sent)} & {
             s_[1] for s_ in shapes
         }
-        if not shp and cols and re.search(r"\bcells?\b", sent):  # 'digits in grey cells are odd': any shape, by colour
+        if not shp and cols and re.search(r"\bcells?\b", sent):  # 'digits in gray cells are odd': any shape, by color
             shp = ["circle", "square", "cell"]
         if not shp or len(par) != 1 or (len(shp) > 1 and not cols):
             continue

@@ -63,7 +63,7 @@ def region_sum_swatch():
 
 
 def chain(rule, digits=None):
-    """an edge clue on each neighbouring pair of the bottom row"""
+    """an edge clue on each neighboring pair of the bottom row"""
     return [dict(rule, cells=[a, b]) for a, b in zip(ROW3, ROW3[1:])], along(ROW3, digits) if digits else None
 
 
@@ -309,7 +309,7 @@ def layout_svg(origins, dark=False, cell=7, n=9):
     theme = render_svg.THEMES[bool(dark)]
     ink, board = theme["ink"], theme["board"]
     tint = {}
-    for i, (r, c) in enumerate(origins):  # greedy colouring of the overlap graph
+    for i, (r, c) in enumerate(origins):  # greedy coloring of the overlap graph
         near = {tint[j] for j, (r2, c2) in enumerate(origins[:i]) if abs(r - r2) < n and abs(c - c2) < n}
         tint[i] = next(k for k in range(len(TINTS[dark])) if k not in near)
     h = (max(r for r, _ in origins) + n) * cell

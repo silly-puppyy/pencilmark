@@ -334,7 +334,7 @@ def _explain(p, m, nm, pats, exs, info=None):
                 "colors": [[{"cell": e // 32, "rc": _rc(p, e // 32), "digit": e % 32} for e in col] for col in cols],
                 "eliminated_color": side if wrap else None,
                 "clash": [ca, cb] if wrap == 1 else None,
-                "emptied": {"unit": _group(p, ca, info), "digit": cb} if wrap == 2 else None,  # colour empties a house
+                "emptied": {"unit": _group(p, ca, info), "digit": cb} if wrap == 2 else None,  # color empties a house
             }
         elif tag == 9 and n >= 6:
             v, wrap, side, ca, cb, n0 = data[:6]
@@ -346,7 +346,7 @@ def _explain(p, m, nm, pats, exs, info=None):
                 "rc": [[_rc(p, c) for c in col] for col in cols],
                 "eliminated_color": side if wrap else None,
                 "clash": [ca, cb] if wrap == 1 else None,
-                "emptied": {"unit": _group(p, ca, info), "digit": v} if wrap == 2 else None,  # colour empties a house
+                "emptied": {"unit": _group(p, ca, info), "digit": v} if wrap == 2 else None,  # color empties a house
             }
         elif tag == 10 and n >= 4:
             total, outie, nh = data[:3]
@@ -403,7 +403,7 @@ def _explain(p, m, nm, pats, exs, info=None):
                 }
                 for k in range(0, n - 1, 2)
             ]
-        elif tag == 16 and n >= 6:  # class colouring: split, reason, orientation, anchor / houses, links, sides
+        elif tag == 16 and n >= 6:  # class coloring: split, reason, orientation, anchor / houses, links, sides
             kind, why, orient, anchor, nh = data[:5]
             houses = data[5 : 5 + nh]
             ne = data[5 + nh]

@@ -124,7 +124,7 @@ def compact_to_json(s):
             out.append('"' + s[i:j] + '"')
             i = j
         elif ch.isdigit() or (ch in "-." and i + 1 < n and s[i + 1].isdigit()):
-            j = i + 1  # numbers; a bare token like 67f067 (hex colour) is a string
+            j = i + 1  # numbers; a bare token like 67f067 (hex color) is a string
             while j < n and (s[j].isalnum() or s[j] in ".-+"):
                 j += 1
             tok = s[i:j]

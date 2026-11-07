@@ -142,7 +142,7 @@ EDGE = {
     )
 }
 NEG_SELECTOR = {k: v.param for k, v in EDGE.items() if v.negative}
-# the pair a numbered clue allows; orthogonal neighbours share a row or column, so their digits differ
+# the pair a numbered clue allows; orthogonal neighbors share a row or column, so their digits differ
 _PAIR_OK = {
     "difference": lambda a, b, v: abs(a - b) == v,
     "sum": lambda a, b, v: a + b == v,

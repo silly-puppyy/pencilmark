@@ -42,7 +42,7 @@ class Spec:
                       returned
     elements          {kind or class: N | [min, max] | "auto" | "full" | "min" | "partition"}: N = at least N needed elements
                       (0 / None / "auto" = allowed, not required); [min, max] = between min and max (max None = no cap;
-                      [2, 2] = exactly 2). Classes count one colour / letter / parity of a kind: kropki_white, kropki_black,
+                      [2, 2] = exactly 2). Classes count one color / letter / parity of a kind: kropki_white, kropki_black,
                       x, v, odd, even ({"kropki_black": [2, 2], "kropki_white": "auto"}); {"kropki": "full"} = zero-given
                       full kropki (no dot = neither relation);
                       {"kropki": "min"} = zero-given minimal dot set; {"cage": "partition"} = killer tiled by cages, few
@@ -177,7 +177,7 @@ def _plan(s):
 
 
 def _most(s):
-    """the element classes to maximise (count "max")"""
+    """the element classes to maximize (count "max")"""
     return [EL.norm_kind(k) for k, v in (s.elements or {}).items() if isinstance(v, str) and v.lower() == "max"]
 
 
@@ -797,7 +797,7 @@ def _generate(spec):
                 info["seconds"],
             )
             return {"puzzle": d, "card": card, "info": info}
-        if hunt == "count":  # most of the maximised classes, then fewest givens
+        if hunt == "count":  # most of the maximized classes, then fewest givens
             score = (sum(1 for e in els if any(EL.in_class(e, k) for k in most)), -len(givens))
         else:
             score = (card.get("difficulty") or 0) * (1 if hunt == "max" else -1)

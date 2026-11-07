@@ -34,7 +34,7 @@ first. `closed` is allowed only for `whisper`, `renban` and `parity`.
 | `entropic` | `groups`: REQUIRED when D ≠ 9; default `[[1,2,3],[4,5,6],[7,8,9]]` | Every run of 3 consecutive cells holds one digit from each group. | <Swatch name="line-entropic" /> |
 | `modular` | `value` m (≥ 2): REQUIRED when D ≠ 9; default 3 | Every run of m consecutive cells holds one digit of each residue class mod m. | <Swatch name="line-modular" /> |
 | `parity` | – | Adjacent cells on the line differ in parity (alternate odd / even). | <Swatch name="line-parity" /> |
-| `zipper` | – | Cells equally far from the centre of the line sum to the same total (the centre digit, for an odd length). | <Swatch name="line-zipper" /> |
+| `zipper` | – | Cells equally far from the center of the line sum to the same total (the center digit, for an odd length). | <Swatch name="line-zipper" /> |
 | `between` | – | Digits strictly between those of the two ends `cells[0]` and `cells[-1]`, ends in either order. | <Swatch name="line-between" /> |
 | `lockout` | `value` k (1..D−1): REQUIRED when D ≠ 9; default 4 | The ends differ by at least k; every other digit lies outside the closed range of the ends. | <Swatch name="line-lockout" /> |
 | `double_arrow` | – | The two ends sum to the total of the cells between them. | <Swatch name="line-double_arrow" /> |

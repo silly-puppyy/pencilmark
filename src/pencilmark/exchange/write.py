@@ -101,7 +101,7 @@ class _Writer:
 
     # ---------------------------------------------------------------- groups
     def eff_groups(self):
-        """(kind, cells, total) per engine group, with the normalised kinds (docs/guides/development/engine-mapping.md: jigsaw pieces stored as regions ->
+        """(kind, cells, total) per engine group, with the normalized kinds (docs/guides/development/engine-mapping.md: jigsaw pieces stored as regions ->
         box; SudokuPad explicit houses -> row / column / box / region)."""
         p, B, D = self.p, self.B, self.D
         gs = [g for g in p.groups if not (self.key and set(g.cells) & self.key)]
@@ -209,7 +209,7 @@ class _Writer:
             kind, cells, total, _ = g
             if kind in ("row", "col", "box"):
                 if frozenset(cells) in seen:
-                    self.merged_duplicates += 1  # normalisation: a house listed twice is one house
+                    self.merged_duplicates += 1  # normalization: a house listed twice is one house
                     continue
                 seen.add(frozenset(cells))
             items.append((k, {"g": g, "gi": [k]}))
@@ -632,7 +632,7 @@ class _Writer:
         return prs
 
     def whole_rule(self, kind, args, prs, pos):
-        """a neighbours / negative rule whose expansion is prs[pos:pos+n] (as a set) -> (rule, n) or None"""
+        """a neighbors / negative rule whose expansion is prs[pos:pos+n] (as a set) -> (rule, n) or None"""
         B, D = self.B, self.D
         rest = prs[pos:]
         fs = lambda L: {frozenset(x) for x in L}
@@ -640,29 +640,29 @@ class _Writer:
         cands = []
         if kind == "neq" and not args:
             kn = B.pairs(KNIGHT)
-            cands.append(({"type": "neighbours", "kind": "antiknight"}, kn))
-            cands.append(({"type": "neighbours", "kind": "antiking"}, B.pairs(KING_DIAG)))
+            cands.append(({"type": "neighbors", "kind": "antiknight"}, kn))
+            cands.append(({"type": "neighbors", "kind": "antiking"}, B.pairs(KING_DIAG)))
             if self.box_sets:
                 cands.append(
                     (
-                        {"type": "neighbours", "kind": "antiknight", "within": "box"},
+                        {"type": "neighbors", "kind": "antiknight", "within": "box"},
                         [(a, b) for a, b in kn if any(a in g and b in g for g in self.box_sets)],
                     )
                 )
                 cands.append(
                     (
-                        {"type": "neighbours", "kind": "antiking", "within": "box"},
+                        {"type": "neighbors", "kind": "antiking", "within": "box"},
                         [(a, b) for a, b in B.pairs(KING_DIAG) if any(a in g and b in g for g in self.box_sets)],
                     )
                 )
         if kind == "nonconsec" and not args:
-            cands.append(({"type": "neighbours", "kind": "nonconsecutive"}, B.pairs(ORTHO)))
+            cands.append(({"type": "neighbors", "kind": "nonconsecutive"}, B.pairs(ORTHO)))
         if len(self.grid_areas) > 1 and kind in ("neq", "nonconsec") and not args:  # the same rule on one grid only
             for nk, steps in (
                 (("antiknight", KNIGHT), ("antiking", KING_DIAG)) if kind == "neq" else (("nonconsecutive", ORTHO),)
             ):
                 for org, area in self.grid_areas:
-                    cands.append(({"type": "neighbours", "kind": nk, "area": org}, B.pairs(steps, sorted(area))))
+                    cands.append(({"type": "neighbors", "kind": nk, "area": org}, B.pairs(steps, sorted(area))))
         neg = {
             ("nonconsec", ()): ("kropki", "white"),
             ("notdiff", (1,)): ("kropki", "white"),
@@ -681,7 +681,7 @@ class _Writer:
             exp = [(a, b) for a, b in self.ortho_in_subgrids() if frozenset((a, b)) not in exempt]
             rule = {"type": "negative", "of": of, NEG_SELECTOR[of]: sel}
             if kind == "nonconsec" and not exempt and fs(exp) == fs(B.pairs(ORTHO)):
-                pass  # plain non-consecutive: the neighbours rule above
+                pass  # plain non-consecutive: the neighbors rule above
             else:
                 cands.append((rule, exp))
             if len(self.grid_areas) > 1:  # the negative on one grid only
@@ -703,7 +703,7 @@ class _Writer:
                         exp = [x for x in alln if frozenset(x) in have]
                         if [frozenset(x) for x in exp] == [frozenset(x) for x in prs]:
                             rule = dict(
-                                {"type": "neighbours", "op": REL_OP[kind]},
+                                {"type": "neighbors", "op": REL_OP[kind]},
                                 **op_named(REL_OP[kind], _engine_params_to_op(kind, args)),
                                 step=where,
                             )
@@ -802,7 +802,7 @@ class _Writer:
                     return [{"type": "corner", "kind": "battenburg", "cells": [B.name(y) for y in cells]}], 1
         if len(cells) == 2 and B.adjacent(*cells) and UNIFY_TABLE_EDGES:
             f = self.table_edge(c)
-            if f:  # normalisation 8: a 2-cell table edge clue -> pair relation
+            if f:  # normalization 8: a 2-cell table edge clue -> pair relation
                 return [edge_rule(f[0], f[1], cells[0], cells[1], B)], 1
         # mathrax corner: tables on (TL, BR) then (TR, BL) of a 2x2 block with the same clue
         if len(cells) == 2 and i + 1 < len(live) and cons[live[i + 1]].get("type") == "table" and UNIFY_TABLE_EDGES:
@@ -863,7 +863,7 @@ class _Writer:
         if t == "sum":
             cells = list(c["cells"])
             common = self.common_group(cells)
-            if c.get("distinct") and not common:  # normalisation 9: a no-repeat sum is a cage
+            if c.get("distinct") and not common:  # normalization 9: a no-repeat sum is a cage
                 return [{"type": "cage", "sum": c["total"], "cells": nm(cells)}]
             side = B.outside_side(cells) if len(cells) >= 2 else None
             if side and len(cells) < D and B.outside_ok(side, cells, False):
@@ -898,12 +898,12 @@ class _Writer:
                 raise NotSupportedError(f"set constraint of kind {c.get('kind')!r}")
             cells = list(c["cells"])
             if all(B.touching(a, b) for a, b in zip(cells, cells[1:])):
-                return [{"type": "line", "kind": "renban", "cells": nm(cells)}]  # normalisation 1
+                return [{"type": "line", "kind": "renban", "cells": nm(cells)}]  # normalization 1
             raise NotSupportedError("a consecutive set whose cells are not a line")
         if t == "between":
             cells = list(c["cells"])
             if all(B.touching(a, b) for a, b in zip(cells, cells[1:])):
-                return [{"type": "line", "kind": "between", "cells": nm(cells)}]  # normalisation 2
+                return [{"type": "line", "kind": "between", "cells": nm(cells)}]  # normalization 2
             raise NotSupportedError("a between constraint whose cells are not a line")
         if t == "equal_sum":
             return [self.equal_sum_rule(c)]
@@ -972,7 +972,7 @@ class _Writer:
             if mid:
                 ids[n // 2] = mid[0][0]
             if path(ids):
-                return {"type": "line", "kind": "zipper", "cells": nm(ids)}  # normalisation 3
+                return {"type": "line", "kind": "zipper", "cells": nm(ids)}  # normalization 3
         # double arrow: [[a, b], middle]
         if len(segs) == 2 and len(segs[0]) == 2 and segs[1]:
             ids = [segs[0][0]] + segs[1] + [segs[0][1]]
@@ -995,5 +995,5 @@ class _Writer:
                     cur = [x]
             cut.append(cur)
             if cut == segs:
-                return {"type": "line", "kind": "region_sum", "cells": nm(flat)}  # normalisation 3
+                return {"type": "line", "kind": "region_sum", "cells": nm(flat)}  # normalization 3
         return {"type": "equal_sum", "segments": [nm(s) for s in segs]}

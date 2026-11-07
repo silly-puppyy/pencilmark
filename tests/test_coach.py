@@ -128,10 +128,10 @@ def test_negatives_exempt_their_own_clues():
             solution=None,
         )
     )
-    neigh = rules_of(doc, "neighbours")
-    assert {"type": "neighbours", "kind": "nonconsecutive", "except": [["r1c1", "r1c2"]]} in neigh
+    neigh = rules_of(doc, "neighbors")
+    assert {"type": "neighbors", "kind": "nonconsecutive", "except": [["r1c1", "r1c2"]]} in neigh
     assert {
-        "type": "neighbours",
+        "type": "neighbors",
         "op": "not_ratio",
         "value": 2,
         "step": "orthogonal",
@@ -223,7 +223,7 @@ def test_link_reader_takes_a_payload():
     assert sources.detect(p) == "coach" and sources.detect("https://sudoku.coach/en/s/LW4k") == "coach"
     assert coach.puzzle_id("https://sudoku.coach/en/s/LW4k") == "LW4k"
     doc = pencilmark.read.link(p)
-    assert {"type": "neighbours", "kind": "antiknight"} in doc["rules"]
+    assert {"type": "neighbors", "kind": "antiknight"} in doc["rules"]
 
 
 def test_page_record_is_read_from_the_html():

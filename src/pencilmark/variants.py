@@ -8,7 +8,7 @@ Two kinds of entries:
   @variant(name, aliases=..., text=...)   a PLACEMENT variant: fn(g) -> the rules it adds to ONE grid area g, or None where the
                                           variant is not defined for that area (size / box shape). Works for any size:
                                           windoku(g) on a 16x16 grid places its 9 windows.
-  @family(name, match=..., text=...)      a RULE-FAMILY variant (killer, thermo, kropki, ...): recognised by rule type / kind;
+  @family(name, match=..., text=...)      a RULE-FAMILY variant (killer, thermo, kropki, ...): recognized by rule type / kind;
                                           text(rules, ctx) writes its sentence.
 Recognition: for each grid area, every placement variant's rules are compared with the puzzle's rules as sets of (type, kind,
 cell set) -- region kinds are drawing hints and are ignored; if all are present the variant applies and those rules are
@@ -162,9 +162,9 @@ def asterisk(g):
     return [region([g.cell(r, c) for r, c in ((1, 4), (2, 2), (2, 6), (4, 1), (4, 4), (4, 7), (6, 2), (6, 6), (7, 4))])]
 
 
-@variant("Centre-dot", aliases=["Center dot"], text="Digits don't repeat among the centre cells of the boxes.")
+@variant("Centre-dot", aliases=["Center dot"], text="Digits don't repeat among the center cells of the boxes.")
 def centre_dot(g):
-    """the centre cell of every box as one region; None unless the boxes have odd sides"""
+    """the center cell of every box as one region; None unless the boxes have odd sides"""
     if not g.box or g.bh % 2 == 0 or g.bw % 2 == 0:
         return None
     return [region([g.cell(br + g.bh // 2, bc + g.bw // 2) for br, bc in g.boxes()])]
@@ -302,7 +302,7 @@ family(
 )
 family("Quadruple", _t("quadruple"), "Digits in a circle appear at least once among the cells around it.")
 family("Cupid", _t("appears"), "The digit in a cell with an arrow appears again in the direction of the arrow.")
-family("Clone", _t("clone"), "Shaded shapes of the same colour hold the same digits in corresponding cells.")
+family("Clone", _t("clone"), "Shaded shapes of the same color hold the same digits in corresponding cells.")
 family("Twin", _t("isomorphic"), "The two grids are the same solution with the digits relabelled.")
 for _v, _txt in VARIANT_TEXT.items():  # the cell families (rules/cell.py)
     _ks = {k for k, ck in CELL.items() if ck.variant == _v}
@@ -344,23 +344,23 @@ family("Vudoku", _t("vudoku"), "The digit at the point of a V is the sum or diff
 family("Entropy", _t("global_entropy"), "Every 2×2 area holds a low, a middle and a high digit.")
 family(
     "Anti-Knight",
-    _t("neighbours", "antiknight"),
+    _t("neighbors", "antiknight"),
     lambda rs, c: f"Cells a knight's move apart don't contain the same digit{_scope(rs[0])}.",
 )
 family(
     "Anti-King",
-    _t("neighbours", "antiking"),
+    _t("neighbors", "antiking"),
     lambda rs, c: f"Cells a king's move apart don't contain the same digit{_scope(rs[0])}.",
 )
 family(
     "Non-Consecutive",
-    _t("neighbours", "nonconsecutive"),
+    _t("neighbors", "nonconsecutive"),
     lambda rs, c: f"Orthogonally adjacent cells don't contain consecutive digits{_scope(rs[0])}.",
 )
 family(
     "Neighbours",
-    lambda r: r["type"] == "neighbours" and "kind" not in r,
-    lambda rs, c: "Neighbouring cells follow the marked pair rule" + _scope(rs[0]) + ".",
+    lambda r: r["type"] == "neighbors" and "kind" not in r,
+    lambda rs, c: "Neighboring cells follow the marked pair rule" + _scope(rs[0]) + ".",
 )
 family("Relation", _t("relation"), "Linked pairs of cells follow the marked pair rule.")
 
@@ -409,7 +409,7 @@ GENERIC_REGION = {
     "diagonal": ("Diagonals", "Digits don't repeat along a marked diagonal."),
     "window": ("Windows", "Digits don't repeat in a shaded window."),
     "disjoint": ("Disjoint Groups", "Digits don't repeat in a group of cells in the same box position."),
-    "color": ("Colour Groups", "Cells of the same colour contain different digits."),
+    "color": ("Color Groups", "Cells of the same color contain different digits."),
     "extra": ("Extra Regions", "Digits don't repeat in a shaded region."),
     "region": ("Extra Regions", "Digits don't repeat in a shaded region."),
 }
@@ -660,7 +660,7 @@ def _rule_cells(r):
 
 
 def grid_names(grids):
-    """position names of the grids of a multi-grid board ("top-left", "centre", …), or "grid at r7c7" where positions
+    """position names of the grids of a multi-grid board ("top-left", "center", …), or "grid at r7c7" where positions
     would be ambiguous"""
     rs = sorted({g.r0 for g in grids})
     cs = sorted({g.c0 for g in grids})

@@ -134,7 +134,7 @@ def jcs(x):
 
 
 SET_TYPES = {"region", "cage", "cell", "quadruple", "appears", "count", "box", "row", "column", "negative",
-             "neighbours"}  # fmt: skip
+             "neighbors"}  # fmt: skip
 
 
 def _rc(name):

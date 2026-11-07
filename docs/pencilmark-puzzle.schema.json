@@ -960,7 +960,7 @@
    "type": "object",
    "properties": {
     "type": {
-     "const": "neighbours"
+     "const": "neighbors"
     },
     "id": {
      "type": "string"
@@ -1861,7 +1861,7 @@
        "minItems": 2,
        "maxItems": 2
       },
-      "neighbours": {
+      "neighbors": {
        "enum": [
         "orthogonal",
         "diagonal",
@@ -1922,7 +1922,7 @@
     "type"
    ],
    "additionalProperties": false,
-   "description": "shading: shaded and unshaded cells each orthogonally connected, no 2x2 of one colour; optional given colours (docs/formats/rules/whole-board-rules.mdx 6.19)"
+   "description": "shading: shaded and unshaded cells each orthogonally connected, no 2x2 of one color; optional given colors (docs/formats/rules/whole-board-rules.mdx 6.19)"
   },
   "rule_fog": {
    "type": "object",

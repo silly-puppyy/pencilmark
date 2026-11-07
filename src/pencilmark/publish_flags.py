@@ -68,7 +68,7 @@ QUALITY = {
 }
 OPT_IN = ("asymmetric", "no_interplay", "winding", "short_lines", "repetitive", "monotone", "desert", "late_break")
 # difficulty of published puzzles per band: (10th, 90th percentile), classic 9x9 and variants apart. Measured
-# 2026-11-06 (1.2 engine: colouring on, round counting) on the v12 development set (7,253 puzzles with human data from
+# 2026-11-06 (1.2 engine: coloring on, round counting) on the v12 development set (7,253 puzzles with human data from
 # seven sources, 7,155 graded; never the frozen benchmark); a band with fewer than 20 puzzles has no range.
 # docs/guides/generator/generate.md shows the middle halves.
 # Very Easy has no floor and Extreme no ceiling (nothing is too easy or too hard for them)
@@ -82,7 +82,7 @@ TYPICAL = {
 # difficulty, a normal draw clipped to [low, high]. Classic: fed-sudoku.eu, sudoku.coach classics and Wang 2024 on the
 # v12 development set (1.2 engine, 2026-11-07), except Very Easy: there the curated sources sit at 4.1, the top of the
 # band, while generated sites' easy tiers sit lower (sudoku.com easy / medium / hard 2.5 / 3.1 / 3.6, 300 each) and
-# the user's reference for other sites' Very Easy is 2.7-3.9: centred 3.3 in that range. 9x9 variants: the development
+# the user's reference for other sites' Very Easy is 2.7-3.9: centered 3.3 in that range. 9x9 variants: the development
 # set's variant9 groups. Bands with fewer than 20 puzzles have none (the generator then digs as far as the band allows).
 AIM = {
     "classic": {"Very Easy": (3.3, 0.45, 2.7, 3.9), "Easy": (5.41, 0.73, 4.4, 6.4), "Medium": (6.68, 0.43, 6.1, 7.2),

@@ -42,7 +42,7 @@ It is written so that:
   (section 8.2 says which are).
 
 The file is JSON ([RFC 8259](https://www.rfc-editor.org/rfc/rfc8259)), UTF-8, conventionally named `*.json` or
-`*.sudoku.json`, media type `application/json`. A file is recognised by its `"format"` member, not by its name.
+`*.sudoku.json`, media type `application/json`. A file is recognized by its `"format"` member, not by its name.
 Several puzzles go in a [JSON Lines](https://jsonlines.org/) file (`*.jsonl`): one compact `pencilmark-puzzle` object per
 line.
 
@@ -155,7 +155,7 @@ clues competing for one gap) is the renderer's business; the semantics never dep
 - The position next to `cells[0]` on `side` MUST NOT be an existing cell: it is beyond the board or a gap
   (`null`).
 - Multi-grid boards: `cells[0]` need not be on the board's edge. A clue on the left of board row 10 of a
-  samurai (the 4th row of the centre grid) is `"side": "left"` with `cells[0] = "r10c7"`; it attaches to the gap at
+  samurai (the 4th row of the center grid) is `"side": "left"` with `cells[0] = "r10c7"`; it attaches to the gap at
   r10c6.
 
 ### 3.3 Ordered lists and sets
@@ -179,8 +179,8 @@ Edge and corner positions are never named directly. They follow from the cells:
 - **Edge clue**: exactly 2 orthogonally adjacent cells. The clue sits at the midpoint of the shared side.
 - **Corner clue**: exactly 4 cells forming a 2×2 block, written TL, TR, BL, BR. The clue sits at the shared corner.
 - **Outside clue**: `side` plus ordered `cells` along a straight line (row, column or diagonal), contiguous (3.2).
-- **Line**: centre-to-centre segments between consecutive cells; consecutive cells MUST touch (side or corner). A
-  segment between diagonal neighbours passes straight through their shared corner.
+- **Line**: center-to-center segments between consecutive cells; consecutive cells MUST touch (side or corner). A
+  segment between diagonal neighbors passes straight through their shared corner.
 
 ## 4. Strict reading (must-understand)
 
@@ -223,7 +223,7 @@ semantics and drawing). Every rule MAY carry:
 
 **Areas.** A rule that applies to part of the board says where with `area`: the `origin` of a `grid` / `box_grid` rule
 in the file (that grid's D × D cells), or a list of cells. The same key means the same thing everywhere it appears
-(`neighbours`, `negative`, and the generator spec, [Generator spec](generator-spec.md)).
+(`neighbors`, `negative`, and the generator spec, [Generator spec](generator-spec.md)).
 
 Number keys: **`sum`** when the clue is a sum of digits (cage, every `sum` kind, sandwich, x-sum, edge kind `sum`),
 **`value`** for every other number (difference, ratio, product, whisper gap, skyscraper count, …). Parameters with a
@@ -231,7 +231,7 @@ stated default are omitted by canonical writers when they equal the default.
 
 ### 5.1 Pair operators
 
-`relation` and `neighbours` use these operator names, with the operator's parameter under its own key, as everywhere
+`relation` and `neighbors` use these operator names, with the operator's parameter under its own key, as everywhere
 else in the format (`value` for a number, `sum` for a sum):
 
 ```json
@@ -270,7 +270,7 @@ Each rule family has its own page; the quick reference lists every `type` and `k
 - [Lines and arrows](rules/lines-and-arrows.mdx): 6.4 `line`, 6.5 `arrow`
 - [Edges and corners](rules/edges-and-corners.mdx): 6.6 `edge`, 6.7 `corner`
 - [Outside clues](rules/outside-clues.mdx): 6.9 `sandwich`, `xsum`, `skyscraper`, `rossini`, `first_seen`
-- [Whole-board rules](rules/whole-board-rules.mdx): 6.10 `neighbours`, 6.11 `relation`, 6.14 `negative`, 6.19 shading (reserved)
+- [Whole-board rules](rules/whole-board-rules.mdx): 6.10 `neighbors`, 6.11 `relation`, 6.14 `negative`, 6.19 shading (reserved)
 - [Cell clues](rules/cell-clues.mdx): 6.12 `cell`
 - [Custom rules](rules/custom.mdx): 6.18 rules written as expressions
 - [Other rules](rules/other.mdx): 6.13 other families, 6.15 vendor rules, 6.16 what is not a rule, 6.17 reserved, 6.20 `fog`
@@ -286,35 +286,35 @@ Per-rule `style` (optional, never semantic):
 `{"color": "#rrggbb" | palette index, "fill": "#rrggbb" | palette index, "opacity": 0..1, "width": cell units,
 "shape": "circle" | "square" | "diamond", "size": cell units, "angle": degrees, "outline": "#rrggbb" | palette index,
 "outline_width": cell units, "layer": "under" | "over", "label_cell": "r1c1", "dash": true}`. `size` is a drawn
-shape's diameter or side; `outline` and `outline_width` the edge of a line (a pale halo around a coloured line) or the
+shape's diameter or side; `outline` and `outline_width` the edge of a line (a pale halo around a colored line) or the
 border of a shape; `layer` puts the drawing below or above the grid lines and digits. The text a rule shows is its
 `label` (section 5); `label_cell` only says where to draw it. pencilmark's SudokuPad and sudoku.coach readers fill it
 from the element that draws the rule.
 
-Top-level `style`: puzzle-wide hints. Named keys: `palette` (a list of colours the palette indices refer to),
+Top-level `style`: puzzle-wide hints. Named keys: `palette` (a list of colors the palette indices refer to),
 `cell_size`, `background`, `grid_color`, `box_color`; other keys are free-form.
 
 `decorations`: artwork that carries no rule.
 
 ```json
 {"kind": "line" | "arrow" | "rect" | "circle" | "text" | "polygon" | "fill" | "image",
- "points": [[y, x], …], "center": [y, x], "size": [h, w], "text": "…", "cells": {"r1c1": [colour, …]},
+ "points": [[y, x], …], "center": [y, x], "size": [h, w], "text": "…", "cells": {"r1c1": [color, …]},
  "href": "data:image/png;base64,…", "layer": "under" | "over", "style": { … }}
 ```
 
 - `polygon`: a closed shape through `points` (any shape a setter draws: triangles, stars, plus signs).
-- `fill`: cell colours, `cells` maps a cell to one colour or several; a renderer splits a cell with k colours into k
-  equal parts (wedges from the centre by default, `style.pattern: "stripes"` for slanted stripes).
+- `fill`: cell colors, `cells` maps a cell to one color or several; a renderer splits a cell with k colors into k
+  equal parts (wedges from the center by default, `style.pattern: "stripes"` for slanted stripes).
 - `image`: a picture placed over `center` / `size` (a data URI or a link in `href`; `style.opacity`). Readers add it
   only on request (images can be large, and they are third-party artwork). An image is artwork: no rule may depend on it.
 
 How much a renderer needs (13,451 sudoku.coach and 19,074 SudokuPad puzzles): rules in their family's default look draw
 every puzzle legibly and about half of them exactly; per-rule `color` / `width` / `opacity` / `fill` covers most of
 what setters change (a third of coach puzzles, a fifth of SudokuPad ones); cell `fill` decorations come next (coach
-14%); rotation, outlines, polygons and layers a few percent each; several colours in one cell (1.3%) and background
+14%); rotation, outlines, polygons and layers a few percent each; several colors in one cell (1.3%) and background
 images (0.4%) are the long tail.
 
-Coordinates are cell units `[row, col]` with the origin at the top-left corner of the board, so the centre of
+Coordinates are cell units `[row, col]` with the origin at the top-left corner of the board, so the center of
 `rRcC` is `[R − 0.5, C − 0.5]` ([SudokuPad](https://sudokupad.app/)'s convention shifted to the outer corner).
 
 ## 8. Canonical form, fingerprint, compression
@@ -371,7 +371,7 @@ keep their order.
 2. Replace the pair and cell rules by what they allow, so every spelling of one meaning gives the same result (a white
    kropki dot, a `difference` 1 circle and a `relation` `difference` 1 on the same pair; a thermometer and a chain of
    `less` relations; a V and an edge `sum` of 5; an `odd` cell and a `set` cell of the odd digits). The rules
-   replaced: every `edge`, `relation`, `neighbours` (except `"within": "region"`) and `cell` rule, `negative` of an
+   replaced: every `edge`, `relation`, `neighbors` (except `"within": "region"`) and `cell` rule, `negative` of an
    edge family or of `cell`, the `line` kinds `thermo`, `slow_thermo`, `whisper`, `palindrome` and `parity`, and
    the `corner` kinds `exclude` and `mathrax` (not `even` / `odd`). In their place:
    - one `{"type": "pair_table", "cells": [a, b], "allowed": [[x, y], …]}` per pair of cells they restrict, `a` before
@@ -391,7 +391,7 @@ keep their order.
    edge clues other than `greater`, scope and `except` lists, the pairs of symmetric `relation` operators, `equal_sum`
    segments) in reading order.
 6. Sort `rules` by their compact canonical JSON text.
-7. Serialise with RFC 8785 (JSON Canonicalization Scheme) and hash with SHA-256.
+7. Serialize with RFC 8785 (JSON Canonicalization Scheme) and hash with SHA-256.
 
 ```python
 same = dict(messy, rules=[{"type": "box_grid", "box": [2, 2], "count": [2, 2]},

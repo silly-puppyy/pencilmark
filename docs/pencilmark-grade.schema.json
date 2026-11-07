@@ -298,7 +298,7 @@
                },
                "color": {
                 "type": "string",
-                "description": "a colour name of the named palette (yellow, blue, green, purple, orange, pink, cyan, grey, brown, red); each renderer picks its own shade"
+                "description": "a color name of the named palette (yellow, blue, green, purple, orange, pink, cyan, gray, brown, red); each renderer picks its own shade"
                }
               }
              },
@@ -321,7 +321,7 @@
                },
                "color": {
                 "type": "string",
-                "description": "a colour name of the named palette (yellow, blue, green, purple, orange, pink, cyan, grey, brown, red); each renderer picks its own shade"
+                "description": "a color name of the named palette (yellow, blue, green, purple, orange, pink, cyan, gray, brown, red); each renderer picks its own shade"
                }
               }
              },
@@ -418,7 +418,7 @@
      },
      "marks": {
       "type": "object",
-      "description": "marks a casual solver would have written (grade-card.md 6): corner = position notes, centre = candidate lists",
+      "description": "marks a casual solver would have written (grade-card.md 6): corner = position notes, center = candidate lists",
       "propertyNames": {
        "pattern": "^r[0-9]+c[0-9]+$"
       },
@@ -445,7 +445,7 @@
      },
      "colors": {
       "type": "array",
-      "description": "identity colours an expert would have painted (grade-card.md 6): each colour's cells hold one and the same digit, one of digits; the opposite colour holds the other digit of the pair",
+      "description": "identity colors an expert would have painted (grade-card.md 6): each color's cells hold one and the same digit, one of digits; the opposite color holds the other digit of the pair",
       "items": {
        "type": "object",
        "additionalProperties": false,

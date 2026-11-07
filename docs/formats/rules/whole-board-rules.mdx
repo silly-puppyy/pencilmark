@@ -1,28 +1,28 @@
 ---
-description: "Rules over neighbouring pairs (anti-knight, anti-king, non-consecutive), explicit pairs, the negative constraints and shading (yin-yang)."
+description: "Rules over neighboring pairs (anti-knight, anti-king, non-consecutive), explicit pairs, the negative constraints and shading (yin-yang)."
 title: Whole-board rules
 ---
 
 
 # Whole-board rules
 
-This page covers rules over neighbouring pairs (6.10), explicit pairs (6.11), negative constraints (6.14) and shading
+This page covers rules over neighboring pairs (6.10), explicit pairs (6.11), negative constraints (6.14) and shading
 (6.19).
 
-## 6.10 `neighbours`
+## 6.10 `neighbors`
 
-A rule over neighbouring pairs of the whole board.
+A rule over neighboring pairs of the whole board.
 
 ```json
-{"type": "neighbours", "kind": "antiknight"}
-{"type": "neighbours", "kind": "antiknight", "within": "box"}
-{"type": "neighbours", "kind": "antiknight", "area": "r1c1"}
-{"type": "neighbours", "op": "not_sum", "sum": 10, "step": "orthogonal", "except": [["r1c1", "r1c2"]]}
+{"type": "neighbors", "kind": "antiknight"}
+{"type": "neighbors", "kind": "antiknight", "within": "box"}
+{"type": "neighbors", "kind": "antiknight", "area": "r1c1"}
+{"type": "neighbors", "op": "not_sum", "sum": 10, "step": "orthogonal", "except": [["r1c1", "r1c2"]]}
 ```
 
 | Field | Meaning |
 |---|---|
-| `kind` | A named shortcut for one exact `op` + `step`: `antiknight` = `different` on `knight` pairs, `antiking` = `different` on `diagonal` pairs (orthogonal neighbours already share a row or column), `nonconsecutive` = `not_consecutive` on `orthogonal` pairs. Writers SHOULD use the kind when one matches. Or omit `kind` and give `op` (+ parameters) and `step`. |
+| `kind` | A named shortcut for one exact `op` + `step`: `antiknight` = `different` on `knight` pairs, `antiking` = `different` on `diagonal` pairs (orthogonal neighbors already share a row or column), `nonconsecutive` = `not_consecutive` on `orthogonal` pairs. Writers SHOULD use the kind when one matches. Or omit `kind` and give `op` (+ parameters) and `step`. |
 | `op` (+ its parameter) | A symmetric pair operator (5.1). |
 | `step` | The pairs: `orthogonal` \| `diagonal` \| `king` \| `knight` (one king or knight move apart). |
 | `within` | Optional scope: `"box"` (only pairs inside one box) or `"region"` (only pairs inside one `region` rule). |
@@ -66,7 +66,7 @@ States exactly which clues are "all shown".
 
 - **A negative covers exactly what its selector names.** With a selector it covers a single value:
   `{"of": "xv", "letter": "X"}` says only "pairs without a clue do not sum to 10"; V clues may be partial.
-- **Exemption**: a position carrying **any** rule of the same family (any kropki dot of either colour; any X or V;
+- **Exemption**: a position carrying **any** rule of the same family (any kropki dot of either color; any X or V;
   any edge clue of that kind, whatever its value (a `difference` 3 edge exempts its pair from a `difference` 5 negative); any rossini arrow; any battenburg mark; any `cell` rule of that kind) is exempt.
 - **Adjacency is only within one grid**: two cells form a pair only if some `grid` / `box_grid` area contains both (on a
   board without one, all orthogonally adjacent existing cells).

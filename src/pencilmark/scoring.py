@@ -356,7 +356,7 @@ class Scorer:
                 * (1.0 + math.log1p(max(meta[0], 0)))
             )
         if tech == S.COLOUR_ALGEBRA and pm and P.get("colour_chain_k", 0.0):
-            # colours / labels involved and the relation-chain length (off by default = published build)
+            # colors / labels involved and the relation-chain length (off by default = published build)
             d *= 1.0 + P.get("colour_chain_k", 0.0) * (0.1 * max(meta[1] - 1, 0) + 0.15 * meta[3])
         if (
             pm

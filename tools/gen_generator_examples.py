@@ -168,7 +168,7 @@ CURIOSITIES = {
         "palindrome and anti-knight, aimed at Medium",
         spec(
             rules=[
-                {"type": "neighbours", "kind": "antiknight"},
+                {"type": "neighbors", "kind": "antiknight"},
                 {"type": "sandwich", "count": [2, 4]},
                 {"type": "quadruple", "count": [1, 3]},
                 {"type": "line", "kind": "palindrome", "count": 1},

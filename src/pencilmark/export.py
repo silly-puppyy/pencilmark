@@ -165,7 +165,7 @@ def import_puzzle(d):
 def region_geometry(p):
     """type-free region geometry the time model reads : blob_cells = share of cells in 2-D complete
     groups that are not rectangles (jigsaw regions; diagonals are lines, excluded); extra_area_pc = 2-D complete groups per cell beyond
-    one (windoku / centre-dot / extra regions). 0 / 0 on a standard grid."""
+    one (windoku / center-dot / extra regions). 0 / 0 on a standard grid."""
     from collections import Counter
 
     if not hasattr(p, "groups_of"):
@@ -303,11 +303,11 @@ RULE_NOUN = {
     ("region", "window"): "window",
     ("region", "disjoint"): "disjoint group",
     ("region", "extra"): "extra region",
-    ("region", "color"): "colour group",
+    ("region", "color"): "color group",
     ("cage", None): "cage",
     ("arrow", None): "arrow",
     ("cell", None): "cell clue",
-    ("neighbours", None): "neighbour rule",
+    ("neighbors", None): "neighbor rule",
     ("negative", None): "negative constraint",
     ("table", None): "table rule",
     ("relation", None): "pair rule",
@@ -332,7 +332,7 @@ def _noun(rules):
                     "antiking": "anti-king rule",
                     "nonconsecutive": "non-consecutive rule",
                 }.get(k)
-                if t == "neighbours" and k
+                if t == "neighbors" and k
                 else None
             )
             or RULE_NOUN.get((t, None))
@@ -559,7 +559,7 @@ def _f_steps(c):
             r["region"] = f"{cn(st['lplace'][0])}@{st['lplace'][1]}"
         if st.get("lelims"):
             r["region_eliminations"] = [f"{cn(x)}@!{k}" for x, k in st["lelims"]]
-        if st.get("idfx"):  # identity layer (params colouring, experiment): the cell joins the colour class of anchor /
+        if st.get("idfx"):  # identity layer (params coloring, experiment): the cell joins the color class of anchor /
             fx = st["idfx"]  # the two cells' classes hold different digits
             if any(k == CB.AE_ID_JOIN for k, _, _ in fx):
                 r["same_digit"] = [f"{cn(x)}={cn(a)}" for x, a in CB.id_joins(fx)]
@@ -585,7 +585,7 @@ def _f_trace(c):
     from . import grader_model as GM
 
     wm = BP.written_marks(p, c.bp["steps"], pos, GM.default().route)  # what a casual solver would have on paper
-    wc = BP.written_colours(p, pos, GM.default().route)  # the identity colours an expert would have painted
+    wc = BP.written_colours(p, pos, GM.default().route)  # the identity colors an expert would have painted
 
     def marks(i):
         m = wm[i]

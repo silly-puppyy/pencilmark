@@ -148,7 +148,7 @@ def report2(g, k=None):
         )
     )
     if g.get("completed") is False and g.get("band") != "Unknown":
-        L.append("   (time cap hit: contents not minimised; joint alternatives may be missing)")
+        L.append("   (time cap hit: contents not minimized; joint alternatives may be missing)")
     if g.get("stopped_at_step"):
         L.append(f"   human logic ran out at step {g.get('stopped_at_step')}; contents incomplete")
     for st in g.get("steps") or []:
@@ -390,7 +390,7 @@ def main(argv=None):
     r.add_argument(
         "--coloring",
         action="store_true",
-        help="opt in to colouring as a solving method (colours kept through the solve); off by default",
+        help="opt in to coloring as a solving method (colors kept through the solve); off by default",
     )
     r.add_argument(
         "--no-alternatives",

@@ -74,7 +74,7 @@ def _record(pencilmark, cbackend, item):
         out["card"] = pencilmark.rate(puzzle, fields=fields, explain="steps" in fields or None, max_seconds=_LIMIT)
         if out["card"].get("completed") is False:
             raise LimitReached(f"{name}: stopped at the {_LIMIT} s limit; give it fewer fields")
-        out["card"].get("grader", {}).pop("version", None)  # a release changes it; the corpus records behaviour
+        out["card"].get("grader", {}).pop("version", None)  # a release changes it; the corpus records behavior
         if "steps" in fields:
             out["notation"] = [
                 s.get("explanation", {}).get("notation")

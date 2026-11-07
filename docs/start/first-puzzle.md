@@ -37,7 +37,7 @@ needs. `-` means "read puzzles from standard input"; you can also pass a file wi
 ```
 $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9.......' | pencilmark rate - --report
 #1  Hard  -  difficulty 5.9  -  time 10.7 min
-   contains: Naked Pair (or Hidden Pair), X-Wing (or 2-String Kite / Simple Colouring / Short chain in the head)
+   contains: Naked Pair (or Hidden Pair), X-Wing (or 2-String Kite / Simple Coloring / Short chain in the head)
 ```
 
 - Hard is the band: what you need to know. Hard means the puzzle needs a pattern most people learn after the basics;

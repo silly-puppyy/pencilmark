@@ -22,7 +22,7 @@
     ]
    },
    {
-    "type": "neighbours",
+    "type": "neighbors",
     "kind": "antiknight"
    },
    {
@@ -245,7 +245,7 @@
     ]
    },
    {
-    "type": "neighbours",
+    "type": "neighbors",
     "kind": "antiknight"
    },
    {

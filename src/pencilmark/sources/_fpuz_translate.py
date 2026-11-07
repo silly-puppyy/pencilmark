@@ -146,7 +146,7 @@ def translate(fp, line_kinds=None, join=True):
     """line_kinds: {colour: kind} reading for generic 'line' entries (see infer_lines). join: same-colour segments of a
     set rule (renban, line total) that share a cell are one line (info "_joined" when that merged any)."""
 
-    # fog light written as generic cages (as SudokuPad imports them; often drawn invisible, which normalise drops): a
+    # fog light written as generic cages (as SudokuPad imports them; often drawn invisible, which normalize drops): a
     # FOGLIGHT / "foglight: ..." cage's cells are lit, a one-cell FOW cage lights its 3x3 like a fogofwar cell
     def fog_kind(c):
         return str(c.get("value") or "").strip().lower().split(":")[0]
@@ -193,7 +193,7 @@ def translate(fp, line_kinds=None, join=True):
             if r in (-1, n) or c in (-1, n):
                 outside_texts.append({"center": [r + 0.5, c + 0.5], "text": str(t["value"]).strip()})
     clones = None
-    if ST.CLONE_TEXT.search(text0) and not fp.get("clone"):  # clones drawn as coloured cells
+    if ST.CLONE_TEXT.search(text0) and not fp.get("clone"):  # clones drawn as colored cells
         colour_of = {
             (r, c): str(cell["c"]).lower()
             for r, row in enumerate(fp.get("grid") or [])
@@ -201,7 +201,7 @@ def translate(fp, line_kinds=None, join=True):
             if isinstance(cell, dict) and cell.get("c")
         }
         clones = ST.clone_groups(colour_of) if colour_of else None
-        if not clones and colour_of:  # clones in different colours: one class
+        if not clones and colour_of:  # clones in different colors: one class
             clones = ST.clone_groups(dict.fromkeys(colour_of, "any"))
         if clones:
             refused = [r_ for r_ in refused if r_ != "rule 'clone'"]
@@ -325,7 +325,7 @@ def translate(fp, line_kinds=None, join=True):
         p.groups.append(M.Group(f"k{k}", cells, "cage", len(cells) == n, tot))
     for k, er in enumerate(
         fp.get("extraregion") or []
-    ):  # extra regions (asterisk, windoku, centre dot ...): no repeats
+    ):  # extra regions (asterisk, windoku, center dot ...): no repeats
         cells = tuple(sorted(ix(x) for x in er.get("cells", [])))
         if len(cells) >= 2:
             p.groups.append(M.Group(f"x{k}", cells, "region", len(cells) == n))
@@ -378,7 +378,7 @@ def translate(fp, line_kinds=None, join=True):
     for big, small in fp.get("_ineq") or []:
         p.relations.append(("lt", small[0] * n + small[1], big[0] * n + big[1]))
         used["inequality"] = used.get("inequality", 0) + 1
-    for comps in clones or []:  # clones drawn as coloured cells (clone_groups)
+    for comps in clones or []:  # clones drawn as colored cells (clone_groups)
         p.constraints.append({"type": "clone", "regions": [[r * n + c for r, c in comp] for comp in comps]})
         used["clone"] = used.get("clone", 0) + 1
     for item in fp.get("clone") or []:  # f-puzzles: {"cells": [...], "cloneCells": [...]} in matching order
@@ -471,7 +471,7 @@ def translate(fp, line_kinds=None, join=True):
             ST.color_name(it.get("baseC") or "") == "white" for k in ("circle", "rectangle") for it in fp.get(k) or []
         )
         if "white" in tn and (fp.get("difference") or (circle_rules and not white_shapes)):
-            neg.add("difference")  # all white dots given, none drawn beside the coloured dots read: no consecutive pair
+            neg.add("difference")  # all white dots given, none drawn beside the colored dots read: no consecutive pair
         if "black" in tn and fp.get("ratio"):
             neg.add("ratio")
     marked = {"difference": set(), "ratio": set(), "xv": set()}
@@ -513,7 +513,7 @@ def translate(fp, line_kinds=None, join=True):
         if cells:
             ST._cell_clue(p, {"type": "parity", "parity": key}, cells, mask)
     for key, rel in (("maximum", "lt"), ("minimum", "gt")):
-        same = {ix(m["cell"]) for m in fp.get(key) or []}  # fortress: two grey cells side by side are not compared
+        same = {ix(m["cell"]) for m in fp.get(key) or []}  # fortress: two gray cells side by side are not compared
         for m in fp.get(key) or []:
             x = ix(m["cell"])
             r, c = divmod(x, n)
@@ -548,7 +548,7 @@ def translate(fp, line_kinds=None, join=True):
             names = [f"r{rc(x, n)[0] + 1}c{rc(x, n)[1] + 1}" for x in cs]
             PJ.add_named(p, {"type": "custom", "cells": {"Q": names}, "label": "Anti-quadruple",
                              "holds": " and ".join(f"all(x != {d} for x in Q)" for d in ds)})  # fmt: skip
-        else:  # pair sums, coloured dots (sum / diff / ratio)
+        else:  # pair sums, colored dots (sum / diff / ratio)
             p.relations.append(("sum" if kind == "pair_sum" else kind, min(cells), max(cells), ds[0]))
         used[kind] = used.get(kind, 0) + 1
     pair_cells = {frozenset(ix(x) for x in cs) for kind, cs, _ in circle_rules if kind == "pair_sum"}
@@ -561,7 +561,7 @@ def translate(fp, line_kinds=None, join=True):
                 if frozenset((x, y)) not in pair_cells:
                     p.relations.append(("notsum", x, y, k_))
     if shape_clues and (fp.get("circle") or re.search(r"\bsquares?\b", text0)):
-        # one-cell circles and squares: the SudokuPad reader's shape clues (parity, digit sets by shape / colour)
+        # one-cell circles and squares: the SudokuPad reader's shape clues (parity, digit sets by shape / color)
         from collections import Counter
 
         shapes = _shape_cells(fp, n)
@@ -575,7 +575,7 @@ def translate(fp, line_kinds=None, join=True):
                 for r_, row in enumerate(fp.get("grid") or []) for c_, cell in enumerate(row or [])
                 if isinstance(cell, dict) and cell.get("c") and not clones]  # fmt: skip
     if coloured and re.search(r"\bcells?\b[^.]{0,40}\b(?:odd|even|greater|less|larger|smaller)\b", text0):
-        # coloured cells with a meaning in the text ("red cells are greater than 5"): the shape-clue reader
+        # colored cells with a meaning in the text ("red cells are greater than 5"): the shape-clue reader
         from collections import Counter
 
         u = Counter()
@@ -584,7 +584,7 @@ def translate(fp, line_kinds=None, join=True):
         used.update({k: v for k, v in u.items() if v})
     from collections import defaultdict
 
-    colour_cells = defaultdict(list)  # rules on caged / coloured cells stated in the text
+    colour_cells = defaultdict(list)  # rules on caged / colored cells stated in the text
     for r_, row in enumerate(fp.get("grid") or []):
         for c_, cell in enumerate(row or []):
             if isinstance(cell, dict) and cell.get("c"):
@@ -661,7 +661,7 @@ def _path_through(cells, n, limit=20000):
                     return got
         return None
 
-    for start in sorted(cells, key=lambda c: (len(touch[c]), c)):  # ends of a path have few neighbours
+    for start in sorted(cells, key=lambda c: (len(touch[c]), c)):  # ends of a path have few neighbors
         got = walk([start], {start})
         if got:
             return got
@@ -747,7 +747,7 @@ def _text_circles(fp, text, n):
                 continue
             if col == "white":  # the quadruple's own circle
                 continue
-            # another colour under a quadruple has its own meaning (bipolar, half correct, ...): left unread
+            # another color under a quadruple has its own meaning (bipolar, half correct, ...): left unread
         about = " ".join(x for x in re.split(r"(?<=[.\n])\s*", text) if "circle" in x)  # the sentences on circles
         standard = re.search(r"quadruple|must (?:appear|be placed)", about) and not re.search(
             r"exactly (?:one|two|three) of|\bsum\b|\bproduct\b", about
@@ -763,7 +763,7 @@ def _text_circles(fp, text, n):
         else:
             keep.append(it)
     rects = []
-    for it in fp.get("rectangle") or []:  # diamonds / squares between two cells, coloured like the circles
+    for it in fp.get("rectangle") or []:  # diamonds / squares between two cells, colored like the circles
         cs, v = it.get("cells") or [], str(it.get("value", "")).strip()
         m = len(cs) == 2 and not v and _dot_meaning(ST.color_name(it.get("baseC") or ""), text)
         if m:
@@ -854,9 +854,7 @@ def _text_line_reading(fp, text):
     # rules drawn by their own f-puzzles element (a between line, a thermometer) are not what generic lines mean
     own = lambda r: any(r.replace("_", "") in k for k, v in fp.items() if v and k != "line" and not k.startswith("_"))
     only = (named | ST.described_line_rules(text) | ({dk} if dk else set())) - {"ten"}
-    if any(
-        not own(r) for r in cmap.values()
-    ):  # the text gives its lines colours: an unnamed colour is not the one rule
+    if any(not own(r) for r in cmap.values()):  # the text gives its lines colors: an unnamed color is not the one rule
         only = set()
     every = ST.every_line_rule(text)
     drawn = {ST.color_name(c) for c in colours if c.startswith("#")}
@@ -865,12 +863,12 @@ def _text_line_reading(fp, text):
     spare = {w for w in cmap if cmap[w] != "ignore" and not any(ST.color_name(c) == w for c in colours)}
     spare = {cmap[w] for w in spare if not own(cmap[w])} - {first[c] for c in colours}
     if len(unread) == 1 and len(spare) == 1 and len(colours) > 1 or len(colours) == 1 == len(unread) == len(spare):
-        first[unread[0]] = spare.pop()  # the one line colour the text does not name is the one rule it names unseen
+        first[unread[0]] = spare.pop()  # the one line color the text does not name is the one rule it names unseen
     others = ST.other_lines_rule(text) if any(v is None for v in first.values()) else None
     reading = {}
     for c in colours:
         named_c = re.search(rf"\b{ST.color_name(c)}", text.lower()) if c.startswith("#") else None
-        rk = first[c] or (others if not named_c else None)  # "all other lines": the colours no sentence names
+        rk = first[c] or (others if not named_c else None)  # "all other lines": the colors no sentence names
         if rk is None and len(only) == 1 and (len(colours) == 1 or not cmap):
             rk = next(iter(only))  # the one line rule the text describes (lines drawn in several shades)
         if rk is None and every:

@@ -42,7 +42,7 @@ Wikipedia's editors list the habits that make text read as machine-written
 
 15. **A table needs rows and columns that both mean something.** Two columns of label and value is a list. Long text
     goes under the table or in a collapsible row, not in a cell.
-16. **Figures are optional and collapsible**: every figure has alt text, the same facts are in the text, colours pass
+16. **Figures are optional and collapsible**: every figure has alt text, the same facts are in the text, colors pass
     WCAG contrast (4.5:1 text, 3:1 graphics) and are never the only distinction ([WCAG 2.2](https://www.w3.org/TR/WCAG22/)).
 17. **Formulas in KaTeX**, each followed by one line saying what the symbols are
     ([Docusaurus math](https://docusaurus.io/docs/markdown-features/math-equations)).

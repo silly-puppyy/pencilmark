@@ -56,8 +56,8 @@ def has_shading(p):
 
 
 def _add_yin_yang(m, p, shading):
-    """yin-yang: a shading Boolean per cell; no 2x2 of one colour; each colour orthogonally connected (each of its cells
-    but its first, in reading order, has a neighbour of its colour one step closer to that first cell); given shaded /
+    """yin-yang: a shading Boolean per cell; no 2x2 of one color; each color orthogonally connected (each of its cells
+    but its first, in reading order, has a neighbor of its color one step closer to that first cell); given shaded /
     unshaded cells. shading (dict) receives the Boolean per cell, for custom rules reading shaded()."""
     for con in p.constraints:
         if con.get("type") != "yin_yang":
@@ -108,7 +108,7 @@ def has_chaos(p):
 def _add_chaos(m, x, p):
     """the regions to find of every chaos constraint: a region label per cell (one Boolean per label); every label
     covers D cells, holds each digit once and is connected (each cell but the region's first, in reading order, has a
-    neighbour of its region one step closer to it); label k's first cell precedes label k + 1's (symmetry);
+    neighbor of its region one step closer to it); label k's first cell precedes label k + 1's (symmetry);
     region_border pairs differ in label, same_region cells share one"""
     D = p.D
     lab = {}

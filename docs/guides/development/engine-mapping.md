@@ -22,17 +22,17 @@ whatever its source.
 | `cage` | a `cage` group with its total |
 | `line` | `{"type": "line", "kind": …}` (whisper `value` → `k`; closed: the first cell repeated at the end); `double_arrow` → `equal_sum` `[[ends], middle]`; `lockout` → `diffge` on the ends plus a 3-cell table per middle cell |
 | `arrow` | one `arrow` constraint per shaft |
-| `edge` | relations `diff 1` / `ratio 2` (kropki), `sum 10` / `sum 5` (xv), `lt` of the reversed pair (greater); difference / sum / product / ratio: a 2-cell table of the allowed pairs (normalisation 8) |
+| `edge` | relations `diff 1` / `ratio 2` (kropki), `sum 10` / `sum 5` (xv), `lt` of the reversed pair (greater); difference / sum / product / ratio: a 2-cell table of the allowed pairs (normalization 8) |
 | `corner` | battenburg: a 4-cell table; mathrax: a 2-cell table per diagonal pair (TL–BR, then TR–BL), even / odd: a `cell` clue; exclude: a `cell` exclude clue |
 | `sum` | `little_killer` / `sum` constraints |
 | outside clues | `sandwich` / `xsum` / `skyscraper` / `first_seen` constraints; rossini: `lt` relations and, with its negative, 3-cell tables |
-| `neighbours` | `neq` / `nonconsec` / the operator's relations per pair |
+| `neighbors` | `neq` / `nonconsec` / the operator's relations per pair |
 | `relation` | one relation per pair |
 | `negative` | the complementary relation on every uncovered pair (`nonconsec` for white kropki, `notratio`, `notsum`, `notdiff`, `allowed`), tables for rossini / battenburg, domains for digits |
 | `cell`, `candidates` | domain masks (`cell` clues are also kept as cell clues) |
 | `quadruple` / `appears` / `count` / `distinct_count` / `clone` / `isomorphic` / `global_entropy` / `equal_sum` / `vudoku` | the engine constraints and named rules of the same mechanics |
 
-## Normalisations
+## Normalizations
 
 Site loaders produce engine structures in several shapes; the writer maps each to one rule, so the same puzzle gives
 the same file and the same card whatever its source.
@@ -53,7 +53,7 @@ the same file and the same card whatever its source.
    switches to pair relations.)
 9. `sum` constraints with distinct digits whose cells share no house → `cage` groups.
 10. A house listed twice is one house.
-11. Negative and neighbour rules expand in board order (cell by cell).
+11. Negative and neighbor rules expand in board order (cell by cell).
 12. Named multi-grid layouts (puzzle JSON `layout`): cells are numbered in board reading order.
 13. Houses are written grid by grid (`grid` / `box_grid`, at the place of the grid's first house) whatever order a
     loader listed them in; reading the file back lists each grid's rows, columns, then boxes.

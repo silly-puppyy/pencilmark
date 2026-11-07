@@ -38,17 +38,17 @@ MENTAL_CHAIN = 62  # short chain (<= 5 links) reasoned without notes, ending in 
 EITHER_WAY = 63  # both options of a two-way choice agree on a placement / elimination
 LINE_CLASS = 64  # line reasoning on digit classes (high/low, parity, thirds, mod 3)
 DIGIT_COUNT = 65  # positional set logic for one digit (must-contain units vs at-most-once groups)
-EQUAL_DIGITS = 66  # abstract colouring: two cells forced to hold the same unknown digit
+EQUAL_DIGITS = 66  # abstract coloring: two cells forced to hold the same unknown digit
 LINE_SCAN = 67  # line consistency on 3-cell windows (local scan of a long line)
 # forcing chains (k-way cell / unit case analysis; C++ only)
 FORCING = 68  # basic propagation in the branches (singles, relations, rules)
 DYN_FORCING = 69  # dynamic: the engine's techniques up to a ceiling in the branches
 NESTED_FORCING = 70  # nested II: forcing chains inside the branches
-MEDUSA = 71  # 3D Medusa (multi-digit colouring)
+MEDUSA = 71  # 3D Medusa (multi-digit coloring)
 SUM_BOUND = 72  # min / max (triangular number) bounds of sum rules
 CLASS_COUNT = 73  # odd / even, low / middle / high counting; sum parity
 DOMINO = 74  # relation dominoes (kropki, XV, difference): must-contain digit, 2-domino locks
-COLOUR_ALGEBRA = 75  # abstract-digit colour classes (cells that hold the same unknown digit)
+COLOUR_ALGEBRA = 75  # abstract-digit color classes (cells that hold the same unknown digit)
 N_WING = 76  # WXYZ / VWXYZ wings (bent sets)
 SUE_DE_COQ = 77
 APE = 78  # aligned pair exclusion
@@ -58,7 +58,7 @@ GURTH = 81  # Gurth's symmetrical placement theorem (assumes a unique solution)
 NISHIO = 82  # single-digit forcing net
 WHAT_IF = 83  # human "what if": two-way case split followed with light logic (bounded)
 MENTAL_NOTES = 84  # single after notes logic done in the head (on the no-notes mental view)
-MULTI_COLOR = 85  # multi-colouring: two single-digit colour clusters interacting
+MULTI_COLOR = 85  # multi-coloring: two single-digit color clusters interacting
 REMOTE_PAIRS = 86  # XY-chain of identical bivalue pairs (own code: priced apart from XY-Chain)
 EMPTY_RECT = 87  # empty rectangle (grouped X-chain through a box; own code)
 RULE_INTERSECT = 88  # two rules / houses taken together (joint digit combinations over their cells)
@@ -81,21 +81,21 @@ CLUE_SHAPE = 102  # clue facts with the line shape (C++ only): partners in one h
 REGION_CAP = 103  # a region with D known cells is sealed; D cells that may take a region take it
 REGION_EXCL = 104  # a placed digit leaves its region's other cells; equal digits split regions
 REGION_REACH = 105  # a cell out of a region's reach with its remaining cells is not in it
-DEAD_END = 106  # a cell shares its region with a neighbour (no one-cell region)
+DEAD_END = 106  # a cell shares its region with a neighbor (no one-cell region)
 REGION_EXIT = 107  # a region short of cells with one way out takes that cell
 REGION_DIGIT = 108  # a region's missing digit fits one cell it can reach: that cell joins it
 POCKET = 109  # pocket counting: a pocket too small for a new region, touching one unfinished region, joins it
-# identity layer (C++ only, params colouring): persistent colour classes of cells holding one unknown digit
+# identity layer (C++ only, params coloring): persistent color classes of cells holding one unknown digit
 CLASS_SINGLE = 110  # in a house only one cell can hold a class's digit (the others see a member): it joins the class
 ID_PROPAGATE = 111  # a class member's lost candidate leaves every member; a placed member places the others
-CLASS_PAIR = 112  # bivalue cells {a, b} that differ: two classes of opposite colour; a cell seeing one joins the other
-CLASS_TRAP = 113  # a cell seeing both colours of an {a, b} class pair holds neither
-CHAIN_COLOUR = 114  # two cells forced equal through a third by pair rules (a V / X / dot chain): one colour
-COLOUR_CLASH = 115  # a cell next to a linked colour would leave that colour no digit: it is not this colour
-CLASS_POINTING = 116  # a colour's places in a house lie in another house: elsewhere there, cells are not that colour
-CLASS_FISH = 117  # two houses confine a colour to two other houses (an X-Wing over a colour)
-CLASS_COMPLETE = 118  # k complete colours with k possible digits between them: every other cell loses those digits
-CLASS_COLOUR = 100  # class colouring (C++ only): low / high or odd / even links between cells, sides fixed by known cells / house counts
+CLASS_PAIR = 112  # bivalue cells {a, b} that differ: two classes of opposite color; a cell seeing one joins the other
+CLASS_TRAP = 113  # a cell seeing both colors of an {a, b} class pair holds neither
+CHAIN_COLOUR = 114  # two cells forced equal through a third by pair rules (a V / X / dot chain): one color
+COLOUR_CLASH = 115  # a cell next to a linked color would leave that color no digit: it is not this color
+CLASS_POINTING = 116  # a color's places in a house lie in another house: elsewhere there, cells are not that color
+CLASS_FISH = 117  # two houses confine a color to two other houses (an X-Wing over a color)
+CLASS_COMPLETE = 118  # k complete colors with k possible digits between them: every other cell loses those digits
+CLASS_COLOUR = 100  # class coloring (C++ only): low / high or odd / even links between cells, sides fixed by known cells / house counts
 # names and flags: the technique registry (data/techniques.csv); the constants above mirror csrc/solver.hpp enum Tech,
 # and tests/test_registry.py checks all three agree
 TECH_NAMES = {t.id: t.name for t in sorted(_R.techniques(), key=lambda t: t.id)}

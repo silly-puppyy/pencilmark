@@ -47,7 +47,7 @@ RULE_KEYS = {
     "skyscraper": ({"value", "side", "cells"}, set()),
     "rossini": ({"arrow", "side", "cells"}, set()),
     "first_seen": ({"value", "digits", "side", "cells"}, set()),
-    "neighbours": (set(), {"kind", "op", "value", "sum", "allowed", "any_of", "step", "within", "area", "except"}),
+    "neighbors": (set(), {"kind", "op", "value", "sum", "allowed", "any_of", "step", "within", "area", "except"}),
     "relation": ({"op", "pairs"}, {"value", "sum", "allowed", "any_of"}),
     "cell": ({"kind", "cells"}, {"split", "values"}),
     "quadruple": ({"digits", "cells"}, set()),
@@ -69,7 +69,7 @@ KINDS = {
     "edge": set(EDGE),  # rules/edge.py
     "corner": {"battenburg", "mathrax", "exclude"},
     "sum": {"little_killer", "frame", "group", "corner"},
-    "neighbours": {"antiknight", "antiking", "nonconsecutive"},
+    "neighbors": {"antiknight", "antiking", "nonconsecutive"},
     "cell": set(CELL),  # rules/cell.py
     "count": {"circles"},
 }
@@ -210,7 +210,7 @@ def _cells(B, x, what="cells", n=None, minlen=1):
 
 
 def _merge_negatives(rules, prov):
-    """adjacent negatives of both kropki colours (white, black) or both XV letters (X, V) with the same scope -> one negative
+    """adjacent negatives of both kropki colors (white, black) or both XV letters (X, V) with the same scope -> one negative
     without a selector, which expands to the same relations in the same order"""
     out, op = [], []
     for r, pr in zip(rules, prov):
@@ -308,9 +308,9 @@ def _validate_rule(r, B):
     kind = r.get("kind")
     if kind is not None and not isinstance(kind, str):
         raise FormatError(f"a rule kind must be a string, not {kind!r}")
-    if t in KINDS and (kind is not None or t not in ("neighbours", "count")) and kind not in KINDS[t]:
+    if t in KINDS and (kind is not None or t not in ("neighbors", "count")) and kind not in KINDS[t]:
         raise FormatError(f"unknown kind {kind!r}")
-    if t == "yin_yang":  # shading: each colour connected, no 2x2 of one colour; given colours optional
+    if t == "yin_yang":  # shading: each color connected, no 2x2 of one color; given colors optional
         sh = _cells(B, r["shaded"], "shaded", minlen=0) if "shaded" in r else []
         un = _cells(B, r["unshaded"], "unshaded", minlen=0) if "unshaded" in r else []
         if len(set(sh)) != len(sh) or len(set(un)) != len(un) or set(sh) & set(un):
@@ -335,7 +335,7 @@ def _validate_rule(r, B):
         if t == "region_border":
             (r1, c1), (r2, c2) = (B.coords[x] for x in cs)
             if abs(r1 - r2) + abs(c1 - c2) != 1:
-                raise FormatError("a region_border separates two orthogonal neighbours")
+                raise FormatError("a region_border separates two orthogonal neighbors")
         return
     if t in ("grid", "box_grid", "chaos"):
         if t == "box_grid":
@@ -488,16 +488,16 @@ def _validate_rule(r, B):
         cs = _cells(B, r["cells"])
         if "side" in r:
             B.check_outside(r["side"], cs, what="distinct_count")
-    elif t == "neighbours":
+    elif t == "neighbors":
         if "kind" in r:
             if set(r) & ({"op", "step"} | OP_PARAM_KEYS):
-                raise FormatError("neighbours takes a kind or op / step, not both")
+                raise FormatError("neighbors takes a kind or op / step, not both")
         else:
             if not {"op", "step"} <= set(r):
-                raise FormatError("neighbours needs a kind, or op + step")
+                raise FormatError("neighbors needs a kind, or op + step")
             _check_op(r)
             if r["op"] in DIRECTED_OPS - {"allowed", "any_of"} or r["step"] not in NEIGHBOUR_STEPS:
-                raise FormatError("neighbours needs a symmetric op and step orthogonal / diagonal / king / knight")
+                raise FormatError("neighbors needs a symmetric op and step orthogonal / diagonal / king / knight")
         if "within" in r and r["within"] not in ("box", "region"):
             raise FormatError("within must be box or region")
         if "area" in r:
@@ -661,14 +661,12 @@ def _validate_custom(r, B):
         raise FormatError(f'custom rule: "each" must name a list of cell lists in "cells", got {each!r}')
     scope = r.get("scope")
     if scope is not None:
-        kinds = [k for k in ("pairs", "windows", "neighbours") if k in (scope if isinstance(scope, dict) else {})]
-        if not isinstance(scope, dict) or len(kinds) != 1 or set(scope) - {"pairs", "windows", "neighbours", "cells",
+        kinds = [k for k in ("pairs", "windows", "neighbors") if k in (scope if isinstance(scope, dict) else {})]
+        if not isinstance(scope, dict) or len(kinds) != 1 or set(scope) - {"pairs", "windows", "neighbors", "cells",
                                                                             "within", "except"}:  # fmt: skip
-            raise FormatError(
-                'custom rule: "scope" takes one of pairs / windows / neighbours (+ cells, within, except)'
-            )
+            raise FormatError('custom rule: "scope" takes one of pairs / windows / neighbors (+ cells, within, except)')
         kind = kinds[0]
-        if kind in ("pairs", "neighbours") and scope[kind] not in CU.STEPS:
+        if kind in ("pairs", "neighbors") and scope[kind] not in CU.STEPS:
             raise FormatError(f"custom rule: scope {kind} {scope[kind]!r}; known: {sorted(CU.STEPS)}")
         if kind == "windows" and not (isinstance(scope["windows"], list) and len(scope["windows"]) == 2
                                       and all(isinstance(x, int) and x >= 1 for x in scope["windows"])):  # fmt: skip

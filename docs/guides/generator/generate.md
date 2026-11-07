@@ -128,7 +128,7 @@ your own:
 ```
 
 or `"difficulty": "typical"`: the seed draws a window from where published puzzles of the band lie (a bell curve
-fitted to them), so many seeds spread like real puzzles; `info.aimed_at` shows the window. Classic Very Easy centres
+fitted to them), so many seeds spread like real puzzles; `info.aimed_at` shows the window. Classic Very Easy centers
 on 3.3 (2.7 to 3.9), where generated sites' easy puzzles lie (sudoku.com's easy, medium and hard tiers: 2.5, 3.1 and
 3.6 on this scale); the other bands, and 9×9 variants, follow the development set below. When nothing lands in the
 window by half of the time limit, any difficulty in the band will do (`info.aim_relaxed`).

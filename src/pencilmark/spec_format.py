@@ -234,10 +234,10 @@ LOCKED_OK = {
     ("region", "diagonal"),
     ("region", "extra"),
     ("region", "window"),
-    ("neighbours", "antiknight"),
-    ("neighbours", "antiking"),
-    ("neighbours", "nonconsecutive"),
-    ("neighbours", None),  # any op on orthogonal / diagonal / king / knight pairs: a pair rule
+    ("neighbors", "antiknight"),
+    ("neighbors", "antiking"),
+    ("neighbors", "nonconsecutive"),
+    ("neighbors", None),  # any op on orthogonal / diagonal / king / knight pairs: a pair rule
 }  # locked rules the generator's grids can respect: all-different cells and pair rules
 
 
@@ -339,7 +339,7 @@ def spec_to_gen(doc):
             lim["sum" if k == "sum" else "length"] = [v, v] if isinstance(v, int) else list(v)
         if lim:
             out.setdefault("shape", {})[kind] = lim
-        # one colour / letter / parity of a kind is its own element class (counted separately)
+        # one color / letter / parity of a kind is its own element class (counted separately)
         cls = {
             ("kropki", "white"): "kropki_white",
             ("kropki", "black"): "kropki_black",

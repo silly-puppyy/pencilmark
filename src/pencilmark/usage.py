@@ -28,7 +28,7 @@ def _con_element(c):
     t = c.get("type")
     if t == "leftovers":
         return None  # derived from the houses
-    if "detected" in str(t):  # a line recognised in pair relations (thermo / whisper / dot chain)
+    if "detected" in str(t):  # a line recognized in pair relations (thermo / whisper / dot chain)
         return f"{c['kind']} line" if c.get("kind") else "line from pair relations"
     if c.get("line_kind"):
         return f"{c['line_kind']} line"
@@ -63,7 +63,7 @@ def _unit_element(kind):
     return {
         "diag": "diagonal",
         "window": "window",
-        "center": "centre cells",
+        "center": "center cells",
         "extra": "extra region",
         "cage": "cage",
         "region": "irregular region",

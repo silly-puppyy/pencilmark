@@ -9,7 +9,7 @@ from .base import _J, CONCEPTS, LINE_NAMES, _cap, _generic, _join, _result, fmt_
 from .chains import _h_chain
 
 # ================================================== techniques 68-82 (engine records) ==
-# Forcing chains, 3D Medusa, colour classes, sum bounds, class counting, dominoes and the sudokuwiki set.
+# Forcing chains, 3D Medusa, color classes, sum bounds, class counting, dominoes and the sudokuwiki set.
 # Built from the engine's explanation records (cbackend.solve(..., explain=True)): each handler states
 # the move exactly in the short line and names only cells / houses that it also highlights.
 
@@ -187,18 +187,20 @@ def _h_medusa(ctx):
     fmt = lambda c: ", ".join(f"{nm.cell(e['cell'])} as {e['digit']}" for e in c)  # noqa: E731
     if col.get("emptied"):
         e = col["emptied"]
-        why = f"one colour would leave {nm.unit(ctx.gi(e['unit']['name']))} no place for {e['digit']}, so all of it is false"
+        why = f"one color would leave {nm.unit(ctx.gi(e['unit']['name']))} no place for {e['digit']}, so all of it is false"
     elif col.get("type") == "wrap":
-        why = "one colour contradicts itself (twice in a cell or house, or it empties a cell), so all of it is false"
+        why = "one color contradicts itself (twice in a cell or house, or it empties a cell), so all of it is false"
     else:
-        why = "whichever colour is true, these candidates cannot survive (they see both colours, or share a cell with one)"
+        why = (
+            "whichever color is true, these candidates cannot survive (they see both colors, or share a cell with one)"
+        )
     teach = (
-        f"Colour candidates in two colours along strong links (a cell with two candidates, or a digit with two "
-        f"places in a house), switching colour at every link and across digits; one colour is entirely true. "
+        f"Color candidates in two colors along strong links (a cell with two candidates, or a digit with two "
+        f"places in a house), switching color at every link and across digits; one color is entirely true. "
         f"Blue: {fmt(cs[0])}. Green: {fmt(cs[1])}. Here {why}: {goal}."
     )
     J = _J(ctx, digits=sorted({e["digit"] for c in cs for e in c}))
-    return _result(ctx, J, f"{head}: two-colour chain over several digits", teach, bool(cells), extra_cells=cells)
+    return _result(ctx, J, f"{head}: two-color chain over several digits", teach, bool(cells), extra_cells=cells)
 
 
 def _h_colour_classes(ctx):
@@ -206,58 +208,56 @@ def _h_colour_classes(ctx):
     head, goal = _x_head(ctx)
     pc = eng.get("pattern_cells") or []
     same = (
-        f"Colour {nm.cells(pc)} purple: they must {'both' if len(pc) == 2 else 'all'} hold the same digit (each "
+        f"Color {nm.cells(pc)} purple: they must {'both' if len(pc) == 2 else 'all'} hold the same digit (each "
         f"was shown to equal the next: an equality rule, or the only cell of a house that can take the other's "
         f"digit)"
     )
     units = _x_units(ctx, [u["name"] for u in (eng.get("base") or {}).get("units") or [] if u])
     seed = (ctx.xm or {}).get("seed", 0)
     if seed in (2, 3):
-        same = same + (
-            " -- this colouring came from you" + (" (not checked against the solution)" if seed == 3 else "")
-        )
-    if ctx.code == "colour class (odd/even/low/high)":
+        same = same + (" -- this coloring came from you" + (" (not checked against the solution)" if seed == 3 else ""))
+    if ctx.code == "color class (odd/even/low/high)":
         k = (ctx.xm or {}).get("class_kinds", 0)
         names = [
             n for b, n in ((1, "odd"), (2, "even"), (4, "low (1-3)"), (8, "middle (4-6)"), (16, "high (7-9)")) if k & b
         ]
-        teach = f"Your colouring marks {nm.cells(pc)} as {' and '.join(names) or 'one class'} digits. So {goal}."
+        teach = f"Your coloring marks {nm.cells(pc)} as {' and '.join(names) or 'one class'} digits. So {goal}."
         J = _J(ctx)
-        return _result(ctx, J, f"{head}: coloured as {' and '.join(names) or 'a class'}", teach, True, extra_cells=pc)
+        return _result(ctx, J, f"{head}: colored as {' and '.join(names) or 'a class'}", teach, True, extra_cells=pc)
     if ctx.code == "label break-in (abstract digits)":
         teach = (
             f"Give every cell an abstract label for its digit (A, B, C ...): this assumes nothing. A label that "
             f"must appear in a house but has only one cell there that does not see it lands on that cell, so "
-            f"cells end up sharing labels; the rules then act on whole labels (a relation between two labelled "
+            f"cells end up sharing labels; the rules then act on whole labels (a relation between two labeled "
             f"cells relates the labels, and each house's labels are all nine digits). Following this, "
             f"{nm.cells(pc)} hold labels that cannot be some of their candidates. So {goal}."
         )
         J = _J(ctx)
         return _result(ctx, J, f"{head}: abstract-digit labels", teach, bool(pc), extra_cells=pc)
-    if ctx.code == "colour bounds (order / min-max)":
+    if ctx.code == "color bounds (order / min-max)":
         teach = (
-            f"{same}. Ordering rules between colours (thermometers, inequalities) bound each colour's digit "
+            f"{same}. Ordering rules between colors (thermometers, inequalities) bound each color's digit "
             f"from below and above. So {goal}."
         )
         J = _J(ctx)
-        return _result(ctx, J, f"{head}: colour bounds", teach, bool(pc), extra_cells=pc)
-    if ctx.code == "coloured like a solved cell":
+        return _result(ctx, J, f"{head}: color bounds", teach, bool(pc), extra_cells=pc)
+    if ctx.code == "colored like a solved cell":
         c, v = ctx.place
-        short = f"{head}: same colour as a solved {v}"
+        short = f"{head}: same color as a solved {v}"
         teach = (
-            f"{nm.cell(c)} has the same colour as a cell that is already {v} -- the colouring came from you"
+            f"{nm.cell(c)} has the same color as a cell that is already {v} -- the coloring came from you"
             + (" (not checked against the solution)" if seed == 3 else "")
-            + f". Same colour, same digit: {goal}."
+            + f". Same color, same digit: {goal}."
         )
         J = _J(ctx)
         return _result(ctx, J, short, teach, True, extra_cells=pc)
-    if ctx.code in ("colour must fit every house", "colour resolved") and units:
+    if ctx.code in ("color must fit every house", "color resolved") and units:
         hu = nm.unit(units[0])
         why = (
-            f"{same}. A colour appears once in every house, so {hu} needs that digit in a cell that sees none of "
-            f"the coloured cells; for some digits {hu} has no such cell, so the colour cannot be them"
+            f"{same}. A color appears once in every house, so {hu} needs that digit in a cell that sees none of "
+            f"the colored cells; for some digits {hu} has no such cell, so the color cannot be them"
         )
-        short = f"{head}: the colour is resolved" if ctx.place else f"{head}: the colour has no place in {hu}"
+        short = f"{head}: the color is resolved" if ctx.place else f"{head}: the color has no place in {hu}"
         teach = f"{why}. So {goal}."
     else:
         short = f"{head}: cells forced to be equal"
@@ -335,7 +335,7 @@ def _h_domino(ctx):
         why = "the middle cell of a black-dot run needs both half and double its digit, so it must be even and small"
     elif "squeeze" in code:
         why = (
-            "the middle cell's two neighbours see each other, so they need two different digits that both fit "
+            "the middle cell's two neighbors see each other, so they need two different digits that both fit "
             "the rule with it"
         )
     elif "pair lock" in code:
@@ -471,7 +471,7 @@ def _h_sum_algebra(ctx):
 
 
 def _band_equation(ctx, house_names, cage_names):
-    """The derived sum that best summarises a band move: a union of disjoint houses (parallel lines, or
+    """The derived sum that best summarizes a band move: a union of disjoint houses (parallel lines, or
     boxes) minus the sum cages inside it -> what the remaining cells add up to (fewest remaining cells)."""
     p = ctx.p
     groups = {}
@@ -800,7 +800,7 @@ def _h_region(ctx):
         )
         title = "region cannot reach"
     elif ctx.tech == S.DEAD_END:
-        why = f"No region has one cell, so a cell joins a region that one of its neighbours ({nm.cells(pc)}) can join"
+        why = f"No region has one cell, so a cell joins a region that one of its neighbors ({nm.cells(pc)}) can join"
         title = "dead end"
     elif ctx.tech == S.REGION_EXIT:
         why = f"The region of {nm.cells(pc)} still needs cells and has one way out, so it takes that cell"
@@ -828,8 +828,8 @@ def _h_region(ctx):
 
 
 def _h_class_colour(ctx):
-    """ClassColouring: rule links that always join a low and a high digit (or an odd and an even one) colour cells in
-    two classes; a known cell or a house's count of each class fixes the colours."""
+    """ClassColouring: rule links that always join a low and a high digit (or an odd and an even one) color cells in
+    two classes; a known cell or a house's count of each class fixes the colors."""
     nm = ctx.nm
     xm = ctx.xm or {}
     pc = (ctx.raw_engine or {}).get("pattern_cells") or _changed_cells(ctx)
@@ -844,19 +844,19 @@ def _h_class_colour(ctx):
     head, goal = _x_head(ctx)
     base = (
         f"The rules linking {nm.cells(pc)} always join a {a.split()[0]} digit to a {b.split()[0]} one (or always two of "
-        f"the same kind), so these cells split into two colours: one colour is {a}, the other {b}"
+        f"the same kind), so these cells split into two colors: one color is {a}, the other {b}"
     )
     why = {
-        0: ", and a cell whose digit is already known says which colour is which",
+        0: ", and a cell whose digit is already known says which color is which",
         1: ", and counting fixes which is which: a house holds only so many digits of each kind",
-        2: "; either way round, the coloured cells fill a house's share of one kind, so the house's other cells cannot "
+        2: "; either way round, the colored cells fill a house's share of one kind, so the house's other cells cannot "
         "have it",
     }.get(xm.get("why"), "")
     J = _J(ctx, base_cells=pc)
     res = _result(
         ctx,
         J,
-        f"{head}: {a.split()[0]} / {b.split()[0]} colouring",
+        f"{head}: {a.split()[0]} / {b.split()[0]} coloring",
         f"{base}{why}. So {goal}.",
         bool(pc),
         extra_cells=pc,
@@ -869,7 +869,7 @@ def _h_class_colour(ctx):
 
 # why a rule link joins two digits of different classes (or the same class), by the rule's display name; our wording
 _CLASS_WHY = {
-    (0, "German whisper"): "Neighbours on a German whisper differ by at least 5, so a low digit always sits next to a "
+    (0, "German whisper"): "Neighbors on a German whisper differ by at least 5, so a low digit always sits next to a "
     "high one (5 can't be on the line).",
     (1, "white dot"): "A white dot joins two consecutive digits: one odd, one even.",
     (1, "V"): "Two digits that sum to 5 are one odd and one even.",
@@ -884,19 +884,19 @@ def _kind_digits(x):
 
 
 def _class_substeps(ctx, cc, a, b, kind):
-    """the colouring as sub-steps: the legend, the cell that fixes the colours (or the house count), each rule link in
-    turn (runs along one rule merged), then the result; colour names from the named palette"""
+    """the coloring as sub-steps: the legend, the cell that fixes the colors (or the house count), each rule link in
+    turn (runs along one rule merged), then the result; color names from the named palette"""
     nm = ctx.nm
     sides, orient = cc["sides"], cc["orientation"]
-    if orient is None or orient < 0:  # which colour is which is still open
+    if orient is None or orient < 0:  # which color is which is still open
         names, legend_text = (
             ("green", "purple"),
-            (f"Colour these cells green and purple: one colour is {a}, the other {b}; which is which is still open."),
+            (f"Color these cells green and purple: one color is {a}, the other {b}; which is which is still open."),
         )
         legend = {"green": f"{a} or {b}", "purple": "the other kind"}
     else:
         names = ("blue", "yellow") if orient == 0 else ("yellow", "blue")  # side 0 / side 1
-        legend_text = f"Colour {_kind_digits(a)} blue and {_kind_digits(b)} yellow."
+        legend_text = f"Color {_kind_digits(a)} blue and {_kind_digits(b)} yellow."
         legend = {"blue": a, "yellow": b}
     col = lambda c: names[sides[c]]
     ids = iter(range(1, 10**6))

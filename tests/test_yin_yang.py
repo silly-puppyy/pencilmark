@@ -1,5 +1,5 @@
 """Shading (yin-yang, docs/formats/rules/whole-board-rules.mdx 6.19): validated, read, written, fingerprinted and
-described; solve / count check it (the C++ search carries a colour per cell, agreeing with CP-SAT on 700 random small
+described; solve / count check it (the C++ search carries a color per cell, agreeing with CP-SAT on 700 random small
 puzzles); custom rules read it with shaded(); rate refuses it."""
 
 import json
@@ -43,7 +43,7 @@ def test_read_write_describe():
 
 def test_count_couplings_and_rate_unknown():
     assert pencilmark.count_solutions(with_rule({"type": "yin_yang", "shaded": ["r1c1"]}))["count"] == 1
-    checker = {"type": "yin_yang", "shaded": ["r1c1", "r2c2"], "unshaded": ["r1c2", "r2c1"]}  # disconnects a colour
+    checker = {"type": "yin_yang", "shaded": ["r1c1", "r2c2"], "unshaded": ["r1c2", "r2c1"]}  # disconnects a color
     assert pencilmark.count_solutions(with_rule(checker))["count"] == 0
     card = pencilmark.rate(with_rule({"type": "yin_yang", "shaded": ["r1c1"]}))  # no human route: Unknown, with why
     assert card["band"] == "Unknown" and card["difficulty"] is None and card["contains"] == []

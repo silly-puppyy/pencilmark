@@ -61,7 +61,7 @@ def pack():
                     "side": "top",
                     "cells": ["r1c4", "r2c5", "r3c6", "r4c7", "r5c8", "r6c9"],
                 },
-                {"type": "neighbours", "kind": "antiknight", "within": "box"},
+                {"type": "neighbors", "kind": "antiknight", "within": "box"},
             ],
         ):
             d = json.loads(json.dumps(pencilmark.read.auto(CLASSIC)))
@@ -390,7 +390,7 @@ def test_sudokuwiki_round_trip():
         back = pencilmark.api._load(pencilmark.read.auto(s))
         assert I.analyse(back)[0] == k, (k, I.analyse(back))
         assert _semantic(back) == _semantic(p), f"{k}: {s[:12]}..."
-        again = pencilmark.write.sudokuwiki(back)  # cage colours may differ; the puzzle may not
+        again = pencilmark.write.sudokuwiki(back)  # cage colors may differ; the puzzle may not
         assert again[:3] == s[:3] and _semantic(pencilmark.api._load(pencilmark.read.auto(again))) == _semantic(p)
     try:
         pencilmark.write.sudokuwiki(gen4)
@@ -475,7 +475,7 @@ def test_describe_names():
     )
     dsc = pencilmark.describe(nxv)
     assert dsc["type"] == "XV Sudoku" and "All X's and V's are given." in dsc["rules"]["XV"]
-    ak = _with([{"type": "neighbours", "kind": "antiknight", "within": "box"}])
+    ak = _with([{"type": "neighbors", "kind": "antiknight", "within": "box"}])
     assert "within the same box" in pencilmark.describe(ak)["rules"]["Anti-Knight"]
     assert pencilmark.describe(pencilmark.api._load({"layout": "samurai", "numbers": ""}))["type"] == "Samurai Sudoku"
     assert (
@@ -706,7 +706,7 @@ def test_area_scope():
         "givens": giv,
         "rules": [{"type": "box_grid", "origin": o, "box": [3, 3], "count": [3, 3]} for o in grids]
         + [
-            {"type": "neighbours", "kind": "antiknight", "area": "r13c13"},
+            {"type": "neighbors", "kind": "antiknight", "area": "r13c13"},
             {"type": "negative", "of": "xv", "area": "r1c13"},
         ],
     }
@@ -800,7 +800,7 @@ def test_describe_names_grids():
         {"type": "region", "kind": "diagonal", "cells": [X.cell_name(i, i) for i in range(9)]},
         {"type": "region", "kind": "diagonal", "cells": [X.cell_name(i, 8 - i) for i in range(9)]},
         {"type": "cage", "sum": 10, "cells": ["r13c1", "r13c2", "r14c1"]},
-        {"type": "neighbours", "kind": "antiknight", "area": "r13c13"},
+        {"type": "neighbors", "kind": "antiknight", "area": "r13c13"},
     ]
     doc = {
         "format": "pencilmark-puzzle",
@@ -896,7 +896,7 @@ def test_check_registry_matches_quality_and_grade_md():
 
 
 def test_line_registry_matches_schema_palette_docs():
-    """rules/line.py is the one list of line kinds: the JSON Schema, the default colours and the rule page agree"""
+    """rules/line.py is the one list of line kinds: the JSON Schema, the default colors and the rule page agree"""
     from pencilmark.rules import LINE
 
     schema = json.loads((ROOT / "docs" / "pencilmark-puzzle.schema.json").read_text(encoding="utf-8"))

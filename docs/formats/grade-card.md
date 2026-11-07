@@ -173,10 +173,10 @@ extras, in the tradition of Sudoku Explainer's and Andrew Stuart's hint pages:
 
 ```json
 "substeps": [
-  {"text": "Colour low digits (1–4) blue and high digits (6–9) yellow.",
+  {"text": "Color low digits (1–4) blue and high digits (6–9) yellow.",
    "legend": {"blue": "low (1–4)", "yellow": "high (6–9)"}},
   {"text": "Follow the German whisper from r1c3 (blue): r1c4 yellow, r1c5 blue.",
-   "why": "Neighbours on a German whisper differ by at least 5, so a low digit always sits next to a high one (5 can't be on the line).",
+   "why": "Neighbors on a German whisper differ by at least 5, so a low digit always sits next to a high one (5 can't be on the line).",
    "annotations": [{"id": 1, "cell": "r1c4", "color": "yellow"}, {"id": 2, "cell": "r1c5", "color": "blue"}]},
   {"text": "So r1c4 ≠ 1,2,3.",
    "annotations": [{"id": 3, "candidate": "r1c4#1", "color": "red"}]}
@@ -187,13 +187,13 @@ extras, in the tradition of Sudoku Explainer's and Andrew Stuart's hint pages:
 |---|---|
 | `text` | One sentence that reads on its own, without any drawing. |
 | `why` | Optional: the rule fact behind the sentence (given once per step). |
-| `legend` | Optional: what a colour name stands for; it holds for the rest of the solve. |
-| `annotations` | Optional drawing elements, each with an integer `id`: colour a `cell` or a `candidate` (`color`), show a `digit` (`"r5c6=7"`), or an `arrow` between two cells or candidates (`line`: `strong`, `weak` or `plain`). A later element on the same target replaces the earlier one. |
+| `legend` | Optional: what a color name stands for; it holds for the rest of the solve. |
+| `annotations` | Optional drawing elements, each with an integer `id`: color a `cell` or a `candidate` (`color`), show a `digit` (`"r5c6=7"`), or an `arrow` between two cells or candidates (`line`: `strong`, `weak` or `plain`). A later element on the same target replaces the earlier one. |
 
-Colours are names from a named palette (`yellow`, `blue`, `green`, `purple`, `orange`, `pink`, `cyan`, `grey`, `brown`;
+Colors are names from a named palette (`yellow`, `blue`, `green`, `purple`, `orange`, `pink`, `cyan`, `gray`, `brown`;
 `red` for removals); each renderer picks its own shade for each name. Steps whose technique has no sub-step form yet leave
-`substeps` out; so far: locked candidates (pointing, claiming), naked and hidden subsets, line rules (thermo, whispers, renban, ...), low / high and odd / even colouring,
-simple colouring, regions to find (each region keeps one colour for the whole solve), killer cage combinations, fish (X-Wing, Swordfish, Jellyfish, finned, Franken, Mutant), XY-, XYZ- and WXYZ-Wings (both types), and single chains (X-Chain, XY-Chain, AIC and the
+`substeps` out; so far: locked candidates (pointing, claiming), naked and hidden subsets, line rules (thermo, whispers, renban, ...), low / high and odd / even coloring,
+simple coloring, regions to find (each region keeps one color for the whole solve), killer cage combinations, fish (X-Wing, Swordfish, Jellyfish, finned, Franken, Mutant), XY-, XYZ- and WXYZ-Wings (both types), and single chains (X-Chain, XY-Chain, AIC and the
 short chains such as Skyscraper and 2-String Kite; strong links drawn as `strong` arrows, weak ones as `weak`).
 
 ## 6. `trace`
@@ -212,13 +212,13 @@ position before step 1 and `trace[n]` the position after step n (one more entry 
   candidate lists (written when the route first needs notes, in the cells with at most 3 candidates, then in each cell
   a step uses). Marks always show a subset of the cell's `candidates`; a viewer may draw them instead of the full
   candidates. Present when the grader's note model is on (the default).
-- `colors` (optional): the identity colours an expert would have painted at this position, as a list of
-  `{"color": "green", "cells": ["r3c7", …], "digits": [7, 8], "opposite": "purple"}`. Every cell of one colour holds
-  the same digit, one of `digits`; the `opposite` colour holds the other one (which is which is still open). Colours
+- `colors` (optional): the identity colors an expert would have painted at this position, as a list of
+  `{"color": "green", "cells": ["r3c7", …], "digits": [7, 8], "opposite": "purple"}`. Every cell of one color holds
+  the same digit, one of `digits`; the `opposite` color holds the other one (which is which is still open). Colors
   start where two cells of one house have exactly the same two candidates and are tracked further: in a house without
-  the colour, the one cell left that can hold it joins it; cells a palindrome or clone rule makes equal share it. A
-  pair seen only in its two starting cells is left out (the candidates already show it), and at most three colour
-  pairs are listed, the largest. A colour keeps its name while it lasts. Present when the grader's colour model is on
+  the color, the one cell left that can hold it joins it; cells a palindrome or clone rule makes equal share it. A
+  pair seen only in its two starting cells is left out (the candidates already show it), and at most three color
+  pairs are listed, the largest. A color keeps its name while it lasts. Present when the grader's color model is on
   (the default).
 
 The first position is each empty cell's possible digits less those its peers' givens rule out; a step's placement

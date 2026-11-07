@@ -1,4 +1,4 @@
-"""The rule families with no table of their own (corner, sum, neighbours, region, outside clues, count and the rest),
+"""The rule families with no table of their own (corner, sum, neighbors, region, outside clues, count and the rest),
 read, written and described exactly as recorded in tests/fixtures/rule_matrix.jsonl (see test_line_matrix.py). Each case
 is one rule (sometimes with its negative) on a 4 x 4, 6 x 6 and 9 x 9 board; invalid ones record their error.
 Regenerate (only when a change is meant to alter it):
@@ -59,9 +59,9 @@ RULES = [
         }
     ],
     [{"type": "distinct_count", "value": 2, "side": "top", "cells": ["r1c2", "r2c3"]}],
-    # neighbours
-    *[[{"type": "neighbours", "kind": k}] for k in ("antiknight", "antiking", "nonconsecutive", "antiqueen")],
-    [{"type": "neighbours", "op": "difference", "value": 1, "within": 1}],
+    # neighbors
+    *[[{"type": "neighbors", "kind": k}] for k in ("antiknight", "antiking", "nonconsecutive", "antiqueen")],
+    [{"type": "neighbors", "op": "difference", "value": 1, "within": 1}],
     # region
     [{"type": "region", "kind": "diagonal", "cells": ["r1c1", "r2c2", "r3c3", "r4c4"]}],
     [{"type": "region", "kind": "window", "cells": BLOCK}],

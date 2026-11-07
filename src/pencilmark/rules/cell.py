@@ -11,8 +11,8 @@ def _vals(rs, key):
 
 def _odd_even_text(rs, c):
     k = {r["kind"] for r in rs if r["type"] == "cell"}
-    parts = (["a digit in a grey circle is odd"] if "odd" in k else []) + (
-        ["a digit in a grey square is even"] if "even" in k else []
+    parts = (["a digit in a gray circle is odd"] if "odd" in k else []) + (
+        ["a digit in a gray square is even"] if "even" in k else []
     )
     s = "; ".join(parts) or "shaded cells have a fixed parity"
     s = s[0].upper() + s[1:] + "."
@@ -36,7 +36,7 @@ class CellKind:
     variant: str  # the variant name describe() uses ("Exclusion" also covers the corner exclude, in variants.py)
     param: str = None  # "split" (an integer >= 1) or "values" (digits); required when set
     negative: bool = False  # {"type": "negative", "of": "cell", "kind": kind} is defined
-    mark: str = "digits"  # drawn in each cell: "circle", "square", "diamond" (shaded, palette colour = kind), "digits"
+    mark: str = "digits"  # drawn in each cell: "circle", "square", "diamond" (shaded, palette color = kind), "digits"
 
 
 CELL = {

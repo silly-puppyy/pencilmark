@@ -96,9 +96,9 @@ CONCEPTS = {
         "Like an XY-Wing but the pivot also holds Z: one of the three cells is Z, so cells seeing all three lose Z.",
     ),
     S.COLORING: (
-        "Simple colouring",
+        "Simple coloring",
         "Follow one digit through houses where it has exactly two spots, alternating two "
-        "colours; one colour is the truth. A cell seeing both colours can't hold the digit.",
+        "colors; one color is the truth. A cell seeing both colors can't hold the digit.",
     ),
     S.PAIRARC: (
         "Pair-rule pressure",
@@ -216,7 +216,7 @@ CONCEPTS = {
     ),
     S.LINE_RANGE: (
         "Line ranges",
-        "Work out the range each cell of a line can take from its length, its neighbours and the digits already on it.",
+        "Work out the range each cell of a line can take from its length, its neighbors and the digits already on it.",
     ),
     S.MENTAL_D: (
         "Pairs and triples in your head",

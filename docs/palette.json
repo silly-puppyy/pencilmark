@@ -1,5 +1,5 @@
 {
- "$comment": "pencilmark default drawing (docs/library/drawing-style.md): sizes in cell units, digit weights in font weight; colours per theme. Line colours are the community defaults measured on 6,217 LMD puzzles.",
+ "$comment": "pencilmark default drawing (docs/library/drawing-style.md): sizes in cell units, digit weights in font weight; colors per theme. Line colors are the community defaults measured on 6,217 LMD puzzles.",
  "format": "pencilmark-palette",
  "format_version": 1,
  "sizes": {
@@ -90,7 +90,7 @@
   "Unknown": "#9a958e"
  },
  "annotation": {
-  "$comment": "named colours of step annotations and the trace's colour layer (grade-card.md 5, 6), drawn over the cell at this opacity; a cell with n colours is split into n wedges from its centre whose ends cut the cell's outline into n equal lengths, the first cut 25/360 of the way round clockwise from the top centre (as SudokuPad draws several colours in one cell)",
+  "$comment": "named colors of step annotations and the trace's color layer (grade-card.md 5, 6), drawn over the cell at this opacity; a cell with n colors is split into n wedges from its center whose ends cut the cell's outline into n equal lengths, the first cut 25/360 of the way round clockwise from the top center (as SudokuPad draws several colors in one cell)",
   "opacity": {
    "light": 0.65,
    "dark": 0.5
@@ -103,7 +103,7 @@
    "orange": "#d88835",
    "pink": "#d5829e",
    "cyan": "#46b4c5",
-   "grey": "#959595",
+   "gray": "#959595",
    "brown": "#9e7746",
    "red": "#ca3f37"
   },
@@ -115,7 +115,7 @@
    "orange": "#d9802a",
    "pink": "#d67a9b",
    "cyan": "#35b2c4",
-   "grey": "#8a8a8a",
+   "gray": "#8a8a8a",
    "brown": "#9a7040",
    "red": "#cc3a32"
   }

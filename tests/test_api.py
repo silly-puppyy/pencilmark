@@ -414,8 +414,8 @@ def test_params_follow_in_place_setting_changes():
 
 
 def test_colouring_is_opt_in(variants):
-    """rate(coloring=True) puts kept colours on the route (Vudoku: Colour Fill / Single / Pair take it from Hard to
-    Medium); the default leaves the colour-only techniques out"""
+    """rate(coloring=True) puts kept colors on the route (Vudoku: Color Fill / Single / Pair take it from Hard to
+    Medium); the default leaves the color-only techniques out"""
     import pencilmark
 
     vudoku = next(v["puzzle"] for v in variants if v["name"].startswith("Vudoku"))

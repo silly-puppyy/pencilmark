@@ -105,7 +105,7 @@ def _propagate(p, st, c0, v0, max_rounds=8, use_rules=True, out=None):
                 continue
             if any(d == 0 for d in dom):
                 continue
-            res = enum_rule(p, rule, dom, node_limit=20000)  # memoised on the rule
+            res = enum_rule(p, rule, dom, node_limit=20000)  # memoized on the rule
             if not res["complete"]:
                 continue
             deps = sorted({i for i, ev in enumerate(events) if ev["cell"] in rule.cells and ev.get("digit")})
@@ -444,7 +444,7 @@ def _h_line_class(ctx):
         nev_cells = [c for c, d in ctx.elims if cls[d] in never]
         if nev_cells:
             nev_txt = (
-                f"{nm.digits(nd)} has no possible neighbour on a {lname}, so it can't appear anywhere on it "
+                f"{nm.digits(nd)} has no possible neighbor on a {lname}, so it can't appear anywhere on it "
                 f"-- remove it from {nm.cells(nev_cells)}. "
             )
     classes = "; ".join(names[q] for q in sorted(names))
@@ -548,12 +548,12 @@ def _h_equal_digits(ctx):
         ok &= cs == [B]
     el = {(A, d) for d in digits_of(st.cand[A] & ~st.cand[B])} | {(B, d) for d in digits_of(st.cand[B] & ~st.cand[A])}
     ok &= set(ctx.elims) <= el
-    if not ctx.elims:  # identity layer (params colouring): kept as a colour class, nothing eliminated yet
-        short = f"{nm.cell(A)} and {nm.cell(B)} must hold the same digit (one colour)"
+    if not ctx.elims:  # identity layer (params coloring): kept as a color class, nothing eliminated yet
+        short = f"{nm.cell(A)} and {nm.cell(B)} must hold the same digit (one color)"
         teach = (
             f"{nm.cell(A)} {nm.cset(st.cand[A])} sits outside {nm.unit(hi)}. Whatever digit it is, {nm.unit(hi)} needs "
             f"that digit too, and every spot for it there sees {nm.cell(A)} except {nm.cell(B)}. So the two cells hold "
-            f"the same digit: colour them alike and keep the colour for later."
+            f"the same digit: color them alike and keep the color for later."
         )
         J = _J(ctx, digits=sorted(digits_of(st.cand[A] & st.cand[B])), base_units=[hi], base_cells=[A, B])
         return _result(ctx, J, short, teach, ok, extra_cells=[A, B])
@@ -571,24 +571,24 @@ def _h_equal_digits(ctx):
 
 
 def _h_class_single(ctx):
-    """identity layer: only one cell of a house can hold a colour class's digit -> it joins the class"""
+    """identity layer: only one cell of a house can hold a color class's digit -> it joins the class"""
     nm = ctx.nm
     X, a, hi = ctx.xm.get("cell"), ctx.xm.get("anchor"), ctx.xm.get("house")
     ms = [c for c in (ctx.engine.get("pattern_cells") or ()) if isinstance(c, int) and c != X]
     if X is None or a is None or hi is None or not ms:
         return _generic(ctx)
-    short = f"{nm.cell(X)} has the colour of {nm.cell(a)}: the only place for it in {nm.unit(hi)}"
+    short = f"{nm.cell(X)} has the color of {nm.cell(a)}: the only place for it in {nm.unit(hi)}"
     teach = (
         f"{nm.cells(ms)} hold one digit, whatever it is. {_cap(nm.unit(hi))} needs that digit too, and every other "
-        f"cell there sees one of them or cannot hold it. So {nm.cell(X)} is that digit: it gets the same colour."
+        f"cell there sees one of them or cannot hold it. So {nm.cell(X)} is that digit: it gets the same color."
     )
     J = _J(ctx, base_units=[hi], base_cells=ms + [X])
     return _result(ctx, J, short, teach, True, extra_cells=ms + [X])
 
 
 def _h_class_propagation(ctx):
-    """identity layer: cells of one colour hold one digit -- what one loses, all lose; one placed places all; across a
-    difference, a known colour's digit leaves the other colour"""
+    """identity layer: cells of one color hold one digit -- what one loses, all lose; one placed places all; across a
+    difference, a known color's digit leaves the other color"""
     nm = ctx.nm
     ms = [c for c in (ctx.engine.get("pattern_cells") or ()) if isinstance(c, int)]
     if not ms:
@@ -596,27 +596,27 @@ def _h_class_propagation(ctx):
     src = ctx.xm.get("from_anchor")
     if src is not None and src >= 0 and ctx.elims and not ctx.place:
         v = ctx.elims[0][1]
-        short = f"{fmt_elims(nm, ctx.elims)}: the other colour of {nm.cell(src)} is {v}"
+        short = f"{fmt_elims(nm, ctx.elims)}: the other color of {nm.cell(src)} is {v}"
         teach = (
-            f"The colour of {nm.cell(src)} is {v}, and the colour of {nm.cell(ctx.xm.get('anchor', ms[0]))} holds a "
+            f"The color of {nm.cell(src)} is {v}, and the color of {nm.cell(ctx.xm.get('anchor', ms[0]))} holds a "
             f"different digit: {_cant(nm, ctx.elims)}."
         )
         J = _J(ctx, base_cells=ms, digits=[v])
         return _result(ctx, J, short, teach, True, extra_cells=ms)
     if ctx.place:
         c, v = ctx.place
-        short = f"{nm.cell(c)} = {v}: same colour as {nm.cells([x for x in ms if x != c])}"
+        short = f"{nm.cell(c)} = {v}: same color as {nm.cells([x for x in ms if x != c])}"
         teach = f"{nm.cells(ms)} hold one digit; one of them is {v}, so {nm.cell(c)} is {v} too."
     else:
-        short = f"{fmt_elims(nm, ctx.elims)}: cells of one colour ({nm.cells(ms)})"
+        short = f"{fmt_elims(nm, ctx.elims)}: cells of one color ({nm.cells(ms)})"
         teach = f"{nm.cells(ms)} hold one digit, so each keeps only the candidates all of them have: {_cant(nm, ctx.elims)}."
     J = _J(ctx, base_cells=ms, digits=sorted({d for _, d in ctx.elims}) or ([ctx.place[1]] if ctx.place else []))
     return _result(ctx, J, short, teach, True, extra_cells=ms)
 
 
 def _h_class_pair(ctx):
-    """identity layer: two cells of one digit pair that differ get opposite colours; a cell of that pair seeing one
-    colour gets the other"""
+    """identity layer: two cells of one digit pair that differ get opposite colors; a cell of that pair seeing one
+    color gets the other"""
     nm = ctx.nm
     x = ctx.xm
     cells = [c for c in (ctx.engine.get("pattern_cells") or ()) if isinstance(c, int)]
@@ -626,27 +626,27 @@ def _h_class_pair(ctx):
         X, Y = x.get("cell"), x.get("anchor")
         if X is None or Y is None:
             return _generic(ctx)
-        short = f"{nm.cell(X)} and {nm.cell(Y)} hold {pair} in some order: opposite colours"
+        short = f"{nm.cell(X)} and {nm.cell(Y)} hold {pair} in some order: opposite colors"
         teach = (
             f"{nm.cell(X)} and {nm.cell(Y)} can only be {pair}, and they must differ. So one is {U[0]} and the other "
-            f"{U[-1]}: colour them in two colours and keep the colours for later."
+            f"{U[-1]}: color them in two colors and keep the colors for later."
         )
         J = _J(ctx, digits=U, base_cells=[X, Y])
         return _result(ctx, J, short, teach, True, extra_cells=[X, Y])
     Z, k2, k1 = x.get("cell"), x.get("anchor"), x.get("other_anchor")
     if Z is None or k1 is None or k2 is None:
         return _generic(ctx)
-    short = f"{nm.cell(Z)} gets the colour of {nm.cell(k2)}: it sees the colour of {nm.cell(k1)}"
+    short = f"{nm.cell(Z)} gets the color of {nm.cell(k2)}: it sees the color of {nm.cell(k1)}"
     teach = (
-        f"The colours of {nm.cell(k1)} and {nm.cell(k2)} are {pair} in some order. {nm.cell(Z)} can only be {pair} and "
-        f"sees a cell of {nm.cell(k1)}'s colour, so it holds the other one: it gets {nm.cell(k2)}'s colour."
+        f"The colors of {nm.cell(k1)} and {nm.cell(k2)} are {pair} in some order. {nm.cell(Z)} can only be {pair} and "
+        f"sees a cell of {nm.cell(k1)}'s color, so it holds the other one: it gets {nm.cell(k2)}'s color."
     )
     J = _J(ctx, digits=U, base_cells=cells)
     return _result(ctx, J, short, teach, True, extra_cells=cells)
 
 
 def _h_class_trap(ctx):
-    """identity layer: a cell seeing both colours of a digit pair holds neither digit"""
+    """identity layer: a cell seeing both colors of a digit pair holds neither digit"""
     nm = ctx.nm
     x = ctx.xm
     cells = [c for c in (ctx.engine.get("pattern_cells") or ()) if isinstance(c, int)]
@@ -655,10 +655,10 @@ def _h_class_trap(ctx):
     if k1 is None or k2 is None or not U:
         return _generic(ctx)
     pair = "/".join(str(d) for d in U)
-    short = f"{fmt_elims(nm, ctx.elims)}: sees both colours of {pair}"
+    short = f"{fmt_elims(nm, ctx.elims)}: sees both colors of {pair}"
     teach = (
-        f"The colours of {nm.cell(k1)} and {nm.cell(k2)} hold {pair}, one digit each. A cell seeing a cell of each "
-        f"colour can be neither: {_cant(nm, ctx.elims)}."
+        f"The colors of {nm.cell(k1)} and {nm.cell(k2)} hold {pair}, one digit each. A cell seeing a cell of each "
+        f"color can be neither: {_cant(nm, ctx.elims)}."
     )
     J = _J(ctx, digits=U, base_cells=cells)
     return _result(ctx, J, short, teach, True, extra_cells=cells)
@@ -676,8 +676,8 @@ def _h_chain_colour(ctx):
         f"{nm.cell(C)}. So the two cells hold one digit, whatever it is"
     )
     if not ctx.elims:
-        short = f"{nm.cell(A)} and {nm.cell(C)} hold the same digit through {nm.cell(B)} (one colour)"
-        teach = why + ": colour them alike and keep the colour for later."
+        short = f"{nm.cell(A)} and {nm.cell(C)} hold the same digit through {nm.cell(B)} (one color)"
+        teach = why + ": color them alike and keep the color for later."
     else:
         short = f"{fmt_elims(nm, ctx.elims)}: {nm.cell(A)} and {nm.cell(C)} hold the same digit through {nm.cell(B)}"
         teach = why + f", and each keeps only the candidates the other has: {_cant(nm, ctx.elims)}."
@@ -686,26 +686,26 @@ def _h_chain_colour(ctx):
 
 
 def _h_colour_clash(ctx):
-    """identity layer: a cell next to a member of a linked colour would leave that colour no digit -> it is not the
-    first colour"""
+    """identity layer: a cell next to a member of a linked color would leave that color no digit -> it is not the
+    first color"""
     nm = ctx.nm
     c, k, o = ctx.xm.get("cell"), ctx.xm.get("anchor"), ctx.xm.get("via")
     cells = [x for x in (ctx.engine.get("pattern_cells") or ()) if isinstance(x, int)]
     if c is None or k is None or o is None:
         return _generic(ctx)
-    short = f"{nm.cell(c)} is not the colour of {nm.cell(k)}: it would leave {nm.cell(o)}'s colour no digit"
+    short = f"{nm.cell(c)} is not the color of {nm.cell(k)}: it would leave {nm.cell(o)}'s color no digit"
     teach = (
-        f"The colour of {nm.cell(k)} and the colour of {nm.cell(o)} are tied by a rule: each digit of the first fixes "
-        f"the second. Whatever digit the first colour is, {nm.cell(c)} holding it would rule out the one digit "
-        f"{nm.cell(o)} then needs. So {nm.cell(c)} never has {nm.cell(k)}'s colour."
+        f"The color of {nm.cell(k)} and the color of {nm.cell(o)} are tied by a rule: each digit of the first fixes "
+        f"the second. Whatever digit the first color is, {nm.cell(c)} holding it would rule out the one digit "
+        f"{nm.cell(o)} then needs. So {nm.cell(c)} never has {nm.cell(k)}'s color."
     )
     J = _J(ctx, base_cells=cells)
     return _result(ctx, J, short, teach, True, extra_cells=cells)
 
 
 def _h_colour_pointing(ctx):
-    """identity layer: a colour's places in one house all lie in another house -> its other cells there are not that
-    colour"""
+    """identity layer: a color's places in one house all lie in another house -> its other cells there are not that
+    color"""
     nm = ctx.nm
     x = ctx.xm
     a, hi, li = x.get("anchor"), x.get("house"), x.get("line")
@@ -716,18 +716,18 @@ def _h_colour_pointing(ctx):
     ms = cells[: len(cells) - k - n]
     P, T = cells[len(ms) : len(ms) + k], cells[len(ms) + k :]
     are, hold = ("is", "holds") if len(T) == 1 else ("are", "hold")
-    short = f"{nm.cells(T)} {are} not the colour of {nm.cell(a)}: in {nm.unit(hi)} it is in {nm.cells(P, 'or')}"
+    short = f"{nm.cells(T)} {are} not the color of {nm.cell(a)}: in {nm.unit(hi)} it is in {nm.cells(P, 'or')}"
     teach = (
         f"{_cap(nm.cells(ms))} hold one digit, whatever it is. In {nm.unit(hi)} that digit can only be in "
         f"{nm.cells(P, 'or')}, {'both' if len(P) == 2 else 'all'} in {nm.unit(li)}. So {nm.unit(li)} has it there, and "
-        f"{nm.cells(T)} {hold} a different digit: a pointing pair, for a colour."
+        f"{nm.cells(T)} {hold} a different digit: a pointing pair, for a color."
     )
     J = _J(ctx, base_units=[hi], cover_units=[li], base_cells=ms + P)
     return _result(ctx, J, short, teach, True, extra_cells=cells)
 
 
 def _h_colour_fish(ctx):
-    """identity layer: two houses confine a colour to two other houses -> the colour's other places there are not it"""
+    """identity layer: two houses confine a color to two other houses -> the color's other places there are not it"""
     nm = ctx.nm
     x = ctx.xm
     a, b1, b2, c1, c2 = (x.get(k) for k in ("anchor", "base_a", "base_b", "cover_a", "cover_b"))
@@ -738,18 +738,18 @@ def _h_colour_fish(ctx):
     ms = cells[: len(cells) - k - n]
     P, T = cells[len(ms) : len(ms) + k], cells[len(ms) + k :]
     are = "is" if len(T) == 1 else "are"
-    short = f"{nm.cells(T)} {are} not the colour of {nm.cell(a)}: an X-Wing on the colour"
+    short = f"{nm.cells(T)} {are} not the color of {nm.cell(a)}: an X-Wing on the color"
     teach = (
         f"{_cap(nm.cells(ms))} hold one digit, whatever it is. {_cap(nm.unit(b1))} and {nm.unit(b2)} each need it once, "
         f"and its places there ({nm.cells(P)}) all lie in {nm.unit(c1)} and {nm.unit(c2)}. So those two hold both "
-        f"copies, and {nm.cells(T)} hold a different digit: fish logic, for a colour."
+        f"copies, and {nm.cells(T)} hold a different digit: fish logic, for a color."
     )
     J = _J(ctx, base_units=[b1, b2], cover_units=[c1, c2], base_cells=ms + P)
     return _result(ctx, J, short, teach, True, extra_cells=cells)
 
 
 def _h_complete_colours(ctx):
-    """identity layer: k complete colours with k possible digits between them -> every other cell loses those digits"""
+    """identity layer: k complete colors with k possible digits between them -> every other cell loses those digits"""
     nm = ctx.nm
     x = ctx.xm
     k, U = int(x.get("colours") or 0), int(x.get("digits") or 0)
@@ -758,9 +758,9 @@ def _h_complete_colours(ctx):
         return _generic(ctx)
     D = sorted(digits_of(U))
     ds = ", ".join(map(str, D[:-1])) + " and " + str(D[-1]) if len(D) > 1 else str(D[0])
-    short = f"{fmt_elims(nm, ctx.elims)}: {k} complete colours hold every {ds}"
+    short = f"{fmt_elims(nm, ctx.elims)}: {k} complete colors hold every {ds}"
     teach = (
-        f"{k} colours each have a cell in every row, so each holds every copy of its digit, and they hold different "
+        f"{k} colors each have a cell in every row, so each holds every copy of its digit, and they hold different "
         f"digits. Between them they can only be {ds}: they use those digits up, so no other cell can be one: "
         f"{_cant(nm, ctx.elims)}."
     )

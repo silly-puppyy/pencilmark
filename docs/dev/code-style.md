@@ -70,7 +70,7 @@ Rules for pencilmark's Python and C++. Each names its source. Docs have their ow
 
 ## Tests
 
-22. **Outside in**: public API first, then integration, then units; one behaviour per test
+22. **Outside in**: public API first, then integration, then units; one behavior per test
     ([Scientific Python: testing](https://learn.scientific-python.org/development/principles/testing/)).
 23. **Fast by default, slow on request**: the unit suite runs in seconds; slow suites carry a pytest marker and run
     separately ([pytest good practices](https://docs.pytest.org/en/stable/explanation/goodpractices.html),

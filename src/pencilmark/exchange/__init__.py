@@ -8,7 +8,7 @@
     fingerprint(doc) -> "<64 hex>"                       content fingerprint (docs/formats/puzzle-format.md 8.2)
 
 The format is a transport layer: read(write(p)) builds the same engine structure as p (groups in order, relations and
-constraints in order, domains, givens, coordinates), except for the normalisations listed in docs/guides/development/engine-mapping.md (each
+constraints in order, domains, givens, coordinates), except for the normalizations listed in docs/guides/development/engine-mapping.md (each
 mechanic gets ONE engine expansion). The writer therefore works from the engine structure directly and keeps the order of
 relations and constraints (the order changes cards).
 """

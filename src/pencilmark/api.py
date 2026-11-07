@@ -79,7 +79,7 @@ def _params(mode):
 
 
 def _load(puzzle, format=None):  # noqa: A002
-    """any input pencilmark.read reads (detected, or named by format), or an engine Puzzle -> a finalised engine
+    """any input pencilmark.read reads (detected, or named by format), or an engine Puzzle -> a finalized engine
     Puzzle; the input's rules are kept in the file's order (written back and counted in that order)"""
     from . import puzzle_json as PJ
     from .export import import_puzzle
@@ -152,8 +152,8 @@ def rate(
         False skips the search for interchangeable techniques (each chip in contains lists one code). Band, difficulty
         and time are the same either way, and the card comes much faster.
     coloring : bool
-        Opt in to colouring as a solving method: colours kept through the solve (Colour Fill, Colour Single, Colour
-        Pair, ...; docs/grades/techniques.md, Colouring). Off by default: most solvers do not colour, and with it
+        Opt in to coloring as a solving method: colors kept through the solve (Color Fill, Color Single, Color
+        Pair, ...; docs/grades/techniques.md, Coloring). Off by default: most solvers do not color, and with it
         the hardest puzzles take much longer to grade.
 
     format : str, optional

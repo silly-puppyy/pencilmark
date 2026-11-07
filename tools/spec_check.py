@@ -51,7 +51,7 @@ KNOWN_RULE_KEYS = {
     "label",
     "style",
     "of",
-    "area",  # used on the negative / neighbours pages, not in the 8.1 list
+    "area",  # used on the negative / neighbors pages, not in the 8.1 list
 }
 
 
@@ -720,7 +720,7 @@ def rule_key(rule):
         return "relation " + rule["op"]
     if t == "negative":
         return "negative " + rule["of"] + (" " + rule["kind"] if "kind" in rule else "")
-    if "kind" in rule and t != "neighbours" or t == "neighbours" and "kind" in rule:
+    if "kind" in rule and t != "neighbors" or t == "neighbors" and "kind" in rule:
         return t + " " + rule["kind"]
     return t
 
@@ -737,7 +737,7 @@ DISPATCH = {
     "line": check_line,
     "arrow": check_arrow,
     "cell": check_cell,
-    "neighbours": check_neighbours,
+    "neighbors": check_neighbours,
     "relation": check_relation,
     "negative": check_negative,
     "sandwich": check_outside_rule,

@@ -1,6 +1,6 @@
 """Every edge kind, read, written and described exactly as recorded in tests/fixtures/edge_matrix.jsonl (the safety net
 for moving the edge rules into their own module; see test_line_matrix.py). Each case: kind x board size x parameter x
-neighbouring or not x with or without the matching negative rule ("all clues shown", carrying the same selector).
+neighboring or not x with or without the matching negative rule ("all clues shown", carrying the same selector).
 Regenerate (only when a change is meant to alter it):
     python tests/test_edge_matrix.py --write
 """

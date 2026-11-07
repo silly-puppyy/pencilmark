@@ -406,13 +406,13 @@ def test_corner_clues():
 
 def test_locked_nonconsecutive():
     """a locked nonconsecutive rule: the grid fill respects pair rules (no relabelling), every result carries it"""
-    r = run(spec(6, rules=[{"type": "neighbours", "kind": "nonconsecutive"}], seed=1, time_limit=30))
-    assert {"type": "neighbours", "kind": "nonconsecutive"} in r["puzzle"]["rules"]
+    r = run(spec(6, rules=[{"type": "neighbors", "kind": "nonconsecutive"}], seed=1, time_limit=30))
+    assert {"type": "neighbors", "kind": "nonconsecutive"} in r["puzzle"]["rules"]
     sol = r["puzzle"]["solution"]
     pairs = [(i, i + 1) for i in range(36) if i % 6 < 5] + [(i, i + 6) for i in range(30)]
     assert all(abs(sol[i] - sol[j]) != 1 for i, j in pairs)
-    # any op on neighbours: no orthogonal pair sums to 7, written back as the negative rule of the matching edge
-    rule = {"type": "neighbours", "op": "not_sum", "sum": 7, "step": "orthogonal"}
+    # any op on neighbors: no orthogonal pair sums to 7, written back as the negative rule of the matching edge
+    rule = {"type": "neighbors", "op": "not_sum", "sum": 7, "step": "orthogonal"}
     r = run(spec(6, rules=[rule], seed=1, time_limit=30))
     sol = r["puzzle"]["solution"]
     assert all(sol[i] + sol[j] != 7 for i, j in pairs)

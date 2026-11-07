@@ -384,7 +384,7 @@ def _h_combo(ctx):
 
 
 def _red_step(nm, elims, first_id):
-    """the closing sub-step: the removals, each candidate coloured red"""
+    """the closing sub-step: the removals, each candidate colored red"""
     return {
         "text": f"So {fmt_elims(nm, elims)}.",
         "annotations": [
@@ -494,9 +494,9 @@ def _line_tip(kind):
     return {
         "thermo": "On a thermometer, count cells: a cell n steps from the bulb is at least n+1, and one with m cells "
         "above it is at most 9-m.",
-        "slow_thermo": "On a slow thermometer digits never decrease, so neighbours bound each other.",
+        "slow_thermo": "On a slow thermometer digits never decrease, so neighbors bound each other.",
         "whisper": "On German whispers 5 is impossible and 4/6 are tight -- they need a 9 or a 1 next door.",
-        "dutch_whisper": "On Dutch whispers neighbours differ by at least 4; 5 needs a 1 or 9 neighbour.",
+        "dutch_whisper": "On Dutch whispers neighbors differ by at least 4; 5 needs a 1 or 9 neighbor.",
         "renban": "On renbans, think about which runs fit before thinking about cells.",
         "palindrome": "A palindrome reads the same both ways: mirrored cells share their candidates.",
         "kropki_chain": "White dots need consecutive digits, black dots a 1:2 ratio -- chains of dots are very "
@@ -505,9 +505,9 @@ def _line_tip(kind):
         "entropic": "Every three consecutive cells on an entropic line hold one low, one middle and one high digit.",
         "modular": "Every three consecutive cells on a modular line hold one digit from each of {1,4,7}, {2,5,8}, "
         "{3,6,9}.",
-        "parity": "Neighbours on a parity line alternate odd and even.",
+        "parity": "Neighbors on a parity line alternate odd and even.",
         "region_sum": "Each box segment of a region-sum line has the same total.",
-        "zipper": "Pairs equidistant from the zipper's centre add up to the same total.",
+        "zipper": "Pairs equidistant from the zipper's center add up to the same total.",
     }.get(kind, "")
 
 
@@ -557,7 +557,7 @@ def _line_reasons(ctx, rule, res):
                     dq = dom[cells.index(q)]
                     if not any(abs(w - d) >= k for w in digits_of(dq)):
                         seg.append(
-                            f"{d} would need a neighbour {k}+ away, but {nm.cell(q)} can only be "
+                            f"{d} would need a neighbor {k}+ away, but {nm.cell(q)} can only be "
                             f"{nm.digits(digits_of(dq))}"
                         )
                         break
@@ -566,7 +566,7 @@ def _line_reasons(ctx, rule, res):
                         far = [w for w in range(1, p.D + 1) if abs(w - d) >= k]
                         if len(far) == 1:
                             seg.append(
-                                f"{d} would force both neighbours {nm.cell(nbs[0])} and {nm.cell(nbs[1])} to "
+                                f"{d} would force both neighbors {nm.cell(nbs[0])} and {nm.cell(nbs[1])} to "
                                 f"be {far[0]}, but they see each other"
                             )
             if len(seg) == len(ds):
@@ -593,7 +593,7 @@ def _line_reasons(ctx, rule, res):
             if txt is None and len(nbs) == 2 and cells[nbs[1]] in p.peers[cells[nbs[0]]]:
                 qa, qb = cells[nbs[0]], cells[nbs[1]]
                 seg = []
-                for d in ds:  # both neighbours could only take the same single digit, but they see each other
+                for d in ds:  # both neighbors could only take the same single digit, but they see each other
                     pa = [w for w in digits_of(dom[nbs[0]]) if not _rel_ex(p, c, qa, d) & bit(w)]
                     pb = [w for w in digits_of(dom[nbs[1]]) if not _rel_ex(p, c, qb, d) & bit(w)]
                     if len(pa) == 1 and pa == pb:
@@ -895,9 +895,9 @@ def _h_lol(ctx):
         pc = (ctx.raw_engine or {}).get("pattern_cells") or []
         ring = ctx.code == "PHI"
         what = (
-            "the four 2x2 corner blocks hold exactly the same digits as the 16-cell ring around the centre box"
+            "the four 2x2 corner blocks hold exactly the same digits as the 16-cell ring around the center box"
             if ring
-            else "a Phistomefel-style set equality: rows and columns mirrored about the centre, minus "
+            else "a Phistomefel-style set equality: rows and columns mirrored about the center, minus "
             "the boxes they cover, leave two groups of cells with exactly the same digits"
         )
         teach = (

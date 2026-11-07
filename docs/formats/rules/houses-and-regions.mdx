@@ -1,5 +1,5 @@
 ---
-description: "Grids, boxes, rows, columns and extra regions (diagonals, windows, colours) in the puzzle format."
+description: "Grids, boxes, rows, columns and extra regions (diagonals, windows, colors) in the puzzle format."
 title: Houses and regions
 ---
 
@@ -57,8 +57,8 @@ where the area's boxes are irregular or absent, and `box` / `row` / `column` rul
   has exactly D cells.
 - `kind`: `diagonal` | `window` | `disjoint` | `color` | `extra` | `region`. To a solver all kinds mean the same; the
   kind is a drawing and grouping hint: `diagonal` (a straight diagonal: X-sudoku, argyle lines; cells listed from
-  the top), `window` (windoku windows), `disjoint` (same position in every box), `color` (colour groups), `extra`
-  (shaded extra regions: asterisk, centre dot, …), `region` (anything else).
+  the top), `window` (windoku windows), `disjoint` (same position in every box), `color` (color groups), `extra`
+  (shaded extra regions: asterisk, center dot, …), `region` (anything else).
 
 ## 6.3 Regions to find: `chaos`, `region_border`, `same_region`
 
@@ -96,7 +96,7 @@ A complete 4×4 chaos construction (one solution, digits and regions; the dividi
 - **`chaos`**: a `grid` (its D rows and D columns are houses) whose boxes the solver finds: the area divides into D
   orthogonally connected regions of D cells, and every region holds each digit once (chaos construction). Every cell
   of the area MUST exist; the area has no `box` / `box_grid` rules of its own.
-- **`region_border`**: a given border between two orthogonal neighbours: they lie in different regions. A drawn
+- **`region_border`**: a given border between two orthogonal neighbors: they lie in different regions. A drawn
   border of several cell edges is one rule per edge.
 - **`same_region`**: the cells lie in one region (a rule such as "every thermometer lies in one region" is written
   as the thermometer plus `same_region` over its cells).

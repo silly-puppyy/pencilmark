@@ -2,8 +2,12 @@
 
 ## Unreleased
 
+- **American English throughout** (format and text): the rule type is `neighbors` (was `neighbours`), the custom
+  rule scope key `neighbors`, the palette name `gray` (was `grey`), `render_svg.render(colors=...)`, technique names
+  (Simple Coloring, Multi-Coloring, ...), explanations, rules text and the docs. Names of other sites' pages keep
+  their own spelling.
 - **The fingerprint follows meaning, not spelling** (puzzle-format.md 8.2, new step 2): pair rules (edge clues,
-  `relation`, `neighbours`, their negatives, thermo / slow thermo / whisper / palindrome / parity lines, mathrax) are
+  `relation`, `neighbors`, their negatives, thermo / slow thermo / whisper / palindrome / parity lines, mathrax) are
   hashed as one table of allowed digit pairs per cell pair, and cell clues (`cell`, corner `exclude`, `negative` of
   `cell`) as one allowed set per cell. A white kropki dot, a `difference` 1 circle and a `relation` `difference` 1 now
   share a fingerprint; so do a V and an edge `sum` 5, a thermometer and a chain of `less`, an `odd` and a `set` cell.
@@ -12,12 +16,12 @@
   new ones.
   - The quadruple rule is `{"type": "quadruple", ...}` (was `contains`, the community name is quadruple), so
     `contains` now only means the card's technique list and its `where.contains` target.
-  - `color` everywhere in keys and values: region kind `color` (was `colour`), card annotations and trace layers
-    `color` / `colors` / `center` (were `colour` / `colours` / `centre`), `rate(coloring=True)` and `--coloring`
-    (were `colouring`). Prose keeps British spelling.
+  - `color` everywhere in keys and values: region kind `color` (was `color`), card annotations and trace layers
+    `color` / `colors` / `center` (were `color` / `colors` / `center`), `rate(coloring=True)` and `--coloring`
+    (were `coloring`). Prose keeps British spelling.
   - The card's `contains` and `steps` entries give `band_index` (was `band`, an integer next to the card's band
     name); trace positions give `grid` (was `digits`).
-  - `neighbours` takes `step` for its pairs (`"step": "knight"`; was `where`, which also named the spec's targets).
+  - `neighbors` takes `step` for its pairs (`"step": "knight"`; was `where`, which also named the spec's targets).
   - `mathrax` uses the pair-operator names of numbered edges: `"op": "sum"` with `sum`, `"difference"` / `"product"` /
     `"ratio"` with `value` (was `+ - x /`, all with `value`).
   - Spec `limits.seconds` (was `limits.time`, which read like the card's minutes); `grade_seconds` and `solver` move
@@ -37,17 +41,17 @@
 - `--steps` is the same as `steps` in `--fields` (it no longer turns on explanations; `--explain` does).
 - A multi-grid layout without `where.band` says in `info.warnings` that it was dug up to Hard.
 - **sudoku.coach reader**: `pencilmark.read.link("https://sudoku.coach/en/s/<id>")` and raw `SCv7_...` payloads, with
-  the setter's colours and widths as style and cell colours as a `fill` decoration; the embedded solution is checked.
+  the setter's colors and widths as style and cell colors as a `fill` decoration; the embedded solution is checked.
   Of 16,436 coach puzzles, 13,407 read, 0 crash; refused: extra rules written only in the description (2,293), older
   payload versions SCv3-SCv6 (716), and a few clues the site defines differently.
 - **Generator examples regenerated** under the band aim.
 - **No seed, a new puzzle.** A request without `limits.seed` draws a fresh seed each run (reported in `info.seed`,
   which reproduces it); 1.2 used seed 1, so every unseeded run gave the same puzzle.
 - **Style format**: rule `style` gains `size`, `angle`, `outline`, `outline_width` and `layer`; new decorations
-  `polygon` (any closed shape), `fill` (cell colours, several per cell) and `image`; named top-level style keys. The spec
+  `polygon` (any closed shape), `fill` (cell colors, several per cell) and `image`; named top-level style keys. The spec
   says how much of it a renderer needs (13,451 sudoku.coach and 19,074 SudokuPad puzzles measured).
 - **`"difficulty": "typical"`** (with a band): the seed draws a window from where published puzzles of the band lie
-  (a bell curve fitted to them; `info.aimed_at`) and digging stops inside it; classic Very Easy centres on 3.3
+  (a bell curve fitted to them; `info.aimed_at`) and digging stops inside it; classic Very Easy centers on 3.3
   (2.7-3.9), as generated sites' easy tiers do (sudoku.com easy / medium / hard: 2.5 / 3.1 / 3.6). It never fails a
   request: with nothing in the window by half of the time limit, any difficulty in the band will do
   (`info.aim_relaxed`). Opt in; without it a band request digs as far as the band allows, as before.
@@ -61,11 +65,11 @@
   true` or `{"scheme": "name" | "list"}` ("Jigsaw Killer Renban Kropki Sudoku"), `"variants": true` (snake_case ids
   like tags), `"rules_text": true`; `fingerprint` / `generated_from` now take only `true`. `describe()`, the card's
   `describe` field and `write.*(describe=True)` give `variants` too; `subtitle` and `variants` are suggested meta keys.
-- **Puzzle format wording**: meaning and drawing are split per field (a kropki dot's colour is meaning), and the
+- **Puzzle format wording**: meaning and drawing are split per field (a kropki dot's color is meaning), and the
   fingerprint section says which spellings of one constraint meet.
 - **All unique rectangle types.** New type 6 (an X-Wing on one floor digit across a diagonal floor), and every type
   allows corners that miss one of the pair (HoDoKu's "missing candidates": the deadly-pattern argument is about the
-  final grid). Avoidable rectangle type 2 is no longer tied to the colour-algebra switch, so default cards use it.
+  final grid). Avoidable rectangle type 2 is no longer tied to the color-algebra switch, so default cards use it.
   `placed` digits now reach the engine as solved-but-not-given, which avoidable rectangles need. HoDoKu's regression
   library: all 69 uniqueness cases that were missing match now (types 1-6, hidden rectangles, avoidable rectangles 1-2),
   no unsound move anywhere in the library. Explanations name types 5 and 6 (type 5 used the hidden rectangle text).
@@ -73,7 +77,7 @@
   by restricted common digits, listed under ALS-AIC.
 - **Grouped chain ends**: an AIC, X-chain or ALS chain may end on a box-line group (HoDoKu's grouped AICs and nice
   loops). Speed on 419 classic-source cards: within noise.
-- **Multi-Colouring type 2**: a colour that sees both colours of another cluster is false.
+- **Multi-Colouring type 2**: a color that sees both colors of another cluster is false.
 - **Sue de Coq** with line and box sets of up to 3 cells, without the almost-locked restriction (HoDoKu's form).
 - HoDoKu's regression library: missing 193 -> 64 cases over this pass, 0 unsound moves.
 
@@ -94,7 +98,7 @@
 - **Faster** on the slowest variants; several puzzles that hit the time limit are graded now.
 - **Breaking, no aliases** (nobody depends on them yet): the format names, the reading and writing functions, the
   command line's `json`, `export` and `count` commands and its `--format` and `--computer` options, `rate(steps=, se=)`, the fingerprint prefix, `box_grid` and the
-  colouring codes all change. Details under each heading below.
+  coloring codes all change. Details under each heading below.
 
 ### Format (pencilmark JSON)
 
@@ -105,7 +109,7 @@
   it in; 43 of the Cracking the Cryptic fog puzzles load with their fog (none before).
 - Custom rules (6.18): a rule written as an expression over named cells, such as
   `{"type": "custom", "cells": {"c": [...]}, "holds": "2 * max(c) == sum(c)"}`, with scopes for every pair of
-  neighbours, every window or every cell with its neighbours. Named `unknowns` (a number several clues share) and
+  neighbors, every window or every cell with its neighbors. Named `unknowns` (a number several clues share) and
   `layers` (a second value per cell) can be read by custom rules; puzzles with them solve and count, and grade as band
   Unknown with a `reason` for now. The grammar was checked on 1,000 Logic Masters puzzles.
 - `placed`: digits filled in after the start, as on a mid-solve board. They are solved and graded like givens, but are
@@ -140,7 +144,7 @@
   281 -> 337 graded, the 2,000 most-solved Logic Masters sudokus 802 -> 912, GMPuzzles' GAS series 136 -> 217. One-off
   rules become custom rules. Mechanics pencilmark does not model (equality cages, clones, maze paths, ...) are refused
   by name instead of misread.
-- Readers keep a SudokuPad puzzle's look (line colours and widths, cage and dot colours) as each rule's `style`.
+- Readers keep a SudokuPad puzzle's look (line colors and widths, cage and dot colors) as each rule's `style`.
 - The sudokuwiki reader keeps Andrew Stuart's placed digits as `placed`, and the writer writes them back.
 
 ### Command line
@@ -167,20 +171,20 @@
   Blossom of any size; almost locked sets of any size, overlapping ALS-XZ, eliminations inside the sets of
   doubly-linked ALS-XZ and ALS-XY-Wing; Aligned Pair Exclusion with any almost locked set as witness; BUG+1 with a
   4+ candidate cell; Unique Rectangle type 3 with subsets of any size; hidden and extended Unique Rectangles type 2;
-  XY-Chains up to 12 cells; Pattern Overlay rule 2; colouring that empties a house (sudokuwiki, July 2026).
+  XY-Chains up to 12 cells; Pattern Overlay rule 2; coloring that empties a house (sudokuwiki, July 2026).
 - How the techniques were checked: Andrew Stuart's strategy examples (132 of 139 found, no wrong move), independent
   reference finders, soundness walks over 391 puzzles (no wrong move), 192 of his curiosities, and Sudoku Explainer
   on 1,672 puzzles (nothing it uses is missing).
-- Colouring as a solving method is opt in: `rate(colouring=True)`, `--colouring`. It keeps colours (cells known to
-  hold one unknown digit) through the solve, with its own techniques (Colour Single, Colour Fill, Colour Pair, Colour
-  Trap, Colour Pointing, Colour Fish, Complete Colours, Chain Colour, Colour Clash). Codes of colouring techniques
+- Coloring as a solving method is opt in: `rate(colouring=True)`, `--coloring`. It keeps colors (cells known to
+  hold one unknown digit) through the solve, with its own techniques (Color Single, Color Fill, Color Pair, Color
+  Trap, Color Pointing, Color Fish, Complete Colors, Chain Color, Color Clash). Codes of coloring techniques
   share the prefix C: EQD -> CEQ, SCL -> CSM, MCL -> CMU, 3DM -> CMD.
 - Fog of war is graded under the fog: the band and techniques of the route a solver can take on what the fog shows,
   round by round. Where the fog stops the route, the band is Unknown with `stopped_at_step`; the card's `fog` field
   says what the fog did.
 - Band Unknown with a `reason` replaces the `Undecided` error in `rate` when uniqueness can't be settled within the
   engine's limits (`solve` still raises it); errors are only for wrong inputs.
-- Clue Facts are Easy; Colour Fill is Medium.
+- Clue Facts are Easy; Color Fill is Medium.
 - The last cell of a killer cage (its total minus the digits in it) is the Very Easy step "Last cell of a cage" (`CSI`),
   as for other rules; it read as a Naked Single. Reference cards: bands and difficulties unchanged.
 
@@ -190,10 +194,10 @@
   Pair Exclusion with its witnesses, WXYZ-Wings (types 1 and 2), Pattern Overlay rules 1 and 2, Death Blossom,
   doubly-linked ALS-XZ, Empty Rectangles, BUG+1.
 - Sub-steps (`explain=["short", "substeps"]`): steps told as sub-steps with reasons and drawing annotations, for
-  intersections, subsets, line rules, colouring, killer cages, fish (with Franken and Mutant shapes), XY-, XYZ- and
+  intersections, subsets, line rules, coloring, killer cages, fish (with Franken and Mutant shapes), XY-, XYZ- and
   WXYZ-Wings, and single chains.
 - Card field `trace`: the board before the first step and after each step, with the notes a casual solver would have
-  written (`marks`) and the colours an expert would have painted (`colours`), so a viewer can replay a solve.
+  written (`marks`) and the colors an expert would have painted (`colors`), so a viewer can replay a solve.
 - Step notation names houses by position for every input ("X-Wing: 3 r58 c68").
 - Rule facts in explanations are worked out for the puzzle's digit range (a 6×6 black dot excludes only 5).
 
@@ -218,7 +222,7 @@
 - Every line kind the engine grades: slow thermo, entropic, modular, parity, palindrome, zipper, region sum, lockout
   and double arrow, besides thermo, whisper, renban and between.
 - Corner clues (quadruples, mathrax), outside clues (sandwich, x-sum, skyscraper, little killer), and locked
-  `neighbours` rules with any `op` and `where` (for example nonconsecutive).
+  `neighbors` rules with any `op` and `where` (for example nonconsecutive).
 - A request without a band or difficulty target keeps the broadest search and says so in `info.warnings`.
 - A request that keeps many givens (a quarter of the cells or more) may leave givens inside cages (never a whole cage),
   so the last cell of a cage is read as its total minus the digits in it; with fewer givens the cages carry the puzzle.
@@ -227,7 +231,7 @@
 
 ### Speed
 
-- Long lines (over 12 cells) of neighbour rules, counting circles, and trial refutations on killers: the 18 frozen
+- Long lines (over 12 cells) of neighbor rules, counting circles, and trial refutations on killers: the 18 frozen
   puzzles with long lines 677 -> 32 s; a 15-circle puzzle 232 -> 2.5 s; 331 frozen killers 1,490 -> 1,320 s. Three
   puzzles that hit the 300 s limit are graded now.
 - Uniqueness: with OR-Tools installed, CP-SAT takes over after 2 s (one puzzle 197 -> 4.4 s); without it, the C++
@@ -239,7 +243,7 @@
 
 ### Fixes
 
-- SudokuPad thermometers and whispers were exported as chains of pair rules with the line's colour on one pair only;
+- SudokuPad thermometers and whispers were exported as chains of pair rules with the line's color on one pair only;
   they are `line` rules again.
 - A rule part tagged with its line kind was dropped on export even when its line was missing.
 - The engine params cache missed in-place changes between two `rate` calls in one process.
@@ -279,7 +283,7 @@
 - The inequality edge is `"kind": "greater"`, `cells[0] > cells[1]`, after the variant's name (Greater-Than); it was
   `"less"` with the cells the other way round. Files with `"less"` are refused: swap the two cells and rename the
   kind. The `less` / `less_equal` operators of `relation` rules are unchanged.
-- SudokuPad files read that crashed the reader (5 of 19,194 stored puzzles): a colour typed without "#" stored as a
+- SudokuPad files read that crashed the reader (5 of 19,194 stored puzzles): a color typed without "#" stored as a
   number, an all-digit solution stored as a number, and null entries in element lists or in a cage's cells.
 - Chains held in the head (mental chains) are explained when they pass through a group of cells (they crashed into
   the generic sentence), and only with a chain that visibly closes: the engine's record can stop short of the step
@@ -304,8 +308,8 @@
   or `[min, max]`); a template's count may be `"max"` (as many as fit), and `where.difficulty` may be `"max"` or
   `"min"` (the hardest or easiest puzzle found). These searches use the whole `limits.time` and return the best
   result. Long lines are grown by a backtracking walk, so a request for a 15-cell whisper finds one.
-- Vudoku is drawn as a grey right-angle corner, elbow in the vertex cell, arms reaching into the arm
-  cells (it was a thin V through the cell centres). The docs' examples use the L of three cells the rule is played on.
+- Vudoku is drawn as a gray right-angle corner, elbow in the vertex cell, arms reaching into the arm
+  cells (it was a thin V through the cell centers). The docs' examples use the L of three cells the rule is played on.
 - Explanations of chains through a group of cells (grouped AIC, Grouped X-Chain, Empty Rectangle) name the group:
   they described it as "an almost locked set", which the step does not contain (43 steps in the golden corpora).
 - Region-sum lines split only at box borders. An extra region overlapping a box split a line inside that box,
@@ -331,12 +335,12 @@
   "Remote pair").
 - `load({})` (or a dict holding only a title) raised nothing and read an empty 9×9 board; it is now refused like any
   dict that is not a puzzle.
-- Two dead technique links fixed: Multi-Colouring's SudokuWiki page (in its explanation) and Simple Colouring's
+- Two dead technique links fixed: Multi-Colouring's SudokuWiki page (in its explanation) and Simple Coloring's
   KrazyDad page (techniques page).
 - Generator specs accept the `odd` and `even` cell templates SPEC.md documents (only an undocumented `parity` worked);
   `parity` (odd or even cells, either kind) is now documented too.
 - `se`: a technique Sudoku Explainer has no value for takes the value of the technique it is a special case of
-  (Simple Colouring and Multi-Colouring rate as X-Chain, 6.6, instead of the 7.0 fallback). The DiufSudoku scale is
+  (Simple Coloring and Multi-Colouring rate as X-Chain, 6.6, instead of the 7.0 fallback). The DiufSudoku scale is
   gone from the code and data as well (the card field went in 1.0.0); `se.scale` is always `"classic"`.
 - Step explanations use the engine's own record of each move (units, cages, chains, the cases tried): digit counting,
   killer cage combinations and others now show their reasoning instead of a general description (about 390 -> 56 such
@@ -375,7 +379,7 @@
 - `pencilmark.count_solutions(puzzle, limit=1000)` and `pencilmark count FILE`: how many solutions a puzzle has (`>=N`
   when counting stops at the limit).
 - `pencilmark generate SPEC`: the generator on the command line (`--seed`, `--time`, `--result`).
-- Step explanations: Clue facts, Clue shape and low / high and odd / even colouring have their own explanations;
+- Step explanations: Clue facts, Clue shape and low / high and odd / even coloring have their own explanations;
   they read "ClueFacts (code 10102) pattern removes ...". Explanations of the band route now get the engine's pattern
   cells, so "Two rules together" names its cells (it said "over their 0 open cells") and no-notes steps list the cells
   they use (they said "(cells )"). Only explanation texts change (12 of 55 public and 101 of 227 private golden cards).
@@ -412,7 +416,7 @@
   `pencilmark/registry.py`. Every module reads its technique tables from there. The old file gave X-Chain as Very Hard
   while the grader rates the technique Hard; the registry keeps the technique (Hard, short shapes) apart from the long
   X-Chain chip XCL (Very Hard). Cards are unchanged.
-- Class colouring and clue facts (two variant techniques) record their move descriptors in the right slots (cells,
+- Class coloring and clue facts (two variant techniques) record their move descriptors in the right slots (cells,
   houses used, digits eliminated, links); the descriptors were shifted, which mispriced those steps. Cards with these
   steps move slightly: time by about 0.1 minutes on typical kropki / XV / thermo puzzles, difficulty by a median 0.01.
 - Faster cards: the C++ puzzle is built once per card instead of about six times (classics 25-50% faster).
@@ -448,7 +452,7 @@ meaning is set out in docs/PHILOSOPHY.md. Changes since 1.0.0rc2:
   warning), next to `reject`.
 - Format: `ext` removed; data for one program goes in `meta` under a reverse-DNS key, next to the suggested common keys
   (the generator's own knobs too). Reserved items (`"type": "custom"`, `digits` as an object) are refused with a
-  message naming them as future work. `neighbours` kinds are documented as exact shortcuts for an operator on a pair
+  message naming them as future work. `neighbors` kinds are documented as exact shortcuts for an operator on a pair
   pattern.
 - Pair operators take their parameter under its own key, as the rest of the format: `{"op": "difference", "value": 3}`,
   `{"op": "sum", "sum": 10}`, `any_of` a list of objects; positional `params` lists are refused. Writing an
@@ -457,13 +461,13 @@ meaning is set out in docs/PHILOSOPHY.md. Changes since 1.0.0rc2:
   drawn; a custom rule type is planned to replace them. Mechanics without a rule family cannot be written in
   format_version 1. The Rossini test puzzle now uses `rossini` rules and `negative` instead of edges and tables.
 - Generator: one vocabulary. `pencilmark.generate(spec)` (also `pencilmark.gen.generate`) takes a `pencilmark-spec` request and
-  returns a `pencilmark-puzzle` (with `meta.generated_from`), honouring the spec's `fields`; the internal Spec dicts
+  returns a `pencilmark-puzzle` (with `meta.generated_from`), honoring the spec's `fields`; the internal Spec dicts
   (`target_band`, `max_givens`, ...) and `spec_from_gen` / `spec_to_gen` are no longer public. `SPEC.md` version 1
   describes exactly what the generator runs; the rest is listed as reserved and refused with a message naming it.
   Example specs that use reserved parts moved to `docs/examples/specs/reserved/`.
 - **Seven bands**: Very Easy (scanning: full house, hidden singles) / Easy (naked singles, pointing / claiming, one rule's
   combinations) / Medium (pairs, triples, quads; variant implications) / Hard (the first learned patterns: X-Wing,
-  Skyscraper, 2-String Kite, Turbot Fish, simple colouring) / Very Hard (Empty Rectangle, finned and larger fish, wings,
+  Skyscraper, 2-String Kite, Turbot Fish, simple coloring) / Very Hard (Empty Rectangle, finned and larger fish, wings,
   uniqueness) / **Expert** (new: XY-Chain, AIC, Medusa, ALS) / Extreme (forcing, trial). The steps common curricula
   take (docs/PHILOSOPHY.md). `band_index` runs 0..6. Difficulty and time are unchanged
   (all 7,427 graded puzzles of the frozen benchmark identical).
@@ -471,7 +475,7 @@ meaning is set out in docs/PHILOSOPHY.md. Changes since 1.0.0rc2:
   `teach`; `pencilmark rate --report -v / -vv / -vvv` lists the steps at those levels. The report shows time percentiles
   only when asked for (`--fields ...,time_p80`) and names alternatives in full.
 - Singles never carry `uses`; alternatives inside a chip are ordered deterministically (the order depended on Python's
-  per-process hashing); `max_seconds` also checked in the generalised fish search.
+  per-process hashing); `max_seconds` also checked in the generalized fish search.
 - Difficulty below 2: the score map turns gentler there (about the square root of effort, the same value and slope at 2)
   instead of bending into 0, so very easy puzzles keep apart (an easy 4x4 about 0.1-0.4, a nearly finished grid about
   0.2; most used to read 0.0). Scores of 2 and above, every ranking and every time are unchanged.
@@ -484,18 +488,18 @@ meaning is set out in docs/PHILOSOPHY.md. Changes since 1.0.0rc2:
   `difficulty` / `time` null and the techniques found so far; if uniqueness is not proven in time, `rate` raises
   `Undecided`. New `completed` field whenever `max_seconds` is set.
 - `contains_truncated` removed: `completed: false` already says the limit passed (when it passed only while the technique
-  list was being minimised, the grade stands and the list may not be minimal).
+  list was being minimized, the grade stands and the list may not be minimal).
 - Optional `elapsed` field (wall-clock seconds for the call); `solve(puzzle, info=True)` returns the solution with its
   seconds; the generator's `info` has `seconds` and `attempts`.
 - Optional `time_dist` field (`{"type": "lognormal", "median", "sigma_players", "sigma_model"}`); `time_p50` accepted.
 - Three variant techniques from how people solve on video: clue facts (`CFX`, Very Easy: what a clue rules out on an
   empty grid, e.g. no 5 on a whisper), clue shape (`CSH`, Easy: a line's shape inside one house, e.g. a whisper 4
-  between two 9s) and high/low & odd/even colouring (`CCL`, Medium). Accuracy on human data is unchanged on average
+  between two 9s) and high/low & odd/even coloring (`CCL`, Medium). Accuracy on human data is unchanged on average
   (kropki ranks better); solving routes are shorter and closer to human ones.
 - Time spread: `time_mean` and any percentile `time_pNN` (e.g. `time_p20`, `time_p80`) on request, over today's players
   (log-normal; sigma 0.79 for classics and multi-grid layouts, 0.62 with any other rule, from two sources' per-player times). `time_p80` was a one-player spread (1.53x) and is now
   the population one (about 1.85x). `time` is the median player.
-- Generator: element varieties (kropki colour, XV letter, odd/even) with counts, ranges and caps; the information-budget
+- Generator: element varieties (kropki color, XV letter, odd/even) with counts, ranges and caps; the information-budget
   check uses per-class maximums.
 - `spike` check: a Medium+ puzzle whose 3 hardest steps carry more than 60% of its effort (adjustable, `quality`), as a
   warning; replaces the old "few band moves in an all-singles solve" rule.
@@ -509,7 +513,7 @@ meaning is set out in docs/PHILOSOPHY.md. Changes since 1.0.0rc2:
 - Docs: the puzzle format (`FORMAT.md`), grade card (`GRADE.md`) and generator spec (`SPEC.md`) are separate
   documents, each saying how to implement a subset; drawing conventions moved out of the format into `STYLE.md`, variant
   naming into `NAMING.md`.
-- Drawing: `docs/palette.json` with the default sizes, light and dark themes and the community line colours; reference
+- Drawing: `docs/palette.json` with the default sizes, light and dark themes and the community line colors; reference
   SVG renderer `tools/render_svg.py`.
 
 ## 1.0.0rc1

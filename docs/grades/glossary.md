@@ -6,7 +6,7 @@ description: The words these pages use, in one place.
 # Glossary
 
 **Alternatives.** Techniques that would each do the same job at a point of the solve. On the card they share a chip:
-`XWG/KTE/CSM` means an X-Wing, a 2-String Kite or simple colouring works there.
+`XWG/KTE/CSM` means an X-Wing, a 2-String Kite or simple coloring works there.
 
 **Band.** What you need to know to solve the puzzle: Very Easy, Easy, Medium, Hard, Very Hard, Expert or Extreme. It
 is the band of the hardest technique on the route. See [Philosophy](philosophy.md).
@@ -39,7 +39,7 @@ region.
 **Issues.** Publishing checks on the card: a rule nobody needs, too many givens, most of the effort in a few steps.
 See [Check a puzzle before publishing](../guides/grader/publish-checks.md).
 
-**Layout.** The arrangement of the grids of a multi-grid puzzle (Samurai, Twodoku, ...). See [Variant catalogue](../guides/generator/variant-catalogue.mdx).
+**Layout.** The arrangement of the grids of a multi-grid puzzle (Samurai, Twodoku, ...). See [Variant catalog](../guides/generator/variant-catalog.mdx).
 
 **Placement variant.** A variant that adds fixed regions to a grid: X diagonals, Windoku windows, Argyle lines.
 

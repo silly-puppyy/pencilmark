@@ -60,7 +60,7 @@ The `grid` gives the rows and columns; each piece is a `box`. (A shape example, 
   {"type": "box_grid", "origin": "r13c13", "box": [3, 3], "count": [3, 3]}]}
 ```
 
-(`…` marks rows left out of this document; a real file lists all 441 entries.) The centre grid shares one box with
+(`…` marks rows left out of this document; a real file lists all 441 entries.) The center grid shares one box with
 each corner grid; a shared box is one house. Board row 7 holds three separate 9-cell row houses (c1–c9, c7–c15,
 c13–c21).
 
@@ -147,7 +147,7 @@ below r9c2 and runs up-left.
 ```json
 "rules": [
   {"type": "box_grid", "box": [3, 3], "count": [3, 3]},
-  {"type": "neighbours", "kind": "antiknight", "within": "box"}]
+  {"type": "neighbors", "kind": "antiknight", "within": "box"}]
 ```
 
 Only knight-move pairs inside one box must differ. Without `within` the rule covers the whole board.

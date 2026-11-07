@@ -43,9 +43,9 @@ grids: one `box_grid` rule per grid, at the origins of samurai, super-samurai, t
 windmill, flower-4, tridoku, wing-3, sensei, shogun, sumo, twins, clueless-1 or clueless-2 (the board is their extent).
 
 Rules with cells and no `count` are **locked**: every result carries them and its solution respects them. The
-generator takes rules of different digits (`region` kinds `diagonal`, `extra` and `window`; `neighbours` kinds
-`antiknight` and `antiking`) and pair rules on neighbours: the `neighbours` kind `nonconsecutive`, or any `op` with
-`step` (written back in canonical form: "no two orthogonal neighbours sum to 10" is the `negative` rule of X marks). Without a `where.band`, a layout's result is at most Hard, even with `"difficulty": "max"` (digging with every
+generator takes rules of different digits (`region` kinds `diagonal`, `extra` and `window`; `neighbors` kinds
+`antiknight` and `antiking`) and pair rules on neighbors: the `neighbors` kind `nonconsecutive`, or any `op` with
+`step` (written back in canonical form: "no two orthogonal neighbors sum to 10" is the `negative` rule of X marks). Without a `where.band`, a layout's result is at most Hard, even with `"difficulty": "max"` (digging with every
 technique is slow on hundreds of cells); `info.warnings` says so. A super samurai with X diagonals on its top three grids is eight `box_grid` rules and six
 `region` `diagonal` rules.
 
@@ -56,11 +56,11 @@ A rule with `count` and no cells is a **template**: the generator places rules o
 | Template | Varieties |
 |---|---|
 | `{"type": "cage"}` | killer cages |
-| `{"type": "line", "kind": "thermo" \| "slow_thermo" \| "whisper" \| "renban" \| "between" \| "entropic" \| "modular" \| "parity" \| "palindrome" \| "zipper" \| "region_sum" \| "lockout" \| "double_arrow"}` | the default parameters: whisper gap 5 and lockout gap 4 on 9 × 9; entropic groups (boards of 6 × 6 and up); modular mod 3. Palindromes and zippers have an odd length (built from their centre); double arrows are 5 cells or more (a shorter one is a zipper) |
+| `{"type": "line", "kind": "thermo" \| "slow_thermo" \| "whisper" \| "renban" \| "between" \| "entropic" \| "modular" \| "parity" \| "palindrome" \| "zipper" \| "region_sum" \| "lockout" \| "double_arrow"}` | the default parameters: whisper gap 5 and lockout gap 4 on 9 × 9; entropic groups (boards of 6 × 6 and up); modular mod 3. Palindromes and zippers have an odd length (built from their center); double arrows are 5 cells or more (a shorter one is a zipper) |
 | `{"type": "arrow"}` | |
 | `{"type": "quadruple"}`, `{"type": "corner", "kind": "mathrax"}` | corner clues on a 2 × 2 block: a quadruple shows all four digits or three of them; a mathrax clue is whichever operator holds on both diagonals (`sum`, `difference`, `product`, `ratio`, or all `even` / `odd`) |
 | `{"type": "sandwich" \| "xsum" \| "skyscraper"}`, `{"type": "sum", "kind": "little_killer"}` | outside clues on single grids (not layouts): a whole row or column (a diagonal for little killers) read from either end |
-| `{"type": "edge", "kind": "kropki"}` | `"color": "white" \| "black"` for one colour |
+| `{"type": "edge", "kind": "kropki"}` | `"color": "white" \| "black"` for one color |
 | `{"type": "edge", "kind": "xv"}` | `"letter": "X" \| "V"` for one letter |
 | `{"type": "cell", "kind": "odd" \| "even" \| "parity"}` | `"parity"`: odd or even cells, either kind |
 

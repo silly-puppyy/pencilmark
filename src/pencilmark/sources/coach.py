@@ -37,7 +37,7 @@ HOST = re.compile(r"(?:^|\.)sudoku\.coach$", re.I)
 PAGE = "https://sudoku.coach/en/s/"
 HTTP = Http(min_gap=1.0)  # one GET per puzzle page, >= 1 s apart
 
-# the app's light-theme named colours (accessibilityDefaultColours; docs/research style survey 2026-11-07)
+# the app's light-theme named colors (accessibilityDefaultColours; docs/research style survey 2026-11-07)
 NAMED_COLOURS = {
     "white": "#ffffff",
     "grey": "#e2e2e2",
@@ -64,7 +64,7 @@ LINE_KINDS = {
     "modularLine": "modular",
     "regionSumLine": "region_sum",
 }
-# cosmetic shape defaults of the app's editor (size in % of a cell, fill colour)
+# cosmetic shape defaults of the app's editor (size in % of a cell, fill color)
 SHAPE_SIZE, SHAPE_FILL, TEXT_SIZE = 63, "#d5e2ff", 110
 ORTHO = ((0, 1), (1, 0), (0, -1), (-1, 0))
 
@@ -410,9 +410,9 @@ def _negatives(cons, B):
         (
             "nonconsecutive" in types or "difference" in neg,
             "difference",
-            {"type": "neighbours", "kind": "nonconsecutive"},
+            {"type": "neighbors", "kind": "nonconsecutive"},
         ),
-        ("ratio" in neg, "ratio", {"type": "neighbours", "op": "not_ratio", "value": 2, "step": "orthogonal"}),
+        ("ratio" in neg, "ratio", {"type": "neighbors", "op": "not_ratio", "value": 2, "step": "orthogonal"}),
     ):
         if not when:
             continue
@@ -900,7 +900,7 @@ def _rules_of(c, B, givens, solution):
         cells = [r * n + (n - 1 - r if t == "diagonalPositive" else r) for r in range(n)]
         return [_with_style({"type": "region", "kind": "diagonal", "cells": B.names(cells)}, style)]
     if t in ("antiKnight", "antiKing"):
-        return [{"type": "neighbours", "kind": t.lower()}]
+        return [{"type": "neighbors", "kind": t.lower()}]
     if t == "quadruple":
         return _quadruples(segs, B, style)
     if t == "sandwich":

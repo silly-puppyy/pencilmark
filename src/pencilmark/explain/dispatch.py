@@ -202,9 +202,9 @@ _X_HANDLERS = {
         "equal_cells",
         "intersections+combos",
         (
-            "Colour class single",
-            "A colour (cells holding one unknown digit) must appear in every house: when only one "
-            "cell of a house can take it, that cell gets the colour.",
+            "Color class single",
+            "A color (cells holding one unknown digit) must appear in every house: when only one "
+            "cell of a house can take it, that cell gets the color.",
         ),
     ),
     "ID_PROPAGATE": (
@@ -212,8 +212,8 @@ _X_HANDLERS = {
         "equal_cells",
         "singles",
         (
-            "Colour class propagation",
-            "Cells of one colour hold one digit: a candidate one of them loses, all lose; one placed places them all.",
+            "Color class propagation",
+            "Cells of one color hold one digit: a candidate one of them loses, all lose; one placed places them all.",
         ),
     ),
     "CLASS_PAIR": (
@@ -221,9 +221,9 @@ _X_HANDLERS = {
         "equal_cells",
         "intersections+combos",
         (
-            "Colour pair",
+            "Color pair",
             "Two cells that can only be the same two digits and must differ hold them in some order: give them two "
-            "colours. A cell of that pair seeing one colour gets the other.",
+            "colors. A cell of that pair seeing one color gets the other.",
         ),
     ),
     "CHAIN_COLOUR": (
@@ -231,9 +231,9 @@ _X_HANDLERS = {
         "equal_cells",
         "intersections+combos",
         (
-            "Chain colour",
+            "Chain color",
             "A cell tied to two others by pair rules (V / X dominoes, dots) can force them to hold the same digit: "
-            "trace each digit through the chain and back. Give them one colour.",
+            "trace each digit through the chain and back. Give them one color.",
         ),
     ),
     "CLASS_COMPLETE": (
@@ -241,9 +241,9 @@ _X_HANDLERS = {
         "equal_cells",
         "subsets",
         (
-            "Complete colours",
-            "A colour with a cell in every row holds every copy of its digit. When some complete colours can only be as "
-            "many digits as there are colours, they use those digits up: every other cell loses them.",
+            "Complete colors",
+            "A color with a cell in every row holds every copy of its digit. When some complete colors can only be as "
+            "many digits as there are colors, they use those digits up: every other cell loses them.",
         ),
     ),
     "CLASS_FISH": (
@@ -251,9 +251,9 @@ _X_HANDLERS = {
         "equal_cells",
         "fish+wings",
         (
-            "Colour fish",
-            "An X-Wing for a colour: two houses that each need the colour, with all its places in two other houses, "
-            "put both copies there; the colour leaves the rest of those houses.",
+            "Color fish",
+            "An X-Wing for a color: two houses that each need the color, with all its places in two other houses, "
+            "put both copies there; the color leaves the rest of those houses.",
         ),
     ),
     "CLASS_POINTING": (
@@ -261,9 +261,9 @@ _X_HANDLERS = {
         "equal_cells",
         "intersections+combos",
         (
-            "Colour pointing",
-            "Pointing for a colour: when a colour's places in one house all lie in another house, the colour is there, "
-            "so the other cells of that house are not that colour.",
+            "Color pointing",
+            "Pointing for a color: when a color's places in one house all lie in another house, the color is there, "
+            "so the other cells of that house are not that color.",
         ),
     ),
     "COLOUR_CLASH": (
@@ -271,9 +271,9 @@ _X_HANDLERS = {
         "equal_cells",
         "chains",
         (
-            "Colour clash",
-            "Two colours tied by a rule (one fixes the other): a cell that would leave the second colour no digit if it "
-            "held the first can never have the first colour.",
+            "Color clash",
+            "Two colors tied by a rule (one fixes the other): a cell that would leave the second color no digit if it "
+            "held the first can never have the first color.",
         ),
     ),
     "CLASS_TRAP": (
@@ -281,8 +281,8 @@ _X_HANDLERS = {
         "equal_cells",
         "chains",
         (
-            "Colour pair trap",
-            "Two colours hold the two digits of a pair, one each: a cell that sees both colours can be neither.",
+            "Color pair trap",
+            "Two colors hold the two digits of a pair, one each: a cell that sees both colors can be neither.",
         ),
     ),
     "CLUE_FACTS": (
@@ -305,9 +305,9 @@ _X_HANDLERS = {
         "class_colouring",
         "chains",
         (
-            "Low / high and odd / even colouring",
-            "Rules that always join a low and a high digit (or an odd and an even one) colour cells in two classes; a "
-            "known cell or a house's count fixes which colour is which.",
+            "Low / high and odd / even coloring",
+            "Rules that always join a low and a high digit (or an odd and an even one) color cells in two classes; a "
+            "known cell or a house's count fixes which color is which.",
         ),
     ),
     "REGION_CAP": (
@@ -326,7 +326,7 @@ _X_HANDLERS = {
         _h_region,
         "dead_end",
         "singles",
-        ("Dead end", "No region has one cell: a cell takes only a region one of its neighbours can join."),
+        ("Dead end", "No region has one cell: a cell takes only a region one of its neighbors can join."),
     ),
     "REGION_EXIT": (
         _h_region,
@@ -468,16 +468,16 @@ _X_HANDLERS = {
     "MULTI_COLOR": (
         _h_pattern_named(
             "multi-colouring",
-            "Two separate colourings of the same digit (each along "
-            "conjugate pairs) touch: one colour of the first sees one colour of the second, so they are not both "
-            "true and one of their opposites is; cells seeing both opposites lose the digit. A colour that sees both "
-            "colours of the other colouring is false.",
+            "Two separate colorings of the same digit (each along "
+            "conjugate pairs) touch: one color of the first sees one color of the second, so they are not both "
+            "true and one of their opposites is; cells seeing both opposites lose the digit. A color that sees both "
+            "colors of the other coloring is false.",
         ),
         "multi_colouring",
         "chains",
         (
             "Multi-Colouring",
-            "Colour two separate conjugate-pair networks of a digit and use how their colours see each other.",
+            "Color two separate conjugate-pair networks of a digit and use how their colors see each other.",
         ),
     ),
     "WHAT_IF": (
@@ -544,7 +544,7 @@ _X_HANDLERS = {
         "chains",
         (
             "3D Medusa",
-            "Colouring across several digits: bivalue cells and two-place digits form one two-coloured network.",
+            "Coloring across several digits: bivalue cells and two-place digits form one two-colored network.",
         ),
     ),
     "COLOUR_ALGEBRA": (
@@ -552,8 +552,8 @@ _X_HANDLERS = {
         "colour_algebra",
         "chains",
         (
-            "Colour Algebra",
-            "Cells forced to be equal share one colour; the colour's possible digits are what all its cells allow.",
+            "Color Algebra",
+            "Cells forced to be equal share one color; the color's possible digits are what all its cells allow.",
         ),
     ),
     "SUM_BOUND": (
@@ -586,7 +586,7 @@ _X_HANDLERS = {
         _h_nwing,
         "wxyz_wing",
         "fish+wings",
-        ("WXYZ-Wing", "Bent sets of 4+ cells generalising XY- and XYZ-Wings."),
+        ("WXYZ-Wing", "Bent sets of 4+ cells generalizing XY- and XYZ-Wings."),
     ),
     "SUE_DE_COQ": (
         _h_pattern_named(

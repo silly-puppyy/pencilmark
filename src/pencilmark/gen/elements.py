@@ -4,14 +4,14 @@ An element is a tuple (kind, cells, extra):
   ("cage", sorted cells, total)          killer cage, distinct digits
   ("thermo", path, None)                 strictly increasing from the bulb (path[0])
   ("slow_thermo", path, None)            non-decreasing from the bulb (path[0])
-  ("whisper", path, None)                German whisper, neighbours differ by >= whisper_gap(n)
+  ("whisper", path, None)                German whisper, neighbors differ by >= whisper_gap(n)
   ("renban", path, None)                 a set of consecutive digits, any order
   ("between", path, None)                interior digits strictly between the two end circles
   ("entropic", path, None)               every 3 consecutive cells: a low, a middle and a high digit (digit_third)
   ("modular", path, None)                every 3 consecutive cells: three different remainders mod 3
-  ("parity_line", path, None)            neighbours on the line alternate odd / even (the format's line kind parity)
-  ("palindrome", path, None)             reads the same from both ends (odd length, built from its centre)
-  ("zipper", path, None)                 cells equally far from the centre sum to the centre digit (odd length)
+  ("parity_line", path, None)            neighbors on the line alternate odd / even (the format's line kind parity)
+  ("palindrome", path, None)             reads the same from both ends (odd length, built from its center)
+  ("zipper", path, None)                 cells equally far from the center sum to the center digit (odd length)
   ("region_sum", path, None)             the same sum in each box it passes through (two boxes or more)
   ("lockout", path, None)                ends differ by >= lockout_gap(n), the other digits outside their range
   ("double_arrow", path, None)           the two ends sum to the digits between them (5+ cells: shorter is a zipper)
@@ -56,7 +56,7 @@ ALIASES = {
 }
 
 
-# element classes: a kind, or one colour / letter / parity of it (counted separately in Spec.elements)
+# element classes: a kind, or one color / letter / parity of it (counted separately in Spec.elements)
 CLASSES = {
     "kropki_white": ("kropki", "white"),
     "kropki_black": ("kropki", "black"),
@@ -87,7 +87,7 @@ def base_kind(k):
 
 
 def element_class(e):
-    """the class of an element: its colour / letter / parity class where one exists, else its kind"""
+    """the class of an element: its color / letter / parity class where one exists, else its kind"""
     for name, (kind, extra) in CLASSES.items():
         if e[0] == kind and e[2] == extra:
             return name
@@ -109,7 +109,7 @@ def lockout_gap(n):
 
 
 def line_holds(b, kind, cells, ds):
-    """does a line of a kind checked as a whole (CENTRED, WHOLE) hold for these digits?"""
+    """does a line of a kind checked as a whole (CENTERED, WHOLE) hold for these digits?"""
     if kind == "palindrome":
         return ds == ds[::-1]
     if kind == "zipper":
@@ -218,7 +218,7 @@ LENGTHS = {"cage": (2, 5), "thermo": (2, 6), "slow_thermo": (2, 6), "whisper": (
            "region_sum": (3, 8), "lockout": (3, 6), "double_arrow": (5, 7), "arrow": (1, 4)}  # fmt: skip
 # lines always grown by _walk (each step checks the cells before it)
 WALKED = ("slow_thermo", "entropic", "modular", "parity_line")
-CENTRED = ("palindrome", "zipper")  # grown from the centre cell, one cell at each end per step
+CENTRED = ("palindrome", "zipper")  # grown from the center cell, one cell at each end per step
 WHOLE = ("region_sum", "lockout", "double_arrow")  # a random walk, kept at its longest prefix that holds
 
 
@@ -411,7 +411,7 @@ def _centred(b, kind, sol, start, taken, rng, target):
 
 
 def _walk(b, kind, sol, start, taken, rng, target, budget=None):
-    """a line of `kind` from `start` (its bulb for a thermo), true in the solution, by randomised depth-first search:
+    """a line of `kind` from `start` (its bulb for a thermo), true in the solution, by randomized depth-first search:
     the first path of `target` cells, else the longest found within `budget` steps"""
     gap = whisper_gap(b.n)
     budget = budget or 40 * target * target  # a long line needs a deeper search (25 cells: 25,000 steps)

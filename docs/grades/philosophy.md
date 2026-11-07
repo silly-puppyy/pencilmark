@@ -44,7 +44,7 @@ learning path, the steps every curriculum takes (HoDoKu, sudokuwiki.org, sudoku.
 | Very Easy | the entry point: scanning without candidates (full house, hidden singles), a rule's obvious consequences |
 | Easy | candidates in one cell (naked singles), pointing / claiming, one rule's combinations |
 | Medium | subsets: naked and hidden pairs, triples, quads; the implications of each variant rule |
-| Hard | the first learned patterns: X-Wing, Skyscraper, 2-String Kite, Turbot Fish, simple colouring |
+| Hard | the first learned patterns: X-Wing, Skyscraper, 2-String Kite, Turbot Fish, simple coloring |
 | Very Hard | Empty Rectangle, finned fish, Swordfish and Jellyfish, wings, uniqueness, longer X-Chains, advanced variant logic |
 | Expert | chains and almost locked sets: XY-Chain, AIC, Medusa |
 | Extreme | forcing chains and nets, trial and error |
@@ -57,11 +57,11 @@ available, so the band is the least a solver must know.
   can be long and demanding. So a Hard puzzle is often easier and quicker than a Medium one, and people agree: among
   pairs of puzzles of one type where the two disagree, solvers side with the difficulty number about three times in four
   (sudoku.coach, 384 puzzles; grandgames and Puzzle Duel the same way).
-- Where no technique in the catalogue applies, the engine proves the next step by search (Trial and error) and the
+- Where no technique in the catalog applies, the engine proves the next step by search (Trial and error) and the
   band is Extreme. **Unknown** means the band could not be determined: guessing was allowed and used, the time
   limit (`max_seconds`) passed first, uniqueness could not be settled, the fog stops the route, or a rule has no human
   technique yet (the card's `reason` says which).
-- The band depends on the technique catalogue, which can grow; a new technique can lower a puzzle's band.
+- The band depends on the technique catalog, which can grow; a new technique can lower a puzzle's band.
 
 ### `difficulty`
 

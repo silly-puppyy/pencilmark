@@ -25,7 +25,7 @@ family (6.1 to 6.13) covers. Where a family exists, files use the family: reader
 | `label` | The author's words for the rule (optional; descriptions are generated from the expression). |
 
 The expression is the rule: no text is needed beside it. `describe` renders it in words, after the label when there is
-one ("No fours: for every pair of orthogonal neighbours a, b: the difference between a and b differs from 4").
+one ("No fours: for every pair of orthogonal neighbors a, b: the difference between a and b differs from 4").
 
 ### Expressions
 
@@ -64,9 +64,9 @@ a rule about "the next cell" simply does not hold at the end of a row; `defined(
 
 | `scope` | The predicate takes |
 |---|---|
-| `{"pairs": "orthogonal" \| "diagonal" \| "king" \| "knight"}` | `(a, b)`: every pair of neighbours of that kind |
+| `{"pairs": "orthogonal" \| "diagonal" \| "king" \| "knight"}` | `(a, b)`: every pair of neighbors of that kind |
 | `{"windows": [h, w]}` | `w`: the cells of every h x w block, in reading order |
-| `{"neighbours": kind, "cells": name, "within": "box"}` | `(x, N)`: each cell of `name` (every cell without it) and the list of its neighbours (`within` keeps those in its box) |
+| `{"neighbors": kind, "cells": name, "within": "box"}` | `(x, N)`: each cell of `name` (every cell without it) and the list of its neighbors (`within` keeps those in its box) |
 
 Each scope takes `"except": [[cells], …]`, instances to skip.
 

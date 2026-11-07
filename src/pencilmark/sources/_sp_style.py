@@ -15,7 +15,7 @@ _CELL = re.compile(r"r(\d+)c(\d+)")
 def _colour(c):
     """SudokuPad colour ('#rgb', '#rgba', '#rrggbb', '#rrggbbaa') -> ('#rrggbb', opacity below 1 or None)"""
     h = c.strip().lstrip("#") if isinstance(c, str) else ""
-    if re.fullmatch(r"[0-9a-fA-F]{1,2}", h):  # newer files' grey shorthand: "#F" white, "#0" black, a 2nd digit = alpha
+    if re.fullmatch(r"[0-9a-fA-F]{1,2}", h):  # newer files' gray shorthand: "#F" white, "#0" black, a 2nd digit = alpha
         h = h[0] * 6 + (h[1] * 2 if len(h) == 2 else "")
     if not re.fullmatch(r"[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8}", h):
         return None, None

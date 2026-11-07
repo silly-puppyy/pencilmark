@@ -1,8 +1,8 @@
 """Draw a pencilmark-puzzle file as SVG, following the default drawing of docs/library/drawing-style.md (reference renderer for
 the docs; not part of the package).
   python tools/render_svg.py puzzle.json out.svg [--dark] [--cell 48] [--card card.json --position N]
-  render(doc, dark=False, cell=48, colours=None, placed=None) -> svg text
---card / --position draw one position of a card's trace (grade-card.md 6): its placed digits and its colour layer."""
+  render(doc, dark=False, cell=48, colors=None, placed=None) -> svg text
+--card / --position draw one position of a card's trace (grade-card.md 6): its placed digits and its color layer."""
 
 import json
 import math
@@ -41,17 +41,17 @@ def render(
     annotate=False,
     labels=False,
     background=True,
-    colours=None,
+    colors=None,
     placed=None,
     marks=None,
     open_sides=(),
 ):
     """svg text. annotate: every element drawn for rules[i] carries data-rule="i" (pages link it to the JSON);
     labels: row numbers on the left and column numbers on top, outside the board and its outside clues.
-    colours {cell name: [colour names]}: annotation colours over the cells (one fills the cell; n split it into n
+    colors {cell name: [color names]}: annotation colors over the cells (one fills the cell; n split it into n
     wedges, as SudokuPad draws them); placed {cell name: digit}: digits the solver has written, in the placed ink;
     marks {cell name: {"corner": [...], "center": [...]}}: the solver's pencil marks (corner marks in the cell's corners
-    and edges, centre marks in a row across the middle), in the placed ink. open_sides ("left", "right", "top",
+    and edges, center marks in a row across the middle), in the placed ink. open_sides ("left", "right", "top",
     "bottom"): leave the outer frame out there, for a cut-out of a larger board (the docs' small pictures)."""
     T = THEMES[bool(dark)]
     S = STYLE
@@ -83,13 +83,13 @@ def render(
     palette = (doc.get("style") or {}).get("palette") or []
 
     def colour_of(v, default=None):
-        """a style colour: "#rrggbb", or an index into the top-level style palette"""
+        """a style color: "#rrggbb", or an index into the top-level style palette"""
         if isinstance(v, int) and not isinstance(v, bool):
             return palette[v] if 0 <= v < len(palette) else default
         return v if isinstance(v, str) and v else default
 
     def restyle(k, s, st):
-        """a rule's own style over its family's look (section 7): colour on strokes, fill on shapes, width on lines,
+        """a rule's own style over its family's look (section 7): color on strokes, fill on shapes, width on lines,
         opacity on everything; digits and clue text keep their ink"""
         if not st or k == "digits":
             return s
@@ -114,14 +114,14 @@ def render(
     # ---- board, houses
     for r, c in B.coords:
         add("shade", f'<rect x="{m + c * u}" y="{m + r * u}" width="{u}" height="{u}" fill="{T["board"]}"/>')
-    # ---- annotation colours, over the board, region shading and cell shapes (they show through) and under every line,
-    # arrow, cage, dot, clue and digit (drawn later, so they stay readable). One per cell fills it; several split it into equal wedges from the centre, as
+    # ---- annotation colors, over the board, region shading and cell shapes (they show through) and under every line,
+    # arrow, cage, dot, clue and digit (drawn later, so they stay readable). One per cell fills it; several split it into equal wedges from the center, as
     # SudokuPad draws them: wedge i spans 25 + i * 360 / n to 25 + (i + 1) * 360 / n "degrees", each mapped to a point
-    # that far round the cell's outline (clockwise from the top centre; 360 = once round), not to a true angle
+    # that far round the cell's outline (clockwise from the top center; 360 = once round), not to a true angle
     shades, alpha = ANNOTATION["dark" if dark else "light"], ANNOTATION["opacity"]["dark" if dark else "light"]
 
     def perim(x0, y0, a):
-        """the point a / 360 of the way round the cell's outline, clockwise from the top centre"""
+        """the point a / 360 of the way round the cell's outline, clockwise from the top center"""
         t = (a % 360) / 90  # in sides: 0.5 = top-right corner, 1.5 = bottom-right, 2.5 = bottom-left, 3.5 = top-left
         if t < 0.5:
             return x0 + (0.5 + t) * u, y0
@@ -136,7 +136,7 @@ def render(
     corners = (45, 135, 225, 315)  # the corners, in the same measure
 
     def cell_colours(name, cols, opacity, pattern="wedges"):
-        """one colour fills the cell; k split it into k wedges from the centre (SudokuPad) or k slanted stripes
+        """one color fills the cell; k split it into k wedges from the center (SudokuPad) or k slanted stripes
         (sudoku.coach)"""
         r, c = rc(name)
         x0, y0 = m + c * u, m + r * u
@@ -162,7 +162,7 @@ def render(
             d = " ".join(f"{x:.1f},{y:.1f}" for x, y in pts)
             add("colour", f'<polygon points="{d}" fill="{col}" fill-opacity="{opacity}"/>')
 
-    for name, cols in (colours or {}).items():
+    for name, cols in (colors or {}).items():
         cell_colours(name, [shades[x] for x in cols], alpha)
     houses, _ = X.read_houses([x for x in rules if x["type"] in ("grid", "box_grid", "box", "row", "column")], B)
     box_of = {}
@@ -196,8 +196,8 @@ def render(
             segs[k].append((m + x1 * u, m + y1 * u, m + x2 * u, m + y2 * u))
     for k in ("thin", "box", "frame"):
         ww = S["box_dark"] if (dark and k != "thin") else S[k]  # light lines on dark read thinner: thicker boxes there
-        w = max(1 if k == "thin" else 2, round(ww * u))  # whole device pixels: no grey anti-aliased hairlines
-        off = 0.5 if w % 2 else 0.0  # odd widths sit on pixel centres
+        w = max(1 if k == "thin" else 2, round(ww * u))  # whole device pixels: no gray anti-aliased hairlines
+        off = 0.5 if w % 2 else 0.0  # odd widths sit on pixel centers
         col = T["thin"] if k == "thin" else T["ink"]
         for x1, y1, x2, y2 in segs[k]:
             x1, y1, x2, y2 = (round(v) + off for v in (x1, y1, x2, y2))
@@ -334,7 +334,7 @@ def render(
                         "lines",
                         f'<polygon points="{x},{y - d} {x + d},{y} {x},{y + d} {x - d},{y}" fill="{T["board"]}" stroke="{col}" stroke-width="{0.05 * u:.1f}"/>',
                     )
-            if lk.ends == "centre dot":  # at the line's centre (a cell, or between the two middle cells)
+            if lk.ends == "center dot":  # at the line's center (a cell, or between the two middle cells)
                 n = len(r["cells"])
                 (xa, ya), (xb, yb) = ctr(r["cells"][(n - 1) // 2]), ctr(r["cells"][n // 2])
                 add(
@@ -394,7 +394,7 @@ def render(
                     "clues",
                     f'<rect x="{x - c:.1f}" y="{y - c:.1f}" width="{2 * c:.1f}" height="{2 * c:.1f}" rx="{0.03 * u:.1f}" fill="{T["clue_bg"]}"/>',
                 )
-                if mk == "letter":  # cap height ~0.7 em: shift the baseline so the letter's box is centred
+                if mk == "letter":  # cap height ~0.7 em: shift the baseline so the letter's box is centered
                     add(
                         "clues",
                         f'<text x="{x:.1f}" y="{y + 0.35 * 0.3 * u:.1f}" font-size="{0.3 * u:.1f}" text-anchor="middle" '
@@ -476,9 +476,9 @@ def render(
             for x in r["cells"]:
                 cxx, cyy = ctr(x)
                 mk = CELL[k].mark if k in CELL else "digits"
-                # under annotation colours the shape's fill fades: its outline is drawn again above them (readable)
+                # under annotation colors the shape's fill fades: its outline is drawn again above them (readable)
                 edge = f'fill="none" stroke="{T["cand"]}" stroke-width="{0.035 * u:.1f}"'
-                if colours and x in colours and mk in ("circle", "square", "diamond"):
+                if colors and x in colors and mk in ("circle", "square", "diamond"):
                     d = 0.42 * u
                     add(
                         "marks",
@@ -565,18 +565,18 @@ def render(
                     f'<polyline points="{pts[0][0]:.1f},{pts[0][1]:.1f} {ex:.1f},{ey:.1f} {pts[1][0]:.1f},{pts[1][1]:.1f}" '
                     f'fill="none" stroke="#a7abb0" stroke-width="{0.08 * u:.1f}" stroke-linejoin="miter"/>',
                 )
-            else:  # not an L: a V through the cell centres
+            else:  # not an L: a V through the cell centers
                 add("lines", polyline([r["cells"][1], r["cells"][0], r["cells"][2]], "#a7abb0", 0.06))
 
     cur[0] = None
-    if labels:  # r1.. down the left, c1.. along the top, in the muted text colour
+    if labels:  # r1.. down the left, c1.. along the top, in the muted text color
         for r in range(R):
             add("outside", small_text(lab * 0.55, cy(r), f"r{r + 1}", size=0.26, col=T["cand"], weight=400))
         for c in range(C):
             add("outside", small_text(cx(c), lab * 0.55, f"c{c + 1}", size=0.26, col=T["cand"], weight=400))
 
     cur[0] = None  # decorations belong to no rule
-    # ---- decorations (artwork, no rules; section 7): cell fills with the annotation colours; shapes, lines, text and
+    # ---- decorations (artwork, no rules; section 7): cell fills with the annotation colors; shapes, lines, text and
     # images under the lines and clues, or over everything with layer "over" (text defaults to over)
     P = lambda yx: (m + yx[1] * u, m + yx[0] * u)  # noqa: E731  [row, col] cell units from the board's corner -> px
     for dec in doc.get("decorations") or []:
@@ -624,7 +624,7 @@ def render(
                     x, y, esc(str(dec["text"])), size=st.get("size", 0.3), col=colour_of(st.get("color"), T["given"])
                 ),
             )
-    # ---- digits and candidates (halo in the board colour)
+    # ---- digits and candidates (halo in the board color)
     halo = (S["halo_dark"] if dark else S["halo_light"]) * u
     for i, v in enumerate(doc["givens"]):
         if not v:
@@ -644,7 +644,7 @@ def render(
             f'font-family="Inter,Helvetica,Arial,sans-serif" font-weight="{S.get("placed_w", 500)}" fill="{T["placed"]}" '
             f'stroke="{T["board"]}" stroke-width="{halo:.2f}" paint-order="stroke" stroke-linejoin="round">{v}</text>',
         )
-    # pencil marks: corner marks in SudokuPad's spots (corners first, then the edges' middles), centre marks in a row
+    # pencil marks: corner marks in SudokuPad's spots (corners first, then the edges' middles), center marks in a row
     spots = [(0.2, 0.2), (0.8, 0.2), (0.2, 0.8), (0.8, 0.8), (0.5, 0.2), (0.5, 0.8), (0.2, 0.5), (0.8, 0.5)]
     for name, mk in (marks or {}).items():
         if placed and name in placed:
@@ -675,7 +675,7 @@ def render(
 
 
 def trace_position(doc, card, n):
-    """(colours, placed, marks) of position n of a card's trace: each colour group's cells take its colour (a cell in
+    """(colors, placed, marks) of position n of a card's trace: each color group's cells take its color (a cell in
     several groups gets them all), every digit not given is a placed one, and the marks layer as written"""
     pos = card["trace"][n]
     colours = {}
@@ -697,5 +697,5 @@ if __name__ == "__main__":
         card = json.load(open(sys.argv[sys.argv.index("--card") + 1], encoding="utf-8"))
         n = int(sys.argv[sys.argv.index("--position") + 1]) if "--position" in sys.argv else 0
         colours, placed, marks = trace_position(doc, card, n)
-    svg = render(doc, dark="--dark" in sys.argv, cell=cell, colours=colours, placed=placed, marks=marks)
+    svg = render(doc, dark="--dark" in sys.argv, cell=cell, colors=colours, placed=placed, marks=marks)
     Path(sys.argv[2]).write_text(svg, encoding="utf-8")

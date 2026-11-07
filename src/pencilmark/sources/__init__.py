@@ -4,7 +4,7 @@
     pj = sources.load("https://sudokupad.app/wjgxgaji9a")              # -> puzzle JSON dict (pencilmark.puzzle_json)
     p = pencilmark.puzzle_json.from_json(pj)
 
-load() recognises
+load() recognizes
     SudokuPad    sudokupad.app/... , app.crackingthecryptic.com/... (short ids are fetched: one API request),
                  bare 'scl...' / 'ctc...' / 'fpuzzles...' payloads, 'sudokupad:<shortid>'
     f-puzzles    f-puzzles.com/?load=... (offline), ?id=<alias> (one TinyURL HEAD request)

@@ -206,7 +206,7 @@ def dig(
         if over() and not keep:
             return None
     mins = {k: n for k, n in (seeds or {}).items() if n}
-    for e in list(els):  # prune decorative elements (never below a class's minimum, never one being maximised)
+    for e in list(els):  # prune decorative elements (never below a class's minimum, never one being maximized)
         if e == planted or any(EL.in_class(e, k) for k in most):
             continue
         rest_ = [x for x in els if x != e]
@@ -223,9 +223,9 @@ def dig(
 
 def partition(b, rng, chk, n_givens=0, min_els=0, cover=True):
     """killer covering the board: keep `n_givens` random givens, tile the other cells with 2-cell informative cages,
-    then merge neighbouring cages (distinct digits, <= 6 cells) -- or delete cages if cover=False -- while the puzzle
+    then merge neighboring cages (distinct digits, <= 6 cells) -- or delete cages if cover=False -- while the puzzle
     stays solvable within the checker's cap. A cell left alone becomes a given (a 1-cell cage is a given in disguise)
-    when there are givens; with none it joins a neighbouring cage."""
+    when there are givens; with none it joins a neighboring cage."""
     sol = b.solution(rng)
     NB = b.nb
     givens = {i: sol[i] for i in sorted(range(b.N), key=lambda _: rng.random())[:n_givens]}
@@ -243,7 +243,7 @@ def partition(b, rng, chk, n_givens=0, min_els=0, cover=True):
         j = min(opts, key=lambda j: (EL.ncomb(b.n, 2, sol[c] + sol[j]), rng.random()))
         els.append(("cage", tuple(sorted((c, j))), sol[c] + sol[j]))
         owner[c] = owner[j] = 1
-    for e in [e for e in els if len(e[1]) == 1]:  # a single cell: a given, or absorbed into a neighbouring cage
+    for e in [e for e in els if len(e[1]) == 1]:  # a single cell: a given, or absorbed into a neighboring cage
         c = e[1][0]
         if n_givens:
             givens[c] = sol[c]
@@ -294,7 +294,7 @@ def partition(b, rng, chk, n_givens=0, min_els=0, cover=True):
 
 
 def cage_count(b, n_cages, rng, time_limit=30.0, deadline=None):
-    """killer with EXACTLY n_cages cages and no givens: tile with 2-cell cages, then merge neighbouring cages (distinct
+    """killer with EXACTLY n_cages cages and no givens: tile with 2-cell cages, then merge neighboring cages (distinct
     digits) in batches while the puzzle stays UNIQUE (CP-SAT oracle with a counterexample cache; a failed batch is
     bisected). No human-solvability cap: the card grades whatever results."""
     import time as _t

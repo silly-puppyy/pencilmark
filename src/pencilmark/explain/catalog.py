@@ -1,4 +1,4 @@
-"""The technique catalogue: names, aliases and explainer links per technique; shapes; lessons. (split from explain.py)"""
+"""The technique catalog: names, aliases and explainer links per technique; shapes; lessons. (split from explain.py)"""
 
 from __future__ import annotations
 
@@ -256,7 +256,7 @@ CATALOG = {
     "simple_colouring": (
         "Simple Coloring",
         {
-            "sudokuwiki": ["Simple Colouring", "Singles Chains"],
+            "sudokuwiki": ["Simple Coloring", "Singles Chains"],
             "HoDoKu": ["Simple Colors"],
             "Sudoku Snake": ["Coloring"],
             "other": ["Single-digit coloring", "Color wrap", "Color trap"],
@@ -473,14 +473,14 @@ CATALOG = {
     ),
     "equal_cells": (
         "Two cells with the same digit",
-        {"other": ["Abstract colouring", "Equivalent cells"]},
+        {"other": ["Abstract coloring", "Equivalent cells"]},
         3,
         [],
         ["hidden_single"],
     ),
     "digit_counting": (
         "Digit counting",
-        {"other": ["Generalised fish", "Cage fish"], "HoDoKu": ["Generalized Fish"]},
+        {"other": ["Generalized fish", "Cage fish"], "HoDoKu": ["Generalized Fish"]},
         3,
         [HD + "tech_fishg.php", SW + "Cage_Unit_Overlap"],
         ["x_wing", "killer_combinations"],
@@ -567,7 +567,7 @@ CATALOG = {
     "zipper": ("Zipper lines", {"other": ["Equal pair sums"]}, 1, [], ["killer_combinations"]),
     "nonconsecutive": (
         "Non-consecutive logic",
-        {"other": ["Neighbours can't be consecutive"]},
+        {"other": ["Neighbors can't be consecutive"]},
         1,
         [],
         ["naked_single"],
@@ -586,7 +586,7 @@ CATALOG = {
         [],
         ["killer_combinations"],
     ),
-    "pair_rule": ("Neighbour-rule logic", {"other": ["Pair constraints"]}, 1, [], ["naked_single"]),
+    "pair_rule": ("Neighbor-rule logic", {"other": ["Pair constraints"]}, 1, [], ["naked_single"]),
 }
 
 _LINE_KEY = {
@@ -750,9 +750,9 @@ def fish_shape(p, base, cover, fins, U):
 
 
 _VARIANT_LESSONS = {
-    "german_whispers": "On a German whisper neighbours differ by at least 5: 5 can never appear, and digits "
+    "german_whispers": "On a German whisper neighbors differ by at least 5: 5 can never appear, and digits "
     "alternate between low (1-4) and high (6-9) along the line.",
-    "dutch_whispers": "Dutch whisper neighbours differ by at least 4; 5 can only sit next to 1 or 9.",
+    "dutch_whispers": "Dutch whisper neighbors differ by at least 4; 5 can only sit next to 1 or 9.",
     "thermo": "Digits rise from the bulb: a cell n steps along is at least n+1, and one with m cells after it is "
     "at most 9-m. Bulbs are low, tips are high.",
     "renban": "A renban line holds a run of consecutive digits in any order: no repeats, and the length decides "
@@ -769,8 +769,8 @@ _VARIANT_LESSONS = {
     "very restricted.",
     "palindrome": "A palindrome line reads the same from both ends: mirrored cells hold the same digit.",
     "between": "Digits on a between line lie strictly between the two circle digits.",
-    "nonconsecutive": "Orthogonal neighbours can't be consecutive, so every placed digit removes two candidates "
-    "from each neighbour.",
+    "nonconsecutive": "Orthogonal neighbors can't be consecutive, so every placed digit removes two candidates "
+    "from each neighbor.",
 }
 
 SHAPE_NOTES = {

@@ -65,7 +65,7 @@ def _source(x):
 
 
 # the pair and cell rules the fingerprint replaces by what they allow (docs/formats/puzzle-format.md 8.2): every edge
-# clue, relation, neighbours rule and cell clue, the negatives of those families, the lines made of pairs, and the
+# clue, relation, neighbors rule and cell clue, the negatives of those families, the lines made of pairs, and the
 # corner clues that are pair or cell clues
 PAIR_LINES = {"thermo", "slow_thermo", "whisper", "palindrome", "parity"}
 
@@ -75,7 +75,7 @@ def _by_meaning(r):
     from .rules.edge import EDGE
 
     t = r["type"]
-    if t == "neighbours":
+    if t == "neighbors":
         return r.get("within") != "region"  # regions to find (chaos) are not known when the pairs are listed
     if t in ("edge", "relation", "cell"):
         return True

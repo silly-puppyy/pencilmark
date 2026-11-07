@@ -117,13 +117,13 @@ def test_trace_colours_layer():
     idx = lambda cell: (int(cell[1 : cell.index("c")]) - 1) * 9 + int(cell[cell.index("c") + 1 :]) - 1
     drawn = 0
     for t in tr:
-        assert "colors" in t and len(t["colors"]) <= 6  # at most three colour pairs
+        assert "colors" in t and len(t["colors"]) <= 6  # at most three color pairs
         by = {g["color"]: g for g in t["colors"]}
-        assert len(by) == len(t["colors"])  # one name per colour on the board
+        assert len(by) == len(t["colors"])  # one name per color on the board
         for g in t["colors"]:
             drawn += 1
             ds = {int(sol[idx(c)]) for c in g["cells"]}
-            assert len(ds) == 1 and ds <= set(g["digits"])  # one digit per colour, one of the pair
+            assert len(ds) == 1 and ds <= set(g["digits"])  # one digit per color, one of the pair
             assert not ds & {int(sol[idx(c)]) for c in by[g["opposite"]]["cells"]}  # the opposite holds the other
-            assert all(c in t["candidates"] for c in g["cells"])  # only empty cells are coloured
+            assert all(c in t["candidates"] for c in g["cells"])  # only empty cells are colored
     assert drawn

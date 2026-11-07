@@ -19,7 +19,7 @@ from . import registry as R
 
 def _value(code, seen=()):
     """SE's value for a code, else the value of the nearest technique it is a special case of (codes.csv subset_of:
-    Simple Colouring is a case of X-Chain, which SE finds it as); None when no generalisation has one either"""
+    Simple Coloring is a case of X-Chain, which SE finds it as); None when no generalization has one either"""
     c = R.codes()[code]
     if c.se_classic is not None:
         return c.se_classic

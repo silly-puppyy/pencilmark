@@ -278,7 +278,7 @@ def _con_label(nm, con, idx):
             segs = con.get("segments")
             mid = segs[-1][0] if segs and len(segs[-1]) == 1 else None
             return f"the zipper line through {nm.cells(cells)}" + (
-                f" (centre {nm.cell(mid)})" if mid is not None else ""
+                f" (center {nm.cell(mid)})" if mid is not None else ""
             )
         if lk == "region_sum":
             return f"the region-sum line through {nm.cells(cells)}"

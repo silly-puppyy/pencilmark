@@ -1,5 +1,5 @@
-"""The `substeps` explanation level (docs/formats/grade-card.md 5): only on request, and the class-colouring builder
-tells a colouring as standalone sentences with a legend, one reason per rule and annotations that fit the schema."""
+"""The `substeps` explanation level (docs/formats/grade-card.md 5): only on request, and the class-coloring builder
+tells a coloring as standalone sentences with a legend, one reason per rule and annotations that fit the schema."""
 
 import json
 from pathlib import Path
@@ -204,12 +204,10 @@ def test_rule_facts_follow_the_digit_range():
     from pencilmark.explain.facts import derived
 
     assert derived("whisper", 9) == (
-        "With digits 1-9, 5 can never be on the line and neighbours alternate between low (1-4) and high (6-9) digits."
+        "With digits 1-9, 5 can never be on the line and neighbors alternate between low (1-4) and high (6-9) digits."
     )
     assert derived("whisper", 16) == ""
-    assert (
-        derived("whisper", 6, k=3) == "With digits 1-6, neighbours alternate between low (1-3) and high (4-6) digits."
-    )
+    assert derived("whisper", 6, k=3) == "With digits 1-6, neighbors alternate between low (1-3) and high (4-6) digits."
     assert derived("arrow", 9, 2).startswith("With digits 1-9, 9 cannot sit on its 2-cell shaft")
     assert derived("renban", 6, 4) == "A 4-cell renban with digits 1-6 always holds 3 and 4."
     assert derived("kropki_chain", 6) == "With digits 1-6, 5 never sits on a black dot."

@@ -1,6 +1,6 @@
 """Shared rendering for the generated reference pages (gen_api_md, gen_reference_md, gen_cpp_reference), in the shape of
 Sphinx autodoc as numpy and pandas show it. The pages are plain Markdown in a few patterns, readable as they are;
-website/src/plugins/api-reference.mjs recognises the patterns and styles them:
+website/src/plugins/api-reference.mjs recognizes the patterns and styles them:
 
   ### `def name(args) -> ret` {#anchor}     an entry: its signature (h4 = a method, indented under its class)
   [source](https://github.com/...#L12)    right after an entry: the source link, drawn in the signature box

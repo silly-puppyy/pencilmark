@@ -28,7 +28,7 @@ Full form (every field optional except what the puzzle needs):
                {"type": "pairs", "rel": "notdiff", "params": [1], "cells": [["r1c1", "r1c2"], ...]},
                {"type": "pairs", "rel": "notsum", "params": [10], "where": "orthogonal", "except": [["r1c1", "r1c2"]]},
                                                           # whole-grid pair rule: every orthogonal / diagonal / king / knight
-                                                          # neighbour pair except those listed (e.g. "no X where not marked")
+                                                          # neighbor pair except those listed (e.g. "no X where not marked")
                {"type": "<engine constraint>", ...}, ...],               # arrow, sum, little_killer, sandwich ...
      "candidates": {"r1c1": "137"},                       # given pencil marks (Sukaku); shaded clues are rules above
      "meta": {"title": "...", "author": "...", "rules_text": "...", "source": "...", "id": "..."}}
@@ -110,8 +110,8 @@ def _layout_origins(name):
 
 
 def _layout_extra(name, coords):
-    """Grids that are not contiguous 9x9 windows (from the layouts' rules): Clueless 1 = the centre CELL of every box
-    of the 9 grids forms a 10th grid; Clueless 2 = the centre BOX of each grid forms a 10th grid. -> list of
+    """Grids that are not contiguous 9x9 windows (from the layouts' rules): Clueless 1 = the center CELL of every box
+    of the 9 grids forms a 10th grid; Clueless 2 = the center BOX of each grid forms a 10th grid. -> list of
     [(row, col) * 81] in reading order of the extra grid."""
     n = name.lower()
     if n in ("clueless-1", "clueless"):
@@ -386,7 +386,7 @@ def from_json(obj) -> M.Puzzle:
             for c_ in cells_:
                 p.domains[c_] &= m
             p.cell_clues = getattr(p, "cell_clues", []) + [(dict(r, cells=cells_), {c_: m for c_ in cells_})]
-        elif t == "pairs" and "where" in r:  # a whole-grid pair rule: every neighbour pair of that kind, minus "except"
+        elif t == "pairs" and "where" in r:  # a whole-grid pair rule: every neighbor pair of that kind, minus "except"
             skip = {frozenset((ci(a), ci(b))) for a, b in r.get("except") or []}
             for a, b in _pairs(list(cid), NEIGHBOURS[r["where"]]):
                 if frozenset((a, b)) not in skip:
@@ -687,7 +687,7 @@ def to_json(p: M.Puzzle, solution=None, meta=None) -> dict:
     return out
 
 
-# neighbourhoods a whole-grid pair rule can cover ("where"); forward steps, so each pair appears once
+# neighborhoods a whole-grid pair rule can cover ("where"); forward steps, so each pair appears once
 NEIGHBOURS = {
     "orthogonal": [(0, 1), (1, 0)],
     "diagonal": [(1, 1), (1, -1)],
@@ -707,7 +707,7 @@ def _symmetric(kind, params, D=9):
 
 
 def _compact_pairs(kind, params, cells, coords, cname):
-    """a "pairs" rule; when its pairs are (almost) every neighbour pair of one kind, write it as a whole-grid rule
+    """a "pairs" rule; when its pairs are (almost) every neighbor pair of one kind, write it as a whole-grid rule
     {"where": "orthogonal", "except": [...]} instead of listing every pair (a non-consecutive sudoku was 144
     pairs). Only for symmetric relations, where the pair's order carries no meaning."""
     plain = {"type": "pairs", "rel": kind, "params": params, "cells": cells}

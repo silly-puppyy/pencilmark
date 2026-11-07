@@ -1,8 +1,8 @@
 """Techniques against independent reference finders written from the textbook definitions (sudokuwiki.org, HoDoKu):
-XY-Chain, Simple Colouring, Unique Rectangle (types 1, 2, 4, hidden 1, 2), Aligned Pair Exclusion, 3D Medusa, Pattern
+XY-Chain, Simple Coloring, Unique Rectangle (types 1, 2, 4, hidden 1, 2), Aligned Pair Exclusion, 3D Medusa, Pattern
 Overlay (rules 1, 2) and ALS-XZ;
 on mid-solve positions of generated puzzles (fixtures/technique_positions.json), the engine's XY-Chain and Simple
-Colouring eliminations equal the reference's, and each added rule (colour unit wrap, hidden UR type 2, extended UR
+Coloring eliminations equal the reference's, and each added rule (color unit wrap, hidden UR type 2, extended UR
 type 2, APE with a 2-cell set) is found where it applies and removes only candidates the solution does not use."""
 
 import collections
@@ -45,8 +45,8 @@ def _xy_chains(cand, max_cells=8):
 
 
 def _simple_colouring(cand):
-    """wrap (two same-colour cells see each other), unit wrap (a colour sees every place of the digit in a house) and
-    trap (an uncoloured candidate sees both colours), per digit and conjugate-pair cluster of 4+ cells"""
+    """wrap (two same-color cells see each other), unit wrap (a color sees every place of the digit in a house) and
+    trap (an uncoloured candidate sees both colors), per digit and conjugate-pair cluster of 4+ cells"""
     out = set()
     for d in range(1, 10):
         adj = defaultdict(set)
@@ -439,7 +439,7 @@ EXPLAINED = {
     "hur2": ("UniqueRectangle", lambda m: m["code"] == "HUR", "hidden unique rectangle"),
     "xur2": ("UniqueRectangle", lambda m: m["code"] == "XUR2", "extended unique rectangle type 2"),
     "ape_als": ("AlignedPairExclusion", lambda m: True, "aligned pair exclusion"),
-    "colour_unit": ("Coloring", lambda m: True, "colouring"),
+    "colour_unit": ("Coloring", lambda m: True, "coloring"),
     "medusa_unit": ("3DMedusa", lambda m: m["code"] == "medusa wrap (emptied house)", "no place for"),
     "xy": ("XY-Chain", lambda m: True, "XY-Chain"),
     "wxyz2": ("WXYZ-Wing", lambda m: m["code"] in ("WXYZ-Wing (type 2)", "VWXYZ-Wing (type 2)"), "type 2"),

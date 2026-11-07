@@ -32,7 +32,7 @@ id,const,name,role,code,display,band,split,family,gate,direct,mental,price_fallb
 99,WEIGHTED_SUMS,WeightedSums,logic,WEI,,Very Hard,0,intersections+combos,sum,0,0,HiddenTriple
 64,LINE_CLASS,LineClass,logic,LNC,,Easy,0,intersections+combos,any,0,0,
 65,DIGIT_COUNT,DigitCount,logic,DGC,,Medium,0,intersections+combos,any,0,0,
-66,EQUAL_DIGITS,EqualDigits,logic,CEQ,Same Colour,Medium,0,intersections+combos,any,0,0,
+66,EQUAL_DIGITS,EqualDigits,logic,CEQ,Same Color,Medium,0,intersections+combos,any,0,0,
 67,LINE_SCAN,LineScan,logic,LNS,,Easy,0,intersections+combos,any,0,0,
 72,SUM_BOUND,SumBound,logic,SBD,,Medium,0,intersections+combos,sum,0,0,
 73,CLASS_COUNT,ClassCount,logic,CLC,,Medium,0,intersections+combos,any,0,0,
@@ -63,7 +63,7 @@ id,const,name,role,code,display,band,split,family,gate,direct,mental,price_fallb
 76,N_WING,WXYZ-Wing,logic,WXZ,,Very Hard,0,fish+wings,,0,0,
 81,GURTH,GurthSymmetry,logic,GSY,,Very Hard,0,fish+wings,,0,0,
 93,FIREWORKS,Fireworks,logic,FIR,,Very Hard,0,fish+wings,,0,0,HiddenTriple
-24,COLORING,Coloring,logic,CSM,Simple Colouring,Hard,0,chains,,0,0,
+24,COLORING,Coloring,logic,CSM,Simple Coloring,Hard,0,chains,,0,0,
 41,X_CHAIN,X-Chain,logic,XCL,,Hard,1,chains,,0,0,
 42,XY_CHAIN,XY-Chain,logic,XYC,,Expert,0,chains,,0,0,
 43,AIC_CHAIN,AIC,logic,AIC,,Expert,0,chains,,0,0,
@@ -77,7 +77,7 @@ id,const,name,role,code,display,band,split,family,gate,direct,mental,price_fallb
 87,EMPTY_RECT,EmptyRectangle,logic,ERE,,Very Hard,0,chains,,0,0,
 92,BAND_LOGIC,BandLogic,logic,BAN,,Very Hard,0,chains,any,0,0,
 94,HUMAN_CASE,CaseAnalysis,logic,CAS,,Expert,0,chains,,0,0,ALS-XZ
-100,CLASS_COLOUR,ClassColouring,logic,CCL,Class Colouring,Medium,0,chains,any,0,0,
+100,CLASS_COLOUR,ClassColouring,logic,CCL,Class Coloring,Medium,0,chains,any,0,0,
 103,REGION_CAP,RegionSizeCap,logic,RSC,Region size cap (regions to find),Easy,0,intersections+combos,any,0,0,
 104,REGION_EXCL,RegionExclusion,logic,REX,Region exclusion (equal digits split regions),Very Easy,0,singles,any,0,0,
 105,REGION_REACH,RegionReach,logic,RRE,Region cannot reach (regions to find),Easy,0,intersections+combos,any,0,0,
@@ -85,15 +85,15 @@ id,const,name,role,code,display,band,split,family,gate,direct,mental,price_fallb
 107,REGION_EXIT,RegionExit,logic,RXT,Region exit (a region's only way out),Easy,0,intersections+combos,any,0,0,
 108,REGION_DIGIT,RegionDigit,logic,RDG,Region needs a digit it can reach,Medium,0,intersections+combos,any,0,0,
 109,POCKET,PocketCounting,logic,RPK,Pocket counting (regions to find),Medium,0,intersections+combos,any,0,0,
-110,CLASS_SINGLE,ClassSingle,logic,CSG,Colour Single,Medium,0,intersections+combos,any,0,0,EqualDigits
-111,ID_PROPAGATE,ClassPropagation,logic,CFL,Colour Fill,Medium,0,singles,any,0,0,NakedSingle(notes)
-112,CLASS_PAIR,ClassPair,logic,CPR,Colour Pair,Medium,0,intersections+combos,any,0,0,EqualDigits
-113,CLASS_TRAP,ClassTrap,logic,CTR,Colour Trap,Hard,0,chains,any,0,0,Coloring
-114,CHAIN_COLOUR,ChainColour,logic,CCH,Chain Colour,Medium,0,intersections+combos,any,0,0,EqualDigits
-115,COLOUR_CLASH,ColourClash,logic,CCX,Colour Clash,Hard,0,chains,any,0,0,EqualDigits
-116,CLASS_POINTING,ColourPointing,logic,CPT,Colour Pointing,Medium,0,intersections+combos,any,0,0,EqualDigits
-117,CLASS_FISH,ColourFish,logic,CFS,Colour Fish,Hard,0,fish+wings,any,0,0,X-Wing
-118,CLASS_COMPLETE,CompleteColours,logic,CCM,Complete Colours,Medium,0,subsets,any,0,0,EqualDigits
+110,CLASS_SINGLE,ClassSingle,logic,CSG,Color Single,Medium,0,intersections+combos,any,0,0,EqualDigits
+111,ID_PROPAGATE,ClassPropagation,logic,CFL,Color Fill,Medium,0,singles,any,0,0,NakedSingle(notes)
+112,CLASS_PAIR,ClassPair,logic,CPR,Color Pair,Medium,0,intersections+combos,any,0,0,EqualDigits
+113,CLASS_TRAP,ClassTrap,logic,CTR,Color Trap,Hard,0,chains,any,0,0,Coloring
+114,CHAIN_COLOUR,ChainColour,logic,CCH,Chain Color,Medium,0,intersections+combos,any,0,0,EqualDigits
+115,COLOUR_CLASH,ColourClash,logic,CCX,Color Clash,Hard,0,chains,any,0,0,EqualDigits
+116,CLASS_POINTING,ColourPointing,logic,CPT,Color Pointing,Medium,0,intersections+combos,any,0,0,EqualDigits
+117,CLASS_FISH,ColourFish,logic,CFS,Color Fish,Hard,0,fish+wings,any,0,0,X-Wing
+118,CLASS_COMPLETE,CompleteColours,logic,CCM,Complete Colors,Medium,0,subsets,any,0,0,EqualDigits
 52,ALS_XZ,ALS-XZ,logic,ALS,,Expert,0,ALS,,0,0,
 53,ALS_XYWING,ALS-XY-Wing,logic,AXY,,Expert,0,ALS,,0,0,
 54,DEATH_BLOSSOM,DeathBlossom,logic,DEB,,Expert,0,ALS,,0,0,

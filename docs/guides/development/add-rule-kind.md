@@ -7,7 +7,7 @@ description: Every place a new line, edge or cell kind touches, from its registr
 
 Each rule family with kinds keeps one registry in `src/pencilmark/rules/`: `line.py` (`LINE`), `edge.py` (`EDGE`) and
 `cell.py` (`CELL`). The reader, the writer, `describe()`, the drawing and the generator all consult it, so a new kind
-starts there. The quick suite then names most of what is still missing: the JSON Schema, the default colour and the
+starts there. The quick suite then names most of what is still missing: the JSON Schema, the default color and the
 rule page are checked against the registry. This page follows a new **line** kind, the case with the most steps; edge
 and cell kinds follow the same order (section 6).
 
@@ -48,7 +48,7 @@ The engine knows no public kinds: the reader translates each rule. Choose the ch
 
 - **JSON Schema.** Add the kind to the `kind` enum of `rule_line` in `docs/pencilmark-puzzle.schema.json`, and any new
   parameter to its properties.
-- **Default colour.** Add it to `lines` in `docs/palette.json`. Use the colour most setters use for it, if there is
+- **Default color.** Add it to `lines` in `docs/palette.json`. Use the color most setters use for it, if there is
   one; [Drawing and style](../../library/drawing-style.md) says where the current defaults come from.
 - **Width in Drawing and style.** If `width` is a number rather than a palette size name, state it in the kind's row of
   `docs/library/drawing-style.md` (`tests/test_format.py` checks the two agree).
@@ -64,10 +64,10 @@ sentence, a link to a page that explains it to solvers, and `<Swatch name="line-
 ## 5. Explanations and readers
 
 - **Words in explanations.** Name the line in `LINE_NAMES` in `src/pencilmark/explain/base.py` ("nabner line"). If it
-  needs its own lesson, map the engine kind to a catalogue key in `_LINE_KEY`, add the entry to `CATALOG` and a sentence
+  needs its own lesson, map the engine kind to a catalog key in `_LINE_KEY`, add the entry to `CATALOG` and a sentence
   to `_VARIANT_LESSONS` in `explain/catalog.py`. Without these, explanations fall back to "the nabner line".
-- **Imported puzzles.** If SudokuPad or f-puzzles puzzles use the rule, teach the readers in `sources/` to recognise
-  it: `_sp_translate.py` matches rule text and line colours, `_fpuz_translate.py` the f-puzzles constraint names.
+- **Imported puzzles.** If SudokuPad or f-puzzles puzzles use the rule, teach the readers in `sources/` to recognize
+  it: `_sp_translate.py` matches rule text and line colors, `_fpuz_translate.py` the f-puzzles constraint names.
 
 ## 6. Edge and cell kinds
 
@@ -78,8 +78,8 @@ an `edge-<kind>` swatch.
 
 A **cell** kind is a `CellKind` in `CELL` (`rules/cell.py`): its variant name, its parameter, whether the negative is
 defined, and its mark. Its meaning is a domain restriction on the cell; follow how `odd` and `low` reach the engine in
-`exchange/read.py`. If it is drawn shaded, give it a colour of its own name in both themes of `docs/palette.json` (the
-renderer reads the colour by kind). Then the schema, `docs/formats/rules/cell-clues.mdx` and a swatch.
+`exchange/read.py`. If it is drawn shaded, give it a color of its own name in both themes of `docs/palette.json` (the
+renderer reads the color by kind). Then the schema, `docs/formats/rules/cell-clues.mdx` and a swatch.
 
 ## 7. Check and record
 

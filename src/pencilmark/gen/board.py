@@ -27,7 +27,7 @@ def grid_log2(n):
 
 
 class Board:
-    """the cells, houses and neighbours of the board being generated: one n x n grid with standard boxes, or a named
+    """the cells, houses and neighbors of the board being generated: one n x n grid with standard boxes, or a named
     multi-grid layout of 9 x 9 grids (samurai, super-samurai, ...: puzzle_json's layouts). Cell indices follow
     puzzle_json's cell order, so a puzzle's numbers string lines up. extra: more all-different units (extra regions,
     diagonals) that the solution must respect."""
@@ -75,7 +75,7 @@ class Board:
         self.grid_cells = [  # the cells of each n x n grid, the grids in reading order of their origins
             [self.cid[(o_r + r, o_c + c)] for r in range(n) for c in range(n)] for o_r, o_c in sorted(self.origins)
         ]
-        # orthogonal neighbours, and the orthogonal edges (i < j) kropki / xv use
+        # orthogonal neighbors, and the orthogonal edges (i < j) kropki / xv use
         step = lambda i, dr, dc: self.cid.get((self.coords[i][0] + dr, self.coords[i][1] + dc), -1)
         self.nb = [
             [j for j in (step(i, -1, 0), step(i, 1, 0), step(i, 0, -1), step(i, 0, 1)) if j >= 0] for i in range(self.N)

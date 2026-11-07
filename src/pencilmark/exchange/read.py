@@ -207,7 +207,7 @@ class _ReadCtx:
             return [{"type": t, "cells": list(r["cells"]), "value": r["value"], "digits": list(r["digits"])}]
         if t == "rossini":
             return self.rossini(i, done)
-        if t == "neighbours":
+        if t == "neighbors":
             return self.neighbours(r)
         if t == "relation":
             kind = OPS[r["op"]]
@@ -300,7 +300,7 @@ class _ReadCtx:
         raise FormatError(f"unknown rule type {t!r}")
 
     def neighbours(self, r):
-        """engine rules for a neighbours rule: a whole-board kind, or the scoped cell pairs"""
+        """engine rules for a neighbors rule: a whole-board kind, or the scoped cell pairs"""
         B = self.B
         k = r.get("kind")
         scoped = "within" in r or "cells" in r or "except" in r

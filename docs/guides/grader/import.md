@@ -64,10 +64,10 @@ f-puzzles `?load=` links, Penpa+ links and bare SudokuPad payloads are decoded o
 `?id=` links, short-link services and Logic Masters pages are fetched: one request each, identified as pencilmark, with
 robots.txt obeyed and a pause between requests to the same site.
 
-Lines take their meaning from their colour and the rules text: "adjacent digits on a green line differ by at least 5"
+Lines take their meaning from their color and the rules text: "adjacent digits on a green line differ by at least 5"
 makes green lines German whispers, whether the text names the rule or only describes it ("a purple line contains a set
-of consecutive digits"). In a puzzle with lines of one colour, a rules text that describes one line rule without naming
-a colour gives that rule to every line.
+of consecutive digits"). In a puzzle with lines of one color, a rules text that describes one line rule without naming
+a color gives that rule to every line.
 
 A rule pencilmark cannot map exactly is refused with the list of what it could not read; nothing is dropped silently.
 The error is `pencilmark.NotSupportedError`, and its message names each element, for example "pink line" or
@@ -94,7 +94,7 @@ Measured on the 1,351 SudokuPad puzzles from Cracking the Cryptic videos (2026-1
 Reads well:
 
 - the standard rule families and their many wordings;
-- line meanings given by colour in the rules text;
+- line meanings given by color in the rules text;
 - killer cages, arrows, thermos, dots, X/V, whispers, renbans, region-sum lines, quadruples, sandwiches and the other
   families on the [puzzle format](../../formats/puzzle-format.md) pages.
 
@@ -143,6 +143,6 @@ open("killer.json", "w").write(text)
 
 On the command line, `pencilmark convert links.txt --solution` does the same for every line.
 
-A SudokuPad puzzle's look comes along: each rule takes the colour, width or shape of the element that draws it (a
+A SudokuPad puzzle's look comes along: each rule takes the color, width or shape of the element that draws it (a
 purple renban line stays purple) as its `style` ([Puzzle format](../../formats/puzzle-format.md) section 7), which
 renderers may use and solvers ignore. `pencilmark convert --no-style` and `write.pencilmark(..., style=False)` leave it out.

@@ -74,7 +74,7 @@ Command line:
 ```
 $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9.......' | pencilmark rate - --report
 #1  Hard  -  difficulty 5.9  -  time 10.7 min
-   contains: Naked Pair (or Hidden Pair), X-Wing (or 2-String Kite / Simple Colouring / Short chain in the head)
+   contains: Naked Pair (or Hidden Pair), X-Wing (or 2-String Kite / Simple Coloring / Short chain in the head)
 
 pencilmark rate puzzles.txt --json        # full card per line (python -m pencilmark works too)
 pencilmark solve puzzles.txt              # the solution, or 'not unique' / 'no solution'
@@ -168,7 +168,7 @@ the `PENCILMARK_UA` environment variable.
   ([philosophy](https://silly-puppyy.github.io/pencilmark/grades/philosophy/)). This is by design, not an error.
 - Difficulty and time are models fitted to human solving data. Differences under one point of difficulty are not
   meaningful, and a single solve can vary a lot from the predicted time.
-- Bands depend on the technique catalogue; a puzzle that needs a technique the engine does not have is solved with
+- Bands depend on the technique catalog; a puzzle that needs a technique the engine does not have is solved with
   Trial and error at that point and rated Extreme.
 - Very hard puzzles with many-cell rules (killers, arrows, palindromes, thermos) can take minutes while the technique list
   (`contains`) is made minimal; use `max_seconds` to cap it (the card then says `completed: false`).

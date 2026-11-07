@@ -59,11 +59,11 @@ BAND_MEANING = {
     "of a rule ('a 6 in a cage of 11')",
     "Easy": "one step further: naked singles, pointing / claiming, reading one rule's combinations",
     "Medium": "subsets (naked and hidden pairs, triples, quads) and the implications of each variant rule",
-    "Hard": "the first learned patterns: X-Wing, Skyscraper, 2-String Kite, Turbot Fish, simple colouring, the "
+    "Hard": "the first learned patterns: X-Wing, Skyscraper, 2-String Kite, Turbot Fish, simple coloring, the "
     "Phistomefel ring",
     "Very Hard": "the big study band: Empty Rectangle, finned fish, Swordfish and Jellyfish, wings, uniqueness, longer "
     "X-Chains, advanced variant logic (sum algebra, band logic)",
-    "Expert": "chains and almost locked sets: XY-Chains, AIC, nice loops, Medusa, multi-colouring, case analysis",
+    "Expert": "chains and almost locked sets: XY-Chains, AIC, nice loops, Medusa, multi-coloring, case analysis",
     "Extreme": "the limit of human solving: forcing chains / nets, Nishio, pattern overlay, trial and error",
 }
 # technique -> band (data/techniques.csv). FAMILIES above stay the engine's structural groups (pricing / features).

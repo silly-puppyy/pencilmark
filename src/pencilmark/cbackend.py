@@ -1,6 +1,6 @@
 """C++ backend for pencilmark.solver (sources and build script in csolver/).
 
-Drop-in fast paths with behavioural parity to the Python reference:
+Drop-in fast paths with behavioral parity to the Python reference:
 
     from pencilmark import cbackend as CB
     steps, solved = CB.solve(puzzle, params)            # ~ Solver(puzzle, Scorer(params)).solve()
@@ -135,8 +135,8 @@ XMETA_KEYS = {
     S.CLUE_FACTS: ("level", "cells", "n_elims"),
     S.CLUE_SHAPE: ("level", "cells", "n_elims"),
     S.DOMINO: ("dominoes", "digit_or_mask", "cell_a", "cell_b", "fillings"),
-    # seed: 0 house argument only, 1 equality rule / case split, 2 human colouring (consistent with the
-    # solution), 3 human colouring without a solution to check against (soft hypothesis)
+    # seed: 0 house argument only, 1 equality rule / case split, 2 human coloring (consistent with the
+    # solution), 3 human coloring without a solution to check against (soft hypothesis)
     S.COLOUR_ALGEBRA: ("cells", "digits", "n_elims", "seed", "class_kinds"),
     S.N_WING: ("size", "z", "z_cells", "n_elims"),
     S.SUE_DE_COQ: ("n_inter", "n_line", "n_box", "digit_mask", "n_elims"),
@@ -177,7 +177,7 @@ for _t in (S.X_CHAIN, S.XY_CHAIN, S.AIC_CHAIN, S.NICE_LOOP, S.MENTAL_CHAIN, S.RE
     XMETA_KEYS[_t] = _CHAIN_KEYS
 XMETA_KEYS[S.ALS_AIC] = _CHAIN_KEYS[:5] + ("n_als",) + _CHAIN_KEYS[6:]
 # pattern codes the engine puts on moves (data/patterns.csv): sudokuwiki-style codes for chain special cases, names
-# of uniqueness / ALS / set-theory / forcing / colouring forms
+# of uniqueness / ALS / set-theory / forcing / coloring forms
 CHAIN_CODES = {p.cpp_code: p.engine_code for p in R.patterns()}
 _FISH_SIZE = {2: "X-Wing", 3: "Swordfish", 4: "Jellyfish"}
 
@@ -268,7 +268,7 @@ def _label_fx(aeffs):
 
 
 def _id_fx(aeffs):
-    """identity layer (params colouring): the move's identity effects [(kind, cell, arg)]: AE_ID_JOIN cell's class merges
+    """identity layer (params coloring): the move's identity effects [(kind, cell, arg)]: AE_ID_JOIN cell's class merges
     into the class whose first cell is arg; AE_ID_NEQ the classes of cell and arg differ; AE_ID_USE the move relies on
     the class anchored at cell"""
     return [(k, c, a) for k, c, a in aeffs if k in (AE_ID_JOIN, AE_ID_NEQ, AE_ID_USE)]
@@ -323,7 +323,7 @@ def id_norm(idc, vals):
 
 
 def id_apply(idc, vals, fx):
-    """apply a move's identity effects (joins, then differences, as the engine) and normalise"""
+    """apply a move's identity effects (joins, then differences, as the engine) and normalize"""
     N = len(vals)
     for k, c, a in fx or ():
         if k == AE_ID_JOIN and c != a:
@@ -385,7 +385,7 @@ def id_held(N, givens, steps):
 
 
 def _ann_kw(labels):
-    """engine keywords of a mid-solve annotation state: labels = (region labels, label candidates[, colour classes]);
+    """engine keywords of a mid-solve annotation state: labels = (region labels, label candidates[, color classes]);
     either part may be None"""
     kw = {}
     if labels is None:
@@ -509,7 +509,7 @@ def detect_lines(p):
 
 
 def _colour_list(colours, N):
-    """{cell: colour} (any hashable colour labels) -> per-cell colour ids (-1 none) or None."""
+    """{cell: color} (any hashable color labels) -> per-cell color ids (-1 none) or None."""
     if not colours:
         return None
     ids = {}
@@ -561,7 +561,7 @@ def solve(
     ]
     args.append(bool(explain))
     args.append(_colour_list(colour_seeds, puzzle.N))
-    kw = _ann_kw(labels)  # regions to find / colour classes: mid-solve
+    kw = _ann_kw(labels)  # regions to find / color classes: mid-solve
     if stop_cells:  # stop right after placing one of these cells (the fog route's reveal cells)
         kw["stop_cells"] = sorted(int(c) for c in stop_cells)
     if SOLVE_STATS is not None:  # diagnostics: per-strategy (ms, calls, hits) summed into SOLVE_STATS
@@ -587,7 +587,7 @@ def solve(
         m.place = place
         m.elim = el
         m.lplace, m.lelim = _label_fx(row[15]) if len(row) > 15 else (None, ())  # annotations: region labels
-        m.idfx = _id_fx(row[15]) if len(row) > 15 else []  # ... and identity effects (colour classes)
+        m.idfx = _id_fx(row[15]) if len(row) > 15 else []  # ... and identity effects (color classes)
         m.name = _name(puzzle, *nm)
         m.d = d
         tech = m.feat[0]
@@ -683,7 +683,7 @@ def state_moves(
         bool(assume_unique),
         int(limit_per_tech),
     ]
-    kw = _ann_kw(labels)  # regions to find / colour classes: mid-solve
+    kw = _ann_kw(labels)  # regions to find / color classes: mid-solve
     if cand is not None:  # mid-solve candidates as a mask; cpuzzle keeps the puzzle's own domains (build it once)
         raw = _C.state_moves(
             *args,

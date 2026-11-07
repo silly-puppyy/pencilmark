@@ -1,5 +1,5 @@
 """Write docs/grades/techniques.md, the technique codes by family, from the technique registry (data/techniques.csv,
-data/codes.csv) and the explanation catalogue's links (explain.CATALOG). Reads the source tree; the C++ engine need not
+data/codes.csv) and the explanation catalog's links (explain.CATALOG). Reads the source tree; the C++ engine need not
 be built.
   python tools/gen_techniques_md.py [--check]      --check: exit 1 if docs/grades/techniques.md is out of date"""
 
@@ -18,28 +18,28 @@ FAMILY_TITLES = {
     "intersections+combos": "Intersections and rule combinations",
     "subsets": "Subsets",
     "fish+wings": "Fish and wings",
-    "chains": "Chains and colouring",
+    "chains": "Chains and coloring",
     "ALS": "Almost locked sets",
     "trial": "Trial and forcing",
 }
-# colouring: one concept across families (codes share the prefix C); the page explains it once
-# the colour-identity techniques: listed in the Colouring section only (candidate colouring, Simple / Multi-Colouring and
+# coloring: one concept across families (codes share the prefix C); the page explains it once
+# the color-identity techniques: listed in the Coloring section only (candidate coloring, Simple / Multi-Colouring and
 # 3D Medusa, stays in its family's table); every code appears once on the page
 COLOUR_CODES = ("CFL", "CEQ", "CSG", "CPT", "CPR", "CFS", "CCM", "CCH", "CCL", "CTR", "CCX", "CAL")
 COLOURING_INTRO = [
-    "## Colouring",
+    "## Coloring",
     "",
-    "Colouring gives cells a colour for what is known about them before their digits are: cells of one colour hold",
-    "the same digit, whatever it is, and two colours of a pair hold two different digits. A colour, once given, stays",
-    "for the whole solve, so later steps build on it. Explanations name each colour with a legend the first time it",
-    "appears, such as *orange: an unknown digit (5 or 6)* or *blue: a low digit (1-4)*. Colouring candidates (Simple",
-    "Colouring, Multi-Colouring, 3D Medusa) is a classic chain technique and is listed under Chains and colouring.",
+    "Coloring gives cells a color for what is known about them before their digits are: cells of one color hold",
+    "the same digit, whatever it is, and two colors of a pair hold two different digits. A color, once given, stays",
+    "for the whole solve, so later steps build on it. Explanations name each color with a legend the first time it",
+    "appears, such as *orange: an unknown digit (5 or 6)* or *blue: a low digit (1-4)*. Coloring candidates (Simple",
+    "Coloring, Multi-Colouring, 3D Medusa) is a classic chain technique and is listed under Chains and coloring.",
     "",
-    "Every colouring technique is Medium or harder: colouring is a concept to learn, not a first step. The route",
-    "parameter `coloring` keeps colours in the solve path; it is opt in (`rate(puzzle, coloring=True)`, CLI",
-    "`--coloring`), since most solvers do not colour (sudoku.coach comments: 4% of classics, 10% overall). Without it, Same Colour and Chain Colour",
-    "still remove candidates but keep no colour, and Colour Fill, Colour Single, Colour Pointing, Colour Pair, Colour",
-    "Trap, Colour Clash, Colour Fish and Complete Colours do not occur.",
+    "Every coloring technique is Medium or harder: coloring is a concept to learn, not a first step. The route",
+    "parameter `coloring` keeps colors in the solve path; it is opt in (`rate(puzzle, coloring=True)`, CLI",
+    "`--coloring`), since most solvers do not color (sudoku.coach comments: 4% of classics, 10% overall). Without it, Same Color and Chain Color",
+    "still remove candidates but keep no color, and Color Fill, Color Single, Color Pointing, Color Pair, Color",
+    "Trap, Color Clash, Color Fish and Complete Colors do not occur.",
     "",
 ]
 # link icon per site (website/static/img/sites, made by tools/site_icons.py); a site without one gets a text badge
@@ -56,7 +56,7 @@ SITES = {
     "lisudoku.xyz": ("lisudoku", "lisudoku.png"),
     "www.sugurupuzzles.com": ("sugurupuzzles.com", None),
 }
-LINKS = ROOT / "docs" / "technique_links.csv"  # more explainer pages per code, beside the explanation catalogue's
+LINKS = ROOT / "docs" / "technique_links.csv"  # more explainer pages per code, beside the explanation catalog's
 
 
 # fish shapes the engine names by size and kind, not by a pattern code: they take the family of a related code
@@ -110,12 +110,12 @@ def page():
     for r in csv.DictReader(LINKS.open(encoding="utf-8")):
         extra.setdefault(r["code"], []).append(r["url"])
 
-    def band_cell(b):  # the band; custom.css tints its cell in the band's colour (docs/palette.json "bands")
+    def band_cell(b):  # the band; custom.css tints its cell in the band's color (docs/palette.json "bands")
         name = R.BANDS[b]
         return f'<span class="pm-band-{name.lower().replace(" ", "-")}">{name.replace(" ", "&nbsp;")}</span>'
 
     def row(code, band):
-        """one table row: code, name, the variant mark, the band in its colour, what it is a special case of, links"""
+        """one table row: code, name, the variant mark, the band in its color, what it is a special case of, links"""
         c, t = codes[code], tech_of[code]
         urls = list(dict.fromkeys((E.CATALOG[c.explain][3] if c.explain else []) + extra.get(code, [])))
         variant = '<span class="pm-variant" title="variants only">V</span>' if t.gate else ""

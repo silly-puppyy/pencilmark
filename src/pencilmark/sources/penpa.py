@@ -8,7 +8,7 @@ Format (from the penpa-edit source, github.com/swaroopg92/penpa-edit, docs/js/ge
                  sudoku0..3,Title: ..,Author: ..,source,rules,border,multisolution[,bg image]'  (%2C = ',', %2D = newline)
               1 space [top, bottom, left, right] (margin rows / columns outside the board)
               2 mode   3 pu_q (problem layer)   4 pu_a (answer layer, edit links)   5 centerlist (delta-coded cells)
-              7/8 answer-check settings   10 version   14/15 custom colours   17 genre tags
+              7/8 answer-check settings   10 version   14/15 custom colors   17 genre tags
   A    deflated solution: JSON list per element class; index 4 = ["cell,digit", ...] for number answers
        (with multisolution, a JSON list of such solutions).
 Square-grid point indices (nx0 = nx + 4, ny0 = ny + 4, N = nx0 * ny0; cell (i, j) = column i, row j of the padded

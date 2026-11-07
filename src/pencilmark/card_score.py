@@ -49,7 +49,7 @@ def _record(p, st):
             continue
         t = s.move.feat[0]
         nm = "notes" if t in S.NOTE_TECHS else S.TECH_NAMES[t]
-        # ABSOLUTE candidate density, Andrew Stuart's C / 727 * 20 on every grid size: human times across sizes favour it
+        # ABSOLUTE candidate density, Andrew Stuart's C / 727 * 20 on every grid size: human times across sizes favor it
         # ... but only up to 9x9 size: beyond it no extra per-step difficulty is supported by data (sudokuleader
         # 12x12-25x25: partial Spearman +0.07), so bigger grids add TIME, not difficulty (relative density above 729 slots)
         C = s.n_cands if s.n_cands is not None else p.N * p.D
@@ -65,7 +65,7 @@ def _record(p, st):
 def refute_lr_cell(p):
     """technique-free search effort of the puzzle: the engine's generic refutation profile (singles + pair
     relations + n-ary consistency; when stuck, every candidate trialled, shortest refutations applied) -> log1p(sum over stuck points of
-    log(candidates / shortest refutations) per empty cell). Puzzle-only: no technique catalogue, no prices."""
+    log(candidates / shortest refutations) per empty cell). Puzzle-only: no technique catalog, no prices."""
     from . import cbackend as _CB
     from . import cpsat_verify as V
 

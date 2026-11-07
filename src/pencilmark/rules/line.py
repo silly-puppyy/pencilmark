@@ -39,7 +39,7 @@ class LineKind:
     closable: bool = False  # "closed": true allowed (the last cell connects back to the first)
     name_fn: object = None  # fn(rules) -> the name for these rules, when it depends on them
     width: object = "line"  # drawn line width: a docs/palette.json size name, or cell units
-    ends: str = ""  # end markers: "bulb" (filled, cells[0]), "hollow bulb", "circles", "diamonds", "centre dot"
+    ends: str = ""  # end markers: "bulb" (filled, cells[0]), "hollow bulb", "circles", "diamonds", "center dot"
     generated: bool = False  # the generator can place it (a pencilmark-spec template; pencilmark/gen/elements.py)
 
 
@@ -103,8 +103,8 @@ LINE = {
         LineKind(
             "zipper",
             "Zipper",
-            "Digits equally far from the centre of a zipper line sum to the same total.",
-            ends="centre dot",
+            "Digits equally far from the center of a zipper line sum to the same total.",
+            ends="center dot",
             generated=True,
         ),
         LineKind(
@@ -170,7 +170,7 @@ def line_from_engine(c, B, D):
 
     kind = c["kind"]
     cells = list(c["cells"])
-    if kind == "kropki_chain":  # normalisation 4: kropki edges
+    if kind == "kropki_chain":  # normalization 4: kropki edges
         dots = c.get("dots") or ["white"] * (len(cells) - 1)
         return [edge_rule("kropki", d_, a, b, B) for (a, b), d_ in zip(zip(cells, cells[1:]), dots)]
     r = {"type": "line", "kind": "whisper" if kind == "dutch_whisper" else kind}

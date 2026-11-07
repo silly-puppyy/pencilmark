@@ -148,7 +148,7 @@ def test_whole_rules_with_scopes():
     from pencilmark.rules.custom import rule_holds
 
     g = {f"r{r}c{c}": v for r, row in enumerate([[1, 2], [3, 4]], 1) for c, v in enumerate(row, 1)}
-    # no two orthogonal neighbours differ by 2: 1-3 (r1c1, r2c1) and 2-4 do -> false; excepting those pairs -> true
+    # no two orthogonal neighbors differ by 2: 1-3 (r1c1, r2c1) and 2-4 do -> false; excepting those pairs -> true
     rule = {"type": "custom", "holds": "(a, b) => abs(a - b) != 2", "scope": {"pairs": "orthogonal"}}
     assert not rule_holds(rule, g, (2, 2))
     rule["scope"]["except"] = [["r1c1", "r2c1"], ["r1c2", "r2c2"]]
@@ -156,9 +156,9 @@ def test_whole_rules_with_scopes():
     # every 2 x 2 window holds two odd and two even digits
     win = {"type": "custom", "holds": "w => count(x for x in w if odd(x)) == 2", "scope": {"windows": [2, 2]}}
     assert rule_holds(win, g, (2, 2))
-    # each cell with its king neighbours: the 4 sees 1, 2, 3 (all smaller)
+    # each cell with its king neighbors: the 4 sees 1, 2, 3 (all smaller)
     nb = {"type": "custom", "cells": {"t": ["r2c2"]}, "holds": "(x, N) => all(y < x for y in N)",
-          "scope": {"cells": "t", "neighbours": "king"}}  # fmt: skip
+          "scope": {"cells": "t", "neighbors": "king"}}  # fmt: skip
     assert rule_holds(nb, g, (2, 2))
     # "each": distinct sums over every cage of a list
     each = {
@@ -176,10 +176,10 @@ def test_describe_rule():
     pair = {"holds": "(a, b) => abs(a - b) != 4", "scope": {"pairs": "orthogonal"}}
     assert (
         describe_rule(pair)
-        == "For every pair of orthogonal neighbours a, b: the difference between a and b differs from 4."
+        == "For every pair of orthogonal neighbors a, b: the difference between a and b differs from 4."
     )
-    nb = {"holds": "(x, N) => any(abs(x - y) == 1 for y in N)", "scope": {"cells": "u", "neighbours": "orthogonal"}}
-    assert describe_rule(nb).startswith("For every cell x of u, with N its orthogonal neighbours: for some y in N")
+    nb = {"holds": "(x, N) => any(abs(x - y) == 1 for y in N)", "scope": {"cells": "u", "neighbors": "orthogonal"}}
+    assert describe_rule(nb).startswith("For every cell x of u, with N its orthogonal neighbors: for some y in N")
     assert describe_rule({"cells": {"c": ["r1c1"]}, "holds": "c == 5"}) == "C equals 5."
 
 

@@ -991,7 +991,7 @@ def _name(r, c):
 def rule_holds(rule, grid, box=(3, 3), layers=None):
     """does a custom rule {"type": "custom", "cells": {...}, "holds": "...", "scope"?, "each"?} hold for a filled grid?
     scope: {"pairs": kind} (holds is a predicate (a, b)), {"windows": [h, w]} (a predicate over the window's cells in
-    reading order), {"cells": name, "neighbours": kind, "within": "box"?} (a predicate (x, N)); each with "except" (cell
+    reading order), {"cells": name, "neighbors": kind, "within": "box"?} (a predicate (x, N)); each with "except" (cell
     lists to skip). "each": name -> the rule holds for every tuple of that list of lists, bound to the name."""
     cells, tree = dict(rule.get("cells") or {}), parse(rule["holds"])
     scope, skip = rule.get("scope"), {tuple(sorted(x)) for x in (rule.get("scope") or {}).get("except", [])}
@@ -1026,10 +1026,10 @@ def rule_holds(rule, grid, box=(3, 3), layers=None):
             if call_fn(f, [[Cell(x, grid[x]) for x in win]], env) is not True:
                 return False
         return True
-    if "neighbours" in scope:
+    if "neighbors" in scope:
         bh, bw = box
         boxof = lambda n: ((_rc(n)[0] - 1) // bh, (_rc(n)[1] - 1) // bw)
-        steps = STEPS[scope["neighbours"]]
+        steps = STEPS[scope["neighbors"]]
         for name in cells[scope["cells"]] if "cells" in scope else list(grid):
             r, c = _rc(name)
             nb = [_name(r + s * dr, c + s * dc) for dr, dc in steps for s in (1, -1)]
@@ -1306,9 +1306,9 @@ def compile_rule(rule, B, D, layers=()):
                 shared = None if pos else allowed
             out.append({"type": "table", "cells": names, "allowed": allowed if pos else shared})
         return out
-    if "neighbours" in scope:
+    if "neighbors" in scope:
         bh, bw = B_box(B)
-        steps = STEPS[scope["neighbours"]]
+        steps = STEPS[scope["neighbors"]]
         targets = cells[scope["cells"]] if scope.get("cells") else [B.name(i) for i in range(len(B.coords))]
         shared_nb = {}
         for name in targets if isinstance(targets, list) else [targets]:
@@ -1323,7 +1323,7 @@ def compile_rule(rule, B, D, layers=()):
             test = lambda g, names=names: (
                 call_fn(f, [Cell(names[0], g[names[0]]), [Cell(n, g[n]) for n in names[1:]]], env) is True
             )
-            if len(names) <= MAX_TABLE_CELLS and not pos:  # the table depends only on how many neighbours a cell has
+            if len(names) <= MAX_TABLE_CELLS and not pos:  # the table depends only on how many neighbors a cell has
                 if len(names) not in shared_nb:
                     shared_nb[len(names)] = _table(test, names, D)
                 out.append({"type": "table", "cells": names, "allowed": shared_nb[len(names)]})
@@ -1348,15 +1348,15 @@ def describe_rule(rule):
     skip = " (except the listed ones)" if scope.get("except") else ""
     if "pairs" in scope:
         a, b = (params + ("a", "b"))[:2]
-        return f"For every pair of {scope['pairs']} neighbours {a}, {b}{skip}: {cond}."
+        return f"For every pair of {scope['pairs']} neighbors {a}, {b}{skip}: {cond}."
     if "windows" in scope:
         h, w = scope["windows"]
         return f"For every {h} x {w} block {params[0] if params else 'w'}{skip}: {cond}."
-    if "neighbours" in scope:
+    if "neighbors" in scope:
         x, nb = (params + ("x", "N"))[:2]
         within = " in its box" if scope.get("within") == "box" else ""
         where = f" of {scope['cells']}" if scope.get("cells") else ""
-        return f"For every cell {x}{where}, with {nb} its {scope['neighbours']} neighbours{within}{skip}: {cond}."
+        return f"For every cell {x}{where}, with {nb} its {scope['neighbors']} neighbors{within}{skip}: {cond}."
     if rule.get("each"):
         return f"For every {rule['each']}: {cond}."
     return cond[:1].upper() + cond[1:] + "."

@@ -32,7 +32,7 @@ data/codes.csv, one row per chip code a route step can carry:
   subset_of   the codes this one is always a special case of (every X-Wing is a Skyscraper), space-separated
   se_classic  Sudoku Explainer rating (Juillerat's table, the one expert solvers quote); "-": SE has no such
               technique (se.py rates it 7.0)
-  explain     the explanation catalogue entry that teaches it (explain.CATALOG: names, aliases, links to explainer
+  explain     the explanation catalog entry that teaches it (explain.CATALOG: names, aliases, links to explainer
               sites); blank when there is none
   note        why: the reason for a subset_of entry or an order (free text, not read by the code)
 
@@ -43,7 +43,7 @@ data/patterns.csv, one row per pattern code the engine puts on a move (Move.code
   code          the chip code of a step with this pattern
   step_name     the step's name on the route
   explain_name  the pattern's name in explanations (the explain package; blank = the technique's)
-  catalog_key   the explanation catalogue entry for this pattern (explain.CATALOG)
+  catalog_key   the explanation catalog entry for this pattern (explain.CATALOG)
 """
 
 from __future__ import annotations

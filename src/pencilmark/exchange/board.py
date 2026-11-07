@@ -42,7 +42,7 @@ class Board:
         return max(abs(r1 - r2), abs(c1 - c2)) == 1
 
     def pairs(self, steps, cells=None):
-        """forward neighbour pairs in the engine's order (puzzle_json._pairs): by cell, then by step."""
+        """forward neighbor pairs in the engine's order (puzzle_json._pairs): by cell, then by step."""
         out = []
         for (r, c), a in self.cid.items():
             for dr, dc in steps:

@@ -99,8 +99,8 @@ def test_fpuzzles_lockout_written_back():
 
 
 def test_fpuzzles_generic_line_from_rules_text():
-    """generic f-puzzles lines take their meaning from the rules text as SudokuPad lines do: by colour, or the one line
-    rule a single-colour puzzle's text describes; a line rule left unread stays refused"""
+    """generic f-puzzles lines take their meaning from the rules text as SudokuPad lines do: by color, or the one line
+    rule a single-color puzzle's text describes; a line rule left unread stays refused"""
     from pencilmark.sources import _fpuz_translate as FT
 
     line = lambda col: {"lines": [["R1C1", "R1C2", "R1C3"]], "outlineC": col}
@@ -141,7 +141,7 @@ def test_malformed_fpuzzles_is_a_decode_error():
 
 
 def test_sudokupad_numbers_and_nulls_in_real_files():
-    """found reading 19,194 stored SudokuPad puzzles: a colour typed without "#" arrives as a number (777777), an
+    """found reading 19,194 stored SudokuPad puzzles: a color typed without "#" arrives as a number (777777), an
     all-digit solution as a number, and element lists can hold nulls (SudokuPad skips them); each crashed the reader"""
     rows = [
         [{"value": v} if v else {} for v in row] for row in ([1, 2, 3, 4], [3, 4, 1, 2], [2, 1, 4, 3], [4, 3, 2, 0])
@@ -160,14 +160,14 @@ def test_sudokupad_numbers_and_nulls_in_real_files():
     }
     try:
         pj = SP.to_puzzle(sp, fetch=False)
-    except sources.NotSupportedError:  # the grey line may not be read; the point is that nothing crashes
+    except sources.NotSupportedError:  # the gray line may not be read; the point is that nothing crashes
         return
     assert pj["numbers"].startswith("1234")
 
 
 def test_sudokupad_rules_text_readings():
     """found on the 500 most-solved LMD sudokus (2026-11-02): "equal digits must not touch diagonally" is anti-king;
-    a mostly transparent black (#0003) is drawn grey, so "digits in grey cells are odd" finds the cells"""
+    a mostly transparent black (#0003) is drawn gray, so "digits in gray cells are odd" finds the cells"""
     from pencilmark.sources import _sp_translate as SP
 
     assert SP.rule_flags("Equal digits must not touch each other diagonally.")["antiking"]
@@ -189,7 +189,7 @@ def test_sudokupad_rules_text_readings():
 
 
 def test_sudokupad_uncoloured_dot_follows_the_rules():
-    """a kropki dot drawn without a colour is white when the rules mention only white dots (it read as black)"""
+    """a kropki dot drawn without a color is white when the rules mention only white dots (it read as black)"""
     from pencilmark.sources import _sp_translate as SP
 
     ov = [{"center": [1.0, 0.5], "width": 0.3, "height": 0.3, "rounded": True}]
@@ -228,7 +228,7 @@ def test_unmodelled_rules_refused():
         ("look-and-say cages: read the clue out loud", "look-and-say"),
         ("cells a camel move apart may not contain the same digit", "camel"),
         ("cold arrows: a blue arrow points toward a cell n distance away", "cold / hot arrow"),
-        ("congruent boxes: the two pairs of coloured boxes are congruent", "congruent"),
+        ("congruent boxes: the two pairs of colored boxes are congruent", "congruent"),
     ):
         assert unmodelled_rules(text) == [f"rule '{label}'"], text
     for text in (
@@ -258,8 +258,8 @@ def _sp4(**puzzle):
 
 def test_sudokupad_misreads_fixed():
     """misreads found on the 500 most-solved LMD sudokus (2026-11-02, each puzzle now unique and matching its embedded
-    solution): newer files' grey shorthand ("#F" white, "#0" black) and c2 fill (000Q6G); a same-parity line, which has
-    no rule family, is a custom rule (000JCK, it read as alternating); grey thermometers beside grey palindromes are
+    solution): newer files' gray shorthand ("#F" white, "#0" black) and c2 fill (000Q6G); a same-parity line, which has
+    no rule family, is a custom rule (000JCK, it read as alternating); gray thermometers beside gray palindromes are
     told apart by the bulb (000JH3); "all X and V are given" on a grid without one forbids sums of 5 and 10 (000STV)"""
     from pencilmark.sources import _sp_translate as SP
     from pencilmark.sources import sudokupad
@@ -284,7 +284,7 @@ def test_sudokupad_misreads_fixed():
     p, _ = SP.translate(
         _sp4(lines=grey, underlays=bulb), "Thermometers increase from the bulb. A gray line is a palindrome."
     )
-    assert {"type": "line", "kind": "thermo", "cells": [0, 1]} in p.constraints  # the bulbed grey line: a thermometer
+    assert {"type": "line", "kind": "thermo", "cells": [0, 1]} in p.constraints  # the bulbed gray line: a thermometer
     assert any(r[0] == "eq" for r in p.relations)  # the other: a palindrome
 
     p, info = SP.translate(
@@ -307,7 +307,7 @@ def test_fpuzzles_negative_only_the_named_letter():
 
 
 def test_default_line_colour_needs_the_rules_to_describe_it():
-    """a line whose colour the rules do not name takes SudokuPad's default meaning only when the rules describe that
+    """a line whose color the rules do not name takes SudokuPad's default meaning only when the rules describe that
     meaning: a cyan line under "adjacent digits on an N-cell line differ by at least N" read as a region sum (Quiet
     Room, 000TBF); "a pink line holds consecutive digits" is still a renban (000QJZ)"""
     from pencilmark.sources import _sp_translate as SP
@@ -324,7 +324,7 @@ def test_default_line_colour_needs_the_rules_to_describe_it():
 def test_line_colour_from_described_rule():
     """CTC rules often describe a line without naming it (screen of 1,351 CTC puzzles, 2026-11-03): "a purple line
     contains a set of consecutive digits" is a renban, "box borders divide a blue line into segments with the same sum"
-    a region sum; the same words about a cage colour no line"""
+    a region sum; the same words about a cage color no line"""
     from pencilmark.sources import _sp_translate as SP
 
     got = SP.rules_color_map("A purple line contains a set of consecutive digits in any order.")
@@ -335,12 +335,12 @@ def test_line_colour_from_described_rule():
     assert SP.rules_color_map("Digits in a cage form a consecutive set. Red circles are odd.") == {}
     assert SP.rules_color_map("The sum of any three consecutive digits along a red line is divisible by 3.") == {}
     assert (
-        SP.rules_color_map("Digits on lines of the same colour sum to the same total.") == {}
+        SP.rules_color_map("Digits on lines of the same color sum to the same total.") == {}
     )  # no boxes: not a region sum
     assert SP.unmodelled_rules("anti renban: digits on a purple line must not all be consecutive.")
     assert not SP.unmodelled_rules("exactly one cage is lying. multiplying the end digits gives the sum.")  # not "yin"
     assert SP.unmodelled_rules("yin yang: shade some cells so that the shaded cells are connected.")
-    assert SP.unmodelled_rules("on a broken zipper, no pairs the same distance from the centre have the same sum")
+    assert SP.unmodelled_rules("on a broken zipper, no pairs the same distance from the center have the same sum")
 
 
 def test_region_sum_loop_and_per_box_wording():
@@ -359,7 +359,7 @@ def test_region_sum_loop_and_per_box_wording():
 
 
 def test_default_colours_need_a_positive_description():
-    """SudokuPad's default line colours count only when a sentence about a line says the meaning positively (CTC
+    """SudokuPad's default line colors count only when a sentence about a line says the meaning positively (CTC
     misreads: "nor can it contain any consecutive digits" as renban, "increase from one end to the other" as a
     thermometer with a bulb, "digits along a line sum to the product of ..." as a region sum); rings drawn along grid
     lines around clues are not lines (eXAb7nRcveM), lines drawn offset inside their cells are (Overlap)"""
@@ -413,12 +413,12 @@ def test_yin_yang_couplings_read():
     sentence about the shading leaves the puzzle refused, and other shading genres are not read as yin-yang"""
     from pencilmark.sources import _sp_translate as SP
 
-    frame = "Yin Yang: shade some cells so that shaded and unshaded cells are each connected; no 2x2 is one colour. "
+    frame = "Yin Yang: shade some cells so that shaded and unshaded cells are each connected; no 2x2 is one color. "
     got = SP.yin_yang_reading(frame + "Even digits in a cage are always shaded, odd digits are always unshaded.")
     assert got == [("cage", "even", True), ("cage", "odd", False)]
     assert SP.yin_yang_reading(frame + "Odd digits on a thermometer are shaded.") == [("thermo", "odd", True)]
     assert SP.yin_yang_reading(frame) == []
-    assert SP.yin_yang_reading(frame + "A digit in a square counts the cells of the same colour it sees.") is None
+    assert SP.yin_yang_reading(frame + "A digit in a square counts the cells of the same color it sees.") is None
     assert SP.yin_yang_reading("Nurikabe: shade some cells; each island is connected; no 2x2 is shaded.") is None
     p, info = SP.translate(_sp4(), frame + "Shaded cells contain odd digits.")
     assert info.get("yin_yang") and any(c.get("type") == "yin_yang" for c in p.constraints)
@@ -441,8 +441,8 @@ def test_outside_clue_wordings_and_arrowheads():
 
 
 def test_fortress_and_native_xsum():
-    """fortress: grey cells exceed their white neighbours only (f-puzzles 'maximum' cells side by side read with no
-    solution); SudokuPad grey squares are fortress cells when the text says so; f-puzzles' own xsum key is read"""
+    """fortress: gray cells exceed their white neighbors only (f-puzzles 'maximum' cells side by side read with no
+    solution); SudokuPad gray squares are fortress cells when the text says so; f-puzzles' own xsum key is read"""
     from pencilmark.sources import _fpuz_translate as FT
     from pencilmark.sources import _sp_translate as SP
 
@@ -460,8 +460,8 @@ def test_fortress_and_native_xsum():
 
 
 def test_clones_from_coloured_shapes():
-    """clones drawn as coloured shapes become clone rules: same-colour shapes matched by translation, cells paired in
-    reading order; shapes that differ stay refused; a payload whose clones use different colours is one class"""
+    """clones drawn as colored shapes become clone rules: same-color shapes matched by translation, cells paired in
+    reading order; shapes that differ stay refused; a payload whose clones use different colors is one class"""
     from pencilmark.sources import _sp_translate as SP
 
     two = {(0, 0): "red", (0, 1): "red", (2, 2): "red", (2, 3): "red"}
@@ -470,7 +470,7 @@ def test_clones_from_coloured_shapes():
     sq = lambda r, c, col: {"center": [r + 0.5, c + 0.5], "width": 1, "height": 1, "backgroundColor": col}
     sp = _sp4(underlays=[sq(0, 0, "#FFA3A3BF"), sq(0, 1, "#FFA3A3BF"), sq(2, 2, "#FFB3FFBF"), sq(2, 3, "#FFB3FFBF")])
     p, info = SP.translate(
-        sp, "Each coloured connected shape (clone) must contain the same numbers in the same positions."
+        sp, "Each colored connected shape (clone) must contain the same numbers in the same positions."
     )
     assert info.get("clone") and [c["regions"] for c in p.constraints if c["type"] == "clone"] == [[[0, 1], [10, 11]]]
 
@@ -500,7 +500,7 @@ def test_rossini_and_battenburg():
 
 def test_one_off_line_rules():
     """one-off line rules described in the text are custom rules (sequence, alternating, one-digit lines) or difference
-    pairs (neighbours differ by 1); "along each line" gives every line the rule; "a difference of 4 or more" is a
+    pairs (neighbors differ by 1); "along each line" gives every line the rule; "a difference of 4 or more" is a
     Dutch whisper; an f-puzzles payload's own ruleset falls back to the page's wording for its lines"""
     from pencilmark.sources import _fpuz_translate as FT
     from pencilmark.sources import _sp_translate as SP
@@ -553,7 +553,7 @@ def test_drawn_styles():
     assert style["kropki"] == {"fill": "#ffffff", "color": "#000000", "shape": "circle", "size": 0.3}  # the dot is 0.3 cells
     plain = dict(doc, rules=[{k: v for k, v in r.items() if k != "style"} for r in doc["rules"]])
     assert pm.fingerprint(doc) == pm.fingerprint(plain)  # styles are cosmetic
-    # a SudokuPad thermometer stays a thermo line (with its colour), a board-sized fill is the background decoration
+    # a SudokuPad thermometer stays a thermo line (with its color), a board-sized fill is the background decoration
     thermo = {"color": "#a29b65ff", "thickness": 16, "wayPoints": [[0.5, 0.5], [1.5, 1.5], [1.5, 2.5]]}
     bulb = {"center": [0.5, 0.5], "width": 0.7, "height": 0.7, "rounded": True, "backgroundColor": "#a29b65ff"}
     bg = {"center": [2, 2], "width": 4, "height": 4, "backgroundColor": "#d3f2844f"}
@@ -614,7 +614,7 @@ def test_one_off_global_rules():
 
 
 def test_shape_digit_sets_and_unread_drawings():
-    """shapes with digit sets by colour ("orange circles contain numbers from {1, 2, 3}, blue squares ... {4, 5, 6}");
+    """shapes with digit sets by color ("orange circles contain numbers from {1, 2, 3}, blue squares ... {4, 5, 6}");
     a puzzle that reads as plain sudoku while it draws shapes or lines in the grid is refused, not misread"""
     from pencilmark.sources import _sp_translate as SP
 
@@ -629,7 +629,7 @@ def test_shape_digit_sets_and_unread_drawings():
 
 
 def test_marked_cell_clues():
-    """one-off clues on marked cells: a circled cell against its neighbours, a small arrow inside a cell against the
+    """one-off clues on marked cells: a circled cell against its neighbors, a small arrow inside a cell against the
     cells in its direction (an open arrowhead or a closed outline), as custom rules"""
     from pencilmark.sources import _sp_translate as SP
 
@@ -669,8 +669,8 @@ def test_arrow_variants():
 def test_in_cell_arrows_cages_and_line_colours():
     """an arrow drawn inside one cell points along a ray (the closest 5, arrow X-sums); f-puzzles cages: factor cages,
     x + k cages (x forced by the cage sizes gives the totals), blank cages the text gives a meaning, equal sums of the
-    cages without a total; line colours called by a neighbouring word, a dull orange called brown, the one unnamed
-    colour, "all other lines", a grey cell that is no line colour"""
+    cages without a total; line colors called by a neighboring word, a dull orange called brown, the one unnamed
+    color, "all other lines", a gray cell that is no line color"""
     from pencilmark.sources import _fpuz_translate as FT
     from pencilmark.sources import _sp_translate as SP
 
@@ -702,7 +702,7 @@ def test_in_cell_arrows_cages_and_line_colours():
     assert SP.line_rule_from_text("#A87A47", cmap) == "palindrome"
     line = lambda col: {"lines": [["R1C1", "R1C2"]], "outlineC": col}
     reading = FT._text_line_reading({"line": [line("#FF4444"), line("#FFF888")]},
-                                    "Red lines alternate in parity (odd/even). Grey lines are palindromes.")  # fmt: skip
+                                    "Red lines alternate in parity (odd/even). Gray lines are palindromes.")  # fmt: skip
     assert reading == {"#ff4444": "parity", "#fff888": "palindrome"}
     reading = FT._text_line_reading({"line": [line("#75ED68"), line("#C77EFA")]},
                                     "Numbers on green lines are at least 5 apart. Numbers on all other lines are each "
@@ -722,7 +722,7 @@ def test_in_cell_arrows_cages_and_line_colours():
     assert ("ratio", 0, 1, 3) in p.relations and ("notdiff", 4, 5, 1) in p.relations
     assert FT._dot_meaning("green", "a pair can only appear once. green dots have a ratio of 3:1.") is None
     assert FT._dot_meaning("green", "all green dots are given. green dots have a ratio of 3:1.") is None
-    assert FT._dot_meaning("grey", "digits separated by a grey dot are either consecutive or have a 1:2 ratio.") is None
+    assert FT._dot_meaning("grey", "digits separated by a gray dot are either consecutive or have a 1:2 ratio.") is None
     assert FT._dot_meaning(
         "red", "digits separated by a red dot are not consecutive. digits without a dot may or may not be consecutive."
     ) == ("notdiff", 1)
@@ -737,7 +737,7 @@ def test_in_cell_arrows_cages_and_line_colours():
     assert not any(r[0] == "notdiff" for r in p.relations) and any(r[0] == "notratio" for r in p.relations)
     assert SP.LINE_CUSTOM["entropic2"][1] == "count_distinct((x + 1) div 2 for x in t) == 5"
     assert SP.QUAD_TEXT.search("every digit in a circle has to be assigned to one of the surrounding cells")
-    sq = "A dot means that the digits in the two neighbouring cells form a double digit square number in the reading direction. All dots are in the grid."
+    sq = "A dot means that the digits in the two neighboring cells form a double digit square number in the reading direction. All dots are in the grid."
     p, _ = SP.translate(_sp4(overlays=[black]), sq)
     rules = [r for r, _ in p.named_rules]
     assert (
@@ -748,7 +748,7 @@ def test_in_cell_arrows_cages_and_line_colours():
         9, SP.M.standard(9, 3, 3), "Cells that are 180° symmetric to each other cannot have the same digits."
     )
     assert found == ["rotational_neq"]
-    t = "In all cases where two neighbouring cells contain consecutive digits, a circle is placed between those cells."
+    t = "In all cases where two neighboring cells contain consecutive digits, a circle is placed between those cells."
     assert SP.negative_markers(t) == {"white"}
     assert SP.rule_flags("Cells that are orthogonally adjacent cannot contain consecutive digits.")["nonconsec"]
     with pytest.raises(Exception):
@@ -897,7 +897,7 @@ def test_fpuzzles_circles_and_squares_as_shape_clues():
 
 def test_fpuzzles_generic_lines_as_custom_rules():
     """f-puzzles generic lines take the line rules the SudokuPad reader knows from their descriptions, also when drawn
-    in several shades: increasing-or-decreasing, same parity, centre sum, three distinct digits on a diagonal"""
+    in several shades: increasing-or-decreasing, same parity, center sum, three distinct digits on a diagonal"""
     from pencilmark.sources import _fpuz_translate as FT
 
     line = lambda cells, col="#CCCCCC": {"lines": [cells], "outlineC": col, "width": 0.4}
@@ -919,7 +919,7 @@ def test_fpuzzles_generic_lines_as_custom_rules():
 def test_lmd_wording_fixes():
     """LMD top-500 misreads: "[no negative constraints]" adds none; "If not, they don't" makes the marker negative;
     "at least 5 apart" is a whisper; equal-parity lines are same-parity lines; thermos of a single parity; f-puzzles
-    coloured cells "greater than 5" """
+    colored cells "greater than 5" """
     from pencilmark.sources import _fpuz_translate as FT
     from pencilmark.sources import _sp_translate as SP
 
@@ -954,7 +954,7 @@ def test_fpuzzles_line_totals_whisper_thresholds_and_segments():
 
     line = lambda cells, col="#CCCCCC": {"lines": [cells], "outlineC": col, "width": 0.4}
     base = {"size": 4, "grid": [[{} for _ in range(4)] for _ in range(4)]}
-    p, _ = FT.translate(dict(base, ruleset="Whisper: adjacent digits along the grey line must differ by at least 2.",
+    p, _ = FT.translate(dict(base, ruleset="Whisper: adjacent digits along the gray line must differ by at least 2.",
                              line=[line(["R1C1", "R1C2"])]))  # fmt: skip
     assert [c.get("k") for c in p.constraints if c.get("kind") == "whisper"] == [2]
     p, info = FT.translate(dict(base, ruleset="Numbers on blue lines sum to 7.",
@@ -1038,8 +1038,8 @@ def test_equality_cages():
 
 
 def test_shifter_lines_and_dots():
-    """shifter lines: within a box neighbours share parity and polarity, across a box border exactly one changes, never
-    the middle digit; shifter dots: exactly one shared; a dot of another colour that no reading takes is refused; the
+    """shifter lines: within a box neighbors share parity and polarity, across a box border exactly one changes, never
+    the middle digit; shifter dots: exactly one shared; a dot of another color that no reading takes is refused; the
     rule needs its definition ("Shifter lines: ..."), not a mention in a list of series"""
     from pencilmark.sources import _sp_translate as SP
 
@@ -1075,7 +1075,7 @@ def test_fpuzzles_circle_meanings():
 
 
 def test_rule_for_every_line():
-    """ "all lines are region sum lines" gives every line that rule; a line whose colour also names another rule has two
+    """ "all lines are region sum lines" gives every line that rule; a line whose color also names another rule has two
     rules and is refused (CTC zkz5Qw2BWx4: orange lines are also Dutch whispers)"""
     from pencilmark.sources import _sp_translate as SP
 
@@ -1114,7 +1114,7 @@ def test_whole_grid_region_means_no_boxes():
 
 def test_off_centre_cell_text_is_refused():
     """small text in a cell's corner is a clue no reading handles (run sums, 000V90, read as nothing at all): refused,
-    not dropped; text centred in a cell, and a digit by a cell corner when the rules speak of quadruples, are not"""
+    not dropped; text centered in a cell, and a digit by a cell corner when the rules speak of quadruples, are not"""
     from pencilmark.sources import _sp_translate as SP
 
     corner = [{"center": [1.83, 1.83], "width": 0, "height": 0.46, "rounded": True, "text": "44"}]
@@ -1170,7 +1170,7 @@ def test_fog_payloads_keep_their_fog():
 
 def test_fpuzzles_fog_cages():
     """f-puzzles fog written as generic cages, as SudokuPad imports them: a one-cell FOW cage lights its 3x3 (drawn
-    invisible, which the cage normaliser drops), a FOGLIGHT cage lights its cells; neither is read as a clue. A rule
+    invisible, which the cage normalizer drops), a FOGLIGHT cage lights its cells; neither is read as a clue. A rule
     described without its name ("indicate the column in which") is refused, not dropped."""
     from pencilmark.sources import _fpuz_translate as FT
 

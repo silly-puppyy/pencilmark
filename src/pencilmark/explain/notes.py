@@ -1,4 +1,4 @@
-"""Pencil-mark techniques: locked candidates, subsets, fish, wings, colouring; uniqueness. (split from explain.py)"""
+"""Pencil-mark techniques: locked candidates, subsets, fish, wings, coloring; uniqueness. (split from explain.py)"""
 
 from __future__ import annotations
 
@@ -539,7 +539,7 @@ def _wing_substeps(nm, st, piv, w1, w2, x, y, z, xyz, elims):
     return out
 
 
-# ------------------------------------------------------------- colouring ----
+# ------------------------------------------------------------- coloring ----
 def _h_coloring(ctx):
     nm, p, st = ctx.nm, ctx.p, ctx.st
     v = _elim_digits(ctx)[0]
@@ -576,7 +576,7 @@ def _h_coloring(ctx):
                     break
             if wrap:
                 break
-        if not wrap:  # unit wrap: a colour seeing every v of a house (none of them its own) would empty it
+        if not wrap:  # unit wrap: a color seeing every v of a house (none of them its own) would empty it
             for side in (0, 1):
                 for hi in p.houses:
                     hc = [c for c in p.groups[hi].cells if not st.vals[c] and st.cand[c] & b]
@@ -609,26 +609,26 @@ def _h_coloring(ctx):
         ]
         tg = sorted({c for c, _ in ctx.elims})
         A, Bc = nm.cells(g[0]), nm.cells(g[1])
-        short = f"{fmt_elims(nm, ctx.elims)}: colouring on {v}"
+        short = f"{fmt_elims(nm, ctx.elims)}: coloring on {v}"
         if wrap and wrap[1] is None:
             teach = (
-                f"Colour the {v}s that form conjugate pairs (houses with exactly two {v}s): one colour is "
-                f"{A}, the other {Bc}. Exactly one colour is the truth. But if {nm.cells(g[wrap[0]])} were {v}, "
-                f"{nm.unit(wrap[2])} would have no place left for {v}, so that whole colour is false: remove {v} "
+                f"Color the {v}s that form conjugate pairs (houses with exactly two {v}s): one color is "
+                f"{A}, the other {Bc}. Exactly one color is the truth. But if {nm.cells(g[wrap[0]])} were {v}, "
+                f"{nm.unit(wrap[2])} would have no place left for {v}, so that whole color is false: remove {v} "
                 f"from {nm.cells(tg)}."
             )
         elif wrap:
             teach = (
-                f"Colour the {v}s that form conjugate pairs (houses with exactly two {v}s): one colour is "
-                f"{A}, the other {Bc}. Exactly one colour is the truth. But {nm.cell(wrap[1])} and "
-                f"{nm.cell(wrap[2])} share a colour and see each other -- they can't both be {v}, so that "
-                f"whole colour is false: remove {v} from {nm.cells(tg)}."
+                f"Color the {v}s that form conjugate pairs (houses with exactly two {v}s): one color is "
+                f"{A}, the other {Bc}. Exactly one color is the truth. But {nm.cell(wrap[1])} and "
+                f"{nm.cell(wrap[2])} share a color and see each other -- they can't both be {v}, so that "
+                f"whole color is false: remove {v} from {nm.cells(tg)}."
             )
         else:
             teach = (
-                f"Chain the {v}s through houses where {v} has only two spots, alternating two colours: "
-                f"{A} versus {Bc}. One colour holds all the real {v}s. {_subj(nm, tg)} "
-                f"see{'s' if len(tg) == 1 else ''} a cell of each colour, so whichever colour wins, "
+                f"Chain the {v}s through houses where {v} has only two spots, alternating two colors: "
+                f"{A} versus {Bc}. One color holds all the real {v}s. {_subj(nm, tg)} "
+                f"see{'s' if len(tg) == 1 else ''} a cell of each color, so whichever color wins, "
                 f"{'it sees' if len(tg) == 1 else 'they see'} a {v} -- no {v} there."
             )
         J = _J(ctx, digits=[v], base_cells=g[0], cover_cells=g[1], links=links)
@@ -640,25 +640,25 @@ def _h_coloring(ctx):
 
 
 def _colouring_substeps(nm, v, comp, adj, via, wrap, tg, elims):
-    """simple colouring as sub-steps: the legend, each conjugate pair in turn (the next cell takes the other colour),
-    then the clash (wrap) or the cells that see both colours (trap), the removals in red"""
+    """simple coloring as sub-steps: the legend, each conjugate pair in turn (the next cell takes the other color),
+    then the clash (wrap) or the cells that see both colors (trap), the removals in red"""
     names = ("blue", "yellow")
     ids = iter(range(1, 10**6))
     ann = lambda c: {"id": next(ids), "candidate": f"{nm.cell(c)}#{v}", "color": names[comp[c]]}
     start = min(comp, key=lambda c: nm.p.coords[c])
     out = [
         {
-            "text": f"Colour the {v}s that are one of only two places in a house, alternating blue and yellow, "
+            "text": f"Color the {v}s that are one of only two places in a house, alternating blue and yellow, "
             f"starting with {nm.cell(start)}.",
             "legend": {
                 "blue": f"all of these are {v}, or none are",
-                "yellow": f"the other colour: one colour holds the {v}s",
+                "yellow": f"the other color: one color holds the {v}s",
             },
             "annotations": [ann(start)],
         }
     ]
     seen, queue = {start}, [start]
-    why = f"If one of a house's only two places for {v} isn't {v}, the other is; so the two take different colours."
+    why = f"If one of a house's only two places for {v} isn't {v}, the other is; so the two take different colors."
     while queue:
         x = queue.pop(0)
         for y in sorted(adj[x], key=lambda c: nm.p.coords[c]):
@@ -763,7 +763,7 @@ def _h_pairarc(ctx):
         + " logic"
     )
     teach = (
-        f"{_cap('; '.join(parts))}. Rules between neighbouring cells work both ways: every candidate needs "
+        f"{_cap('; '.join(parts))}. Rules between neighboring cells work both ways: every candidate needs "
         f"at least one partner value that is still possible. Check the cells along dots and lines whose "
         f"partners have few candidates."
     )

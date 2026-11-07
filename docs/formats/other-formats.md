@@ -79,7 +79,7 @@ pencilmark reads and writes these headers:
 | `S9B`, `S6B` | classic 9×9, 6×6 | one `box_grid` |
 | `X9B` | Sudoku X | + both main diagonals (`region` kind `diagonal`) |
 | `W9B` | Windoku | + the 4 windows (`region` kind `window`) |
-| `C9B` | Colour Sudoku | + 9 groups at the same position in every box (`region` kind `disjoint`) |
+| `C9B` | Color Sudoku | + 9 groups at the same position in every box (`region` kind `disjoint`) |
 | `J9B` | Jigsaw | `box` rules |
 | `L9B`, `L6C` | Killer 9×9, 6×6 | + `cage` rules (L6C: `+` cages only) |
 | `M9B` | Killer Jigsaw | `box` and `cage` rules |
@@ -136,10 +136,10 @@ steps: `fetch` (page to record), `decode` (string to the site's JSON) and `to_do
   with no family is refused by name. So are a clue whose number is text, and puzzles whose setter lists extra rules
   in the description.
 - Settings that change the meaning become rules: a whisper's difference, and the "negative constraint" of white
-  and black dots (a `neighbours` rule that exempts the marked pairs). Line segments that touch are joined into one
+  and black dots (a `neighbors` rule that exempts the marked pairs). Line segments that touch are joined into one
   line, as the site joins them for renban, palindrome, region-sum and consecutive lines.
 - When the page carries the setter's solution, a reading that breaks it is refused (`ReadingMismatch`).
-- The setter's look is kept as cosmetic `style` on each rule: colours, line width, outline, opacity, shape size and
-  angle. Cell colours become one `fill` decoration, with several colours in a cell kept as several parts. The
+- The setter's look is kept as cosmetic `style` on each rule: colors, line width, outline, opacity, shape size and
+  angle. Cell colors become one `fill` decoration, with several colors in a cell kept as several parts. The
   site's cosmetic lines, shapes, text and cages become `line`, `polygon`, `circle`, `rect` and `text` decorations.
   None of this changes the puzzle's meaning.

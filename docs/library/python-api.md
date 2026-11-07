@@ -63,7 +63,7 @@ The "pencilmark-grade" card of one puzzle ([Grade card](../formats/grade-card.md
 - `explain` *str, list of str or bool, optional* — Explanation levels for the steps: "notation", "short", "teach", or True for all three; "substeps" (only by name) tells each step as sub-steps with reasons and drawing annotations ([Grade card](../formats/grade-card.md) 5).
 - `quality` *dict, optional* — Which issue checks run and how ([Grade card](../formats/grade-card.md) 4): None = every check that is not opt in, at its own severity (the "default" preset); {} = none; {"preset": "standard"}; without a preset only the checks named run, e.g. {"trivial": {"limit": 0.5}, "trial": {"severity": "reject"}}.
 - `alternatives` *bool* — False skips the search for interchangeable techniques (each chip in contains lists one code). Band, difficulty and time are the same either way, and the card comes much faster.
-- `coloring` *bool* — Opt in to colouring as a solving method: colours kept through the solve (Colour Fill, Colour Single, Colour Pair, ...; [techniques](../grades/techniques.md), Colouring). Off by default: most solvers do not colour, and with it the hardest puzzles take much longer to grade.
+- `coloring` *bool* — Opt in to coloring as a solving method: colors kept through the solve (Color Fill, Color Single, Color Pair, ...; [techniques](../grades/techniques.md), Coloring). Off by default: most solvers do not color, and with it the hardest puzzles take much longer to grade.
 - `format` *str, optional* — The input's format (a pencilmark.read reader: "plain", "sudokuwiki", "pencilmark", "link", ...) instead of detecting it.
 
 **Returns**
@@ -239,7 +239,7 @@ Read a SudokuPad, f-puzzles, Penpa, Logic Masters or sudoku.coach link (or a sho
 
 ### `def write.pencilmark(x: str | dict | Path, *, solution: bool=False, describe: bool=False, style: bool=True, pretty: bool=True) -> str` {#write-pencilmark}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L76)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L133)
 
 pencilmark JSON text of x: canonical key order, one line per rule (pretty) or one line.
 
@@ -251,25 +251,25 @@ The pencilmark-puzzle dict of x, canonical. solution: add the solution (when the
 
 ### `def write.plain(x: str | dict | Path) -> str` {#write-plain}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L85)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L142)
 
 One string of D x D characters, '.' for an empty cell (classic sudoku with standard boxes only).
 
 ### `def write.grid(x: str | dict | Path) -> str` {#write-grid}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L93)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L150)
 
 Rows on lines, boxes separated by | and -+- lines (classic sudoku with standard boxes only).
 
 ### `def write.sudokuwiki(x: str | dict | Path) -> str` {#write-sudokuwiki}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L101)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L158)
 
 A sudokuwiki.org packed string (classic, jigsaw, X, windoku, killer and the other forms sudokuwiki has).
 
 ### `def write.ipuz(x: str | dict | Path) -> dict` {#write-ipuz}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L109)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L166)
 
 An ipuz 2 dict (classic, Latin square, diagonal, windoku, jigsaw and killer sudoku).
 

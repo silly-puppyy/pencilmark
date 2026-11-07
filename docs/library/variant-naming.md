@@ -4,7 +4,7 @@ description: "How describe() names a variant and writes its rules in words, from
 
 # How variants are named
 
-How `describe()` names a variant and writes its rules from the rules alone. This is library behaviour, not part of
+How `describe()` names a variant and writes its rules from the rules alone. This is library behavior, not part of
 any format: the names appear only in `meta.type` and in `describe()` output.
 
 `describe(puzzle)` names the variant and lists its rules **from the rules alone**, as an ordered map from a short name
@@ -28,7 +28,7 @@ describe=True)` and `write.pencilmark(..., describe=True)` use them only to fill
 `meta.rules_text` / `meta.variants`; they never overwrite them. The generator fills them only when the spec's `meta`
 asks ([Generator spec](../formats/generator-spec.md) 5.1).
 
-They come from a registry in code (`pencilmark/variants.py`), so they generalise across sizes (a 16×16 windoku, a 6×6
+They come from a registry in code (`pencilmark/variants.py`), so they generalize across sizes (a 16×16 windoku, a 6×6
 X).
 
 ## 1. Name
@@ -55,12 +55,12 @@ Sudoku".
   the variant is not defined for that size or box shape. For each grid area of the puzzle, every placement variant is
   run; if all the rules it returns are present in the puzzle (compared as type, kind and cell set; region kinds are
   drawing hints and are ignored), the variant applies and those rules are explained.
-- **Rule families** (killer, thermo, kropki, …) are recognised by rule type and kind; a family's negative rules join
+- **Rule families** (killer, thermo, kropki, …) are recognized by rule type and kind; a family's negative rules join
   it ("XV" with `{"type": "negative", "of": "xv"}`; a negative alone is "Non-XV").
 - `box` rules (boxes that are not a regular tiling) are "Jigsaw".
 - Anything left falls back to a generic family name ("Diagonals", "Windows", "Extra Regions", …).
 - On a multi-grid board, a variant or family whose rules lie in some grids only says so at the end of its sentence:
-  "Only in the top-left grid." Grids are named by position (top-left, centre, …), or by origin ("grid at r7c7") when
+  "Only in the top-left grid." Grids are named by position (top-left, center, …), or by origin ("grid at r7c7") when
   positions would be ambiguous.
 
 ## 3. Placement variants (geometric definitions)
@@ -73,9 +73,9 @@ For porting: a grid area has size n, boxes bh × bw, local rows and columns 0 �
 | Windoku (Hyper, NRC) | boxes, n/bh ≥ 2 and n/bw ≥ 2 | a bh × bw `region` window at every (1 + i(bh+1), 1 + j(bw+1)), i < n/bh − 1, j < n/bw − 1, that fits inside the grid's inner border (9×9: 4 windows at r2c2, r2c6, r6c2, r6c6; 16×16: 9) |
 | Argyle | n = 9 | `region` diagonals of 8 cells from (0,1), (1,0) going down-right and from (0,7), (1,8) going down-left; of 5 cells from (0,4) going down-left and down-right, from (4,0) down-right and (4,8) down-left |
 | Asterisk | n = 9 | one `region`: (1,4) (2,2) (2,6) (4,1) (4,4) (4,7) (6,2) (6,6) (7,4) |
-| Centre-dot (Center dot) | boxes with odd bh and bw | one `region`: the centre cell (br + ⌊bh/2⌋, bc + ⌊bw/2⌋) of every box |
+| Center-dot (Center dot) | boxes with odd bh and bw | one `region`: the center cell (br + ⌊bh/2⌋, bc + ⌊bw/2⌋) of every box |
 | Girandola | n = 9 | one `region`: (0,0) (0,8) (1,4) (4,1) (4,4) (4,7) (7,4) (8,0) (8,8) |
-| Disjoint Groups (Colour) | boxes | bh·bw `region`s: for each in-box position (a, b), the cells (br + a, bc + b) of every box |
+| Disjoint Groups (Color) | boxes | bh·bw `region`s: for each in-box position (a, b), the cells (br + a, bc + b) of every box |
 
 ## 4. Rule families
 
@@ -86,7 +86,7 @@ Modular, Parity, Zipper, Between Lines, Lockout, Double Arrow, Kropki (white dot
 Non-Kropki), XV (negative alone: Non-XV), Difference, Sum Pairs, Product, Ratio, Greater-Than, Battenburg, Mathrax,
 Exclusion, Quadruple (`contains`), Cupid (`appears`), Clone, Twin (`isomorphic`), Odd-Even, Low-High, Digit Class,
 Double / Counting Circles / Count (`count`), Distinct Count, Equal Sums, Vudoku, Entropy (`global_entropy`),
-Anti-Knight, Anti-King, Non-Consecutive, Neighbours (generic), Relation, Custom (vendor rules), Sukaku
+Anti-Knight, Anti-King, Non-Consecutive, Neighbors (generic), Relation, Custom (vendor rules), Sukaku
 (`candidates`). Each has one sentence, filled from its rules (whisper gap, sandwich digits, scope "within the same box",
 "All X's and V's are given." for a negative, …).
 

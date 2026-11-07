@@ -1,5 +1,5 @@
-"""Identity layer (params colouring, experiment): the Python mirror of the class state, the held-step accounting and
-the two-colour moves on a hand-made position."""
+"""Identity layer (params coloring, experiment): the Python mirror of the class state, the held-step accounting and
+the two-color moves on a hand-made position."""
 
 import json
 from pathlib import Path
@@ -38,7 +38,7 @@ def test_id_held_accounting():
         (None, [], [(J, 30, 20)]),  # join 20 = 30, never used: held
         (None, [], [(NEQ, 40, 0)]),  # difference, used by step 4's trap
         (None, [(10, 5)], [(USE, 0, 0)]),  # propagation in class 0
-        (None, [(50, 1)], [(USE, 0, 0), (USE, 40, 0)]),  # sees both colours
+        (None, [(50, 1)], [(USE, 0, 0), (USE, 40, 0)]),  # sees both colors
     ]
     assert CB.id_held(81, {}, steps) == [False, True, False, False, False]
 
@@ -53,7 +53,7 @@ def test_class_pair_and_trap_listed():
     cand[0] = cand[1] = (1 << 2) | (1 << 5)  # r1c1, r1c2: 3 / 6
     ms = CB.state_moves(p, P, cand=cand, disabled=off, labels=(None, None, [0] * 81))
     assert [m.get("idfx") for m in ms if m["tech"] == S.CLASS_PAIR] == [[(NEQ, 1, 0)]]
-    idc = [1, 2] + [0] * 79 + [1, 2]  # after it: two colours
+    idc = [1, 2] + [0] * 79 + [1, 2]  # after it: two colors
     ms = CB.state_moves(p, P, cand=cand, disabled=off, labels=(None, None, idc))
     trap = [m for m in ms if m["tech"] == S.CLASS_TRAP]
     assert len(trap) == 1 and {c for c, _ in trap[0]["elim"]} == set(range(2, 9)) | {9, 10, 11, 18, 19, 20}
@@ -61,8 +61,8 @@ def test_class_pair_and_trap_listed():
 
 
 def test_colour_legend_kept_for_the_solve():
-    """colouring sub-steps: each colour class keeps one colour name for the whole solve, with a legend (its possible
-    digits) the first time; a cell joining an existing colour says so, without a new legend"""
+    """coloring sub-steps: each color class keeps one color name for the whole solve, with a legend (its possible
+    digits) the first time; a cell joining an existing color says so, without a new legend"""
     from pencilmark import band_path as BP
 
     p = pencilmark.api._load("." * 81)
@@ -85,7 +85,7 @@ GOLDEN = Path(__file__).parent / "golden"
 
 
 def test_colouring_never_below_medium():
-    """colouring is a concept to learn (user 2026-11-05): every colouring code is Medium or harder, and no Very Easy /
+    """coloring is a concept to learn (user 2026-11-05): every coloring code is Medium or harder, and no Very Easy /
     Easy golden card lists one"""
     from pencilmark import registry as R
 
@@ -100,7 +100,7 @@ def test_colouring_never_below_medium():
 
 @pytest.mark.slow
 def test_colouring_switch_leaves_easy_cards_alone():
-    """the solve path stays easiest-first: with colouring switched (on, since it is opt in), Very Easy / Easy
+    """the solve path stays easiest-first: with coloring switched (on, since it is opt in), Very Easy / Easy
     golden cards keep their band and list"""
     from pencilmark import grader_model as GM
 
@@ -124,13 +124,13 @@ def test_colouring_switch_leaves_easy_cards_alone():
 
 
 def test_colour_pointing():
-    """a colour's places in box 1 all lie in column 1 (CtC, Restricted Access: "orange is in one of these two
-    positions"): the colour's other places in column 1 are not that colour"""
+    """a color's places in box 1 all lie in column 1 (CtC, Restricted Access: "orange is in one of these two
+    positions"): the color's other places in column 1 are not that color"""
     p = pencilmark.api._load("." * 81)
     P = dict(api._params("human"), colouring=1)
     full = (1 << 9) - 1
     cand = [full] * 81
-    m1, m2 = 1 * 9 + 3, 3 * 9 + 1  # r2c4, r4c2: one colour, digits 1 / 2
+    m1, m2 = 1 * 9 + 3, 3 * 9 + 1  # r2c4, r4c2: one color, digits 1 / 2
     cand[m1] = cand[m2] = 0b11
     for c in (0 * 9 + 2, 2 * 9 + 2):  # r1c3, r3c3 can't hold it: box 1's places are r1c1, r3c1
         cand[c] = full & ~0b11

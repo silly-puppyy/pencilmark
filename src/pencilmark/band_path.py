@@ -162,8 +162,8 @@ def band_path(
     """solve band by band (see module doc). Moves are taken in full-notes mode: each placement clears its peers.
     target = a cell: stop once it is placed, preferring (within the current band) a move that places it -- "what does
     it take to place this cell from here". max_band: stop (unsolved) where only a harder move would continue -- contents()
-    reruns can only count if they stay in the card's band, so they never list above it. keep_held: keep colour-only
-    steps no later step used (the fog route: a colour may pay off after the next reveal). stop_cells: stop right after
+    reruns can only count if they stay in the card's band, so they never list above it. keep_held: keep color-only
+    steps no later step used (the fog route: a color may pay off after the next reveal). stop_cells: stop right after
     a placement in one of these cells (the fog route: a placement that lights new cells ends the round)."""
     if not hasattr(p, "groups_of"):
         p.finalize()
@@ -184,7 +184,7 @@ def band_path(
         if vals[c]:
             for x in p.peer_list[c]:
                 cand[x] &= ~(1 << (vals[c] - 1))
-    # regions to find: label per cell and label candidates (the engine normalises them on every call)
+    # regions to find: label per cell and label candidates (the engine normalizes them on every call)
     chaos = any(c_.get("type") == "chaos" for c_ in getattr(p, "constraints", ()))
     lab = [0] * N if chaos else None
     lcand = [0] * N if chaos else None
@@ -192,7 +192,7 @@ def band_path(
         if c_.get("type") == "chaos":
             for x in c_["cells"]:
                 lcand[x] = (1 << D) - 1
-    # identity layer (params colouring): colour class per cell (0 none), canonical ids as the engine keeps them
+    # identity layer (params coloring): color class per cell (0 none), canonical ids as the engine keeps them
     ids = bool(P.get("colouring"))
     idc = [0] * N if ids else None
     labels = lambda: (lab, lcand, idc) if chaos or ids else None  # noqa: E731
@@ -229,7 +229,7 @@ def band_path(
         if ids:  # class joins and differences; a placement may free a class
             CB.id_apply(idc, vals, m.get("idfx"))
 
-    def acts(m):  # the move changes the state (a digit, a region label or a colour class)
+    def acts(m):  # the move changes the state (a digit, a region label or a color class)
         return (
             m["place"]
             or m["elim"]
@@ -512,7 +512,7 @@ def _late_bound(techs):
 
 def _route_ok(bp, alt, code, extra=()):
     """alt (a route with `code` banned) keeps bp's band, uses nothing new except `extra` and special cases of what's
-    listed, and moves code's work only to techniques of its band or lower that aren't generalisations of it."""
+    listed, and moves code's work only to techniques of its band or lower that aren't generalizations of it."""
     if not alt["solved"] or alt["band_index"] != bp["band_index"]:
         return False
     keep = (set(bp["profile"]) - {code}) | set(extra)
@@ -527,9 +527,9 @@ def _route_ok(bp, alt, code, extra=()):
 def _check(bp, code, ban, extra=()):
     """(guard, prefix) for the route that bans `ban` to test removing / replacing `code`: the guard stops it at the
     first step that already makes _route_ok fail (a band above the card's, something new not covered, or the work
-    going to a harder technique or a generalisation of `code` -- counts only grow, so the verdict is final).
+    going to a harder technique or a generalization of `code` -- counts only grow, so the verdict is final).
     The prefix (base route up to the first banned step) is NOT used by contents(): a whole-technique ban also removes
-    composite moves built on it (a "notes in the head" single using innies / outies is labelled MSI), so a banned
+    composite moves built on it (a "notes in the head" single using innies / outies is labeled MSI), so a banned
     route can differ before the banned code's first use."""
     B = bp["band_index"]
     keep = (set(bp["profile"]) - {code}) | set(extra)
@@ -570,7 +570,7 @@ def _states(p, steps):
     for cells in chaos:
         for x in cells:
             lcand[x] = (1 << D) - 1
-    ids = any("idfx" in st for st in steps)  # identity layer: the route carries its colour classes
+    ids = any("idfx" in st for st in steps)  # identity layer: the route carries its color classes
     idc = [0] * N
     for st in steps:
         q = copy.copy(p)
@@ -607,7 +607,7 @@ def contents(p, P, alternatives=True, deadline=None, base=None):
     1. band_path (easy to hard, simplest technique first).
     2. Shrink: each listed technique is tried for removal (banned by its exact code), later in the study order first,
        so the simpler of two interchangeable ones stays; kept only if _route_ok (same band, nothing new but special
-       cases of what's listed, its work not moved to a harder technique or a generalisation of it).
+       cases of what's listed, its work not moved to a harder technique or a generalization of it).
     3. Alternatives: for each listed technique X, every same-band technique Y that is NOT on X's subset chain (neither
        is a special case of the other) and was available where X was used, is tested by banning X: if the puzzle then
        solves with the listed techniques plus Y (_route_ok, Y actually used), X/Y is a joint chip -- "solvable if you
@@ -710,7 +710,7 @@ def _contents(p, P, alternatives, deadline=None, base=None):
                 alt = band_path(p, P, ban_codes=base | others, guard=g_, max_band=bp["band_index"])
                 if alt["profile"].get(y) and _route_ok(bp, alt, code, extra={y}):
                     alts.setdefault(code, []).append(y)
-    for code, ys in list(alts.items()):  # keep the most specific: drop an alternative that generalises another
+    for code, ys in list(alts.items()):  # keep the most specific: drop an alternative that generalizes another
         chip = [code] + ys  # one in the same chip (a mental subset working implies NPR works)
         alts[code] = [y for y in ys if not any(z != y and y in SUPERSETS.get(z, set()) for z in chip)]
     out = dict(bp, removed=removed, alternatives={c: ys for c, ys in alts.items() if ys}, profile=fold(bp["profile"]))
@@ -732,7 +732,7 @@ def fold(profile):
 
 
 def allowed(profile, banned):
-    """content filter: no hint is a banned technique or a generalisation of one (not ready for Skyscrapers means not
+    """content filter: no hint is a banned technique or a generalization of one (not ready for Skyscrapers means not
     ready for Turbot Fish / X-Chains either). Special cases of a banned code stay allowed (an X-Wing is fine when
     Skyscrapers are banned)."""
     ban = set(banned)
@@ -826,11 +826,11 @@ def step_notation(p, st, just=None):
     return f"{name}: {pat + ' => ' if pat else ''}{res}"
 
 
-REGION_COLOURS = ("yellow", "green", "blue", "purple", "orange", "pink", "cyan", "grey", "brown")
+REGION_COLOURS = ("yellow", "green", "blue", "purple", "orange", "pink", "cyan", "gray", "brown")
 
 
 def _region_substeps(p, st, ex, lab, region_colour):
-    """regions to find: the step as sub-steps; each region keeps one colour for the whole solve (a legend the first
+    """regions to find: the step as sub-steps; each region keeps one color for the whole solve (a legend the first
     time), every cell known to be in the step's region drawn in it; updates lab (cell -> label) in place"""
     from .explain.base import Namer
 
@@ -866,7 +866,7 @@ def _region_substeps(p, st, ex, lab, region_colour):
         for k, cs in sorted(by.items()):
             cs = sorted(cs, key=lambda x: p.coords[x])
             known = sorted((x for x, kk in lab.items() if kk == k), key=lambda x: p.coords[x])
-            if k not in region_colour and known:  # first mention of a region with a known cell: its colour from now on
+            if k not in region_colour and known:  # first mention of a region with a known cell: its color from now on
                 region_colour[k] = REGION_COLOURS[len(region_colour) % len(REGION_COLOURS)]
                 legend[region_colour[k]] = f"region {k}"
             where = f"the {region_colour[k]} region" if k in region_colour else f"region {k}"
@@ -885,13 +885,13 @@ def _region_substeps(p, st, ex, lab, region_colour):
     return out
 
 
-CLASS_COLOURS = ("orange", "green", "purple", "cyan", "pink", "brown", "grey", "yellow", "blue")
+CLASS_COLOURS = ("orange", "green", "purple", "cyan", "pink", "brown", "gray", "yellow", "blue")
 
 
 def _class_substeps(p, st, ex, idc, vals, cand, class_colour):
-    """identity layer: a step's colour work as sub-steps. Each colour class (cells holding one unknown digit) keeps one
-    colour for the whole solve, with a legend the first time it appears ("orange: an unknown digit (3, 5 or 6)"); two
-    classes that merge keep the older colour. Updates idc (class per cell) and class_colour (class id -> colour) in
+    """identity layer: a step's color work as sub-steps. Each color class (cells holding one unknown digit) keeps one
+    color for the whole solve, with a legend the first time it appears ("orange: an unknown digit (3, 5 or 6)"); two
+    classes that merge keep the older color. Updates idc (class per cell) and class_colour (class id -> color) in
     place; None for a step without joins or differences."""
     from .explain.base import Namer
 
@@ -907,7 +907,7 @@ def _class_substeps(p, st, ex, idc, vals, cand, class_colour):
     for c in range(N):
         if idc[c]:
             cls.setdefault(idc[c], []).append(c)
-    for k, ms in cls.items():  # a class inherits the colour of the oldest coloured class it absorbed
+    for k, ms in cls.items():  # a class inherits the color of the oldest colored class it absorbed
         olds = sorted({before[c] for c in ms if before[c] and before[c] in class_colour})
         if k not in class_colour and olds:
             class_colour[k] = class_colour[olds[0]]
@@ -941,7 +941,7 @@ def _class_substeps(p, st, ex, idc, vals, cand, class_colour):
     for k, c, a in fx:
         if k == CB.AE_ID_JOIN and idc[c] in class_colour:
             col = class_colour[idc[c]]
-            if col in legend:  # a new colour: both cells start it
+            if col in legend:  # a new color: both cells start it
                 parts.append(f"{nm.cell(c)} and {nm.cell(a)} are {col}")
             else:
                 new = [x for x in (c, a) if before[x] != idc[x] and not (before[x] and before[x] in class_colour)]
@@ -954,7 +954,7 @@ def _class_substeps(p, st, ex, idc, vals, cand, class_colour):
         sub["annotations"] = [dict(x, id=i + 1) for i, x in enumerate(ann)]
     out = list(ex.get("substeps") or ()) or [sub]
     if out[0] is not sub:
-        out.append({k: v for k, v in sub.items() if k != "text"} | {"text": "Colours: " + "; ".join(parts) + "."})
+        out.append({k: v for k, v in sub.items() if k != "text"} | {"text": "Colors: " + "; ".join(parts) + "."})
     elif parts:
         out.append({"text": "So " + "; ".join(parts) + "."})
     return out
@@ -974,8 +974,8 @@ def explain_steps(p, P, steps):
     N = p.N
     vals, cand = start_position(p)
     out = []
-    lab, region_colour = {}, {}  # regions to find: cell -> region label known so far; label -> colour name (fixed)
-    ids = any("idfx" in st for st in steps)  # identity layer: colour classes, one colour each for the whole solve
+    lab, region_colour = {}, {}  # regions to find: cell -> region label known so far; label -> color name (fixed)
+    ids = any("idfx" in st for st in steps)  # identity layer: color classes, one color each for the whole solve
     idc, class_colour = [0] * N, {}
     for st in steps:
         q = copy.copy(p)
@@ -1104,9 +1104,9 @@ def written_marks(p, steps, pos, P):
     """the marks a casual classic solver would have on paper at each position (pos = positions(p, steps)), following
     the engine's note model (params notes_live, snyder_max, notes_small, notes_lazy; docs/research/notes_dynamics.md):
     corner = position notes (a digit with 2..snyder_max places left in a box by the placed digits, noted once, from the
-    start); centre = candidate lists, written when notes start (the first step that is neither direct nor worked in the
+    start); center = candidate lists, written when notes start (the first step that is neither direct nor worked in the
     head) in the cells with <= notes_small candidates, then in every cell a step uses. Marks show only digits that are
-    still candidates. -> [{cell index: (corner digits, centre digits)}] per position; None when the model is off."""
+    still candidates. -> [{cell index: (corner digits, center digits)}] per position; None when the model is off."""
     from .scoring import MENTAL
 
     live, lazy = bool(P.get("notes_live")), bool(P.get("notes_lazy"))
@@ -1164,18 +1164,18 @@ def written_marks(p, steps, pos, P):
 
 
 MAX_COLOUR_PAIRS = 3
-COLOUR_PAIRS = (("green", "purple"), ("blue", "yellow"), ("orange", "cyan"), ("pink", "grey"), ("red", "brown"))
+COLOUR_PAIRS = (("green", "purple"), ("blue", "yellow"), ("orange", "cyan"), ("pink", "gray"), ("red", "brown"))
 
 
 def written_colours(p, pos, P):
-    """the identity colours an expert would have painted at each position (pos = positions(p, steps); params
-    notes_colours): pair colouring as hosts do it ("colour the sevens and nines against each other", CtC solves):
+    """the identity colors an expert would have painted at each position (pos = positions(p, steps); params
+    notes_colours): pair coloring as hosts do it ("color the sevens and nines against each other", CtC solves):
     for a digit pair {a, b}, the cells whose candidates are exactly {a, b}; two of them in one house hold different
-    digits, so they take opposite colours of a colour pair (which colour is a and which b is still open). Each colour
+    digits, so they take opposite colors of a color pair (which color is a and which b is still open). Each color
     stands for one unknown digit and is tracked further: in a complete house without it, the single open cell that
     can hold one of its digits and sees none of its cells joins it; cells an equality rule joins (palindromes,
-    clones) share it. A pair coloured only in its two seed cells is left out (the centre marks show a naked pair). A
-    colour pair keeps its names while its first cell stays in it; at most MAX_COLOUR_PAIRS pairs, the largest.
+    clones) share it. A pair colored only in its two seed cells is left out (the center marks show a naked pair). A
+    color pair keeps its names while its first cell stays in it; at most MAX_COLOUR_PAIRS pairs, the largest.
     -> [[{"color", "cells", "digits", "opposite"}]] per position (cell indices); None when the model is off."""
     if not P.get("notes_colours"):
         return None
@@ -1185,7 +1185,7 @@ def written_colours(p, pos, P):
         if r[0] == "eq":
             eq.setdefault(r[1], set()).add(r[2])
             eq.setdefault(r[2], set()).add(r[1])
-    names = {}  # (pair mask, first cell) -> colour pair, kept while it lasts
+    names = {}  # (pair mask, first cell) -> color pair, kept while it lasts
 
     def grow(col, m, vals, cand):
         changed = True
@@ -1198,7 +1198,7 @@ def written_colours(p, pos, P):
                         changed = True
             for h in houses:
                 if any(x in col for x in h) or any(vals[x] and (1 << (vals[x] - 1)) & m for x in h):
-                    continue  # the colour is already here, or its digit may be one placed here
+                    continue  # the color is already here, or its digit may be one placed here
                 opts = [x for x in h if not vals[x] and cand[x] & m and not any(y in col for y in p.peer_list[x])]
                 if len(opts) == 1:
                     col.add(opts[0])
@@ -1231,14 +1231,14 @@ def written_colours(p, pos, P):
                     grow(col, m, vals, cand)
                     cols.append(col)
                 if len(cols[0]) + len(cols[1]) < 3:
-                    continue  # a bare naked pair: the centre marks already show it, nobody colours it
+                    continue  # a bare naked pair: the center marks already show it, nobody colors it
                 layer.append(((m, min(comp)), m, cols))
-        # hosts keep about two colours on the board, rarely more than four to six (CtC action logs): the largest pairs
+        # hosts keep about two colors on the board, rarely more than four to six (CtC action logs): the largest pairs
         layer.sort(key=lambda e: -(len(e[2][0]) + len(e[2][1])))
         taken, shown = set(), []
         for key, m, cols in layer[:MAX_COLOUR_PAIRS]:
             pair = names.get(key)
-            if pair is None or pair in taken:  # a colour keeps its names unless another pair on the board has them
+            if pair is None or pair in taken:  # a color keeps its names unless another pair on the board has them
                 pair = next(x for x in COLOUR_PAIRS if x not in taken)
                 names[key] = pair
             taken.add(pair)
