@@ -368,6 +368,19 @@ def render(doc, dark=False, cell=48, annotate=False, labels=False, background=Tr
                         anchor="start",
                     ),
                 )
+            elif t == "contains":  # quadruple: a circle on the shared corner, its digits in a 2 x 2 grid (sudoku.coach)
+                ds = list(r["digits"])
+                add(
+                    "clues",
+                    f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{0.3 * u:.1f}" fill="{T["clue_bg"]}" stroke="{T["given"]}" '
+                    f'stroke-width="1"/>',
+                )
+                g = 0.12 * u  # half the spacing of the 2 x 2 grid
+                spots = {1: [(0, 0)], 2: [(-1, 0), (1, 0)], 3: [(-1, -1), (1, -1), (0, 1)]}.get(
+                    len(ds), [(-1, -1), (1, -1), (-1, 1), (1, 1)]
+                )
+                for d, (dx, dy) in zip(ds, spots):
+                    add("clues", small_text(x + dx * g, y + dy * g, d, size=0.22))
             elif k == "battenburg":
                 s = 0.15 * u
                 for i, (dx, dy) in enumerate(((-1, -1), (0, -1), (-1, 0), (0, 0))):

@@ -92,20 +92,20 @@
  "annotation": {
   "$comment": "named colours of step annotations and the trace's colour layer (grade-card.md 5, 6), drawn over the cell at this opacity; a cell with n colours is split into n wedges from its centre whose ends cut the cell's outline into n equal lengths, the first cut 25/360 of the way round clockwise from the top centre (as SudokuPad draws several colours in one cell)",
   "opacity": {
-   "light": 0.6,
+   "light": 0.65,
    "dark": 0.5
   },
   "light": {
-   "yellow": "#ffe14d",
-   "blue": "#4f97f0",
-   "green": "#5cbf68",
-   "purple": "#a77fdc",
-   "orange": "#f59a3c",
-   "pink": "#f294b4",
-   "cyan": "#4fcde0",
-   "grey": "#a9a9a9",
-   "brown": "#b3874f",
-   "red": "#e5483f"
+   "yellow": "#e0c644",
+   "blue": "#4685d3",
+   "green": "#51a85c",
+   "purple": "#9370c2",
+   "orange": "#d88835",
+   "pink": "#d5829e",
+   "cyan": "#46b4c5",
+   "grey": "#959595",
+   "brown": "#9e7746",
+   "red": "#ca3f37"
   },
   "dark": {
    "yellow": "#e0c22e",
