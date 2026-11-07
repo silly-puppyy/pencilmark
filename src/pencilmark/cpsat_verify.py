@@ -19,6 +19,8 @@ from . import model as M
 _log = logging.getLogger(__name__)
 NODE_LIMIT = 20_000_000
 QUICK_NODES = 100_000  # the C++ search's share before CP-SAT, when OR-Tools is installed (about 0.3 s)
+QUICK_SECONDS = 2.0  # the quick C++ pass's time limit when CP-SAT can take over (2026-11-07: a global-entropy puzzle
+# spent 60 s in 100,000 nodes; CP-SAT settles it in 0.5 s)
 
 # constraint types the checker models (the same set the CP-SAT model below encodes); anything else -> undecided
 _CON_TYPES = {
@@ -766,7 +768,9 @@ def _decide(p, limit, node_limit, time_limit):
     """decide() and the search that settled it"""
     ortools = have_ortools()
     first = min(node_limit, QUICK_NODES) if ortools else node_limit
-    sols, complete = _engine(p, limit, first, time_limit)
+    # the quick pass is quick in time too: where each node is costly (global rules, zero givens) its node budget could
+    # take the whole time limit before CP-SAT (often under a second) gets a turn
+    sols, complete = _engine(p, limit, first, min(time_limit, QUICK_SECONDS) if ortools else time_limit)
     if complete or len(sols) >= limit:
         return sols, True, "the C++ search"
     if ortools:
