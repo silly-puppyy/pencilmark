@@ -14,14 +14,18 @@ from __future__ import annotations
 from pathlib import Path
 
 
-def document(x: str | dict | Path, *, solution: bool = False, describe: bool = False) -> dict:
+def document(x: str | dict | Path, *, solution: bool = False, describe: bool = False, style: bool = True) -> dict:
     """The pencilmark-puzzle dict of x, canonical. solution: add the solution (when the puzzle has exactly one);
-    describe: fill an empty meta.type / meta.rules_text / meta.variants (never overwritten)."""
+    describe: fill an empty meta.type / meta.rules_text / meta.variants (never overwritten); style=False: leave out
+    the drawing (the rules' style, the top-level style and decorations)."""
     from .api import _load
     from .exchange import canonical
     from .export import read_meta
 
     doc = canonical(_source(x))
+    if not style:
+        doc = {k: v for k, v in doc.items() if k not in ("style", "decorations")}
+        doc["rules"] = [{k: v for k, v in r.items() if k != "style"} for r in doc.get("rules") or []]
     if solution and not doc.get("solution"):
         from .api import solve
         from .errors import Undecided
@@ -69,11 +73,13 @@ def _rebuilt(x):
     return export_puzzle(_load(src), meta=read_meta(src))
 
 
-def pencilmark(x: str | dict | Path, *, solution: bool = False, describe: bool = False, pretty: bool = True) -> str:
+def pencilmark(
+    x: str | dict | Path, *, solution: bool = False, describe: bool = False, style: bool = True, pretty: bool = True
+) -> str:
     """pencilmark JSON text of x: canonical key order, one line per rule (pretty) or one line."""
     from .exchange import dumps
 
-    return dumps(document(x, solution=solution, describe=describe), pretty=pretty)
+    return dumps(document(x, solution=solution, describe=describe, style=style), pretty=pretty)
 
 
 def plain(x: str | dict | Path) -> str:

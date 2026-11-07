@@ -66,13 +66,17 @@ pencilmark.rate(g, fields=["band", "issues", "reject"])
 
 ## Tune the checks
 
-Every check takes a `severity` (`reject`, `warning`, or `off`) and, where it has one, a `limit`:
+Without a `quality` object, `rate()` runs the `"default"` preset: every check that is not opt in, at its own severity.
+A `quality` object says exactly which checks run: a preset turns on its set (`"default"`, or `"standard"`, the five
+the generator examples use), and without a preset only the checks named run. Every check takes a `severity`
+(`reject`, `warning`, or `off`) and, where it has one, a `limit`:
 
 ```python
 card = pencilmark.rate(puzzle, fields=["issues", "reject"],
-                       quality={"trivial": {"limit": 0.7}, "thin": {"severity": "off"}})
+                       quality={"preset": "default", "trivial": {"limit": 0.7}, "thin": {"severity": "off"}})
 ```
 
-With `trivial` raised to 70%, the puzzle above passes (`issues` is empty, `reject` false).
+With `trivial` raised to 70%, the puzzle above passes (`issues` is empty, `reject` false). The opt-in checks
+(`monotone`, `winding`, `desert`, ...) run only when named: `{"preset": "default", "monotone": {"severity": "warning"}}`.
 
-On the command line the same settings are `--quality trivial.limit=0.7,thin.severity=off`.
+On the command line the same settings are `--quality preset=default,trivial.limit=0.7,thin.severity=off`.

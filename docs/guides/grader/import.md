@@ -141,8 +141,8 @@ text = pencilmark.write.pencilmark("https://f-puzzles.com/?load=N4IgzglgXgpiBcAC
 open("killer.json", "w").write(text)
 ```
 
-On the command line, `pencilmark convert links.txt --pretty` does the same for every line.
+On the command line, `pencilmark convert links.txt --solution` does the same for every line.
 
 A SudokuPad puzzle's look comes along: each rule takes the colour, width or shape of the element that draws it (a
 purple renban line stays purple) as its `style` ([Puzzle format](../../formats/puzzle-format.md) section 7), which
-renderers may use and solvers ignore. `pencilmark convert --no-style` leaves it out.
+renderers may use and solvers ignore. `pencilmark convert --no-style` and `write.pencilmark(..., style=False)` leave it out.

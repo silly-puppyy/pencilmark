@@ -49,7 +49,7 @@ def test_cli_parallel_same_output(variants):
 def test_cli_export_keeps_meta():
     exp = pencilmark.write.document(CLASSIC, solution=True, describe=True)
     exp["meta"].update(title="T", author="A")
-    out = json.loads(run(["convert", "-"], json.dumps(exp) + "\n")[0])
+    out = json.loads(run(["convert", "-", "--compact"], json.dumps(exp) + "\n")[0])
     assert out["meta"]["title"] == "T" and out["meta"]["author"] == "A"
     assert run(["fingerprint", "-"], json.dumps(exp) + "\n") == [pencilmark.fingerprint(exp)]
 

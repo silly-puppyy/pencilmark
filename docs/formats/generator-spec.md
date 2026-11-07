@@ -45,8 +45,8 @@ windmill, flower-4, tridoku, wing-3, sensei, shogun, sumo, twins, clueless-1 or 
 Rules with cells and no `count` are **locked**: every result carries them and its solution respects them. The
 generator takes rules of different digits (`region` kinds `diagonal`, `extra` and `window`; `neighbours` kinds
 `antiknight` and `antiking`) and pair rules on neighbours: the `neighbours` kind `nonconsecutive`, or any `op` with
-`step` (written back in canonical form: "no two orthogonal neighbours sum to 10" is the `negative` rule of X marks). Without a `where.band`, a layout's result is at most Hard (digging with every technique
-is slow on hundreds of cells). A super samurai with X diagonals on its top three grids is eight `box_grid` rules and six
+`step` (written back in canonical form: "no two orthogonal neighbours sum to 10" is the `negative` rule of X marks). Without a `where.band`, a layout's result is at most Hard, even with `"difficulty": "max"` (digging with every
+technique is slow on hundreds of cells); `info.warnings` says so. A super samurai with X diagonals on its top three grids is eight `box_grid` rules and six
 `region` `diagonal` rules.
 
 ## 2. Templates
@@ -119,8 +119,10 @@ Conditions on the result's card, using the card's keys ([Grade card](grade-card.
 ### 4.1 Publishing checks: `quality`
 
 `quality` (top level) is opt in: without it, or with `{}`, no check runs (a canonical writer drops `{}`). With it, a
-candidate that gets an issue of severity `reject` is not returned, and the run's `info.rejected` counts the candidates
-each check refused. The checks and their limits are those of the grade card ([Grade card](grade-card.md), section 4).
+candidate that gets an issue of severity `reject` is not returned, the run's `info.rejected` counts the candidates
+each check refused, and `info.issues` lists what the checks found on the returned puzzle (warnings). The object means
+what it means in `rate()`: the checks, their limits and the presets are those of the grade card
+([Grade card](grade-card.md), section 4).
 
 - `"preset": "standard"` turns on the standard set, each at severity `reject`: `decorative`, `trivial`, `trial`,
   `thin` and `unusual`. The preset is the only thing that turns on checks you do not name.

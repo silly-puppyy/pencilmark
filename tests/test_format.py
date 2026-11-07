@@ -1087,6 +1087,21 @@ def test_quality_preset():
         quality_limits({"preset": "lenient"})
 
 
+def test_quality_one_meaning():
+    """one quality object, one meaning in rate() and in a spec (grade-card.md 4): None = the default preset (every
+    check not opt in, at its own severity), {} = nothing, without a preset only the named checks"""
+    from pencilmark.publish_flags import OPT_IN, QUALITY, quality_limits
+
+    on = lambda q: {k for k, v in quality_limits(q).items() if v["severity"] != "off"}  # noqa: E731
+    assert on(None) == on({"preset": "default"}) == set(QUALITY) - set(OPT_IN)
+    assert on({}) == set() and on({"trial": {"severity": "reject"}}) == {"trial"}
+    assert on({"trivial": {"limit": 0.5}}) == {"trivial"} and on({"monotone": {"limit": 3}}) == {"monotone"}
+    d = pencilmark.read.auto(CLASSIC)
+    d["rules"].append({"type": "line", "kind": "thermo", "cells": ["r1c5", "r1c4"]})
+    assert "decorative" in {i["code"] for i in pencilmark.rate(d, fields=["issues"])["issues"]}
+    assert pencilmark.rate(d, fields=["issues"], quality={})["issues"] == []
+
+
 def test_quality_opt_in_checks():
     """opt-in checks are off by default; a severity or a limit turns one on"""
     import pencilmark as pm

@@ -47,7 +47,7 @@ toc_max_heading_level: 2
 
 ## Grading
 
-### `def rate(puzzle: str | dict | Path, *, max_seconds: float | None=None, mode: str='human', fields: list[str] | None=None, allow_guessing: bool=False, explain: bool | str | list[str] | None=None, quality: dict | None=None, alternatives: bool=True, colouring: bool=False, format: str | None=None) -> dict` {#rate}
+### `def rate(puzzle: str | dict | Path, *, max_seconds: float | None=None, mode: str='human', fields: list[str] | None=None, allow_guessing: bool=False, explain: bool | str | list[str] | None=None, quality: dict | None=None, alternatives: bool=True, coloring: bool=False, format: str | None=None) -> dict` {#rate}
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L110)
 
@@ -61,9 +61,9 @@ The "pencilmark-grade" card of one puzzle ([Grade card](../formats/grade-card.md
 - `fields` *list of str, optional* — The top-level fields to return. Default: difficulty, time, band, contains. Optional: band_index, issues, reject, warning (publishing checks), time_mean, time_pNN (any percentile 1-99, e.g. time_p80), time_dist, elapsed (wall seconds of the call), se (Sudoku Explainer-style ratings; classic sudoku only), steps (with `explain` for their explanations), trace (the board before and after each step), describe, symmetry. format, format_version and grader are always present.
 - `allow_guessing` *bool* — Guess where no technique applies (band "Unknown") instead of proving by full search (Trial and error, Extreme).
 - `explain` *str, list of str or bool, optional* — Explanation levels for the steps: "notation", "short", "teach", or True for all three; "substeps" (only by name) tells each step as sub-steps with reasons and drawing annotations ([Grade card](../formats/grade-card.md) 5).
-- `quality` *dict, optional* — Settings of the issue checks, e.g. {"trivial": {"limit": 0.5}, "trial": {"severity": "off"}} ([Grade card](../formats/grade-card.md) 4).
+- `quality` *dict, optional* — Which issue checks run and how ([Grade card](../formats/grade-card.md) 4): None = every check that is not opt in, at its own severity (the "default" preset); {} = none; {"preset": "standard"}; without a preset only the checks named run, e.g. {"trivial": {"limit": 0.5}, "trial": {"severity": "reject"}}.
 - `alternatives` *bool* — False skips the search for interchangeable techniques (each chip in contains lists one code). Band, difficulty and time are the same either way, and the card comes much faster.
-- `colouring` *bool* — Opt in to colouring as a solving method: colours kept through the solve (Colour Fill, Colour Single, Colour Pair, ...; [techniques](../grades/techniques.md), Colouring). Off by default: most solvers do not colour, and with it the hardest puzzles take much longer to grade.
+- `coloring` *bool* — Opt in to colouring as a solving method: colours kept through the solve (Colour Fill, Colour Single, Colour Pair, ...; [techniques](../grades/techniques.md), Colouring). Off by default: most solvers do not colour, and with it the hardest puzzles take much longer to grade.
 - `format` *str, optional* — The input's format (a pencilmark.read reader: "plain", "sudokuwiki", "pencilmark", "link", ...) instead of detecting it.
 
 **Returns**
@@ -77,9 +77,9 @@ The "pencilmark-grade" card of one puzzle ([Grade card](../formats/grade-card.md
 - *A puzzle whose uniqueness the engine cannot settle (max_seconds passed first, or the search hit its limit without*
 - *OR-Tools) is not an error: its card has band "Unknown" and a `reason`.*
 
-### `def rate_many(puzzles: list, *, jobs: int=1, max_seconds: float | None=None, mode: str='human', fields: list[str] | None=None, allow_guessing: bool=False, explain: bool | str | list[str] | None=None, quality: dict | None=None, alternatives: bool=True, colouring: bool=False) -> list[dict]` {#rate_many}
+### `def rate_many(puzzles: list, *, jobs: int=1, max_seconds: float | None=None, mode: str='human', fields: list[str] | None=None, allow_guessing: bool=False, explain: bool | str | list[str] | None=None, quality: dict | None=None, alternatives: bool=True, coloring: bool=False) -> list[dict]` {#rate_many}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L294)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L296)
 
 Cards for many puzzles, in input order.
 
@@ -87,7 +87,7 @@ Cards for many puzzles, in input order.
 
 - `puzzles` *iterable* — Puzzles in any form `rate` accepts.
 - `jobs` *int* — Worker processes; 1 rates in this process.
-- `max_seconds, mode, fields, allow_guessing, explain, quality, alternatives, colouring` — As for `rate`.
+- `max_seconds, mode, fields, allow_guessing, explain, quality, alternatives, coloring` — As for `rate`.
 
 **Returns**
 
@@ -95,7 +95,7 @@ Cards for many puzzles, in input order.
 
 ### `def describe(puzzle: str | dict | Path) -> dict` {#describe}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L442)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L444)
 
 The variant name and its rules in words, from the rules alone (pencilmark/variants.py).
 
@@ -111,7 +111,7 @@ The variant name and its rules in words, from the rules alone (pencilmark/varian
 
 ### `def solve(puzzle: str | dict | Path, *, format: str | None=None) -> list[int]` {#solve}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L331)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L333)
 
 The unique solution of a puzzle.
 
@@ -134,7 +134,7 @@ Uses the engine's exhaustive C++ search; CP-SAT (OR-Tools, optional) only when t
 
 ### `def count_solutions(puzzle: str | dict | Path, *, limit: int=1000, format: str | None=None) -> dict` {#count_solutions}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L372)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L374)
 
 How many solutions a puzzle has, counting up to a limit.
 
@@ -151,7 +151,7 @@ How many solutions a puzzle has, counting up to a limit.
 
 ### `def generate(spec: str | dict | Path) -> dict` {#generate}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L462)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L464)
 
 One puzzle for a "pencilmark-spec" request ([Generator spec](../formats/generator-spec.md)).
 
@@ -237,39 +237,39 @@ Read a SudokuPad, f-puzzles, Penpa, Logic Masters or sudoku.coach link (or a sho
 
 ## Writing (pencilmark.write)
 
-### `def write.pencilmark(x: str | dict | Path, *, solution: bool=False, describe: bool=False, pretty: bool=True) -> str` {#write-pencilmark}
+### `def write.pencilmark(x: str | dict | Path, *, solution: bool=False, describe: bool=False, style: bool=True, pretty: bool=True) -> str` {#write-pencilmark}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L72)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L76)
 
 pencilmark JSON text of x: canonical key order, one line per rule (pretty) or one line.
 
-### `def write.document(x: str | dict | Path, *, solution: bool=False, describe: bool=False) -> dict` {#write-document}
+### `def write.document(x: str | dict | Path, *, solution: bool=False, describe: bool=False, style: bool=True) -> dict` {#write-document}
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L17)
 
-The pencilmark-puzzle dict of x, canonical. solution: add the solution (when the puzzle has exactly one); describe: fill an empty meta.type / meta.rules_text / meta.variants (never overwritten).
+The pencilmark-puzzle dict of x, canonical. solution: add the solution (when the puzzle has exactly one); describe: fill an empty meta.type / meta.rules_text / meta.variants (never overwritten); style=False: leave out the drawing (the rules' style, the top-level style and decorations).
 
 ### `def write.plain(x: str | dict | Path) -> str` {#write-plain}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L79)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L85)
 
 One string of D x D characters, '.' for an empty cell (classic sudoku with standard boxes only).
 
 ### `def write.grid(x: str | dict | Path) -> str` {#write-grid}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L87)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L93)
 
 Rows on lines, boxes separated by | and -+- lines (classic sudoku with standard boxes only).
 
 ### `def write.sudokuwiki(x: str | dict | Path) -> str` {#write-sudokuwiki}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L95)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L101)
 
 A sudokuwiki.org packed string (classic, jigsaw, X, windoku, killer and the other forms sudokuwiki has).
 
 ### `def write.ipuz(x: str | dict | Path) -> dict` {#write-ipuz}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L103)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L109)
 
 An ipuz 2 dict (classic, Latin square, diagonal, windoku, jigsaw and killer sudoku).
 
@@ -277,7 +277,7 @@ An ipuz 2 dict (classic, Latin square, diagonal, windoku, jigsaw and killer sudo
 
 ### `def validate(doc: dict) -> bool` {#validate}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L418)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L420)
 
 Strict reading checks of a format_version 1 dict ([Puzzle format](../formats/puzzle-format.md) section 4).
 
@@ -295,7 +295,7 @@ Strict reading checks of a format_version 1 dict ([Puzzle format](../formats/puz
 
 ### `def fingerprint(puzzle: str | dict | Path) -> str` {#fingerprint}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L396)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L398)
 
 Content fingerprint of a puzzle: the SHA-256 of its canonical form, 64 hex digits.
 

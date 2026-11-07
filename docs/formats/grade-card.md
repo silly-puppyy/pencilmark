@@ -88,23 +88,29 @@ The checks run only when the card is asked for `issues` (or `reject`); a default
 `rules`, when present, lists the offending rules as indices into the `rules` array of the puzzle file that was graded
 (0-based; for other inputs, of the puzzle as `pencilmark.write.pencilmark` writes it); `ids` lists those rules' `id`s where they have one.
 
-Each check can be adjusted with a **quality object** keyed by code. Every entry is an object with `limit` (checks that
-have one) and / or `severity` (`"reject"`, `"warning"`, or `"off"` to turn the check off).
+Which checks run is set by a **quality object** keyed by code, with one meaning wherever it is taken (`rate()`, the CLI's
+`--quality`, a generator spec):
 
-A **preset** turns on a named set of checks and switches the others off: `{"preset": "standard"}` rejects a rule
-family nobody needs (`decorative`), a puzzle that is mostly given (`trivial`), a solve that needs trial or forcing
-(`trial`), candidate steps that do little (`thin`) and a difficulty outside the published range for its band
-(`unusual`). Checks named next to the preset adjust it:
-`{"preset": "standard", "thin": {"limit": 0.2}}`.
+- No quality object: the `"default"` preset (below). Only `rate()` has this case; a generator spec without `quality`
+  runs no checks.
+- `{}`: no checks.
+- A **preset** turns on a named set of checks and switches the others off. `{"preset": "default"}`: every check in the
+  table that is not opt in, at its own severity. `{"preset": "standard"}`: rejects a rule family nobody needs
+  (`decorative`), a puzzle that is mostly given (`trivial`), a solve that needs trial or forcing (`trial`), candidate
+  steps that do little (`thin`) and a difficulty outside the published range for its band (`unusual`).
+- Without a preset, only the checks named run. A check named next to a preset adjusts it:
+  `{"preset": "standard", "thin": {"limit": 0.2}}`.
+
+Every entry is an object with `limit` (checks that have one) and / or `severity` (`"reject"`, `"warning"`, or `"off"`);
+a named check without `severity` runs at its own.
 
 ```python
 pencilmark.rate(puzzle, fields=["issues", "reject", "warning"],
-                quality={"trivial": {"limit": 0.5}, "trial": {"severity": "reject"}, "tedious": {"severity": "off"}})
+                quality={"preset": "default", "trivial": {"limit": 0.5}, "trial": {"severity": "reject"}})
 ```
 
-CLI: `--quality trivial.limit=0.5,trial.severity=reject,tedious.severity=off`, or `--quality preset=standard`. The generator spec's `quality` block
-has the same shape and filters the candidates it generates; there it is opt in, and without a preset only the checks
-named run ([Generator spec](generator-spec.md), section 4.1).
+CLI: `--quality preset=default,trivial.limit=0.5,trial.severity=reject`, or `--quality preset=standard`. A generator
+spec's `quality` block filters the candidates it generates ([Generator spec](generator-spec.md), section 4.1).
 
 | Code | Severity when asked for | Meaning | Limit (default) |
 |---|---|---|---|

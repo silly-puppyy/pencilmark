@@ -20,6 +20,16 @@
   - `where.contains` has one shape, a list of codes the puzzle needs (each an entry of the card's `contains` with no
     alternative); the `{"codes": [...], "strict": true}` form is gone, and a lenient "an alternative will do" request
     is no longer offered (nothing used it).
+- **`quality` means one thing everywhere** (`rate()`, `--quality`, a generator spec): no object = the new
+  `"default"` preset (every check that is not opt in, at its own severity; `rate()` only, a spec runs nothing), `{}` =
+  no checks, a preset turns on its set, and without a preset only the checks named run. In 1.2 `rate()` treated
+  `{"trial": ...}` as "all checks, trial adjusted" while a spec ran only `trial`. Generated puzzles report what the
+  checks found in `info.issues` (1.2 dropped warnings).
+- **CLI and Python agree on `convert` / `write` defaults**: the solution is opt in (`--solution`, was on unless
+  `--no-solution`), output is one rule per line (`--compact` for one line, was the default), and `write.document` /
+  `write.pencilmark` take `style=False` like `--no-style` (which now also drops decorations and the top-level style).
+- `--steps` is the same as `steps` in `--fields` (it no longer turns on explanations; `--explain` does).
+- A multi-grid layout without `where.band` says in `info.warnings` that it was dug up to Hard.
 - **sudoku.coach reader**: `pencilmark.read.link("https://sudoku.coach/en/s/<id>")` and raw `SCv7_...` payloads, with
   the setter's colours and widths as style and cell colours as a `fill` decoration; the embedded solution is checked.
   Of 16,436 coach puzzles, 13,407 read, 0 crash; refused: extra rules written only in the description (2,293), older

@@ -308,6 +308,7 @@ def test_layout_generation():
         ]
         r = run(dict(spec(), board={"rows": rows, "cols": cols}, rules=grids, limits={"seconds": 60, "seed": 1}))
         assert r["info"]["givens"] == sum(1 for v in r["puzzle"]["givens"] if v)
+        assert r["info"]["warnings"] == [GA.LAYOUT_CAP]  # no where.band: dug up to Hard, and the result says so
         # the card is the one rate() gives the returned file: the generator numbers layout cells as the reader does
         # (row by row) and the refutation profile no longer falls to 0 when a capped search gave up (2026-11-01:
         # a butterfly killer's card said 7.9, rate() 8.9)

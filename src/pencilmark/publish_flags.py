@@ -91,22 +91,27 @@ AIM = {
                 "Hard": (7.90, 1.41, 6.2, 9.3), "Very Hard": (10.95, 2.26, 7.8, 13.9), "Expert": (10.88, 1.56, 9.2, 13.0)},
 }  # fmt: skip
 SEVERITIES = ("reject", "warning", "off")
-# presets (quality {"preset": name}): only these checks are on, at these severities; everything else is off; any check
-# named next to the preset overrides it. standard = a few common-sense rules (decorative, trivial, trial) and two
-# supported by published puzzles (thin: published Hard rarely below 0.26; unusual: outside the published range)
+# presets (quality {"preset": name}): only these checks are on, at these severities (None: the check's own);
+# everything else is off; any check named next to the preset overrides it. standard = a few common-sense rules
+# (decorative, trivial, trial) and two supported by published puzzles (thin: published Hard rarely below 0.26;
+# unusual: outside the published range). default = every check that is not opt in, at its own severity: what rate()
+# runs when asked for issues without a quality object
 PRESETS = {
     "standard": {"decorative": "reject", "trivial": "reject", "trial": "reject", "thin": "reject", "unusual": "reject"},
+    "default": {k: None for k in QUALITY if k not in OPT_IN},
 }
 
 
 def quality_limits(q=None):
     """quality object -> {check: {"limit": number or None, "severity": "reject" | "warning" | "off" | None}} for every check.
-    Each entry of q is an object with "limit" (checks with a limit: a number >= 0) and / or "severity"; severity None =
-    the check's own (docs/formats/grade-card.md 4). Raises ValueError for unknown checks, keys or values."""
-    out = {k: {"limit": v, "severity": "off" if k in OPT_IN else None} for k, v in QUALITY.items()}
+    One meaning everywhere (docs/formats/grade-card.md 4): None = the "default" preset (rate() asked for issues without
+    a quality object); {} = no checks; a preset turns on its checks; without a preset only the checks named run. Each
+    entry is an object with "limit" (checks with a limit: a number >= 0) and / or "severity"; severity None = the
+    check's own. Raises ValueError for unknown checks, keys or values."""
+    out = {k: {"limit": v, "severity": "off"} for k, v in QUALITY.items()}
     if q is not None and not isinstance(q, dict):
         raise ValueError(f'quality must be an object of checks, e.g. {{"trivial": {{"severity": "off"}}}}, got {q!r}')
-    q = dict(q or {})
+    q = {"preset": "default"} if q is None else dict(q)
     if "preset" in q:
         name = q.pop("preset")
         if name not in PRESETS:
@@ -127,8 +132,8 @@ def quality_limits(q=None):
             if isinstance(lim, bool) or not isinstance(lim, (int, float)) or lim < 0:
                 raise ValueError(f"quality {k} limit must be a number >= 0")
             out[k]["limit"] = lim
-            if k in OPT_IN and "severity" not in v and out[k]["severity"] == "off":
-                out[k]["severity"] = None  # setting an opt-in check's limit turns it on
+        if "severity" not in v and out[k]["severity"] == "off":
+            out[k]["severity"] = None  # naming a check turns it on, at its own severity
         if "severity" in v:
             if v["severity"] not in SEVERITIES:
                 raise ValueError(f"quality {k} severity must be one of {list(SEVERITIES)}")
@@ -138,13 +143,9 @@ def quality_limits(q=None):
 
 def spec_quality(q):
     """a generator spec's quality block -> the quality object its candidates are graded with, or None (no checks).
-    Quality is opt in: no block or {} runs nothing; a preset turns on its checks; without a preset only the checks
-    named run (docs/formats/generator-spec.md 4)"""
-    if not q:
-        return None
-    if "preset" in q:
-        return dict(q)
-    return {**{k: {"severity": "off"} for k in QUALITY if k not in q}, **q}
+    Quality is opt in: no block or {} runs nothing; otherwise the object means what it means in rate()
+    (quality_limits; docs/formats/generator-spec.md 4)"""
+    return dict(q) if q else None
 
 
 def _apply_severity(notes, q):

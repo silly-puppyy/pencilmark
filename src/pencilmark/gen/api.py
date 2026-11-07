@@ -419,6 +419,11 @@ NO_TARGET = (
     "no band or difficulty target, so the search is the broadest (every technique, up to Extreme) and can be slow on "
     "sparse variants: add where.band or where.difficulty to aim it"
 )
+# a layout without where.band is dug with techniques up to Hard (a failing check with every technique costs seconds on
+# hundreds of cells): said in info.warnings, so a "max" request that stops at Hard is not a surprise
+LAYOUT_CAP = (
+    "a multi-grid layout without where.band is dug with techniques up to Hard: add where.band for harder puzzles"
+)
 
 
 def band_aim(s, mode):
@@ -511,14 +516,16 @@ def generate(spec):
     meta_requests(doc.get("meta") or {}, None)  # a bad request fails before the run
     where = doc.get("where") if isinstance(doc.get("where"), dict) else {}  # a malformed where fails in spec_to_gen
     aimed = where.get("band") is not None or where.get("difficulty") is not None
+    gs = SF.spec_to_gen(doc)
+    hint = LAYOUT_CAP if gs.get("layout") and where.get("band") is None else None if aimed else NO_TARGET
     try:
-        r = _generate(SF.spec_to_gen(doc))
+        r = _generate(gs)
     except GenerationFailed as e:
-        if aimed:
+        if not hint:
             raise
-        raise GenerationFailed(f"{e.args[0]}; {NO_TARGET}", *e.args[1:]) from None
-    if not aimed:
-        r["info"]["warnings"] = [NO_TARGET]
+        raise GenerationFailed(f"{e.args[0]}; {hint}", *e.args[1:]) from None
+    if hint:
+        r["info"]["warnings"] = [hint]
     p = PJ.from_json(r["puzzle"])  # with the solution the puzzle was dug from: exporting needs no search
     p._pm_solution = [PJ._val(ch) for ch in r["puzzle"]["solution"]]
     from ..exchange import canonical
@@ -778,6 +785,8 @@ def _generate(spec):
             "seed": s.seed,
             **({"aimed_at": list(aim)} if aim else {}),  # a band alone: the difficulty window drawn for this run
             **({"aim_relaxed": True} if relaxed else {}),  # nothing in the window by half time: any in the band
+            # the spec's checks ran: what they found short of a reject (warnings), so a passed puzzle keeps its notes
+            **({"issues": qc.get("issues") or []} if quality is not None else {}),
         }
         if hunt is None:
             _log.info(

@@ -145,7 +145,9 @@ def rate(
         Explanation levels for the steps: "notation", "short", "teach", or True for all three; "substeps" (only by
         name) tells each step as sub-steps with reasons and drawing annotations (docs/formats/grade-card.md 5).
     quality : dict, optional
-        Settings of the issue checks, e.g. {"trivial": {"limit": 0.5}, "trial": {"severity": "off"}} (docs/formats/grade-card.md 4).
+        Which issue checks run and how (docs/formats/grade-card.md 4): None = every check that is not opt in, at its own
+        severity (the "default" preset); {} = none; {"preset": "standard"}; without a preset only the checks named run,
+        e.g. {"trivial": {"limit": 0.5}, "trial": {"severity": "reject"}}.
     alternatives : bool
         False skips the search for interchangeable techniques (each chip in contains lists one code). Band, difficulty
         and time are the same either way, and the card comes much faster.
@@ -224,7 +226,7 @@ def rate(
         if not sols:
             raise NoSolution("no solution")
         p._pm_solution = list(sols[0])  # proven unique: later stages reuse it instead of searching again
-        P = dict(_params(mode), allow_guess=bool(allow_guessing), quality=quality or {}, colouring=int(bool(coloring)))
+        P = dict(_params(mode), allow_guess=bool(allow_guessing), quality=quality, colouring=int(bool(coloring)))
         if no_route:
             g = EX.unknown_card(want, no_route)
             if "elapsed" in want:

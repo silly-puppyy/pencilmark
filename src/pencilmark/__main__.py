@@ -15,7 +15,7 @@
   python -m pencilmark count-solutions [FILE|-] [--limit N]   how many solutions per puzzle (">=N" at N)
   python -m pencilmark generate [SPEC|-] [--result]
                                        a puzzle for a "pencilmark-spec" request (docs/formats/generator-spec.md), as a pencilmark-puzzle file
-  python -m pencilmark convert [FILE|-] [--to pencilmark|plain|grid|sudokuwiki|ipuz] [--pretty] [--no-solution] [--no-style]
+  python -m pencilmark convert [FILE|-] [--to pencilmark|plain|grid|sudokuwiki|ipuz] [--solution] [--compact] [--no-style]
                                        each puzzle in another format; pencilmark JSON (docs/formats/puzzle-format.md) by default, canonical
   python -m pencilmark fingerprint [FILE|-]  the content fingerprint (64 hex digits) per puzzle
   python -m pencilmark describe [FILE|-]     variant name and rules per puzzle (JSON)
@@ -164,7 +164,7 @@ def report2(g, k=None):
 def _quality_arg(text):
     """--quality "preset=standard,trivial.limit=0.5" -> {"preset": "standard", "trivial": {"limit": 0.5}}"""
     if not text:
-        return {}
+        return None
     from .publish_flags import quality_limits
 
     out = {}
@@ -214,7 +214,7 @@ def _rate_one(args):
         explain = (
             a.explain.split(",")
             if a.explain
-            else (["notation", "short", "teach"][min(verbose, 3) - 1] if verbose else True if a.steps else None)
+            else (["notation", "short", "teach"][min(verbose, 3) - 1] if verbose else None)
         )
         try:
             g = api.rate(
@@ -321,17 +321,15 @@ def cmd_generate(a):
 
 
 def cmd_convert(a):
-    """`convert` command: print each input puzzle in the --to format (pencilmark JSON by default: with its solution
-    unless --no-solution, the rules' drawing styles unless --no-style, one line unless --pretty)"""
+    """`convert` command: print each input puzzle in the --to format (pencilmark JSON by default: one rule per line, or
+    one line with --compact; the solution with --solution; the drawing (styles, decorations) unless --no-style)"""
     from . import write
     from .exchange import dumps
 
     def one(k, obj):
         if a.to == "pencilmark":
-            d = write.document(obj, solution=not a.no_solution)
-            if a.no_style:
-                d = dict(d, rules=[{k2: v for k2, v in r.items() if k2 != "style"} for r in d["rules"]])
-            print(dumps(d, pretty=a.pretty), end="" if a.pretty else "\n", flush=True)
+            d = write.document(obj, solution=a.solution, style=not a.no_style)
+            print(dumps(d, pretty=not a.compact), end="\n" if a.compact else "", flush=True)
         elif a.to == "ipuz":
             print(json.dumps(write.ipuz(obj), ensure_ascii=False), flush=True)
         else:
@@ -409,7 +407,7 @@ def main(argv=None):
     r.add_argument(
         "--steps",
         action="store_true",
-        help="with --json: include the step-by-step solve (with both explanation levels)",
+        help="with --json: include the step list (the same as adding steps to --fields; --explain adds explanations)",
     )
     r.add_argument(
         "--quality",
@@ -463,9 +461,11 @@ def main(argv=None):
         default="pencilmark",
         help="output format",
     )
-    e.add_argument("--pretty", action="store_true")
-    e.add_argument("--no-solution", action="store_true", help="do not solve to add the solution")
-    e.add_argument("--no-style", action="store_true", help="leave out how the source drew the rules (colours, shapes)")
+    e.add_argument("--solution", action="store_true", help="solve to add the solution")
+    e.add_argument("--compact", action="store_true", help="one line per puzzle (default: one rule per line)")
+    e.add_argument(
+        "--no-style", action="store_true", help="leave out how the source drew the puzzle (styles, decorations)"
+    )
     e.set_defaults(fn=cmd_convert)
     f = sub.add_parser("fingerprint", parents=[common])
     f.add_argument("file", nargs="?")

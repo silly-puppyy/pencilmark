@@ -17,7 +17,7 @@ site link or another app's format ([Other formats](../formats/other-formats.md))
 | `pencilmark solve FILE` | the solution, or `not unique` / `no solution` / `undecided` |
 | `pencilmark count-solutions FILE` | the number of solutions (`>=1000` when it stops counting; `--limit N` to change) |
 | `pencilmark describe FILE` | the variant's name and its rules in words |
-| `pencilmark convert FILE` | the puzzle as canonical pencilmark JSON (`--pretty` for one rule per line), or `--to plain`, `grid`, `sudokuwiki`, `ipuz` |
+| `pencilmark convert FILE` | the puzzle as canonical pencilmark JSON, one rule per line (`--compact`: one line; `--solution` adds the solution), or `--to plain`, `grid`, `sudokuwiki`, `ipuz` |
 | `pencilmark fingerprint FILE` | a content fingerprint, 64 hex digits |
 | `pencilmark generate SPEC` | a new puzzle for a [generator spec](../formats/generator-spec.md) |
 
@@ -38,7 +38,7 @@ $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7..
 | Option | Effect |
 |---|---|
 | `--report` | readable text; `-v` adds the steps in solvers' notation, `-vv` plain sentences, `-vvv` short lessons |
-| `--json` | the full card as one JSON line; `--steps` adds the steps, `--explain notation,short,teach` their explanations (`substeps`: each step as sub-steps with reasons and drawing annotations) |
+| `--json` | the full card as one JSON line; `--steps` adds the steps (the same as `steps` in `--fields`), `--explain notation,short,teach` their explanations (`substeps`: each step as sub-steps with reasons and drawing annotations) |
 | `--fields difficulty,band,...` | only these card fields ([Grade card](../formats/grade-card.md) lists them) |
 | `--print '%b\|%d\|%m'` | your own columns (below) |
 | `-j N` | grade N puzzles at a time; the output keeps the input order |
