@@ -849,6 +849,12 @@ void Solver::empty_rect(MoveBuf& out) {
                                 bool zsees = true;
                                 for (int c : rest) zsees &= tbit(p.gbits(line_z), c);
                                 if (!zsees || rest.empty()) continue;
+                                // the coordinates matched; the houses must too: on a multi-grid board (butterfly,
+                                // samurai) cells on one board row need not share a row house, so X must see the box
+                                // part on its line and Y must see Z (2026-11-08: an unsound elimination on a butterfly)
+                                bool xsees = true;
+                                for (int c : seenX) xsees &= c == X || tbit(p.peers(X), c);
+                                if (!xsees || !tbit(p.peers(Y), Z)) continue;
                                 std::vector<uint32_t> key{(uint32_t)Z * 32u + (uint32_t)v, (uint32_t)hb, (uint32_t)hl};
                                 if (!seen.insert(key).second) continue;
                                 std::vector<int> cells = B;
