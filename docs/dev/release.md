@@ -14,7 +14,9 @@ before the last step.
 - **Patch** (1.0.1): bug fixes that change no card value.
 - **Minor** (1.1.0): anything that changes card values (difficulty, time, band, contains, issues, explanations) or
   adds a feature. The card's meaning is fixed in 1.x; a value change needs a minor version and a CHANGELOG line.
-- **Major** (2.0.0): a breaking change to a format (`format_version` goes up) or to the Python API.
+- **Major** (2.0.0): a breaking change to a format (`format_version` goes up) or to the Python API, once people
+  depend on them. Until then (1.x so far), breaking changes go into a minor version, without aliases, each listed
+  under "Breaking" in the CHANGELOG.
 - For a trial run, use a release candidate (`1.1.0rc1`): it installs only when asked for by number.
 
 ## 2. Prepare main
