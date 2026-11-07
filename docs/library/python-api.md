@@ -95,7 +95,7 @@ Cards for many puzzles, in input order.
 
 ### `def describe(puzzle: str | dict | Path) -> dict` {#describe}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L445)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L442)
 
 The variant name and its rules in words, from the rules alone (pencilmark/variants.py).
 
@@ -111,7 +111,7 @@ The variant name and its rules in words, from the rules alone (pencilmark/varian
 
 ### `def solve(puzzle: str | dict | Path, *, format: str | None=None) -> list[int]` {#solve}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L334)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L331)
 
 The unique solution of a puzzle.
 
@@ -134,7 +134,7 @@ Uses the engine's exhaustive C++ search; CP-SAT (OR-Tools, optional) only when t
 
 ### `def count_solutions(puzzle: str | dict | Path, *, limit: int=1000, format: str | None=None) -> dict` {#count_solutions}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L375)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L372)
 
 How many solutions a puzzle has, counting up to a limit.
 
@@ -151,7 +151,7 @@ How many solutions a puzzle has, counting up to a limit.
 
 ### `def generate(spec: str | dict | Path) -> dict` {#generate}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L465)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L462)
 
 One puzzle for a "pencilmark-spec" request ([Generator spec](../formats/generator-spec.md)).
 
@@ -277,7 +277,7 @@ An ipuz 2 dict (classic, Latin square, diagonal, windoku, jigsaw and killer sudo
 
 ### `def validate(doc: dict) -> bool` {#validate}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L421)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L418)
 
 Strict reading checks of a format_version 1 dict ([Puzzle format](../formats/puzzle-format.md) section 4).
 
@@ -295,7 +295,7 @@ Strict reading checks of a format_version 1 dict ([Puzzle format](../formats/puz
 
 ### `def fingerprint(puzzle: str | dict | Path) -> str` {#fingerprint}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L399)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/api.py#L396)
 
 Content fingerprint of a puzzle: the SHA-256 of its canonical form, 64 hex digits.
 
