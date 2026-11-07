@@ -23,14 +23,17 @@ FAMILY_TITLES = {
     "trial": "Trial and forcing",
 }
 # colouring: one concept across families (codes share the prefix C); the page explains it once
-COLOUR_CODES = ("CFL", "CEQ", "CSG", "CPT", "CPR", "CFS", "CCM", "CCH", "CCL", "CTR", "CCX", "CSM", "CAL", "CMU", "CMD")
+# the colour-identity techniques: listed in the Colouring section only (candidate colouring, Simple / Multi-Colouring and
+# 3D Medusa, stays in its family's table); every code appears once on the page
+COLOUR_CODES = ("CFL", "CEQ", "CSG", "CPT", "CPR", "CFS", "CCM", "CCH", "CCL", "CTR", "CCX", "CAL")
 COLOURING_INTRO = [
     "## Colouring",
     "",
     "Colouring gives cells a colour for what is known about them before their digits are: cells of one colour hold",
     "the same digit, whatever it is, and two colours of a pair hold two different digits. A colour, once given, stays",
     "for the whole solve, so later steps build on it. Explanations name each colour with a legend the first time it",
-    "appears, such as *orange: an unknown digit (5 or 6)* or *blue: a low digit (1-4)*.",
+    "appears, such as *orange: an unknown digit (5 or 6)* or *blue: a low digit (1-4)*. Colouring candidates (Simple",
+    "Colouring, Multi-Colouring, 3D Medusa) is a classic chain technique and is listed under Chains and colouring.",
     "",
     "Every colouring technique is Medium or harder: colouring is a concept to learn, not a first step. The route",
     "parameter `colouring` keeps colours in the solve path; it is opt in (`rate(puzzle, colouring=True)`, CLI",
@@ -124,7 +127,7 @@ def page():
     rows = {f: [] for f in FAMILY_TITLES}
     for code, c in codes.items():
         t = tech_of.get(code)
-        if t is None:
+        if t is None or code in COLOUR_CODES:
             continue
         band = c.shape_band if c.shape_band is not None else t.band
         rows[t.family].append((band, c.order, row(code, band)))
