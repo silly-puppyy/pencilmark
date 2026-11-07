@@ -367,21 +367,31 @@ keep their order.
 
 `pencilmark.fingerprint(puzzle) -> "<64 hex>"` (SHA-256, lowercase):
 
-1. Read the puzzle and write it canonically (8.1). Reading turns the rules into constraints and writing rebuilds rules
-   from them, so some spellings of one constraint meet here: a `relation` on an orthogonal pair is written as the edge
-   clue it amounts to (`difference` 1 as a white kropki dot, `less` as a `greater` edge). Others keep their family:
-   a thermometer and a chain of `less` relations, or a V and an edge `sum` of 5, have different fingerprints. The
-   fingerprint identifies a puzzle as written, up to these merges, not every puzzle with the same solutions.
-2. Keep only `format`, `format_version`, `board`, `digits`, `givens`, `placed`, `candidates`, `rules`; in every rule drop `id`,
+1. Read the puzzle and write it canonically (8.1).
+2. Replace the pair and cell rules by what they allow, so every spelling of one meaning gives the same result (a white
+   kropki dot, a `difference` 1 circle and a `relation` `difference` 1 on the same pair; a thermometer and a chain of
+   `less` relations; a V and an edge `sum` of 5; an `odd` cell and a `set` cell of the odd digits). The rules
+   replaced: every `edge`, `relation`, `neighbours` (except `"within": "region"`) and `cell` rule, `negative` of an
+   edge family or of `cell`, the `line` kinds `thermo`, `slow_thermo`, `whisper`, `palindrome` and `parity`, and
+   the `corner` kinds `exclude` and `mathrax` (not `even` / `odd`). In their place:
+   - one `{"type": "pair_table", "cells": [a, b], "allowed": [[x, y], …]}` per pair of cells they restrict, `a` before
+     `b` in reading order: the digit pairs (x in `a`, y in `b`) every constraint on that pair allows, taken together
+     (a `negative` constrains the pairs it leaves uncovered). When `a` and `b` share a house or another group of
+     different digits, pairs of equal digits are left out of the comparison: a table that then allows everything
+     is dropped;
+   - one `{"type": "cell_set", "cells": [c], "allowed": [digits]}` per cell whose digits they restrict.
+   The fingerprint identifies the puzzle by these meanings, not every puzzle with the same solutions: lines of more
+   than pairs (renban, region sums, ...), cages, outside clues and custom rules stay as written.
+3. Keep only `format`, `format_version`, `board`, `digits`, `givens`, `placed`, `candidates`, `rules`; in every rule drop `id`,
    `label`, `style`.
-3. Replace all house rules (`grid`, `box_grid`, `box`, `row`, `column`) by the houses they state, one
+4. Replace all house rules (`grid`, `box_grid`, `box`, `row`, `column`) by the houses they state, one
    `{"type": "row" | "column" | "box", "cells": [...]}` per distinct house, so every spelling of the same houses (a
    `box_grid`, a `grid` plus `box` rules, single rules, in any order) gives the same result.
-4. Sort the cells of set-like lists (3.3: region, cage, cell, quadruple, appears, count, sum group / corner,
+5. Sort the cells of set-like lists (3.3: region, cage, cell, quadruple, appears, count, sum group / corner,
    edge clues other than `greater`, scope and `except` lists, the pairs of symmetric `relation` operators, `equal_sum`
    segments) in reading order.
-5. Sort `rules` by their compact canonical JSON text.
-6. Serialise with RFC 8785 (JSON Canonicalization Scheme) and hash with SHA-256.
+6. Sort `rules` by their compact canonical JSON text.
+7. Serialise with RFC 8785 (JSON Canonicalization Scheme) and hash with SHA-256.
 
 ```python
 same = dict(messy, rules=[{"type": "box_grid", "box": [2, 2], "count": [2, 2]},

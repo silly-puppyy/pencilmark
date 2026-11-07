@@ -195,6 +195,9 @@ def semantic_subset(doc):
     return keep
 
 
-def fingerprint_of_doc(doc):
-    """SHA-256 of the JCS form of the semantic subset of an already canonical pencilmark-puzzle dict"""
-    return hashlib.sha256(jcs(semantic_subset(doc)).encode("utf-8")).hexdigest()
+def fingerprint_of_doc(doc, by_meaning=()):
+    """SHA-256 of the JCS form of the semantic subset of an already canonical pencilmark-puzzle dict, with the pair
+    tables and cell sets that state its pair and cell rules (puzzle-format.md 8.2) among the rules"""
+    keep = semantic_subset(doc)
+    keep["rules"] = sorted(keep["rules"] + list(by_meaning), key=jcs)
+    return hashlib.sha256(jcs(keep).encode("utf-8")).hexdigest()

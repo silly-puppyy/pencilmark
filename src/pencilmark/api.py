@@ -414,7 +414,7 @@ def fingerprint(puzzle: str | dict | Path) -> str:
     from .exchange import fingerprint_of_doc
     from .write import _rebuilt
 
-    return fingerprint_of_doc(_rebuilt(puzzle))
+    return fingerprint_of_doc(*_rebuilt(puzzle))
 
 
 def validate(doc: dict) -> bool:

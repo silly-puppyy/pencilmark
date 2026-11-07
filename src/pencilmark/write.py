@@ -64,13 +64,70 @@ def _source(x):
     return x if isinstance(x, dict) and x.get("format") == FORMAT else auto(x)
 
 
+# the pair and cell rules the fingerprint replaces by what they allow (docs/formats/puzzle-format.md 8.2): every edge
+# clue, relation, neighbours rule and cell clue, the negatives of those families, the lines made of pairs, and the
+# corner clues that are pair or cell clues
+PAIR_LINES = {"thermo", "slow_thermo", "whisper", "palindrome", "parity"}
+
+
+def _by_meaning(r):
+    """True when the fingerprint states rule r through the pair tables and cell sets rather than as written"""
+    from .rules.edge import EDGE
+
+    t = r["type"]
+    if t == "neighbours":
+        return r.get("within") != "region"  # regions to find (chaos) are not known when the pairs are listed
+    if t in ("edge", "relation", "cell"):
+        return True
+    if t == "negative":
+        return r.get("of") in EDGE or r.get("of") == "cell"
+    if t == "line":
+        return r.get("kind") in PAIR_LINES
+    if t == "corner":
+        return r.get("kind") == "exclude" or (r.get("kind") == "mathrax" and r.get("op") not in ("even", "odd"))
+    return False
+
+
 def _rebuilt(x):
-    """the document of x as the engine writes it back (the fingerprint's input: every spelling of a puzzle the same)"""
+    """the fingerprint's input (docs/formats/puzzle-format.md 8.2): the document of x as the engine writes it back,
+    with the pair and cell rules replaced by what they allow: one {"type": "pair_table", "cells": [a, b], "allowed":
+    [[digit a, digit b], ...]} per cell pair the rules restrict (every constraint on the pair together; digits of
+    two cells in one house already differ) and one {"type": "cell_set", "cells": [c], "allowed": [...]} per cell
+    whose digits they restrict"""
     from .api import _load
     from .export import export_puzzle, read_meta
+    from .model import RELATIONS
 
     src = _source(x)
-    return export_puzzle(_load(src), meta=read_meta(src))
+    p = _load(src)
+    doc = export_puzzle(p, meta=read_meta(src))
+    D, name = p.D, (lambda i: f"r{p.coords[i][0] + 1}c{p.coords[i][1] + 1}")
+    full = {(v, w) for v in range(1, D + 1) for w in range(1, D + 1)}
+    tables = {}
+
+    def restrict(a, b, ok):
+        if p.coords[a] > p.coords[b]:
+            a, b, ok = b, a, {(w, v) for v, w in ok}
+        tables[(a, b)] = tables.get((a, b), full) & ok
+
+    ok_of = dict(RELATIONS, neq=lambda v, w: v != w)  # neq: the engine's plain "different" pair
+    for kind, a, b, *args in p.relations:
+        restrict(a, b, {(v, w) for v, w in full if ok_of[kind](v, w, *args)})
+    for c in p.constraints:
+        if c.get("type") == "table" and len(c["cells"]) == 2:
+            restrict(*c["cells"], {tuple(x) for x in c["allowed"]})
+    house = {frozenset((a, b)) for g in p.groups for a in g.cells for b in g.cells if a != b}
+    same = {(v, v) for v in range(1, D + 1)}
+    extra = []
+    for (a, b), ok in sorted(tables.items(), key=lambda x: (p.coords[x[0][0]], p.coords[x[0][1]])):
+        free = full - same if frozenset((a, b)) in house else full
+        if ok & free != free:
+            extra.append({"type": "pair_table", "cells": [name(a), name(b)], "allowed": sorted(map(list, ok & free))})
+    for i, dom in enumerate(p.domains):
+        allowed = [v for v in range(1, D + 1) if dom >> (v - 1) & 1]
+        if len(allowed) < D:
+            extra.append({"type": "cell_set", "cells": [name(i)], "allowed": allowed})
+    return dict(doc, rules=[r for r in doc["rules"] if not _by_meaning(r)]), extra
 
 
 def pencilmark(

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- **The fingerprint follows meaning, not spelling** (puzzle-format.md 8.2, new step 2): pair rules (edge clues,
+  `relation`, `neighbours`, their negatives, thermo / slow thermo / whisper / palindrome / parity lines, mathrax) are
+  hashed as one table of allowed digit pairs per cell pair, and cell clues (`cell`, corner `exclude`, `negative` of
+  `cell`) as one allowed set per cell. A white kropki dot, a `difference` 1 circle and a `relation` `difference` 1 now
+  share a fingerprint; so do a V and an edge `sum` 5, a thermometer and a chain of `less`, an `odd` and a `set` cell.
+  Every fingerprint with such a rule changes.
 - **Renames (one name per thing, US spelling for keys).** No aliases; files and code using the old names need the
   new ones.
   - The quadruple rule is `{"type": "quadruple", ...}` (was `contains`, the community name is quadruple), so

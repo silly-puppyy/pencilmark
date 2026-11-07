@@ -1177,3 +1177,28 @@ def test_placed_digits():
     bad = dict(doc, placed={"r1c5": 4})  # r1c5 is given
     with pytest.raises(pencilmark.FormatError, match="given or placed"):
         pencilmark.validate(bad)
+
+
+def test_fingerprint_by_meaning():
+    """puzzle-format.md 8.2 step 2: spellings of one meaning share a fingerprint (pair rules as allowed-pair tables,
+    cell clues as allowed sets); a negative's exemption is per family, so it still tells kropki from difference 1"""
+    base = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 4, "cols": 4}, "digits": 4,
+            "givens": [1] + [0] * 15, "rules": [{"type": "box_grid", "box": [2, 2], "count": [2, 2]}]}  # fmt: skip
+    fp = lambda *rules: pencilmark.fingerprint(dict(base, rules=base["rules"] + list(rules)))  # noqa: E731
+    P = ["r1c2", "r1c3"]
+    same = [
+        [{"type": "edge", "kind": "kropki", "color": "white", "cells": P},
+         {"type": "edge", "kind": "difference", "value": 1, "cells": P},
+         {"type": "relation", "op": "difference", "value": 1, "pairs": [P]}],
+        [{"type": "edge", "kind": "xv", "letter": "V", "cells": P}, {"type": "edge", "kind": "sum", "sum": 5, "cells": P}],
+        [{"type": "line", "kind": "thermo", "cells": ["r2c1", "r2c2", "r2c3"]},
+         {"type": "relation", "op": "less", "pairs": [["r2c1", "r2c2"], ["r2c2", "r2c3"]]}],
+        [{"type": "line", "kind": "whisper", "value": 2, "cells": P},
+         {"type": "relation", "op": "difference_at_least", "value": 2, "pairs": [P]}],
+        [{"type": "cell", "kind": "odd", "cells": ["r3c3"]}, {"type": "cell", "kind": "set", "values": [1, 3], "cells": ["r3c3"]}],
+    ]  # fmt: skip
+    for group in same:
+        assert len({fp(r) for r in group}) == 1, group
+    assert fp({"type": "relation", "op": "different", "pairs": [P]}) == fp()  # a row already says so
+    neg = {"type": "negative", "of": "kropki"}
+    assert fp(same[0][0], neg) != fp(same[0][2], neg)
