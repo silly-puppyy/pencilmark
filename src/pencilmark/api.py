@@ -321,10 +321,7 @@ def rate_many(
         One card per puzzle. A puzzle that cannot be rated (not unique, no solution, unreadable) gives
         {"error": "..."} instead of raising.
     """
-    items = [
-        (p, max_seconds, mode, fields, allow_guessing, explain, quality, alternatives, colouring)
-        for p in puzzles
-    ]
+    items = [(p, max_seconds, mode, fields, allow_guessing, explain, quality, alternatives, colouring) for p in puzzles]
     if jobs <= 1:
         return [_rate_job(it) for it in items]
     with _mp_context().Pool(jobs, initializer=_one_route_thread) as pool:

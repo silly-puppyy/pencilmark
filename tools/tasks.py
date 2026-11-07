@@ -95,7 +95,9 @@ def release(version):
     log = (ROOT / "CHANGELOG.md").read_text()
     if not re.search(rf"^## {re.escape(version)} \(", log, re.M):
         problems.append(f'CHANGELOG.md has no "## {version} (date)" section (rename "## Unreleased")')
-    if re.search(r"^## Unreleased\n\s*\n(?!## )\S", log, re.M):  # anything (bullets, ### headings) before the next release
+    if re.search(
+        r"^## Unreleased\n\s*\n(?!## )\S", log, re.M
+    ):  # anything (bullets, ### headings) before the next release
         problems.append('CHANGELOG.md: "## Unreleased" still lists changes')
     if subprocess.run(["git", "status", "--porcelain"], cwd=ROOT, capture_output=True, text=True).stdout.strip():
         problems.append("the work tree has uncommitted changes")
