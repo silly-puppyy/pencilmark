@@ -76,7 +76,15 @@ def page():
     L += [f"| `{k}` | `{v}` |" for k, v in PAL["lines"].items()]
     L += ["", "## Region shading", "", "`region` `colour` rules take these in rule order, repeating.", ""]
     L += [" ".join(f"`{c}`" for c in PAL["region_palette"]), ""]
-    L += ["## Bands", "", "A colour per band, for software that shows a card (render_svg draws boards only).", "",
+    A = PAL["annotation"]
+    L += ["## Annotation colours", "",
+          "The named colours of step annotations and of the trace's colour layer ([Grade card](../formats/grade-card.md) "
+          f"sections 5 and 6), drawn over the cell at opacity {A['opacity']['light']} (light) / {A['opacity']['dark']} "
+          "(dark), under the lines, cages, clues and digits. A cell with several colours is split into equal wedges "
+          "from its centre, the first starting 25 degrees past the horizontal, as SudokuPad draws them.", "",
+          "| Name | Light | Dark |", "|---|---|---|"]  # fmt: skip
+    L += [f"| `{k}` | `{v}` | `{A['dark'][k]}` |" for k, v in A["light"].items()]
+    L += ["", "## Bands", "", "A colour per band, for software that shows a card (render_svg draws boards only).", "",
           "| Band | Colour |", "|---|---|"]  # fmt: skip
     L += [f"| {k} | `{v}` |" for k, v in PAL["bands"].items()]
     L += ["", "## Sizes", "", "In cell units (1 = a cell's side); font weights as CSS weights.", "",

@@ -1,7 +1,8 @@
 """Draw a pencilmark-puzzle file as SVG, following the default drawing of docs/library/drawing-style.md (reference renderer for
 the docs; not part of the package).
-  python tools/render_svg.py puzzle.json out.svg [--dark] [--cell 48]
-  render(doc, dark=False, cell=48) -> svg text"""
+  python tools/render_svg.py puzzle.json out.svg [--dark] [--cell 48] [--card card.json --position N]
+  render(doc, dark=False, cell=48, colours=None, placed=None) -> svg text
+--card / --position draw one position of a card's trace (grade-card.md 6): its placed digits and its colour layer."""
 
 import json
 import math
@@ -24,6 +25,7 @@ THEMES = {False: _PAL["themes"]["light"], True: _PAL["themes"]["dark"]}
 LINE_COLOURS = {k: v for k, v in _PAL["lines"].items() if k != "dutch_whisper"}
 DUTCH = _PAL["lines"]["dutch_whisper"]
 PALETTE = _PAL["region_palette"]
+ANNOTATION = _PAL["annotation"]
 OUTSIDE = ("sandwich", "xsum", "skyscraper", "rossini", "first_seen")
 
 
@@ -31,9 +33,11 @@ def esc(s):
     return str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-def render(doc, dark=False, cell=48, annotate=False, labels=False, background=True):
+def render(doc, dark=False, cell=48, annotate=False, labels=False, background=True, colours=None, placed=None):
     """svg text. annotate: every element drawn for rules[i] carries data-rule="i" (pages link it to the JSON);
-    labels: row numbers on the left and column numbers on top, outside the board and its outside clues."""
+    labels: row numbers on the left and column numbers on top, outside the board and its outside clues.
+    colours {cell name: [colour names]}: annotation colours over the cells (one fills the cell; n split it into n
+    wedges, as SudokuPad draws them); placed {cell name: digit}: digits the solver has written, in the placed ink."""
     T = THEMES[bool(dark)]
     S = STYLE
     u = float(cell)
@@ -55,7 +59,7 @@ def render(doc, dark=False, cell=48, annotate=False, labels=False, background=Tr
     cy = lambda r: m + (r + 0.5) * u
     ctr = lambda name: (cx(rc(name)[1]), cy(rc(name)[0]))
     exists = {(r, c) for r, c in B.coords}
-    layers = {k: [] for k in ("shade", "lines", "cages", "grid", "clues", "digits", "outside")}
+    layers = {k: [] for k in ("shade", "colour", "lines", "cages", "grid", "clues", "digits", "outside")}
     cur = [None]  # the rule being drawn (annotate)
 
     def add(k, s):
@@ -66,6 +70,32 @@ def render(doc, dark=False, cell=48, annotate=False, labels=False, background=Tr
     # ---- board, houses
     for r, c in B.coords:
         add("shade", f'<rect x="{m + c * u}" y="{m + r * u}" width="{u}" height="{u}" fill="{T["board"]}"/>')
+    # ---- annotation colours: one per cell fills it; several split it into equal wedges from the centre, the first
+    # from 25 degrees on (SudokuPad's multi-colour cells)
+    shades, alpha = ANNOTATION["dark" if dark else "light"], ANNOTATION["opacity"]["dark" if dark else "light"]
+    for name, cols in (colours or {}).items():
+        r, c = rc(name)
+        x0, y0 = m + c * u, m + r * u
+        if len(cols) == 1:
+            add(
+                "colour",
+                f'<rect x="{x0}" y="{y0}" width="{u}" height="{u}" fill="{shades[cols[0]]}" fill-opacity="{alpha}"/>',
+            )
+            continue
+        cid = f"pmc{r}_{c}"
+        add("colour", f'<clipPath id="{cid}"><rect x="{x0}" y="{y0}" width="{u}" height="{u}"/></clipPath>')
+        R_ = u  # past the corners: the clip trims the wedge to the cell
+        for i, col in enumerate(cols):
+            a1, a2 = math.radians(25 + i * 360 / len(cols)), math.radians(25 + (i + 1) * 360 / len(cols))
+            ox, oy = x0 + u / 2, y0 + u / 2
+            p1 = (ox + R_ * math.cos(a1), oy + R_ * math.sin(a1))
+            p2 = (ox + R_ * math.cos(a2), oy + R_ * math.sin(a2))
+            big = 1 if a2 - a1 > math.pi else 0
+            add(
+                "colour",
+                f'<path clip-path="url(#{cid})" d="M{ox:.1f},{oy:.1f} L{p1[0]:.1f},{p1[1]:.1f} A{R_:.1f},{R_:.1f} 0 '
+                f'{big} 1 {p2[0]:.1f},{p2[1]:.1f} Z" fill="{shades[col]}" fill-opacity="{alpha}"/>',
+            )
     houses, _ = X.read_houses([x for x in rules if x["type"] in ("grid", "box_grid", "box", "row", "column")], B)
     box_of = {}
     for k, (kind, cells, _) in enumerate(houses):
@@ -455,13 +485,23 @@ def render(doc, dark=False, cell=48, annotate=False, labels=False, background=Tr
             f'font-family="Inter,Helvetica,Arial,sans-serif" font-weight="{S["given_w"]}" fill="{T["given"]}" stroke="{T["board"]}" '
             f'stroke-width="{halo:.2f}" paint-order="stroke" stroke-linejoin="round">{v}</text>',
         )
+    for name, v in (placed or {}).items():
+        r, c = rc(name)
+        add(
+            "digits",
+            f'<text x="{cx(c):.1f}" y="{cy(r):.1f}" dy="0.36em" font-size="{S["digit"] * u:.1f}" text-anchor="middle" '
+            f'font-family="Inter,Helvetica,Arial,sans-serif" font-weight="{S.get("placed_w", 500)}" fill="{T["placed"]}" '
+            f'stroke="{T["board"]}" stroke-width="{halo:.2f}" paint-order="stroke" stroke-linejoin="round">{v}</text>',
+        )
     for name, ds in (doc.get("candidates") or {}).items():
         r, c = rc(name)
         for d in ds:
             x = m + c * u + u * (((d - 1) % 3) + 0.5) / 3
             y = m + r * u + u * (((d - 1) // 3) + 0.5) / 3
             add("digits", small_text(x, y, d, size=0.24, col=T["cand"], weight=400))
-    body = "".join("".join(layers[k]) for k in ("shade", "lines", "cages", "grid", "clues", "digits", "outside"))
+    body = "".join(
+        "".join(layers[k]) for k in ("shade", "colour", "lines", "cages", "grid", "clues", "digits", "outside")
+    )
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{W:.0f}" height="{H:.0f}" viewBox="0 0 {W:.1f} {H:.1f}">'
         + (f'<rect width="{W:.1f}" height="{H:.1f}" fill="{T["page"]}"/>' if background else "")
@@ -469,7 +509,28 @@ def render(doc, dark=False, cell=48, annotate=False, labels=False, background=Tr
     )
 
 
+def trace_position(doc, card, n):
+    """(colours, placed) of position n of a card's trace: each colour group's cells take its colour (a cell in several
+    groups gets them all), and every digit not given is a placed one"""
+    pos = card["trace"][n]
+    colours = {}
+    for g in pos.get("colours") or []:
+        for name in g["cells"]:
+            colours.setdefault(name, []).append(g["colour"])
+    C = doc["board"]["cols"]
+    placed = {
+        f"r{i // C + 1}c{i % C + 1}": v for i, (v, g) in enumerate(zip(pos["digits"], doc["givens"])) if v and not g
+    }
+    return colours, placed
+
+
 if __name__ == "__main__":
     doc = json.load(open(sys.argv[1], encoding="utf-8"))
     cell = int(sys.argv[sys.argv.index("--cell") + 1]) if "--cell" in sys.argv else 48
-    Path(sys.argv[2]).write_text(render(doc, dark="--dark" in sys.argv, cell=cell), encoding="utf-8")
+    colours = placed = None
+    if "--card" in sys.argv:
+        card = json.load(open(sys.argv[sys.argv.index("--card") + 1], encoding="utf-8"))
+        n = int(sys.argv[sys.argv.index("--position") + 1]) if "--position" in sys.argv else 0
+        colours, placed = trace_position(doc, card, n)
+    svg = render(doc, dark="--dark" in sys.argv, cell=cell, colours=colours, placed=placed)
+    Path(sys.argv[2]).write_text(svg, encoding="utf-8")
