@@ -107,17 +107,15 @@ def page():
     for r in csv.DictReader(LINKS.open(encoding="utf-8")):
         extra.setdefault(r["code"], []).append(r["url"])
 
-    def band_cell(b):  # the band in its colour (docs/palette.json "bands"; custom.css .pm-band-*)
+    def band_cell(b):  # the band; custom.css tints its cell in the band's colour (docs/palette.json "bands")
         name = R.BANDS[b]
-        return (
-            f'<span class="pm-band-pill pm-band-{name.lower().replace(" ", "-")}">{name.replace(" ", "&nbsp;")}</span>'
-        )
+        return f'<span class="pm-band-{name.lower().replace(" ", "-")}">{name.replace(" ", "&nbsp;")}</span>'
 
     def row(code, band):
         """one table row: code, name, the variant mark, the band in its colour, what it is a special case of, links"""
         c, t = codes[code], tech_of[code]
         urls = list(dict.fromkeys((E.CATALOG[c.explain][3] if c.explain else []) + extra.get(code, [])))
-        variant = '<span class="pm-variant-mark" title="variants only">variant</span>' if t.gate else ""
+        variant = '<span class="pm-variant" title="variants only">V</span>' if t.gate else ""
         sub = ", ".join(f"`{s}`" for s in immediate(code, codes))
         learn = " ".join(map(link, sorted(urls, key=_site_rank)))
         return f"| `{code}` | {c.name} | {variant} | {band_cell(band)} | {sub} | {learn} |"

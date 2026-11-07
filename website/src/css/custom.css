@@ -490,16 +490,15 @@ img[src*='/img/swatches/example-'][src$='-dark.svg'] {
   background: #1b1916;
 }
 
-/* band pills (techniques page, tools/gen_techniques_md.py): the band colours of docs/palette.json "bands" */
-.pm-band-pill { display: inline-block; padding: 0 0.5em; border-radius: 0.8em; font-size: 0.85em; white-space: nowrap;
-  color: #fff; background: var(--pm-band); }
-.pm-band-very-easy { --pm-band: #7ccf6b; color: #1a1a1a; }
-.pm-band-easy { --pm-band: #2f9e44; }
-.pm-band-medium { --pm-band: #f2b705; color: #1a1a1a; }
-.pm-band-hard { --pm-band: #ee6a1a; }
-.pm-band-very-hard { --pm-band: #c92a2a; }
-.pm-band-expert { --pm-band: #9c36b5; }
-.pm-band-extreme { --pm-band: #e665c0; color: #1a1a1a; }
-.pm-band-unknown { --pm-band: #9a958e; }
-.pm-variant-mark { display: inline-block; padding: 0 0.5em; border-radius: 0.8em; font-size: 0.8em;
-  color: var(--ifm-color-emphasis-800); border: 1px solid var(--ifm-color-emphasis-500); }
+/* techniques page (tools/gen_techniques_md.py): the Band cell tinted in the band's colour (docs/palette.json "bands"),
+   the Variant cell sky blue with a V, as the experiment log tints its verdicts; mixed with transparent, so the same
+   tint reads on the light and the dark page */
+td:has(> .pm-band-very-easy) { background: color-mix(in srgb, #7ccf6b 28%, transparent); }
+td:has(> .pm-band-easy) { background: color-mix(in srgb, #2f9e44 28%, transparent); }
+td:has(> .pm-band-medium) { background: color-mix(in srgb, #f2b705 28%, transparent); }
+td:has(> .pm-band-hard) { background: color-mix(in srgb, #ee6a1a 28%, transparent); }
+td:has(> .pm-band-very-hard) { background: color-mix(in srgb, #c92a2a 28%, transparent); }
+td:has(> .pm-band-expert) { background: color-mix(in srgb, #9c36b5 28%, transparent); }
+td:has(> .pm-band-extreme) { background: color-mix(in srgb, #e665c0 28%, transparent); }
+td:has(> .pm-band-unknown) { background: color-mix(in srgb, #9a958e 28%, transparent); }
+td:has(> .pm-variant) { background: color-mix(in srgb, #38a8e8 28%, transparent); text-align: center; font-weight: 600; }
