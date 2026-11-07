@@ -363,6 +363,15 @@ def _h_fish(ctx):
         fkey = "franken_fish"
     r["pattern_key"] = fkey
     r["substeps"] = _fish_substeps(nm, v, base, cov, U, fins, ctx.elims)
+    if "Franken" in name or adj == "Mutant":  # the shape, before the removals
+        r["substeps"].insert(
+            -1,
+            {
+                "text": "A box takes the place of a row or column (Franken fish)."
+                if "Franken" in name
+                else "Rows and columns are mixed in the base or cover houses (Mutant fish)."
+            },
+        )
     return r
 
 
@@ -1085,7 +1094,52 @@ def _h_nwing(ctx):
     if free and gone != [free[0]]:
         return _generic(ctx)
     J = _J(ctx, digits=gone, base_cells=cells, cover_cells=sorted({c for c, _ in ctx.elims}))
-    return _result(ctx, J, short, teach, True)
+    r = _result(ctx, J, short, teach, True)
+    r["substeps"] = _nwing_substeps(nm, st, cells, ds, restricted, free[0] if free else None, ctx.elims)
+    return r
+
+
+def _nwing_substeps(nm, st, cells, ds, restricted, z, elims):
+    """WXYZ-type wing as sub-steps: the cells (green) and their digits, the digits held at most once, then Z's places
+    (orange; type 1) or every digit exactly once (type 2), the removals (red)"""
+    ids = iter(range(1, 10**6))
+    n = len(cells)
+    out = [
+        {
+            "text": f"{_cap(nm.cells(cells))} hold only {_join(ds)}: {n} cells, {n} digits.",
+            "annotations": [{"id": next(ids), "cell": nm.cell(c), "colour": "green"} for c in cells],
+        },
+        {
+            "text": f"{_cap(_join(restricted))} {'is' if len(restricted) == 1 else 'are'} there at most once: "
+            + ("its places see each other." if len(restricted) == 1 else "each digit's places see each other."),
+            "why": "Cells that see each other can't share a digit.",
+        },
+    ]
+    tg = sorted({c for c, _ in elims})
+    red = [{"id": next(ids), "candidate": f"{nm.cell(c)}#{d}", "colour": "red"} for c, d in sorted(elims)]
+    if z is not None:
+        zc = [c for c in cells if st.cand[c] & bit(z)]
+        out.append(
+            {
+                "text": f"Those {n - 1} digits fill at most {n - 1} cells, so {z} is in the wing: in {nm.cells(zc, 'or')}.",
+                "annotations": [{"id": next(ids), "candidate": f"{nm.cell(c)}#{z}", "colour": "orange"} for c in zc],
+            }
+        )
+        out.append(
+            {
+                "text": f"{_subj(nm, tg)} {'sees' if len(tg) == 1 else 'see'} all of them, so {fmt_elims(nm, elims)}.",
+                "annotations": red,
+            }
+        )
+    else:
+        out.append({"text": f"With {n} cells and {n} digits, each digit is there exactly once."})
+        out.append(
+            {
+                "text": f"A cell that sees every place of a digit in the wing loses it: {fmt_elims(nm, elims)}.",
+                "annotations": red,
+            }
+        )
+    return out
 
 
 def _h_pom(ctx):

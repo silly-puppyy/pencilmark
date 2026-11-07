@@ -63,6 +63,8 @@ What changes for you (details in the entries below):
   on the engine's own rectangle (before: a hidden-UR text, sometimes on another rectangle); Aligned Pair Exclusion names
   the base pair and the witness that rules out each value pair; BUG+1 with a 4+ candidate cell has its own text.
   Tests: each added rule's explanation names its pattern and every removed candidate.
+- Sub-steps (`explain="substeps"`) for WXYZ-type wings (both types: the digits held at most once, then Z's places
+  or every digit once, the removals), and Franken / Mutant fish name their shape in a sub-step.
 - Counting circles: the combination search runs one digit set at a time (digits summing to the number of circles,
   each digit d exactly d times) instead of "each digit 0 or d times" over all circles. Same deductions, found
   exactly: a 15-circle LMD puzzle 232 s -> 2.5 s (Easy 8.4 -> 8.3); another (LMD 1 star) Easy 5.7 -> Very Easy 3.5,
