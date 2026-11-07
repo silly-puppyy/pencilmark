@@ -78,6 +78,18 @@ TYPICAL = {
     "variant": {"Very Easy": (None, 5.9), "Easy": (4.7, 8.5), "Medium": (6.5, 10.9),
                 "Hard": (5.2, 9.8), "Very Hard": (8.3, 13.8), "Expert": (8.5, 14.1)},
 }  # fmt: skip
+# where a band request without a difficulty aims (the generator, gen/api.py band_aim): (mean, sd, low, high) of
+# difficulty, a normal draw clipped to [low, high]. Classic: fed-sudoku.eu, sudoku.coach classics and Wang 2024 on the
+# v12 development set (1.2 engine, 2026-11-07), except Very Easy: there the curated sources sit at 4.1, the top of the
+# band, while generated sites' easy tiers sit lower (sudoku.com easy / medium / hard 2.5 / 3.1 / 3.6, 300 each) and
+# the user's reference for other sites' Very Easy is 2.7-3.9: centred 3.3 in that range. 9x9 variants: the development
+# set's variant9 groups. Bands with fewer than 20 puzzles have none (the generator then digs as far as the band allows).
+AIM = {
+    "classic": {"Very Easy": (3.3, 0.45, 2.7, 3.9), "Easy": (5.41, 0.73, 4.4, 6.4), "Medium": (6.68, 0.43, 6.1, 7.2),
+                "Hard": (6.15, 0.72, 5.3, 7.1), "Very Hard": (7.29, 0.85, 6.6, 7.8), "Expert": (9.23, 1.53, 7.5, 11.5)},
+    "variant": {"Very Easy": (5.58, 0.69, 5.0, 6.2), "Easy": (7.51, 1.29, 5.7, 8.8), "Medium": (9.32, 1.39, 7.6, 11.2),
+                "Hard": (7.90, 1.41, 6.2, 9.3), "Very Hard": (10.95, 2.26, 7.8, 13.9), "Expert": (10.88, 1.56, 9.2, 13.0)},
+}  # fmt: skip
 SEVERITIES = ("reject", "warning", "off")
 # presets (quality {"preset": name}): only these checks are on, at these severities; everything else is off; any check
 # named next to the preset overrides it. standard = a few common-sense rules (decorative, trivial, trial) and two

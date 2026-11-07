@@ -1604,6 +1604,51 @@ void Solver::multi_colouring(MoveBuf& out) {
             for (int j = i + 1; j < K; ++j) {
                 if (cl[i][0].empty() || cl[j][0].empty()) continue;
                 if (cl[i][0].size() + cl[i][1].size() < 2 || cl[j][0].size() + cl[j][1].size() < 2) continue;
+                // type 2 (HoDoKu's Multi-Colors 2): a colour seeing both colours of the other cluster is false
+                for (int t = 0; t < 2; ++t) {
+                    const int X = t ? j : i, Y = t ? i : j;
+                    for (int a = 0; a < 2; ++a) {
+                        if (!sees_set(cl[X][a], cl[Y][0]) || !sees_set(cl[X][a], cl[Y][1])) continue;
+                        std::vector<uint32_t> el;
+                        for (int c : cl[X][a]) el.push_back((uint32_t)c * 32u + v);
+                        std::sort(el.begin(), el.end());
+                        std::vector<int> pc;
+                        for (int k2 = 0; k2 < 2; ++k2) {
+                            pc.insert(pc.end(), cl[X][k2].begin(), cl[X][k2].end());
+                            pc.insert(pc.end(), cl[Y][k2].begin(), cl[Y][k2].end());
+                        }
+                        std::sort(pc.begin(), pc.end());
+                        Move& m = new_move(out, MULTI_COLOR, 1.0, (int)pc.size());
+                        for (uint32_t e : el) {
+                            out.elims.push_back(e);
+                            ++m.el_n;
+                        }
+                        set_pattern(out, m, pc);
+                        {   // true colour first (the false colour's opposite), then the false colour, then the other cluster
+                            const auto& T = cl[X][1 - a];
+                            std::vector<int> rec{v, 0, -1, -1, -1, (int)T.size()};
+                            rec.insert(rec.end(), T.begin(), T.end());
+                            rec.insert(rec.end(), cl[X][a].begin(), cl[X][a].end());
+                            rec.insert(rec.end(), cl[Y][0].begin(), cl[Y][0].end());
+                            rec.insert(rec.end(), cl[Y][1].begin(), cl[Y][1].end());
+                            add_expl(out, m, EX_COLOR, rec);
+                        }
+                        const int n = (int)pc.size();
+                        m.has_meta = true;
+                        m.meta[0] = n;
+                        m.meta[1] = n - 1;
+                        m.meta[2] = 1;
+                        m.meta[3] = std::min(n - 1, 12);
+                        m.meta[4] = 1;
+                        m.meta[5] = 0;
+                        m.meta[6] = 0;
+                        m.meta[7] = 1;
+                        m.spread = pspread(pc);
+                        m.code = 3522;
+                        pm_long xm[XM_N] = {v, n, (pm_long)el.size(), 0, 0, 0, 0, 0, 0, 0};
+                        std::copy(xm, xm + XM_N, m.xm);
+                    }
+                }
                 for (int a = 0; a < 2; ++a)
                     for (int bb = 0; bb < 2; ++bb) {
                         if (!sees_set(cl[i][a], cl[j][bb])) continue;

@@ -275,6 +275,8 @@ def fetch(short_link, http=None):
     if not re.fullmatch(r"[A-Za-z0-9_-]{4,}|[A-Za-z0-9_-]+/[A-Za-z0-9_.-]+", key):  # an id, or an author/slug alias
         raise FormatError(f"not a SudokuPad short id: {key[:80]!r}")
     payload = (http or HTTP).get_text(API + urllib.parse.quote(key, safe="/")).strip()
+    if "%" in payload:  # some API responses come percent-encoded (%2B / %2F / %3D; lz-string output has no '%')
+        payload = urllib.parse.unquote(payload)
     if not payload:
         raise FetchError(f"empty SudokuPad API response for {key}")
     d = decode_payload(payload)

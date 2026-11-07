@@ -20,7 +20,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PY = sys.executable
 FIXTURES = ["test_line_matrix", "test_edge_matrix", "test_cell_matrix", "test_rule_matrix", "test_input_matrix"]
-GENERATORS = ["gen_api_md", "gen_reference_md", "gen_cpp_reference", "gen_techniques_md", "gen_parameters_md",
+GENERATORS = ["gen_api_md", "gen_reference_md", "gen_cpp_reference", "gen_techniques_md", "gen_parameters_md", "gen_page_versions",
               "gen_palette_md", "gen_swatches"]  # fmt: skip
 COPIES = [("README.md", "docs/index.md", None),  # the homepage: its link previews show the wide banner (image below)
           ("ARCHITECTURE.md", "docs/guides/development/architecture.md", "How a card is computed in the code, and which file holds each part."),

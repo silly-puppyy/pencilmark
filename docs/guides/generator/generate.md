@@ -118,9 +118,13 @@ symmetry, board sizes), with the puzzle each produced and how long it took.
 
 ## 4. Typical difficulty
 
-Without a difficulty range the generator removes every given it can. A puzzle with few givens takes long to scan even
-when it needs only singles, so a Very Easy request comes back at about 4-5, the hard end of published Very Easy
-puzzles. For a gentle puzzle, add a range:
+A request with a band and no difficulty range aims where published puzzles of that band lie: the seed draws a
+difficulty window from the band's spread (a bell curve fitted to published puzzles), and the generator stops digging
+inside it, so many seeds spread like real puzzles. `info.aimed_at` shows the window drawn. Classic Very Easy centres on
+3.3 (2.7 to 3.9), where generated sites' easy puzzles lie (sudoku.com's easy, medium and hard tiers: 2.5, 3.1 and 3.6
+on this scale); the other bands, and 9×9 variants, follow the development set below. Without a band or a range the
+generator removes every given it can, and few givens make even a singles-only puzzle slow to scan; `"difficulty":
+"any"` keeps the band and switches the aim off. A range of your own replaces the aim:
 
 ```json
 "where": {"band": "Very Easy", "difficulty": [3.2, 4.0]}
@@ -140,7 +144,8 @@ The middle half of published puzzles per band (development set: 7,155 puzzles fr
 
 A band says which techniques a puzzle needs and the difficulty how hard its steps are to find, so a Hard puzzle (one
 X-Wing) is often quicker than a long Medium. For classics, Andrew Stuart's sudokuwiki.org grades read directly on
-pencilmark's difficulty (the two scales agree within 0.3 on the same puzzles): Gentle 3 to 4, Moderate 4 to 5, Tough 5
+pencilmark's difficulty in the middle of the range (within 0.3 on the same puzzles; at the extremes ours spreads more:
+about 1 lower on the easiest puzzles he lists, about 0.4 higher on 17-clue ones): Gentle 3 to 4, Moderate 4 to 5, Tough 5
 to 7, Diabolical 7 to 9, Extreme 9 and above. With the standard preset the check `unusual` refuses a result outside the
 middle 80% of its band (Very Easy has no floor, Extreme no ceiling); `{"unusual": {"severity": "off"}}` lets it through.
 

@@ -470,7 +470,8 @@ _X_HANDLERS = {
             "multi-colouring",
             "Two separate colourings of the same digit (each along "
             "conjugate pairs) touch: one colour of the first sees one colour of the second, so they are not both "
-            "true and one of their opposites is; cells seeing both opposites lose the digit.",
+            "true and one of their opposites is; cells seeing both opposites lose the digit. A colour that sees both "
+            "colours of the other colouring is false.",
         ),
         "multi_colouring",
         "chains",

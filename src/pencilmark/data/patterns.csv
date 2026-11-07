@@ -76,6 +76,7 @@ cpp_code,engine_code,technique,code,step_name,explain_name,catalog_key
 3515,colour arithmetic,,,,,
 3520,multi-colouring,,,,,
 3521,medusa wrap (emptied house),,,,,
+3522,multi-colouring (colour sees both),,,,,
 3601,secret,,,,,
 3602,rule of 45,,,,,
 3603,"secret (outie, cage splitting)",,,,,

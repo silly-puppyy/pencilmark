@@ -69,9 +69,12 @@ def elements(sp):
             add(cells, {"color": col, "opacity": op, "width": round(w / size, 3) if isinstance(w, (int, float)) and w > 0 else None,
                         "dash": bool(ln.get("stroke-dasharray"))})  # fmt: skip
     for cage in P.get("cages") or []:
-        if isinstance(cage, dict) and not cage.get("hidden") and cage.get("cells"):
+        cells = (
+            [rc for rc in (cage.get("cells") or []) if isinstance(rc, (list, tuple))] if isinstance(cage, dict) else []
+        )
+        if cells and not cage.get("hidden"):  # metadata cages carry `cells: [null]`
             col, op = _colour(cage.get("outlineC"))
-            add([tuple(rc) for rc in cage["cells"]], {"color": col, "opacity": op})
+            add([tuple(rc) for rc in cells], {"color": col, "opacity": op})
     for kind in ("underlays", "overlays"):
         for sh in P.get(kind) or []:
             if not isinstance(sh, dict) or "center" not in sh or str(sh.get("text", "")).strip():

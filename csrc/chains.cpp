@@ -7,6 +7,7 @@
 #include <set>
 #include <unordered_set>
 
+#include <cstdlib>
 #include "solver.hpp"
 #include "move_util.hpp"
 
@@ -535,6 +536,11 @@ void Solver::build_aic(int maxl, bool with_als) {
     // equally short AIC between the same ends hides in pass 0
     std::set<std::pair<int, int>> xy_done;
     auto bival = [&](int i) { return i < Mc && popc(cand[node[i].first]) == 2; };
+    // chain ends: a chain starts on a candidate and may end on a grouped node (HoDoKu's grouped AICs and nice loops end
+    // on box-line groups; whatever sees every cell of a group end is weakly linked to it). Searching from group starts
+    // too (both ends grouped) is left out
+    const int NE = Mc + (M - Ma);
+    auto end_node = [&](int i) { return i < Mc ? i : Ma + i - Mc; };
     for (int xyp = 0; xyp < (with_als ? 1 : 2); ++xyp)
     for (int A = 0; A < Mc; ++A) {
         if (st[A].empty() || (xyp && !bival(A))) continue;
@@ -597,12 +603,13 @@ void Solver::build_aic(int maxl, bool with_als) {
             for (size_t i = 0; i < nxt.size(); ++i) rank_[nxt[i]] = (int)i;
             cur.swap(nxt);
         }
-        for (int Z = 0; Z < Mc; ++Z) {
+        for (int zi = 0; zi < NE; ++zi) {
+            const int Z = end_node(zi);
             int dz = dist[2 * Z + 1];
-            if (dz < 3) continue;
+            if (dz < 3 || (Z == A && is_grp(A))) continue;
             // each endpoint pair once (the reverse chain has the same length);
             // canonical: start from the smaller invariant label
-            if (Z != A) {
+            if (Z != A && Z < Mc) {  // a group end has no reverse search
                 if (!canon && Z < A) continue;
                 if (canon && (lab[Z] < lab[A] || (lab[Z] == lab[A] && Z < A))) continue;
             }

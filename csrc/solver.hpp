@@ -638,6 +638,9 @@ public:
     void death_blossom(MoveBuf& out);
     /// alternating inference chains through almost locked sets, up to hi links; adds eliminations and placements
     void als_aic(MoveBuf& out, int hi);
+    /// ALS chains of 4..max_n pairwise-disjoint ALS of any size, linked by restricted common digits (HoDoKu's
+    /// ALS-XY-Chain); listed under ALS_AIC
+    void als_chain(MoveBuf& out, int max_n);
     /// bounded case split (human "what if"): returns rounds to contradiction, 0 = none
     void short_trial(MoveBuf& out);
     /// bounded human case analysis (refutation, cell and house forcing within a few rule rounds)

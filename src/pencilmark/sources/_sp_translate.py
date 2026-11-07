@@ -133,7 +133,7 @@ def fog_of(P, p, idx, inside):
     for cg in P.get("cages") or []:
         v = str((cg or {}).get("value", "")) if isinstance(cg, dict) else ""
         if v.lower() == "foglight":
-            lit += cells([tuple(x) for x in cg.get("cells") or []])
+            lit += cells([tuple(x) for x in cg.get("cells") or [] if isinstance(x, (list, tuple))])
             have = True
         elif v.lower().startswith("foglight:"):
             lit += cells(v)
@@ -1307,11 +1307,11 @@ def translate(sp, page_text=None, overrides=None):
     thermo_cells = []  # cells on thermometers (shading couplings name them)
     # killer cages (skip metadata cages)
     for cg in P.get("cages") or []:
-        if not isinstance(cg, dict) or not cg.get("cells"):
-            continue
+        if not isinstance(cg, dict) or not any(isinstance(x, (list, tuple)) for x in cg.get("cells") or ()):
+            continue  # no cells, or a metadata cage (`cells: [null]`, its value "title: ...")
         if str(cg.get("value", "")).lower().startswith("foglight"):
             continue  # fog of war's lit cells (read by fog_of())
-        cs = [idx(tuple(x)) for x in cg["cells"] if inside(tuple(x))]
+        cs = [idx(tuple(x)) for x in cg["cells"] if isinstance(x, (list, tuple)) and inside(tuple(x))]
         v = cg.get("value")
         total = int(v) if isinstance(v, (int, float)) or (isinstance(v, str) and v.isdigit()) else None
         if cs and total is not None and ZONE_TEXT.search(rules.lower()):  # zone: the cage's number lists digits in it

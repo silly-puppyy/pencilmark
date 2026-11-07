@@ -201,23 +201,27 @@ void Solver::sue_de_coq(MoveBuf& out) {
                 for (int i = 0; i < ni; ++i)
                     if (cm >> i & 1) C.push_back(inter[i]), V |= cand[inter[i]];
                 if (popc(V) < (int)C.size() + 2) continue;
+                // line / box sets of 1-3 cells, each sharing a digit with C (HoDoKu's Sue de Coq has no size cap; the
+                // proof needs only disjoint line and box digits and the whole group locked)
                 auto subsets = [&](const std::vector<int>& from, std::vector<std::pair<std::vector<int>, uint32_t>>& outs) {
-                    const int n = (int)from.size();
+                    std::vector<int> use;
+                    for (int c : from)
+                        if (cand[c] & V) use.push_back(c);
+                    const int n = (int)use.size();
                     for (int a = 0; a < n; ++a) {
-                        if (!(cand[from[a]] & V)) continue;
-                        outs.push_back({{from[a]}, cand[from[a]]});
-                        for (int b = a + 1; b < n; ++b)
-                            if (cand[from[b]] & V) outs.push_back({{from[a], from[b]}, cand[from[a]] | cand[from[b]]});
+                        outs.push_back({{use[a]}, cand[use[a]]});
+                        for (int b = a + 1; b < n; ++b) {
+                            outs.push_back({{use[a], use[b]}, cand[use[a]] | cand[use[b]]});
+                            for (int d = b + 1; d < n; ++d)
+                                outs.push_back({{use[a], use[b], use[d]}, cand[use[a]] | cand[use[b]] | cand[use[d]]});
+                        }
                     }
                 };
                 std::vector<std::pair<std::vector<int>, uint32_t>> Ls, Bs;
                 subsets(lrest, Ls);
                 subsets(brest, Bs);
                 for (auto& L : Ls) {
-                    // L must be "almost locked" around V: |VL| = |L| + 1 at most -> keep classic sizes
-                    if (popc(L.second) > (int)L.first.size() + 1) continue;
                     for (auto& B : Bs) {
-                        if (popc(B.second) > (int)B.first.size() + 1) continue;
                         if (L.second & B.second) continue;
                         const uint32_t U = V | L.second | B.second;
                         const int n = (int)(C.size() + L.first.size() + B.first.size());

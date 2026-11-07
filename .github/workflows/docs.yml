@@ -24,6 +24,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0   # the release tags: each page's "as of" version (tools/gen_page_versions.py)
       - uses: actions/setup-node@v7
         with:
           node-version: 22

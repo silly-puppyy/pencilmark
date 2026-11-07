@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **A band request aims where published puzzles of the band lie.** With a band and no difficulty range, the seed
+  draws a window from the band's spread (a bell curve fitted to published puzzles; `info.aimed_at`) and digging stops
+  inside it. Classic Very Easy centres on 3.3 (2.7-3.9; it came back at about 4.5 with 25 givens before), as
+  generated sites' easy tiers do (sudoku.com easy / medium / hard: 2.5 / 3.1 / 3.6). A range of your own replaces it;
+  `"difficulty": "any"` opts out (the deepest dig within the band).
 - **Generator publishing checks are opt in.** A request without `quality`, or with `{}` (dropped when a spec is
   written), runs no checks; `{"preset": "standard"}` turns on the standard set; without a preset only the checks named
   run. 1.2 used the standard preset by default and `{}` meant every check at its own severity. The examples and guides
@@ -20,6 +25,13 @@
   `placed` digits now reach the engine as solved-but-not-given, which avoidable rectangles need. HoDoKu's regression
   library: all 69 uniqueness cases that were missing match now (types 1-6, hidden rectangles, avoidable rectangles 1-2),
   no unsound move anywhere in the library. Explanations name types 5 and 6 (type 5 used the hidden rectangle text).
+- **ALS chains of any ALS size** (HoDoKu's ALS-XY-Chain): four or five pairwise-disjoint almost locked sets linked
+  by restricted common digits, listed under ALS-AIC.
+- **Grouped chain ends**: an AIC, X-chain or ALS chain may end on a box-line group (HoDoKu's grouped AICs and nice
+  loops). Speed on 419 classic-source cards: within noise.
+- **Multi-Colouring type 2**: a colour that sees both colours of another cluster is false.
+- **Sue de Coq** with line and box sets of up to 3 cells, without the almost-locked restriction (HoDoKu's form).
+- HoDoKu's regression library: missing 193 -> 64 cases over this pass, 0 unsound moves.
 
 ## 1.2.0 (2026-11-07)
 

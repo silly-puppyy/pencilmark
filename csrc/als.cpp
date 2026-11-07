@@ -274,8 +274,103 @@ void Solver::death_blossom(MoveBuf& out) {
     }
 }
 
+// ALS chain A1 -x1- A2 -x2- ... An: consecutive ALS share a restricted common digit x_i (every x_i of one sees
+// every x_i of the other), the two digits linking an inner ALS differ, the ALS are pairwise disjoint. If z (in A1
+// and An, not x1 in A1, not x_{n-1} in An) were false in A1, A1 would lock x1, so A2 loses x1 and locks x2, ... and An
+// locks z: z is in A1 or An, and leaves every cell seeing all of their z cells (HoDoKu's ALS-XY-Chain, sudokuwiki's
+// ALS chains). Two and three ALS are ALS-XZ and ALS-XY-Wing; this lists 4 to max_n.
+void Solver::als_chain(MoveBuf& out, int max_n) {
+    build_als();
+    const int W = p.W, K = (int)als.size();
+    if (K < 4) return;
+    // restricted commons of disjoint pairs
+    std::vector<std::vector<std::pair<int, uint32_t>>> adj(K);
+    for (int a = 0; a < K; ++a)
+        for (int b = a + 1; b < K; ++b) {
+            const uint32_t common = als[a].cand & als[b].cand;
+            if (!common || !disjoint(als[a].cells, als[b].cells)) continue;
+            uint32_t rcc = 0;
+            for (uint32_t dm = common; dm; dm &= dm - 1)
+                if (als_rcc(a, b, lowdigit(dm))) rcc |= dm & (~dm + 1);
+            if (!rcc) continue;
+            adj[a].push_back({b, rcc});
+            adj[b].push_back({a, rcc});
+        }
+    ElimSet es;
+    std::vector<int> ch, xs;  // chain ALS, linking digits (xs[i] links ch[i] and ch[i + 1])
+    std::vector<uint64_t> used(W, 0), tg(W);
+    auto emit = [&]() {
+        const int A = ch.front(), Z = ch.back(), n = (int)ch.size();
+        if (Z < A) return;  // each chain once (its reverse has the same eliminations)
+        const uint32_t zs = als[A].cand & als[Z].cand & ~bit(xs.front()) & ~bit(xs.back());
+        std::vector<uint32_t> el;
+        for (uint32_t dm = zs; dm; dm &= dm - 1) {
+            const int z = lowdigit(dm);
+            const uint64_t* sa = als_seen_d(A, z);
+            const uint64_t* sz = als_seen_d(Z, z);
+            for (int w = 0; w < W; ++w) tg[w] = sa[w] & sz[w] & ~als[A].cells[w] & ~als[Z].cells[w];
+            for (int q = 0; q < p.N; ++q)
+                if (tbit(tg.data(), q) && !vals[q] && (cand[q] & bit(z))) el.push_back((uint32_t)q * 32 + z);
+        }
+        if (el.empty() || (!canon && !es.fresh(el, n))) return;
+        std::vector<int> pc;
+        uint32_t digs = 0;
+        for (int a : ch) {
+            digs |= als[a].cand;
+            for (int c : als[a].list) pc.push_back(c);
+        }
+        const double shp = pspread(pc);
+        const int L = 2 * n - 1;
+        Move& m = new_move(out, ALS_AIC, shp, L);
+        for (uint32_t e : el) add_elim(out, m, (int)(e / 32), (int)(e % 32));
+        set_pattern(out, m, pc);
+        {  // chain record as the AIC builder writes it: z in A1 = x1 in A1 - x1 in A2 = x2 in A2 - ... = z in An
+            const int z0 = lowdigit(zs);
+            std::vector<int> lk{-1 - A, z0, 0, -1, -1 - A, xs[0], 5, A};
+            for (int i = 1; i < n; ++i) {
+                lk.insert(lk.end(), {-1 - ch[i], xs[i - 1], 0, -1});
+                lk.insert(lk.end(), {-1 - ch[i], i + 1 < n ? xs[i] : z0, 5, ch[i]});
+            }
+            add_expl(out, m, EX_CHAIN, lk);
+        }
+        for (int a : ch) add_als_expl(out, m, a, als[a].cand, als[a].list);
+        meta9(m, (int)pc.size(), n - 1, popc(digs), L, 0, 0, 0, 1, shp);
+        m.code = 3105;
+        pm_long xm[XM_N] = {L, 0, 0, 0, 0, n, n - 1, 0, 0, popc(digs)};
+        std::copy(xm, xm + XM_N, m.xm);
+    };
+    std::function<void(int)> rec = [&](int in) {  // in: the digit that linked the last ALS (-1 at the start)
+        const int a = ch.back();
+        if ((int)ch.size() >= 4) emit();
+        if ((int)ch.size() == max_n) return;
+        for (const auto& [b, rcc] : adj[a]) {
+            bool clash = false;
+            for (int w = 0; w < W && !clash; ++w) clash = used[w] & als[b].cells[w];
+            if (clash) continue;
+            for (uint32_t dm = rcc & ~(in > 0 ? bit(in) : 0u); dm; dm &= dm - 1) {
+                const int x = lowdigit(dm);
+                ch.push_back(b);
+                xs.push_back(x);
+                for (int w = 0; w < W; ++w) used[w] |= als[b].cells[w];
+                rec(x);
+                for (int w = 0; w < W; ++w) used[w] &= ~als[b].cells[w];
+                ch.pop_back();
+                xs.pop_back();
+            }
+        }
+    };
+    for (int a = 0; a < K; ++a) {
+        ch.assign(1, a);
+        xs.clear();
+        std::fill(used.begin(), used.end(), 0);
+        for (int w = 0; w < W; ++w) used[w] = als[a].cells[w];
+        rec(-1);
+    }
+}
+
 void Solver::als_aic(MoveBuf& out, int hi) {
     if (disabled[ALS_AIC]) return;
+    als_chain(out, 5);
     build_aic(hi, true);
     for (size_t i = 0; i < aicx_buf.moves.size(); ++i) {
         const Move& a = aicx_buf.moves[i];

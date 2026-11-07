@@ -1209,3 +1209,31 @@ def test_renban_cells_in_path_order():
     assert all(abs(a // n - b // n) <= 1 and abs(a % n - b % n) <= 1 for a, b in zip(path, path[1:]))
     star = {cell(5, 5), cell(4, 5), cell(6, 5), cell(5, 4), cell(5, 6), cell(3, 5), cell(7, 5), cell(5, 3), cell(5, 7)}
     assert _path_through(star, n) is None  # a plus with four long arms: no single path
+
+
+def test_sudokupad_metadata_cages_and_encoded_payloads():
+    """found by the style survey (2026-11-07): a metadata cage with `cells: [null]` (000VVN) crashed the translator and
+    the style capture; an API response may come percent-encoded (000VS2: %2B / %2F / %3D)"""
+    import urllib.parse
+
+    from pencilmark.sources import _sp_style, sudokupad
+    from pencilmark.sources import _sp_translate as SP
+
+    meta_cage = {"cells": [None], "value": "title: A puzzle"}
+    killer = {"cells": [[0, 0], [0, 1]], "value": "3"}
+    sp = sudokupad.decode(_sp4(cages=[meta_cage, killer]))
+    p, _ = SP.translate(sp, "Normal sudoku rules apply. Digits in a cage sum to the small clue.")
+    assert p is not None and _sp_style.elements(sp) is not None
+
+    class Fake:
+        def __init__(self, text):
+            self.text = text
+
+        def get_text(self, url):
+            return self.text
+
+    fpz = {"size": 4, "title": "t", "grid": [[{} for _ in range(4)] for _ in range(4)]}
+    raw = "fpuzzles" + sudokupad._lz().compressToBase64(json.dumps(fpz))
+    quoted = urllib.parse.quote(raw, safe="")
+    assert "%" in quoted
+    assert sudokupad.fetch("abcdef", http=Fake(quoted)) == sudokupad.fetch("abcdef", http=Fake(raw))

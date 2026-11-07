@@ -52,7 +52,8 @@ class Spec:
                       cage or line, the shaft of an arrow; sum: cages); None = no limit on that side
     kinds             shorthand: every listed kind keeps >= 1 needed element (each-kind mode)
     target_band       "Very Easy" .. "Extreme" (or 0..6): the card's band must equal it
-    target_difficulty [lo, hi] on the card's difficulty scale, or "max" / "min": the hardest / easiest result found in
+    target_difficulty [lo, hi] on the card's difficulty scale, or "any" (with a band: no aim, the deepest dig), or
+                      "max" / "min": the hardest / easiest result found in
                       the whole time
     require           technique codes the card must contain (e.g. ["XWG"]); strict_require = listed as the code itself,
                       not only as an alternative chip
@@ -267,7 +268,7 @@ def feasibility(spec):
     except ValueError as e:
         probs.append(str(e))
         tb = None
-    if isinstance(s.target_difficulty, str) and s.target_difficulty not in ("max", "min"):
+    if isinstance(s.target_difficulty, str) and s.target_difficulty not in ("max", "min", "any"):
         probs.append(f"target_difficulty must be [low, high], 'max' or 'min', got {s.target_difficulty!r}")
     elif s.target_difficulty is not None and not isinstance(s.target_difficulty, str):
         try:
@@ -419,6 +420,23 @@ NO_TARGET = (
 )
 
 
+def band_aim(s, mode):
+    """a band request without a difficulty: a window drawn from the band's published distribution (publish_flags.AIM,
+    normal, truncated to its 10th-90th percentiles, +-0.4), the same for the same seed; None where there is no
+    distribution (other sizes, layouts, bands with too few published puzzles): dig as far as the band allows"""
+    from ..publish_flags import AIM
+
+    if s.layout or s.size != 9:
+        return None
+    dist = AIM["classic" if mode == "classic" else "variant"].get(s.target_band)
+    if dist is None:
+        return None
+    mean, sd, lo, hi = dist
+    r = random.Random(f"aim-{s.seed}-{s.target_band}")
+    x = min(hi, max(lo, r.gauss(mean, sd)))
+    return (round(x - 0.4, 1), round(x + 0.4, 1))
+
+
 def meta_requests(meta, result):
     """the spec's meta with its requests filled in from result (None: only check the requests). Requests
     (docs/formats/generator-spec.md, Metadata): title / subtitle templates ({type}, {type:list}, {variants}, {size},
@@ -552,7 +570,11 @@ def _generate(spec):
     tb = _band_index(s.target_band)
     td = tuple(s.target_difficulty) if isinstance(s.target_difficulty, (list, tuple)) else None
     most, shape = _most(s), _shape(s)
-    hunt = s.target_difficulty if isinstance(s.target_difficulty, str) else ("count" if most else None)
+    hunt = s.target_difficulty if s.target_difficulty in ("max", "min") else ("count" if most else None)
+    aim = None
+    if s.target_difficulty is None and hunt is None and tb is not None:  # a band alone: aim where published ones lie
+        # ("any" opts out: dig as far as the band allows)
+        aim = td = band_aim(s, mode)
     best = None  # best-so-far search (count "max", difficulty "max" / "min"): (score, result)
     req = list(s.require or [])
     codes = _known_codes()
@@ -749,6 +771,7 @@ def _generate(spec):
             "rejected": stats["rejected"],
             "unique_verified": verified,
             "seed": s.seed,
+            **({"aimed_at": list(aim)} if aim else {}),  # a band alone: the difficulty window drawn for this run
         }
         if hunt is None:
             _log.info(
