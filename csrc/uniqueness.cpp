@@ -170,7 +170,7 @@ void Solver::unique_rect(MoveBuf& out) {
                         for (int q : p.groups[gi].cells)
                             if (!vals[q] && q != r1 && q != r2) others.push_back(q);
                         const int no = (int)others.size();
-                        for (int k = 1; k <= 3 && k < no; ++k) {
+                        for (int k = 1; k < no; ++k) {  // any subset size (HoDoKu)
                             std::vector<int> idx(k);
                             std::function<void(int, int, uint32_t)> rec = [&](int st, int dep, uint32_t U) {
                                 if (popc(U) > k + 1) return;
