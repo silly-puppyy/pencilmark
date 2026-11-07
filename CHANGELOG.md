@@ -63,6 +63,8 @@ What changes for you (details in the entries below):
   on the engine's own rectangle (before: a hidden-UR text, sometimes on another rectangle); Aligned Pair Exclusion names
   the base pair and the witness that rules out each value pair; BUG+1 with a 4+ candidate cell has its own text.
   Tests: each added rule's explanation names its pattern and every removed candidate.
+- XY-Chains up to 12 cells (sudokuwiki's solver; before: 8, the chain search's 15-link cap). Same speed and cards on
+  the reference sets.
 - Unique Rectangle type 3: naked subsets of any size with the roof (HoDoKu; before: up to 3 more cells).
 - BUG+1 also when the odd cell has 4+ candidates (Sudopedia: the two digits a BUG would leave there go); doubly-linked
   ALS-XZ eliminates inside the other set and ALS-XY-Wing inside the pivot (HoDoKu). Reference cards: bands unchanged.

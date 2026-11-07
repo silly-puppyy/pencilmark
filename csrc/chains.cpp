@@ -547,7 +547,10 @@ void Solver::build_aic(int maxl, bool with_als) {
         // Reference ranks: discovery order (= plain FIFO BFS).
         std::vector<int> cur{2 * A}, nxt;
         rank_[2 * A] = 0;
-        for (int depth = 0; depth < MAXL && !cur.empty(); ++depth) {
+        // the bivalue-only pass reaches 12 cells (23 links) in the longest tier: sudokuwiki's solver goes to 12,
+        // HoDoKu has no limit; the bivalue graph is small (60 frozen puzzles: same time, same cards)
+        const int lim = xyp && MAXL >= 15 ? 23 : MAXL;
+        for (int depth = 0; depth < lim && !cur.empty(); ++depth) {
             nxt.clear();
             for (int s : cur) {
                 int x = s >> 1, t = s & 1;
@@ -883,7 +886,8 @@ void Solver::aic(MoveBuf& out, int lo, int hi) {
         return;
     build_aic(hi);
     for (size_t i = 0; i < aic_buf.moves.size(); ++i) {
-        if (aic_len[i] < lo || aic_len[i] > hi) continue;
+        const bool long_xy = hi >= 15 && (aic_buf.moves[i].tech == XY_CHAIN || aic_buf.moves[i].tech == REMOTE_PAIRS);
+        if (aic_len[i] < lo || (aic_len[i] > hi && !(long_xy && aic_len[i] <= 23))) continue;
         const Move& a = aic_buf.moves[i];
         Move m = a;
         m.cov_off = (int)out.covers.size();
