@@ -90,7 +90,7 @@
   "Unknown": "#9a958e"
  },
  "annotation": {
-  "$comment": "named colours of step annotations and the trace's colour layer (grade-card.md 5, 6), drawn over the cell at this opacity; a cell with n colours is split into n equal wedges from its centre, the first starting 25 degrees past the horizontal (as SudokuPad draws several colours in one cell)",
+  "$comment": "named colours of step annotations and the trace's colour layer (grade-card.md 5, 6), drawn over the cell at this opacity; a cell with n colours is split into n wedges from its centre whose ends cut the cell's outline into n equal lengths, the first cut 25/360 of the way round clockwise from the top centre (as SudokuPad draws several colours in one cell)",
   "opacity": {
    "light": 0.6,
    "dark": 0.5

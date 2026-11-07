@@ -70,9 +70,25 @@ def render(doc, dark=False, cell=48, annotate=False, labels=False, background=Tr
     # ---- board, houses
     for r, c in B.coords:
         add("shade", f'<rect x="{m + c * u}" y="{m + r * u}" width="{u}" height="{u}" fill="{T["board"]}"/>')
-    # ---- annotation colours: one per cell fills it; several split it into equal wedges from the centre, the first
-    # from 25 degrees on (SudokuPad's multi-colour cells)
+    # ---- annotation colours: one per cell fills it; several split it into equal wedges from the centre, as
+    # SudokuPad draws them: wedge i spans 25 + i * 360 / n to 25 + (i + 1) * 360 / n "degrees", each mapped to a point
+    # that far round the cell's outline (clockwise from the top centre; 360 = once round), not to a true angle
     shades, alpha = ANNOTATION["dark" if dark else "light"], ANNOTATION["opacity"]["dark" if dark else "light"]
+
+    def outline(x0, y0, a):
+        """the point a / 360 of the way round the cell's outline, clockwise from the top centre"""
+        t = (a % 360) / 90  # in sides: 0.5 = top-right corner, 1.5 = bottom-right, 2.5 = bottom-left, 3.5 = top-left
+        if t < 0.5:
+            return x0 + (0.5 + t) * u, y0
+        if t < 1.5:
+            return x0 + u, y0 + (t - 0.5) * u
+        if t < 2.5:
+            return x0 + (2.5 - t) * u, y0 + u
+        if t < 3.5:
+            return x0, y0 + (3.5 - t) * u
+        return x0 + (t - 3.5) * u, y0
+
+    corners = (45, 135, 225, 315)  # the corners, in the same measure
     for name, cols in (colours or {}).items():
         r, c = rc(name)
         x0, y0 = m + c * u, m + r * u
@@ -82,20 +98,12 @@ def render(doc, dark=False, cell=48, annotate=False, labels=False, background=Tr
                 f'<rect x="{x0}" y="{y0}" width="{u}" height="{u}" fill="{shades[cols[0]]}" fill-opacity="{alpha}"/>',
             )
             continue
-        cid = f"pmc{r}_{c}"
-        add("colour", f'<clipPath id="{cid}"><rect x="{x0}" y="{y0}" width="{u}" height="{u}"/></clipPath>')
-        R_ = u  # past the corners: the clip trims the wedge to the cell
         for i, col in enumerate(cols):
-            a1, a2 = math.radians(25 + i * 360 / len(cols)), math.radians(25 + (i + 1) * 360 / len(cols))
-            ox, oy = x0 + u / 2, y0 + u / 2
-            p1 = (ox + R_ * math.cos(a1), oy + R_ * math.sin(a1))
-            p2 = (ox + R_ * math.cos(a2), oy + R_ * math.sin(a2))
-            big = 1 if a2 - a1 > math.pi else 0
-            add(
-                "colour",
-                f'<path clip-path="url(#{cid})" d="M{ox:.1f},{oy:.1f} L{p1[0]:.1f},{p1[1]:.1f} A{R_:.1f},{R_:.1f} 0 '
-                f'{big} 1 {p2[0]:.1f},{p2[1]:.1f} Z" fill="{shades[col]}" fill-opacity="{alpha}"/>',
-            )
+            a1, a2 = 25 + i * 360 / len(cols), 25 + (i + 1) * 360 / len(cols)
+            turn = [k for k in corners for k in (k, k + 360) if a1 < k < a2]
+            pts = [(x0 + u / 2, y0 + u / 2)] + [outline(x0, y0, a) for a in (a1, *sorted(turn), a2)]
+            d = " ".join(f"{x:.1f},{y:.1f}" for x, y in pts)
+            add("colour", f'<polygon points="{d}" fill="{shades[col]}" fill-opacity="{alpha}"/>')
     houses, _ = X.read_houses([x for x in rules if x["type"] in ("grid", "box_grid", "box", "row", "column")], B)
     box_of = {}
     for k, (kind, cells, _) in enumerate(houses):
