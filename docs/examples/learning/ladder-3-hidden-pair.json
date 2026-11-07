@@ -30,7 +30,6 @@
     "strict": true
    }
   },
-  "quality": {},
   "limits": {
    "time": 120,
    "seed": 1

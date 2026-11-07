@@ -1,5 +1,5 @@
 """The puzzles of the "Generate for learning" guide: a technique ladder (each puzzle needs singles, the earlier rungs'
-techniques and exactly one new one) and a killer curriculum (cages covering the board, in four stages). Kept in docs/examples/learning/<name>.json
+techniques and exactly one new one) and a killer curriculum (four stages, small cages to cage maths). Kept in docs/examples/learning/<name>.json
 ({"title", "spec", "puzzle", "card", "tries"}) and drawn by tools/gen_swatches.py. Generation takes minutes (the
 ladder tries seeds until a card has no other technique), so the results are committed; run this again when the
 generator changes.
@@ -25,21 +25,25 @@ LADDER = {
     "ladder-5-x-wing": ("X-Wing", "XWG", "Hard"),
     "ladder-6-swordfish": ("Swordfish", "SWF", "Very Hard"),
 }
-# the killer curriculum: cages cover every cell that is not a given (a lone cell becomes a given, never a 1-cell cage);
-# name -> (title, what it teaches, givens, where)
+# the killer curriculum (user 2026-11-07): small cages with givens in them, where a cage's last cell is its total minus
+# the digits in it; then bigger cages; then the cages' digit sets (combinations); then cage maths (the rule of 45).
+# Early stages keep the totals low (easy mental arithmetic). name -> (title, what it teaches, cage template, givens,
+# where); every stage passes the standard publishing checks (the generator's default)
+CSI = {"codes": ["CSI"], "strict": True}
 KILLERS = {
-    "killer-1-first-cages": ("First cages", "a mostly filled grid where a cage or two give the last singles",
-                             [50, None], {"band": "Very Easy", "difficulty": [0, 3]}),
-    "killer-2-more-cages": ("More cages", "fewer givens, so more of the grid is read through cage sums",
-                            [28, 40], {"band": "Very Easy", "difficulty": [2, 4.5]}),
+    "killer-1-last-cell": ("Last cell of a cage", "a cage's last cell is its total minus the digits already in it",
+                           {"size": [2, 3], "sum": [3, 15], "count": [8, 14]}, [30, 46],
+                           {"band": "Very Easy", "contains": CSI}),
+    "killer-2-bigger-cages": ("Bigger cages", "longer cages and fewer givens: add up more digits before the last one",
+                              {"size": [3, 5], "sum": [6, 25], "count": [8, 14]}, [24, 36],
+                              {"band": "Very Easy", "contains": CSI}),
     "killer-3-combinations": ("Cage combinations", "a cage's digit sets do the work: a 3 in two cells is 1 and 2",
-                              [8, 22], {"band": "Easy", "contains": {"codes": ["CGC"], "strict": True}}),
-    "killer-4-no-givens": ("No givens", "the cages alone: no number clue to start from", 0, {"band": "Easy"}),
+                              {"count": "tile"}, [8, 22], {"band": "Easy", "contains": {"codes": ["CGC"], "strict": True}}),
+    "killer-4-cage-maths": ("Cage maths", "the rule of 45: a house's total minus the cages inside it gives the rest",
+                            {"count": "tile"}, 0, {"contains": {"codes": ["IOU"], "strict": True}}),
 }  # fmt: skip
 
-
-# a first stage is mostly given by design: the publishing check for too many givens is off there
-QUALITY = {"killer-1-first-cages": {"preset": "standard", "trivial": {"severity": "off"}}}
+QUALITY = {}  # name -> a quality object instead of the standard preset
 KILLER_SEED = {}  # name -> seed, where seed 1 found nothing in the time
 
 
@@ -64,9 +68,9 @@ def run(name):
             if only(r["card"], code, earlier):
                 return save(name, title, s, r, seed)
         return name, "no seed in 1..24 gave singles, the earlier rungs and that technique alone"
-    title, _teaches, giv, where = KILLERS[name]
+    title, _teaches, cage, giv, where = KILLERS[name]
     s = spec(
-        rules=[{"type": "cage", "count": "tile"}],
+        rules=[{"type": "cage", **cage}],
         givens={"count": giv},
         where=where,
         seed=KILLER_SEED.get(name, list(KILLERS).index(name) + 1),  # a seed per stage: one seed gives one grid
@@ -136,18 +140,20 @@ def practice(code, band, known=(), tries=24):
 MIDDLE = """
 ## 2. A killer curriculum
 
-Someone starting out with killers first meets a cage or two that are needed for simple singles; then the cages
-multiply; then the cages' digit sets do the work (a 3 in two cells is 1 and 2, which acts like a pointing pair); and at
-last there are no number clues at all. Each stage below is a killer whose cages cover every cell that is not a given
-(a cell left alone becomes a given: a 1-cell cage is a given in disguise), with a given range and a target:
+Killers start with one idea: the digits in a cage add up to its total, so when all but one are known, the last is the
+total minus the others. The first stage teaches just that, with small cages, low totals (easy mental arithmetic) and
+givens inside the cages; the second makes the cages longer; the third lets the cages' digit sets do the work (a 3 in
+two cells is 1 and 2, which acts like a pointing pair); the fourth is cage maths, the rule of 45, on a board of cages
+with no givens. Each stage asks for its technique (`"strict": true`) and keeps small totals where the arithmetic is
+new:
 
 ```json
-{"rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}, {"type": "cage", "count": "tile"}],
- "givens": {"count": [28, 40]}, "where": {"band": "Very Easy", "difficulty": [2, 4.5]}}
+{"rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+           {"type": "cage", "size": [2, 3], "sum": [3, 15], "count": [8, 14]}],
+ "givens": {"count": [30, 46]}, "where": {"band": "Very Easy", "contains": {"codes": ["CSI"], "strict": true}}}
 ```
 
-Without a difficulty range the generator removes every given it can, and a grid with few givens takes long to scan
-even when it needs only singles: a Very Easy puzzle then scores about 4-5. The range keeps the first stages gentle.
+Every stage passes the standard publishing checks (the generator's default), so even the first is not mostly given.
 """
 
 
@@ -169,7 +175,7 @@ def write_page():
     for name, (title, code, band) in LADDER.items():
         L += section(name, f"{title} (`{code}`, {band})")
     L.append(MIDDLE)
-    for name, (title, teaches, _g, _w) in KILLERS.items():
+    for name, (title, teaches, _c, _g, _w) in KILLERS.items():
         L += section(name, f"{title}: {teaches}")
     PAGE.write_text("\n".join(L), encoding="utf-8")
 

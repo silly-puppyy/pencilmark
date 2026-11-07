@@ -68,8 +68,7 @@
    "title": "Killer with German whispers and two givens",
    "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nKiller: Digits in a cage sum to its small clue and don't repeat within the cage.\nGerman Whispers: Adjacent digits on a whisper line differ by at least 5.",
    "type": "Variant Sudoku",
-   "description": "Cages and whisper lines, exactly two givens, Hard.",
-   "generated_from": "e8d807e3904906ba079fe090e4e028f2cf797513070fc44ca72cd07d7d6a91a5"
+   "description": "Cages and whisper lines, exactly two givens, Hard."
   },
   "board": {
    "rows": 9,
@@ -410,11 +409,10 @@
     "band": 0
    },
    {
-    "code": "CFX",
-    "chip": "CFX",
-    "name": "Clue Facts",
-    "band": 0,
-    "uses": 1
+    "code": "CSI",
+    "chip": "CSI",
+    "name": "Last cell of a cage / line",
+    "band": 0
    },
    {
     "code": "NSI",
@@ -451,7 +449,7 @@
     "alternatives": [
      "LNR"
     ],
-    "uses": 10
+    "uses": 14
    },
    {
     "code": "DGC",
@@ -477,15 +475,18 @@
    },
    {
     "code": "SKY",
-    "chip": "SKY",
+    "chip": "SKY/CSM",
     "name": "Skyscraper",
     "band": 3,
+    "alternatives": [
+     "CSM"
+    ],
     "uses": 1
    }
   ]
  },
  "info": {
-  "seconds": 430.1,
+  "seconds": 445.0,
   "attempts": 13,
   "found": null,
   "givens": 2,

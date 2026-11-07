@@ -28,7 +28,6 @@
     "of": "givens"
    }
   ],
-  "quality": {},
   "limits": {
    "time": 180,
    "seed": 1
@@ -40,8 +39,7 @@
   "meta": {
    "title": "generated 4x4 classic, 4 givens",
    "rules_text": "Tiny Sudoku: Place 1–4 in every row, column and 2×2 box.",
-   "type": "Tiny Sudoku",
-   "generated_from": "ce54f514783fc586d4b228040aaabbed601701c9fedc0f5997cb6916712738e4"
+   "type": "Tiny Sudoku"
   },
   "board": {
    "rows": 4,
@@ -100,7 +98,7 @@
  },
  "card": {
   "band": "Very Easy",
-  "difficulty": 0.2,
+  "difficulty": 0.4,
   "time": 0.7,
   "contains": [
    {

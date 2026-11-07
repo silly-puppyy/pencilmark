@@ -12,6 +12,7 @@
   "rules": [
    {
     "type": "box_grid",
+    "origin": "r1c1",
     "box": [
      3,
      3
@@ -37,7 +38,6 @@
   "where": {
    "band": "Hard"
   },
-  "quality": {},
   "limits": {
    "time": 900,
    "seed": 1
@@ -49,8 +49,7 @@
   "meta": {
    "title": "generated 9x9 classic, 39 givens",
    "rules_text": "Twodoku: Each 9×9 grid follows normal sudoku rules: place 1–9 in every row, column and box; shared cells belong to both grids.",
-   "type": "Twodoku",
-   "generated_from": "959b000457270fff295a4ae752f919e438ef4516fe991e4f549af46ad87767e9"
+   "type": "Twodoku"
   },
   "board": {
    "rows": 15,
@@ -525,7 +524,6 @@
    },
    {
     "type": "box_grid",
-    "origin": "r7c7",
     "box": [
      3,
      3
@@ -533,14 +531,15 @@
     "count": [
      3,
      3
-    ]
+    ],
+    "origin": "r7c7"
    }
   ]
  },
  "card": {
   "band": "Hard",
-  "difficulty": 6.0,
-  "time": 21.7,
+  "difficulty": 6.2,
+  "time": 22.1,
   "contains": [
    {
     "code": "HSI",
@@ -570,18 +569,19 @@
    },
    {
     "code": "SKY",
-    "chip": "SKY/KTE",
+    "chip": "SKY/KTE/CSM",
     "name": "Skyscraper",
     "band": 3,
     "alternatives": [
-     "KTE"
+     "KTE",
+     "CSM"
     ],
     "uses": 1
    }
   ]
  },
  "info": {
-  "seconds": 0.7,
+  "seconds": 0.8,
   "attempts": 1,
   "found": null,
   "givens": 39,

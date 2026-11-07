@@ -37,7 +37,6 @@
     "of": "givens"
    }
   ],
-  "quality": {},
   "limits": {
    "time": 300,
    "seed": 1
@@ -49,8 +48,7 @@
   "meta": {
    "title": "generated 9x9 1 whisper, 12 givens",
    "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nGerman Whispers: Adjacent digits on a whisper line differ by at least 5.",
-   "type": "German Whispers Sudoku",
-   "generated_from": "a66e1d814df5869eec6c180ed9bfb09eee185de60ea4d9e41c849f931a0cfb1f"
+   "type": "German Whispers Sudoku"
   },
   "board": {
    "rows": 9,
@@ -270,9 +268,9 @@
   ]
  },
  "card": {
-  "band": "Very Easy",
-  "difficulty": 5.4,
-  "time": 13.2,
+  "band": "Easy",
+  "difficulty": 6.8,
+  "time": 27.4,
   "contains": [
    {
     "code": "HSI",
@@ -285,11 +283,53 @@
     "chip": "LSI",
     "name": "Line / dot read without notes",
     "band": 0
+   },
+   {
+    "code": "NSI",
+    "chip": "NSI/LNS/CSH",
+    "name": "Naked Single",
+    "band": 1,
+    "alternatives": [
+     "LNS",
+     "CSH"
+    ]
+   },
+   {
+    "code": "PPR",
+    "chip": "PPR/LNS/CSH",
+    "name": "Pointing / Box-Line Reduction",
+    "band": 1,
+    "alternatives": [
+     "LNS",
+     "CSH"
+    ],
+    "uses": 8
+   },
+   {
+    "code": "MSI",
+    "chip": "MSI/LNS/CSH",
+    "name": "Notes in the head",
+    "band": 1,
+    "alternatives": [
+     "LNS",
+     "CSH"
+    ],
+    "uses": 2
+   },
+   {
+    "code": "PWC",
+    "chip": "PWC/LNS",
+    "name": "Pair rules (dots, whispers, anti-knight...)",
+    "band": 1,
+    "alternatives": [
+     "LNS"
+    ],
+    "uses": 24
    }
   ]
  },
  "info": {
-  "seconds": 31.4,
+  "seconds": 36.8,
   "attempts": 7,
   "found": null,
   "givens": 12,

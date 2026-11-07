@@ -40,7 +40,6 @@
     "count": "auto"
    }
   ],
-  "quality": {},
   "limits": {
    "time": 600,
    "seed": 1
@@ -52,8 +51,7 @@
   "meta": {
    "title": "generated 9x9 6 renban, 2 whisper, 6 givens",
    "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nGerman Whispers: Adjacent digits on a whisper line differ by at least 5.\nRenban: A renban line holds a set of consecutive digits in any order, without repeats.",
-   "type": "Variant Sudoku",
-   "generated_from": "94758af5011e8c03d58d1266bb66dc1f5211fcf89e347e77726250c8520680ec"
+   "type": "Variant Sudoku"
   },
   "board": {
    "rows": 9,
@@ -359,7 +357,7 @@
  },
  "card": {
   "band": "Medium",
-  "difficulty": 9.8,
+  "difficulty": 9.9,
   "time": 41.2,
   "contains": [
    {
@@ -417,7 +415,7 @@
   ]
  },
  "info": {
-  "seconds": 373.9,
+  "seconds": 402.8,
   "attempts": 5,
   "found": null,
   "givens": 6,

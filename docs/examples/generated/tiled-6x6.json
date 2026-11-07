@@ -26,7 +26,6 @@
     "count": "tile"
    }
   ],
-  "quality": {},
   "limits": {
    "time": 180,
    "seed": 1
@@ -38,8 +37,7 @@
   "meta": {
    "title": "generated 6x6 10 cage, 0 givens",
    "rules_text": "Mini Sudoku: Place 1–6 in every row, column and 2×3 box.\nKiller: Digits in a cage sum to its small clue and don't repeat within the cage.",
-   "type": "Mini Killer Sudoku",
-   "generated_from": "4e614d775a2a5c811a76a56d6bc51ed33c6e6e85829dccefa24314753d08b5ac"
+   "type": "Mini Killer Sudoku"
   },
   "board": {
    "rows": 6,
@@ -234,7 +232,7 @@
  },
  "card": {
   "band": "Easy",
-  "difficulty": 5.5,
+  "difficulty": 5.6,
   "time": 9.3,
   "contains": [
    {
@@ -244,10 +242,10 @@
     "band": 0
    },
    {
-    "code": "NSI",
-    "chip": "NSI",
-    "name": "Naked Single",
-    "band": 1
+    "code": "CSI",
+    "chip": "CSI",
+    "name": "Last cell of a cage / line",
+    "band": 0
    },
    {
     "code": "PPR",
@@ -273,7 +271,7 @@
   ]
  },
  "info": {
-  "seconds": 1.5,
+  "seconds": 1.7,
   "attempts": 5,
   "found": null,
   "givens": 0,

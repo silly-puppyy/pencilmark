@@ -27,7 +27,6 @@
     "count": "max"
    }
   ],
-  "quality": {},
   "limits": {
    "time": 300,
    "seed": 1
@@ -37,10 +36,9 @@
   "format": "pencilmark-puzzle",
   "format_version": 1,
   "meta": {
-   "title": "generated 9x9 36 parity, 10 givens",
+   "title": "generated 9x9 36 parity, 11 givens",
    "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nOdd-Even: A digit in a grey square is even.",
-   "type": "Odd-Even Sudoku",
-   "generated_from": "3a756f98f51ee7326c4f96f4127c1ec348851d2284ecb0be57123ffedc30b9ca"
+   "type": "Odd-Even Sudoku"
   },
   "board": {
    "rows": 9,
@@ -49,73 +47,14 @@
   "digits": 9,
   "givens": [
    0,
+   0,
+   0,
    6,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   3,
-   0,
-   0,
-   9,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   3,
-   0,
-   0,
-   0,
-   0,
-   9,
-   5,
-   0,
-   2,
-   0,
-   0,
-   0,
-   0,
-   0,
-   4,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
    0,
    0,
    0,
    0,
    1,
-   6,
    0,
    0,
    0,
@@ -125,93 +64,152 @@
    0,
    0,
    0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   5,
+   0,
+   0,
+   0,
+   0,
+   0,
+   3,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   2,
+   3,
+   0,
+   0,
+   1,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   2,
+   0,
+   0,
+   9,
+   0,
+   0,
+   5,
+   0,
+   4,
    0,
    0,
    0,
    0
   ],
   "solution": [
-   8,
-   6,
-   3,
-   9,
-   7,
-   1,
-   2,
-   4,
    5,
-   4,
-   1,
-   5,
-   3,
-   8,
    2,
-   9,
    7,
    6,
+   8,
+   9,
+   4,
+   3,
+   1,
+   1,
+   8,
+   3,
    7,
+   5,
+   4,
    2,
    9,
    6,
-   5,
    4,
-   3,
-   1,
-   8,
-   9,
-   7,
-   4,
-   2,
-   1,
-   6,
-   8,
-   5,
-   3,
-   6,
-   3,
-   1,
-   8,
-   9,
-   5,
-   7,
-   2,
-   4,
-   5,
-   8,
-   2,
-   7,
-   4,
-   3,
-   1,
-   6,
-   9,
-   3,
    9,
    6,
-   4,
-   2,
-   7,
-   5,
-   8,
    1,
    2,
+   3,
+   7,
+   8,
    5,
    8,
-   1,
-   6,
-   9,
+   5,
+   2,
    4,
+   3,
+   1,
+   9,
+   6,
+   7,
+   6,
+   4,
+   9,
+   5,
+   7,
+   8,
+   3,
+   1,
+   2,
    3,
    7,
    1,
+   2,
+   9,
+   6,
+   8,
+   5,
+   4,
+   2,
+   3,
+   4,
+   9,
+   1,
+   5,
+   6,
+   7,
+   8,
+   7,
+   1,
+   8,
+   3,
+   6,
+   2,
+   5,
+   4,
+   9,
+   9,
+   6,
+   5,
+   8,
    4,
    7,
-   5,
-   3,
-   8,
-   6,
-   9,
-   2
+   1,
+   2,
+   3
   ],
   "rules": [
    {
@@ -229,70 +227,7 @@
     "type": "cell",
     "kind": "even",
     "cells": [
-     "r7c4"
-    ]
-   },
-   {
-    "type": "cell",
-    "kind": "even",
-    "cells": [
-     "r8c3"
-    ]
-   },
-   {
-    "type": "cell",
-    "kind": "even",
-    "cells": [
-     "r1c7"
-    ]
-   },
-   {
-    "type": "cell",
-    "kind": "even",
-    "cells": [
-     "r4c7"
-    ]
-   },
-   {
-    "type": "cell",
-    "kind": "even",
-    "cells": [
-     "r6c8"
-    ]
-   },
-   {
-    "type": "cell",
-    "kind": "even",
-    "cells": [
-     "r5c8"
-    ]
-   },
-   {
-    "type": "cell",
-    "kind": "even",
-    "cells": [
-     "r1c8"
-    ]
-   },
-   {
-    "type": "cell",
-    "kind": "even",
-    "cells": [
-     "r7c5"
-    ]
-   },
-   {
-    "type": "cell",
-    "kind": "even",
-    "cells": [
-     "r8c1"
-    ]
-   },
-   {
-    "type": "cell",
-    "kind": "even",
-    "cells": [
-     "r8c7"
+     "r5c1"
     ]
    },
    {
@@ -306,91 +241,35 @@
     "type": "cell",
     "kind": "even",
     "cells": [
-     "r2c5"
+     "r8c8"
     ]
    },
    {
     "type": "cell",
     "kind": "even",
     "cells": [
-     "r9c9"
+     "r3c1"
     ]
    },
    {
     "type": "cell",
     "kind": "even",
     "cells": [
-     "r6c2"
+     "r4c1"
     ]
    },
    {
     "type": "cell",
     "kind": "even",
     "cells": [
-     "r8c5"
+     "r1c7"
     ]
    },
    {
     "type": "cell",
     "kind": "even",
     "cells": [
-     "r6c3"
-    ]
-   },
-   {
-    "type": "cell",
-    "kind": "even",
-    "cells": [
-     "r7c3"
-    ]
-   },
-   {
-    "type": "cell",
-    "kind": "even",
-    "cells": [
-     "r9c7"
-    ]
-   },
-   {
-    "type": "cell",
-    "kind": "even",
-    "cells": [
-     "r9c6"
-    ]
-   },
-   {
-    "type": "cell",
-    "kind": "even",
-    "cells": [
-     "r2c1"
-    ]
-   },
-   {
-    "type": "cell",
-    "kind": "even",
-    "cells": [
-     "r4c3"
-    ]
-   },
-   {
-    "type": "cell",
-    "kind": "even",
-    "cells": [
-     "r5c9"
-    ]
-   },
-   {
-    "type": "cell",
-    "kind": "even",
-    "cells": [
-     "r7c8"
-    ]
-   },
-   {
-    "type": "cell",
-    "kind": "even",
-    "cells": [
-     "r2c9"
+     "r1c4"
     ]
    },
    {
@@ -404,21 +283,154 @@
     "type": "cell",
     "kind": "even",
     "cells": [
-     "r3c2"
+     "r4c8"
     ]
    },
    {
     "type": "cell",
     "kind": "even",
     "cells": [
-     "r6c5"
+     "r9c8"
     ]
    },
    {
     "type": "cell",
     "kind": "even",
     "cells": [
-     "r3c4"
+     "r2c9"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r8c5"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r9c5"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r6c6"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r2c7"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r7c7"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r8c3"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r7c1"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r6c4"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r5c6"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r6c7"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r6c9"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r5c2"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r9c4"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r3c3"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r4c3"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r1c5"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r2c2"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r5c9"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r3c8"
     ]
    },
    {
@@ -432,21 +444,14 @@
     "type": "cell",
     "kind": "even",
     "cells": [
-     "r5c1"
+     "r3c5"
     ]
    },
    {
     "type": "cell",
     "kind": "even",
     "cells": [
-     "r4c6"
-    ]
-   },
-   {
-    "type": "cell",
-    "kind": "even",
-    "cells": [
-     "r1c1"
+     "r7c3"
     ]
    },
    {
@@ -460,29 +465,22 @@
     "type": "cell",
     "kind": "even",
     "cells": [
-     "r3c6"
+     "r8c6"
     ]
    },
    {
     "type": "cell",
     "kind": "even",
     "cells": [
-     "r3c9"
-    ]
-   },
-   {
-    "type": "cell",
-    "kind": "even",
-    "cells": [
-     "r5c4"
+     "r7c9"
     ]
    }
   ]
  },
  "card": {
-  "band": "Hard",
-  "difficulty": 7.5,
-  "time": 22.9,
+  "band": "Easy",
+  "difficulty": 5.4,
+  "time": 12.0,
   "contains": [
    {
     "code": "HSI",
@@ -493,82 +491,25 @@
    {
     "code": "PPR",
     "chip": "PPR",
-    "name": "Pointing / Box-Line Reduction",
+    "name": "Pointing Pair (in the head)",
     "band": 1,
-    "uses": 8
-   },
-   {
-    "code": "MSI",
-    "chip": "MSI",
-    "name": "Pair / triple in the head",
-    "band": 1,
-    "uses": 7
-   },
-   {
-    "code": "HPR",
-    "chip": "HPR/NPR/NQD/NTR/HTR",
-    "name": "Hidden Pair",
-    "band": 2,
-    "alternatives": [
-     "NPR",
-     "NQD",
-     "NTR",
-     "HTR"
-    ],
-    "uses": 4
-   },
-   {
-    "code": "HQD",
-    "chip": "HQD/NPR/NQD/NTR/HTR",
-    "name": "Hidden Quad",
-    "band": 2,
-    "alternatives": [
-     "NPR",
-     "NQD",
-     "NTR",
-     "HTR"
-    ],
-    "uses": 5
-   },
-   {
-    "code": "XWG",
-    "chip": "XWG",
-    "name": "X-Wing",
-    "band": 3,
-    "uses": 1
-   },
-   {
-    "code": "SKY",
-    "chip": "SKY/KTE",
-    "name": "Skyscraper (in the head)",
-    "band": 3,
-    "alternatives": [
-     "KTE"
-    ],
-    "uses": 2
-   },
-   {
-    "code": "CSM",
-    "chip": "CSM/MCH",
-    "name": "Simple Colouring",
-    "band": 3,
-    "alternatives": [
-     "MCH"
-    ],
     "uses": 1
    }
   ]
  },
  "info": {
-  "seconds": 300.3,
-  "attempts": 164,
-  "found": 207,
-  "givens": 10,
+  "seconds": 300.2,
+  "attempts": 14,
+  "found": 150,
+  "givens": 11,
   "elements": {
    "even": 36
   },
   "rejected": {
-   "publishing check: unusual": 25
+   "publishing check: thin": 33,
+   "publishing check: unusual": 18,
+   "publishing check: thin/unusual": 3,
+   "publishing check: trivial": 1
   }
  }
 }

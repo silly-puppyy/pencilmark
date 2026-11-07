@@ -30,7 +30,6 @@
     "strict": true
    }
   },
-  "quality": {},
   "limits": {
    "time": 120,
    "seed": 15
@@ -42,8 +41,7 @@
   "meta": {
    "title": "generated 9x9 classic, 25 givens",
    "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.",
-   "type": "Sudoku",
-   "generated_from": "c2bd5d2b0636fe5a46b75311fae7f8bb46bc24fa30d91dfa0734b6a5b9f565af"
+   "type": "Sudoku"
   },
   "board": {
    "rows": 9,
@@ -232,8 +230,8 @@
  },
  "card": {
   "band": "Very Hard",
-  "difficulty": 6.9,
-  "time": 14.0,
+  "difficulty": 7.1,
+  "time": 13.9,
   "contains": [
    {
     "code": "HSI",
@@ -256,9 +254,12 @@
    },
    {
     "code": "SWF",
-    "chip": "SWF",
+    "chip": "SWF/JLF",
     "name": "Swordfish",
     "band": 4,
+    "alternatives": [
+     "JLF"
+    ],
     "uses": 1
    }
   ]

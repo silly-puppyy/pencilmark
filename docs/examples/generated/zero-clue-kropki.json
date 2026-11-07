@@ -53,8 +53,7 @@
    "title": "0-clue 6x6 kropki",
    "rules_text": "Mini Sudoku: Place 1–6 in every row, column and 2×3 box.\nKropki: Digits separated by a white dot are consecutive; digits separated by a black dot are in a 1:2 ratio.",
    "type": "Mini Kropki Sudoku",
-   "description": "No givens, a minimal set of kropki dots, difficulty at least 3.",
-   "generated_from": "99ce6eabad15a70f934d35b8fd54bc790e530021e179de2e62a47d9e0df02711"
+   "description": "No givens, a minimal set of kropki dots, difficulty at least 3."
   },
   "board": {
    "rows": 6,
@@ -252,21 +251,14 @@
  },
  "card": {
   "band": "Expert",
-  "difficulty": 13.3,
-  "time": 26.9,
+  "difficulty": 13.0,
+  "time": 27.1,
   "contains": [
    {
     "code": "HSI",
     "chip": "HSI",
     "name": "Hidden Single",
     "band": 0
-   },
-   {
-    "code": "CFX",
-    "chip": "CFX",
-    "name": "Clue Facts",
-    "band": 0,
-    "uses": 1
    },
    {
     "code": "PPR",
@@ -280,7 +272,7 @@
     "chip": "PWC",
     "name": "Pair rules (dots, whispers, anti-knight...)",
     "band": 1,
-    "uses": 12
+    "uses": 20
    },
    {
     "code": "LNR",
@@ -361,7 +353,7 @@
   ]
  },
  "info": {
-  "seconds": 16.3,
+  "seconds": 16.8,
   "attempts": 1,
   "found": null,
   "givens": 0,

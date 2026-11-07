@@ -31,7 +31,6 @@
     "count": 3
    }
   ],
-  "quality": {},
   "limits": {
    "time": 180,
    "seed": 1
@@ -43,8 +42,7 @@
   "meta": {
    "title": "generated 9x9 3 thermo, 13 givens",
    "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nThermo: Digits strictly increase along a thermometer from the bulb.",
-   "type": "Thermo Sudoku",
-   "generated_from": "98d1dd6c728c692f495be602dec6d933b2eb2b3b48c625293b3a49389616675e"
+   "type": "Thermo Sudoku"
   },
   "board": {
    "rows": 9,
@@ -271,8 +269,8 @@
   ]
  },
  "card": {
-  "band": "Easy",
-  "difficulty": 5.3,
+  "band": "Very Easy",
+  "difficulty": 5.4,
   "time": 12.0,
   "contains": [
    {
@@ -286,20 +284,11 @@
     "chip": "LSI",
     "name": "Line / dot read without notes",
     "band": 0
-   },
-   {
-    "code": "NSI",
-    "chip": "NSI/MSI",
-    "name": "Naked Single",
-    "band": 1,
-    "alternatives": [
-     "MSI"
-    ]
    }
   ]
  },
  "info": {
-  "seconds": 61.2,
+  "seconds": 73.2,
   "attempts": 5,
   "found": null,
   "givens": 13,

@@ -133,6 +133,7 @@
 
 ### Generator
 
+- The learning guide's killer curriculum: the last cell of a cage, bigger cages, combinations, then cage maths.
 - Every request passes the standard publishing checks unless its `quality` says otherwise (`{}` gives each check
   its own default severity, as `rate` does).
 - Every line kind the engine grades: slow thermo, entropic, modular, parity, palindrome, zipper, region sum, lockout
@@ -140,8 +141,8 @@
 - Corner clues (quadruples, mathrax), outside clues (sandwich, x-sum, skyscraper, little killer), and locked
   `neighbours` rules with any `op` and `where` (for example nonconsecutive).
 - A request without a band or difficulty target keeps the broadest search and says so in `info.warnings`.
-- Cages may keep givens inside them (never a whole cage), so the last cell of a cage can be read as its total minus the
-  digits in it.
+- A request that keeps many givens (a quarter of the cells or more) may leave givens inside cages (never a whole cage),
+  so the last cell of a cage is read as its total minus the digits in it; with fewer givens the cages carry the puzzle.
 - With `quality` in the request, a puzzle's checks and card are one grading (the nine-variants example 135 -> 121 s).
 - `limits.time` holds while the generator restores givens and prunes.
 
