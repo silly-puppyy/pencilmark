@@ -59,7 +59,7 @@ def render(doc, dark=False, cell=48, annotate=False, labels=False, background=Tr
     cy = lambda r: m + (r + 0.5) * u
     ctr = lambda name: (cx(rc(name)[1]), cy(rc(name)[0]))
     exists = {(r, c) for r, c in B.coords}
-    layers = {k: [] for k in ("shade", "colour", "lines", "cages", "grid", "clues", "digits", "outside")}
+    layers = {k: [] for k in ("shade", "colour", "marks", "lines", "cages", "grid", "clues", "digits", "outside")}
     cur = [None]  # the rule being drawn (annotate)
 
     def add(k, s):
@@ -368,19 +368,23 @@ def render(doc, dark=False, cell=48, annotate=False, labels=False, background=Tr
                         anchor="start",
                     ),
                 )
-            elif t == "contains":  # quadruple: a circle on the shared corner, its digits in a 2 x 2 grid (sudoku.coach)
+            elif (
+                t == "contains"
+            ):  # quadruple: a circle on the shared corner (sudoku.coach): one or two digits as a word,
+                # three or four in a compact 2 x 2 grid, bold, well inside the circle
                 ds = list(r["digits"])
                 add(
                     "clues",
                     f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{0.3 * u:.1f}" fill="{T["clue_bg"]}" stroke="{T["given"]}" '
-                    f'stroke-width="1"/>',
+                    f'stroke-width="{max(1.0, 0.025 * u):.1f}"/>',
                 )
-                g = 0.12 * u  # half the spacing of the 2 x 2 grid
-                spots = {1: [(0, 0)], 2: [(-1, 0), (1, 0)], 3: [(-1, -1), (1, -1), (0, 1)]}.get(
-                    len(ds), [(-1, -1), (1, -1), (-1, 1), (1, 1)]
-                )
-                for d, (dx, dy) in zip(ds, spots):
-                    add("clues", small_text(x + dx * g, y + dy * g, d, size=0.22))
+                if len(ds) <= 2:
+                    add("clues", small_text(x, y, "".join(map(str, ds)), size=0.22, weight=700))
+                else:
+                    g = 0.085 * u  # half the spacing of the 2 x 2 grid
+                    spots = [(-1, -1), (1, -1), (0, 1)] if len(ds) == 3 else [(-1, -1), (1, -1), (-1, 1), (1, 1)]
+                    for d, (dx, dy) in zip(ds, spots):
+                        add("clues", small_text(x + dx * g, y + dy * g, d, size=0.17, weight=700))
             elif k == "battenburg":
                 s = 0.15 * u
                 for i, (dx, dy) in enumerate(((-1, -1), (0, -1), (-1, 0), (0, 0))):
@@ -409,6 +413,19 @@ def render(doc, dark=False, cell=48, annotate=False, labels=False, background=Tr
             for x in r["cells"]:
                 cxx, cyy = ctr(x)
                 mk = CELL[k].mark if k in CELL else "digits"
+                # under annotation colours the shape's fill fades: its outline is drawn again above them (readable)
+                edge = f'fill="none" stroke="{T["cand"]}" stroke-width="{0.035 * u:.1f}"'
+                if colours and x in colours and mk in ("circle", "square", "diamond"):
+                    d = 0.42 * u
+                    add(
+                        "marks",
+                        f'<circle cx="{cxx:.1f}" cy="{cyy:.1f}" r="{0.4 * u:.1f}" {edge}/>'
+                        if mk == "circle"
+                        else f'<rect x="{cxx - 0.4 * u:.1f}" y="{cyy - 0.4 * u:.1f}" width="{0.8 * u:.1f}" '
+                        f'height="{0.8 * u:.1f}" {edge}/>'
+                        if mk == "square"
+                        else f'<polygon points="{cxx},{cyy - d} {cxx + d},{cyy} {cxx},{cyy + d} {cxx - d},{cyy}" {edge}/>',
+                    )
                 if mk == "circle":
                     add("shade", f'<circle cx="{cxx:.1f}" cy="{cyy:.1f}" r="{0.4 * u:.1f}" fill="{T["odd"]}"/>')
                 elif mk == "square":
@@ -522,7 +539,7 @@ def render(doc, dark=False, cell=48, annotate=False, labels=False, background=Tr
             y = m + r * u + u * (((d - 1) // 3) + 0.5) / 3
             add("digits", small_text(x, y, d, size=0.24, col=T["cand"], weight=400))
     body = "".join(
-        "".join(layers[k]) for k in ("shade", "colour", "lines", "cages", "grid", "clues", "digits", "outside")
+        "".join(layers[k]) for k in ("shade", "colour", "marks", "lines", "cages", "grid", "clues", "digits", "outside")
     )
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{W:.0f}" height="{H:.0f}" viewBox="0 0 {W:.1f} {H:.1f}">'
