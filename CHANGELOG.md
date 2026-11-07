@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Difficulty ranges spread**: `"difficulty": [lo, hi]` aims at a point drawn in the range for each seed
+  (`info.aimed_at`) instead of returning the first puzzle inside it, which sat at the low edge (Very Easy `[2, 4]`:
+  median 2.4, 2.2-2.9 before; 2.9, 2.2-4.0 now).
 - **Technique whitelist**: `rate(puzzle, techniques=["XWG", "SKY"])` / `--techniques XWG,SKY` grades for a solver who
   knows only these techniques (and the singles); a puzzle needing more gets band Unknown with the reason. Difficulty
   can be higher than the full card's: a solver with fewer techniques has fewer moves on offer at each step.

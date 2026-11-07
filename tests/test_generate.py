@@ -508,7 +508,9 @@ def test_typical_difficulty_aims_where_published_puzzles_lie():
     r = run(s)
     lo, hi = r["info"]["aimed_at"]
     assert lo <= r["card"]["difficulty"] <= hi and r["card"]["band"] == "Very Easy"
-    assert "aimed_at" not in run(spec(9, where={"band": "Very Easy", "difficulty": [3.5, 4.5]}, seed=2))["info"]
+    ranged = run(spec(9, where={"band": "Very Easy", "difficulty": [3.5, 4.5]}, seed=2))  # a point drawn in the range
+    lo, hi = ranged["info"].get("aimed_at", (3.5, 4.5))
+    assert 3.5 <= lo < hi <= 4.5 and 3.5 <= ranged["card"]["difficulty"] <= 4.5
     deep = run(spec(9, where={"band": "Very Easy"}, seed=2))  # not asked for: the deepest dig
     assert "aimed_at" not in deep["info"] and deep["info"]["givens"] < r["info"]["givens"]
 

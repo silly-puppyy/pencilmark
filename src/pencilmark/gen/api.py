@@ -445,6 +445,16 @@ def band_aim(s, mode):
     return (round(x - 0.4, 1), round(x + 0.4, 1))
 
 
+def range_aim(s, td):
+    """a difficulty range [lo, hi]: a window of +-0.25 around a point drawn uniformly in it (the same for the same
+    seed); a range narrower than the window is its own aim"""
+    lo, hi = td
+    if hi - lo <= 0.5:
+        return td
+    x = random.Random(f"aim-{s.seed}-{lo}-{hi}").uniform(lo, hi)
+    return (max(lo, round(x - 0.25, 2)), min(hi, round(x + 0.25, 2)))
+
+
 def meta_requests(meta, result):
     """the spec's meta with its requests filled in from result (None: only check the requests). Requests
     (docs/formats/generator-spec.md, Metadata): title / subtitle templates ({type}, {type:list}, {variants}, {size},
@@ -583,9 +593,11 @@ def _generate(spec):
     td = tuple(s.target_difficulty) if isinstance(s.target_difficulty, (list, tuple)) else None
     most, shape = _most(s), _shape(s)
     hunt = s.target_difficulty if s.target_difficulty in ("max", "min") else ("count" if most else None)
-    aim = None
+    aim, asked = None, td  # asked: what the request allows once the aim is relaxed
     if s.target_difficulty == "typical" and tb is not None:  # asked for: aim where published puzzles of the band lie
         aim = td = band_aim(s, mode)
+    elif td is not None and hunt is None:  # a range: aim at a point drawn in it, so results spread over the range
+        aim = td = range_aim(s, td)  # (digging stops at the first puzzle inside, which sat at the low edge)
     best = None  # best-so-far search (count "max", difficulty "max" / "min"): (score, result)
     req = list(s.require or [])
     codes = _known_codes()
@@ -635,7 +647,7 @@ def _generate(spec):
     while time.time() < deadline:
         stats["attempts"] += 1
         if aim and not relaxed and time.time() > t0 + s.time_limit / 2:  # the aim is a preference, the band the
-            td, relaxed = None, True  # request: after half the time any difficulty in the band will do
+            td, relaxed = asked, True  # request: after half the time any difficulty in the band / range will do
         if mode in ("classic", "dig"):
             few = (
                 not s.layout and s.max_givens is not None and s.max_givens < CLASSIC_MIN_GIVENS.get(s.size, 0)

@@ -119,7 +119,7 @@ Conditions on the result's card, using the card's keys ([Grade card](grade-card.
 | Key | Value |
 |---|---|
 | `band` | one band name |
-| `difficulty` | `[lo, hi]`; or `"max"` / `"min"`: the hardest / easiest result found in `limits.seconds` (the run uses all of it); or `"typical"` (with a band, 9×9): aim at a window drawn from the seed where published puzzles of the band lie, reported in `info.aimed_at`; it is a preference, so with nothing in the window by half of `limits.seconds` any difficulty in the band will do (`info.aim_relaxed`). Without `difficulty` the generator digs as far as the band allows |
+| `difficulty` | `[lo, hi]` (the run aims at a point drawn in the range, `info.aimed_at`, so results spread over it; after half of `limits.seconds` any difficulty in the range will do); or `"max"` / `"min"`: the hardest / easiest result found in `limits.seconds` (the run uses all of it); or `"typical"` (with a band, 9×9): aim at a window drawn from the seed where published puzzles of the band lie, reported in `info.aimed_at`; it is a preference, so with nothing in the window by half of `limits.seconds` any difficulty in the band will do (`info.aim_relaxed`). Without `difficulty` the generator digs as far as the band allows |
 | `contains` | technique codes the puzzle needs: each is an entry of the card's `contains` with no `alternatives` (no other technique gets through at that point) |
 | `elements` | `{"max": n}`: at most n placed rule elements in total |
 
