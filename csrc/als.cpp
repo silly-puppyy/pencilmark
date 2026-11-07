@@ -118,8 +118,9 @@ void Solver::als_xz(MoveBuf& out) {
             } else {  // doubly linked: both ALS become locked sets minus the RCCs
                 for (uint32_t dm = common & ~rcc; dm; dm &= dm - 1) targets(both, lowdigit(dm), both);
                 for (uint32_t dm = rcc; dm; dm &= dm - 1) targets(both, lowdigit(dm), both);
-                for (int s : both)
-                    for (uint32_t dm = als[s].cand & ~rcc; dm; dm &= dm - 1) targets({s}, lowdigit(dm), both);
+                for (int s : both)  // a digit locked in s leaves the cells outside s seeing all its places (HoDoKu:
+                                    // inside the other set too)
+                    for (uint32_t dm = als[s].cand & ~rcc; dm; dm &= dm - 1) targets({s}, lowdigit(dm), {s});
             }
             if (el.empty()) continue;
             std::sort(el.begin(), el.end());
@@ -168,7 +169,7 @@ void Solver::als_xywing(MoveBuf& out) {
                     const uint64_t* sa = als_seen_d(A, z);
                     const uint64_t* sb = als_seen_d(B, z);
                     for (int w = 0; w < W; ++w)
-                        tg[w] = sa[w] & sb[w] & ~als[A].cells[w] & ~als[B].cells[w] & ~als[cpiv].cells[w];
+                        tg[w] = sa[w] & sb[w] & ~als[A].cells[w] & ~als[B].cells[w];  // pivot cells too (HoDoKu)
                     for (int q = 0; q < p.N; ++q)
                         if (tbit(tg.data(), q) && !vals[q] && (cand[q] & bit(z))) el.push_back((uint32_t)q * 32 + z);
                 }

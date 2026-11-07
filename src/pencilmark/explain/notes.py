@@ -888,6 +888,20 @@ def _h_ur(ctx):
 
 def _h_bug(ctx):
     nm, p, st = ctx.nm, ctx.p, ctx.st
+    odd = [q for q in range(p.N) if not st.vals[q] and popcount(st.cand[q]) != 2]
+    if not ctx.place and len(odd) == 1 and popcount(st.cand[odd[0]]) >= 4:  # BUG+1 with a 4+ candidate cell
+        c = odd[0]
+        pair = sorted({d for _, d in ctx.elims})
+        short = f"{fmt_elims(nm, ctx.elims)}: BUG+1"
+        teach = (
+            f"Every unsolved cell has exactly two candidates except {nm.cell(c)} {nm.cset(st.cand[c])}. In its "
+            f"houses {' and '.join(map(str, pair))} appear twice and its other digits three times. If {nm.cell(c)} "
+            f"held {pair[0]} or {pair[1] if len(pair) > 1 else pair[0]}, the grid would be a 'bivalue universal "
+            f"grave' -- every digit twice per house -- which never has exactly one solution. So "
+            f"{fmt_elims(nm, ctx.elims)}."
+        )
+        J = _J(ctx, digits=pair, base_cells=[c])
+        return _result(ctx, J, short, teach, True)
     if ctx.code == "BUG+2" or not ctx.place:
         tri = [q for q in range(p.N) if not st.vals[q] and popcount(st.cand[q]) == 3]
         others = [q for q in range(p.N) if not st.vals[q] and q not in tri]

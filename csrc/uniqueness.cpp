@@ -453,13 +453,44 @@ void Solver::bug_plus1(MoveBuf& out) {
         if (!p.rel[c].empty() || !p.neq[c].empty()) return;
         int k = popc(cand[c]);
         if (k == 2) continue;
-        if (k != 3 || T2 >= 0) return;
+        if (k < 3 || T2 >= 0) return;
         if (T < 0) T = c;
         else T2 = c;
     }
     if (T < 0) return;
     if (T2 >= 0) {  // BUG+2 (newer techniques only: the frozen reference has BUG+1 alone)
-        if (!disabled[COLOUR_ALGEBRA]) bug_plus2(out, T, T2, G0);
+        if (popc(cand[T]) == 3 && popc(cand[T2]) == 3 && !disabled[COLOUR_ALGEBRA]) bug_plus2(out, T, T2, G0);
+        return;
+    }
+    if (popc(cand[T]) > 3) {  // the odd cell has 4+ candidates (Sudopedia): in each of its houses its digits appear
+        // three times (the extras) or twice (the pair a BUG would leave there); T is one of the extras, so the pair goes
+        uint32_t pair = 0;
+        bool first = true;
+        for (int hi : p.houses) {
+            if (hi >= G0) continue;
+            const bool hasT = tbit(p.gbits(hi), T);
+            uint32_t two = 0, three = 0;
+            for (int v = 1; v <= p.D; ++v) {
+                int n = 0;
+                for (int q : p.groups[hi].cells)
+                    if (!vals[q] && (cand[q] & bit(v))) ++n;
+                if (n == 0 || (n == 2 && !(hasT && (cand[T] & bit(v))))) continue;
+                if (!hasT || !(cand[T] & bit(v)) || (n != 2 && n != 3)) return;
+                (n == 2 ? two : three) |= bit(v);
+            }
+            if (!hasT) continue;
+            if (popc(two) != 2 || (two | three) != cand[T] || (!first && two != pair)) return;
+            pair = two, first = false;
+        }
+        if (!pair) return;
+        Move& m = new_move(out, BUG_PLUS1, 1.0, 1);
+        for (uint32_t mm = pair; mm; mm &= mm - 1) add_elim(out, m, T, lowdigit(mm));
+        int nun = 0;
+        for (int c = 0; c < p.N; ++c) nun += !vals[c];
+        meta9(m, nun, (int)p.houses.size(), p.D, 0, 0, 0, 0, 1, 1.0);
+        m.code = CODE_BUG;
+        pm_long xm[XM_N] = {nun, 0, 0, 0, 1, 0, 0, 0, 0, 0};
+        std::copy(xm, xm + XM_N, m.xm);
         return;
     }
     int digit = 0;
