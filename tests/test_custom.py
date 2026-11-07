@@ -1,6 +1,8 @@
 """The custom rule language (pencilmark.rules.custom, docs/formats/rules/custom.mdx): the language itself, then rules in
 puzzle files (validation, reading, grading, writing back)."""
 
+import json
+
 import pytest
 
 from pencilmark.rules.custom import ABSENT, Env, LangError, canonical, check, describe, evaluate, holds, parse
@@ -549,3 +551,27 @@ def test_rate_unknowns_is_unknown_with_reason():
     card = pencilmark.rate(doc, fields=["band", "difficulty", "time", "band_index"])
     assert card["band"] == "Unknown" and card["band_index"] is None and card["time"] is None
     assert "unknowns" in card["reason"]
+
+
+def test_definitions_place_one_rule_many_times():
+    """6.18 definitions: a named custom rule placed with use (its own style wins); a placement is the rule it spells
+    out (same fingerprint, names and drawing aside); bad definitions or placements are refused (user 2026-11-07, K2)"""
+    base = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 4, "cols": 4}, "digits": 4,
+            "givens": [0] * 16, "rules": [{"type": "box_grid", "box": [2, 2], "count": [2, 2]}]}  # fmt: skip
+    rule = {"holds": "a + b != 5", "label": "No fives"}
+    defs = {"no_five": dict(rule, draw="dot", style={"color": "#ff0000"})}
+    cells = [{"a": ["r1c1"], "b": ["r1c2"]}, {"a": ["r3c3"], "b": ["r4c3"]}]
+    placed = dict(
+        base, definitions=defs, rules=base["rules"] + [{"type": "custom", "use": "no_five", "cells": c} for c in cells]
+    )
+    inline = dict(base, rules=base["rules"] + [dict(rule, type="custom", cells=c) for c in cells])
+    renamed = json.loads(json.dumps(placed).replace("no_five", "fives"))
+    assert pencilmark.fingerprint(placed) == pencilmark.fingerprint(inline) == pencilmark.fingerprint(renamed)
+    assert pencilmark.describe(placed)["rules_text"].count("No fives") == 1
+    text = pencilmark.write.pencilmark(placed)
+    assert '"definitions"' in text and '"use": "no_five"' in text  # kept as written
+    for bad in ({"definitions": {"x": {"label": "no holds"}}},
+                dict(definitions=defs, rules=base["rules"] + [{"type": "custom", "use": "nope", "cells": cells[0]}]),
+                dict(definitions=defs, rules=base["rules"] + [{"type": "custom", "use": "no_five", "holds": "a == 1"}])):  # fmt: skip
+        with pytest.raises(pencilmark.FormatError):
+            pencilmark.validate(dict(base, **bad))

@@ -19,7 +19,7 @@ from .common import (
     cell_name,
     op_params,
     parse_cell,
-    with_origins,
+    prepared,
 )
 from .validate import resolve_areas, validate
 
@@ -27,7 +27,7 @@ from .validate import resolve_areas, validate
 # ----------------------------------------------------------------------------------------------------------- reading
 def to_internal(doc):
     """pencilmark-puzzle (format_version 1) -> puzzle JSON (pencilmark.puzzle_json) that builds the engine Puzzle."""
-    doc = with_origins(doc)
+    doc = prepared(doc)
     B = validate(doc)
     D = B.D
     R, C = doc["board"]["rows"], doc["board"]["cols"]
@@ -248,7 +248,7 @@ class _ReadCtx:
                 CU.compile_rule(r, self.B, self.D, layers)  # too large for a table: refused here, with its reason
             except CU.LangError as e:
                 raise NotSupportedError(f"custom rule: {e}") from None
-            return [{k: v for k, v in r.items() if k not in ("id", "label", "style")}]
+            return [{k: v for k, v in r.items() if k not in ("id", "label", "style", "draw")}]
         if t == "quadruple":
             return [{"type": "quadruple", "cells": list(r["cells"]), "digits": list(r["digits"])}]
         if t == "appears":

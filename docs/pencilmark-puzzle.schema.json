@@ -93,6 +93,87 @@
     "uniqueItems": true
    }
   },
+  "definitions": {
+   "type": "object",
+   "description": "named custom rules placed with {\"type\": \"custom\", \"use\": name} (docs/formats/rules/custom.mdx)",
+   "additionalProperties": {
+    "type": "object",
+    "required": [
+     "holds"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "holds": {
+      "type": "string"
+     },
+     "scope": {
+      "type": "object",
+      "properties": {
+       "pairs": {
+        "enum": [
+         "orthogonal",
+         "diagonal",
+         "king",
+         "knight"
+        ]
+       },
+       "windows": {
+        "type": "array",
+        "items": {
+         "type": "integer",
+         "minimum": 1
+        },
+        "minItems": 2,
+        "maxItems": 2
+       },
+       "neighbors": {
+        "enum": [
+         "orthogonal",
+         "diagonal",
+         "king",
+         "knight"
+        ]
+       },
+       "cells": {
+        "type": "string"
+       },
+       "within": {
+        "const": "box"
+       },
+       "except": {
+        "type": "array",
+        "items": {
+         "type": "array",
+         "items": {
+          "$ref": "#/$defs/cell"
+         }
+        }
+       }
+      },
+      "additionalProperties": false
+     },
+     "each": {
+      "type": "string"
+     },
+     "label": {
+      "type": "string"
+     },
+     "style": {
+      "$ref": "#/$defs/style"
+     },
+     "draw": {
+      "enum": [
+       "line",
+       "cage",
+       "cells",
+       "circle",
+       "dot"
+      ],
+      "description": "how the rule is drawn (drawing only)"
+     }
+    }
+   }
+  },
   "rules": {
    "type": "array",
    "items": {
@@ -1797,12 +1878,15 @@
   "rule_custom": {
    "type": "object",
    "required": [
-    "type",
-    "holds"
+    "type"
    ],
    "properties": {
     "type": {
      "const": "custom"
+    },
+    "use": {
+     "type": "string",
+     "description": "the name of a definition (top-level definitions) this rule places; its keys are the definition's, then this rule's"
     },
     "id": {
      "type": "string"
@@ -1812,6 +1896,16 @@
     },
     "style": {
      "$ref": "#/$defs/style"
+    },
+    "draw": {
+     "enum": [
+      "line",
+      "cage",
+      "cells",
+      "circle",
+      "dot"
+     ],
+     "description": "how the rule is drawn (drawing only)"
     },
     "holds": {
      "type": "string",
@@ -1888,7 +1982,19 @@
      "additionalProperties": false
     }
    },
-   "additionalProperties": false
+   "additionalProperties": false,
+   "anyOf": [
+    {
+     "required": [
+      "holds"
+     ]
+    },
+    {
+     "required": [
+      "use"
+     ]
+    }
+   ]
   },
   "rule_yin_yang": {
    "type": "object",

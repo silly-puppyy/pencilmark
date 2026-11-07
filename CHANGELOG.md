@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **Reusable custom rules**: a top-level `"definitions"` object names a custom rule once (`holds`, optional
+  `scope`, `each`, `label`, `style`, `draw`); `{"type": "custom", "use": name, "cells": {...}}` places it, with its own
+  style if wanted. A placement means the rule it spells out (same fingerprint and card). Custom rules also take `draw`
+  (`line`, `cage`, `cells`, `circle`, `dot`), which the renderer draws in the rule's style.
 - **Difficulty ranges spread**: `"difficulty": [lo, hi]` aims at a point drawn in the range for each seed
   (`info.aimed_at`) instead of returning the first puzzle inside it, which sat at the low edge (Very Easy `[2, 4]`:
   median 2.4, 2.2-2.9 before; 2.9, 2.2-4.0 now).

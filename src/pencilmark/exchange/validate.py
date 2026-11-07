@@ -9,6 +9,7 @@ from ..rules.edge import EDGE, NEG_SELECTOR, edge_value_ok
 from ..rules.line import LINE
 from .board import _NUMBERED_OK, Board, grid_area, grid_units
 from .common import (
+    CUSTOM_DRAW,
     DIRECTED_OPS,
     FORMAT,
     FORMAT_VERSION,
@@ -20,7 +21,7 @@ from .common import (
     FormatError,
     NotSupportedError,
     parse_cell,
-    with_origins,
+    prepared,
 )
 
 # -------------------------------------------------------------------------------------------------------- validation
@@ -87,6 +88,7 @@ TOP_KEYS = {
     "placed",
     "solution",
     "candidates",
+    "definitions",
     "rules",
     "decorations",
     "style",
@@ -105,7 +107,7 @@ def validate(doc):
     """strict reading (docs/formats/puzzle-format.md section 4) of a format_version 1 dict; raises FormatError. Returns the Board."""
     if not isinstance(doc, dict) or doc.get("format") != FORMAT:
         raise FormatError('not a pencilmark-puzzle ("format" must be "pencilmark-puzzle")')
-    doc = with_origins(doc)  # a grid / box_grid / chaos rule's origin defaults to r1c1
+    doc = prepared(doc)  # origins filled in, named custom rules expanded
     if "format_version" not in doc:
         raise FormatError("format_version missing")
     fv = _int(doc["format_version"], "format_version", 1)
@@ -633,8 +635,10 @@ def _validate_custom(r, B):
     from ..rules import custom as CU
 
     for k in r:
-        if k not in {"type", "holds", "cells", "scope", "each"} | COMMON:
+        if k not in {"type", "holds", "cells", "scope", "each", "draw"} | COMMON:
             raise FormatError(f"unknown key {k!r}")
+    if "draw" in r and r["draw"] not in CUSTOM_DRAW:
+        raise FormatError(f"custom rule: draw must be one of {list(CUSTOM_DRAW)}")
     if not isinstance(r.get("holds"), str):
         raise FormatError('custom rule: "holds" must be an expression (text)')
     hit = re.search(r"\b(region|shaded)\s*\(", r["holds"])

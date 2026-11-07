@@ -376,7 +376,7 @@ def _custom_text(r):
     return f"{r['label']}: {text}" if r.get("label") else text
 
 
-family("Custom Rules", _t("custom"), lambda rs, c: " ".join(_custom_text(r) for r in rs))
+family("Custom Rules", _t("custom"), lambda rs, c: " ".join(dict.fromkeys(_custom_text(r) for r in rs)))  # once each
 
 
 def _chaos_text(rs, c):
@@ -492,7 +492,9 @@ def describe(puzzle):
         else document(puzzle)  # the rules alone: no search for the solution
     )
     D = doc["digits"]
-    rules = [r for r in doc["rules"]]
+    from .exchange import prepared
+
+    rules = list(prepared(doc)["rules"])  # named custom rules expanded
     # grid areas from the houses the rules state (any spelling): every D x D area whose D rows and D columns are houses,
     # with a box shape when its regular boxes are houses too
     from .exchange import Board, read_houses

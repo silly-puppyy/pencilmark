@@ -139,6 +139,33 @@ pencilmark reads, checks and writes them, evaluates rules with them, and its exh
 puzzles (uniqueness is by digits; the hidden values only have to exist). The search can be slow where the hidden values
 say little until most digits are known. `rate` gives them band Unknown with a `reason`: no human technique reasons with them yet.
 
+### Definitions: one rule, many places
+
+A rule used in several places is written once, under a name in the top-level `"definitions"` object, and placed with
+`use`:
+
+```json
+"definitions": {
+  "no_five": {"holds": "a + b != 5", "label": "No fives", "draw": "dot", "style": {"color": "#d33"}}
+},
+"rules": [
+  {"type": "custom", "use": "no_five", "cells": {"a": ["r1c1"], "b": ["r1c2"]}},
+  {"type": "custom", "use": "no_five", "cells": {"a": ["r4c4"], "b": ["r5c4"]}, "style": {"color": "#33d"}}
+]
+```
+
+A definition takes `holds`, and optionally `scope`, `each`, `label`, `style` and `draw`; a placement takes `use`, the
+`cells` it binds and optionally `label`, `style` or `draw` of its own, which win over the definition's. A placement is
+the custom rule it spells out (the definition's keys, then its own): readers, `describe` and the fingerprint see that
+rule, so two files that differ only in a definition's name or in spelling a rule out are the same puzzle. A `use`
+without a definition, a placement with `holds`, and a definition without `holds` are refused. Writers keep the
+definitions, in the order of first use.
+
+`draw` says how a custom rule is drawn (drawing only, like `style`): `line` (through each cell list, in order),
+`cage` (an outline around the cells), `cells` (the cells shaded), `circle` (a circle in each cell) or `dot` (on the
+edge between the two cells). Without `draw` the rule has no drawing of its own (a source's look comes as
+decorations).
+
 ### Reading, writing, limits
 
 A reader refuses a custom rule that does not parse or type-check (unknown names or functions, arithmetic on a

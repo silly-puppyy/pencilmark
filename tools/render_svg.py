@@ -58,7 +58,7 @@ def render(
     u = float(cell)
     B = X.validate(doc)
     R, C = doc["board"]["rows"], doc["board"]["cols"]
-    rules = X.resolve_areas(B, doc["rules"])
+    rules = X.resolve_areas(B, X.prepared(doc)["rules"])  # named custom rules drawn as placed
     has_out = any(
         r["type"] in OUTSIDE
         or (r["type"] == "sum" and r.get("kind") in ("little_killer", "frame"))
@@ -472,6 +472,32 @@ def render(
                     )
                 )
                 add("clues", circle_clue(x, y, s, r=0.22 if t == "quadruple" else 0.15))
+        elif t == "custom" and r.get("draw"):  # drawn as the file asks (6.18 draw), colored by its style
+            lists = [[v] if isinstance(v, str) else v for v in (r.get("cells") or {}).values()]
+            lists = [ls if ls and isinstance(ls[0], str) else [c for sub in ls for c in sub] for ls in lists]
+            allc = [c for ls in lists for c in ls]
+            how = r["draw"]
+            if how == "line":
+                for ls in lists:
+                    add("lines", polyline(ls, "#aaaaaa", 0.15))
+            elif how == "cage":
+                add("cages", outline(allc, 0.08, "4 3", T["given"], 1.2))
+            elif how == "cells":
+                for x in allc:
+                    rr, cc = rc(x)
+                    add(
+                        "shade",
+                        f'<rect x="{m + cc * u}" y="{m + rr * u}" width="{u}" height="{u}" fill="{T["shade"]}"/>',
+                    )
+            elif how == "circle":
+                for x in allc:
+                    cxx, cyy = ctr(x)
+                    add("marks", f'<circle cx="{cxx:.1f}" cy="{cyy:.1f}" r="{0.4 * u:.1f}" fill="none" '
+                                 f'stroke="{T["given"]}" stroke-width="{0.04 * u:.1f}"/>')  # fmt: skip
+            elif how == "dot" and len(allc) == 2:
+                (x0, y0), (x1, y1) = ctr(allc[0]), ctr(allc[1])
+                add("clues", f'<circle cx="{(x0 + x1) / 2:.1f}" cy="{(y0 + y1) / 2:.1f}" r="{0.12 * u:.1f}" '
+                              f'fill="{T["board"]}" stroke="{T["given"]}" stroke-width="{0.03 * u:.1f}"/>')  # fmt: skip
         elif t == "cell":
             for x in r["cells"]:
                 cxx, cyy = ctr(x)

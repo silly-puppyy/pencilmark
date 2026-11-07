@@ -651,7 +651,9 @@ def to_ipuz(puzzle):
         raise NotSupportedError("ipuz sudoku needs one gap-free D x D grid")
     if doc.get("candidates"):
         raise NotSupportedError("ipuz sudoku cannot carry given candidates (Sukaku)")
-    rules = doc["rules"]
+    from .exchange import prepared
+
+    rules = prepared(doc)["rules"]
     grids = [r for r in rules if r["type"] in ("grid", "box_grid")]
     if len(grids) != 1 or any(r["type"] in ("row", "column") for r in rules):
         raise NotSupportedError("ipuz sudoku needs one grid with plain rows and columns")

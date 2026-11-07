@@ -6,6 +6,8 @@
     validate(doc)                                       strict reading checks (docs/formats/puzzle-format.md section 4); raises FormatError
     dumps(doc, pretty=True) -> str                      canonical JSON text (docs/formats/puzzle-format.md 8.1)
     fingerprint(doc) -> "<64 hex>"                       content fingerprint (docs/formats/puzzle-format.md 8.2)
+    prepared(doc) -> dict                               the doc as readers take it (origins filled in, named custom rules
+                                                        expanded): use it before reading doc["rules"] yourself
 
 The format is a transport layer: read(write(p)) builds the same engine structure as p (groups in order, relations and
 constraints in order, domains, givens, coordinates), except for the normalizations listed in docs/guides/development/engine-mapping.md (each
@@ -74,6 +76,7 @@ from .common import (  # noqa: F401
     op_named,
     op_params,
     parse_cell,
+    prepared,
 )
 from .read import _engine_params_json, _ReadCtx, read, to_internal  # noqa: F401
 from .validate import (  # noqa: F401

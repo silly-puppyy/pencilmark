@@ -103,7 +103,9 @@ def _load(puzzle, format=None):  # noqa: A002
     p = PJ.from_json(import_puzzle(doc))
     p.finalize()
     if isinstance(doc.get("rules"), list):
-        p._pm_input_rules = doc["rules"]
+        from .exchange.common import with_definitions
+
+        p._pm_input_rules = with_definitions(doc)["rules"]  # named custom rules expanded, one per input rule
     return p
 
 

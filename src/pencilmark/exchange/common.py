@@ -128,6 +128,50 @@ def _engine_params_to_op(kind, args):
 GRID_TYPES = ("grid", "box_grid", "chaos")
 
 
+DEFINITION_KEYS = {"holds", "scope", "each", "label", "style", "draw"}
+# how a custom rule is drawn (6.18, drawing only): a line through each cell list, a cage outline, shaded cells, a
+# circle in each cell, or a dot on the edge of a two-cell list
+CUSTOM_DRAW = ("line", "cage", "cells", "circle", "dot")
+
+
+def with_definitions(doc):
+    """the doc with every placement of a named custom rule ({"type": "custom", "use": name, "cells": {...}}) replaced
+    by the rule it places: the definition's keys, then the placement's (a placement's style or label wins); the
+    "definitions" map itself is dropped. Raises FormatError for a bad definition or placement (6.18)."""
+    if not isinstance(doc, dict):
+        return doc
+    defs = doc.get("definitions")
+    rules = doc.get("rules") if isinstance(doc.get("rules"), list) else []
+    if defs is None and not any(isinstance(r, dict) and "use" in r for r in rules):
+        return doc
+    if not isinstance(defs, dict) or not defs:
+        raise FormatError('"definitions" must be an object of named custom rules, {"name": {"holds": ...}}')
+    for name, d in defs.items():
+        if not isinstance(d, dict) or "holds" not in d:
+            raise FormatError(f"definition {name!r} must be an object with holds")
+        bad = set(d) - DEFINITION_KEYS
+        if bad:
+            raise FormatError(f"definition {name!r}: unknown key(s) {sorted(bad)} (it takes {sorted(DEFINITION_KEYS)})")
+    out = []
+    for i, r in enumerate(rules):
+        if isinstance(r, dict) and "use" in r:
+            if r.get("type") != "custom":
+                raise FormatError(f"rule {i}: use places a custom rule definition (type custom)")
+            if r["use"] not in defs:
+                raise FormatError(f"rule {i}: no definition named {r['use']!r}")
+            if "holds" in r:
+                raise FormatError(f"rule {i}: a placement gives use or holds, not both")
+            r = {"type": "custom", **defs[r["use"]], **{k: v for k, v in r.items() if k not in ("type", "use")}}
+        out.append(r)
+    return dict({k: v for k, v in doc.items() if k != "definitions"}, rules=out)
+
+
+def prepared(doc):
+    """a document as readers, validators and the fingerprint take it: grid origins filled in, named custom rules
+    expanded. One place for every such normalization: a new one is added here, not at each caller."""
+    return with_definitions(with_origins(doc))
+
+
 def with_origins(doc):
     """the doc with every grid / box_grid / chaos rule's origin filled in: r1c1 when it is left out (6.1)"""
     rules = doc.get("rules") if isinstance(doc, dict) else None

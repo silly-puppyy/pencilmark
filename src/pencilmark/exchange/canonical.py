@@ -6,7 +6,7 @@ import hashlib
 import json
 
 from .board import Board, read_houses
-from .common import DIRECTED_OPS, GRID_TYPES, parse_cell, with_origins
+from .common import DIRECTED_OPS, GRID_TYPES, parse_cell, prepared
 from .validate import resolve_areas
 
 # --------------------------------------------------------------------------------------------- canonical text + hash
@@ -21,12 +21,14 @@ KEY_ORDER = [
     "placed",
     "solution",
     "candidates",
+    "definitions",
     "rules",
     "decorations",
     "style",
 ]
 RULE_ORDER = [
     "type",
+    "use",
     "kind",
     "of",
     "op",
@@ -63,6 +65,7 @@ RULE_ORDER = [
     "allowed",
     "id",
     "label",
+    "draw",
     "style",
 ]
 
@@ -87,7 +90,17 @@ def canonical(doc):
             else r
             for r in out["rules"]
         ]
-        out["rules"] = [dict(r, holds=_holds(r["holds"])) if r.get("type") == "custom" else r for r in out["rules"]]
+        out["rules"] = [
+            dict(r, holds=_holds(r["holds"])) if r.get("type") == "custom" and "holds" in r else r for r in out["rules"]
+        ]
+    if isinstance(out.get("definitions"), dict):  # named custom rules in first-use order, each in rule key order
+        used = [r.get("use") for r in out.get("rules") or [] if isinstance(r, dict) and r.get("use")]
+        names = sorted(out["definitions"], key=lambda n: (used.index(n) if n in used else len(used), n))
+        out["definitions"] = {
+            n: _order(dict(d, holds=_holds(d["holds"])) if "holds" in d else d, RULE_ORDER)
+            for n in names
+            for d in [out["definitions"][n]]
+        }
     if "candidates" in out:
 
         def rc(k):
@@ -153,7 +166,7 @@ def _holds(text):
 
 def _norm_rule(r, D):
     """spelling-free form of one rule for the fingerprint: cell sets sorted, symmetric pairs sorted"""
-    r = {k: v for k, v in r.items() if k not in ("id", "label", "style")}
+    r = {k: v for k, v in r.items() if k not in ("id", "label", "style", "draw")}
     srt = lambda xs: sorted((x.lower() for x in xs), key=_rc)
     t = r["type"]
     if (
@@ -179,7 +192,7 @@ def semantic_subset(doc):
     """the fingerprinted content: board, digits, givens, placed digits, candidates and rules, with the houses replaced by the houses they
     state (grid, box_grid, box / row / column rules), so every spelling of the same houses gives
     the same result, and set-like cell lists sorted"""
-    doc = with_origins(doc)
+    doc = prepared(doc)
     keep = {k: doc[k] for k in ("format", "format_version", "digits", "givens", "placed", "candidates") if k in doc}
     keep["board"] = {"rows": doc["board"]["rows"], "cols": doc["board"]["cols"]}
     D = doc.get("digits")

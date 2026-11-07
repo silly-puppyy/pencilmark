@@ -79,7 +79,7 @@ def _input_order(doc, prov, src):
     rules = []
     for j, i in enumerate(order):
         r = dict(doc["rules"][i])
-        for extra in ("id", "label", "style"):
+        for extra in ("id", "label", "style", "draw"):
             if extra in src[j]:
                 r[extra] = src[j][extra]
         rules.append(r)
