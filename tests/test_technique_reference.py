@@ -13,6 +13,7 @@ from collections import defaultdict
 from pathlib import Path
 
 import pytest
+from conftest import CLASSIC
 
 import pencilmark
 from pencilmark import api
@@ -493,3 +494,44 @@ def test_explanation_names_the_pattern(pos):
 
 # rules whose explanation has sub-steps
 SUBSTEPS = {"wxyz2", "colour_unit", "finned", "franken"}
+
+
+def test_avoidable_rectangle_needs_placed_corners():
+    """avoidable rectangle type 1 (D2): three corners of a two-box rectangle solved as x / y / y by the solver (not
+    given) and the fourth able to be x: x would make the four solver-placed cells swappable, so x goes. The same corners
+    as givens prove nothing (a given pair may form the pattern), so the move must not appear"""
+    sol = pencilmark.solve(CLASSIC)
+    giv = {k: int(ch) for k, ch in enumerate(CLASSIC) if ch.isdigit() and ch != "0"}
+    box = lambda c: (c // 27, c % 9 // 3)  # noqa: E731
+
+    def cands(filled):  # every digit a cell's filled peers leave
+        return [1 << (filled[k] - 1) if k in filled else
+                sum(1 << (v - 1) for v in range(1, 10) if all(filled.get(j) != v for j in PEERS[k]))
+                for k in range(81)]  # fmt: skip
+
+    for a, b, c_, d in (
+        (r1 * 9 + c1, r1 * 9 + c2, r2 * 9 + c1, r2 * 9 + c2)
+        for r1 in range(9) for r2 in range(r1 + 1, 9) for c1 in range(9) for c2 in range(c1 + 1, 9)
+    ):  # fmt: skip
+        corners = (a, b, c_, d)
+        if len({box(k) for k in corners}) != 2 or any(k in giv for k in corners):
+            continue
+        if sol[b] == sol[c_] != sol[a] != sol[d]:
+            filled = {**giv, **{k: sol[k] for k in (a, b, c_)}}
+            if cands(filled)[d] >> (sol[a] - 1) & 1:
+                break
+    else:
+        pytest.fail("no avoidable rectangle in the puzzle")
+    x = sol[a]
+    found = {}
+    for placed in (True, False):
+        p = api._load("".join(str(filled[k]) if k in filled else "." for k in range(81)))
+        if placed:  # the solver filled these (the file's "placed" cells), they are not givens
+            p.placed = {a, b, c_}
+        q = copy.copy(p)
+        q.givens = filled
+        keep = {k for k, v in S.TECH_NAMES.items() if v == "UniqueRectangle"}
+        mv = CB.state_moves(q, api._params("computer"), cpuzzle=CB.to_cpuzzle(p), cand=cands(filled), limit_per_tech=0,
+                            details=True, assume_unique=True, disabled=list(set(S.TECH_NAMES) - keep))  # fmt: skip
+        found[placed] = {tuple(e) for m in mv for e in m["elim"]}
+    assert (d, x) in found[True] and (d, x) not in found[False], found
