@@ -1312,6 +1312,8 @@ def translate(sp, page_text=None, overrides=None):
         if str(cg.get("value", "")).lower().startswith("foglight"):
             continue  # fog of war's lit cells (read by fog_of())
         cs = [idx(tuple(x)) for x in cg["cells"] if isinstance(x, (list, tuple)) and inside(tuple(x))]
+        if not cs:  # every cell outside the grid (a frame drawn as cages): nothing to read
+            continue
         v = cg.get("value")
         total = int(v) if isinstance(v, (int, float)) or (isinstance(v, str) and v.isdigit()) else None
         if cs and total is not None and ZONE_TEXT.search(rules.lower()):  # zone: the cage's number lists digits in it

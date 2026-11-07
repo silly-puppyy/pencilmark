@@ -550,7 +550,7 @@ def test_drawn_styles():
     doc = pm.write.document(pm.read._document(pj), describe=True)
     style = {r.get("kind"): r.get("style") for r in doc["rules"]}
     assert style["renban"] == {"color": "#c060c0", "width": 0.2}
-    assert style["kropki"] == {"fill": "#ffffff", "color": "#000000", "shape": "circle"}
+    assert style["kropki"] == {"fill": "#ffffff", "color": "#000000", "shape": "circle", "size": 0.3}  # the dot is 0.3 cells
     plain = dict(doc, rules=[{k: v for k, v in r.items() if k != "style"} for r in doc["rules"]])
     assert pm.fingerprint(doc) == pm.fingerprint(plain)  # styles are cosmetic
     # a SudokuPad thermometer stays a thermo line (with its colour), a board-sized fill is the background decoration
@@ -1237,3 +1237,29 @@ def test_sudokupad_metadata_cages_and_encoded_payloads():
     quoted = urllib.parse.quote(raw, safe="")
     assert "%" in quoted
     assert sudokupad.fetch("abcdef", http=Fake(quoted)) == sudokupad.fetch("abcdef", http=Fake(raw))
+
+
+def test_sudokupad_style_halos_and_leftover_artwork():
+    """two looks on a rule's cells, wide and narrow, are a line and its outline; drawn elements on cells no rule
+    touches become decorations (a line, a rotated square as a polygon, a word); nothing on a rule's cells is copied"""
+    from pencilmark.sources import _sp_style as SS
+
+    path = [[0.5, 0.5], [0.5, 1.5], [0.5, 2.5]]
+    sp = {"puzzle": {"cells": [[{}] * 4] * 4, "cellSize": 64,
+                     "lines": [{"wayPoints": path, "color": "#ffffff", "thickness": 20},
+                               {"wayPoints": path, "color": "#cc3333", "thickness": 8},
+                               {"wayPoints": [[3.5, 0.5], [3.5, 3.5]], "color": "#2266cc", "thickness": 4}],
+                     "underlays": [{"center": [2.5, 2.5], "width": 0.6, "height": 0.6, "angle": 30, "backgroundColor": "#88cc88"},
+                                   {"center": [0.5, 0.5], "width": 0.8, "height": 0.8, "rounded": True, "backgroundColor": "#dddddd"}],
+                     "overlays": [{"center": [1.5, 3.5], "text": "Bonus", "fontSize": 16}]}}  # fmt: skip
+    doc = {"rules": [{"type": "line", "kind": "renban", "cells": ["r1c1", "r1c2", "r1c3"]}]}
+    out = SS.apply(doc, SS.elements(sp))
+    st = out["rules"][0]["style"]
+    wide, thin = round(20 / 64, 3), round(8 / 64, 3)  # widths in cell units, as stored
+    assert (
+        st["color"] == "#cc3333" and st["outline"] == "#ffffff" and st["outline_width"] == round((wide - thin) / 2, 3)
+    )
+    kinds = sorted(d["kind"] for d in out["decorations"])
+    assert kinds == ["line", "polygon", "text"], kinds  # the bulb-like circle on r1c1 belongs to the rule: not copied
+    poly = next(d for d in out["decorations"] if d["kind"] == "polygon")
+    assert len(poly["points"]) == 4 and poly["style"]["fill"] == "#88cc88"

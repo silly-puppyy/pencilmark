@@ -4,6 +4,7 @@ the look of the element whose cells are exactly the rule's cells (a purple renba
 no element, or elements that disagree, match it."""
 
 import json
+import math
 import re
 
 from ._sp_translate import line_cells
@@ -53,10 +54,12 @@ def elements(sp):
     n, size = len(P["cells"]), P.get("cellSize") or 64
     out = []
 
-    def add(cells, style):
+    def add(cells, style, geom=None):
         style = {k: v for k, v in style.items() if v not in (None, False)}
         if cells and style:
-            out.append({"cells": sorted({_name(rc) for rc in cells}), "style": style})
+            out.append(
+                {"cells": sorted({_name(rc) for rc in cells}), "style": style, **({"geom": geom} if geom else {})}
+            )
 
     for kind in ("lines", "arrows"):
         for ln in P.get(kind) or []:
@@ -67,7 +70,8 @@ def elements(sp):
             col, op = _colour(ln.get("color") or ln.get("stroke"))
             w = ln.get("thickness")
             add(cells, {"color": col, "opacity": op, "width": round(w / size, 3) if isinstance(w, (int, float)) and w > 0 else None,
-                        "dash": bool(ln.get("stroke-dasharray"))})  # fmt: skip
+                        "dash": bool(ln.get("stroke-dasharray"))},
+                {"kind": "arrow" if kind == "arrows" else "line", "points": [list(p) for p in wp]})  # fmt: skip
     for cage in P.get("cages") or []:
         cells = (
             [rc for rc in (cage.get("cells") or []) if isinstance(rc, (list, tuple))] if isinstance(cage, dict) else []
@@ -77,7 +81,16 @@ def elements(sp):
             add([tuple(rc) for rc in cells], {"color": col, "opacity": op})
     for kind in ("underlays", "overlays"):
         for sh in P.get(kind) or []:
-            if not isinstance(sh, dict) or "center" not in sh or str(sh.get("text", "")).strip():
+            if not isinstance(sh, dict) or "center" not in sh:
+                continue
+            text = str(sh.get("text", "")).strip()
+            if text:  # words (a legend, a title): artwork; digits are clue labels, drawn by their rules
+                if re.search(r"[A-Za-z]", text):
+                    col, _ = _colour(sh.get("color"))
+                    fs = sh.get("fontSize")
+                    deco = {"kind": "text", "center": list(sh["center"]), "text": text,
+                            "style": {k: v for k, v in {"color": col, "size": round(fs / size, 3) if isinstance(fs, (int, float)) and fs > 0 else None}.items() if v}}  # fmt: skip
+                    out.append({"cells": [_name(rc) for rc in _shape_cells(*sh["center"], n)], "text_decoration": deco})
                 continue
             fill, op = _colour(sh.get("backgroundColor"))
             col, _ = _colour(sh.get("borderColor"))
@@ -95,7 +108,12 @@ def elements(sp):
                 if sh.get("rounded")
                 else ("diamond" if square and sh.get("angle") == 45 else "square" if square else None)
             )
-            add(_shape_cells(*sh["center"], n), {"fill": fill, "color": col, "opacity": op, "shape": shape})
+            ang = sh.get("angle") if isinstance(sh.get("angle"), (int, float)) and sh.get("angle") % 90 else None
+            sz = round(max(h, w), 3) if square and (h or w) else None
+            geom = {"kind": "circle" if sh.get("rounded") else "rect", "center": list(sh["center"]), "size": [h or w, w or h],
+                    "angle": sh.get("angle") or 0}  # fmt: skip
+            add(_shape_cells(*sh["center"], n), {"fill": fill, "color": col, "opacity": op, "shape": shape, "size": sz,
+                                                 "angle": ang if shape not in ("diamond", "circle") else None}, geom)  # fmt: skip
     return out
 
 
@@ -113,13 +131,57 @@ def _rule_cells(v, acc):
     return acc
 
 
+def _halo(styles):
+    """several line looks on the same cells (a wide pale line under a narrow coloured one): the narrowest is the line, the
+    widest its outline"""
+    lines = [json.loads(x) for x in styles]
+    if len(lines) < 2 or not all(isinstance(x.get("width"), (int, float)) for x in lines):
+        return styles
+    lines.sort(key=lambda x: x["width"])
+    thin, wide = lines[0], lines[-1]
+    if wide["width"] <= thin["width"] or "color" not in wide:
+        return styles
+    merged = dict(thin, outline=wide["color"], outline_width=round((wide["width"] - thin["width"]) / 2, 3))
+    return {json.dumps(merged, sort_keys=True)}
+
+
+def _decoration(el):
+    """a drawn element no rule uses, as a section 7 decoration (cell units, [row, col] from the board's corner)"""
+    g, st = el.get("geom") or {}, el["style"]
+    style = {k: st[k] for k in ("color", "fill", "opacity", "width", "outline", "outline_width") if k in st}
+    if g.get("kind") in ("line", "arrow"):
+        return {"kind": g["kind"], "points": g["points"], "style": style}
+    if g.get("kind") in ("rect", "circle"):
+        (y, x), (h, w), a = g["center"], g["size"], g.get("angle") or 0
+        if g["kind"] == "rect" and a % 90:  # a rotated rectangle: its corners
+            t = math.radians(a)
+            pts = [[round(y + dy * math.cos(t) + dx * math.sin(t), 3), round(x + dx * math.cos(t) - dy * math.sin(t), 3)]
+                   for dy, dx in ((-h / 2, -w / 2), (-h / 2, w / 2), (h / 2, w / 2), (h / 2, -w / 2))]  # fmt: skip
+            return {"kind": "polygon", "points": pts, "style": style}
+        return {"kind": g["kind"], "center": [y, x], "size": [h, w], "style": style}
+    return None
+
+
 def apply(doc, drawn):
-    """the pencilmark-puzzle document with `style` on each rule whose cells one drawn look matches"""
+    """the pencilmark-puzzle document with `style` on each rule whose cells one drawn look matches (two looks on the same
+    cells, wide and narrow, are a line and its outline); drawn elements on cells no rule touches become decorations
+    (lines, shapes, words), so the artwork survives without ever being read as a rule"""
     looks, decorations = {}, [el["decoration"] for el in drawn or [] if "decoration" in el]
     for el in drawn or []:
-        if "cells" not in el:
+        if "cells" not in el or "style" not in el:
             continue
         looks.setdefault(frozenset(el["cells"]), set()).add(json.dumps(el["style"], sort_keys=True))
+    looks = {k: _halo(v) for k, v in looks.items()}
+    ruled = set()
+    for r in doc.get("rules") or []:
+        ruled |= _rule_cells(r, set())
+    for el in drawn or []:
+        cells = set(el.get("cells") or ())
+        if not cells or cells & ruled:  # a rule's own drawing, or touching one: never duplicated as artwork
+            continue
+        deco = el.get("text_decoration") or (_decoration(el) if "style" in el else None)
+        if deco and deco not in decorations:
+            decorations.append(deco)
     rules = []
     for r in doc.get("rules") or []:
         cells = _rule_cells(r, set())
