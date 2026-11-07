@@ -541,6 +541,18 @@ static bool alldiff_path_ok(const NConstraint& k) {
     return true;
 }
 
+// a line over more than 12 cells whose rule is only its neighbour (or mirror) relations: those relations form a tree
+static bool long_tree_line(const NConstraint& k) {
+    if (k.type != NT_LINE || k.nv() <= 12) return false;
+    switch (k.line_kind) {
+        case LK_THERMO: case LK_SLOW_THERMO: case LK_WHISPER: case LK_DUTCH: case LK_PALINDROME: case LK_PARITY:
+        case LK_KROPKI:
+            return true;
+        default:
+            return false;
+    }
+}
+
 // the digit sets an all-different rule allows, from the digits in uni: runs of nv consecutive digits (a set) or nv
 // distinct digits summing to a total (a sum). fn(set) returns true to stop; returns whether one did.
 template <class Fn>
@@ -1189,6 +1201,17 @@ void nary_gac_plain(const NConstraint& k, const uint32_t* dom, const std::vector
     }
     if (alldiff_path_ok(k)) {
         alldiff_gac(k, dom, req, D, out);
+        return;
+    }
+    if (long_tree_line(k) && req.empty()) {
+        // the pair relations already propagate a tree-shaped line; the whole-line search over this many cells costs
+        // seconds per call and the head reasoning gives up on it anyway (incomplete): no information
+        for (int i = 0; i < nv; ++i) out.sup[i] = dom[i];
+        out.count = 0;
+        out.complete = false;
+        out.set_unique = false;
+        out.any = true;
+        out.must = 0;
         return;
     }
     // 1) full enumeration (exact count / digit sets) under a small budget

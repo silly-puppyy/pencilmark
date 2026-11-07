@@ -63,6 +63,11 @@ What changes for you (details in the entries below):
   on the engine's own rectangle (before: a hidden-UR text, sometimes on another rectangle); Aligned Pair Exclusion names
   the base pair and the witness that rules out each value pair; BUG+1 with a 4+ candidate cell has its own text.
   Tests: each added rule's explanation names its pattern and every removed candidate.
+- Lines over 12 cells whose rule is only neighbour (or mirror) relations (thermo, slow thermo, whispers, palindrome,
+  parity, kropki chain) skip the whole-line search; the pair relations still propagate them. 18 frozen puzzles with
+  such lines: 677 s -> 389 s, bands unchanged but one (a 49-cell palindrome: Unknown at 300 s -> Easy 9.1 in 55 s);
+  difficulty moves within the band (up to 3 points on one). Reference cards: one palindrome uses its line in one step
+  fewer (difficulty 12.6 -> 12.5).
 - Custom rules `concat(cells) in {numbers}` over more than 5 cells become engine tables like the smaller ones (the
   rows are in the rule; before: an expression evaluated by enumeration). A puzzleduel Antidiagonal sudoku: 271 s ->
   0.5 s, and its card Easy 7.7 -> Very Easy 5.7 (table pricing, as every rule of up to 5 cells already gets).
