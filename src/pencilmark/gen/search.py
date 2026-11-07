@@ -125,7 +125,9 @@ def dig(
                 if EL.in_class(e, kind) and e[1] not in seen and (bk != "parity" or i not in taken("parity")):
                     els.append(e)
                     seen.add(e[1])
-    el_cells = {c for x in els for c in x[1]} - set(blocked)
+    # element cells are emptied first so the elements end up needed, except a cage's: its cells may keep givens (n - m
+    # reads the last cell; user 2026-11-07); a cage left fully given says nothing and the prune below drops it
+    el_cells = {c for x in els if x[0] != "cage" for c in x[1]} - set(blocked)
     peers = {j for c in el_cells for j in b.peers[c]} - el_cells
     rest = [i for i in range(b.N) if i not in el_cells and i not in peers]
     order = (

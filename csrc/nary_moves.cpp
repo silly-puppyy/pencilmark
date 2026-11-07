@@ -355,12 +355,13 @@ void Solver::innie_sum(MoveBuf& out) {
 }
 
 // direct (no notes): a constraint with one empty cell whose value is forced by
-// the arithmetic / set rule alone
+// the arithmetic / set rule alone; killer cages too (the last cell of a cage is its total minus the digits in it)
 void Solver::nary_direct(MoveBuf& out) {
     if (disabled[NARY_D]) return;
     uint32_t dom[64];
     static const std::vector<GacReq> noreq;
-    for (const NConstraint& k : p.nary) {
+    for (int pass = 0; pass < 2; ++pass)
+    for (const NConstraint& k : pass == 0 ? p.nary : p.cage_nary) {
         int u = -1, nu = 0;
         for (int i = 0; i < k.nv(); ++i)
             if (!vals[k.vars[i]]) {

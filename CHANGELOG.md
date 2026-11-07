@@ -102,6 +102,8 @@
 - Band Unknown with a `reason` replaces the `Undecided` error in `rate` when uniqueness can't be settled within the
   engine's limits (`solve` still raises it); errors are only for wrong inputs.
 - Clue Facts are Easy; Colour Fill is Medium.
+- The last cell of a killer cage (its total minus the digits in it) is the Very Easy step "Last cell of a cage" (`CSI`),
+  as for other rules; it read as a Naked Single. Reference cards: bands and difficulties unchanged.
 
 ### Explanations and the card
 
@@ -138,6 +140,8 @@
 - Corner clues (quadruples, mathrax), outside clues (sandwich, x-sum, skyscraper, little killer), and locked
   `neighbours` rules with any `op` and `where` (for example nonconsecutive).
 - A request without a band or difficulty target keeps the broadest search and says so in `info.warnings`.
+- Cages may keep givens inside them (never a whole cage), so the last cell of a cage can be read as its total minus the
+  digits in it.
 - With `quality` in the request, a puzzle's checks and card are one grading (the nine-variants example 135 -> 121 s).
 - `limits.time` holds while the generator restores givens and prunes.
 
