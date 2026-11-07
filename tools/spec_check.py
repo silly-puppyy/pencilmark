@@ -34,7 +34,7 @@ KNOWN_RULE_KEYS = {
     "size",
     "repeat",
     "box",
-    "where",
+    "step",
     "within",
     "closed",
     "side",
@@ -284,16 +284,16 @@ def check_corner(doc, rule):
             p = 0 if op == "even" else 1
             need(all(x % 2 == p for x in (A, B, Cc, Dd)), "not all " + op)
         else:
-            val = rule["value"]
+            val = rule["sum"] if op == "sum" else rule["value"]
             for x, y in ((A, Dd), (B, Cc)):
                 hi, lo = max(x, y), min(x, y)
-                if op == "+":
+                if op == "sum":
                     ok = x + y == val
-                elif op == "-":
+                elif op == "difference":
                     ok = hi - lo == val
-                elif op == "x":
+                elif op == "product":
                     ok = x * y == val
-                elif op == "/":
+                elif op == "ratio":
                     ok = hi == val * lo
                 else:
                     raise NotImplementedError
@@ -428,7 +428,7 @@ def check_neighbours(doc, rule):
     elif k == "nonconsecutive":
         op, where = "not_consecutive", "orthogonal"
     elif k is None:
-        op, where = rule["op"], rule["where"]
+        op, where = rule["op"], rule["step"]
     else:
         raise NotImplementedError
     deltas = {

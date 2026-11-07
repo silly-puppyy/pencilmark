@@ -17,14 +17,14 @@ A rule over neighbouring pairs of the whole board.
 {"type": "neighbours", "kind": "antiknight"}
 {"type": "neighbours", "kind": "antiknight", "within": "box"}
 {"type": "neighbours", "kind": "antiknight", "area": "r1c1"}
-{"type": "neighbours", "op": "not_sum", "sum": 10, "where": "orthogonal", "except": [["r1c1", "r1c2"]]}
+{"type": "neighbours", "op": "not_sum", "sum": 10, "step": "orthogonal", "except": [["r1c1", "r1c2"]]}
 ```
 
 | Field | Meaning |
 |---|---|
-| `kind` | A named shortcut for one exact `op` + `where`: `antiknight` = `different` on `knight` pairs, `antiking` = `different` on `diagonal` pairs (orthogonal neighbours already share a row or column), `nonconsecutive` = `not_consecutive` on `orthogonal` pairs. Writers SHOULD use the kind when one matches. Or omit `kind` and give `op` (+ parameters) and `where`. |
+| `kind` | A named shortcut for one exact `op` + `step`: `antiknight` = `different` on `knight` pairs, `antiking` = `different` on `diagonal` pairs (orthogonal neighbours already share a row or column), `nonconsecutive` = `not_consecutive` on `orthogonal` pairs. Writers SHOULD use the kind when one matches. Or omit `kind` and give `op` (+ parameters) and `step`. |
 | `op` (+ its parameter) | A symmetric pair operator (5.1). |
-| `where` | `orthogonal` \| `diagonal` \| `king` \| `knight`. |
+| `step` | The pairs: `orthogonal` \| `diagonal` \| `king` \| `knight` (one king or knight move apart). |
 | `within` | Optional scope: `"box"` (only pairs inside one box) or `"region"` (only pairs inside one `region` rule). |
 | `area` | Optional scope (5): only pairs with both cells in the area, such as one grid of a samurai. |
 | `except` | Optional list of exempt pairs. |

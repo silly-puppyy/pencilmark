@@ -189,10 +189,11 @@ def propose(rng, S, D):
         if k == "sum_corner":
             return [{"type": "sum", "kind": "corner", "sum": sum(map(v, blk)), "cells": cells}]
         tl, tr, bl, br = map(v, blk)
-        for op, f in (("+", lambda a, b: a + b), ("-", lambda a, b: abs(a - b)), ("x", lambda a, b: a * b),
-                      ("/", lambda a, b: max(a, b) // min(a, b) if max(a, b) % min(a, b) == 0 else None)):  # fmt: skip
+        for op, f in (("sum", lambda a, b: a + b), ("difference", lambda a, b: abs(a - b)), ("product", lambda a, b: a * b),
+                      ("ratio", lambda a, b: max(a, b) // min(a, b) if max(a, b) % min(a, b) == 0 else None)):  # fmt: skip
             if f(tl, br) is not None and f(tl, br) == f(tr, bl):
-                return [{"type": "corner", "kind": "mathrax", "op": op, "value": f(tl, br), "cells": cells}]
+                key = "sum" if op == "sum" else "value"
+                return [{"type": "corner", "kind": "mathrax", "op": op, key: f(tl, br), "cells": cells}]
         if all(x % 2 == 0 for x in (tl, tr, bl, br)):
             return [{"type": "corner", "kind": "mathrax", "op": "even", "cells": cells}]
         return None

@@ -134,7 +134,7 @@ def test_negatives_exempt_their_own_clues():
         "type": "neighbours",
         "op": "not_ratio",
         "value": 2,
-        "where": "orthogonal",
+        "step": "orthogonal",
         "except": [["r1c1", "r2c1"]],
     } in neigh
 

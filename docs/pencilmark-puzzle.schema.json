@@ -678,15 +678,18 @@
     },
     "op": {
      "enum": [
-      "+",
-      "-",
-      "x",
-      "/",
+      "sum",
+      "difference",
+      "product",
+      "ratio",
       "even",
       "odd"
      ]
     },
     "value": {
+     "type": "integer"
+    },
+    "sum": {
      "type": "integer"
     }
    },
@@ -1012,7 +1015,7 @@
       "sum"
      ]
     },
-    "where": {
+    "step": {
      "enum": [
       "diagonal",
       "king",
@@ -1093,7 +1096,7 @@
        },
        {
         "required": [
-         "where"
+         "step"
         ]
        },
        {
@@ -1117,7 +1120,7 @@
     {
      "required": [
       "op",
-      "where"
+      "step"
      ],
      "not": {
       "required": [

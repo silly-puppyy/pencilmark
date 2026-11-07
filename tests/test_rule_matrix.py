@@ -23,12 +23,14 @@ RULES = [
     [{"type": "corner", "kind": "exclude", "value": 3, "cells": BLOCK}],
     [{"type": "corner", "kind": "exclude", "cells": BLOCK}],
     *[
-        [{"type": "corner", "kind": "mathrax", "op": op, "value": v, "cells": BLOCK}]
-        for op, v in (("+", 7), ("-", 1), ("x", 6), ("/", 2), ("+", 30))
+        [{"type": "corner", "kind": "mathrax", "op": op, ("sum" if op == "sum" else "value"): v, "cells": BLOCK}]
+        for op, v in (("sum", 7), ("difference", 1), ("product", 6), ("ratio", 2), ("sum", 30))
     ],
     [{"type": "corner", "kind": "mathrax", "op": "even", "cells": BLOCK}],
     [{"type": "corner", "kind": "mathrax", "op": "odd", "value": 1, "cells": BLOCK}],
     [{"type": "corner", "kind": "mathrax", "op": "%", "value": 1, "cells": BLOCK}],
+    [{"type": "corner", "kind": "mathrax", "op": "+", "value": 7, "cells": BLOCK}],
+    [{"type": "corner", "kind": "mathrax", "op": "sum", "value": 7, "cells": BLOCK}],
     # sum
     [{"type": "sum", "kind": "little_killer", "sum": 5, "side": "top", "cells": ["r1c2", "r2c3", "r3c4"]}],
     [{"type": "sum", "kind": "little_killer", "sum": 5, "cells": ["r1c2", "r2c3", "r3c4"]}],

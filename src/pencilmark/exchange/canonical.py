@@ -46,7 +46,7 @@ RULE_ORDER = [
     "repeat",
     "box",
     "count",
-    "where",
+    "step",
     "within",
     "area",
     "closed",

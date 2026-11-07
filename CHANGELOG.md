@@ -11,6 +11,9 @@
     (were `colouring`). Prose keeps British spelling.
   - The card's `contains` and `steps` entries give `band_index` (was `band`, an integer next to the card's band
     name); trace positions give `grid` (was `digits`).
+  - `neighbours` takes `step` for its pairs (`"step": "knight"`; was `where`, which also named the spec's targets).
+  - `mathrax` uses the pair-operator names of numbered edges: `"op": "sum"` with `sum`, `"difference"` / `"product"` /
+    `"ratio"` with `value` (was `+ - x /`, all with `value`).
 - **sudoku.coach reader**: `pencilmark.read.link("https://sudoku.coach/en/s/<id>")` and raw `SCv7_...` payloads, with
   the setter's colours and widths as style and cell colours as a `fill` decoration; the embedded solution is checked.
   Of 16,436 coach puzzles, 13,407 read, 0 crash; refused: extra rules written only in the description (2,293), older

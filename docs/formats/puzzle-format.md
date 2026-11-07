@@ -324,7 +324,7 @@ Coordinates are cell units `[row, col]` with the origin at the top-left corner o
 - Top-level key order: `format`, `format_version`, `$schema`, `meta`, `board`, `digits`, `givens`, `placed`, `solution`,
   `candidates`, `rules`, `decorations`, `style`. Inside `board`: `rows`, then `cols`.
 - Rule key order: `type`, `kind`, `of`, then the parameters (`op`, `any_of`, `color`, `letter`, `value`, `sum`, `split`,
-  `values`, `digits`, `groups`, `each`, `counts`, `arrow`, `size`, `repeat`, `box`, `count`, `where`, `within`, `area`, `closed`),
+  `values`, `digits`, `groups`, `each`, `counts`, `arrow`, `size`, `repeat`, `box`, `count`, `step`, `within`, `area`, `closed`),
   then `side`, then the cell keys (`origin`, `source`, `bulb`, `lines`, `cells`, `regions`, `segments`, `pairs`,
   `except`, `allowed`), then `id`, `label`, `style`.
 - Houses as described in 6.1. Rules in the order given (a grader's tie-breaks can depend on it). Candidate lists ascending; `candidates` keys in reading order. Cells of sets as the source listed them (the

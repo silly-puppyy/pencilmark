@@ -7,7 +7,7 @@ import re
 from ..rules.cell import CELL
 from ..rules.edge import EDGE, NEG_SELECTOR, edge_value_ok
 from ..rules.line import LINE
-from .board import Board, grid_area, grid_units
+from .board import _NUMBERED_OK, Board, grid_area, grid_units
 from .common import (
     DIRECTED_OPS,
     FORMAT,
@@ -40,14 +40,14 @@ RULE_KEYS = {
     "line": ({"kind", "cells"}, {"closed", "value", "groups"}),
     "arrow": ({"bulb", "lines"}, set()),
     "edge": ({"kind", "cells"}, {"color", "letter", "value", "sum"}),
-    "corner": ({"kind", "cells"}, {"op", "value"}),
+    "corner": ({"kind", "cells"}, {"op", "value", "sum"}),
     "sum": ({"kind", "sum", "cells"}, {"side"}),
     "sandwich": ({"sum", "side", "cells"}, set()),
     "xsum": ({"sum", "side", "cells"}, set()),
     "skyscraper": ({"value", "side", "cells"}, set()),
     "rossini": ({"arrow", "side", "cells"}, set()),
     "first_seen": ({"value", "digits", "side", "cells"}, set()),
-    "neighbours": (set(), {"kind", "op", "value", "sum", "allowed", "any_of", "where", "within", "area", "except"}),
+    "neighbours": (set(), {"kind", "op", "value", "sum", "allowed", "any_of", "step", "within", "area", "except"}),
     "relation": ({"op", "pairs"}, {"value", "sum", "allowed", "any_of"}),
     "cell": ({"kind", "cells"}, {"split", "values"}),
     "quadruple": ({"digits", "cells"}, set()),
@@ -456,14 +456,16 @@ def _validate_rule(r, B):
             if op in ("even", "odd"):
                 if "value" in r:
                     raise FormatError("mathrax even / odd takes no value")
-            elif op in ("+", "-", "x", "/"):
-                v = _int(r.get("value"), "value", 0)
-                hit = {"+": lambda x, y: x + y == v, "-": lambda x, y: abs(x - y) == v, "x": lambda x, y: x * y == v,
-                       "/": lambda x, y: x == v * y or y == v * x}[op]  # fmt: skip
+            elif op in _NUMBERED_OK:  # the pair operators of the numbered edges: sum takes sum, the others value
+                key = "sum" if op == "sum" else "value"
+                if ({"sum", "value"} - {key}) & set(r):
+                    raise FormatError(f"mathrax {op} takes {key}")
+                v = _int(r.get(key), key, 0)
+                hit = _NUMBERED_OK[op]({key: v})
                 if not any(hit(x, y) for x in range(1, D + 1) for y in range(1, D + 1)):  # diagonal digits may repeat
                     raise FormatError(f"no two digits 1..{D} make mathrax {op} {v}")
             else:
-                raise FormatError("mathrax op must be + - x / even odd")
+                raise FormatError("mathrax op must be sum, difference, product, ratio, even or odd")
     elif t == "sum":
         cs = _cells(B, r["cells"])
         _int(r["sum"], "sum", 0)
@@ -488,14 +490,14 @@ def _validate_rule(r, B):
             B.check_outside(r["side"], cs, what="distinct_count")
     elif t == "neighbours":
         if "kind" in r:
-            if set(r) & ({"op", "where"} | OP_PARAM_KEYS):
-                raise FormatError("neighbours takes a kind or op / where, not both")
+            if set(r) & ({"op", "step"} | OP_PARAM_KEYS):
+                raise FormatError("neighbours takes a kind or op / step, not both")
         else:
-            if not {"op", "where"} <= set(r):
-                raise FormatError("neighbours needs a kind, or op + where")
+            if not {"op", "step"} <= set(r):
+                raise FormatError("neighbours needs a kind, or op + step")
             _check_op(r)
-            if r["op"] in DIRECTED_OPS - {"allowed", "any_of"} or r["where"] not in NEIGHBOUR_STEPS:
-                raise FormatError("neighbours needs a symmetric op and where orthogonal / diagonal / king / knight")
+            if r["op"] in DIRECTED_OPS - {"allowed", "any_of"} or r["step"] not in NEIGHBOUR_STEPS:
+                raise FormatError("neighbours needs a symmetric op and step orthogonal / diagonal / king / knight")
         if "within" in r and r["within"] not in ("box", "region"):
             raise FormatError("within must be box or region")
         if "area" in r:

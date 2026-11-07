@@ -705,7 +705,7 @@ class _Writer:
                             rule = dict(
                                 {"type": "neighbours", "op": REL_OP[kind]},
                                 **op_named(REL_OP[kind], _engine_params_to_op(kind, args)),
-                                where=where,
+                                step=where,
                             )
                             if missing:
                                 rule["except"] = [[B.name(a), B.name(b)] for a, b in missing]
@@ -814,12 +814,14 @@ class _Writer:
                 if B.is_block(blk):
                     m1, m2 = self.mathrax_clue(c), self.mathrax_clue(c2)
                     if m1 and m1 == m2:
+                        op = {"x": "product", "+": "sum", "-": "difference", "/": "ratio"}[m1[0]]
+                        key = "sum" if op == "sum" else "value"
                         return [
                             {
                                 "type": "corner",
                                 "kind": "mathrax",
-                                "op": m1[0],
-                                "value": m1[1],
+                                "op": op,
+                                key: m1[1],
                                 "cells": [B.name(x) for x in blk],
                             }
                         ], 2

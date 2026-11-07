@@ -252,8 +252,8 @@ SWATCHES = {
     ),
     "corner-mathrax": (
         [
-            {"type": "corner", "kind": "mathrax", "op": "x", "value": 6, "cells": block(1, 1)},
-            {"type": "corner", "kind": "mathrax", "op": "-", "value": 3, "cells": block(2, 2)},
+            {"type": "corner", "kind": "mathrax", "op": "product", "value": 6, "cells": block(1, 1)},
+            {"type": "corner", "kind": "mathrax", "op": "difference", "value": 3, "cells": block(2, 2)},
         ],
         G_MATH,
     ),

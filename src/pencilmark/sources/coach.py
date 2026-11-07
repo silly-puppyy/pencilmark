@@ -412,7 +412,7 @@ def _negatives(cons, B):
             "difference",
             {"type": "neighbours", "kind": "nonconsecutive"},
         ),
-        ("ratio" in neg, "ratio", {"type": "neighbours", "op": "not_ratio", "value": 2, "where": "orthogonal"}),
+        ("ratio" in neg, "ratio", {"type": "neighbours", "op": "not_ratio", "value": 2, "step": "orthogonal"}),
     ):
         if not when:
             continue

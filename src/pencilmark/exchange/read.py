@@ -5,7 +5,7 @@ from __future__ import annotations
 from .. import puzzle_json as PJ
 from ..rules.edge import NEG_SELECTOR, edge_relation, negative_relation
 from ..rules.line import line_to_engine
-from .board import _MATHRAX_OK, _NUMBERED_OK, battenburg_table, grid_area, product_pairs, read_houses
+from .board import _NUMBERED_OK, battenburg_table, grid_area, product_pairs, read_houses
 from .common import (
     KING_DIAG,
     KNIGHT,
@@ -180,11 +180,12 @@ class _ReadCtx:
                 op = r["op"]
                 if op in ("even", "odd"):
                     return [{"type": "parity", "parity": op, "cells": list(r["cells"])}]
-                v = r["value"]
+                v = r["sum"] if op == "sum" else r["value"]
                 if NUMBERED_PAIR_FORM == "table":
-                    ok = _MATHRAX_OK[op](v)
+                    ok = _NUMBERED_OK[op](r)
                     return [self.pair_table(tl, br, ok), self.pair_table(tr, bl, ok)]
-                rel = {"+": ("sum", v), "-": ("diff", v), "/": ("ratio", v), "x": ("allowed", product_pairs(D, v))}[op]
+                rel = {"sum": ("sum", v), "difference": ("diff", v), "ratio": ("ratio", v),
+                       "product": ("allowed", product_pairs(D, v))}[op]  # fmt: skip
                 return [
                     self.pairs_rule(rel[0], tuple(rel[1:]), [(tl, br)]),
                     self.pairs_rule(rel[0], tuple(rel[1:]), [(tr, bl)]),
@@ -306,7 +307,7 @@ class _ReadCtx:
         if k and not scoped:
             return [{"type": k}]
         steps = {"antiknight": KNIGHT, "antiking": KING_DIAG, "nonconsecutive": ORTHO}.get(k) or NEIGHBOUR_STEPS[
-            r["where"]
+            r["step"]
         ]
         if k == "antiknight":
             steps = KNIGHT
@@ -315,7 +316,7 @@ class _ReadCtx:
                 "type": "pairs",
                 "rel": OPS[r["op"]],
                 "params": _engine_params_json(OPS[r["op"]], _op_params_to_engine(r["op"], op_params(r))),
-                "where": r["where"],
+                "where": r["step"],
             }
             if r.get("except"):
                 out["except"] = [list(p) for p in r["except"]]

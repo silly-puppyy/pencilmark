@@ -24,6 +24,7 @@ STYLE = _PAL["sizes"]
 THEMES = {False: _PAL["themes"]["light"], True: _PAL["themes"]["dark"]}
 LINE_COLOURS = {k: v for k, v in _PAL["lines"].items() if k != "dutch_whisper"}
 DUTCH = _PAL["lines"]["dutch_whisper"]
+MATHRAX_SIGN = {"sum": "+", "difference": "−", "product": "×", "ratio": "÷"}  # a mathrax clue is drawn as value + sign
 PALETTE = _PAL["region_palette"]
 ANNOTATION = _PAL["annotation"]
 OUTSIDE = ("sandwich", "xsum", "skyscraper", "rossini", "first_seen")
@@ -462,7 +463,7 @@ def render(
                         r["sum"]
                         if t == "sum"
                         else (
-                            f"{r.get('value', '')}{r.get('op', '')}"
+                            f"{r.get('sum', r.get('value', ''))}{MATHRAX_SIGN.get(r.get('op'), '')}"
                             if k == "mathrax" and r.get("op") not in ("even", "odd")
                             else ("E" if r.get("op") == "even" else "O")
                             if k == "mathrax"

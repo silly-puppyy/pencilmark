@@ -43,7 +43,7 @@ Exactly 4 cells forming a 2×2 block, written TL, TR, BL, BR.
 | `kind` | Fields | Meaning | Drawing |
 |---|---|---|---|
 | `battenburg` | – | The 4 cells form a parity checkerboard: TL and BR share a parity, TR and BL the other. | <Swatch name="corner-battenburg" /> |
-| `mathrax` | `op`: `"+"`, `"-"`, `"x"`, `"/"` with `value`; or `op`: `"even"` / `"odd"` | `+ - x /`: each diagonal pair (TL–BR and TR–BL) combines to `value` (difference and quotient are larger over smaller). `even` / `odd`: all four digits have that parity. | <Swatch name="corner-mathrax" /> |
+| `mathrax` | `op`: `"sum"` with `sum`; `"difference"`, `"product"` or `"ratio"` with `value` (the pair operators of 5.1, as on numbered edges); or `op`: `"even"` / `"odd"` | Each diagonal pair (TL–BR and TR–BL) combines to the clue (difference and ratio are larger over smaller). `even` / `odd`: all four digits have that parity. Drawn as the number and `+ − × ÷`, or E / O. | <Swatch name="corner-mathrax" /> |
 | `exclude` | `value` | None of the 4 cells holds `value`. | <Swatch name="corner-exclude" /> |
 
 </div>
