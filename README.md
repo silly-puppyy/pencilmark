@@ -111,8 +111,10 @@ Classic sudoku from 4x4 to 25x25, irregular (jigsaw) regions, diagonals and extr
 twodoku, butterfly, windmill and more), killer cages, little killers, sandwich, X-sums, skyscrapers, frame sums,
 arrows, thermometers (normal and slow), German and Dutch whispers, renban, region-sum, palindrome, zipper, between,
 entropic, modular and parity lines, kropki, XV, greater-than, difference / ratio dots, anti-knight, anti-king,
-non-consecutive, odd / even, low / high, Rossini, Vudoku, equal sums, counting rules, and given candidates (Sukaku).
-Rules that cannot be translated exactly are refused, never dropped silently.
+non-consecutive, odd / even, low / high, quadruples, mathrax, Battenburg, Rossini, clones, Vudoku, equal sums, global
+entropy, counting rules, given candidates (Sukaku), fog of war, and custom rules: any rule written as an expression over
+cell digits. Rules that cannot be translated exactly are refused, never dropped silently. Shading and regions to find
+(chaos construction) are reserved for a later version.
 
 ## Generator
 
@@ -127,8 +129,8 @@ r["puzzle"], r["card"], r["info"]       # pencilmark-puzzle, its card, run detai
 The request is a `pencilmark-spec` ([docs/formats/generator-spec.md](https://github.com/silly-puppyy/pencilmark/blob/main/docs/formats/generator-spec.md)).
 
 Targets: band, a difficulty range or the hardest / easiest found, required techniques, symmetry, given counts (per
-grid on a multi-grid layout), and rule elements with counts and shape limits (cages, thermos, whispers, renban, between
-lines, arrows, kropki, XV, parity). Boards: one grid, or a named multi-grid layout such as samurai, with locked rules of
+grid on a multi-grid layout), and rule elements with counts and shape limits (cages, every line kind, arrows, kropki, XV,
+parity, quadruples, mathrax, sandwich / x-sum / skyscraper / little killer clues). Boards: one grid, or a named multi-grid layout such as samurai, with locked rules of
 different digits. Every result is checked for uniqueness.
 
 ## Puzzle sources
@@ -164,7 +166,7 @@ classics. Details: [docs/grades/benchmark.mdx](https://github.com/silly-puppyy/p
 
 ## Known issues
 
-Being worked on after 1.0:
+Being worked on:
 
 - **Speed.** Grading takes a median 0.49 s per puzzle on the benchmark (classics 0.04 s; 90th percentile 3.8 s), and
   the slowest few percent take 10 s to minutes. Sudoku Explainer and HoDoKu answer in under a millisecond (they do not
