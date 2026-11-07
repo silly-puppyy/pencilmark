@@ -441,7 +441,15 @@ def translate(fp, line_kinds=None, join=True):
             used["_joined"] = True
         for g in groups:
             if kind == "renban":
-                p.constraints.append({"type": "line", "kind": "renban", "cells": sorted(g)})
+                # a line needs its cells in path order: a lone segment keeps its own, joined ones are walked as one
+                # path through touching cells; a branching set that no path covers is a consecutive set (written
+                # out it is refused as not a line, never an invalid line)
+                own = next((list(c) for c in parts if set(c) == g and len(c) == len(g)), None)
+                path = own or _path_through(g, n)
+                if path:
+                    p.constraints.append({"type": "line", "kind": "renban", "cells": path})
+                else:
+                    p.constraints.append({"type": "set", "kind": "consecutive", "cells": sorted(g)})
             else:
                 ST.custom_line(p, kind, sorted(g))
     for item in fp.get("betweenline") or []:
@@ -632,6 +640,32 @@ def translate(fp, line_kinds=None, join=True):
         )
         p.fog = fog  # rate grades it under the fog
     return p, used
+
+
+def _path_through(cells, n, limit=20000):
+    """the cells in an order where each touches the next (king steps, as lines are drawn), or None"""
+    cells = set(cells)
+    touch = {c: [d for d in cells if d != c and abs(d // n - c // n) <= 1 and abs(d % n - c % n) <= 1] for c in cells}
+    budget = [limit]
+
+    def walk(path, seen):
+        if len(path) == len(cells):
+            return path
+        budget[0] -= 1
+        if budget[0] < 0:
+            return None
+        for d in sorted(touch[path[-1]], key=lambda d: len(touch[d])):  # the most constrained first
+            if d not in seen:
+                got = walk(path + [d], seen | {d})
+                if got:
+                    return got
+        return None
+
+    for start in sorted(cells, key=lambda c: (len(touch[c]), c)):  # ends of a path have few neighbours
+        got = walk([start], {start})
+        if got:
+            return got
+    return None
 
 
 def solution_of(fp):

@@ -1194,3 +1194,18 @@ def test_fpuzzles_fog_cages():
     fp["ruleset"] += " Digits in column 1 indicate the column in which the digit 1 appears in that row."
     p, info = FT.translate(fp)
     assert p is None and "indexing" in info
+
+
+def test_renban_cells_in_path_order():
+    """f-puzzles renban segments joined into one line keep a path order (each cell touches the next); a set no path
+    covers is None (the reader then keeps it as a consecutive set, never an invalid line)"""
+    from pencilmark.sources._fpuz_translate import _path_through
+
+    n = 9
+    cell = lambda r, c: (r - 1) * n + c - 1
+    snake = [cell(6, 4), cell(7, 3), cell(8, 3), cell(9, 3), cell(9, 2), cell(8, 2), cell(8, 1), cell(7, 1), cell(7, 2)]
+    path = _path_through(set(snake), n)
+    assert sorted(path) == sorted(snake)
+    assert all(abs(a // n - b // n) <= 1 and abs(a % n - b % n) <= 1 for a, b in zip(path, path[1:]))
+    star = {cell(5, 5), cell(4, 5), cell(6, 5), cell(5, 4), cell(5, 6), cell(3, 5), cell(7, 5), cell(5, 3), cell(5, 7)}
+    assert _path_through(star, n) is None  # a plus with four long arms: no single path
