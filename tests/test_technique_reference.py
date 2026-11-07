@@ -487,7 +487,7 @@ def test_explanation_names_the_pattern(pos):
     assert all(n in e["teach"] or n in e["short"] for n in names), (names, e["teach"])
     if pos["kind"] in SUBSTEPS:  # the last sub-step marks every removed candidate in red
         last = e["substeps"][-1]
-        red = {a["candidate"] for a in last.get("annotations", []) if a.get("colour") == "red"}
+        red = {a["candidate"] for a in last.get("annotations", []) if a.get("color") == "red"}
         assert red == {f"r{c // 9 + 1}c{c % 9 + 1}#{d}" for c, d in m["elim"]}, e["substeps"]
 
 

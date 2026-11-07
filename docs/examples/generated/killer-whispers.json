@@ -401,52 +401,52 @@
     "code": "HSI",
     "chip": "HSI",
     "name": "Hidden Single",
-    "band": 0
+    "band_index": 0
    },
    {
     "code": "LSI",
     "chip": "LSI",
     "name": "Line / dot read without notes",
-    "band": 0
+    "band_index": 0
    },
    {
     "code": "CSI",
     "chip": "CSI",
     "name": "Last cell of a cage / line",
-    "band": 0
+    "band_index": 0
    },
    {
     "code": "NSI",
     "chip": "NSI",
     "name": "Naked Single",
-    "band": 1
+    "band_index": 1
    },
    {
     "code": "PPR",
     "chip": "PPR",
     "name": "Pointing / Box-Line Reduction",
-    "band": 1,
+    "band_index": 1,
     "uses": 14
    },
    {
     "code": "MSI",
     "chip": "MSI",
     "name": "Pair / triple in the head",
-    "band": 1,
+    "band_index": 1,
     "uses": 3
    },
    {
     "code": "CGC",
     "chip": "CGC",
     "name": "Killer cage combinations",
-    "band": 1,
+    "band_index": 1,
     "uses": 20
    },
    {
     "code": "PWC",
     "chip": "PWC/LNR",
     "name": "Pair rules (dots, whispers, anti-knight...)",
-    "band": 1,
+    "band_index": 1,
     "alternatives": [
      "LNR"
     ],
@@ -456,7 +456,7 @@
     "code": "DGC",
     "chip": "DGC/NPR/HPR/HQD/IOV/IOM/CBL",
     "name": "Digit counting",
-    "band": 2,
+    "band_index": 2,
     "alternatives": [
      "NPR",
      "HPR",
@@ -471,14 +471,14 @@
     "code": "RUL",
     "chip": "RUL",
     "name": "Two rules together",
-    "band": 2,
+    "band_index": 2,
     "uses": 12
    },
    {
     "code": "SKY",
     "chip": "SKY/CSM",
     "name": "Skyscraper",
-    "band": 3,
+    "band_index": 3,
     "alternatives": [
      "CSM"
     ],

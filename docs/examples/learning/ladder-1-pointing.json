@@ -236,13 +236,13 @@
     "code": "HSI",
     "chip": "HSI",
     "name": "Hidden Single",
-    "band": 0
+    "band_index": 0
    },
    {
     "code": "PPR",
     "chip": "PPR",
     "name": "Pointing / Box-Line Reduction",
-    "band": 1,
+    "band_index": 1,
     "uses": 3
    }
   ]

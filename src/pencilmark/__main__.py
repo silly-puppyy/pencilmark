@@ -226,7 +226,7 @@ def _rate_one(args):
                 explain=explain,
                 quality=_quality_arg(a.quality),
                 alternatives=not a.no_alternatives,
-                colouring=bool(getattr(a, "colouring", False)),
+                coloring=bool(getattr(a, "coloring", False)),
             )
         except (api.NotUnique, api.NoSolution) as e:
             st = "not unique" if isinstance(e, api.NotUnique) else "no solution"
@@ -390,7 +390,7 @@ def main(argv=None):
         help="human: human techniques only (default); computer: also forcing chains / nets and trial",
     )
     r.add_argument(
-        "--colouring",
+        "--coloring",
         action="store_true",
         help="opt in to colouring as a solving method (colours kept through the solve); off by default",
     )

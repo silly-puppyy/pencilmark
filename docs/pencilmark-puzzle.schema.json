@@ -443,7 +443,7 @@
     },
     "kind": {
      "enum": [
-      "colour",
+      "color",
       "diagonal",
       "disjoint",
       "extra",

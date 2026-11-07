@@ -257,10 +257,10 @@ SWATCHES = {
         ],
         G_MATH,
     ),
-    "contains-quadruple": (
+    "quadruple": (
         [
-            {"type": "contains", "digits": [1, 2, 5], "cells": block(1, 1)},
-            {"type": "contains", "digits": [4, 9], "cells": block(2, 2)},
+            {"type": "quadruple", "digits": [1, 2, 5], "cells": block(1, 1)},
+            {"type": "quadruple", "digits": [4, 9], "cells": block(2, 2)},
         ],
         grid("136", "524", "798"),
     ),

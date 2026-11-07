@@ -49,7 +49,7 @@ def render(
     labels: row numbers on the left and column numbers on top, outside the board and its outside clues.
     colours {cell name: [colour names]}: annotation colours over the cells (one fills the cell; n split it into n
     wedges, as SudokuPad draws them); placed {cell name: digit}: digits the solver has written, in the placed ink;
-    marks {cell name: {"corner": [...], "centre": [...]}}: the solver's pencil marks (corner marks in the cell's corners
+    marks {cell name: {"corner": [...], "center": [...]}}: the solver's pencil marks (corner marks in the cell's corners
     and edges, centre marks in a row across the middle), in the placed ink. open_sides ("left", "right", "top",
     "bottom"): leave the outer frame out there, for a cut-out of a larger board (the docs' small pictures)."""
     T = THEMES[bool(dark)]
@@ -281,7 +281,7 @@ def render(
                         "shade",
                         f'<rect x="{m + cc * u}" y="{m + rr * u}" width="{u}" height="{u}" fill="{T["shade"]}"/>',
                     )
-            elif k in ("colour", "disjoint"):
+            elif k in ("color", "disjoint"):
                 col = PALETTE[colour_i % len(PALETTE)]
                 colour_i += 1
                 for x in r["cells"]:
@@ -414,10 +414,10 @@ def render(
                     )
             else:
                 add("clues", circle_clue(x, y, EDGE[k].label(r)))
-        elif t in ("corner", "contains") or (t == "sum" and k == "corner"):
+        elif t in ("corner", "quadruple") or (t == "sum" and k == "corner"):
             pts = [ctr(x) for x in r["cells"]]
             x, y = sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts)
-            if t == "contains" and len(r["cells"]) != 4:
+            if t == "quadruple" and len(r["cells"]) != 4:
                 first = min(r["cells"], key=lambda q: rc(q))
                 rr, cc = rc(first)
                 add(
@@ -431,7 +431,7 @@ def render(
                     ),
                 )
             elif (
-                t == "contains"
+                t == "quadruple"
             ):  # quadruple: a circle on the shared corner (sudoku.coach): one or two digits as a word,
                 # three or four in a compact 2 x 2 grid, bold, well inside the circle
                 ds = list(r["digits"])
@@ -457,7 +457,7 @@ def render(
             else:
                 s = (
                     "".join(map(str, r["digits"]))
-                    if t == "contains"
+                    if t == "quadruple"
                     else (
                         r["sum"]
                         if t == "sum"
@@ -470,7 +470,7 @@ def render(
                         )
                     )
                 )
-                add("clues", circle_clue(x, y, s, r=0.22 if t == "contains" else 0.15))
+                add("clues", circle_clue(x, y, s, r=0.22 if t == "quadruple" else 0.15))
         elif t == "cell":
             for x in r["cells"]:
                 cxx, cyy = ctr(x)
@@ -652,7 +652,7 @@ def render(
         here = spots[1:] if name in labelled else spots  # the top-left spot holds a cage total
         for d, (fx, fy) in zip(mk.get("corner") or [], here):
             add("digits", small_text(m + (c + fx) * u, m + (r + fy) * u, d, size=0.22, col=T["placed"], weight=400))
-        cen = "".join(map(str, mk.get("centre") or []))
+        cen = "".join(map(str, mk.get("center") or []))
         if cen:
             size = 0.22 if len(cen) <= 4 else max(0.13, 0.88 / len(cen))
             add("digits", small_text(cx(c), cy(r), cen, size=size, col=T["placed"], weight=400))
@@ -678,12 +678,12 @@ def trace_position(doc, card, n):
     several groups gets them all), every digit not given is a placed one, and the marks layer as written"""
     pos = card["trace"][n]
     colours = {}
-    for g in pos.get("colours") or []:
+    for g in pos.get("colors") or []:
         for name in g["cells"]:
-            colours.setdefault(name, []).append(g["colour"])
+            colours.setdefault(name, []).append(g["color"])
     C = doc["board"]["cols"]
     placed = {
-        f"r{i // C + 1}c{i % C + 1}": v for i, (v, g) in enumerate(zip(pos["digits"], doc["givens"])) if v and not g
+        f"r{i // C + 1}c{i % C + 1}": v for i, (v, g) in enumerate(zip(pos["grid"], doc["givens"])) if v and not g
     }
     return colours, placed, pos.get("marks") or {}
 

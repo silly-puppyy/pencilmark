@@ -303,7 +303,7 @@ RULE_NOUN = {
     ("region", "window"): "window",
     ("region", "disjoint"): "disjoint group",
     ("region", "extra"): "extra region",
-    ("region", "colour"): "colour group",
+    ("region", "color"): "colour group",
     ("cage", None): "cage",
     ("arrow", None): "arrow",
     ("cell", None): "cell clue",
@@ -313,7 +313,7 @@ RULE_NOUN = {
     ("relation", None): "pair rule",
     ("corner", None): "corner clue",
     ("sum", None): "sum clue",
-    ("contains", None): "quadruple",
+    ("quadruple", None): "quadruple",
     ("appears", None): "arrow clue",
 }
 
@@ -494,7 +494,7 @@ def _f_contains(c):
             "code": code,
             "chip": "/".join([code] + alts.get(code, [])),
             "name": names[code].most_common(1)[0][0],
-            "band": bandof.get(code, 0),
+            "band_index": bandof.get(code, 0),
         }
         if not c.alternatives:
             e["alternatives"] = None  # not searched (alternatives=False); absent = searched, none found
@@ -550,7 +550,7 @@ def _f_steps(c):
     expl = BP.explain_steps(p, c.P, bp["steps"]) if levels else [None] * len(bp["steps"])
     rows = []
     for i, st in enumerate(bp["steps"]):
-        r = {"n": i + 1, "code": st["code"], "name": st["name"], "band": st["band"]}
+        r = {"n": i + 1, "code": st["code"], "name": st["name"], "band_index": st["band"]}
         if st["place"]:
             r["placement"] = f"{cn(st['place'][0])}={st['place'][1]}"
         if st["elims"]:
@@ -589,7 +589,7 @@ def _f_trace(c):
 
     def marks(i):
         m = wm[i]
-        return {cn(x): {k: v for k, v in (("corner", m[x][0]), ("centre", m[x][1])) if v} for x in order if x in m}
+        return {cn(x): {k: v for k, v in (("corner", m[x][0]), ("center", m[x][1])) if v} for x in order if x in m}
 
     def colours(i):
         return [dict(g, cells=[cn(x) for x in g["cells"]]) for g in wc[i]]
@@ -598,11 +598,11 @@ def _f_trace(c):
         "trace": [
             dict(
                 {
-                    "digits": [vals[x] for x in order],
+                    "grid": [vals[x] for x in order],
                     "candidates": {cn(x): digits(cand[x]) for x in order if not vals[x]},
                 },
                 **({"marks": marks(i)} if wm is not None else {}),
-                **({"colours": colours(i)} if wc is not None else {}),
+                **({"colors": colours(i)} if wc is not None else {}),
             )
             for i, (vals, cand) in enumerate(pos)
         ]

@@ -133,7 +133,8 @@ def jcs(x):
     return json.dumps(x, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
 
-SET_TYPES = {"region", "cage", "cell", "contains", "appears", "count", "box", "row", "column", "negative", "neighbours"}
+SET_TYPES = {"region", "cage", "cell", "quadruple", "appears", "count", "box", "row", "column", "negative",
+             "neighbours"}  # fmt: skip
 
 
 def _rc(name):

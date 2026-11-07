@@ -258,33 +258,33 @@
     "code": "HSI",
     "chip": "HSI",
     "name": "Hidden Single",
-    "band": 0
+    "band_index": 0
    },
    {
     "code": "NSI",
     "chip": "NSI",
     "name": "Naked Single",
-    "band": 1
+    "band_index": 1
    },
    {
     "code": "PPR",
     "chip": "PPR",
     "name": "Pointing / Box-Line Reduction",
-    "band": 1,
+    "band_index": 1,
     "uses": 8
    },
    {
     "code": "PWC",
     "chip": "PWC",
     "name": "Pair rules (dots, whispers, anti-knight...)",
-    "band": 1,
+    "band_index": 1,
     "uses": 20
    },
    {
     "code": "LNR",
     "chip": "LNR/LNS/CSH",
     "name": "Line ranges (thermo / whisper bounds)",
-    "band": 1,
+    "band_index": 1,
     "alternatives": [
      "LNS",
      "CSH"
@@ -295,7 +295,7 @@
     "code": "NPR",
     "chip": "NPR/HQD",
     "name": "Naked Pair",
-    "band": 2,
+    "band_index": 2,
     "alternatives": [
      "HQD"
     ],
@@ -305,7 +305,7 @@
     "code": "HPR",
     "chip": "HPR/NQD",
     "name": "Hidden Pair",
-    "band": 2,
+    "band_index": 2,
     "alternatives": [
      "NQD"
     ],
@@ -315,28 +315,28 @@
     "code": "RUL",
     "chip": "RUL",
     "name": "Two rules together",
-    "band": 2,
+    "band_index": 2,
     "uses": 18
    },
    {
     "code": "FXW",
     "chip": "FXW",
     "name": "Finned X-Wing",
-    "band": 4,
+    "band_index": 4,
     "uses": 1
    },
    {
     "code": "BAN",
     "chip": "BAN",
     "name": "Band set theory with cages",
-    "band": 4,
+    "band_index": 4,
     "uses": 13
    },
    {
     "code": "AIC",
     "chip": "AIC/AXY",
     "name": "Alternating Inference Chain",
-    "band": 5,
+    "band_index": 5,
     "alternatives": [
      "AXY"
     ],
@@ -346,7 +346,7 @@
     "code": "CAS",
     "chip": "CAS/EWY/WIF",
     "name": "Case analysis",
-    "band": 5,
+    "band_index": 5,
     "alternatives": [
      "EWY",
      "WIF"

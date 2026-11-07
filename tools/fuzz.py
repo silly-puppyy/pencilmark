@@ -251,7 +251,7 @@ def propose(rng, S, D):
         cs = walk(rng, D, 4, lambda p, x: True, NB4)
         return cs and [
             {
-                "type": "contains",
+                "type": "quadruple",
                 "digits": sorted(rng.sample(sorted(set(map(v, cs))), 2)),
                 "cells": [nm(*x) for x in cs],
             }

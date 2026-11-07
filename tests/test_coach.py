@@ -107,8 +107,8 @@ def test_rule_types():
     assert rules_of(doc, "sum") == [
         {"type": "sum", "kind": "little_killer", "sum": 5, "side": "top", "cells": ["r1c2", "r2c1"]}
     ]
-    assert rules_of(doc, "contains") == [
-        {"type": "contains", "digits": [1, 3], "cells": ["r1c1", "r1c2", "r2c1", "r2c2"]}
+    assert rules_of(doc, "quadruple") == [
+        {"type": "quadruple", "digits": [1, 3], "cells": ["r1c1", "r1c2", "r2c1", "r2c2"]}
     ]
 
 

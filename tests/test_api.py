@@ -23,7 +23,7 @@ def test_classic_card():
     d = pencilmark.rate(CLASSIC, fields=["time", "time_dist", "time_p50"])
     assert d["time_dist"]["type"] == "lognormal" and "median" not in d["time_dist"] and d["time"] == d["time_p50"], d
     assert d["time_dist"]["sigma_players"] == 0.79 and d["time_dist"]["sigma_model"] == 0.33, d
-    chips = [c["chip"] for c in card["contains"] if c["band"] > 0]
+    chips = [c["chip"] for c in card["contains"] if c["band_index"] > 0]
     assert chips == ["NSI", "NPR/HPR", "XWG/KTE/CSM/MCH"]
 
 
@@ -219,7 +219,7 @@ def test_trace_positions():
     steps, trace = card["steps"], card["trace"]
     assert len(trace) == len(steps) + 1
     givens = [int(ch) if ch.isdigit() else 0 for ch in CLASSIC]
-    assert trace[0]["digits"] == givens and len(trace[0]["candidates"]) == givens.count(0)
+    assert trace[0]["grid"] == givens and len(trace[0]["candidates"]) == givens.count(0)
     for i, s in enumerate(steps):
         after = trace[i + 1]
         for e in s.get("eliminations", []):
@@ -228,8 +228,8 @@ def test_trace_positions():
         if "placement" in s:
             cell, d = s["placement"].split("=")
             r, c = map(int, cell[1:].split("c"))
-            assert after["digits"][(r - 1) * 9 + c - 1] == int(d) and cell not in after["candidates"]
-    assert trace[-1]["digits"] == pencilmark.solve(CLASSIC) and trace[-1]["candidates"] == {}
+            assert after["grid"][(r - 1) * 9 + c - 1] == int(d) and cell not in after["candidates"]
+    assert trace[-1]["grid"] == pencilmark.solve(CLASSIC) and trace[-1]["candidates"] == {}
     jsonschema = pytest.importorskip("jsonschema")
     schema = json.loads((ROOT / "docs" / "pencilmark-grade.schema.json").read_text(encoding="utf-8"))
     jsonschema.Draft202012Validator(schema).validate(card)
@@ -414,13 +414,13 @@ def test_params_follow_in_place_setting_changes():
 
 
 def test_colouring_is_opt_in(variants):
-    """rate(colouring=True) puts kept colours on the route (Vudoku: Colour Fill / Single / Pair take it from Hard to
+    """rate(coloring=True) puts kept colours on the route (Vudoku: Colour Fill / Single / Pair take it from Hard to
     Medium); the default leaves the colour-only techniques out"""
     import pencilmark
 
     vudoku = next(v["puzzle"] for v in variants if v["name"].startswith("Vudoku"))
     colour_only = {"CFL", "CSG", "CPR", "CTR", "CPT", "CFS", "CCM", "CCX"}
     off = pencilmark.rate(vudoku, fields=["band", "contains"])
-    on = pencilmark.rate(vudoku, fields=["band", "contains"], colouring=True)
+    on = pencilmark.rate(vudoku, fields=["band", "contains"], coloring=True)
     assert not colour_only & {c["code"] for c in off["contains"]}
     assert colour_only & {c["code"] for c in on["contains"]} and on["band"] != off["band"]

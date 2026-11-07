@@ -240,7 +240,7 @@ class _ReadCtx:
             except CU.LangError as e:
                 raise NotSupportedError(f"custom rule: {e}") from None
             return [{k: v for k, v in r.items() if k not in ("id", "label", "style")}]
-        if t == "contains":
+        if t == "quadruple":
             return [{"type": "quadruple", "cells": list(r["cells"]), "digits": list(r["digits"])}]
         if t == "appears":
             return [{"type": "contains", "cells": [r["source"]] + list(r["cells"])}]

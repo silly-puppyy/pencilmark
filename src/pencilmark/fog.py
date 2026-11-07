@@ -172,7 +172,7 @@ def visible_rules(rules, lit, D, above=(), line_len=None):
             area = sorted(set(k["area"]) & L) if isinstance(k.get("area"), list) else sorted(L)
             if len(area) > 1:
                 out.append(dict(k, area=area))
-        elif t in ("edge", "corner") or (t == "contains" and len(cells) == 4):
+        elif t in ("edge", "corner") or (t == "quadruple" and len(cells) == 4):
             if any(c in L for c in cells):
                 out.append(k)
         elif t == "line" and k.get("kind") in LINE_STRETCH and not k.get("closed"):

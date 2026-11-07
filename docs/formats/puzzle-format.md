@@ -163,7 +163,7 @@ clues competing for one gap) is the renderer's business; the semantics never dep
 | Ordered (the order carries meaning) | Sets (readers ignore the order; writers SHOULD use reading order) |
 |---|---|
 | `line` cells (thermo bulb first; a whisper's order is its path) | `box`, `row`, `column`, `region`, `cage` cells; `sum` kinds `group` / `corner` |
-| `arrow` `bulb` (a pill reads as a number in `bulb` order) and each shaft in `lines` (away from the bulb) | `cell`, `contains`, `appears` cells, `count`, `distinct_count` without `side` |
+| `arrow` `bulb` (a pill reads as a number in `bulb` order) and each shaft in `lines` (away from the bulb) | `cell`, `quadruple`, `appears` cells, `count`, `distinct_count` without `side` |
 | outside clues (`sandwich`, `xsum`, `skyscraper`, `rossini`, `first_seen`, `sum` kinds `little_killer` / `frame`, `distinct_count` with `side`): from the cell next to the clue outwards | `equal_sum` segments (each a set; the segment list is unordered) |
 | `clone` / `isomorphic` regions: corresponding positions | `edge` pairs except `greater`, `relation` pairs of symmetric operators |
 | `edge` kind `greater` (larger digit first) and `relation` pairs of `less` / `less_equal` / `any_of`: `[a, b]` in operator order | `area` cell lists, `except` pairs |
@@ -377,7 +377,7 @@ keep their order.
 3. Replace all house rules (`grid`, `box_grid`, `box`, `row`, `column`) by the houses they state, one
    `{"type": "row" | "column" | "box", "cells": [...]}` per distinct house, so every spelling of the same houses (a
    `box_grid`, a `grid` plus `box` rules, single rules, in any order) gives the same result.
-4. Sort the cells of set-like lists (3.3: region, cage, cell, contains, appears, count, sum group / corner,
+4. Sort the cells of set-like lists (3.3: region, cage, cell, quadruple, appears, count, sum group / corner,
    edge clues other than `greater`, scope and `except` lists, the pairs of symmetric `relation` operators, `equal_sum`
    segments) in reading order.
 5. Sort `rules` by their compact canonical JSON text.

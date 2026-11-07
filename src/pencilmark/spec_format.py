@@ -36,7 +36,7 @@ GEN_KINDS = {
     "parity": ("cell", "parity"),
     **{k: (k, None) for k in ("sandwich", "xsum", "skyscraper")},  # outside clues (gen/elements.OUTSIDE)
     "little_killer": ("sum", "little_killer"),
-    "quadruple": ("contains", None),  # corner circles (gen/elements.CORNER)
+    "quadruple": ("quadruple", None),  # corner circles (gen/elements.CORNER)
     "mathrax": ("corner", "mathrax"),
 }
 RULE_KIND = {v: k for k, v in GEN_KINDS.items()}

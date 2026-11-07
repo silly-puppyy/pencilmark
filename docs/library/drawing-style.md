@@ -25,7 +25,7 @@ corner clues, digits, outside clues.
 | rows / columns | Nothing beyond the grid lines. |
 | `region` `diagonal` | Thin grey line through the cell centres, extended to the outer corners of the end cells. |
 | `region` `window` / `extra` | Light grey shading (`#d8d8d8`). |
-| `region` `colour` | Shading by a palette colour per rule, in rule order (`#f4cccc` `#fce5cd` `#fff2cc` `#d9ead3` `#d0e0e3` `#c9daf8` `#d9d2e9` `#ead1dc` `#e6e6e6`, repeating). |
+| `region` `color` | Shading by a palette colour per rule, in rule order (`#f4cccc` `#fce5cd` `#fff2cc` `#d9ead3` `#d0e0e3` `#c9daf8` `#d9d2e9` `#ead1dc` `#e6e6e6`, repeating). |
 | `region` `disjoint` / `region` | Nothing (listed in the legend). |
 | `cage` | Dashed outline inset 0.08 from the cell edges; `sum` in small type (0.25) in the top-left corner of the first cell in reading order. |
 | `sum` `group` | Like a cage, dotted. |

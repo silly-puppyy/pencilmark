@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- **Renames (one name per thing, US spelling for keys).** No aliases; files and code using the old names need the
+  new ones.
+  - The quadruple rule is `{"type": "quadruple", ...}` (was `contains`, the community name is quadruple), so
+    `contains` now only means the card's technique list and its `where.contains` target.
+  - `color` everywhere in keys and values: region kind `color` (was `colour`), card annotations and trace layers
+    `color` / `colors` / `center` (were `colour` / `colours` / `centre`), `rate(coloring=True)` and `--coloring`
+    (were `colouring`). Prose keeps British spelling.
+  - The card's `contains` and `steps` entries give `band_index` (was `band`, an integer next to the card's band
+    name); trace positions give `grid` (was `digits`).
 - **sudoku.coach reader**: `pencilmark.read.link("https://sudoku.coach/en/s/<id>")` and raw `SCv7_...` payloads, with
   the setter's colours and widths as style and cell colours as a `fill` decoration; the embedded solution is checked.
   Of 16,436 coach puzzles, 13,407 read, 0 crash; refused: extra rules written only in the description (2,293), older

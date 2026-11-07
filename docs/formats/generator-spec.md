@@ -58,7 +58,7 @@ A rule with `count` and no cells is a **template**: the generator places rules o
 | `{"type": "cage"}` | killer cages |
 | `{"type": "line", "kind": "thermo" \| "slow_thermo" \| "whisper" \| "renban" \| "between" \| "entropic" \| "modular" \| "parity" \| "palindrome" \| "zipper" \| "region_sum" \| "lockout" \| "double_arrow"}` | the default parameters: whisper gap 5 and lockout gap 4 on 9 × 9; entropic groups (boards of 6 × 6 and up); modular mod 3. Palindromes and zippers have an odd length (built from their centre); double arrows are 5 cells or more (a shorter one is a zipper) |
 | `{"type": "arrow"}` | |
-| `{"type": "contains"}`, `{"type": "corner", "kind": "mathrax"}` | corner clues on a 2 × 2 block: a quadruple shows all four digits or three of them; a mathrax clue is whichever operator holds on both diagonals (`+ - x /`, or all `even` / `odd`) |
+| `{"type": "quadruple"}`, `{"type": "corner", "kind": "mathrax"}` | corner clues on a 2 × 2 block: a quadruple shows all four digits or three of them; a mathrax clue is whichever operator holds on both diagonals (`+ - x /`, or all `even` / `odd`) |
 | `{"type": "sandwich" \| "xsum" \| "skyscraper"}`, `{"type": "sum", "kind": "little_killer"}` | outside clues on single grids (not layouts): a whole row or column (a diagonal for little killers) read from either end |
 | `{"type": "edge", "kind": "kropki"}` | `"color": "white" \| "black"` for one colour |
 | `{"type": "edge", "kind": "xv"}` | `"letter": "X" \| "V"` for one letter |

@@ -46,7 +46,7 @@ def test_class_colouring_substeps():
     follow = [s for s in sub if s["text"].startswith("Follow the German whisper")]
     assert len(follow) == 1 and len(follow[0]["annotations"]) == 4  # the run along the line is one sub-step
     assert sum("German whisper differ" in s.get("why", "") for s in sub) == 1  # each reason once
-    assert sub[-1]["text"].startswith("So ") and {a["colour"] for a in sub[-1]["annotations"]} == {"red"}
+    assert sub[-1]["text"].startswith("So ") and {a["color"] for a in sub[-1]["annotations"]} == {"red"}
     ids = [a["id"] for s in sub for a in s.get("annotations", [])]
     assert ids == sorted(set(ids))  # unique, increasing
     jsonschema = pytest.importorskip("jsonschema")
@@ -71,7 +71,7 @@ def test_chain_substeps_end_to_end():
         sub = s["explanation"]["substeps"]
         lines = [a["line"] for x in sub for a in x.get("annotations", []) if "arrow" in a]
         assert lines and lines[0] == "strong" and all(x != y for x, y in zip(lines, lines[1:]))  # alternating
-        assert {a["colour"] for a in sub[-1]["annotations"]} == {"red"}
+        assert {a["color"] for a in sub[-1]["annotations"]} == {"red"}
 
 
 def test_simple_colouring_substeps():
@@ -82,8 +82,8 @@ def test_simple_colouring_substeps():
     )
     sub = next(s["explanation"]["substeps"] for s in card["steps"] if s["code"] == "CSM")
     assert set(sub[0]["legend"]) == {"blue", "yellow"}
-    cols = [a["colour"] for x in sub[1:-1] for a in x["annotations"] if "candidate" in a]
-    assert set(cols) <= {"blue", "yellow"} and {a["colour"] for a in sub[-1]["annotations"]} == {"red"}
+    cols = [a["color"] for x in sub[1:-1] for a in x["annotations"] if "candidate" in a]
+    assert set(cols) <= {"blue", "yellow"} and {a["color"] for a in sub[-1]["annotations"]} == {"red"}
 
 
 def test_killer_combination_substeps():
@@ -98,7 +98,7 @@ def test_killer_combination_substeps():
     ]
     assert told
     for sub in told:
-        assert {a["colour"] for a in sub[-1]["annotations"]} == {"red"} and sub[-1]["text"].startswith("So ")
+        assert {a["color"] for a in sub[-1]["annotations"]} == {"red"} and sub[-1]["text"].startswith("So ")
 
 
 def test_fish_substeps():
@@ -108,8 +108,8 @@ def test_fish_substeps():
         explain=["substeps"],
     )
     sub = next(s["explanation"]["substeps"] for s in card["steps"] if s["code"] == "XWG")
-    assert sub[0]["text"].startswith("Look at the") and {a["colour"] for a in sub[0]["annotations"]} == {"blue"}
-    assert "why" in sub[1] and {a["colour"] for a in sub[-1]["annotations"]} == {"red"}
+    assert sub[0]["text"].startswith("Look at the") and {a["color"] for a in sub[0]["annotations"]} == {"blue"}
+    assert "why" in sub[1] and {a["color"] for a in sub[-1]["annotations"]} == {"red"}
 
 
 def test_locked_and_subset_substeps():
@@ -121,8 +121,8 @@ def test_locked_and_subset_substeps():
     got = {s["code"]: s["explanation"]["substeps"] for s in card["steps"] if "substeps" in s.get("explanation", {})}
     for code in ("PPR", "HPR", "NTR"):
         sub = got[code]
-        assert {a["colour"] for a in sub[0]["annotations"]} == {"blue"}
-        assert {a["colour"] for a in sub[-1]["annotations"]} == {"red"} and any("why" in x for x in sub)
+        assert {a["color"] for a in sub[0]["annotations"]} == {"blue"}
+        assert {a["color"] for a in sub[-1]["annotations"]} == {"red"} and any("why" in x for x in sub)
 
 
 def test_line_rule_substeps_and_facts():
@@ -136,7 +136,7 @@ def test_line_rule_substeps_and_facts():
         if s["code"] == "LNR" and "substeps" in s.get("explanation", {})
     )
     assert sub[0]["text"].startswith("Read ") and any(sub[0]["why"].startswith(f) for f in RULE_FACTS.values())
-    assert {a["colour"] for a in sub[-1]["annotations"]} == {"red"}
+    assert {a["color"] for a in sub[-1]["annotations"]} == {"red"}
 
 
 def test_wing_substeps():
@@ -146,9 +146,9 @@ def test_wing_substeps():
         explain=["substeps"],
     )
     sub = next(s["explanation"]["substeps"] for s in card["steps"] if s["code"] == "YWG")
-    assert [a["colour"] for a in sub[0]["annotations"]] == ["cyan", "green", "green"]
+    assert [a["color"] for a in sub[0]["annotations"]] == ["cyan", "green", "green"]
     assert all(a["line"] == "plain" for x in sub[1:3] for a in x["annotations"])
-    assert {a["colour"] for a in sub[-1]["annotations"]} == {"red"}
+    assert {a["color"] for a in sub[-1]["annotations"]} == {"red"}
 
 
 CHAOS_DEMO = {
@@ -189,9 +189,9 @@ def test_region_substeps_keep_their_colours():
             continue
         sub = s["explanation"]["substeps"]
         k = int(s["region"].split("@")[1])
-        cols = {a["colour"] for a in sub[0]["annotations"]}
+        cols = {a["color"] for a in sub[0]["annotations"]}
         assert len(cols) == 1
-        assert colour_of.setdefault(k, cols.pop()) == next(iter({a["colour"] for a in sub[0]["annotations"]}))
+        assert colour_of.setdefault(k, cols.pop()) == next(iter({a["color"] for a in sub[0]["annotations"]}))
         joins += any(x["text"].startswith("So ") and "joins" in x["text"] for x in sub)
     assert colour_of and joins
     first = next(s["explanation"]["substeps"][0] for s in card["steps"] if s.get("region", "").endswith("@1"))

@@ -276,13 +276,13 @@
     "code": "HSI",
     "chip": "HSI",
     "name": "Hidden Single",
-    "band": 0
+    "band_index": 0
    },
    {
     "code": "LSI",
     "chip": "LSI",
     "name": "Line / dot read without notes",
-    "band": 0
+    "band_index": 0
    }
   ]
  },

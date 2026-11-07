@@ -65,9 +65,9 @@ RULES = [
     [{"type": "region", "kind": "window", "cells": BLOCK}],
     [{"type": "region", "kind": "extra", "cells": ["r1c1", "r2c3"]}],
     [{"type": "region", "kind": "disjoint", "cells": ["r1c1", "r1c3"]}],
-    [{"type": "region", "kind": "colour", "cells": ["r1c1", "r4c4"]}],
+    [{"type": "region", "kind": "color", "cells": ["r1c1", "r4c4"]}],
     # sets and the rest
-    [{"type": "contains", "digits": [1, 2], "cells": BLOCK}],
+    [{"type": "quadruple", "digits": [1, 2], "cells": BLOCK}],
     [{"type": "appears", "source": "r1c1", "cells": ["r1c2", "r1c3"]}],
     [{"type": "clone", "regions": [["r1c1", "r1c2"], ["r3c3", "r3c4"]]}],
     [{"type": "count", "kind": "circles", "cells": ["r1c1", "r2c3"]}],

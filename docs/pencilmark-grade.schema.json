@@ -73,7 +73,7 @@
      "code",
      "chip",
      "name",
-     "band"
+     "band_index"
     ],
     "additionalProperties": false,
     "properties": {
@@ -86,7 +86,7 @@
      "name": {
       "type": "string"
      },
-     "band": {
+     "band_index": {
       "type": "integer",
       "minimum": 0,
       "maximum": 6
@@ -198,7 +198,7 @@
      "n",
      "code",
      "name",
-     "band"
+     "band_index"
     ],
     "additionalProperties": false,
     "properties": {
@@ -212,7 +212,7 @@
      "name": {
       "type": "string"
      },
-     "band": {
+     "band_index": {
       "type": "integer",
       "minimum": 0,
       "maximum": 6
@@ -285,7 +285,7 @@
               "required": [
                "id",
                "cell",
-               "colour"
+               "color"
               ],
               "properties": {
                "id": {
@@ -296,7 +296,7 @@
                 "type": "string",
                 "pattern": "^r[0-9]+c[0-9]+$"
                },
-               "colour": {
+               "color": {
                 "type": "string",
                 "description": "a colour name of the named palette (yellow, blue, green, purple, orange, pink, cyan, grey, brown, red); each renderer picks its own shade"
                }
@@ -308,7 +308,7 @@
               "required": [
                "id",
                "candidate",
-               "colour"
+               "color"
               ],
               "properties": {
                "id": {
@@ -319,7 +319,7 @@
                 "type": "string",
                 "pattern": "^r[0-9]+c[0-9]+#[0-9]+$"
                },
-               "colour": {
+               "color": {
                 "type": "string",
                 "description": "a colour name of the named palette (yellow, blue, green, purple, orange, pink, cyan, grey, brown, red); each renderer picks its own shade"
                }
@@ -392,11 +392,11 @@
     "type": "object",
     "additionalProperties": false,
     "required": [
-     "digits",
+     "grid",
      "candidates"
     ],
     "properties": {
-     "digits": {
+     "grid": {
       "type": "array",
       "items": {
        "type": "integer",
@@ -433,7 +433,7 @@
           "minimum": 1
          }
         },
-        "centre": {
+        "center": {
          "type": "array",
          "items": {
           "type": "integer",
@@ -443,20 +443,20 @@
        }
       }
      },
-     "colours": {
+     "colors": {
       "type": "array",
       "description": "identity colours an expert would have painted (grade-card.md 6): each colour's cells hold one and the same digit, one of digits; the opposite colour holds the other digit of the pair",
       "items": {
        "type": "object",
        "additionalProperties": false,
        "required": [
-        "colour",
+        "color",
         "cells",
         "digits",
         "opposite"
        ],
        "properties": {
-        "colour": {
+        "color": {
          "type": "string"
         },
         "cells": {

@@ -485,13 +485,13 @@
     "code": "HSI",
     "chip": "HSI",
     "name": "Hidden Single",
-    "band": 0
+    "band_index": 0
    },
    {
     "code": "PPR",
     "chip": "PPR",
     "name": "Pointing Pair (in the head)",
-    "band": 1,
+    "band_index": 1,
     "uses": 1
    }
   ]

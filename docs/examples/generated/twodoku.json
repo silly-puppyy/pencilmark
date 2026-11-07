@@ -541,33 +541,33 @@
     "code": "HSI",
     "chip": "HSI",
     "name": "Hidden Single",
-    "band": 0
+    "band_index": 0
    },
    {
     "code": "NSI",
     "chip": "NSI",
     "name": "Naked Single",
-    "band": 1
+    "band_index": 1
    },
    {
     "code": "PPR",
     "chip": "PPR",
     "name": "Pointing / Box-Line Reduction",
-    "band": 1,
+    "band_index": 1,
     "uses": 5
    },
    {
     "code": "HPR",
     "chip": "HPR",
     "name": "Hidden Pair",
-    "band": 2,
+    "band_index": 2,
     "uses": 3
    },
    {
     "code": "SKY",
     "chip": "SKY/CSM",
     "name": "Skyscraper",
-    "band": 3,
+    "band_index": 3,
     "alternatives": [
      "CSM"
     ],

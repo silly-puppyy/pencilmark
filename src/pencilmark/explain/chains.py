@@ -505,7 +505,7 @@ def _chain_substeps(nm, p, path, done):
     links, dashed arrows weak links; the ends and the removals"""
     ids = iter(range(1, 10**6))
     col = lambda i: "blue" if i % 2 == 0 else "yellow"
-    ann = lambda n, i: [{"id": next(ids), "candidate": x, "colour": col(i)} for x in _cands(nm, n)]
+    ann = lambda n, i: [{"id": next(ids), "candidate": x, "color": col(i)} for x in _cands(nm, n)]
     s0 = path[0][0]
     out = [
         {
@@ -542,7 +542,7 @@ def _chain_substeps(nm, p, path, done):
         {
             "text": f"So {_is(nm, s0)} or {_is(nm, e0)}: at least one end is true. {_chain_conclusion(nm, p, path, done)}",
             "annotations": [
-                {"id": next(ids), "candidate": f"{nm.cell(c)}#{d}", "colour": "red"} for c, d in sorted(done)
+                {"id": next(ids), "candidate": f"{nm.cell(c)}#{d}", "color": "red"} for c, d in sorted(done)
             ],
         }
     )

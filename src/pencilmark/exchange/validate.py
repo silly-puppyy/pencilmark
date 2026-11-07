@@ -50,7 +50,7 @@ RULE_KEYS = {
     "neighbours": (set(), {"kind", "op", "value", "sum", "allowed", "any_of", "where", "within", "area", "except"}),
     "relation": ({"op", "pairs"}, {"value", "sum", "allowed", "any_of"}),
     "cell": ({"kind", "cells"}, {"split", "values"}),
-    "contains": ({"digits", "cells"}, set()),
+    "quadruple": ({"digits", "cells"}, set()),
     "appears": ({"source", "cells"}, set()),
     "clone": ({"regions"}, set()),
     "isomorphic": ({"regions"}, set()),
@@ -64,7 +64,7 @@ RULE_KEYS = {
     "fog": ({"lit"}, {"triggers"}),
 }
 KINDS = {
-    "region": {"diagonal", "window", "disjoint", "colour", "extra", "region"},
+    "region": {"diagonal", "window", "disjoint", "color", "extra", "region"},
     "line": set(LINE),  # rules/line.py
     "edge": set(EDGE),  # rules/edge.py
     "corner": {"battenburg", "mathrax", "exclude"},
@@ -360,13 +360,13 @@ def _validate_rule(r, B):
         r0, c0 = parse_cell(r["origin"])
         if grid_units(B, r0, c0) is None:
             raise FormatError(f"{t} covers a missing cell (its area is {D} x {D} from origin)")
-    elif t in ("box", "row", "column", "region", "contains", "appears", "cell", "count", "vudoku"):
+    elif t in ("box", "row", "column", "region", "quadruple", "appears", "cell", "count", "vudoku"):
         cs = _cells(B, r["cells"])
         if t == "vudoku" and len(cs) != 3:
             raise FormatError("vudoku takes 3 cells (vertex, arm, arm)")
         if t == "appears":
             B.idx(r["source"])
-        if t == "contains" and (
+        if t == "quadruple" and (
             not isinstance(r["digits"], list)
             or not r["digits"]
             or any(not isinstance(x, int) or not 1 <= x <= D for x in r["digits"])

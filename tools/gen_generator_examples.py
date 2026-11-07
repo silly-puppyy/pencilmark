@@ -170,7 +170,7 @@ CURIOSITIES = {
             rules=[
                 {"type": "neighbours", "kind": "antiknight"},
                 {"type": "sandwich", "count": [2, 4]},
-                {"type": "contains", "count": [1, 3]},
+                {"type": "quadruple", "count": [1, 3]},
                 {"type": "line", "kind": "palindrome", "count": 1},
             ],
             where={"band": "Medium"},

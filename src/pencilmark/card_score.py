@@ -280,7 +280,7 @@ def _rollout_sum(p, P, cfg, w, seed, n_play, solve=None):
 def score_parts(p, model=None, solve=None, overrides=None):
     """(card score, L1 = log of the step-value sum) for one puzzle; None if the engine must guess. The score is priced
     with the model's difficulty prices, L1 (the effort the time model reads) with its route prices; both on the
-    written route each price set produces. overrides: engine params for every route (rate(colouring=True))."""
+    written route each price set produces. overrides: engine params for every route (rate(coloring=True))."""
     model = model or GM.default()
     cfg = model.score
     w = cfg.get("enum_w", 0.0)

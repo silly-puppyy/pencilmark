@@ -13,7 +13,7 @@ from concurrent.futures import ProcessPoolExecutor
 
 BOX = {4: [2, 2], 6: [2, 3], 8: [2, 4], 9: [3, 3]}
 OUTSIDE = [{"type": "sandwich"}, {"type": "xsum"}, {"type": "skyscraper"}, {"type": "sum", "kind": "little_killer"}]
-CORNER = [{"type": "contains"}, {"type": "corner", "kind": "mathrax"}]
+CORNER = [{"type": "quadruple"}, {"type": "corner", "kind": "mathrax"}]
 LINES = None  # every line kind the generator places (rules/line.py), read in request()
 
 

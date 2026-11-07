@@ -664,7 +664,7 @@ def check_other(doc, rule):
             except ValueError as e:
                 raise Fail("STRUCT: " + str(e))
         need(sum(doc.v(n) for n in rule["cells"]) == rule["sum"], "sum wrong")
-    elif t == "contains":
+    elif t == "quadruple":
         vals = Counter(doc.v(n) for n in rule["cells"])
         for d, k in Counter(rule["digits"]).items():
             need(vals[d] >= k, "digit %d appears fewer than %d times" % (d, k))

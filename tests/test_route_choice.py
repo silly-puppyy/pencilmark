@@ -105,7 +105,7 @@ def test_trace_marks_layer():
     assert all("marks" in t for t in tr) and tr[0]["marks"]  # position notes from the start
     for t in tr:
         for cell, m in t["marks"].items():
-            assert set(m.get("corner", [])) | set(m.get("centre", [])) <= set(t["candidates"][cell])
+            assert set(m.get("corner", [])) | set(m.get("center", [])) <= set(t["candidates"][cell])
 
 
 def test_trace_colours_layer():
@@ -117,10 +117,10 @@ def test_trace_colours_layer():
     idx = lambda cell: (int(cell[1 : cell.index("c")]) - 1) * 9 + int(cell[cell.index("c") + 1 :]) - 1
     drawn = 0
     for t in tr:
-        assert "colours" in t and len(t["colours"]) <= 6  # at most three colour pairs
-        by = {g["colour"]: g for g in t["colours"]}
-        assert len(by) == len(t["colours"])  # one name per colour on the board
-        for g in t["colours"]:
+        assert "colors" in t and len(t["colors"]) <= 6  # at most three colour pairs
+        by = {g["color"]: g for g in t["colors"]}
+        assert len(by) == len(t["colors"])  # one name per colour on the board
+        for g in t["colors"]:
             drawn += 1
             ds = {int(sol[idx(c)]) for c in g["cells"]}
             assert len(ds) == 1 and ds <= set(g["digits"])  # one digit per colour, one of the pair

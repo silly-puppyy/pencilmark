@@ -238,33 +238,33 @@
     "code": "HSI",
     "chip": "HSI",
     "name": "Hidden Single",
-    "band": 0
+    "band_index": 0
    },
    {
     "code": "CSI",
     "chip": "CSI",
     "name": "Last cell of a cage / line",
-    "band": 0
+    "band_index": 0
    },
    {
     "code": "PPR",
     "chip": "PPR",
     "name": "Pointing / Box-Line Reduction",
-    "band": 1,
+    "band_index": 1,
     "uses": 9
    },
    {
     "code": "MSI",
     "chip": "MSI",
     "name": "Notes in the head",
-    "band": 1,
+    "band_index": 1,
     "uses": 2
    },
    {
     "code": "CGC",
     "chip": "CGC",
     "name": "Killer cage combinations",
-    "band": 1,
+    "band_index": 1,
     "uses": 6
    }
   ]

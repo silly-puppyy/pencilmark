@@ -236,26 +236,26 @@
     "code": "HSI",
     "chip": "HSI",
     "name": "Hidden Single",
-    "band": 0
+    "band_index": 0
    },
    {
     "code": "NSI",
     "chip": "NSI",
     "name": "Naked Single",
-    "band": 1
+    "band_index": 1
    },
    {
     "code": "PPR",
     "chip": "PPR",
     "name": "Pointing / Box-Line Reduction",
-    "band": 1,
+    "band_index": 1,
     "uses": 7
    },
    {
     "code": "NPR",
     "chip": "NPR/HPR",
     "name": "Naked Pair",
-    "band": 2,
+    "band_index": 2,
     "alternatives": [
      "HPR"
     ],

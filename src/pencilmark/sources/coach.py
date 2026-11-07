@@ -680,7 +680,7 @@ def _quadruples(segs, B, style):
         if not digits:
             continue
         cells = [tl, tl + 1, tl + n, tl + n + 1]
-        out.append(_with_style({"type": "contains", "digits": digits, "cells": B.names(cells)}, style))
+        out.append(_with_style({"type": "quadruple", "digits": digits, "cells": B.names(cells)}, style))
     return out
 
 

@@ -16,10 +16,10 @@ What `rate()` returns and `pencilmark rate --json` prints: one JSON object per p
 {"format": "pencilmark-grade", "format_version": 1,
  "grader": {"name": "pencilmark", "version": "1.2.0"},
  "difficulty": 5.9, "time": 10.7, "band": "Hard",
- "contains": [{"code": "HSI", "chip": "HSI", "name": "Hidden Single", "band": 0},
-              {"code": "NSI", "chip": "NSI", "name": "Naked Single", "band": 1},
-              {"code": "NPR", "chip": "NPR/HPR", "name": "Naked Pair", "band": 2, "alternatives": ["HPR"], "uses": 1},
-              {"code": "XWG", "chip": "XWG/KTE/CSM/MCH", "name": "X-Wing", "band": 3, "alternatives": ["KTE", "CSM", "MCH"], "uses": 1}]}
+ "contains": [{"code": "HSI", "chip": "HSI", "name": "Hidden Single", "band_index": 0},
+              {"code": "NSI", "chip": "NSI", "name": "Naked Single", "band_index": 1},
+              {"code": "NPR", "chip": "NPR/HPR", "name": "Naked Pair", "band_index": 2, "alternatives": ["HPR"], "uses": 1},
+              {"code": "XWG", "chip": "XWG/KTE/CSM/MCH", "name": "X-Wing", "band_index": 3, "alternatives": ["KTE", "CSM", "MCH"], "uses": 1}]}
 ```
 
 A card exists only for a puzzle with exactly one solution. For any other puzzle, `rate()` raises `NotUnique` or
@@ -72,7 +72,7 @@ Each entry is one technique on the route:
 | `code` | Three-letter technique code ([Techniques](../grades/techniques.md) lists them). |
 | `chip` | `code` plus its alternatives, `/`-separated: any one of them gets the solver through at that point. |
 | `name` | Technique name. |
-| `band` | The technique's band index. |
+| `band_index` | The technique's band as an index (0 = Very Easy), like the card's `band_index`. |
 | `uses` | Times used on the route; omitted for singles (full house, hidden and naked singles, a rule's last cell), whose count depends on the route. |
 | `alternatives` | Other codes that also work there; omitted when there are none; `null` when the producer did not search (pencilmark: `alternatives=False`, CLI `--no-alternatives`; band, difficulty and time are the same). |
 
@@ -147,7 +147,7 @@ Which route the steps walk depends on whether the card asks for the techniques. 
 so they use exactly the techniques `contains` lists. Without them, the steps walk the full first route: easy to hard,
 the simplest technique first, as the band is found. Band, difficulty and time are the same either way.
 
-Each step: `n` (from 1), `code`, `name`, `band` (the same keys as in `contains`), then `placement` (`"r2c8=3"`) and / or `eliminations`
+Each step: `n` (from 1), `code`, `name`, `band_index` (the same keys as in `contains`), then `placement` (`"r2c8=3"`) and / or `eliminations`
 (`["r4c5#7", …]`: candidate 7 removed from r4c5); for regions to find, `region` (`"r4c5@3"`: r4c5 is in region 3) and /
 or `region_eliminations` (`["r4c5@!3", …]`: r4c5 is not in region 3), regions numbered so that each region's first
 cell in reading order comes before the next region's; and, when requested, `explanation` with the requested levels
@@ -171,9 +171,9 @@ extras, in the tradition of Sudoku Explainer's and Andrew Stuart's hint pages:
    "legend": {"blue": "low (1–4)", "yellow": "high (6–9)"}},
   {"text": "Follow the German whisper from r1c3 (blue): r1c4 yellow, r1c5 blue.",
    "why": "Neighbours on a German whisper differ by at least 5, so a low digit always sits next to a high one (5 can't be on the line).",
-   "annotations": [{"id": 1, "cell": "r1c4", "colour": "yellow"}, {"id": 2, "cell": "r1c5", "colour": "blue"}]},
+   "annotations": [{"id": 1, "cell": "r1c4", "color": "yellow"}, {"id": 2, "cell": "r1c5", "color": "blue"}]},
   {"text": "So r1c4 ≠ 1,2,3.",
-   "annotations": [{"id": 3, "candidate": "r1c4#1", "colour": "red"}]}
+   "annotations": [{"id": 3, "candidate": "r1c4#1", "color": "red"}]}
 ]
 ```
 
@@ -182,7 +182,7 @@ extras, in the tradition of Sudoku Explainer's and Andrew Stuart's hint pages:
 | `text` | One sentence that reads on its own, without any drawing. |
 | `why` | Optional: the rule fact behind the sentence (given once per step). |
 | `legend` | Optional: what a colour name stands for; it holds for the rest of the solve. |
-| `annotations` | Optional drawing elements, each with an integer `id`: colour a `cell` or a `candidate` (`colour`), show a `digit` (`"r5c6=7"`), or an `arrow` between two cells or candidates (`line`: `strong`, `weak` or `plain`). A later element on the same target replaces the earlier one. |
+| `annotations` | Optional drawing elements, each with an integer `id`: colour a `cell` or a `candidate` (`color`), show a `digit` (`"r5c6=7"`), or an `arrow` between two cells or candidates (`line`: `strong`, `weak` or `plain`). A later element on the same target replaces the earlier one. |
 
 Colours are names from a named palette (`yellow`, `blue`, `green`, `purple`, `orange`, `pink`, `cyan`, `grey`, `brown`;
 `red` for removals); each renderer picks its own shade for each name. Steps whose technique has no sub-step form yet leave
@@ -193,22 +193,21 @@ short chains such as Skyscraper and 2-String Kite; strong links drawn as `strong
 ## 6. `trace`
 
 The positions of the route that `steps` lists, so a viewer can show the board at any step: `trace[0]` is the
-position before step 1 and `trace[n]` the position after step n (one more entry than `steps`). Each position is
-written as the puzzle file writes a board:
+position before step 1 and `trace[n]` the position after step n (one more entry than `steps`):
 
 ```json
-{"digits": [0, 0, 0, 0, 4, 0, 8, 0, 3, …], "candidates": {"r1c1": [1, 5, 7], "r1c2": [1, 2, 5, 7], …}}
+{"grid": [0, 0, 0, 0, 4, 0, 8, 0, 3, …], "candidates": {"r1c1": [1, 5, 7], "r1c2": [1, 2, 5, 7], …}}
 ```
 
-- `digits`: one entry per cell in reading order, the placed digit or 0 (givens and digits placed so far).
+- `grid`: one entry per cell in reading order, the placed digit or 0 (givens and digits placed so far).
 - `candidates`: every empty cell's remaining candidates, ascending, keys in reading order.
 - `marks` (optional): what a casual solver would have written down at this position, for the cells that carry marks:
-  `corner` = position notes (a digit with 2 or 3 places left in its box, noted once, from the start), `centre` =
+  `corner` = position notes (a digit with 2 or 3 places left in its box, noted once, from the start), `center` =
   candidate lists (written when the route first needs notes, in the cells with at most 3 candidates, then in each cell
   a step uses). Marks always show a subset of the cell's `candidates`; a viewer may draw them instead of the full
   candidates. Present when the grader's note model is on (the default).
-- `colours` (optional): the identity colours an expert would have painted at this position, as a list of
-  `{"colour": "green", "cells": ["r3c7", …], "digits": [7, 8], "opposite": "purple"}`. Every cell of one colour holds
+- `colors` (optional): the identity colours an expert would have painted at this position, as a list of
+  `{"color": "green", "cells": ["r3c7", …], "digits": [7, 8], "opposite": "purple"}`. Every cell of one colour holds
   the same digit, one of `digits`; the `opposite` colour holds the other one (which is which is still open). Colours
   start where two cells of one house have exactly the same two candidates and are tracked further: in a house without
   the colour, the one cell left that can hold it joins it; cells a palindrome or clone rule makes equal share it. A

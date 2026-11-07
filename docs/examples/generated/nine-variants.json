@@ -477,67 +477,67 @@
     "code": "HSI",
     "chip": "HSI",
     "name": "Hidden Single",
-    "band": 0
+    "band_index": 0
    },
    {
     "code": "LSI",
     "chip": "LSI",
     "name": "Line / dot read without notes",
-    "band": 0
+    "band_index": 0
    },
    {
     "code": "NSI",
     "chip": "NSI",
     "name": "Naked Single",
-    "band": 1
+    "band_index": 1
    },
    {
     "code": "PPR",
     "chip": "PPR",
     "name": "Pointing / Box-Line Reduction",
-    "band": 1,
+    "band_index": 1,
     "uses": 19
    },
    {
     "code": "MSI",
     "chip": "MSI",
     "name": "Pair / triple in the head",
-    "band": 1,
+    "band_index": 1,
     "uses": 2
    },
    {
     "code": "ARW",
     "chip": "ARW",
     "name": "Arrow sums",
-    "band": 1,
+    "band_index": 1,
     "uses": 1
    },
    {
     "code": "PWC",
     "chip": "PWC",
     "name": "Pair rules (dots, whispers, anti-knight...)",
-    "band": 1,
+    "band_index": 1,
     "uses": 68
    },
    {
     "code": "LNR",
     "chip": "LNR",
     "name": "Line ranges (thermo / whisper bounds)",
-    "band": 1,
+    "band_index": 1,
     "uses": 2
    },
    {
     "code": "CFX",
     "chip": "CFX",
     "name": "Clue Facts",
-    "band": 1,
+    "band_index": 1,
     "uses": 1
    },
    {
     "code": "NPR",
     "chip": "NPR/CEQ/IOM",
     "name": "Naked Pair",
-    "band": 2,
+    "band_index": 2,
     "alternatives": [
      "CEQ",
      "IOM"
@@ -548,7 +548,7 @@
     "code": "HPR",
     "chip": "HPR/CEQ/IOM",
     "name": "Hidden Pair",
-    "band": 2,
+    "band_index": 2,
     "alternatives": [
      "CEQ",
      "IOM"
@@ -559,35 +559,35 @@
     "code": "NQD",
     "chip": "NQD",
     "name": "Naked Quad",
-    "band": 2,
+    "band_index": 2,
     "uses": 2
    },
    {
     "code": "RUL",
     "chip": "RUL",
     "name": "Two rules together",
-    "band": 2,
+    "band_index": 2,
     "uses": 20
    },
    {
     "code": "DOM",
     "chip": "DOM",
     "name": "Domino pairs (dots / XV)",
-    "band": 2,
+    "band_index": 2,
     "uses": 1
    },
    {
     "code": "BAN",
     "chip": "BAN",
     "name": "Band set theory with cages",
-    "band": 4,
+    "band_index": 4,
     "uses": 12
    },
    {
     "code": "ALS",
     "chip": "ALS/AIC/AXY",
     "name": "ALS-XZ (almost locked sets)",
-    "band": 5,
+    "band_index": 5,
     "alternatives": [
      "AIC",
      "AXY"
@@ -598,7 +598,7 @@
     "code": "CAS",
     "chip": "CAS/STR",
     "name": "Case analysis",
-    "band": 5,
+    "band_index": 5,
     "alternatives": [
      "STR"
     ],

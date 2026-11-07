@@ -275,19 +275,19 @@
     "code": "HSI",
     "chip": "HSI",
     "name": "Hidden Single",
-    "band": 0
+    "band_index": 0
    },
    {
     "code": "LSI",
     "chip": "LSI",
     "name": "Line / dot read without notes",
-    "band": 0
+    "band_index": 0
    },
    {
     "code": "NSI",
     "chip": "NSI/LNS/CSH",
     "name": "Naked Single",
-    "band": 1,
+    "band_index": 1,
     "alternatives": [
      "LNS",
      "CSH"
@@ -297,7 +297,7 @@
     "code": "PPR",
     "chip": "PPR/LNS/CSH",
     "name": "Pointing / Box-Line Reduction",
-    "band": 1,
+    "band_index": 1,
     "alternatives": [
      "LNS",
      "CSH"
@@ -308,7 +308,7 @@
     "code": "MSI",
     "chip": "MSI/LNS/CSH",
     "name": "Notes in the head",
-    "band": 1,
+    "band_index": 1,
     "alternatives": [
      "LNS",
      "CSH"
@@ -319,7 +319,7 @@
     "code": "PWC",
     "chip": "PWC/LNS",
     "name": "Pair rules (dots, whispers, anti-knight...)",
-    "band": 1,
+    "band_index": 1,
     "alternatives": [
      "LNS"
     ],

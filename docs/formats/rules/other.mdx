@@ -1,5 +1,5 @@
 ---
-description: "The remaining rule families: contains, appears, clone, count, global entropy, equal sums, vudoku."
+description: "The remaining rule families: quadruple, appears, clone, count, global entropy, equal sums, vudoku."
 title: Other rules
 ---
 
@@ -13,7 +13,7 @@ This page covers the remaining rule families (6.13), vendor rules (6.15), what i
 ## 6.13 Other families
 
 ```json
-{"type": "contains", "digits": [1, 9], "cells": ["r1c1", "r1c2", "r2c1", "r2c2"]}
+{"type": "quadruple", "digits": [1, 9], "cells": ["r1c1", "r1c2", "r2c1", "r2c2"]}
 {"type": "appears", "source": "r5c5", "cells": ["r5c6", "r5c7", "r5c8", "r5c9"]}
 {"type": "clone", "regions": [["r1c1", "r1c2"], ["r9c8", "r9c9"]]}
 {"type": "isomorphic", "regions": [["r1c1", "…81 cells…"], ["r1c11", "…81 cells…"]]}
@@ -29,7 +29,7 @@ This page covers the remaining rule families (6.13), vendor rules (6.15), what i
 
 | `type` | Meaning | Drawing |
 |---|---|---|
-| `contains` | Every listed digit (a multiset) appears among `cells` at least as often as it is listed. On a 2×2 block it is the quadruple clue. | <Swatch name="contains-quadruple" /> |
+| `quadruple` | Every listed digit (a multiset) appears among `cells` at least as often as it is listed. Usually the four cells of a 2×2 block, drawn as a circle on their shared corner; any cell set is allowed. | <Swatch name="quadruple" /> |
 | `appears` | The digit in `source` appears in at least one of `cells` (an in-cell arrow whose digit occurs again along its ray). |  |
 | `clone` | ≥ 2 equal-sized ordered `regions`; corresponding cells hold equal digits. |  |
 | `isomorphic` | 2 ordered `regions` (twins): one fixed relabelling of the digits maps every cell of the first region to the corresponding cell of the second. |  |

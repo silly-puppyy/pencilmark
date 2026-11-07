@@ -900,7 +900,7 @@ def _class_substeps(ctx, cc, a, b, kind):
         legend = {"blue": a, "yellow": b}
     col = lambda c: names[sides[c]]
     ids = iter(range(1, 10**6))
-    ann = lambda c: {"id": next(ids), "cell": nm.cell(c), "colour": col(c)}
+    ann = lambda c: {"id": next(ids), "cell": nm.cell(c), "color": col(c)}
     out = [{"text": legend_text, "legend": legend}]
     start = cc.get("anchor")
     if start is not None:
@@ -973,7 +973,7 @@ def _class_substeps(ctx, cc, a, b, kind):
             {
                 "text": f"So {fmt_elims(nm, ctx.elims)}.",
                 "annotations": [
-                    {"id": next(ids), "candidate": f"{nm.cell(c)}#{d}", "colour": "red"} for c, d in sorted(ctx.elims)
+                    {"id": next(ids), "candidate": f"{nm.cell(c)}#{d}", "color": "red"} for c, d in sorted(ctx.elims)
                 ],
             }
         )

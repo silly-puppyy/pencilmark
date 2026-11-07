@@ -300,7 +300,7 @@ family(
     lambda r: (r["type"] == "corner" and r["kind"] == "exclude") or (r["type"] == "cell" and r["kind"] == "exclude"),
     "A circled digit does not appear in the cells it touches.",
 )
-family("Quadruple", _t("contains"), "Digits in a circle appear at least once among the cells around it.")
+family("Quadruple", _t("quadruple"), "Digits in a circle appear at least once among the cells around it.")
 family("Cupid", _t("appears"), "The digit in a cell with an arrow appears again in the direction of the arrow.")
 family("Clone", _t("clone"), "Shaded shapes of the same colour hold the same digits in corresponding cells.")
 family("Twin", _t("isomorphic"), "The two grids are the same solution with the digits relabelled.")
@@ -409,7 +409,7 @@ GENERIC_REGION = {
     "diagonal": ("Diagonals", "Digits don't repeat along a marked diagonal."),
     "window": ("Windows", "Digits don't repeat in a shaded window."),
     "disjoint": ("Disjoint Groups", "Digits don't repeat in a group of cells in the same box position."),
-    "colour": ("Colour Groups", "Cells of the same colour contain different digits."),
+    "color": ("Colour Groups", "Cells of the same colour contain different digits."),
     "extra": ("Extra Regions", "Digits don't repeat in a shaded region."),
     "region": ("Extra Regions", "Digits don't repeat in a shaded region."),
 }

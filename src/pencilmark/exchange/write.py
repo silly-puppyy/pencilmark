@@ -493,7 +493,7 @@ class _Writer:
 
             return [dict(rule, holds=_holds(rule["holds"]))]
         if t == "quadruple":
-            return [{"type": "contains", "digits": [int(v) for v in rule["digits"]], "cells": nm(rule["cells"])}]
+            return [{"type": "quadruple", "digits": [int(v) for v in rule["digits"]], "cells": nm(rule["cells"])}]
         if t == "vudoku":
             return [{"type": "vudoku", "cells": nm(rule["cells"])}]
         if t == "increasing":
@@ -828,7 +828,7 @@ class _Writer:
         if len(cells) == 4 and B.is_block(cells):  # the quadruple clue (other tables that happen to match stay tables)
             need = self.quadruple_need(A, len(cells))
             if need is not None:
-                return [{"type": "contains", "digits": need, "cells": [B.name(x) for x in cells]}], 1
+                return [{"type": "quadruple", "digits": need, "cells": [B.name(x) for x in cells]}], 1
         return None
 
     def mathrax_clue(self, c):

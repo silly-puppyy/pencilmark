@@ -850,9 +850,7 @@ def _region_substeps(p, st, ex, lab, region_colour):
             region_colour[k] = REGION_COLOURS[len(region_colour) % len(REGION_COLOURS)]
             sub["legend"] = {region_colour[k]: f"region {k}"}
         cells = sorted((x for x, kk in lab.items() if kk == k), key=lambda x: p.coords[x])
-        sub["annotations"] = [
-            {"id": i + 1, "cell": nm.cell(x), "colour": region_colour[k]} for i, x in enumerate(cells)
-        ]
+        sub["annotations"] = [{"id": i + 1, "cell": nm.cell(x), "color": region_colour[k]} for i, x in enumerate(cells)]
     out = [sub]
     placed = st["lplace"][0] if st.get("lplace") else None
     if placed is not None:
@@ -875,8 +873,8 @@ def _region_substeps(p, st, ex, lab, region_colour):
             parts.append(f"{nm.cells(cs)} {'is' if len(cs) == 1 else 'are'} not in {where}")
             if placed is None:  # the region as known so far, and the cells ruled out of it
                 if k in region_colour:
-                    ann += [{"cell": nm.cell(x), "colour": region_colour[k]} for x in known]
-                ann += [{"cell": nm.cell(x), "colour": "red"} for x in cs]
+                    ann += [{"cell": nm.cell(x), "color": region_colour[k]} for x in known]
+                ann += [{"cell": nm.cell(x), "color": "red"} for x in cs]
         if parts:
             last = {"text": "So " + "; ".join(parts) + "."}
             if legend:
@@ -939,7 +937,7 @@ def _class_substeps(p, st, ex, idc, vals, cand, class_colour):
             digs = [str(d) for d in range(1, p.D + 1) if m >> (d - 1) & 1]
             one = ", ".join(digs[:-1]) + " or " + digs[-1] if len(digs) > 1 else "".join(digs)
             legend[class_colour[k]] = f"an unknown digit ({one})" if digs else "an unknown digit"
-        ann += [{"cell": nm.cell(c), "colour": class_colour[k]} for c in sorted(cls[k], key=lambda x: p.coords[x])]
+        ann += [{"cell": nm.cell(c), "color": class_colour[k]} for c in sorted(cls[k], key=lambda x: p.coords[x])]
     for k, c, a in fx:
         if k == CB.AE_ID_JOIN and idc[c] in class_colour:
             col = class_colour[idc[c]]
@@ -1178,7 +1176,7 @@ def written_colours(p, pos, P):
     can hold one of its digits and sees none of its cells joins it; cells an equality rule joins (palindromes,
     clones) share it. A pair coloured only in its two seed cells is left out (the centre marks show a naked pair). A
     colour pair keeps its names while its first cell stays in it; at most MAX_COLOUR_PAIRS pairs, the largest.
-    -> [[{"colour", "cells", "digits", "opposite"}]] per position (cell indices); None when the model is off."""
+    -> [[{"color", "cells", "digits", "opposite"}]] per position (cell indices); None when the model is off."""
     if not P.get("notes_colours"):
         return None
     houses = [g.cells for g in p.groups if g.complete and len(g.cells) == p.D]  # holds every digit exactly once
@@ -1247,7 +1245,7 @@ def written_colours(p, pos, P):
             digits = [d for d in range(1, p.D + 1) if m >> (d - 1) & 1]
             shown += [
                 {
-                    "colour": pair[s],
+                    "color": pair[s],
                     "cells": sorted(cols[s], key=lambda x: p.coords[x]),
                     "digits": digits,
                     "opposite": pair[1 - s],

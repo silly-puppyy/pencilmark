@@ -447,25 +447,25 @@
     "code": "HSI",
     "chip": "HSI",
     "name": "Hidden Single",
-    "band": 0
+    "band_index": 0
    },
    {
     "code": "LSI",
     "chip": "LSI",
     "name": "Line / dot read without notes",
-    "band": 0
+    "band_index": 0
    },
    {
     "code": "NSI",
     "chip": "NSI",
     "name": "Naked Single",
-    "band": 1
+    "band_index": 1
    },
    {
     "code": "MSI",
     "chip": "MSI/CFX",
     "name": "Notes in the head",
-    "band": 1,
+    "band_index": 1,
     "alternatives": [
      "CFX"
     ],

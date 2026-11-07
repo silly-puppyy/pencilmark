@@ -236,20 +236,20 @@
     "code": "HSI",
     "chip": "HSI",
     "name": "Hidden Single",
-    "band": 0
+    "band_index": 0
    },
    {
     "code": "PPR",
     "chip": "PPR",
     "name": "Pointing / Box-Line Reduction",
-    "band": 1,
+    "band_index": 1,
     "uses": 3
    },
    {
     "code": "NTR",
     "chip": "NTR/HTR",
     "name": "Naked Triple",
-    "band": 2,
+    "band_index": 2,
     "alternatives": [
      "HTR"
     ],

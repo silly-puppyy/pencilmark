@@ -237,13 +237,13 @@
     "code": "HSI",
     "chip": "HSI",
     "name": "Hidden Single",
-    "band": 0
+    "band_index": 0
    },
    {
     "code": "NSI",
     "chip": "NSI/MSI",
     "name": "Naked Single",
-    "band": 1,
+    "band_index": 1,
     "alternatives": [
      "MSI"
     ]
@@ -252,7 +252,7 @@
     "code": "XWG",
     "chip": "XWG/MCH",
     "name": "X-Wing",
-    "band": 3,
+    "band_index": 3,
     "alternatives": [
      "MCH"
     ],

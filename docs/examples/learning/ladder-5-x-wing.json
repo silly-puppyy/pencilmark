@@ -236,13 +236,13 @@
     "code": "HSI",
     "chip": "HSI",
     "name": "Hidden Single",
-    "band": 0
+    "band_index": 0
    },
    {
     "code": "NSI",
     "chip": "NSI/MSI",
     "name": "Naked Single",
-    "band": 1,
+    "band_index": 1,
     "alternatives": [
      "MSI"
     ]
@@ -251,14 +251,14 @@
     "code": "PPR",
     "chip": "PPR",
     "name": "Pointing / Box-Line Reduction",
-    "band": 1,
+    "band_index": 1,
     "uses": 1
    },
    {
     "code": "HPR",
     "chip": "HPR/NTR",
     "name": "Hidden Pair",
-    "band": 2,
+    "band_index": 2,
     "alternatives": [
      "NTR"
     ],
@@ -268,7 +268,7 @@
     "code": "XWG",
     "chip": "XWG/CSM/MCH",
     "name": "X-Wing",
-    "band": 3,
+    "band_index": 3,
     "alternatives": [
      "CSM",
      "MCH"

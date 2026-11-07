@@ -30,7 +30,7 @@ whatever its source.
 | `relation` | one relation per pair |
 | `negative` | the complementary relation on every uncovered pair (`nonconsec` for white kropki, `notratio`, `notsum`, `notdiff`, `allowed`), tables for rossini / battenburg, domains for digits |
 | `cell`, `candidates` | domain masks (`cell` clues are also kept as cell clues) |
-| `contains` / `appears` / `count` / `distinct_count` / `clone` / `isomorphic` / `global_entropy` / `equal_sum` / `vudoku` | the engine constraints and named rules of the same mechanics |
+| `quadruple` / `appears` / `count` / `distinct_count` / `clone` / `isomorphic` / `global_entropy` / `equal_sum` / `vudoku` | the engine constraints and named rules of the same mechanics |
 
 ## Normalisations
 

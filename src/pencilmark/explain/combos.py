@@ -298,7 +298,7 @@ def _h_combo(ctx):
         if ok and why.strip():
             first = {
                 "text": f"Read {rule.label}.",
-                "annotations": [{"id": i + 1, "cell": nm.cell(c), "colour": "cyan"} for i, c in enumerate(rule.cells)],
+                "annotations": [{"id": i + 1, "cell": nm.cell(c), "color": "cyan"} for i, c in enumerate(rule.cells)],
             }
             if kind in RULE_FACTS:
                 first["why"] = rule_fact(kind, p.D, rule)
@@ -320,7 +320,7 @@ def _h_combo(ctx):
                     "text": f"{_cap(rule.label)} already holds {nm.digits([d for _, d in known], 'and')}, so its last "
                     f"cell {nm.cell(c)} must be {rule.total} - {sum(d for _, d in known)} = {total}.",
                     "why": "The digits in a cage add up to its total.",
-                    "annotations": [{"id": 1, "cell": nm.cell(c), "colour": "cyan"}],
+                    "annotations": [{"id": 1, "cell": nm.cell(c), "color": "cyan"}],
                 },
                 _red_step(nm, ctx.elims, 2),
             ]
@@ -344,7 +344,7 @@ def _h_combo(ctx):
             r["substeps"] = [
                 {
                     "text": f"{head}.",
-                    "annotations": [{"id": next(ids), "cell": nm.cell(c), "colour": "cyan"} for c in emp],
+                    "annotations": [{"id": next(ids), "cell": nm.cell(c), "color": "cyan"} for c in emp],
                 },
                 {
                     "text": f"With the notes available, {_combo_phrase(combos)}.",
@@ -388,7 +388,7 @@ def _red_step(nm, elims, first_id):
     return {
         "text": f"So {fmt_elims(nm, elims)}.",
         "annotations": [
-            {"id": first_id + i, "candidate": f"{nm.cell(c)}#{d}", "colour": "red"}
+            {"id": first_id + i, "candidate": f"{nm.cell(c)}#{d}", "color": "red"}
             for i, (c, d) in enumerate(sorted(elims))
         ],
     }

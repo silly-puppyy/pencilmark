@@ -214,7 +214,7 @@ def _simple_substeps(nm, first, marks, second, why, elims):
     out = [
         {
             "text": first,
-            "annotations": [{"id": next(ids), "candidate": f"{nm.cell(c)}#{d}", "colour": "blue"} for c, d in marks],
+            "annotations": [{"id": next(ids), "candidate": f"{nm.cell(c)}#{d}", "color": "blue"} for c, d in marks],
         }
     ]
     if second:
@@ -225,7 +225,7 @@ def _simple_substeps(nm, first, marks, second, why, elims):
         {
             "text": f"So {fmt_elims(nm, elims)}.",
             "annotations": [
-                {"id": next(ids), "candidate": f"{nm.cell(c)}#{d}", "colour": "red"} for c, d in sorted(elims)
+                {"id": next(ids), "candidate": f"{nm.cell(c)}#{d}", "color": "red"} for c, d in sorted(elims)
             ],
         }
     )
@@ -385,9 +385,7 @@ def _fish_substeps(nm, v, base, cov, U, fins, elims):
         {
             "text": f"Look at the {v}s in {bn}: {corner}.",
             "annotations": [
-                {"id": next(ids), "candidate": f"{nm.cell(c)}#{v}", "colour": "blue"}
-                for c in sorted(U)
-                if c not in fins
+                {"id": next(ids), "candidate": f"{nm.cell(c)}#{v}", "color": "blue"} for c in sorted(U) if c not in fins
             ],
         },
         {
@@ -405,7 +403,7 @@ def _fish_substeps(nm, v, base, cov, U, fins, elims):
                 f"fish works; only cells that the fish clears and that see {'every fin' if len(fins) > 1 else 'the fin'} "
                 f"lose {v} either way.",
                 "annotations": [
-                    {"id": next(ids), "candidate": f"{nm.cell(c)}#{v}", "colour": "orange"} for c in sorted(fins)
+                    {"id": next(ids), "candidate": f"{nm.cell(c)}#{v}", "color": "orange"} for c in sorted(fins)
                 ],
             }
         )
@@ -413,7 +411,7 @@ def _fish_substeps(nm, v, base, cov, U, fins, elims):
         {
             "text": f"So {fmt_elims(nm, elims)}.",
             "annotations": [
-                {"id": next(ids), "candidate": f"{nm.cell(c)}#{d}", "colour": "red"} for c, d in sorted(elims)
+                {"id": next(ids), "candidate": f"{nm.cell(c)}#{d}", "color": "red"} for c, d in sorted(elims)
             ],
         }
     )
@@ -495,7 +493,7 @@ def _h_wing(ctx):
 def _wing_substeps(nm, st, piv, w1, w2, x, y, z, xyz, elims):
     """XY-Wing / XYZ-Wing as sub-steps: pivot (cyan) and wings (green), what each pivot digit forces, the removals"""
     ids = iter(range(1, 10**6))
-    cell = lambda c, col: {"id": next(ids), "cell": nm.cell(c), "colour": col}
+    cell = lambda c, col: {"id": next(ids), "cell": nm.cell(c), "color": col}
     wx = w1 if st.cand[w1] & bit(x) else w2
     wy = w2 if wx == w1 else w1
     out = [
@@ -534,7 +532,7 @@ def _wing_substeps(nm, st, piv, w1, w2, x, y, z, xyz, elims):
         {
             "text": last,
             "annotations": [
-                {"id": next(ids), "candidate": f"{nm.cell(c)}#{d}", "colour": "red"} for c, d in sorted(elims)
+                {"id": next(ids), "candidate": f"{nm.cell(c)}#{d}", "color": "red"} for c, d in sorted(elims)
             ],
         }
     )
@@ -646,7 +644,7 @@ def _colouring_substeps(nm, v, comp, adj, via, wrap, tg, elims):
     then the clash (wrap) or the cells that see both colours (trap), the removals in red"""
     names = ("blue", "yellow")
     ids = iter(range(1, 10**6))
-    ann = lambda c: {"id": next(ids), "candidate": f"{nm.cell(c)}#{v}", "colour": names[comp[c]]}
+    ann = lambda c: {"id": next(ids), "candidate": f"{nm.cell(c)}#{v}", "color": names[comp[c]]}
     start = min(comp, key=lambda c: nm.p.coords[c])
     out = [
         {
@@ -681,7 +679,7 @@ def _colouring_substeps(nm, v, comp, adj, via, wrap, tg, elims):
             if len(out) == 1:
                 stp["why"] = why
             out.append(stp)
-    red = [{"id": next(ids), "candidate": f"{nm.cell(c)}#{d}", "colour": "red"} for c, d in sorted(elims)]
+    red = [{"id": next(ids), "candidate": f"{nm.cell(c)}#{d}", "color": "red"} for c, d in sorted(elims)]
     if wrap and wrap[1] is None:
         side, _, hi = wrap
         out.append(
@@ -1128,7 +1126,7 @@ def _nwing_substeps(nm, st, cells, ds, restricted, z, elims):
     out = [
         {
             "text": f"{_cap(nm.cells(cells))} hold only {_join(ds)}: {n} cells, {n} digits.",
-            "annotations": [{"id": next(ids), "cell": nm.cell(c), "colour": "green"} for c in cells],
+            "annotations": [{"id": next(ids), "cell": nm.cell(c), "color": "green"} for c in cells],
         },
         {
             "text": f"{_cap(_join(restricted))} {'is' if len(restricted) == 1 else 'are'} there at most once: "
@@ -1137,13 +1135,13 @@ def _nwing_substeps(nm, st, cells, ds, restricted, z, elims):
         },
     ]
     tg = sorted({c for c, _ in elims})
-    red = [{"id": next(ids), "candidate": f"{nm.cell(c)}#{d}", "colour": "red"} for c, d in sorted(elims)]
+    red = [{"id": next(ids), "candidate": f"{nm.cell(c)}#{d}", "color": "red"} for c, d in sorted(elims)]
     if z is not None:
         zc = [c for c in cells if st.cand[c] & bit(z)]
         out.append(
             {
                 "text": f"Those {n - 1} digits fill at most {n - 1} cells, so {z} is in the wing: in {nm.cells(zc, 'or')}.",
-                "annotations": [{"id": next(ids), "candidate": f"{nm.cell(c)}#{z}", "colour": "orange"} for c in zc],
+                "annotations": [{"id": next(ids), "candidate": f"{nm.cell(c)}#{z}", "color": "orange"} for c in zc],
             }
         )
         out.append(

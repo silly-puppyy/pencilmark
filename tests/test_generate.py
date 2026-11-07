@@ -390,7 +390,7 @@ def test_corner_clues():
     `corner` rules (the generator's pair tables per diagonal read back as one mathrax corner)"""
     from pencilmark.gen import elements as EL
 
-    for t in ({"type": "contains"}, {"type": "corner", "kind": "mathrax"}):
+    for t in ({"type": "quadruple"}, {"type": "corner", "kind": "mathrax"}):
         r = run(spec(6, rules=[dict(t, count=[2, None])], seed=1, time_limit=60))
         clues = [x for x in r["puzzle"]["rules"] if x["type"] == t["type"]]
         assert len(clues) >= 2 and not [x for x in r["puzzle"]["rules"] if x["type"] == "table"], t

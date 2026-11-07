@@ -479,26 +479,26 @@
     "code": "HSI",
     "chip": "HSI",
     "name": "Hidden Single",
-    "band": 0
+    "band_index": 0
    },
    {
     "code": "CSI",
     "chip": "CSI",
     "name": "Last cell of a cage / line",
-    "band": 0
+    "band_index": 0
    },
    {
     "code": "MSI",
     "chip": "MSI",
     "name": "Pair / triple in the head",
-    "band": 1,
+    "band_index": 1,
     "uses": 8
    },
    {
     "code": "IOU",
     "chip": "IOU",
     "name": "Innies & outies (rule of 45)",
-    "band": 1,
+    "band_index": 1,
     "uses": 1
    }
   ]
