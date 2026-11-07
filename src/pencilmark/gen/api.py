@@ -6,7 +6,7 @@ import logging
 import math
 import random
 import time
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, field, fields, replace
 from typing import Any
 
 from .. import band_path as BP
@@ -62,7 +62,7 @@ class Spec:
     max_elements      upper bound on the number of rule elements
     solver            "logic" (every step solvable by human logic within the band cap: unique by construction) or
                       "cpsat" (uniqueness only; min kropki); cage-count and full kropki always use CP-SAT
-    seed, time_limit  determinism and the overall budget in seconds
+    seed, time_limit  the seed (None: a random one, reported in info.seed) and the overall budget in seconds
     """
 
     size: int = 9
@@ -82,7 +82,7 @@ class Spec:
     max_givens: int | None = None
     max_elements: int | None = None
     solver: str = "logic"
-    seed: int = 1
+    seed: int | None = None
     time_limit: float = 120.0
     grade_seconds: float | None = 60.0
 
@@ -534,7 +534,7 @@ def generate(spec):
             "band": card.get("band"),
             "difficulty": card.get("difficulty"),
             "time": card.get("time"),
-            "seed": (doc.get("limits") or {}).get("seed", 1),
+            "seed": r["info"].get("seed"),
         },
     )
     filled.pop("fingerprint", None)  # filled in below, from the finished puzzle
@@ -557,6 +557,8 @@ def _generate(spec):
     """generate one puzzle meeting an internal Spec (or its dict). Returns {"puzzle": puzzle JSON (with solution),
     "card", "info"} or raises GenerationFailed with the reason."""
     s = Spec.from_any(spec)
+    if s.seed is None:  # no seed asked for: a fresh puzzle each run, reproducible from info.seed
+        s = replace(s, seed=random.SystemRandom().randrange(1, 2**31))
     probs = feasibility(s)
     if probs:
         raise GenerationFailed("infeasible spec: " + "; ".join(probs))

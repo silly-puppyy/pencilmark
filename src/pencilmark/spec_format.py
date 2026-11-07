@@ -86,7 +86,7 @@ TEMPLATE_KEYS = {
 COUNT_WORDS = {"auto", "all", "min", "tile", "max"}
 DEFAULTS = {
     "solver": "logic",
-    "seed": 1,
+    "seed": None,
     "time_limit": 120.0,
     "grade_seconds": 60.0,
     "min_givens": 0,

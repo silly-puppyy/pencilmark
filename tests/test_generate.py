@@ -510,3 +510,12 @@ def test_band_alone_aims_where_published_puzzles_lie():
     assert "aimed_at" not in run(spec(9, where={"band": "Very Easy", "difficulty": [3.5, 4.5]}, seed=2))["info"]
     deep = run(spec(9, where={"band": "Very Easy", "difficulty": "any"}, seed=2))  # opted out: the deepest dig
     assert "aimed_at" not in deep["info"] and deep["info"]["givens"] < r["info"]["givens"]
+
+
+def test_no_seed_draws_a_fresh_one():
+    """without limits.seed each run draws its own seed (info.seed), and that seed reproduces the puzzle"""
+    s = spec(4)
+    a, b = run(s), run(s)
+    assert a["info"]["seed"] != b["info"]["seed"]
+    again = run(dict(s, limits=dict(s["limits"], seed=a["info"]["seed"])))
+    assert again["puzzle"]["givens"] == a["puzzle"]["givens"]

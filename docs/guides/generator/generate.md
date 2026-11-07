@@ -62,7 +62,8 @@ The run took about a second. The result has three parts:
   these as notes).
   The generator tried 18 puzzles; 17 were too easy.
 
-Change `seed` for a different puzzle. With the same seed and request, the result is the same every time.
+Change `seed` for a different puzzle. With the same seed and request, the result is the same every time; without a
+`seed`, each run makes a new puzzle and `info.seed` says which seed reproduces it.
 
 ### Publishing checks
 

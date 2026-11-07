@@ -284,18 +284,35 @@ Each rule family has its own page; the quick reference lists every `type` and `k
 
 Per-rule `style` (optional, never semantic):
 `{"color": "#rrggbb" | palette index, "fill": "#rrggbb" | palette index, "opacity": 0..1, "width": cell units,
-"shape": "circle" | "square" | "diamond", "label_cell": "r1c1", "dash": true}`. The text a rule shows is its
-`label` (section 5); `label_cell` only says where to draw it. pencilmark's SudokuPad reader fills it from the
-element that draws the rule.
+"shape": "circle" | "square" | "diamond", "size": cell units, "angle": degrees, "outline": "#rrggbb" | palette index,
+"outline_width": cell units, "layer": "under" | "over", "label_cell": "r1c1", "dash": true}`. `size` is a drawn
+shape's diameter or side; `outline` and `outline_width` the edge of a line (a pale halo around a coloured line) or the
+border of a shape; `layer` puts the drawing below or above the grid lines and digits. The text a rule shows is its
+`label` (section 5); `label_cell` only says where to draw it. pencilmark's SudokuPad and sudoku.coach readers fill it
+from the element that draws the rule.
 
-Top-level `style`: puzzle-wide hints, such as `{"palette": [...], "cell_size": 64}`. Free-form.
+Top-level `style`: puzzle-wide hints. Named keys: `palette` (a list of colours the palette indices refer to),
+`cell_size`, `background`, `grid_color`, `box_color`; other keys are free-form.
 
 `decorations`: artwork that carries no rule.
 
 ```json
-{"kind": "line" | "arrow" | "rect" | "circle" | "text",
- "points": [[y, x], …], "center": [y, x], "size": [h, w], "text": "…", "style": { … }}
+{"kind": "line" | "arrow" | "rect" | "circle" | "text" | "polygon" | "fill" | "image",
+ "points": [[y, x], …], "center": [y, x], "size": [h, w], "text": "…", "cells": {"r1c1": [colour, …]},
+ "href": "data:image/png;base64,…", "layer": "under" | "over", "style": { … }}
 ```
+
+- `polygon`: a closed shape through `points` (any shape a setter draws: triangles, stars, plus signs).
+- `fill`: cell colours, `cells` maps a cell to one colour or several; a renderer splits a cell with k colours into k
+  equal parts (wedges from the centre by default, `style.pattern: "stripes"` for slanted stripes).
+- `image`: a picture placed over `center` / `size` (a data URI or a link in `href`; `style.opacity`). Readers add it
+  only on request (images can be large, and they are third-party artwork). An image is artwork: no rule may depend on it.
+
+How much a renderer needs (13,451 sudoku.coach and 19,074 SudokuPad puzzles): rules in their family's default look draw
+every puzzle legibly and about half of them exactly; per-rule `color` / `width` / `opacity` / `fill` covers most of
+what setters change (a third of coach puzzles, a fifth of SudokuPad ones); cell `fill` decorations come next (coach
+14%); rotation, outlines, polygons and layers a few percent each; several colours in one cell (1.3%) and background
+images (0.4%) are the long tail.
 
 Coordinates are cell units `[row, col]` with the origin at the top-left corner of the board, so the centre of
 `rRcC` is `[R − 0.5, C − 0.5]` ([SudokuPad](https://sudokupad.app/)'s convention shifted to the outer corner).

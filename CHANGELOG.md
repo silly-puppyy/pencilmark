@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **No seed, a new puzzle.** A request without `limits.seed` draws a fresh seed each run (reported in `info.seed`,
+  which reproduces it); 1.2 used seed 1, so every unseeded run gave the same puzzle.
+- **Style format**: rule `style` gains `size`, `angle`, `outline`, `outline_width` and `layer`; new decorations
+  `polygon` (any closed shape), `fill` (cell colours, several per cell) and `image`; named top-level style keys. The spec
+  says how much of it a renderer needs (13,451 sudoku.coach and 19,074 SudokuPad puzzles measured).
 - **A band request aims where published puzzles of the band lie.** With a band and no difficulty range, the seed
   draws a window from the band's spread (a bell curve fitted to published puzzles; `info.aimed_at`) and digging stops
   inside it. Classic Very Easy centres on 3.3 (2.7-3.9; it came back at about 4.5 with 25 givens before), as

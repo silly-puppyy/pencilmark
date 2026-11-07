@@ -132,7 +132,8 @@ each check refused. The checks and their limits are those of the grade card ([Gr
 
 ## 5. Limits, fields and program data
 
-- `limits`: `time` (seconds for the whole run, default 120), `seed` (reproducible runs, default 1). The run returns one
+- `limits`: `time` (seconds for the whole run, default 120), `seed` (the same seed and request give the same puzzle;
+  without one each run draws a fresh seed, reported in `info.seed`). The run returns one
   puzzle or fails with the reason after `time`; an attempt still digging when the time is up is given up. Grading the
   returned puzzle in full comes on top.
 - `fields`: which card fields to return with the result ([Grade card](grade-card.md)); default fields without it.
