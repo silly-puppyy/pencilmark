@@ -20,6 +20,8 @@ data/techniques.csv, one row per engine technique (solver.TECH_NAMES):
   direct          1: a move made without pencil marks (also csrc/solver.hpp is_direct)
   mental          1: worked out in the head on the no-notes view (a subset, short chain or case split without notes):
                   priced at least as its written form (params mental_floor), left out of the card score's first solve
+  price           the starting price B of a step (scoring.DEFAULT_PARAMS): what a model fitted before the technique
+                  existed uses; the shipped prices are the fitted ones (data/params.json). Blank: no own price
   price_fallback  blank: the technique has its own fitted price B. Otherwise it has none: it is always priced by the
                   structural meta model and borrows this technique's B when params carry no meta model
 
@@ -78,6 +80,7 @@ class Technique:
     gate: str
     direct: bool
     mental: bool
+    price: float | None
     price_fallback: str
 
 
@@ -151,6 +154,7 @@ def techniques() -> tuple[Technique, ...]:
                 gate=_choice(r["gate"], GATES, w),
                 direct=_flag(r["direct"], w),
                 mental=_flag(r["mental"], w),
+                price=float(r["price"]) if r["price"] else None,
                 price_fallback=r["price_fallback"],
             )
         )

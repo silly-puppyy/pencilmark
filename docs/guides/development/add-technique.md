@@ -41,8 +41,8 @@ will shorten this list.
 
 ## 3. Price and descriptors
 
-- **The price.** A new technique has no fitted price. Either give it a starting price in `DEFAULT_PARAMS["B"]` in
-  `scoring.py`, with a comment saying where the number comes from, or set `price_fallback` in `techniques.csv` so the
+- **The price.** A new technique has no fitted price. Either give it a starting price in the `price` column of its
+  `techniques.csv` row (say in the pull request where the number comes from), or set `price_fallback` there so the
   structural model prices it. Refitting the prices on human solve times is a separate job; say in the pull request
   that the price is not fitted.
 - **Extra move fields.** If the move sets `m.xm`, name the fields in `cbackend.XMETA_KEYS`, in the order the engine
@@ -51,8 +51,8 @@ will shorten this list.
 ## 4. The explanation (`explain/`)
 
 Write a handler `_h_your_technique(ctx)` in `explain/records.py` that returns `_result(...)` with a short line and a
-teaching paragraph, and add it to `_X_HANDLERS` in `explain/dispatch.py` with its catalog key, family and a
-one-sentence concept (import it there from `records`). Read the pattern cells from
+teaching paragraph, and add it to `_X_HANDLERS` in `explain/dispatch.py` with its catalog key and a one-sentence
+concept (the family comes from `techniques.csv`) (import it there from `records`). Read the pattern cells from
 `ctx.raw_engine["pattern_cells"]` and the extra fields from `ctx.xm`. `test_every_move_technique_has_an_explanation`
 fails until the handler exists. Follow the [writing style](../../dev/writing-style.md): result first, plain words.
 

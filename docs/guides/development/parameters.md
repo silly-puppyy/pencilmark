@@ -110,11 +110,11 @@ changing a shipped value is a deliberate commit with a golden rewrite.
 | `route.price.LineClues` | 6.988 | ″ |
 | `route.price.WeightedSums` | 6.988 | ″ |
 | `route.price.ClassColouring` | 5 | ″ |
-| `route.price.RegionExclusion` | 1.6 | ″ |
 | `route.price.RegionSizeCap` | 2 | ″ |
+| `route.price.RegionExclusion` | 1.6 | ″ |
+| `route.price.RegionReach` | 2.6 | ″ |
 | `route.price.DeadEnd` | 2 | ″ |
 | `route.price.RegionExit` | 2.2 | ″ |
-| `route.price.RegionReach` | 2.6 | ″ |
 | `route.price.RegionDigit` | 3 | ″ |
 | `route.price.PocketCounting` | 3 | ″ |
 | `route.price.ClassSingle` | 5 | ″ |
