@@ -425,16 +425,28 @@ def supported(p):
 def _engine(p, limit, node_limit, time_limit=None):
     """the C++ exhaustive search -> (solutions, complete). time_limit bounds it when no caller deadline (rate()'s
     max_seconds) is in force: nodes of counting rules cost milliseconds, so the node limit alone took hours"""
-    from . import cbackend as CB
+    import time
 
-    own = time_limit is not None and hasattr(CB._C, "deadline_on") and not CB._C.deadline_on()
+    from . import cbackend as CB
+    from .export import _OUTER_END
+
+    has = time_limit is not None and hasattr(CB._C, "deadline_on")
+    own = has and not CB._C.deadline_on()
+    # under a caller's deadline (rate(max_seconds=...)) the pass still keeps to its own limit, then the caller's
+    # deadline is put back (2026-11-08: the quick pass took the whole 600 s budget on a zero-given global-entropy
+    # puzzle that CP-SAT settles in half a second)
+    outer = _OUTER_END[0] if has and not own else None
     if own:
         CB._C.set_deadline(float(time_limit))
+    elif outer is not None:
+        CB._C.set_deadline(max(1e-3, min(float(time_limit), outer - time.time())))
     try:
         r = CB.brute_solve(p, limit=limit, node_limit=node_limit)
     finally:
         if own:
             CB._C.set_deadline(0.0)
+        elif outer is not None:
+            CB._C.set_deadline(max(1e-3, outer - time.time()))
     return [list(x) for x in r], r.complete
 
 
