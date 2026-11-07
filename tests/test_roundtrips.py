@@ -36,18 +36,19 @@ def puzzles():
 
 @pytest.mark.slow
 @pytest.mark.parametrize("name,puzzle", puzzles(), ids=[n for n, _ in puzzles()])
+@pytest.mark.usefixtures("reserved_ok")  # the docs' examples include rules reserved for a later version
 def test_round_trips(name, puzzle):
     try:
         doc = pencilmark.write.document(puzzle, solution=True, describe=True)
-    except pencilmark.exchange.FormatError:
+    except pencilmark.FormatError:
         return  # inputs that are invalid on purpose (the golden corpus records their errors)
     fp = pencilmark.fingerprint(doc)
     again = pencilmark.write.document(doc, solution=True, describe=True)
-    assert again == doc, "to_export is not idempotent"
+    assert again == doc, "write.document is not idempotent"
     assert pencilmark.fingerprint(again) == fp
     text = pencilmark.write.pencilmark(doc)
-    assert pencilmark.fingerprint(json.loads(text)) == fp, "dumps changes the fingerprint"
+    assert pencilmark.fingerprint(json.loads(text)) == fp, "write.pencilmark changes the fingerprint"
     assert (
         pencilmark.fingerprint(pencilmark.write.document(pencilmark.api._load(text), solution=True, describe=True))
         == fp
-    ), "load(dumps) changes it"
+    ), "reading write.pencilmark back changes it"

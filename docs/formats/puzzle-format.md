@@ -258,12 +258,12 @@ else in the format (`value` for a number, `sum` for a sum):
 
 Each rule family has its own page; the quick reference lists every `type` and `kind` with a link.
 
-- [Houses and regions](rules/houses-and-regions.mdx): 6.1 houses, 6.2 `region`, 6.3 regions to find
+- [Houses and regions](rules/houses-and-regions.mdx): 6.1 houses, 6.2 `region`, 6.3 regions to find (reserved)
 - [Cages and sums](rules/cages-and-sums.mdx): 6.21 `cage`, 6.8 `sum`
 - [Lines and arrows](rules/lines-and-arrows.mdx): 6.4 `line`, 6.5 `arrow`
 - [Edges and corners](rules/edges-and-corners.mdx): 6.6 `edge`, 6.7 `corner`
 - [Outside clues](rules/outside-clues.mdx): 6.9 `sandwich`, `xsum`, `skyscraper`, `rossini`, `first_seen`
-- [Whole-board rules](rules/whole-board-rules.mdx): 6.10 `neighbours`, 6.11 `relation`, 6.14 `negative`, 6.19 shading
+- [Whole-board rules](rules/whole-board-rules.mdx): 6.10 `neighbours`, 6.11 `relation`, 6.14 `negative`, 6.19 shading (reserved)
 - [Cell clues](rules/cell-clues.mdx): 6.12 `cell`
 - [Custom rules](rules/custom.mdx): 6.18 rules written as expressions
 - [Other rules](rules/other.mdx): 6.13 other families, 6.15 vendor rules, 6.16 what is not a rule, 6.17 reserved, 6.20 `fog`

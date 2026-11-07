@@ -340,6 +340,7 @@ def test_cpp_evaluator_matches_the_reference():
             assert CB._C.expr_holds(spec, digits) == want, (src, digits)
 
 
+@pytest.mark.usefixtures("reserved_ok")  # region() / shaded(): reserved
 def test_board_layers():
     """region(c) and shaded(c) read the board's layers; without the layer the rule is refused. On a regions-to-find
     board the search checks region() once digits and region labels are known; shaded() is refused (no shading layer

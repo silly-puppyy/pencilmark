@@ -174,6 +174,7 @@ CHAOS_DEMO = {
 }  # a unique 5x5 / 6x6 regions-to-find puzzle from a random layout (generated for this test)
 
 
+@pytest.mark.usefixtures("reserved_ok")  # regions to find: reserved
 def test_region_substeps_keep_their_colours():
     jsonschema = pytest.importorskip("jsonschema")
     only = pencilmark.rate(

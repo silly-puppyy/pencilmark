@@ -7,6 +7,9 @@ import pencilmark
 from pencilmark import cpsat_verify
 from pencilmark.exchange import FormatError
 
+# reserved for a later version of the format: the engine support is tested as internal tooling reads it
+pytestmark = pytest.mark.usefixtures("reserved_ok")
+
 
 def doc(rules, givens=None):
     return {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 4, "cols": 4}, "digits": 4,

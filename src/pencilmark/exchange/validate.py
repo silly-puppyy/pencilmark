@@ -18,6 +18,7 @@ from .common import (
     OPS,
     SIDES,
     FormatError,
+    NotSupportedError,
     parse_cell,
     with_origins,
 )
@@ -252,8 +253,15 @@ RESERVED_MSG = (
 _RESERVED_OK = [False]
 
 
+# Reserved for a later version (user, 2026-11-07): shading (6.19) and regions to find (6.3) load, solve and count in the
+# engine, but no human technique grades them yet; files that use them are refused until then (_reserved_ok() reads them).
+RESERVED_TYPES = {"yin_yang": "shading", "chaos": "regions to find", "region_border": "regions to find",
+                  "same_region": "regions to find"}  # fmt: skip
+
+
 class _reserved_ok:
-    """internal tooling only (not part of the format): read and write table rules / the allowed operator"""
+    """internal tooling only (not part of the format): read and write table rules / the allowed operator, and the
+    rules reserved for a later version (RESERVED_TYPES)"""
 
     def __enter__(self):
         self.old = _RESERVED_OK[0]
@@ -284,6 +292,8 @@ def _validate_rule(r, B):
         return _validate_custom(r, B)
     if t == "table" and not _RESERVED_OK[0]:
         raise FormatError('"type": "table" ' + RESERVED_MSG)
+    if t in RESERVED_TYPES and not _RESERVED_OK[0]:
+        raise NotSupportedError(f'"type": "{t}" ({RESERVED_TYPES[t]}) is reserved for a later version of the format')
     if isinstance(t, str) and ":" in t:
         raise FormatError(f"vendor rule type {t!r} is not implemented by this reader")
     if t not in RULE_KEYS:
@@ -625,6 +635,11 @@ def _validate_custom(r, B):
             raise FormatError(f"unknown key {k!r}")
     if not isinstance(r.get("holds"), str):
         raise FormatError('custom rule: "holds" must be an expression (text)')
+    hit = re.search(r"\b(region|shaded)\s*\(", r["holds"])
+    if hit and not _RESERVED_OK[0]:
+        raise NotSupportedError(
+            f"custom rule: {hit.group(1)}() reads {CU.LAYERS[hit.group(1)]}, reserved for a later version of the format"
+        )
     cells = r.get("cells", {})
     if not isinstance(cells, dict):
         raise FormatError('custom rule: "cells" must be an object of named cell lists')

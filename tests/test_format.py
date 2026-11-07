@@ -4,6 +4,7 @@ strings, ipuz, describe, pencilmark-spec.
     pytest tests/test_format.py        (synthetic puzzles only: tests/fixtures/variants.json, docs/formats/puzzle-format.md examples)
 """
 
+import contextlib
 import copy
 import json
 import re
@@ -20,6 +21,7 @@ from pencilmark import exchange as X  # noqa: E402
 from pencilmark import interop as I  # noqa: E402
 from pencilmark import spec_format as SF  # noqa: E402
 from pencilmark import variants as VR  # noqa: E402
+from pencilmark.exchange.validate import _reserved_ok  # noqa: E402
 
 FIXTURES = ROOT / "tests" / "fixtures" / "variants.json"
 SCHEMA = ROOT / "docs" / "pencilmark-puzzle.schema.json"
@@ -246,6 +248,28 @@ def test_schema_validates_pack():
     )
 
 
+def test_later_rules_reserved():
+    """shading and regions to find (and custom rules reading them) are reserved for a later version: refused as not
+    supported, with the rule named"""
+    d = pencilmark.read.auto(CLASSIC)
+    for rule, name in (
+        ({"type": "yin_yang"}, "yin_yang"),
+        ({"type": "same_region", "cells": ["r1c1", "r1c2"]}, "same_region"),
+        ({"type": "custom", "cells": {"a": ["r1c1"]}, "holds": "shaded(a)"}, "shaded()"),
+    ):
+        bad = copy.deepcopy(d)
+        bad["rules"].append(rule)
+        with pytest.raises(pencilmark.NotSupportedError, match=re.escape(name)):
+            X.validate(bad)
+
+
+def _reserved(d):
+    from pencilmark.exchange.validate import RESERVED_TYPES
+
+    return any(r.get("type") in RESERVED_TYPES or re.search(r"\b(region|shaded)\(", r.get("holds", ""))
+               for r in d.get("rules", []) if isinstance(r, dict))  # fmt: skip
+
+
 def test_format_md_examples():
     """the complete example files in docs/formats/puzzle-format.md, the rule family pages and the guides are valid"""
     pages = [
@@ -259,8 +283,9 @@ def test_format_md_examples():
         if not block.startswith('{"format": "pencilmark-puzzle"') or "…" in block:
             continue
         d = json.loads(block)
-        X.validate(d)
-        X.read(d)
+        with _reserved_ok() if _reserved(d) else contextlib.nullcontext():  # documented for a later version
+            X.validate(d)
+            X.read(d)
         n += 1
     for f in sorted((ROOT / "docs" / "examples").glob("*.json")):  # the example files the pages draw
         d = json.loads(f.read_text(encoding="utf-8"))

@@ -48,7 +48,7 @@ Built-ins: `sum`, `product`, `min`, `max` (of a list, or of two numbers), `count
 before), `upto(L, p)` (the prefix through the first element meeting p), `take_while(L, p)`, `take(n, L)`,
 `position(L, p)`, and `row`, `col`, `box` of a cell.
 
-Board layers: `region(c)` is the number of the region a cell is in, on a board whose regions are found by the solver
+Board layers (reserved for a later version with the rules they read: refused in pencilmark 1.2): `region(c)` is the number of the region a cell is in, on a board whose regions are found by the solver
 (chaos construction, 6.3; regions numbered by their first cell in reading order); `shaded(c)` is true when a cell is
 shaded, on a board with shading. A rule that uses either on a board without that layer is refused. pencilmark checks
 `region()` rules once the cells' digits and regions are known (uniqueness, solving, and the last resort of the human

@@ -8,6 +8,9 @@ import pytest
 
 import pencilmark
 
+# reserved for a later version of the format: the engine support is tested as internal tooling reads it
+pytestmark = pytest.mark.usefixtures("reserved_ok")
+
 BASE = {
     "format": "pencilmark-puzzle",
     "format_version": 1,
