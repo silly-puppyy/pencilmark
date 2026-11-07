@@ -33,11 +33,15 @@ def esc(s):
     return str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-def render(doc, dark=False, cell=48, annotate=False, labels=False, background=True, colours=None, placed=None):
+def render(
+    doc, dark=False, cell=48, annotate=False, labels=False, background=True, colours=None, placed=None, marks=None
+):
     """svg text. annotate: every element drawn for rules[i] carries data-rule="i" (pages link it to the JSON);
     labels: row numbers on the left and column numbers on top, outside the board and its outside clues.
     colours {cell name: [colour names]}: annotation colours over the cells (one fills the cell; n split it into n
-    wedges, as SudokuPad draws them); placed {cell name: digit}: digits the solver has written, in the placed ink."""
+    wedges, as SudokuPad draws them); placed {cell name: digit}: digits the solver has written, in the placed ink;
+    marks {cell name: {"corner": [...], "centre": [...]}}: the solver's pencil marks (corner marks in the cell's corners
+    and edges, centre marks in a row across the middle), in the placed ink."""
     T = THEMES[bool(dark)]
     S = STYLE
     u = float(cell)
@@ -61,6 +65,7 @@ def render(doc, dark=False, cell=48, annotate=False, labels=False, background=Tr
     exists = {(r, c) for r, c in B.coords}
     layers = {k: [] for k in ("shade", "colour", "marks", "lines", "cages", "grid", "clues", "digits", "outside")}
     cur = [None]  # the rule being drawn (annotate)
+    labelled = set()  # cells with a cage total in their top-left corner (corner marks start elsewhere there)
 
     def add(k, s):
         if annotate and cur[0] is not None:
@@ -233,6 +238,7 @@ def render(doc, dark=False, cell=48, annotate=False, labels=False, background=Tr
             add("cages", outline(r["cells"], 0.08, "4 3" if t == "cage" else "1.5 3", T["given"], 1.2))
             if "sum" in r:
                 first = min(r["cells"], key=lambda x: rc(x))
+                labelled.add(first)
                 rr, cc = rc(first)
                 add(
                     "cages",
@@ -532,6 +538,19 @@ def render(doc, dark=False, cell=48, annotate=False, labels=False, background=Tr
             f'font-family="Inter,Helvetica,Arial,sans-serif" font-weight="{S.get("placed_w", 500)}" fill="{T["placed"]}" '
             f'stroke="{T["board"]}" stroke-width="{halo:.2f}" paint-order="stroke" stroke-linejoin="round">{v}</text>',
         )
+    # pencil marks: corner marks in SudokuPad's spots (corners first, then the edges' middles), centre marks in a row
+    spots = [(0.2, 0.2), (0.8, 0.2), (0.2, 0.8), (0.8, 0.8), (0.5, 0.2), (0.5, 0.8), (0.2, 0.5), (0.8, 0.5)]
+    for name, mk in (marks or {}).items():
+        if placed and name in placed:
+            continue
+        r, c = rc(name)
+        here = spots[1:] if name in labelled else spots  # the top-left spot holds a cage total
+        for d, (fx, fy) in zip(mk.get("corner") or [], here):
+            add("digits", small_text(m + (c + fx) * u, m + (r + fy) * u, d, size=0.22, col=T["placed"], weight=400))
+        cen = "".join(map(str, mk.get("centre") or []))
+        if cen:
+            size = 0.22 if len(cen) <= 4 else max(0.13, 0.88 / len(cen))
+            add("digits", small_text(cx(c), cy(r), cen, size=size, col=T["placed"], weight=400))
     for name, ds in (doc.get("candidates") or {}).items():
         r, c = rc(name)
         for d in ds:
@@ -549,8 +568,8 @@ def render(doc, dark=False, cell=48, annotate=False, labels=False, background=Tr
 
 
 def trace_position(doc, card, n):
-    """(colours, placed) of position n of a card's trace: each colour group's cells take its colour (a cell in several
-    groups gets them all), and every digit not given is a placed one"""
+    """(colours, placed, marks) of position n of a card's trace: each colour group's cells take its colour (a cell in
+    several groups gets them all), every digit not given is a placed one, and the marks layer as written"""
     pos = card["trace"][n]
     colours = {}
     for g in pos.get("colours") or []:
@@ -560,16 +579,16 @@ def trace_position(doc, card, n):
     placed = {
         f"r{i // C + 1}c{i % C + 1}": v for i, (v, g) in enumerate(zip(pos["digits"], doc["givens"])) if v and not g
     }
-    return colours, placed
+    return colours, placed, pos.get("marks") or {}
 
 
 if __name__ == "__main__":
     doc = json.load(open(sys.argv[1], encoding="utf-8"))
     cell = int(sys.argv[sys.argv.index("--cell") + 1]) if "--cell" in sys.argv else 48
-    colours = placed = None
+    colours = placed = marks = None
     if "--card" in sys.argv:
         card = json.load(open(sys.argv[sys.argv.index("--card") + 1], encoding="utf-8"))
         n = int(sys.argv[sys.argv.index("--position") + 1]) if "--position" in sys.argv else 0
-        colours, placed = trace_position(doc, card, n)
-    svg = render(doc, dark="--dark" in sys.argv, cell=cell, colours=colours, placed=placed)
+        colours, placed, marks = trace_position(doc, card, n)
+    svg = render(doc, dark="--dark" in sys.argv, cell=cell, colours=colours, placed=placed, marks=marks)
     Path(sys.argv[2]).write_text(svg, encoding="utf-8")
