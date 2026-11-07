@@ -48,7 +48,7 @@ def test_deterministic_and_input_forms(tmp_path):
 
 
 def test_steps_and_se():
-    card = pencilmark.rate(CLASSIC, steps=True, se=True)
+    card = pencilmark.rate(CLASSIC, fields=["band", "steps", "se"], explain=True)
     st = card["steps"]
     assert st[0]["n"] == 1 and set(st[0]["explanation"]) == {"notation", "short", "teach"}
     filled = sum(1 for s in st if "placement" in s)
@@ -281,8 +281,8 @@ def test_mode_and_se_are_checked():
     with pytest.raises(ValueError, match="unknown mode"):
         pencilmark.rate(CLASSIC, mode="Computer")
     killer = json.loads((ROOT / "docs" / "examples" / "killer-4x4.json").read_text(encoding="utf-8"))
-    assert pencilmark.rate(killer, se=True)["se"] is None
-    assert pencilmark.rate(CLASSIC, se=True)["se"]["er"] > 0
+    assert pencilmark.rate(killer, fields=["se"])["se"] is None
+    assert pencilmark.rate(CLASSIC, fields=["se"])["se"]["er"] > 0
 
 
 def test_rate_many_takes_rates_options():

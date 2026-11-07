@@ -91,7 +91,7 @@ def test_cli_reads_ipuz(tmp_path):
 def test_cli_count():
     """count: exact counts, ">=N" at the limit, 0 for a grid that breaks the rules"""
     lines = [CLASSIC, "." * 81, "11" + "." * 79]
-    assert run(["count", "-", "--limit", "50"], "\n".join(lines) + "\n") == ["1", ">=50", "0"]
+    assert run(["count-solutions", "-", "--limit", "50"], "\n".join(lines) + "\n") == ["1", ">=50", "0"]
     assert pencilmark.count_solutions(CLASSIC) == {"count": 1, "exact": True}
 
 

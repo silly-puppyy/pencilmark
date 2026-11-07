@@ -14,7 +14,7 @@
 - **New reading and writing API**, one function per format, and every error is a `pencilmark.Error`.
 - **Faster** on the slowest variants; several puzzles that hit the time limit are graded now.
 - **Breaking, no aliases** (nobody depends on them yet): the format names, the reading and writing functions, the
-  command line's `json` / `export` commands and `--format` option, the fingerprint prefix, `box_grid` and the
+  command line's `json`, `export` and `count` commands and its `--format` and `--computer` options, `rate(steps=, se=)`, the fingerprint prefix, `box_grid` and the
   colouring codes all change. Details under each heading below.
 
 ### Format (pencilmark JSON)
@@ -51,7 +51,9 @@
 - One error family: every error is a `pencilmark.Error` (`FormatError`, `NotSupportedError`, `FetchError`,
   `ReadingMismatch`, `NotUnique`, `NoSolution`, `Undecided`, `GenerationFailed`), at the top level. The site readers'
   `SourceError`, `DecodeError`, `UnsupportedPuzzle` and `VerificationError` are gone.
-- Public functions take their options as keywords and carry type hints. `solve(info=True)` is gone.
+- Public functions take their options as keywords and carry type hints. `solve(info=True)` is gone, and so are
+  `rate(steps=True, se=True)`: ask for the fields (`fields=[..., "steps", "se"]`, with `explain=` for the steps'
+  explanations).
 - Site links are checked against the setter's embedded solution: a reading the solution breaks is refused with
   `ReadingMismatch`. On 1,351 Cracking the Cryptic SudokuPad puzzles this refuses 107 of 112 misreads and keeps every
   correct reading.
@@ -66,7 +68,7 @@
 
 - Every command takes `--from FORMAT` (default: detected per line).
 - `rate --print TEMPLATE` replaces `--format`, `convert --to pencilmark|plain|grid|sudokuwiki|ipuz` replaces `export`,
-  and the `json` command is gone. `generate --seed / --time` are gone (the spec's `limits` hold them).
+  `count-solutions` replaces `count`, `rate --mode computer` replaces `--computer`, and the `json` command is gone. `generate --seed / --time` are gone (the spec's `limits` hold them).
 - `--log info` / `--log debug` on every command: pages fetched, what a reader read, time limits, each generator
   attempt, stage timings (the standard Python logger `pencilmark`).
 

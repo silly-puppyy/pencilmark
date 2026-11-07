@@ -61,8 +61,7 @@ Numbers are rounded as emitted: `difficulty`, `time`, `time_mean` and `time_pNN`
 `rate(puzzle, fields=[...])` and `--fields a,b,c` take a list of the keys above; only those are computed. A field name
 is always the key it produces (`contains` also brings `stopped_at_step`).
 Without `fields`, the default fields are returned. `explain=` adds explanations to `steps`, at one or more levels (CLI
-`--explain notation,short,teach`; section 5). Shorthands: `steps=True` = the `steps` field with every explanation level;
-`se=True` = the `se` field.
+`--explain notation,short,teach`; section 5).
 
 ## 3. `contains`
 

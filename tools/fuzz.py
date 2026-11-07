@@ -311,7 +311,7 @@ def case(seed):
         sol = pm.solve(part)
         if sol != flat:
             return fail("unique solution differs from the true one (under-constrains)")
-        card = pm.rate(part, steps=True, alternatives=False, max_seconds=30)
+        card = pm.rate(part, fields=["band", "steps"], explain=True, alternatives=False, max_seconds=30)
         for s in card.get("steps") or []:
             for p in (s.get("placement") or "").split(","):
                 if p.strip():

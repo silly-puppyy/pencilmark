@@ -252,9 +252,9 @@ def _time_stat(field, variant=False):
     return NormalDist().inv_cdf(int(m.group(1)) / 100) * sg or 0.0
 
 
-def card_fields(fields=None, steps=False, se=False):
+def card_fields(fields=None, steps=False):
     """the field mask (docs/formats/grade-card.md 2): the requested top-level card keys; None = the default fields. format,
-    format_version and grader are always present. steps=True / se=True are shorthands."""
+    format_version and grader are always present. steps=True adds the steps (internal callers)."""
     if fields is not None and not all(isinstance(f, str) for f in fields):
         raise ValueError(f"card fields are names (strings), got {list(fields)!r}")
     out = set(DEFAULT_FIELDS) if fields is None else set(fields) - set(ALWAYS)
@@ -263,8 +263,6 @@ def card_fields(fields=None, steps=False, se=False):
         raise ValueError(f"unknown card field(s) {sorted(bad)}; known: {list(DEFAULT_FIELDS) + list(OPTIONAL_FIELDS)}")
     if steps:
         out.add("steps")
-    if se:
-        out.add("se")
     return out
 
 

@@ -12,7 +12,7 @@
       explanations, --fields to choose fields); --report a readable summary. A puzzle without exactly one solution
       prints its error ({"line", "error"} with --json).
   python -m pencilmark solve [FILE|-]      the solution (or 'not unique' / 'no solution' / 'undecided') per puzzle
-  python -m pencilmark count [FILE|-] [--limit N]   how many solutions per puzzle (">=N" when it stops at N)
+  python -m pencilmark count-solutions [FILE|-] [--limit N]   how many solutions per puzzle (">=N" at N)
   python -m pencilmark generate [SPEC|-] [--result]
                                        a puzzle for a "pencilmark-spec" request (docs/formats/generator-spec.md), as a pencilmark-puzzle file
   python -m pencilmark convert [FILE|-] [--to pencilmark|plain|grid|sudokuwiki|ipuz] [--pretty] [--no-solution] [--no-style]
@@ -220,7 +220,7 @@ def _rate_one(args):
             g = api.rate(
                 _ok(obj),
                 max_seconds=a.max_seconds,
-                mode="computer" if a.computer else "human",
+                mode=a.mode,
                 fields=sorted(want),
                 allow_guessing=bool(a.allow_guessing),
                 explain=explain,
@@ -384,9 +384,10 @@ def main(argv=None):
     r.add_argument("--json", action="store_true")
     r.add_argument("--report", action="store_true")
     r.add_argument(
-        "--computer",
-        action="store_true",
-        help="allow pure computer search (forcing chains / nets, trial); default: human mode",
+        "--mode",
+        choices=("human", "computer"),
+        default="human",
+        help="human: human techniques only (default); computer: also forcing chains / nets and trial",
     )
     r.add_argument(
         "--colouring",
@@ -444,7 +445,7 @@ def main(argv=None):
     s = sub.add_parser("solve", parents=[common])
     s.add_argument("file", nargs="?")
     s.set_defaults(fn=cmd_solve)
-    c = sub.add_parser("count", parents=[common])
+    c = sub.add_parser("count-solutions", parents=[common])
     c.add_argument("file", nargs="?")
     c.add_argument("--limit", type=int, default=1000, help="stop counting here (prints >=N)")
     c.set_defaults(fn=cmd_count)

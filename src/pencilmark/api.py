@@ -9,7 +9,7 @@
     text  = pencilmark.write.pencilmark(doc, solution=True)     # pencilmark JSON; write.sudokuwiki / plain / grid / ipuz
 
 `rate` returns the "pencilmark-grade" card: difficulty, time (minutes), band, contains (+ issues / reject,
-time_pNN, ... with fields=[...], + steps with steps=True, + "se": {er, ep, ed, scale} with se=True).
+time_pNN, steps, "se": {er, ep, ed, scale}, ... with fields=[...]; explain= for the steps' explanations).
 mode="human" (default) is the human route; mode="computer" also allows forcing chains / trial.
 Guessing is off by default: where no technique applies, the engine refutes a candidate by full search (Trial and error,
 band Extreme), so every unique puzzle gets a band. allow_guessing=True lets it guess there instead (faster); the card
@@ -110,10 +110,8 @@ def _load(puzzle, format=None):  # noqa: A002
 def rate(
     puzzle: str | dict | Path,
     *,
-    steps: bool = False,
     max_seconds: float | None = None,
     mode: str = "human",
-    se: bool = False,
     fields: list[str] | None = None,
     allow_guessing: bool = False,
     explain: bool | str | list[str] | None = None,
@@ -129,20 +127,17 @@ def rate(
     puzzle : str, dict, Path or Puzzle
         Any format pencilmark.read reads, detected (an 81-character string, a text grid, a sudokuwiki string, pencilmark
         JSON as a dict, text or .json path, an ipuz file, a SudokuPad / f-puzzles / Penpa / Logic Masters link).
-    steps : bool
-        Shorthand for the `steps` field with every explanation level.
     max_seconds : float, optional
         One wall-clock limit for the whole call. When it passes, the card says band "Unknown", difficulty and time are
         null and `completed` is false.
     mode : str
         "human" (default): human techniques only, a proof by full search where they stop; "computer": also forcing chains
         and nets, Nishio and trial.
-    se : bool
-        Shorthand for the `se` field (Sudoku Explainer-style ratings; classic sudoku only).
     fields : list of str, optional
         The top-level fields to return. Default: difficulty, time, band, contains. Optional: band_index, issues, reject,
         warning (publishing checks), time_mean, time_pNN (any percentile 1-99, e.g. time_p80), time_dist, elapsed (wall
-        seconds of the call), se, steps, trace (the board before and after each step), describe, symmetry. format,
+        seconds of the call), se (Sudoku Explainer-style ratings; classic sudoku only), steps (with `explain` for
+        their explanations), trace (the board before and after each step), describe, symmetry. format,
         format_version and grader are always present.
     allow_guessing : bool
         Guess where no technique applies (band "Unknown") instead of proving by full search (Trial and error, Extreme).
@@ -183,7 +178,7 @@ def rate(
     from .export import card_fields, grade
     from .publish_flags import quality_limits
 
-    want = card_fields(fields, steps=steps, se=se)
+    want = card_fields(fields)
     quality_limits(quality)
     if not hasattr(puzzle, "coords"):  # read once: the fog view reads the document too
         from .read import auto
@@ -252,7 +247,6 @@ def rate(
             P,
             max_seconds=max_seconds,
             fields=sorted(want),
-            with_steps=steps,
             explain=explain,
             alternatives=alternatives,
         )
@@ -280,14 +274,12 @@ def _one_route_thread():
 
 
 def _rate_job(args):
-    puzzle, steps, max_seconds, mode, se, fields, allow_guessing, explain, quality, alternatives, colouring = args
+    puzzle, max_seconds, mode, fields, allow_guessing, explain, quality, alternatives, colouring = args
     try:
         return rate(
             puzzle,
-            steps=steps,
             max_seconds=max_seconds,
             mode=mode,
-            se=se,
             fields=fields,
             allow_guessing=allow_guessing,
             explain=explain,
@@ -303,10 +295,8 @@ def rate_many(
     puzzles: list,
     *,
     jobs: int = 1,
-    steps: bool = False,
     max_seconds: float | None = None,
     mode: str = "human",
-    se: bool = False,
     fields: list[str] | None = None,
     allow_guessing: bool = False,
     explain: bool | str | list[str] | None = None,
@@ -322,7 +312,7 @@ def rate_many(
         Puzzles in any form `rate` accepts.
     jobs : int
         Worker processes; 1 rates in this process.
-    steps, max_seconds, mode, se, fields, allow_guessing, explain, quality, alternatives, colouring
+    max_seconds, mode, fields, allow_guessing, explain, quality, alternatives, colouring
         As for `rate`.
 
     Returns
@@ -332,7 +322,7 @@ def rate_many(
         {"error": "..."} instead of raising.
     """
     items = [
-        (p, steps, max_seconds, mode, se, fields, allow_guessing, explain, quality, alternatives, colouring)
+        (p, max_seconds, mode, fields, allow_guessing, explain, quality, alternatives, colouring)
         for p in puzzles
     ]
     if jobs <= 1:

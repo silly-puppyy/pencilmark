@@ -42,7 +42,7 @@ import pencilmark
 card = pencilmark.rate("....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9.......")
 card["band"], card["difficulty"], card["time"]          # ('Hard', 5.8, 10.7)
 
-card  = pencilmark.rate(puzzle, steps=True)             # add the step-by-step solve with explanations
+card  = pencilmark.rate(puzzle, fields=["band", "steps"], explain=True)  # the step-by-step solve, explained
 cards = pencilmark.rate_many(puzzles, jobs=4)           # several puzzles in parallel, input order kept
 sol   = pencilmark.solve(puzzle)                        # list of digits; raises NotUnique / NoSolution
 doc   = pencilmark.read.plain(puzzle)                  # one format, strictly; read.sudokuwiki, .ipuz, .link, ...
@@ -154,7 +154,7 @@ the `PENCILMARK_UA` environment variable.
   Trial and error at that point and rated Extreme.
 - Very hard puzzles with many-cell rules (killers, arrows, palindromes, thermos) can take minutes while the technique list
   (`contains`) is made minimal; use `max_seconds` to cap it (the card then says `completed: false`).
-- The Sudoku Explainer-style ratings (`se=True`) are approximate and meaningful for classic sudoku only.
+- The Sudoku Explainer-style ratings (the `se` field) are approximate and meaningful for classic sudoku only.
 
 ## Benchmark
 

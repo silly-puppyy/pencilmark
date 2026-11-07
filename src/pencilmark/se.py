@@ -1,4 +1,4 @@
-"""Sudoku Explainer-style ratings from our route. Opt-in on the card: pencilmark.rate(puzzle, se=True).
+"""Sudoku Explainer-style ratings from our route. Opt-in on the card: pencilmark.rate(puzzle, fields=[..., "se"]).
 
   ER = the hardest step on our easiest human route (SE's "rating"); EP = hardest before the first placement ("pearl");
   ED = the first step's value ("diamond", hardest before the first elimination / placement).

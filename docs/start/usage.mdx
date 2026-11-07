@@ -15,7 +15,7 @@ site link or another app's format ([Other formats](../formats/other-formats.md))
 |---|---|
 | `pencilmark rate FILE` | band, difficulty, minutes and the hardest technique |
 | `pencilmark solve FILE` | the solution, or `not unique` / `no solution` / `undecided` |
-| `pencilmark count FILE` | the number of solutions (`>=1000` when it stops counting; `--limit N` to change) |
+| `pencilmark count-solutions FILE` | the number of solutions (`>=1000` when it stops counting; `--limit N` to change) |
 | `pencilmark describe FILE` | the variant's name and its rules in words |
 | `pencilmark convert FILE` | the puzzle as canonical pencilmark JSON (`--pretty` for one rule per line), or `--to plain`, `grid`, `sudokuwiki`, `ipuz` |
 | `pencilmark fingerprint FILE` | a content fingerprint, 64 hex digits |
@@ -43,7 +43,7 @@ $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7..
 | `--print '%b\|%d\|%m'` | your own columns (below) |
 | `-j N` | grade N puzzles at a time; the output keeps the input order |
 | `--max-seconds N` | stop each puzzle after N seconds (the card says `completed: false`) |
-| `--computer` | allow computer-style search (forcing chains, trial) as well as human techniques |
+| `--mode computer` | allow computer-style search (forcing chains, trial) as well as human techniques (default: `human`) |
 | `--allow-guessing` | guess where no technique applies (band Unknown), instead of proving by full search (Extreme) |
 | `--colouring` | allow colouring as a solving method: colours kept through the solve (off by default) |
 | `--no-alternatives` | keep `contains` but skip the search for interchangeable techniques (faster) |
@@ -77,7 +77,7 @@ card["band"], card["difficulty"], card["time"], card["contains"]
 `rate` takes the same options as the command line: `fields=[...]`, `max_seconds=60`, `explain="short"` (or
 `explain=["short", "substeps"]` for steps told as sub-steps, each with its reason and drawing annotations; see
 [the grade card](../formats/grade-card.md#5-steps)),
-`mode="computer"` (the default is `"human"`), `allow_guessing=True`, `colouring=True`, `se=True` for a Sudoku Explainer-style rating,
+`mode="computer"` (the default is `"human"`), `allow_guessing=True`, `colouring=True`,
 `quality={...}`. `rate_many(puzzles, jobs=4)` grades a list in parallel and keeps its order; a puzzle that fails gives
 `{"error": ...}` in its place.
 
