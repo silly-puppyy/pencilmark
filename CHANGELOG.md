@@ -63,6 +63,9 @@ What changes for you (details in the entries below):
   on the engine's own rectangle (before: a hidden-UR text, sometimes on another rectangle); Aligned Pair Exclusion names
   the base pair and the witness that rules out each value pair; BUG+1 with a 4+ candidate cell has its own text.
   Tests: each added rule's explanation names its pattern and every removed candidate.
+- Custom rules `concat(cells) in {numbers}` over more than 5 cells become engine tables like the smaller ones (the
+  rows are in the rule; before: an expression evaluated by enumeration). A puzzleduel Antidiagonal sudoku: 271 s ->
+  0.5 s, and its card Easy 7.7 -> Very Easy 5.7 (table pricing, as every rule of up to 5 cells already gets).
 - Uniqueness proof: with OR-Tools installed, the quick C++ pass stops after 2 s as well as after its node budget, so
   CP-SAT gets its turn (a zero-given global-entropy puzzle: 197 s -> 4.4 s, same card). Reference cards identical.
 - ALS-XZ with overlapping almost locked sets when the restricted common has no place in the overlap (HoDoKu); the

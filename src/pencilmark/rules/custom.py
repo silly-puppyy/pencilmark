@@ -1263,9 +1263,9 @@ def compile_rule(rule, B, D, layers=()):
                     if y not in names:
                         names.append(y)
         names += [n for n in dict.fromkeys(re.findall(r"\br\d+c\d+\b", rule["holds"])) if n not in names]
-        if len(names) > MAX_TABLE_CELLS:
+        allowed = _concat_table(tree, cells, names, D)  # the rows are in the rule: no size limit, no enumeration
+        if allowed is None and len(names) > MAX_TABLE_CELLS:
             return [_expr(rule, B)]
-        allowed = _concat_table(tree, cells, names, D)
         if allowed is None:
             allowed = _table(lambda g: holds(tree, cells, g), names, D)
         return [{"type": "table", "cells": names, "allowed": allowed}]
