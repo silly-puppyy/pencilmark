@@ -105,7 +105,7 @@ The variant name and its rules in words, from the rules alone (pencilmark/varian
 
 **Returns**
 
-- *dict* — {"type": variant name, "rules": {short name: one-sentence rule, ...}, "rules_text": the rules as one text}.
+- *dict* — {"type": variant name, "rules": {short name: one-sentence rule, ...}, "rules_text": the rules as one text, "variants": the variants as snake_case ids, like tags (["killer", "german_whispers"])}.
 
 ## Solving
 
@@ -239,7 +239,7 @@ Read a SudokuPad, f-puzzles, Penpa or Logic Masters link (or a short link to one
 
 ### `def write.pencilmark(x: str | dict | Path, *, solution: bool=False, describe: bool=False, pretty: bool=True) -> str` {#write-pencilmark}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L71)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L72)
 
 pencilmark JSON text of x: canonical key order, one line per rule (pretty) or one line.
 
@@ -247,29 +247,29 @@ pencilmark JSON text of x: canonical key order, one line per rule (pretty) or on
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L17)
 
-The pencilmark-puzzle dict of x, canonical. solution: add the solution (when the puzzle has exactly one); describe: fill an empty meta.type / meta.rules_text (never overwritten).
+The pencilmark-puzzle dict of x, canonical. solution: add the solution (when the puzzle has exactly one); describe: fill an empty meta.type / meta.rules_text / meta.variants (never overwritten).
 
 ### `def write.plain(x: str | dict | Path) -> str` {#write-plain}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L78)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L79)
 
 One string of D x D characters, '.' for an empty cell (classic sudoku with standard boxes only).
 
 ### `def write.grid(x: str | dict | Path) -> str` {#write-grid}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L86)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L87)
 
 Rows on lines, boxes separated by | and -+- lines (classic sudoku with standard boxes only).
 
 ### `def write.sudokuwiki(x: str | dict | Path) -> str` {#write-sudokuwiki}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L94)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L95)
 
 A sudokuwiki.org packed string (classic, jigsaw, X, windoku, killer and the other forms sudokuwiki has).
 
 ### `def write.ipuz(x: str | dict | Path) -> dict` {#write-ipuz}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L102)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/write.py#L103)
 
 An ipuz 2 dict (classic, Latin square, diagonal, windoku, jigsaw and killer sudoku).
 

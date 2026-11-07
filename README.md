@@ -17,7 +17,7 @@ you need. It works for classic sudoku of any standard size and for many variants
 sandwich, multi-grid boards and more). It also solves puzzles, checks uniqueness, imports puzzles from [SudokuPad](https://sudokupad.app/),
 [f-puzzles](https://www.f-puzzles.com/), [Penpa+](https://swaroopg92.github.io/penpa-edit/) and [Logic Masters](https://logic-masters.de/) links, and generates new puzzles to a target band or difficulty.
 
-The engine is written in C++ ([pybind11](https://github.com/pybind/pybind11)). Results are deterministic: the same puzzle always gets the same card.
+The engine is written in C++ ([pybind11](https://github.com/pybind/pybind11)). Results are deterministic: on the same version, without a time cap, the same puzzle always gets the same card.
 
 > **Written with AI.** Almost all of pencilmark's code, data analysis and documentation was written by an AI model
 > ([Claude](https://claude.ai)), directed and reviewed by its maintainer. If you object to AI-written software, take that
@@ -31,7 +31,8 @@ The engine is written in C++ ([pybind11](https://github.com/pybind/pybind11)). R
   difficulty for the band, with presets and adjustable limits.
 - **Solve and count**: the solution, uniqueness proofs (with OR-Tools for hard variants), solution counts.
 - **Generate** puzzles to a band, a difficulty range or a required technique, with rule elements (cages, every line
-  kind, dots, outside clues, ...) and multi-grid layouts; every result passes the standard publishing checks.
+  kind, dots, outside clues, ...) and multi-grid layouts; opt-in publishing checks (a standard preset) refuse what a
+  publisher would.
 - **Read and write** pencilmark JSON, plain strings, text grids, sudokuwiki strings and ipuz, and read SudokuPad,
   f-puzzles, Penpa+ and Logic Masters links, with the setter's embedded solution checked.
 - **Variants**: 4×4 to 25×25, irregular regions, multi-grid boards, killers, lines, arrows, dots, outside clues, fog of

@@ -398,6 +398,9 @@
     ]
    ]
   },
+  "quality": {
+   "preset": "standard"
+  },
   "limits": {
    "time": 3600,
    "seed": 1

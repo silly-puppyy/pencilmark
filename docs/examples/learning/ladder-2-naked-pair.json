@@ -30,6 +30,9 @@
     "strict": true
    }
   },
+  "quality": {
+   "preset": "standard"
+  },
   "limits": {
    "time": 120,
    "seed": 1

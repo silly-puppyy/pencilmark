@@ -18,6 +18,8 @@ BOX = {4: [2, 2], 6: [2, 3], 8: [2, 4], 9: [3, 3]}
 
 
 def spec(size=9, rules=(), where=None, givens=None, symmetry=None, seed=1, time=180, quality=None):
+    # every example asks for the standard publishing checks (quality is opt in; generator-spec.md 4.1)
+    quality = {"preset": "standard"} if quality is None else quality
     s = {"format": "pencilmark-spec", "format_version": 1, "board": {"rows": size, "cols": size}, "digits": size,
          "rules": [{"type": "box_grid", "box": BOX[size], "count": [BOX[size][1], BOX[size][0]]}, *rules]}  # fmt: skip
     if givens:
@@ -26,7 +28,7 @@ def spec(size=9, rules=(), where=None, givens=None, symmetry=None, seed=1, time=
         s["symmetry"] = [dict(symmetry, of="givens")]
     if where:
         s["where"] = where
-    if quality is not None:  # without it: the standard preset, as every request
+    if quality:
         s["quality"] = quality
     s["limits"] = {"time": time, "seed": seed}
     return s
@@ -287,7 +289,8 @@ def took(d):
     i, lim = d.get("info") or {}, d["spec"].get("limits", {}).get("time", 120)
     checks = {k.split(": ", 1)[1]: v for k, v in (i.get("rejected") or {}).items() if k.startswith("publishing check")}
     refused = (
-        f"; the publishing checks refused {sum(checks.values())} other candidates ({', '.join(sorted(checks))})"
+        f"; the publishing checks refused {sum(checks.values())} other candidate{'s' if sum(checks.values()) != 1 else ''}"
+        f" ({', '.join(sorted(checks))})"
         if checks
         else ""
     )

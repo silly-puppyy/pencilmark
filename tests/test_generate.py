@@ -444,11 +444,50 @@ def test_fingerprints_asked_for_in_the_spec():
     assert meta["fingerprint"] != meta["generated_from"]
 
 
-def test_standard_preset_by_default():
-    """a request without quality uses the standard preset (its checks reject); a quality object replaces it"""
+def test_quality_is_opt_in():
+    """no quality or {} = no checks ({} is dropped, same fingerprint); a preset turns on its checks; without a preset
+    only the checks named run (generator-spec.md 4.1)"""
     from pencilmark import spec_format as SF
+    from pencilmark.publish_flags import PRESETS, QUALITY, quality_limits, spec_quality
 
     base = {"format": "pencilmark-spec", "format_version": 1, "board": {"rows": 4, "cols": 4}, "digits": 4,
             "rules": [{"type": "box_grid", "box": [2, 2], "count": [2, 2]}]}  # fmt: skip
-    assert SF.spec_to_gen(base)["quality"] == {"preset": "standard"}
-    assert SF.spec_to_gen(dict(base, quality={}))["quality"] == {}
+    assert SF.spec_to_gen(base)["quality"] is None and SF.spec_to_gen(dict(base, quality={}))["quality"] is None
+    assert SF.spec_fingerprint(base) == SF.spec_fingerprint(dict(base, quality={}))
+    assert spec_quality(None) is None and spec_quality({}) is None
+    on = lambda q: {k for k, v in quality_limits(spec_quality(q)).items() if v["severity"] != "off"}  # noqa: E731
+    assert on({"preset": "standard"}) == set(PRESETS["standard"])
+    assert on({"preset": "standard", "trivial": {"severity": "off"}}) == set(PRESETS["standard"]) - {"trivial"}
+    assert on({"trial": {"severity": "reject"}}) == {"trial"} and on({"trivial": {"limit": 0.5}}) == {"trivial"}
+    assert set(PRESETS["standard"]) <= set(QUALITY)
+
+
+def test_meta_requests():
+    """the spec's meta is copied; title / subtitle templates, type (name / list scheme), variants, rules_text and the
+    fingerprints are filled only when asked (generator-spec.md 5.1); a bad request fails before the run"""
+    from pencilmark.errors import NotSupportedError
+    from pencilmark.gen.api import meta_requests
+
+    doc = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 4, "cols": 4}, "digits": 4,
+           "givens": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+           "rules": [{"type": "box_grid", "box": [2, 2], "count": [2, 2]},
+                     {"type": "cage", "sum": 3, "cells": ["r2c1", "r2c2"]},
+                     {"type": "line", "kind": "thermo", "cells": ["r3c1", "r3c2", "r3c3"]}]}  # fmt: skip
+    res = {"puzzle": doc, "spec_fingerprint": "f" * 64, "band": "Easy", "difficulty": 4.2, "time": 3.1, "seed": 7}
+    assert meta_requests({"author": "A", "title": "Plain"}, res) == {"author": "A", "title": "Plain"}
+    m = meta_requests(
+        {"title": "{type} #{seed}", "subtitle": "{type:list}, {band} {difficulty} ({size}, {givens} given, {{x}})",
+         "type": {"scheme": "list"}, "variants": True, "rules_text": True, "generated_from": True},
+        res,
+    )  # fmt: skip
+    assert m["title"] == "Tiny Variant Sudoku #7" and m["type"] == "Tiny Killer Thermo Sudoku"
+    assert m["subtitle"] == "Tiny Killer Thermo Sudoku, Easy 4.2 (4x4, 1 given, {x})"
+    assert m["variants"] == ["killer", "thermo"] and m["rules_text"].startswith("Tiny Sudoku: ")
+    assert m["generated_from"] == "f" * 64
+    assert meta_requests({"type": True, "rules_text": "Mine."}, res) == {
+        "type": "Tiny Variant Sudoku",
+        "rules_text": "Mine.",
+    }
+    for bad in ({"title": "{nope}"}, {"type": {"scheme": "fancy"}}, {"title": 3}):
+        with pytest.raises(NotSupportedError):
+            meta_requests(bad, None)

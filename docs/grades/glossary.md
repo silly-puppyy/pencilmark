@@ -39,7 +39,7 @@ region.
 **Issues.** Publishing checks on the card: a rule nobody needs, too many givens, most of the effort in a few steps.
 See [Check a puzzle before publishing](../guides/grader/publish-checks.md).
 
-**Layout.** The arrangement of the grids of a multi-grid puzzle (Samurai, Twodoku, ...). See [Variant catalogue](../library/variant-catalogue.mdx).
+**Layout.** The arrangement of the grids of a multi-grid puzzle (Samurai, Twodoku, ...). See [Variant catalogue](../guides/generator/variant-catalogue.mdx).
 
 **Placement variant.** A variant that adds fixed regions to a grid: X diagonals, Windoku windows, Argyle lines.
 

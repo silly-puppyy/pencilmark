@@ -27,10 +27,11 @@ module.exports = {
         page('guides/grader/fog', 'fog', 'Fog of war: what works'),
         page('guides/grader/draw', 'draw', 'Draw a puzzle'),
       ]),
-      group('Generator', '/guides/generator/', 'Make puzzles to order: a first request, examples of every kind, and puzzles for learners.', [
+      group('Generator', '/guides/generator/', 'Make puzzles to order: a first request, examples of every kind, puzzles for learners, and the named variants.', [
         page('guides/generator/generate', 'generate', 'Generate a puzzle'),
         page('guides/generator/generator-examples', 'spec-examples', 'Generator examples'),
         page('guides/generator/generate-for-learning', 'learning', 'Generate for learning'),
+        {type: 'doc', id: 'guides/generator/variant-catalogue', className: 'pm-ico-variant-catalogue', label: 'Variant catalogue'},
       ]),
       group('Development', '/guides/development/', 'Build from source, find your way around the code, and add techniques or rules.', [
         page('guides/development/environment', 'environment', 'Development environment'),
@@ -65,9 +66,8 @@ module.exports = {
       page('formats/generator-spec', 'generator-spec', 'Generator spec'),
       page('formats/other-formats', 'other-formats', 'Readers and writers'),
     ]),
-    section('Library', '/library/', 'The Python library: its public API, the variant names it gives, and how it draws puzzles. Internals are under Development and in the Code reference.', [
+    section('Library', '/library/', 'The Python library: its public API, how it names variants, and how it draws puzzles. Internals are under Development and in the Code reference.', [
       {type: 'doc', id: 'library/python-api', className: 'pm-ico-python-api', label: 'Python API'},
-      {type: 'doc', id: 'library/variant-catalogue', className: 'pm-ico-variant-catalogue', label: 'Variant catalogue'},
       {type: 'doc', id: 'library/variant-naming', className: 'pm-ico-variant-naming', label: 'How variants are named'},
       {type: 'doc', id: 'library/drawing-style', className: 'pm-ico-drawing-style', label: 'Drawing and style'},
       {type: 'doc', id: 'library/palette', className: 'pm-ico-palette', label: 'Palette'},

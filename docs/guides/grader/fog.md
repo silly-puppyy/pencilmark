@@ -31,7 +31,7 @@ walls, arrows whose circle is still fogged, thermometer and renban bounds. Each 
 ## What does not work yet
 
 - **Grading details.** A fog card is computed by the same algorithm as any card: the band route for the band and
-  techniques, the card's routes (the price-first route, the human rollouts) for difficulty and time, each run round by
+  techniques, the same steps that set difficulty and time for any puzzle for difficulty and time, each run round by
   round on what the fog shows. A fog rule that lights every cell gives exactly the card of the same puzzle without
   fog. No cost per reveal is added (the data showed no gain from one). Publishing checks (`issues`), `steps`, `trace`
   and `se` are null on a fog card for now.

@@ -48,7 +48,9 @@
   "where": {
    "band": "Hard"
   },
-  "quality": {},
+  "quality": {
+   "preset": "standard"
+  },
   "limits": {
    "results": 1,
    "time": 900,
@@ -486,7 +488,7 @@
   ]
  },
  "info": {
-  "seconds": 445.0,
+  "seconds": 486.2,
   "attempts": 13,
   "found": null,
   "givens": 2,

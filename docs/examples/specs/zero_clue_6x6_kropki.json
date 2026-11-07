@@ -37,7 +37,7 @@
    99
   ]
  },
- "quality": {},
+ "quality": {"preset": "standard"},
  "limits": {
   "time": 600,
   "seed": 5

@@ -37,6 +37,9 @@
     "of": "givens"
    }
   ],
+  "quality": {
+   "preset": "standard"
+  },
   "limits": {
    "time": 300,
    "seed": 1

@@ -16,7 +16,7 @@ from pathlib import Path
 
 def document(x: str | dict | Path, *, solution: bool = False, describe: bool = False) -> dict:
     """The pencilmark-puzzle dict of x, canonical. solution: add the solution (when the puzzle has exactly one);
-    describe: fill an empty meta.type / meta.rules_text (never overwritten)."""
+    describe: fill an empty meta.type / meta.rules_text / meta.variants (never overwritten)."""
     from .api import _load
     from .exchange import canonical
     from .export import read_meta
@@ -35,14 +35,15 @@ def document(x: str | dict | Path, *, solution: bool = False, describe: bool = F
         if sol is not None:
             doc = canonical(dict(doc, solution=write(p, solution=sol)["solution"]))
     meta = doc.get("meta") or {}
-    if describe and not (meta.get("type") and meta.get("rules_text")):
+    if describe and not (meta.get("type") and meta.get("rules_text") and meta.get("variants")):
         from .variants import describe as _describe
-        from .variants import rules_text as _rt
+        from .variants import public
 
-        dsc = _describe(doc)
+        dsc = public(_describe(doc))
         m2 = dict(meta)
-        m2.setdefault("type", dsc["type"])
-        m2.setdefault("rules_text", _rt(dsc))
+        for k in ("type", "rules_text", "variants"):
+            if not m2.get(k):
+                m2[k] = dsc[k]
         doc = canonical(dict(doc, meta=read_meta({"meta": m2})))
     return doc
 

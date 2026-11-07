@@ -626,15 +626,18 @@ def describe(puzzle):
     for nm, txt in found:
         out[nm] = txt
     names = [f[0] for f in found]
+    multi = bool(layout) or len(subs) > 1
     if len(subs) == 1 and not grids[0].box and not boxes and not loose and not names:
-        typ = (sw + " Latin Square").strip()
-    elif layout or len(subs) > 1:
+        base_name = "Latin Square"
+    elif multi:
         lay = layout or "Multi-Grid"
-        lay = lay if lay.lower().endswith("doku") else lay + " Sudoku"
-        typ = (("Variant " if len(names) > 1 else names[0] + " " if names else "") + lay).strip()
+        base_name = lay if lay.lower().endswith("doku") else lay + " Sudoku"
     else:
-        typ = " ".join(x for x in (sw, "Variant" if len(names) > 1 else (names[0] if names else ""), "Sudoku") if x)
-    return {"type": typ, "rules": out}
+        base_name = "Sudoku"
+    size = "" if multi else sw
+    typ = " ".join(x for x in (size, "Variant" if len(names) > 1 else (names[0] if names else ""), base_name) if x)
+    # names / size / base: the parts of the name, for the other naming schemes (type_name)
+    return {"type": typ, "rules": out, "names": names, "size": size, "base": base_name}
 
 
 def _rule_cells(r):
@@ -691,6 +694,68 @@ def _where(gi, grids):
         ns = [n[:-5] for n in ns]
         return " Only in the " + ", ".join(ns[:-1]) + " and " + ns[-1] + " grids."
     return " Only in the " + (", ".join(ns[:-1]) + " and " + ns[-1] if len(ns) > 1 else ns[0]) + "."
+
+
+SCHEMES = ("name", "list")
+
+
+def type_name(described, scheme="name"):
+    """the variant name in a naming scheme: "name" = describe's ("Killer Sudoku"; two or more variants: "Variant
+    Sudoku"), "list" = every variant ("Jigsaw Killer Renban Kropki Sudoku")"""
+    if scheme == "name":
+        return described["type"]
+    if scheme == "list":
+        return " ".join(x for x in (described.get("size"), *described.get("names", ()), described.get("base")) if x)
+    raise ValueError(f"unknown naming scheme {scheme!r}; known: {list(SCHEMES)}")
+
+
+def variant_ids(described):
+    """the variants as snake_case ids, like tags: ["jigsaw", "killer", "german_whispers"] (multi-grid layouts first:
+    "samurai"); a plain sudoku has none"""
+    import re
+
+    snake = lambda x: re.sub(r"[^a-z0-9]+", "_", x.lower()).strip("_")  # noqa: E731
+    base = described.get("base") or ""
+    lay = [] if base in ("Sudoku", "Latin Square") else [snake(base.removesuffix(" Sudoku"))]
+    return lay + [snake(n) for n in described.get("names", ())]
+
+
+class _TypeField:
+    """{type} / {type:list} inside a title template"""
+
+    def __init__(self, described):
+        self.d = described
+
+    def __format__(self, spec):
+        return type_name(self.d, spec or "name")
+
+
+TITLE_FIELDS = ("type", "variants", "size", "band", "difficulty", "time", "givens", "seed")
+
+
+def format_title(template, described, values=None):
+    """a title / subtitle template filled in: {type} (scheme after a colon: {type:list}), {variants} (the variant names,
+    comma-separated), {size} ("9x9"), and from values: {band}, {difficulty}, {time} (minutes), {givens}, {seed}.
+    {{ and }} are literal braces. Raises ValueError for an unknown field or scheme."""
+    import string
+
+    vals = dict(values or {})
+    vals.update(type=_TypeField(described), variants=", ".join(described.get("names", ())))
+    vals.setdefault("size", described.get("board_size", ""))
+    for _, field, _, _ in string.Formatter().parse(template):
+        if field is not None and field.split(".")[0].split("[")[0] not in TITLE_FIELDS:
+            raise ValueError(f"unknown title field {{{field}}}; known: {', '.join(TITLE_FIELDS)}")
+    try:
+        return template.format_map(vals)
+    except (KeyError, IndexError) as e:
+        raise ValueError(f"title field {e} is not available here") from None
+
+
+def public(described):
+    """describe() as the library shows it (pencilmark.describe, the card's describe field): type, rules, rules_text,
+    variants"""
+    return {"type": described["type"], "rules": described["rules"], "rules_text": rules_text(described),
+            "variants": variant_ids(described)}  # fmt: skip
 
 
 def rules_text(described):

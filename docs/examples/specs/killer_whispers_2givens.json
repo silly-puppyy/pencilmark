@@ -45,7 +45,7 @@
  "where": {
   "band": "Hard"
  },
- "quality": {},
+ "quality": {"preset": "standard"},
  "limits": {
   "results": 1,
   "time": 900,

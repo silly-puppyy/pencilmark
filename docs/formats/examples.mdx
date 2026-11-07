@@ -4,6 +4,7 @@ title: Examples
 ---
 
 import PuzzleJson from '@site/src/components/PuzzleJson';
+import Swatch from '@site/src/components/Swatch';
 
 # Examples
 
@@ -12,7 +13,7 @@ This page shows complete puzzle files, from a classic grid to variants.
 
 9.1–9.3 are complete files, drawn next to their JSON: hover a rule on either side to find it on the other
 (they are in the repository as `docs/examples/*.json`). 9.4 shows a structure; from 9.5 on only `rules` is shown, the
-rest is as in 9.1.
+rest is as in 9.1, with an empty grid. Every section is drawn; click a drawing for its complete file.
 
 ## 9.1 Classic
 
@@ -33,6 +34,8 @@ Made by the generator (zero givens, unique). `describe()` names it "Tiny Killer 
 The `grid` gives the rows and columns; each piece is a `box`. (A shape example, no givens.)
 
 ## 9.4 Samurai (structure)
+
+<Swatch name="example-samurai" />
 
 ```json
 {"format": "pencilmark-puzzle", "format_version": 1,
@@ -63,6 +66,8 @@ c13–c21).
 
 ## 9.5 X-sudoku and argyle
 
+<Swatch name="example-x-sudoku" />
+
 ```json
 "rules": [
   {"type": "box_grid", "box": [3, 3], "count": [3, 3]},
@@ -71,6 +76,8 @@ c13–c21).
 ```
 
 Argyle has 8 shorter diagonals instead, all `region` kind `diagonal`:
+
+<Swatch name="example-argyle" />
 
 ```json
 "rules": [
@@ -87,6 +94,8 @@ Argyle has 8 shorter diagonals instead, all `region` kind `diagonal`:
 
 ## 9.6 Thermo, arrow and kropki
 
+<Swatch name="example-thermo-arrow-kropki" />
+
 ```json
 "rules": [
   {"type": "box_grid", "box": [3, 3], "count": [3, 3]},
@@ -102,6 +111,8 @@ The two thermos share the bulb r9c1. The second arrow's pill reads as 10·r1c7 +
 
 ## 9.7 Negative XV
 
+<Swatch name="example-negative-xv" />
+
 ```json
 "rules": [
   {"type": "box_grid", "box": [3, 3], "count": [3, 3]},
@@ -114,6 +125,8 @@ Every pair without a clue sums to neither 10 nor 5. With `{"type": "negative", "
 every X is shown but V clues may be partial. With no XV clues at all, the negative alone is "Non-XV".
 
 ## 9.8 Sandwich, x-sum and little killer
+
+<Swatch name="example-outside-clues" />
 
 ```json
 "rules": [
@@ -128,6 +141,8 @@ The x-sum reads down column 9: X = r1c9. The first little killer sits above r1c4
 below r9c2 and runs up-left.
 
 ## 9.9 Anti-knight within boxes only
+
+<Swatch name="example-antiknight-in-boxes" />
 
 ```json
 "rules": [

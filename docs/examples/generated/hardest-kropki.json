@@ -37,7 +37,9 @@
   "where": {
    "difficulty": "max"
   },
-  "quality": {},
+  "quality": {
+   "preset": "standard"
+  },
   "limits": {
    "time": 600,
    "seed": 5
@@ -334,16 +336,16 @@
   ]
  },
  "info": {
-  "seconds": 612.0,
+  "seconds": 612.4,
   "attempts": 17,
-  "found": 48,
+  "found": 47,
   "givens": 0,
   "elements": {
    "kropki_black": 1,
    "kropki_white": 11
   },
   "rejected": {
-   "construction failed": 15
+   "construction failed": 14
   }
  }
 }

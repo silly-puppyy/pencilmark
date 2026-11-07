@@ -7,11 +7,15 @@ import Cards, {Card} from '@site/src/components/VariantCards';
 
 # Variant catalogue
 
+To generate one of these, put its rules in a request as locked rules (rules with cells and no `count`; [Generator
+spec](../../formats/generator-spec.md), section 1): an X sudoku is the `box_grid` rule plus its two diagonal `region`
+rules, a samurai five `box_grid` rules at the layout's origins. The drawings below show what each adds.
+
 These are the names pencilmark gives a puzzle when its rules match a known pattern: `describe()` and `meta.type` use
-them ("Samurai Sudoku", "Argyle Sudoku"). They are a library feature, not part of the [puzzle format](../formats/puzzle-format.md): a
+them ("Samurai Sudoku", "Argyle Sudoku"). They are a library feature, not part of the [puzzle format](../../formats/puzzle-format.md): a
 samurai file is five `box_grid` rules and an Argyle file a few `region` rules, so any reader that reads those reads the
-puzzle, and no reader needs to know the names. [How variants are named](variant-naming.md) gives the exact matching rules; rule
-families such as killer cages and thermometers have their own pages under [Rule families](../formats/puzzle-format.md#6-rule-families). For an introduction to the popular variants, see Artisanal Sudoku's
+puzzle, and no reader needs to know the names. [How variants are named](../../library/variant-naming.md) gives the exact matching rules; rule
+families such as killer cages and thermometers have their own pages under [Rule families](../../formats/puzzle-format.md#6-rule-families). For an introduction to the popular variants, see Artisanal Sudoku's
 [basics of popular sudoku variants](https://artisanalsudoku.substack.com/p/the-basics-of-popular-sudoku-variants).
 
 ## Placement variants
@@ -31,7 +35,7 @@ any board size where it is defined.
 
 ## Multi-grid layouts
 
-A multi-grid board is written as one `box_grid` per 9×9 grid ([Houses and regions](../formats/rules/houses-and-regions.mdx)).
+A multi-grid board is written as one `box_grid` per 9×9 grid ([Houses and regions](../../formats/rules/houses-and-regions.mdx)).
 When the grids' top-left cells match a named layout, the puzzle takes its name: "Samurai Sudoku", "Killer Twodoku". In
 the drawings, overlapping grids have different tints, so the shared boxes show as a blend. Another arrangement is a
 "Multi-Grid Sudoku" and is graded the same way.

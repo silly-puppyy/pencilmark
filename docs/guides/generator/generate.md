@@ -7,8 +7,9 @@ description: Ask the generator for a classic or a variant puzzle with a given ba
 
 pencilmark's generator makes puzzles to order: you say what the board holds and what the grade card must show, and it
 returns a unique puzzle that meets the request. This guide generates a Hard classic that needs an X-Wing, then a small variant;
-[Write a variant puzzle file](../grader/variant-file.mdx) explains the file the variant comes back as. The generator is used
-from Python.
+[Write a variant puzzle file](../grader/variant-file.mdx) explains the file the variant comes back as. The examples use
+Python; on the command line, `pencilmark generate spec.json` runs a request saved as a file and prints the puzzle
+(`--result` prints the puzzle, its card and the run's `info` as one JSON object).
 
 ## 1. A request
 
@@ -24,6 +25,7 @@ spec = {
     "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}],
     "symmetry": [{"kind": "rot180", "of": "givens"}],
     "where": {"band": "Hard", "contains": ["XWG"]},
+    "quality": {"preset": "standard"},
     "limits": {"time": 120, "seed": 21},
 }
 ```
@@ -31,7 +33,10 @@ spec = {
 - `board`, `digits` and `rules` are as in a puzzle file. Here the only rule is the usual rows, columns and boxes.
 - `symmetry` asks for givens that look the same after a half turn of the grid.
 - `where` is what the card must show: band Hard, with X-Wing (code `XWG`) in `contains`.
-- `limits` gives the run 120 seconds at most; `seed` picks which puzzle you get.
+- `quality` turns on the publishing checks: the generator throws away candidates a publisher would refuse
+  ([Publishing checks](#publishing-checks) below).
+- `limits`: the search stops after `time` seconds (grading the result comes on top: seconds for a classic, minutes for
+  a hard variant); `seed` picks which puzzle you get.
 
 ## 2. Run it
 
@@ -55,11 +60,27 @@ The run took about a second. The result has three parts:
   `info.warnings` lists hints about the request: without `where.band` or `where.difficulty` the search is the broadest
   (every technique, up to Extreme) and can be slow on sparse variants, so it suggests aiming it (the command line prints
   these as notes).
-  The generator tried 18 puzzles; 17 were too easy. Every result also passes the standard publishing checks unless
-  the request's `quality` says otherwise (another seed here found a Hard puzzle whose X-Wing did too little, `thin`,
-  and searched on).
+  The generator tried 18 puzzles; 17 were too easy.
 
 Change `seed` for a different puzzle. With the same seed and request, the result is the same every time.
+
+### Publishing checks
+
+Checks are opt in: a request without `quality` gets none. `{"preset": "standard"}` turns on five, each refusing a
+candidate: a rule family nothing needs (`decorative`), mostly givens (`trivial`), a solve that needs trial or forcing
+(`trial`), candidate steps that do little around one hard step (`thin`), and a difficulty outside the published range
+for its band (`unusual`). Name a check to change it: with the preset, it adjusts that check and keeps the others;
+without the preset, only the checks you name run.
+
+```python
+relaxed = {"preset": "standard", "thin": {"limit": 0.2}}         # the preset, thin relaxed
+learner = {"preset": "standard", "trivial": {"severity": "off"}}  # the preset, mostly-given puzzles allowed
+one = {"trial": {"severity": "reject"}}                           # only this check
+```
+
+`info.rejected` counts the candidates each check refused (another seed of the request above found a Hard puzzle whose
+X-Wing did too little, `thin`, and searched on). [Grade card](../../formats/grade-card.md), section 4, lists every check
+and its limit.
 
 ## 3. A variant
 
@@ -77,6 +98,7 @@ spec = {
         {"type": "edge", "kind": "kropki", "count": [1, 3]},
     ],
     "where": {"band": "Medium"},
+    "quality": {"preset": "standard"},
     "limits": {"time": 300, "seed": 3},
 }
 r = pencilmark.generate(spec)
@@ -98,8 +120,7 @@ symmetry, board sizes), with the puzzle each produced and how long it took.
 
 Without a difficulty range the generator removes every given it can. A puzzle with few givens takes long to scan even
 when it needs only singles, so a Very Easy request comes back at about 4-5, the hard end of published Very Easy
-puzzles. For a gentle puzzle, add a range (every request passes the standard publishing checks unless its `quality`
-says otherwise):
+puzzles. For a gentle puzzle, add a range:
 
 ```json
 "where": {"band": "Very Easy", "difficulty": [3.2, 4.0]}

@@ -48,6 +48,9 @@
   "where": {
    "band": "Medium"
   },
+  "quality": {
+   "preset": "standard"
+  },
   "limits": {
    "time": 600,
    "seed": 1

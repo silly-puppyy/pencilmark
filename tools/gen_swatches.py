@@ -50,6 +50,14 @@ def line(kind, digits=None, **kw):
     return [dict({"type": "line", "kind": kind}, **kw, cells=PATH)], g
 
 
+def region_sum_swatch():
+    """a box border between columns 2 and 3 (two `box` rules), so the line splits into two segments of equal sum"""
+    rules, g = line("region_sum", [1, 2, 3, 6, 4, 5, 3])
+    boxes = [{"type": "box", "cells": ["r1c1", "r1c2", "r2c1", "r2c2", "r3c1", "r3c2"]},
+             {"type": "box", "cells": ["r1c3", "r2c3", "r3c3"]}]  # fmt: skip
+    return boxes + rules, g
+
+
 def chain(rule, digits=None):
     """an edge clue on each neighbouring pair of the bottom row"""
     return [dict(rule, cells=[a, b]) for a, b in zip(ROW3, ROW3[1:])], along(ROW3, digits) if digits else None
@@ -152,7 +160,7 @@ SWATCHES = {
     "line-slow_thermo": line("slow_thermo", [1, 2, 2, 5, 7, 7, 9]),
     "line-whisper": line("whisper", [1, 7, 2, 8, 3, 9, 4]),
     "line-renban": line("renban", [4, 6, 5, 3, 7, 2, 8]),
-    "line-region_sum": line("region_sum"),
+    "line-region_sum": region_sum_swatch(),
     "line-palindrome": line("palindrome", [3, 5, 8, 1, 8, 5, 3]),
     "line-entropic": line("entropic", [1, 5, 9, 2, 4, 7, 3]),
     "line-modular": line("modular", [1, 2, 3, 4, 5, 6, 7]),

@@ -450,13 +450,13 @@ def describe(puzzle: str | dict | Path) -> dict:
     Returns
     -------
     dict
-        {"type": variant name, "rules": {short name: one-sentence rule, ...}, "rules_text": the rules as one text}.
+        {"type": variant name, "rules": {short name: one-sentence rule, ...}, "rules_text": the rules as one text,
+        "variants": the variants as snake_case ids, like tags (["killer", "german_whispers"])}.
     """
     from .variants import describe as d
-    from .variants import rules_text
+    from .variants import public
 
-    out = d(puzzle)
-    return dict(out, rules_text=rules_text(out))
+    return public(d(puzzle))
 
 
 def generate(spec: str | dict | Path) -> dict:

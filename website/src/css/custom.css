@@ -471,3 +471,35 @@ td:has(> .pm-verdict-kept) { background: var(--pm-verdict-kept); }
 td:has(> .pm-verdict-dropped) { background: var(--pm-verdict-dropped); }
 td:has(> .pm-verdict-info) { background: var(--pm-verdict-info); }
 td:has(> .pm-verdict-mixed) { background: var(--pm-verdict-mixed); }
+
+/* the doc version (theme/DocVersionBadge): low contrast, at the right of the title row instead of a chip above it */
+.pm-version-note {
+  float: right;
+  margin: 0.9rem 0 0 1rem;
+  font-size: 0.75rem;
+  color: var(--ifm-color-emphasis-500);
+}
+
+/* palette previews: each drawing padded in its own theme's page colour, so its board edge shows in either site theme */
+img[src*='/img/swatches/example-'] {
+  background: #f8f6f1;
+  padding: 10px;
+  border-radius: 6px;
+}
+img[src*='/img/swatches/example-'][src$='-dark.svg'] {
+  background: #1b1916;
+}
+
+/* band pills (techniques page, tools/gen_techniques_md.py): the band colours of docs/palette.json "bands" */
+.pm-band-pill { display: inline-block; padding: 0 0.5em; border-radius: 0.8em; font-size: 0.85em; white-space: nowrap;
+  color: #fff; background: var(--pm-band); }
+.pm-band-very-easy { --pm-band: #7ccf6b; color: #1a1a1a; }
+.pm-band-easy { --pm-band: #2f9e44; }
+.pm-band-medium { --pm-band: #f2b705; color: #1a1a1a; }
+.pm-band-hard { --pm-band: #ee6a1a; }
+.pm-band-very-hard { --pm-band: #c92a2a; }
+.pm-band-expert { --pm-band: #9c36b5; }
+.pm-band-extreme { --pm-band: #e665c0; color: #1a1a1a; }
+.pm-band-unknown { --pm-band: #9a958e; }
+.pm-variant-mark { display: inline-block; padding: 0 0.5em; border-radius: 0.8em; font-size: 0.8em;
+  color: var(--ifm-color-emphasis-800); border: 1px solid var(--ifm-color-emphasis-500); }

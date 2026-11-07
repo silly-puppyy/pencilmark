@@ -106,6 +106,13 @@ def page():
     extra = {}
     for r in csv.DictReader(LINKS.open(encoding="utf-8")):
         extra.setdefault(r["code"], []).append(r["url"])
+
+    def band_cell(b):  # the band in its colour (docs/palette.json "bands"; custom.css .pm-band-*)
+        name = R.BANDS[b]
+        return (
+            f'<span class="pm-band-pill pm-band-{name.lower().replace(" ", "-")}">{name.replace(" ", "&nbsp;")}</span>'
+        )
+
     rows = {f: [] for f in FAMILY_TITLES}
     for code, c in codes.items():
         t = tech_of.get(code)
@@ -113,13 +120,14 @@ def page():
             continue
         band = c.shape_band if c.shape_band is not None else t.band
         urls = list(dict.fromkeys((E.CATALOG[c.explain][3] if c.explain else []) + extra.get(code, [])))
-        name = c.name + (" *(variant)*" if t.gate else "")
+        name = c.name
+        variant = '<span class="pm-variant-mark" title="variants only">variant</span>' if t.gate else ""
         sub = ", ".join(f"`{s}`" for s in immediate(code, codes))
         rows[t.family].append(
             (
                 band,
                 c.order,
-                f"| `{code}` | {name} | {R.BANDS[band].replace(' ', '&nbsp;')} | {sub} | {' '.join(map(link, sorted(urls, key=_site_rank)))} |",
+                f"| `{code}` | {name} | {variant} | {band_cell(band)} | {sub} | {' '.join(map(link, sorted(urls, key=_site_rank)))} |",
             )
         )
     L = [
@@ -134,7 +142,8 @@ def page():
         "([sudokuwiki.org](https://www.sudokuwiki.org)) where he has the strategy. A step is named by the most specific",
         "shape found: a Skyscraper is `SKY`, not X-Chain. **Special case of** names the next more general technique: an",
         "X-Wing is a special case of a Skyscraper, so if you know Skyscrapers you can solve an X-Wing step. Each family is",
-        "sorted by band. The links go to explanations on other sites.",
+        "sorted by band. **Variant** marks techniques that only variant rules make possible. The links go to explanations",
+        "on other sites.",
         "",
         "This page is generated from `pencilmark/data/codes.csv`, `techniques.csv` and `docs/technique_links.csv`\n(`tools/gen_techniques_md.py`).",
         "",
@@ -142,7 +151,12 @@ def page():
     for fam, title in FAMILY_TITLES.items():
         if not rows[fam]:
             continue
-        L += [f"## {title}", "", "| Code | Technique | Band | Special case of | Learn |", "|---|---|---|---|---|"]
+        L += [
+            f"## {title}",
+            "",
+            "| Code | Technique | Variant | Band | Special case of | Learn |",
+            "|---|---|---|---|---|---|",
+        ]
         L += [r for _, _, r in sorted(rows[fam], key=lambda x: (x[0], x[1]))]
         L.append("")
     col = sorted(
@@ -151,7 +165,7 @@ def page():
         if k in codes and k in tech_of
     )
     L += COLOURING_INTRO + ["| Code | Technique | Band |", "|---|---|---|"]
-    L += [f"| `{k}` | {codes[k].name} | {R.BANDS[b].replace(' ', '&nbsp;')} |" for b, _, k in col]
+    L += [f"| `{k}` | {codes[k].name} | {band_cell(b)} |" for b, _, k in col]
     L.append("")
     return "\n".join(L)
 

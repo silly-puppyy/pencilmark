@@ -15,6 +15,8 @@ from .. import model as M
 from .. import puzzle_json as PJ
 from .. import solver as S
 from ..api import GenerationFailed
+from ..errors import FormatError, NotSupportedError
+from ..publish_flags import spec_quality
 from . import elements as EL
 from . import search as SR
 from .board import BOXES, Board, grid_log2
@@ -35,8 +37,9 @@ class Spec:
     locked            pencilmark-puzzle rules every result carries (all-different ones: diagonals, extra regions, windoku
                       windows, anti-knight, anti-king); the solution respects them
     grid_givens       [[min, max], ...] givens per grid of the layout (in its origins' order); None = no bound
-    quality           None (no filtering), or the publishing checks as rate() takes them ({} = the defaults): a
-                      candidate with a reject issue is not returned
+    quality           None or {} (no checks), or the spec's quality block: a preset turns on its checks, without one
+                      only the checks named run (publish_flags.spec_quality); a candidate with a reject issue is not
+                      returned
     elements          {kind or class: N | [min, max] | "auto" | "full" | "min" | "partition"}: N = at least N needed elements
                       (0 / None / "auto" = allowed, not required); [min, max] = between min and max (max None = no cap;
                       [2, 2] = exactly 2). Classes count one colour / letter / parity of a kind: kropki_white, kropki_black,
@@ -328,11 +331,11 @@ def feasibility(spec):
                 probs.append(
                     f"a unique {s.size}x{s.size} classic needs at least {floor} givens (max_givens={s.max_givens})"
                 )
-    if s.quality is not None:
+    if s.quality:
         from ..publish_flags import quality_limits
 
         try:
-            quality_limits(s.quality)
+            quality_limits(spec_quality(s.quality))
         except ValueError as e:
             probs.append(str(e))
     if s.layout and mode not in ("classic", "dig"):
@@ -416,11 +419,59 @@ NO_TARGET = (
 )
 
 
+def meta_requests(meta, result):
+    """the spec's meta with its requests filled in from result (None: only check the requests). Requests
+    (docs/formats/generator-spec.md, Metadata): title / subtitle templates ({type}, {type:list}, {variants}, {size},
+    {band}, {difficulty}, {time}, {givens}, {seed}); "type": true or {"scheme": "name" | "list"}; "variants": true (snake_case
+    ids); "rules_text": true; "fingerprint" / "generated_from": true. Other keys and other values are copied."""
+    from .. import variants as VR
+
+    if not isinstance(meta, dict):
+        raise FormatError("meta must be an object")
+    out = dict(meta)
+    for k in ("fingerprint", "generated_from"):
+        if k in meta and meta[k] is not True:
+            raise NotSupportedError(f"meta.{k} takes true (the generator fills it in)")
+    for k in ("title", "subtitle"):
+        if k in meta and not isinstance(meta[k], str):
+            raise NotSupportedError(f"meta.{k} is a text (a template: {{type}}, {{band}}, ...)")
+    t = meta.get("type")
+    if isinstance(t, dict) and (set(t) != {"scheme"} or t["scheme"] not in VR.SCHEMES):
+        raise NotSupportedError(f'meta.type takes true or {{"scheme": one of {list(VR.SCHEMES)}}}')
+    if result is None:  # check the templates against a stand-in
+        d = {"type": "Sudoku", "rules": {}, "names": [], "size": "", "base": "Sudoku"}
+        vals = dict.fromkeys(("band", "difficulty", "time", "givens", "seed", "size"), 0)
+        for k in ("title", "subtitle"):
+            if k in meta:
+                try:
+                    VR.format_title(meta[k], d, vals)
+                except ValueError as e:
+                    raise NotSupportedError(f"meta.{k}: {e}") from None
+        return out
+    puzzle = result["puzzle"]
+    d = VR.describe(puzzle)
+    vals = {k: result.get(k) for k in ("band", "difficulty", "time", "seed")}
+    vals["givens"] = sum(1 for v in puzzle.get("givens") or () if v)
+    vals["size"] = f"{puzzle['board']['rows']}x{puzzle['board']['cols']}"
+    for k in ("title", "subtitle"):
+        if k in meta:
+            out[k] = VR.format_title(meta[k], d, vals)
+    if t is True or isinstance(t, dict):
+        out["type"] = VR.type_name(d, t["scheme"] if isinstance(t, dict) else "name")
+    if meta.get("variants") is True:
+        out["variants"] = VR.variant_ids(d)
+    if meta.get("rules_text") is True:
+        out["rules_text"] = VR.rules_text(d)
+    if meta.get("generated_from") is True:
+        out["generated_from"] = result["spec_fingerprint"]
+    return out
+
+
 def generate(spec):
     """generate one puzzle meeting a pencilmark-spec request (docs/formats/generator-spec.md; a dict, JSON text or a path). Returns
-    {"puzzle": pencilmark-puzzle (with solution), "card": pencilmark-grade card, "info": {...}}. A `fingerprint` /
-    `generated_from` key in the spec's meta is filled in on the puzzle (its fingerprint / the request's). Raises NotSupportedError for a part of the spec the generator does not run, GenerationFailed when no
-    puzzle met it in time."""
+    {"puzzle": pencilmark-puzzle (with solution), "card": pencilmark-grade card, "info": {...}}. The spec's meta is
+    copied to the puzzle; some keys are requests filled in from the result (meta_requests). Raises NotSupportedError
+    for a part of the spec the generator does not run, GenerationFailed when no puzzle met it in time."""
     import json as _json
     from pathlib import Path
 
@@ -436,8 +487,9 @@ def generate(spec):
         raise TypeError(
             'generate takes a "pencilmark-spec" request (docs/formats/generator-spec.md), e.g. {"format": "pencilmark-spec", '
             '"format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9, "rules": [{"type": "box_grid", '
-            '"origin": "r1c1", "box": [3, 3]}], "where": {"band": "Hard"}}'
+            '"box": [3, 3], "count": [3, 3]}], "where": {"band": "Hard"}}'
         )
+    meta_requests(doc.get("meta") or {}, None)  # a bad request fails before the run
     where = doc.get("where") if isinstance(doc.get("where"), dict) else {}  # a malformed where fails in spec_to_gen
     aimed = where.get("band") is not None or where.get("difficulty") is not None
     try:
@@ -448,28 +500,34 @@ def generate(spec):
         raise GenerationFailed(f"{e.args[0]}; {NO_TARGET}", *e.args[1:]) from None
     if not aimed:
         r["info"]["warnings"] = [NO_TARGET]
-    meta = {k: v for k, v in (doc.get("meta") or {}).items() if k != SF.NS}
-    if "generated_from" in meta:  # asked for in the spec: the request's fingerprint
-        meta["generated_from"] = SF.spec_fingerprint(doc)
-    meta.pop("fingerprint", None)  # filled in below, from the finished puzzle
     p = PJ.from_json(r["puzzle"])  # with the solution the puzzle was dug from: exporting needs no search
     p._pm_solution = [PJ._val(ch) for ch in r["puzzle"]["solution"]]
     from ..exchange import canonical
     from ..export import read_meta
 
-    puzzle = document(p, solution=True, describe=True)
-    m = dict(puzzle.get("meta") or {}, **dict(r["puzzle"].get("meta") or {}, **meta))
-    puzzle = canonical(dict(puzzle, meta=read_meta({"meta": m})))
-    if "fingerprint" in (
-        doc.get("meta") or {}
-    ):  # asked for in the spec: the puzzle's own (meta is outside it: no loop)
+    puzzle = document(p, solution=True)
+    card = r["card"]
+    req = {k: v for k, v in (doc.get("meta") or {}).items() if k != SF.NS}
+    filled = meta_requests(
+        req,
+        {
+            "puzzle": puzzle,
+            "spec_fingerprint": SF.spec_fingerprint(doc),
+            "band": card.get("band"),
+            "difficulty": card.get("difficulty"),
+            "time": card.get("time"),
+            "seed": (doc.get("limits") or {}).get("seed", 1),
+        },
+    )
+    filled.pop("fingerprint", None)  # filled in below, from the finished puzzle
+    puzzle = canonical(dict(puzzle, meta=read_meta({"meta": filled})))  # the spec's meta only: nothing unasked
+    if req.get("fingerprint") is True:  # asked for in the spec: the puzzle's own (meta is outside it: no loop)
         from ..api import fingerprint
 
         puzzle["meta"]["fingerprint"] = fingerprint(puzzle)
     from ..exchange import validate
 
     validate(puzzle)  # what the generator returns is a valid file: a bad element fails here, not in the user's reader
-    card = r["card"]
     if doc.get("fields") is not None:  # the requested card fields (docs/formats/generator-spec.md 5)
         from ..api import rate
 
@@ -660,11 +718,12 @@ def _generate(spec):
         whole = whole or card.get("completed") is False  # the result's card is complete: no grade_seconds cap
         # the publishing checks, after the cheaper targets; when the result's full card is made anyway, they are part of
         # it (one grading instead of two: a checked card has the same difficulty, time, band and contains)
-        merged = s.quality is not None and whole and hunt is None
-        if s.quality is not None:
+        quality = spec_quality(s.quality)
+        merged = quality is not None and whole and hunt is None
+        if quality is not None:
             p_ = PJ.from_json(d)
             p_.finalize()
-            qc = E2.grade(p_, dict(P, quality=s.quality), with_steps=False,
+            qc = E2.grade(p_, dict(P, quality=quality), with_steps=False,
                           max_seconds=None if merged else s.grade_seconds, alternatives=merged or screen_alts,
                           fields=sorted(E2.card_fields(None) | {"issues", "reject"}) if merged else ["issues", "reject"])  # fmt: skip
             if qc.get("reject"):

@@ -119,7 +119,22 @@ def tech_band(t):
     return MT.band_of(t)
 
 
-META_KEYS = ("title", "author", "source", "id", "url", "date", "rules_text", "type", "license", "tags")
+META_KEYS = (
+    "title",
+    "subtitle",
+    "author",
+    "source",
+    "id",
+    "url",
+    "date",
+    "rules_text",
+    "type",
+    "variants",
+    "license",
+    "tags",
+    "fingerprint",
+    "generated_from",
+)
 
 
 def read_meta(d):
@@ -507,9 +522,10 @@ def _f_issues(c):
 
 def _f_describe(c):
     from .variants import describe as _describe
+    from .variants import public
 
     doc, _ = c.doc
-    return {"describe": _describe(doc) if doc is not None else None}
+    return {"describe": public(_describe(doc)) if doc is not None else None}
 
 
 def _f_se(c):

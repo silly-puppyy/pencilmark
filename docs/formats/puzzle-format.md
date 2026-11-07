@@ -37,7 +37,9 @@ It is written so that:
   common practice);
 - a reader that meets something it does not understand **refuses** the file instead of silently dropping a rule
   (section 4);
-- every puzzle has **one canonical representation** (section 8).
+- every puzzle has **one canonical representation** (section 8): one canonical file per way of writing it; two
+  families that state the same constraint (a kropki dot and a `relation` on the same pair) are not always merged
+  (section 8.2 says which are).
 
 The file is JSON ([RFC 8259](https://www.rfc-editor.org/rfc/rfc8259)), UTF-8, conventionally named `*.json` or
 `*.sudoku.json`, media type `application/json`. A file is recognised by its `"format"` member, not by its name.
@@ -46,7 +48,10 @@ line.
 
 ### 1.1 What each reader needs
 
-Meaning and drawing are kept apart, so different programs read different parts of a file:
+Meaning and drawing are kept apart by field, not by family: a rule's `type`, `kind` and their selectors (a kropki dot's
+`color`, an XV mark's `letter`, a clue's `value` or `sum`) state what it means, and the same fields tell a renderer what
+to draw (a white dot is the consecutive clue); `style` and `decorations` are drawing only. So different programs read
+different parts of a file:
 
 - a **renderer** needs the board, the givens, and each rule's family, kind and cells (plus any number it shows, such as
   a cage sum); it never needs to know what a rule means arithmetically. It MAY use `style` and `decorations`.
@@ -110,6 +115,7 @@ agree on the common ones:
 | Key | Meaning |
 |---|---|
 | `title` | Title. |
+| `subtitle` | A second title line. |
 | `author` | Setter's name. |
 | `source` | The website's domain, such as `"logic-masters.de"`. |
 | `id` | That site's own id. |
@@ -117,6 +123,7 @@ agree on the common ones:
 | `date` | ISO 8601 date. |
 | `rules_text` | The setter's own wording of the rules. Tools never overwrite it. |
 | `type` | Display name of the variant, such as `"Killer Sudoku"`. Variant names live **only** here; they never change the rules. `describe()` ([How variants are named](../library/variant-naming.md)) fills it when it is empty. |
+| `variants` | The variants as snake_case ids, like tags: `["killer", "german_whispers"]` (`describe()` lists them; [How variants are named](../library/variant-naming.md)). |
 | `license` | Licence of the puzzle. |
 | `tags` | List of strings. |
 | `fingerprint` | Optional: the puzzle's [fingerprint](#82-fingerprint), 64 hex digits. `meta` is outside the fingerprint, so a file can carry its own. |
@@ -343,7 +350,11 @@ keep their order.
 
 `pencilmark.fingerprint(puzzle) -> "<64 hex>"` (SHA-256, lowercase):
 
-1. Read the puzzle and write it canonically (8.1).
+1. Read the puzzle and write it canonically (8.1). Reading turns the rules into constraints and writing rebuilds rules
+   from them, so some spellings of one constraint meet here: a `relation` on an orthogonal pair is written as the edge
+   clue it amounts to (`difference` 1 as a white kropki dot, `less` as a `greater` edge). Others keep their family:
+   a thermometer and a chain of `less` relations, or a V and an edge `sum` of 5, have different fingerprints. The
+   fingerprint identifies a puzzle as written, up to these merges, not every puzzle with the same solutions.
 2. Keep only `format`, `format_version`, `board`, `digits`, `givens`, `placed`, `candidates`, `rules`; in every rule drop `id`,
    `label`, `style`.
 3. Replace all house rules (`grid`, `box_grid`, `box`, `row`, `column`) by the houses they state, one

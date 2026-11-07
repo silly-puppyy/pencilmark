@@ -14,24 +14,26 @@ mistakes it for a puzzle), plus blocks that say what the result must satisfy and
 
 ```json
 {"format": "pencilmark-spec", "format_version": 1,
- "meta": {"title": "Killer with whispers"},
+ "meta": {"title": "{type:list} #{seed}", "subtitle": "{band}, {difficulty}", "author": "Your name",
+          "type": {"scheme": "list"}, "variants": true, "rules_text": true,
+          "fingerprint": true, "generated_from": true},
  "board": {"rows": 9, "cols": 9},
  "digits": 9,
- "givens": {"count": [0, 2]},
+ "givens": {"count": 2},
  "rules": [
   {"type": "box_grid", "box": [3, 3], "count": [3, 3]},
-  {"type": "cage", "count": "auto"},
-  {"type": "line", "kind": "whisper", "count": [2, null]}],
- "symmetry": [{"kind": "rot180", "of": "givens"}],
- "where": {"band": "Hard", "difficulty": [6.5, 9]},
- "limits": {"time": 300, "seed": 42},
- "fields": ["difficulty", "time", "band", "contains"]}
+  {"type": "cage", "count": [1, null]},
+  {"type": "line", "kind": "whisper", "count": [1, null]}],
+ "where": {"band": "Hard"},
+ "quality": {"preset": "standard"},
+ "limits": {"time": 900, "seed": 3},
+ "fields": ["difficulty", "time", "band", "contains", "issues"]}
 ```
 
-The result is an ordinary `pencilmark-puzzle` with its `solution`, and `meta` of the spec (title, author, ...) is copied to
-it. A `fingerprint` or `generated_from` key in the spec's `meta` (any value, `true` by convention) is filled in on the
-puzzle: `meta.fingerprint` with the puzzle's [fingerprint](puzzle-format.md#82-fingerprint), `meta.generated_from` with
-the spec's (section 6). Without them the puzzle carries neither.
+The result is an ordinary `pencilmark-puzzle` with its `solution`. Its `meta` is the spec's: every key is optional,
+copied as written, and a few are requests the generator fills in (section 5.1). This one took about nine minutes and came back with
+`"title": "Killer German Whispers Sudoku #3"`, `"subtitle": "Hard, 9.6"`, `"type": "Killer German Whispers Sudoku"`,
+`"variants": ["killer", "german_whispers"]`, the rules in words and both fingerprints; its card has no issues.
 
 ## 1. Board
 
@@ -99,7 +101,8 @@ Shape limits do not combine with `"tile"` or with a zero-given cage count.
   grids in reading order of their origins; a shared cell counts for both grids): more givens on one side makes that
   side easier.
 - `symmetry`: at most one entry, `{"kind": "rot180" | "rot90" | "mirror", "axis"?: "horizontal" | "vertical" |
-  "diagonal" | "antidiagonal", "of": "givens"}`. `rot90` and the diagonal mirrors need square boxes (4×4, 9×9, 16×16);
+  "diagonal" | "antidiagonal", "of"?: "givens"}` (`of` may be left out: `givens` is its default and, in version 1,
+  its only value). `rot90` and the diagonal mirrors need square boxes (4×4, 9×9, 16×16);
   on other boards the request is refused. The same entries are reported by `describe()` and the `symmetry` card field.
 
 ## 4. Targets: `where`
@@ -113,14 +116,19 @@ Conditions on the result's card, using the card's keys ([Grade card](grade-card.
 | `contains` | technique codes that must appear in `contains`; `{"codes": [...], "strict": true}` = as the code itself, not only as an alternative in a chip |
 | `elements` | `{"max": n}`: at most n placed rule elements in total |
 
-`quality` (top level) filters candidates by the publishing checks of the grade card: one with an issue of severity
-reject is not returned, and the run's `info.rejected` counts the candidates refused, by check. Without `quality` every
-request uses the standard preset (a few common-sense checks and two measured on published puzzles, [Grade
-card](grade-card.md) section 4); `{}` gives each check its own default severity, as `rate` does, and a check
-named with `"severity": "off"` is switched off. An object adjusts them as [`rate(quality=...)`](grade-card.md) does:
-`{"trivial": {"limit": 0.45}}` refuses puzzles with more than 45% of the cells given, `{"thin": {"severity":
-"reject"}}` those whose candidate steps do little (mostly singles around one hard step), `{"trivial": {"severity": "off"}}` turns a check off (a learner's
-first puzzle may well be mostly given; with `"preset": "standard"` beside it, the rest of the preset stays).
+### 4.1 Publishing checks: `quality`
+
+`quality` (top level) is opt in: without it, or with `{}`, no check runs (a canonical writer drops `{}`). With it, a
+candidate that gets an issue of severity `reject` is not returned, and the run's `info.rejected` counts the candidates
+each check refused. The checks and their limits are those of the grade card ([Grade card](grade-card.md), section 4).
+
+- `"preset": "standard"` turns on the standard set, each at severity `reject`: `decorative`, `trivial`, `trial`,
+  `thin` and `unusual`. The preset is the only thing that turns on checks you do not name.
+- A check named next to the preset adjusts it: `{"preset": "standard", "thin": {"limit": 0.2}}` relaxes `thin`,
+  `{"preset": "standard", "trivial": {"severity": "off"}}` drops `trivial` (a learner's first puzzle may well be
+  mostly given).
+- Without a preset, only the checks named run: `{"trial": {"severity": "reject"}}` refuses puzzles that need trial
+  or forcing and nothing else. A named check without a `severity` runs at its own (grade card, section 4).
 
 ## 5. Limits, fields and program data
 
@@ -128,11 +136,27 @@ first puzzle may well be mostly given; with `"preset": "standard"` beside it, th
   puzzle or fails with the reason after `time`; an attempt still digging when the time is up is given up. Grading the
   returned puzzle in full comes on top.
 - `fields`: which card fields to return with the result ([Grade card](grade-card.md)); default fields without it.
-- `meta`: free information as in the puzzle format. pencilmark reads its own knobs from
+- `meta`: copied to the puzzle, with the requests of 5.1 filled in. pencilmark reads its own knobs from
   `meta["io.github.silly-puppyy.pencilmark"]`: `{"solver": "logic" | "cpsat", "grade_seconds": s}` (`grade_seconds`:
   how long each candidate may be graded, default 60; the returned puzzle's card is always graded in full).
 
 A part of a request the generator cannot meet in time is never ignored: the run fails and says why.
+
+### 5.1 Metadata: `meta`
+
+Everything in `meta` is optional and copied to the puzzle ([Puzzle format](puzzle-format.md) 2.1 lists the common
+keys). These keys are requests, filled in from the result; nothing is filled unless asked:
+
+| Key | Request | Filled with |
+|---|---|---|
+| `title`, `subtitle` | a text, with fields in braces | the text with its fields filled: `{type}` (the variant name; `{type:list}` in the `list` scheme), `{variants}` (the variant names, comma-separated), `{size}` (`9x9`), `{band}`, `{difficulty}`, `{time}` (minutes), `{givens}` (their count), `{seed}`. `{{` and `}}` are literal braces; a text without fields is copied |
+| `type` | `true`, or `{"scheme": "name" \| "list"}` | the variant name ([How variants are named](../library/variant-naming.md)): `name` (the default) is one variant's name or "Variant" for two or more (`"Variant Sudoku"`); `list` names every variant (`"Jigsaw Killer Renban Kropki Sudoku"`). A text is copied |
+| `variants` | `true` | the variants as snake_case ids, like tags (`["killer", "german_whispers"]`). A list is copied |
+| `rules_text` | `true` | the rules in words, one line per variant. A text (the setter's own) is copied |
+| `fingerprint` | `true` | the puzzle's [fingerprint](puzzle-format.md#82-fingerprint) |
+| `generated_from` | `true` | the spec's fingerprint (section 6) |
+
+An unknown field or scheme fails the request before the run.
 
 ## 6. Fingerprint
 

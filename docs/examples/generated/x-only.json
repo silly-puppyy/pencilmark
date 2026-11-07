@@ -34,6 +34,9 @@
     "count": 0
    }
   ],
+  "quality": {
+   "preset": "standard"
+  },
   "limits": {
    "time": 300,
    "seed": 1

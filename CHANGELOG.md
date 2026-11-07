@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- **Generator publishing checks are opt in.** A request without `quality`, or with `{}` (dropped when a spec is
+  written), runs no checks; `{"preset": "standard"}` turns on the standard set; without a preset only the checks named
+  run. 1.2 used the standard preset by default and `{}` meant every check at its own severity. The examples and guides
+  now ask for the preset explicitly, and the generator spec's top example shows `quality` and both fingerprint keys.
+- **Generator metadata on request.** Everything in a spec's `meta` is optional and copied; nothing is filled unless
+  asked (1.2 always added a machine title, `type` and `rules_text`). Requests: `title` / `subtitle` templates
+  (`{type}`, `{type:list}`, `{variants}`, `{size}`, `{band}`, `{difficulty}`, `{time}`, `{givens}`, `{seed}`), `"type":
+  true` or `{"scheme": "name" | "list"}` ("Jigsaw Killer Renban Kropki Sudoku"), `"variants": true` (snake_case ids
+  like tags), `"rules_text": true`; `fingerprint` / `generated_from` now take only `true`. `describe()`, the card's
+  `describe` field and `write.*(describe=True)` give `variants` too; `subtitle` and `variants` are suggested meta keys.
+- **Puzzle format wording**: meaning and drawing are split per field (a kropki dot's colour is meaning), and the
+  fingerprint section says which spellings of one constraint meet.
 - **All unique rectangle types.** New type 6 (an X-Wing on one floor digit across a diagonal floor), and every type
   allows corners that miss one of the pair (HoDoKu's "missing candidates": the deadly-pattern argument is about the
   final grid). Avoidable rectangle type 2 is no longer tied to the colour-algebra switch, so default cards use it.

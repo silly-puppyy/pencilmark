@@ -44,8 +44,9 @@ a 6×6 board has boxes 2 cells high and 3 wide:
   {"type": "box_grid", "box": [2, 3], "count": [3, 2]}]
 ```
 
-Cells are named by row and column: `r1c1` is the top-left cell, `r6c6` the bottom-right. `origin` is the top-left cell
-of the grid.
+Cells are named by row and column: `r1c1` is the top-left cell, `r6c6` the bottom-right. A `box_grid` may also take
+an `origin`, the grid's top-left cell; it is left out here because it defaults to `r1c1` (a board with several grids,
+such as a samurai, gives each grid its own).
 
 ## 3. Thermometers and dots
 

@@ -103,8 +103,8 @@ pencilmark.rate(puzzle, fields=["issues", "reject", "warning"],
 ```
 
 CLI: `--quality trivial.limit=0.5,trial.severity=reject,tedious.severity=off`, or `--quality preset=standard`. The generator spec's `quality` block
-has the same shape and filters the candidates it generates; without it a request uses the standard preset ([Generator
-spec](generator-spec.md), section 4).
+has the same shape and filters the candidates it generates; there it is opt in, and without a preset only the checks
+named run ([Generator spec](generator-spec.md), section 4.1).
 
 | Code | Severity when asked for | Meaning | Limit (default) |
 |---|---|---|---|

@@ -28,6 +28,9 @@
     "of": "givens"
    }
   ],
+  "quality": {
+   "preset": "standard"
+  },
   "limits": {
    "time": 180,
    "seed": 1

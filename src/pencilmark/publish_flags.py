@@ -124,6 +124,17 @@ def quality_limits(q=None):
     return out
 
 
+def spec_quality(q):
+    """a generator spec's quality block -> the quality object its candidates are graded with, or None (no checks).
+    Quality is opt in: no block or {} runs nothing; a preset turns on its checks; without a preset only the checks
+    named run (docs/formats/generator-spec.md 4)"""
+    if not q:
+        return None
+    if "preset" in q:
+        return dict(q)
+    return {**{k: {"severity": "off"} for k in QUALITY if k not in q}, **q}
+
+
 def _apply_severity(notes, q):
     """the user's severity per check: "off" drops the note, "reject" / "warning" replace the check's own"""
     out = []

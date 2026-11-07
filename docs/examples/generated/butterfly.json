@@ -66,6 +66,9 @@
     ]
    }
   ],
+  "quality": {
+   "preset": "standard"
+  },
   "limits": {
    "time": 1800,
    "seed": 1

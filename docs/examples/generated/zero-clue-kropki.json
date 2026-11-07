@@ -40,7 +40,9 @@
     99
    ]
   },
-  "quality": {},
+  "quality": {
+   "preset": "standard"
+  },
   "limits": {
    "time": 600,
    "seed": 5
@@ -353,7 +355,7 @@
   ]
  },
  "info": {
-  "seconds": 16.8,
+  "seconds": 16.3,
   "attempts": 1,
   "found": null,
   "givens": 0,

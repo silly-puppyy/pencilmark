@@ -26,7 +26,6 @@ from .rules.line import LINE
 FORMAT = "pencilmark-spec"
 FORMAT_VERSION = 1
 NS = "io.github.silly-puppyy.pencilmark"
-DEFAULT_QUALITY = {"preset": "standard"}  # a request without "quality" (generator-spec.md 4)
 # generator element kind <-> template (type, kind)
 GEN_KINDS = {
     "cage": ("cage", None),
@@ -423,9 +422,9 @@ def spec_to_gen(doc):
         if set(w["elements"]) != {"max"}:
             raise NotSupportedError('where.elements takes {"max": n}')
         out["max_elements"] = w["elements"]["max"]
-    # the publishing checks: a candidate with a reject issue is not returned; without "quality" the standard preset
-    # (user 2026-11-07: every generation passes the quality checks)
-    out["quality"] = dict(doc["quality"]) if doc.get("quality") is not None else dict(DEFAULT_QUALITY)
+    # the publishing checks, opt in (user 2026-11-07): a candidate with a reject issue is not returned; no "quality" or
+    # {} = no checks ({} is dropped when the spec is written)
+    out["quality"] = dict(doc["quality"]) if doc.get("quality") else None
     lim = doc.get("limits") or {}
     if lim.get("results", 1) != 1:
         raise NotSupportedError("the generator returns one puzzle per run (limits.results 1; run several seeds)")
@@ -527,7 +526,7 @@ def spec_from_gen(spec):
         lim["seed"] = s.seed
     if lim:
         doc["limits"] = lim
-    if s.quality is not None and s.quality != DEFAULT_QUALITY:  # the default (standard preset) is left out
+    if s.quality:  # {} = no checks = no block
         doc["quality"] = dict(s.quality)
     ext = {k: getattr(s, k) for k in ("solver", "grade_seconds") if getattr(s, k) != DEFAULTS[k]}
     if ext:
@@ -537,6 +536,8 @@ def spec_from_gen(spec):
 
 def spec_fingerprint(doc):
     keep = {k: doc[k] for k in ("board", "digits", "givens", "rules", "symmetry", "where", "quality") if k in doc}
+    if not keep.get("quality"):  # {} = no checks = no block
+        keep.pop("quality", None)
     return hashlib.sha256(jcs(keep).encode()).hexdigest()
 
 

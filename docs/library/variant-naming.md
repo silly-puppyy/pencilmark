@@ -17,12 +17,16 @@ to one sentence, like the rule headers on [Logic Masters](https://logic-masters.
            "Killer": "Digits in a cage sum to its small clue and don't repeat within the cage.",
            "Anti-Knight": "Cells a knight's move apart don't contain the same digit.",
            "XV": "Digits separated by an X sum to 10; digits separated by a V sum to 5. All X's and V's are given."},
- "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nArgyle: ..."}
+ "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nArgyle: ...",
+ "variants": ["argyle", "killer", "anti_knight", "xv"]}
 ```
 
 It is deterministic, never reads `meta`, and never feeds back into solving. `rules_text` is the same map as
-"Key: sentence" lines. `write.document(..., describe=True)` and `write.pencilmark(..., describe=True)` use them only to
-fill an **empty** `meta.type` / `meta.rules_text`; they never overwrite them.
+"Key: sentence" lines; `variants` lists the variants as snake_case ids, like tags (the names lower-cased, other
+characters as `_`; a multi-grid layout first: `"samurai"`; a plain sudoku has none). `write.document(...,
+describe=True)` and `write.pencilmark(..., describe=True)` use them only to fill an **empty** `meta.type` /
+`meta.rules_text` / `meta.variants`; they never overwrite them. The generator fills them only when the spec's `meta`
+asks ([Generator spec](../formats/generator-spec.md) 5.1).
 
 They come from a registry in code (`pencilmark/variants.py`), so they generalise across sizes (a 16×16 windoku, a 6×6
 X).
@@ -40,6 +44,10 @@ X).
   Samurai Sudoku".
 - A board with rows / columns but no boxes and nothing else is a "Latin Square".
 - The first key of `rules` is the base: "Sudoku" (with the size word: "Mini Sudoku", "16x16 Sudoku"), or the layout name.
+
+Naming schemes (the generator's `"type": {"scheme": ...}` and `{type:...}` in a title): `name` is the rule above;
+`list` names every variant, size word first and base last: "Mini Thermo Kropki Sudoku", "Jigsaw Killer Renban Kropki
+Sudoku".
 
 ## 2. Recognition
 

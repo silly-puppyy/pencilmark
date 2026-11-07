@@ -1,0 +1,20 @@
+{"format": "pencilmark-puzzle",
+ "format_version": 1,
+ "board": {"rows": 9, "cols": 9},
+ "digits": 9,
+ "givens": [
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0],
+ "rules": [
+  {"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+  {"type": "sandwich", "sum": 12, "side": "left", "cells": ["r3c1", "r3c2", "r3c3", "r3c4", "r3c5", "r3c6", "r3c7", "r3c8", "r3c9"]},
+  {"type": "xsum", "sum": 24, "side": "top", "cells": ["r1c9", "r2c9", "r3c9", "r4c9", "r5c9", "r6c9", "r7c9", "r8c9", "r9c9"]},
+  {"type": "sum", "kind": "little_killer", "sum": 15, "side": "top", "cells": ["r1c4", "r2c5", "r3c6", "r4c7", "r5c8", "r6c9"]},
+  {"type": "sum", "kind": "little_killer", "sum": 9, "side": "bottom", "cells": ["r9c2", "r8c1"]}]}
