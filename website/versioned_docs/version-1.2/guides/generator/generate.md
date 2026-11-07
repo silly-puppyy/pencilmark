@@ -24,7 +24,7 @@ spec = {
     "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}],
     "symmetry": [{"kind": "rot180", "of": "givens"}],
     "where": {"band": "Hard", "contains": ["XWG"]},
-    "limits": {"time": 120, "seed": 7},
+    "limits": {"time": 120, "seed": 21},
 }
 ```
 
@@ -43,20 +43,21 @@ print(card["band"], card["difficulty"], card["time"], [c["chip"] for c in card["
 ```
 
 ```
-8..1.9...3...5..2..2.7....6....8.1..192...768..8.7....4....8.9..5..9...4...4.7..5
-Hard 5.7 8.6 ['HSI', 'NSI/MSI', 'XWG/MCH']
+..2.987..8.5..7....3.2.5....8..5..4.5.1...6.3.6..1..2....5.1.7....4..3.9..397.5..
+Hard 5.9 10.9 ['HSI', 'NSI/MSI', 'XWG/MCH']
 ```
 
-The run took about a minute. The result has three parts:
+The run took about a second. The result has three parts:
 
 - `r["puzzle"]`: a `pencilmark-puzzle` with its solution, ready to save as a file;
 - `r["card"]`: its grade card, as `pencilmark.rate` would give it;
-- `r["info"]`: how the run went, for example `{'givens': 28, 'attempts': 833, 'rejected': {'band too low (logic pre-check)': 831, 'publishing check: thin': 1}, ...}`.
+- `r["info"]`: how the run went, for example `{'givens': 30, 'attempts': 18, 'rejected': {'band too low (logic pre-check)': 17}, ...}`.
   `info.warnings` lists hints about the request: without `where.band` or `where.difficulty` the search is the broadest
   (every technique, up to Extreme) and can be slow on sparse variants, so it suggests aiming it (the command line prints
   these as notes).
-  The generator tried 833 puzzles: 831 were too easy, and one was Hard but failed the publishing check `thin` (its
-  hard step did too little), which every request passes unless its `quality` says otherwise.
+  The generator tried 18 puzzles; 17 were too easy. Every result also passes the standard publishing checks unless
+  the request's `quality` says otherwise (another seed here found a Hard puzzle whose X-Wing did too little, `thin`,
+  and searched on).
 
 Change `seed` for a different puzzle. With the same seed and request, the result is the same every time.
 

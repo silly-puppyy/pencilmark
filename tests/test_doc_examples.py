@@ -63,7 +63,7 @@ def test_doc_examples_run(page, tmp_path, monkeypatch):
         "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}],
         "symmetry": [{"kind": "rot180", "of": "givens"}],
         "where": {"band": "Hard", "contains": ["XWG"]},
-        "limits": {"time": 120, "seed": 7},
+        "limits": {"time": 120, "seed": 21},
     }
     ns = {
         "__name__": "__doc_example__",
