@@ -2,487 +2,161 @@
 
 ## Unreleased
 
-What changes for you (details in the entries below):
+### What changes for you
 
-- **Difficulty values move.** The search part counts refutations in propagation rounds and the score map is refitted
-  (easy puzzles a little higher, hard ones a little lower), and the difficulty is the expected effort of a human-like
-  solver (bottleneck rollouts, +0.09 on average). Rank agreement with human times rises (fed +0.040, Wang 2024 +0.028).
-- **Some bands and technique lists move.** The band route is the human one (reference cards: 1 of 227 bands).
-  Colouring as a solving method is opt in (`rate(colouring=True)`, `--colouring`).
-- **Technique names follow their cited sources** (the techniques page): Skyscraper vs Turbot Fish, XY-Chain vs AIC,
-  Mutant vs Franken fish, Empty Rectangle; the forms the sources describe are found (WXYZ-Wing type 2, Death Blossom
-  of any size, overlapping ALS-XZ, BUG+1 with a 4+ candidate cell, ...), each with its own explanation. Checked on
-  Andrew Stuart's examples (132 of 139 found, no wrong move) and by soundness walks.
-- **Faster on the slowest variants:** long lines, counting circles and killers; several cards that hit the time
-  limit (band Unknown) are graded now.
-- **Publishing checks.** `thin` replaces `spike`; the `unusual` ranges are re-measured; quality presets
-  (`{"preset": "standard"}`) and opt-in checks are new;
-  rule use counts the steps where a rule acts without being named (a line's pair relations, anti-knight note erasures).
-- **Breaking, no aliases** (nobody depends on them yet): fingerprints drop the `sha256:` prefix; `box_grid` needs `count`; colouring codes share the prefix C
-  (EQD -> CEQ, SCL -> CSM, MCL -> CMU, 3DM -> CMD, identity-layer codes CSG / CFL / CPR / CTR); generated puzzles carry
-  `meta.generated_from` only when the spec asks.
-- **Breaking, no aliases:** the format names are `pencilmark-puzzle`, `pencilmark-grade` and `pencilmark-spec` (the format is
-  called "pencilmark JSON"; were `sudoku-puzzle`, `sudoku-grade`, `sudoku-spec`); the schema files are renamed to match.
-- **New in the format:** fog of war, regions to find (chaos), shading (yin-yang), custom-rule unknowns and layers.
-  `rate` grades fog under the fog; shading and unknowns give band Unknown with a `reason` for now (they load,
-  validate, solve and count). Errors are only for wrong inputs (unreadable, misread, not unique, no solution).
+- **Difficulty values move.** The search part of the score counts refutations in propagation rounds, the score map is
+  refitted, and the difficulty is the expected effort of a human-like solver. Easy puzzles score a little higher, hard
+  ones a little lower; rank agreement with human solve times rises (fed +0.040, Wang 2024 +0.028).
+- **Technique names follow their cited sources** ([Techniques](docs/grades/techniques.md)), and the forms those sources
+  describe are found. Some bands move: wider WXYZ-Wings put some Expert puzzles at Very Hard.
+- **New in the format:** fog of war, custom rules (expressions over cell digits, with unknowns and layers), and
+  `placed` digits for mid-solve boards. Shading and regions to find are reserved for a later version.
+- **New reading and writing API**, one function per format, and every error is a `pencilmark.Error`.
+- **Faster** on the slowest variants; several puzzles that hit the time limit are graded now.
+- **Breaking, no aliases** (nobody depends on them yet): the format names, the reading and writing functions, the
+  command line's `json` / `export` commands and `--format` option, the fingerprint prefix, `box_grid` and the
+  colouring codes all change. Details under each heading below.
 
-- Reading and writing, one function per format (no aliases): `pencilmark.read.plain / grid / pencil_marks /
-  candidates / hodoku / sudokuwiki / ipuz / pencilmark / link` each read one format strictly (FormatError otherwise);
-  `pencilmark.write.pencilmark / document / plain / grid / sudokuwiki / ipuz` write one. `rate`, `solve`,
-  `count_solutions`, `describe`, `fingerprint` and the command line take any of them, detected (`read.detect`,
-  `read.auto`), and `rate(format=...)` names it. Gone: `load`, `to_export`, `dumps`, `from_string`, `to_string`,
-  `from_ipuz`, `to_ipuz`, `rules_text` (now in `describe`'s result), the CLI `json` command, and the engine's internal
-  JSON and sample-pack lines as inputs. A written document is kept as given (no longer rebuilt through the engine;
-  fingerprints unchanged). Site links: the host names the reader, no options.
-- Command line: every command takes `--from FORMAT` (default: detected per line); `rate --print TEMPLATE` replaces
-  `--format` (which read like the input format); `convert --to pencilmark|plain|grid|sudokuwiki|ipuz` replaces
-  `export`; `generate --seed / --time` are gone (the spec's `limits` hold them).
-- Public functions take their options as keywords only and carry type hints. `rate` gives band Unknown with a `reason`
-  (and `completed: false` under `max_seconds`) where it raised `Undecided`: the engine could not settle uniqueness,
-  which is not an input mistake; `solve` still raises it. `solve(info=True)` is gone; `solve` and `count_solutions`
-  take `format=`.
-- `placed` (pencilmark JSON): digits filled in after the start, as on a mid-solve board. Solved and graded like givens
-  (the rest of the solve is graded), not clues for the publishing checks and symmetry. The sudokuwiki reader keeps
-  Andrew Stuart's placed digits (code d + 9) as placed and the writer writes them back.
-- Step notation names houses by position for every input ("X-Wing: 3 r58 c68", "in b5"); pencilmark JSON inputs
-  printed group names ("row4 row7 col14").
+### Format (pencilmark JSON)
+
+- The format is called "pencilmark JSON"; its document names are `pencilmark-puzzle`, `pencilmark-grade` and
+  `pencilmark-spec` (were `sudoku-puzzle`, `sudoku-grade`, `sudoku-spec`), and the schema files are renamed to match.
+- Fog of war (6.20): `{"type": "fog", "lit": [...], "triggers": [...]}`. Without triggers a correct digit lights its
+  3×3; with them only the triggers reveal. A fog puzzle carries its solution. The SudokuPad and f-puzzles readers fill
+  it in; 43 of the Cracking the Cryptic fog puzzles load with their fog (none before).
+- Custom rules (6.18): a rule written as an expression over named cells, such as
+  `{"type": "custom", "cells": {"c": [...]}, "holds": "2 * max(c) == sum(c)"}`, with scopes for every pair of
+  neighbours, every window or every cell with its neighbours. Named `unknowns` (a number several clues share) and
+  `layers` (a second value per cell) can be read by custom rules; puzzles with them solve and count, and grade as band
+  Unknown with a `reason` for now. The grammar was checked on 1,000 Logic Masters puzzles.
+- `placed`: digits filled in after the start, as on a mid-solve board. They are solved and graded like givens, but are
+  not clues for the publishing checks or symmetry.
+- `box_grid` states its tiling as a box size and a count: `{"type": "box_grid", "box": [3, 3], "count": [3, 3]}`;
+  `count` is required. `origin` is optional (`r1c1` by default).
+- Fingerprints are the bare SHA-256 digest (64 hex digits), without the `sha256:` prefix. The digest is unchanged.
+- Generated puzzles carry `meta.generated_from` only when the spec asks for it, and can carry their own
+  `meta.fingerprint`.
+- Reserved for a later version: shading (`yin_yang`) and regions to find (`chaos`, `region_border`, `same_region`).
+  Readers refuse them by name, as they refuse digit tables.
+
+### Reading and writing
+
+- One function per format. `pencilmark.read.plain / grid / pencil_marks / candidates / hodoku / sudokuwiki / ipuz /
+  pencilmark / link` each read one format strictly; `pencilmark.write.pencilmark / document / plain / grid /
+  sudokuwiki / ipuz` each write one. `rate`, `solve`, `count_solutions`, `describe`, `fingerprint` and the command line
+  take any of them and detect the format (`read.detect`, `read.auto`), or take `format=` to name it. Site links pick
+  their reader from the host.
+- Gone: `load`, `to_export`, `dumps`, `from_string`, `to_string`, `from_ipuz`, `to_ipuz` and `rules_text` (now a
+  field of `describe`'s result), and the engine's internal JSON as an input.
 - One error family: every error is a `pencilmark.Error` (`FormatError`, `NotSupportedError`, `FetchError`,
-  `ReadingMismatch`, `NotUnique`, `NoSolution`, `Undecided`, `GenerationFailed`), exported at the top level. The site
-  readers' `SourceError`, `DecodeError` (now `FormatError`), `UnsupportedPuzzle` (now `NotSupportedError`, `.elements`
-  kept) and `VerificationError` (now `ReadingMismatch`) are gone; a custom-rule `LangError` is a `FormatError`.
-- Techniques checked against Andrew Stuart's sudokuwiki.org strategy examples (141 positions, every move sound) and
-  independent reference finders; what was missing is added:
-  - XY-Chain: a second chain search over bivalue cells only, so an XY-chain is no longer named (and priced) AIC when an
-    AIC of the same length joins the same ends.
-  - Simple Colouring and 3D Medusa: a colour that would leave a house no place for a digit is false (sudokuwiki's
-    rule of July 2026).
-  - Hidden Unique Rectangle type 2 (bivalue floor, a strong link from it to the roof) and Extended Unique Rectangle
-    type 2 (two cells with the same one extra digit).
-  - Aligned Pair Exclusion also counts two cells sharing three digits that see both cells of the pair.
-  Bands unchanged on the reference cards; times and difficulties move by up to 0.5 on 32 of 227.
-- Explanations name the pattern found: WXYZ / VWXYZ-Wing (types 1 and 2, with Z) instead of "bent set wing"; Pattern
-  Overlay rules 1 and 2; Death Blossom with several common digits; doubly-linked ALS-XZ including eliminations inside
-  the other set; Empty Rectangles with a single cell or a group on either side. Empty Rectangles come only from the
-  direct finder (HoDoKu's definition): chains are X-chains (the chain classification named some grouped X-chains ER).
-  Tests: every added rule's explanation on a generated position (pattern words, every removed candidate named).
-- Explanations: hidden unique rectangles (types 1 and 2) and extended unique rectangles (types 1 and 2) are explained
-  on the engine's own rectangle (before: a hidden-UR text, sometimes on another rectangle); Aligned Pair Exclusion names
-  the base pair and the witness that rules out each value pair; BUG+1 with a 4+ candidate cell has its own text.
-  Tests: each added rule's explanation names its pattern and every removed candidate.
-- Trial refutations on killers: the search bounds a cage's remaining sum with the digits its other empty cells can
-  still hold (before: any unused digit), so more refutations finish within budget. 331 frozen killers: 1,490 s ->
-  1,320 s, one Unknown at 300 s -> Extreme 21.6 (157 s; LMD 4 stars), 6 difficulties move by 0.1-0.2 within
-  their band. Reference cards: 1 killer 12.0 -> 12.1.
-- Sub-steps (`explain="substeps"`) for WXYZ-type wings (both types: the digits held at most once, then Z's places
-  or every digit once, the removals), and Franken / Mutant fish name their shape in a sub-step.
-- Counting circles: the combination search runs one digit set at a time (digits summing to the number of circles,
-  each digit d exactly d times) instead of "each digit 0 or d times" over all circles. Same deductions, found
-  exactly: a 15-circle LMD puzzle 232 s -> 2.5 s (Easy 8.4 -> 8.3); another (LMD 1 star) Easy 5.7 -> Very Easy 3.5,
-  its circles now read without notes (the old search ran out of budget). Reference cards identical.
-- Lines over 12 cells whose rule is only neighbour (or mirror) relations (thermo, slow thermo, whispers, palindrome,
-  parity, kropki chain) skip the whole-line search; the pair relations still propagate them. 18 frozen puzzles with
-  such lines: 677 s -> 389 s, bands unchanged but one (a 49-cell palindrome: Unknown at 300 s -> Easy 9.1 in 55 s);
-  difficulty moves within the band (up to 3 points on one). Their house-forcing step (a house's digit confined to the
-  line) is skipped too: the 18 puzzles take 32 s in all (was 677 s); a 43-cell parity line Unknown -> Medium 10.5 in
-  1.2 s, the 49-cell palindrome Medium 10.2 in 0.5 s. Reference cards: 1 difficulty 9.7 -> 9.9 (same band).
-- Publishing checks count rule use more faithfully: pair relations a line generated count for that line, and
-  different-digit links (anti-knight, no-touch ...) count where they erase notes without a step naming them (writing
-  notes, placements). Reference cards: 8 false "used in only 0 steps" rejects go (anti-knight, no-touch); the anti-knight
-  rule no longer borrows thermo-line uses.
-- Custom rules `concat(cells) in {numbers}` over more than 5 cells become engine tables like the smaller ones (the
-  rows are in the rule; before: an expression evaluated by enumeration). A puzzleduel Antidiagonal sudoku: 271 s ->
-  0.5 s, and its card Easy 7.7 -> Very Easy 5.7 (table pricing, as every rule of up to 5 cells already gets).
-- Uniqueness proof: with OR-Tools installed, the quick C++ pass stops after 2 s as well as after its node budget, so
-  CP-SAT gets its turn (a zero-given global-entropy puzzle: 197 s -> 4.4 s, same card). Reference cards identical.
-- ALS-XZ with overlapping almost locked sets when the restricted common has no place in the overlap (HoDoKu); the
-  explanation names the shared cells. Reference cards: bands unchanged (Vudoku 8.3 -> 8.2); 60 frozen puzzles +2% time.
-- XY-Chains up to 12 cells (sudokuwiki's solver; before: 8, the chain search's 15-link cap). Same speed and cards on
-  the reference sets.
-- Unique Rectangle type 3: naked subsets of any size with the roof (HoDoKu; before: up to 3 more cells).
-- BUG+1 also when the odd cell has 4+ candidates (Sudopedia: the two digits a BUG would leave there go); doubly-linked
-  ALS-XZ eliminates inside the other set and ALS-XY-Wing inside the pivot (HoDoKu). Reference cards: bands unchanged.
-- Gaps the cited sources show, filled: WXYZ-Wing type 2 (every digit restricted: each leaves the cells seeing all its
-  wing cells; sudokuwiki); Death Blossom stems of any size (sudokuwiki, HoDoKu, Sudopedia); Aligned Pair Exclusion
-  takes any almost locked set seeing both cells as a witness, and non-aligned pairs (sudokuwiki type 2). Reference
-  cards: bands unchanged.
-- More names checked against every cited source (docs/research, 2026-11-07): a Skyscraper's pairs must share a line at
-  their inner ends (else Turbot Fish, HoDoKu / Sudopedia); Empty Rectangles come only from the direct finder (HoDoKu's
-  definition: the chain search no longer names a grouped X-Chain an Empty Rectangle); an XY-Chain has the same digit at both ends (else AIC); Remote Pairs need 4+ cells; basic
-  X-Wings and Swordfish carry their shape, so Mutant fish are named Mutant (they were called Franken). Reference cards:
-  bands unchanged.
-- Names that match the pattern (checked against sudokuwiki.org's examples by their cited page, and against reference
-  finders): a finned X-Wing / Swordfish is no longer named a Franken fish when its eliminations have a plain row /
-  column spelling (the fish search lists line fish first; equal moves keep the plainer shape); Empty Rectangles are
-  found directly (HoDoKu's definition) instead of only when the shortest chain had the ER shape (they were long
-  X-Chains or missed when the box's crossing cell held the digit). Skyscraper and 2-String Kite no longer cite
-  sudokuwiki's Rectangle Elimination, which is the Empty Rectangle. Reference cards: bands unchanged.
-- Pattern Overlay rule 2 (sudokuwiki.org): a template of one digit that meets every template of another digit is not
-  the solution's; candidates left in no surviving template go. Bounded (1,000 templates per digit); reference cards
-  unchanged.
-- Definitions follow the cited sources (docs/grades/techniques.md): WXYZ-Wing is any four cells holding four digits,
-  not all in one house, with one digit not confined to cells that see each other (sudokuwiki.org; before: only cells in
-  one box and one line); an almost locked set has any size (HoDoKu; before: at most 4 cells). Reference cards: bands
-  unchanged, difficulty within 0.1; speed unchanged (60 frozen puzzles, 978 s against 980 s).
-- Quality presets: `quality={"preset": "standard"}` (`--quality preset=standard`) turns on decorative, trivial, trial,
-  thin and unusual (all reject) and switches the other checks off; checks named next to the preset adjust it.
-- Opt-in quality checks (off unless named): `asymmetric`, `no_interplay`, `winding`, `short_lines`, `repetitive`,
-  `monotone`, `desert`, `late_break`; limits near the edge of published Medium+ puzzles
-  (1-27% of them flagged, per check).
-- Fingerprints are the bare SHA-256 digest, 64 lowercase hex digits, without the `sha256:` prefix (puzzle and spec
-  fingerprints, `meta.fingerprint`, `meta.generated_from`). The digest itself is unchanged. No alias.
-- Engine: `CB.solve(stop_cells=)` stops right after a step that places one of the cells; the fog card's routes stop at
-  each reveal inside the engine instead of solving the visible puzzle on (one fog card: over 120 s -> 21 s).
-- The fog route ends each round's band route at the first placement that lights new cells instead of solving on and
-  discarding the rest: the same routes, up to 125x faster (265 s -> 2 s on one sudoku.coach puzzle).
-- `rate` grades fog-of-war puzzles under the fog: the band and techniques of the fog route (the human route on what
-  the fog shows, round by round); difficulty and time by the card's own routes run the same way under the fog (the
-  same algorithm as every card: a fog rule that lights every cell gives exactly the card without fog). A card field
-  `fog` tells what the fog did (lit at the
-  start, reveals, rounds, solved); where the fog stops the route, the band is Unknown with `stopped_at_step`, never
-  the revealed grade. Errors stay for inputs that are wrong. Fog visibility now includes pair relations and custom
-  rules (they were dropped, so a route could stall with nothing fogged).
-- Published ranges per band (`unusual`, the generator guide's table) re-measured on the 1.2 engine and the repaired
-  development set (7,155 puzzles): variant Easy from 4.7 (was 4.4), variant Hard from 5.2 (was 4.6), variant Very Easy
-  up to 5.9 (was 5.6); variant Extreme has too few puzzles for a range now. The guide recommends the standard preset.
-- Export: a rule part tagged with its line kind is dropped only when its line is there too; a reader that built only
-  the part (an equal sum for a region-sum line) no longer loses the rule on export.
-- Custom rules: a set of number literals (`concat(c) in {...}`) is built once, not once per digit tuple: a puzzle
-  with 64 such rules (global entropy) loaded in 27 min; now 1.7 s (`concat(c) in {...}` over one list of cells reads
-  its table straight from the numbers).
-- Colour Algebra (colour the grid as unknown digits) comes before band set theory in the Very Hard study order: the
-  route opens with the colouring that solvers describe on zero-given palindrome puzzles; grades unchanged.
-- Colouring is opt in: `rate(puzzle, colouring=True)` (CLI `--colouring`, also `rate_many`) puts the identity layer's
-  colour techniques on the human route; the default leaves them out. Most solvers do not colour (sudoku.coach
-  comments mention it on 4% of classics, 10% overall, mostly palindromes and zero-given puzzles), and with it the
-  hardest variants grade 2-3x slower. The CLI's rate now goes through `rate()` (it graded fog, shading and unknowns
-  puzzles on its own path).
-- Publishing check `thin` replaces `spike`: a Medium or harder puzzle whose candidate steps carry less than 25% of
-  its effort (singles around one hard step that changes little; Andrew Stuart: "too few candidates removed using
-  candidate strategies"). `spike` flagged most published puzzles (83-92% of human-set Medium / Hard): concentrated
-  effort is normal; little candidate work is not. Measured on fed, sudoku.coach and Stuart's daily puzzles.
-- Format: `box_grid` states its tiling as a box size and a repetition count, `{"type": "box_grid", "box": [3, 3],
-  "count": [3, 3]}` (3×3 boxes, 3×3 times); `count` is required. `origin` of `grid`, `box_grid` and `chaos` is
-  optional, `r1c1` by default, and writers and the canonical form leave it out there. Files without `count` are refused
-  (no aliases). Fingerprints are unchanged (they hash the houses).
-- Generated puzzles no longer carry `meta.generated_from` by default. A spec asks for it in its own `meta`
-  (`"meta": {"generated_from": true, "fingerprint": true}`), and the puzzle gets the request's fingerprint and the new
-  optional `meta.fingerprint`, its own (`meta` is outside the fingerprint, so a file can carry it).
-- Reader: f-puzzles fog written as generic cages, as SudokuPad imports them, is read (a one-cell `FOW` cage lights
-  its 3x3, a `FOGLIGHT` cage its cells); an invisible `FOW` cage was dropped and the puzzle refused. Rules that
-  describe indexing without the word ("digits in column 1 indicate the column in which the digit 1 appears") are
-  refused instead of read without them.
-- Colouring techniques share a code prefix C (codes appear in cards' `contains` and steps): Same Colour EQD -> CEQ,
-  Simple Colouring SCL -> CSM, Multi-colouring MCL -> CMU, 3D Medusa 3DM -> CMD; the identity-layer codes become CSG
-  (Colour Single), CFL (Colour Fill), CPR (Colour Pair), CTR (Colour Trap). Class Colouring CCL and Colour Algebra CAL
-  keep theirs. No aliases.
-- Bands: Clue Facts are Easy (memorised variant facts), Colour Fill Medium; colouring techniques get short names (Same
-  Colour, Colour Single, Colour Fill, Colour Pair, Colour Trap, Simple Colouring, Class Colouring).
-- Colour Fish (CFS, Hard) and Complete Colours (CCM, Medium), with `colouring` on: an X-Wing over a colour (two houses
-  confine it to two others), and k colours with a cell in every row and k possible digits between them, which use
-  those digits up. Colours whose cells see each other count as different. Up to 48 colours are kept (was 16).
-- Experimental fog route: colours are kept across reveals, and visible cell rules (parity squares and the like) narrow
-  the candidates (they were dropped each round). Restricted Access (CtC) now solves under the fog with colouring on,
-  first digit as the host's.
-- Colour Pointing (CPT, Medium; with `colouring` on): pointing for a colour. When a colour's places in one house all lie
-  in another house, the other cells of that house are not that colour (CtC, Restricted Access: "orange is in one of
-  these two positions").
-- Two colouring techniques of their own: Chain Colour (CCH, Medium: two cells forced to hold one digit through a third
-  tied to both by pair rules, e.g. V dominoes) and Colour Clash (CCX, Hard: a cell that would leave a linked colour no
-  digit never has the first colour). Both were reported as Same Colour / Colour Single before, with explanations that
-  read their cells wrongly.
-- Explanation sub-steps of colouring steps (identity layer): each colour keeps one colour name for the whole solve,
-  with a legend the first time it appears ("orange": "an unknown digit (5 or 6)") and its cells drawn in it.
-- Fog of war is a rule of the format (6.20): `{"type": "fog", "lit": [...], "triggers": [{"when": [...], "light":
-  [...]}]}`. Without triggers a correct digit lights its 3x3; with them only the triggers reveal. `lit` is everything
-  visible at the start (givens as the source shows them), and a fog puzzle must carry its solution. The SudokuPad
-  reader fills it from FOGLIGHT cages, `foglight` and `triggereffect` (adding each given's own cell); the f-puzzles
-  reader from `foglight` / `fogofwar`. Fog puzzles now load, validate, solve, count and
-  export with their fog, and `rate` grades them under the fog (entry above). Of the Cracking the Cryptic fog puzzles, 43 now load with their fog (none before).
-- Engine rule kind `cases` (one of several cases holds; each case a set of cells with a circle = the sum of the
-  others or a total, house peers different): the engine checks every case against the live candidates. The fog route
-  uses it for arrows seen in part (the possible hidden shafts, with "arrows move orthogonally / don't share cells"
-  from the rules text). Golden gate identical.
-- Experimental: `pencilmark.fog.route(puzzle)`, the route a solver can take under the fog (what is lit, reveals on
-  correct digits and setter triggers, no guessing); not yet used by `rate`. Hidden-content reasoning (partly seen
-  arrows, cage shapes) comes with the engine port (docs/research/fog_engine_port.md in the research repo).
-- Links are checked against the setter's embedded solution by default: a reading the solution breaks is refused with
-  `VerificationError` ("the reading contradicts the setter's embedded solution"); `sources.load(...,
-  check_solution=False)` skips it. On the 1,351 Cracking the Cryptic SudokuPad puzzles: 345 correct readings all
-  still load, 107 of 112 misreads (one-off rules worded like standard ones) are now refused; the other 5 have no usable
-  embedded solution or an undecided check. The import guide lists what links read and what they don't.
-- Custom rules that read a list only at constant indices compile over just those cells: "ray[3] + ray[4] == 3" over a
-  9-cell ray is now a 2-cell table, not a 9-cell expression constraint. Results are unchanged (golden gate
-  identical). Hand ports that declared whole rays now grade: three GAS ports went from Unknown to Very Easy 5.8 / Easy
-  9.0 / Easy 7.5.
-- The solve trace follows a human route by default (computer search stays opt-in with `mode="computer"` /
-  `--computer`): each step is chosen the way people choose, by a spotting score fitted on casual classic replays (the
-  move's price, its technique, and attention to the previous placement: same digit, same box / row / column, distance),
-  sampled reproducibly (params `spot_w`, `spot_fam`, `spot_seed`). On held-out sudoku.today replays the trace's
-  step-to-step behaviour is about 4x closer to people's than before. The band, the technique list and the publishing
-  checks follow the band route, which is now the human one: on the private golden corpus 1 of 227 bands, 15 technique
-  lists and some warnings differ.
-- Card difficulty is the expected effort of a human-like solver, estimated cheaply (score `route_rollouts`: 2 human
-  routes, 4 playthroughs): singles reach the same next bottleneck in any order, so each human route keeps its
-  bottleneck steps and the stretches of singles between them are replayed in random human order from the state the
-  route reached. Dev set, within-group Spearman vs the old card: fed +0.040, Wang 2024 +0.028, sudoku.coach +0.009,
-  grandgames -0.001. Difficulty rises 0.09 on average (more on singles-only puzzles); bands are unchanged. Rating takes
-  about 15% longer (1.54 -> 1.77 s on dev puzzles). The time quote still reads the single price-first route (score
-  `card_route`).
-- Optional: score `route_samples` = K (with `route_rollouts` off) makes the difficulty the mean effort over K full
-  sampled human routes (on threads in a single rating): a similar gain for about a third more rating time.
-- Note model of casual classic solvers, on by default as bookkeeping: position notes written as you go (`notes_live`:
-  a digit with 2-3 places left in a box), candidate lists in the cells with <= 3 candidates when notes start
-  (`notes_small`), every other cell written only when a step uses it (`notes_lazy`); the marks are counted on each
-  step's `notes_written`. On lisudoku replays its marked cells overlap people's far better on medium puzzles (Jaccard
-  0.65 vs 0.39 for full notes). Routes, prices and the card are unchanged (`notes_lazy_view` false; the card prices
-  full notes: score `card_notes`). The card's `trace` gains a `marks` layer per position (grade-card.md 6): the corner
-  position notes and centre candidate lists such a solver would have written, so a viewer can draw them instead of
-  the full candidates.
-- Colour model of expert solvers, on by default (`notes_colours`): the card's `trace` gains a `colours` layer per
-  position (grade-card.md 6), the identity colours a host would have painted: pair colouring ("colour the sevens and
-  nines against each other": two cells of a house with the same two candidates take opposite colours) and each
-  colour tracked through houses (one cell left that can hold it) and equality rules, at most three colour pairs, the
-  largest. On Cracking the Cryptic solves it covers more of the hosts' own identity colours at the moment they paint
-  them (0.45 vs 0.31 from the digits placed alone, 158 groups in 83 videos) while drawing about as many colours at
-  once as the hosts keep (about two). Bookkeeping only: routes, prices and the card are unchanged.
-- Custom rules: named `unknowns` (a number several clues share, or a 0 / 1 choice) and `layers` (a second value per
-  cell, e.g. a -1 / 0 / +1 shift) at the top level of the puzzle file, read by custom rules as `X` and `shift(c)`
-  (rules/custom.mdx, unknowns and layers; puzzle-format.md; schema). pencilmark reads, checks, writes and evaluates
-  them, and the exhaustive search solves and counts such puzzles: the C++ model carries them as aux variables (a value
-  set per unknown and per layer cell), a rule reading them is checked over its open hidden values once at most two of
-  its digits are open, and the search branches on them once the digits are fixed (uniqueness by digits). `rate`
-  gives band Unknown with a `reason` (no human technique reasons with them yet).
-- Engine: lemma rules (internal, for derived facts; docs/research/engine_aux_lemma_design.md in the research notes).
-  An internal table constraint may carry `lemma` {id, setup, use}: its moves cost `setup` the first time any rule of
-  that lemma is used in a route and `use` afterwards; a constraint marked `gated` makes no human moves (combination
-  steps, rule intersections, band logic, rule reads in the head) while the search still checks it. Nothing in the
-  puzzle format uses them yet; cards and routes are unchanged.
-- New engine param, off by default: `digit_cont` (favour the previous placement's digit).
-- Shading (format: `"type": "yin_yang"`, optional given `shaded` / `unshaded` cells; whole-board-rules 6.19): shaded
-  and unshaded cells each orthogonally connected, no 2x2 of one colour. Readers, writers, `fingerprint` and
-  `describe` handle it; `solve` and `count_solutions` check it (the exhaustive search carries a colour per cell, agreeing with a
-  CP-SAT model on 700 random small puzzles); `rate` gives band Unknown with a `reason`
-  until the engine has a shading layer.
-- Custom rules can read board layers: `region(c)` (regions to find) and `shaded(c)` (shading). `region()` rules are
-  checked on chaos boards (uniqueness, solving, the human route's last resort), `shaded()` rules when solving and
-  counting shading puzzles.
-- Card field `trace`: the board (digits and candidates) before the first step and after each step, so a viewer can
-  replay a solve with the steps' `substeps` annotations.
-- Rule facts in explanations are worked out for the puzzle's digit range (a whisper on 16x16 has no impossible digit
-  and no low / high alternation; a 6x6 black dot excludes only 5), not written for 9x9.
-- Reader: coloured lines described without their name ("a purple line contains a set of consecutive digits"),
-  generic f-puzzles lines from the rules text, "all lines are X lines", branching arrows, region-sum loops, between
-  lines through several circles; refused instead of misread: anti-line rules, broken zippers, rings drawn along grid
-  lines, default line colours without a positive description, a line with two rules. Screen of 1,351 Cracking the
-  Cryptic puzzles: 281 -> 337 graded.
-- Reader, from the GMPuzzles GAS series (286 posts with replays: 136 -> 217 graded): skyscrapers and sum frames
-  from their wordings, little killers drawn as arrowheads, fortress cells, clones drawn as coloured shapes, Rossini
-  arrows, Battenburg markers (with sums on them), f-puzzles' own X-sum clues, typographic quotes in rules texts;
-  one-off line rules as custom rules (sequence lines, alternating lines, one-digit lines; lines whose neighbours
-  differ by 1); "along each line"; "a difference of 4 or more"; f-puzzles lines read from the page's wording when the
-  payload's own is terser; one-off outside clues as custom rules over the cells seen from the clue (outside, first
-  odd / even, neighbours, coast to coast, consecutive count, max + min, median, highball, sum next to nine, position
-  of the largest, interval sums, sum before the nine); numbers drawn just beside an edge circle read as that dot's
-  number; "the greater number" between two cells; a clue 0
-  stored as a number is no longer dropped; one-off whole-grid rules as scoped custom rules (encaged digits, no three
-  of a parity in a row, anti-XV, no checkerboard, box triples divisible by three), for f-puzzles payloads too;
-  shapes with digit sets by colour (circles / squares / diamonds); clues on marked cells as custom rules (a circled
-  digit against its neighbours: sum, distinct count, same-parity count; an X against its diagonal neighbours; a small
-  arrow in a cell against the cells it points at: detection, elimination, prime count); arrow variants as custom
-  rules (even count, all but one, strictly less, at most, one off, average; repeating and alternating parity on top
-  of the sum); clues whose text redefines them (quadruple digits that must not appear, cage numbers listing digits
-  in the cage, dots meaning consecutive or double, diagonals with a count of distinct digits; numbered white / black
-  dots as difference / ratio by colour; zones listing two of three digits, palindromes with one mismatched pair or
-  with consecutive partners, arrows counting distinct digits, cages all even / all odd / half and half; given
-  pencil marks as candidates; lines whose digits are all odd or all even); refused
-  instead of
-  misread: a puzzle that reads
-  as plain sudoku while it draws shapes or lines in the grid (15 of 1,500 sampled Logic Masters puzzles, all of
-  them misread before).
-- Styles: a SudokuPad puzzle's look (line colours and widths, cage colours, dot and shape fills) is exported as each
-  rule's cosmetic `style`, for named and custom rules alike; `to_export(..., style=False)` leaves it out.
-- Readers write parity and digit-set shapes (SudokuPad) and f-puzzles odd / even cells as `cell` rules, not as
-  given candidates; a cell rule drawn as one shape per cell takes the shapes' shared look as its style.
-- f-puzzles numbers written as text outside the grid are read like SudokuPad outside clues (from the payload's rules
-  text, else the page's), and refused when nothing reads them (they were dropped as decoration: 54 GAS Leak puzzles
-  and 5 sampled Logic Masters puzzles read as plain sudoku with two solutions). Numbered rooms are written as the
-  custom rule `ray[ray[1]] == X` (they were internal digit tables the format cannot hold).
-- f-puzzles one-cell circles and squares (rectangles, dropped as decoration before) are read as shape clues
-  (parity, digit sets: "1s, 2s, and 3s are marked with circles").
-- f-puzzles generic lines take every line rule the SudokuPad reader knows from a description (custom-rule lines,
-  same parity, one apart, palindrome variants), also when the lines are drawn in several shades; new line
-  descriptions: increasing or decreasing, every digit twice, centre sum, three distinct digits on a marked diagonal,
-  evenly spaced sequences, more same-parity and entropic wordings.
-- Reader fixes from the 500 most-solved Logic Masters sudokus (graded 157 -> 165): "[no negative constraints]" no
-  longer adds negatives; "If not, they don't" after a marker rule makes it negative; "at least 5 apart" whispers;
-  equal-parity lines; thermos of a single parity; cells greater / less than a digit by colour or shape; f-puzzles
-  coloured cells read by the shape-clue reader when the text gives them a meaning; "digits in the cage are odd"; cells
-  of one colour "are the same number"; refused instead of misread: maze paths (RAT RUN), digit subsets chosen by
-  the solver, every clue type exclusive across the puzzle, cage sums to find; line colours the text calls
-  decorative ("have no effect") are ignored (graded 165 -> 169).
-- Lines: whispers with their own threshold ("differ by at least 3", "minimum difference of 5"), fixed line totals
-  ("numbers on blue lines sum to 20"), more decorative wordings, entropic / parity / renban wordings; f-puzzles
-  renban and line-total segments drawn in pieces are joined into one line, or kept separate when that is the reading
-  with the setter's solution; "chess knight jump" is anti-knight; a difference with an upper bound is not a whisper.
-  More wordings: equal cage sums ("every cage has the same sum": the shown total for every cage, else a custom
-  rule), counting rings, region-sum "segments with the same sum", quadruple "a cell touching the circle", longer
-  whisper sentences and thresholds in words; refused: "one digit in each row that does not fit".
-  Whole-grid rules from the text: 180-degree pair sums, 159 indexing (columns 1, 5 and 9), caged digits not next to
-  a consecutive digit, no repeats around a digit; f-puzzles payloads read global entropy and Dutch flat mates too.
-  Anti-knight stated for marked cells only ("the digit in the yellow cell ... a knight's move away") applies to those
-  cells, not the whole grid (refused when the cells are not found).
-  Oil and water cages (each cage row one parity, even rows above odd) as custom rules; refused instead of misread:
-  pick-up sticks, a magic square somewhere, every domino once, dice, letters for digits, clues or objects the
-  solver must place.
-  "All possible dots are given" adds negatives only for the dot kinds the text mentions.
-  Equality cages (as many low as high and as many even as odd digits per cage) as custom rules; multi-renban lines
-  refused.
-  Shifter lines and shifter dots (parity and polarity rules) as custom rules; edge dots of a colour no reading takes
-  are refused instead of dropped.
-  f-puzzles circles with a meaning in the text: anti-quadruples (a pink circle under a quadruple), quadruple digits in
-  the circle, pair sums ("cells connected by a pink circle must sum to 11"), decorative circles, counting circles
-  in more wordings.
-  Arrows drawn inside one cell point along a ray ("each arrow points to the closest 5", Search Nine, arrow X-sums
-  "the sum of the first N digits in the direction of the arrow"). f-puzzles cages: factor cages ("multiply to the
-  number in the corner") as custom rules; "x + k" cages with one x for all cages (the totals written when the cage
-  sizes force x); cages without a total that the text gives a meaning ("digits in cages do not repeat", a killer's
-  blank cages); "the cages with no sum given have the same sum"; "regions" for cages in sums and repeats. Line
-  colours: a shade the text calls by a neighbouring word (a pinkish line called purple, a dull orange called brown),
-  the one line colour the text does not name taking the one rule it names unseen, "numbers on all other lines";
-  colours of cells ("the gray cell with arrows") no longer read as line colours; a neighbouring word never takes the
-  rule of a colour that is itself drawn. Branching renban lines drawn in pieces are one line. f-puzzles coloured dots
-  and diamonds with their meaning in the text ("green dots: a ratio of 3:1", "orange dots: a difference of 3", "red
-  dots are NOT consecutive"); a dot with a choice of meanings is refused. Dots the text redefines as custom rules
-  (any operation giving 8, a two-digit square in reading direction, one odd and one even), with their negatives;
-  180-degree partners that differ; "in all cases where ... consecutive ..., a circle is placed" is a negative;
-  "2-entropic" lines; "cells that are orthogonally adjacent cannot contain consecutive digits"; more quadruple and
-  cosmetic-thermometer wordings. Misreads fixed: translucent halos over dots read as white dots, quadruple digits read
-  as edge clues, negatives scoped to part of the grid applied everywhere, an "all dots are given" negative for a dot
-  colour the text never defines; "all clues are true or all false" is refused.
-  2,000 most-solved Logic Masters sudokus: 802 -> 912 graded.
-- Export keeps SudokuPad thermometers and whispers as `line` rules (they were written as chains of `greater` edges /
-  `less` relations and pair rules, with the line's colour on one pair only), and a board-sized background fill as a
-  `decorations` rect (section 7). Grades unchanged on the gate; a few line-heavy LMD puzzles grade a band easier now
-  that the engine sees the whole line.
-- The engine params cache follows in-place changes to the grader model's route / price settings: an experiment that
-  switches a parameter between two `rate` calls in one process now gets the new route params for the second (both
-  arms used to run on the first arm's route params; only pricing changed).
-- Colouring (the identity layer) behind the route parameter `colouring` (0 = off, the default for now; grades
-  unchanged): cells known to hold one unknown digit are kept as a colour class even when no candidate goes (Same
-  Colour joins), with Colour Single (a class's only place in a house) and Colour Fill (a member loses a digit / is
-  placed -> all members). First increment of docs/research/identity_layer_v2_proposal.md; not yet adopted (accuracy
-  test pending). Increment 2: class steps that place or eliminate nothing are free unless a later step uses the class;
-  two-colour classes (Colour Pair: two cells with the same two candidates that differ start a pair; Colour Trap: a
-  cell seeing both colours loses both digits).
-- SudokuPad links of the form `sudokupad.app/<author>/<slug>` are fetched (they were refused as not a short id).
-- Speed and robustness: the C++ uniqueness search without OR-Tools stops at a time limit, not only a node limit
-  (counting-circle puzzles ran for hours); the trial step retries with a larger search before giving up (two unique
-  killers ended Unknown) and keeps its result per position (one killer: 558 -> 316 s); a custom rule with a `neighbours`
-  scope shares one digit table per neighbour count unless it reads positions (9x9: 15.6 -> 0.5 s to load).
-- Docs: the `verify` extra (OR-Tools) is recommended for variants; the benchmark page lists Cracking the Cryptic solve
-  times as an outside check (327 puzzles, rank correlation 0.57).
+  `ReadingMismatch`, `NotUnique`, `NoSolution`, `Undecided`, `GenerationFailed`), at the top level. The site readers'
+  `SourceError`, `DecodeError`, `UnsupportedPuzzle` and `VerificationError` are gone.
+- Public functions take their options as keywords and carry type hints. `solve(info=True)` is gone.
+- Site links are checked against the setter's embedded solution: a reading the solution breaks is refused with
+  `ReadingMismatch`. On 1,351 Cracking the Cryptic SudokuPad puzzles this refuses 107 of 112 misreads and keeps every
+  correct reading.
+- The site readers read many more rules, from the rules text as well as the drawing: Cracking the Cryptic puzzles
+  281 -> 337 graded, the 2,000 most-solved Logic Masters sudokus 802 -> 912, GMPuzzles' GAS series 136 -> 217. One-off
+  rules become custom rules. Mechanics pencilmark does not model (equality cages, clones, maze paths, ...) are refused
+  by name instead of misread.
+- Readers keep a SudokuPad puzzle's look (line colours and widths, cage and dot colours) as each rule's `style`.
+- The sudokuwiki reader keeps Andrew Stuart's placed digits as `placed`, and the writer writes them back.
 
-- Regions to find (chaos construction; format: `"type": "chaos"`, `region_border`, `same_region`;
-  docs/formats/rules/houses-and-regions.mdx 6.3): a grid whose D connected regions of D cells the solver finds, given
-  borders between neighbours, and cells known to share a region. Readers, writers, `fingerprint` and `describe`
-  handle them; `solve` and `count_solutions` check them: the engine's exhaustive search carries a region label per
-  cell (D cells per label, each digit once per label, connected, canonical labels), agreeing with a CP-SAT model of
-  the same rules on 699 of 699 random small puzzles. The grader grades them: the solver keeps a region label per
-  cell between steps, and two region techniques are in (region exclusion: a digit leaves the other cells of its
-  region and equal digits split regions; region size cap: a region with all its cells is closed, the cells left for
-  it take it), plus region cannot reach (cells beyond a region's remaining cells, or in a pocket too small for a
-  region), dead end (a cell shares its region with a neighbour) and region exit (a region short of cells with one
-  way out takes it), region needs a digit (a missing digit with one reachable place) and pocket counting (a pocket
-  too small for a region of its own joins the one unfinished region around it); more from the Cracking the Cryptic
-  solves come next, so the routes still lean on the search
-  fallback where those would apply (CC Newbie: Extreme, with one trial step). Prices are provisional until calibration.
-  Card steps show the region effects: `region` (`"r4c5@3"`) and `region_eliminations` (`["r4c5@!3"]`). The SudokuPad reader reads chaos construction
-  when the rules say so and the file draws no regions: drawn borders become `region_border`, and statements such as
-  "digits along a thermometer belong to the same region" become `same_region` / `region_border` for that element
-  kind. Of the 467 cached logic-masters chaos puzzles most are still refused or have another solution: they add
-  rules of their own that read the regions (run sums, counting views), which format_version 1 cannot state.
-- Reader fixes from the 500 most-solved logic-masters sudokus (6 more read and graded, 123; each now unique and
-  matching its embedded solution; none lost): SudokuPad's newer files write a dot's fill as `c2` and
-  greys as one digit (`#F` white, `#0` black), so white dots no longer read as black; a "same parity" line (all odd
-  or all even), which has no rule family, becomes a custom rule instead of an alternating parity line; grey
-  thermometers beside grey palindromes are told apart by the bulb in the line's colour; "all X and V are given" on a
-  grid without any forbids sums of 5 and 10; f-puzzles: "all Vs are given; not all Xs are given" forbids unmarked V
-  pairs only (it also forbade sums of 10). Quadruples written as "Quads: ..." or "a digit in a circle must appear in
-  one of the four cells the circle touches" are read (2 more, 125); a quadruple whose clue holds letters for the
-  solver to find is refused (the letters were dropped). A line whose colour the rules do not name takes SudokuPad's
-  default meaning for that colour only when the rules describe that meaning ("consecutive" for a pink renban, "differ
-  by 5 or more" for a green whisper): a rule the engine does not know, drawn cyan, read as a region sum. On 1,500
-  random cached SudokuPad puzzles this refuses 32 readings, all misread (no solution or several), and keeps every
-  reading that was right; on the top 500, 3 misreads refused, none graded lost. A SudokuPad region covering the whole
-  grid means no boxes (it read as one region of every cell, which has no solution). Text inside a cell away from its
-  centre (a corner clue such as a run sum, a maze marker) is refused instead of dropped: no reading handles it. On
-  1,500 random cached SudokuPad puzzles this refuses 19 misread puzzles and 1 read right (lines labelled "GW" / "RN"
-  in their cells); on the top 500, 22 misread path puzzles, none graded lost.
-- `describe` no longer searches for the solution of a puzzle it is given as anything but a pencilmark-puzzle file: it read
-  the rules through `to_export`, which solves to add the solution (a hard Latin square took minutes; now 17 ms).
-- Readers refuse puzzles whose rules define a mechanic the engine does not model, instead of reading its elements as
-  something else: equality and EquaLite cages, look-and-say cages, Rellik cages, counting cages (all read as killer
-  cages before), congruent boxes, anti-camel, pointer arrows and thermos, index lines and indexers, cold and hot
-  arrows, pairrows, region-sum screws and diagonal kropki dots. The f-puzzles reader now checks the rules text for
-  these and for the words the SudokuPad reader already refused (clones, modifiers, ...). On the 500 most-solved
-  logic-masters sudokus: 21 misread puzzles (no solution or several) are now refused with the mechanic named; every
-  puzzle graded before still grades. A named mechanic counts only when the rules define it ("equality cages: ..."),
-  not when a page lists the author's other series.
-- Generator: with publishing checks (`quality` in the request), a found puzzle's checks and its full card are one grading
-  instead of two (a checked card has the same difficulty, time, band and contents: 138 of 138 development puzzles).
-  The same results, faster: the nine-variants example 135 s -> 121 s.
-- Logging: pencilmark writes to the standard Python logger `pencilmark` (silent until switched on): pages fetched,
-  what a reader read from a link and the readings it inferred, time limits reached and the generator's result at
-  INFO; stage timings, uniqueness checks, each generator attempt and why it was rejected, and the meaning a reader
-  gave each line colour at DEBUG. Every command takes `--log info` or `--log debug` (to standard error, also from
-  `-j` workers). `pencilmark.gen.api.generate` no longer takes a `log=` callback (its attempts are now DEBUG
-  records); `pencilmark.generate` never had one.
-- Custom rules (format: `"type": "custom"`, no longer reserved; docs/formats/rules/custom.mdx): a rule written in the
-  file as an expression over named cells, `{"type": "custom", "cells": {"c": [...]}, "holds": "2 * max(c) == sum(c)"}`,
-  with scopes for every pair of neighbours, every h x w window or every cell with its neighbours, and `each` for a list
-  of cell tuples. Readers parse and type-check the expression and name the problem; writers keep the rule, the
-  expression in its canonical spelling (also what `fingerprint` reads); `describe` renders it in words. pencilmark
-  grades custom rules through its generic rule reading: a rule over up to 5 cells as a table of the digit
-  combinations it allows, a larger one through an evaluator of the expression in the C++ engine (tested against the
-  Python reference). Grammar validated on 1,000 logic-masters puzzles (docs/research in the source repository).
-- Difficulty: the search-effort part of the card counts a refutation's length in propagation rounds (all singles of a
-  round placed together) instead of single placements, so a puzzle and its transpose or relabelling grade the same
-  (98% identical on 786 development puzzles transposed, was 67%; the largest move 0.6, was 1.1). Its weight and the
-  score map are refitted (Andrew Stuart's ratings: fed MAE 0.505, was 0.508; hard set 0.82, was 1.03); ranking against
-  human data is unchanged to slightly better (development set: fed +0.02, logic-masters +0.01, sudoku.today -0.01).
-  Difficulty values change (easy puzzles a little higher, hard ones a little lower; bands are unchanged), and the
-  `unusual` ranges and the typical-difficulty table are recomputed on the new scale.
-- A generator request without `where.band` or `where.difficulty` keeps the broadest search and says so: the result's
-  `info.warnings` (and a failure message) suggests a band or difficulty range, since the untargeted search uses every
-  technique up to Extreme and can be slow on sparse variants. The command line prints it as a note.
-- SudokuPad reading: "equal digits must not touch diagonally" and "no touch" are read as anti-king, and a mostly
-  transparent black (`#0003`) counts as grey, so rules such as "digits in grey cells are odd" find their cells. Found
-  on the 500 most-solved logic-masters sudokus (2 more of them read and graded). A kropki dot drawn without a colour
-  is white when the rules mention only white dots (it read as black: 2 more). f-puzzles: numbers written as text
-  outside the grid are read as the one outside clue family the rules name (sandwich, x-sum or skyscraper: 1 more).
-  "The sum of the digits between 1 and 9" names sandwich clues (the wording wanted "the 1": 1 more).
-- Format docs: the `count` rule's restriction is that an `each` / `counts` rule's cells must not also form a house; it
-  read as if no counted cell could be in any house, which would forbid counting circles on a normal grid.
-- The generator places every line kind the engine grades: besides thermo, whisper, renban and between, now slow
-  thermo, entropic, modular, parity, palindrome, zipper, region-sum, lockout and double-arrow lines, each true in the
-  solution with the format's default parameters. Entropic lines need a board of 6 x 6 or more; palindromes and zippers
-  have an odd length; double arrows are 5 cells or more (a shorter one is a zipper).
-- Generator requests may lock a `neighbours` rule with any `op` and `where` too (for example no two orthogonal
-  neighbours summing to 10); the result writes it in canonical form (there: the `negative` rule of X marks).
-- Generator requests may lock `{"type": "neighbours", "kind": "nonconsecutive"}`: every result's grid has no
-  consecutive orthogonal neighbours (the grid fill respects pair rules, not only rules of different digits). Without a
-  band target the result is very hard (few givens); a band target keeps it in range.
-- The generator places corner clues: quadruples (`{"type": "contains", "count": ...}`, all four digits or three) and
-  mathrax clues (`{"type": "corner", "kind": "mathrax", "count": ...}`, whichever operator holds on both diagonals).
-- The generator places outside clues on single grids: sandwich, x-sum and skyscraper clues on a row or column, little
-  killer clues on a diagonal (`{"type": "sandwich" | "xsum" | "skyscraper", "count": ...}`,
-  `{"type": "sum", "kind": "little_killer", "count": ...}`), read from either end.
-- The generator keeps to `limits.time` while trying elements to restore a removed given and while pruning: one attempt
-  on a 9 x 9 with entropic lines ran 40 s past a 180 s limit.
-- `to_export` uses a solution the puzzle already carries (`rate()` and the generator set it) instead of searching again,
-  and leaves the solution out when the search ends without a verdict: the generator crashed with `Undecided` on a
-  samurai without OR-Tools (found by the generator fuzzer).
+### Command line
+
+- Every command takes `--from FORMAT` (default: detected per line).
+- `rate --print TEMPLATE` replaces `--format`, `convert --to pencilmark|plain|grid|sudokuwiki|ipuz` replaces `export`,
+  and the `json` command is gone. `generate --seed / --time` are gone (the spec's `limits` hold them).
+- `--log info` / `--log debug` on every command: pages fetched, what a reader read, time limits, each generator
+  attempt, stage timings (the standard Python logger `pencilmark`).
+
+### Grading
+
+- Difficulty: the expected effort of a human-like solver, from human routes whose stretches of singles are replayed in
+  human order (singles reach the same next bottleneck in any order). The search part counts a refutation's length in
+  propagation rounds, so a puzzle and its transpose grade the same (98% identical, was 67%). The score map is refitted
+  on Andrew Stuart's ratings and human times. Rating takes about 15% longer.
+- The band, technique list and publishing checks follow the human route: each step chosen the way people choose, by a
+  spotting score fitted on casual solvers' replays. On the reference cards 1 of 227 bands moves.
+- Technique names follow their cited sources: Skyscraper only when the pairs' inner ends share a line (else Turbot
+  Fish); XY-Chain only with the same digit at both ends (else AIC); Remote Pairs from 4 cells; Mutant fish are named
+  Mutant (were Franken); Empty Rectangles as HoDoKu defines them (the chain search no longer names grouped X-Chains
+  ER).
+- Forms the sources describe, now found: WXYZ-Wing over any four cells and type 2 (all digits restricted); Death
+  Blossom of any size; almost locked sets of any size, overlapping ALS-XZ, eliminations inside the sets of
+  doubly-linked ALS-XZ and ALS-XY-Wing; Aligned Pair Exclusion with any almost locked set as witness; BUG+1 with a
+  4+ candidate cell; Unique Rectangle type 3 with subsets of any size; hidden and extended Unique Rectangles type 2;
+  XY-Chains up to 12 cells; Pattern Overlay rule 2; colouring that empties a house (sudokuwiki, July 2026).
+- How the techniques were checked: Andrew Stuart's strategy examples (132 of 139 found, no wrong move), independent
+  reference finders, soundness walks over 391 puzzles (no wrong move), 192 of his curiosities, and Sudoku Explainer
+  on 1,672 puzzles (nothing it uses is missing).
+- Colouring as a solving method is opt in: `rate(colouring=True)`, `--colouring`. It keeps colours (cells known to
+  hold one unknown digit) through the solve, with its own techniques (Colour Single, Colour Fill, Colour Pair, Colour
+  Trap, Colour Pointing, Colour Fish, Complete Colours, Chain Colour, Colour Clash). Codes of colouring techniques
+  share the prefix C: EQD -> CEQ, SCL -> CSM, MCL -> CMU, 3DM -> CMD.
+- Fog of war is graded under the fog: the band and techniques of the route a solver can take on what the fog shows,
+  round by round. Where the fog stops the route, the band is Unknown with `stopped_at_step`; the card's `fog` field
+  says what the fog did.
+- Band Unknown with a `reason` replaces the `Undecided` error in `rate` when uniqueness can't be settled within the
+  engine's limits (`solve` still raises it); errors are only for wrong inputs.
+- Clue Facts are Easy; Colour Fill is Medium.
+
+### Explanations and the card
+
+- Explanations name the pattern found, with the engine's own cells: hidden and extended Unique Rectangles, Aligned
+  Pair Exclusion with its witnesses, WXYZ-Wings (types 1 and 2), Pattern Overlay rules 1 and 2, Death Blossom,
+  doubly-linked ALS-XZ, Empty Rectangles, BUG+1.
+- Sub-steps (`explain=["short", "substeps"]`): steps told as sub-steps with reasons and drawing annotations, for
+  intersections, subsets, line rules, colouring, killer cages, fish (with Franken and Mutant shapes), XY-, XYZ- and
+  WXYZ-Wings, and single chains.
+- Card field `trace`: the board before the first step and after each step, with the notes a casual solver would have
+  written (`marks`) and the colours an expert would have painted (`colours`), so a viewer can replay a solve.
+- Step notation names houses by position for every input ("X-Wing: 3 r58 c68").
+- Rule facts in explanations are worked out for the puzzle's digit range (a 6×6 black dot excludes only 5).
+
+### Publishing checks
+
+- Quality presets: `quality={"preset": "standard"}` (`--quality preset=standard`) turns on decorative, trivial, trial,
+  thin and unusual, all at reject.
+- Opt-in checks: `asymmetric`, `no_interplay`, `winding`, `short_lines`, `repetitive`, `monotone`, `desert`,
+  `late_break`, with limits near the edge of published puzzles.
+- `thin` replaces `spike`: a Medium or harder puzzle whose candidate steps carry less than 25% of its effort.
+  `spike` flagged most published puzzles.
+- The `unusual` ranges per band are re-measured on this engine (7,155 puzzles).
+- Rule use counts the steps where a rule acts without being named: a line's own pair relations, and anti-knight or
+  no-touch links erasing notes. Eight false "used in only 0 steps" rejects on the reference cards go.
+
+### Generator
+
+- Every line kind the engine grades: slow thermo, entropic, modular, parity, palindrome, zipper, region sum, lockout
+  and double arrow, besides thermo, whisper, renban and between.
+- Corner clues (quadruples, mathrax), outside clues (sandwich, x-sum, skyscraper, little killer), and locked
+  `neighbours` rules with any `op` and `where` (for example nonconsecutive).
+- A request without a band or difficulty target keeps the broadest search and says so in `info.warnings`.
+- With `quality` in the request, a puzzle's checks and card are one grading (the nine-variants example 135 -> 121 s).
+- `limits.time` holds while the generator restores givens and prunes.
+
+### Speed
+
+- Long lines (over 12 cells) of neighbour rules, counting circles, and trial refutations on killers: the 18 frozen
+  puzzles with long lines 677 -> 32 s; a 15-circle puzzle 232 -> 2.5 s; 331 frozen killers 1,490 -> 1,320 s. Three
+  puzzles that hit the 300 s limit are graded now.
+- Uniqueness: with OR-Tools installed, CP-SAT takes over after 2 s (one puzzle 197 -> 4.4 s); without it, the C++
+  search stops at a time limit too.
+- Custom rules: `concat(cells) in {...}` becomes a table at any size (one puzzle 271 -> 0.5 s); a rule's table of
+  number literals is built once (64 such rules: 27 min -> 1.7 s to load); a rule reading a list at fixed positions
+  covers only those cells.
+- `describe` no longer solves the puzzle (a hard Latin square: minutes -> 17 ms).
+
+### Fixes
+
+- SudokuPad thermometers and whispers were exported as chains of pair rules with the line's colour on one pair only;
+  they are `line` rules again.
+- A rule part tagged with its line kind was dropped on export even when its line was missing.
+- The engine params cache missed in-place changes between two `rate` calls in one process.
+- The generator crashed with `Undecided` on a samurai without OR-Tools.
+- SudokuPad links of the form `sudokupad.app/<author>/<slug>` are fetched.
+- The `count` rule's docs read as if no counted cell could be in a house.
 
 ## 1.1.0 (2026-11-01)
 
