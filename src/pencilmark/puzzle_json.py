@@ -413,13 +413,10 @@ def from_json(obj) -> M.Puzzle:
                     p.constraints.append({"type": "table", "cells": [cid[x] for x in win], "allowed": allowed})
         elif t == "custom":  # the rule language (rules/custom.py): pair relations / digit tables, kept by name
             from .exchange.board import Board
+            from .layers import layers_of
             from .rules import custom as CU
 
-            layers = tuple(
-                k
-                for k, t in (("region", "chaos"), ("shaded", "yin_yang"))
-                if any(x.get("type") == t for x in d.get("rules") or [])
-            )
+            layers = layers_of(d.get("rules"))
             Bc = Board(coords, D)
             Bc.unknowns, Bc.layers = d.get("unknowns") or {}, d.get("layers") or {}
             compiled = CU.compile_rule(r, Bc, D, layers)
@@ -511,11 +508,13 @@ def add_named(p, rule):
     height = max(rr for rr, _ in coords) + 1
     shape = ["".join("#" if (y, x) in set(coords) else "." for x in range(width)) for y in range(height)]
     # a custom rule reading the shading / regions compiles only beside them: the layer rides along, then is dropped
-    layers = [{"type": t} for t in ("yin_yang",) if any(c.get("type") == t for c in getattr(p, "constraints", ()))]
+    from .layers import BY_KEY, layers_of
+
+    layers = [{"type": BY_KEY[k].rule} for k in layers_of(getattr(p, "constraints", ())) if k == "shaded"]
     q = from_json({"digits": p.D, "shape": shape, "regions": [], "rules": layers + [r]})
     a, b = len(p.relations), len(p.constraints)
     p.relations += q.relations
-    p.constraints += [c for c in q.constraints if c.get("type") != "yin_yang"]
+    p.constraints += [c for c in q.constraints if c.get("type") not in {x["type"] for x in layers}]
     if getattr(q, "domains", None) and p.domains:
         p.domains = [x & y for x, y in zip(p.domains, q.domains)]
     _remember(p, r, p.relations[a:], p.constraints[b:])

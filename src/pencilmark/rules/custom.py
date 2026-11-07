@@ -27,6 +27,7 @@ import re
 from dataclasses import dataclass
 from fractions import Fraction
 
+from .. import layers as _layers
 from ..errors import FormatError
 
 # ---------------------------------------------------------------------------------------------------- lexer
@@ -563,7 +564,7 @@ def _pos(env, x, k):
 for _k in ("row", "col", "box"):
     BUILTINS[_k] = lambda env, x, _k=_k: _pos(env, x, _k)
 
-LAYERS = {"region": "regions to find (chaos)", "shaded": "shading"}  # function -> the board layer it reads
+LAYERS = {x.key: x.name for x in _layers.LAYERS}  # function -> the board layer it reads (pencilmark/layers.py)
 
 
 def _layer(env, x, k):

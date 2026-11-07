@@ -19,10 +19,9 @@ from . import cbackend as CB
 from . import export as E2
 from . import registry as R
 from . import solver as S
+from .layers import CLASS_COLORS, COLOR_PAIRS, REGION_COLORS
 
 BANDS = E2.BANDS
-FORCING_FALLBACK = True  # when no listed move exists, take the solver's forcing step (Extreme)
-FISH_CAP = True  # up to Hard, list fish of size 2 only (X-Wing; Swordfish and larger are Very Hard; speed)
 # costly techniques late in their band's study order: a listing first runs without their strategies, and runs them only
 # when the best move found could still lose to one of theirs (see _late_bound; exact)
 LATE = ("CaseAnalysis", "WhatIf", "EitherWay")
@@ -342,7 +341,7 @@ def band_path(
                 continue
             # below Hard only size-2 finned fish can be picked (larger ones are Hard): don't list them (windoku:
             # sizes 3-4 were 90% of a listing over 58 houses)
-            capped = b <= 3 and FISH_CAP
+            capped = b <= 3  # up to Hard only fish of size 2 are listed (Swordfish and larger are Very Hard; speed)
             Pb = dict(P, fish_max_n=2) if capped else P
 
             def listing(skip=()):
@@ -392,7 +391,7 @@ def band_path(
                 pick = listing()
             if pick is not None:
                 break
-        if pick is None and FORCING_FALLBACK and P.get("r6_extreme", True) and rng is None and max_band >= 6:
+        if pick is None and P.get("r6_extreme", True) and rng is None and max_band >= 6:
             # nothing listed in any band -> one solver step from this state. The solver's stuck-fallback
             # tries forcing chains / dynamic / nested forcing / Nishio / pattern overlay (state_moves never lists them);
             # such a step is an Extreme move. A guess means really stuck -> Unknown.
@@ -676,7 +675,7 @@ def _contents(p, P, alternatives, deadline=None, base=None):
                 g.givens = q.givens
                 for m in CB.state_moves(
                     g,
-                    dict(P, fish_max_n=2) if b <= 3 and FISH_CAP else P,
+                    dict(P, fish_max_n=2) if b <= 3 else P,
                     disabled=set(S.TECH_NAMES) - {t for t in allowed_t if E2.tech_band(t) <= b},
                     limit_per_tech=8,
                     details=True,
@@ -826,9 +825,6 @@ def step_notation(p, st, just=None):
     return f"{name}: {pat + ' => ' if pat else ''}{res}"
 
 
-REGION_COLOURS = ("yellow", "green", "blue", "purple", "orange", "pink", "cyan", "gray", "brown")
-
-
 def _region_substeps(p, st, ex, lab, region_colour):
     """regions to find: the step as sub-steps; each region keeps one color for the whole solve (a legend the first
     time), every cell known to be in the step's region drawn in it; updates lab (cell -> label) in place"""
@@ -847,7 +843,7 @@ def _region_substeps(p, st, ex, lab, region_colour):
         c, k = st["lplace"]
         lab[c] = k
         if k not in region_colour:
-            region_colour[k] = REGION_COLOURS[len(region_colour) % len(REGION_COLOURS)]
+            region_colour[k] = REGION_COLORS[len(region_colour) % len(REGION_COLORS)]
             sub["legend"] = {region_colour[k]: f"region {k}"}
         cells = sorted((x for x, kk in lab.items() if kk == k), key=lambda x: p.coords[x])
         sub["annotations"] = [{"id": i + 1, "cell": nm.cell(x), "color": region_colour[k]} for i, x in enumerate(cells)]
@@ -867,7 +863,7 @@ def _region_substeps(p, st, ex, lab, region_colour):
             cs = sorted(cs, key=lambda x: p.coords[x])
             known = sorted((x for x, kk in lab.items() if kk == k), key=lambda x: p.coords[x])
             if k not in region_colour and known:  # first mention of a region with a known cell: its color from now on
-                region_colour[k] = REGION_COLOURS[len(region_colour) % len(REGION_COLOURS)]
+                region_colour[k] = REGION_COLORS[len(region_colour) % len(REGION_COLORS)]
                 legend[region_colour[k]] = f"region {k}"
             where = f"the {region_colour[k]} region" if k in region_colour else f"region {k}"
             parts.append(f"{nm.cells(cs)} {'is' if len(cs) == 1 else 'are'} not in {where}")
@@ -883,9 +879,6 @@ def _region_substeps(p, st, ex, lab, region_colour):
                 last["annotations"] = [dict(a, id=nid + i + 1) for i, a in enumerate(ann)]
             out.append(last)
     return out
-
-
-CLASS_COLOURS = ("orange", "green", "purple", "cyan", "pink", "brown", "gray", "yellow", "blue")
 
 
 def _class_substeps(p, st, ex, idc, vals, cand, class_colour):
@@ -927,7 +920,7 @@ def _class_substeps(p, st, ex, idc, vals, cand, class_colour):
     used = set(class_colour.values())
     for k in touched:
         if k not in class_colour:
-            free = [x for x in CLASS_COLOURS if x not in used] or list(CLASS_COLOURS)
+            free = [x for x in CLASS_COLORS if x not in used] or list(CLASS_COLORS)
             class_colour[k] = free[0]
             used.add(free[0])
             m = (1 << p.D) - 1  # the class's digits: what every open member can still be
@@ -1163,8 +1156,7 @@ def written_marks(p, steps, pos, P):
     return res
 
 
-MAX_COLOUR_PAIRS = 3
-COLOUR_PAIRS = (("green", "purple"), ("blue", "yellow"), ("orange", "cyan"), ("pink", "gray"), ("red", "brown"))
+MAX_COLOR_PAIRS = 3
 
 
 def written_colours(p, pos, P):
@@ -1175,7 +1167,7 @@ def written_colours(p, pos, P):
     stands for one unknown digit and is tracked further: in a complete house without it, the single open cell that
     can hold one of its digits and sees none of its cells joins it; cells an equality rule joins (palindromes,
     clones) share it. A pair colored only in its two seed cells is left out (the center marks show a naked pair). A
-    color pair keeps its names while its first cell stays in it; at most MAX_COLOUR_PAIRS pairs, the largest.
+    color pair keeps its names while its first cell stays in it; at most MAX_COLOR_PAIRS pairs, the largest.
     -> [[{"color", "cells", "digits", "opposite"}]] per position (cell indices); None when the model is off."""
     if not P.get("notes_colours"):
         return None
@@ -1236,10 +1228,10 @@ def written_colours(p, pos, P):
         # hosts keep about two colors on the board, rarely more than four to six (CtC action logs): the largest pairs
         layer.sort(key=lambda e: -(len(e[2][0]) + len(e[2][1])))
         taken, shown = set(), []
-        for key, m, cols in layer[:MAX_COLOUR_PAIRS]:
+        for key, m, cols in layer[:MAX_COLOR_PAIRS]:
             pair = names.get(key)
             if pair is None or pair in taken:  # a color keeps its names unless another pair on the board has them
-                pair = next(x for x in COLOUR_PAIRS if x not in taken)
+                pair = next(x for x in COLOR_PAIRS if x not in taken)
                 names[key] = pair
             taken.add(pair)
             digits = [d for d in range(1, p.D + 1) if m >> (d - 1) & 1]
