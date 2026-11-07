@@ -50,6 +50,10 @@ def line(kind, digits=None, **kw):
     return [dict({"type": "line", "kind": kind}, **kw, cells=PATH)], g
 
 
+# swatches cut out of a larger board: no frame on these sides (the boxes go on beyond the picture)
+OPEN_SIDES = {"line-region_sum": ("left", "right")}
+
+
 def region_sum_swatch():
     """a box border between columns 2 and 3 (two `box` rules), so the line splits into two segments of equal sum"""
     rules, g = line("region_sum", [1, 2, 3, 6, 4, 5, 3])
@@ -347,7 +351,7 @@ def drawings():
     out = {}
     for name, (rules, givens) in SWATCHES.items():
         out[name] = lambda dark, name=name, rules=rules, givens=givens: RENDER(
-            doc_for(name, rules, givens), dark=dark, cell=40
+            doc_for(name, rules, givens), dark=dark, cell=40, open_sides=OPEN_SIDES.get(name, ())
         )
     for v in PLACEMENT:
         doc = dict(

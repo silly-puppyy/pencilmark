@@ -113,23 +113,23 @@ def page():
             f'<span class="pm-band-pill pm-band-{name.lower().replace(" ", "-")}">{name.replace(" ", "&nbsp;")}</span>'
         )
 
+    def row(code, band):
+        """one table row: code, name, the variant mark, the band in its colour, what it is a special case of, links"""
+        c, t = codes[code], tech_of[code]
+        urls = list(dict.fromkeys((E.CATALOG[c.explain][3] if c.explain else []) + extra.get(code, [])))
+        variant = '<span class="pm-variant-mark" title="variants only">variant</span>' if t.gate else ""
+        sub = ", ".join(f"`{s}`" for s in immediate(code, codes))
+        learn = " ".join(map(link, sorted(urls, key=_site_rank)))
+        return f"| `{code}` | {c.name} | {variant} | {band_cell(band)} | {sub} | {learn} |"
+
+    head = ["| Code | Technique | Variant | Band | Special case of | Learn |", "|---|---|---|---|---|---|"]
     rows = {f: [] for f in FAMILY_TITLES}
     for code, c in codes.items():
         t = tech_of.get(code)
         if t is None:
             continue
         band = c.shape_band if c.shape_band is not None else t.band
-        urls = list(dict.fromkeys((E.CATALOG[c.explain][3] if c.explain else []) + extra.get(code, [])))
-        name = c.name
-        variant = '<span class="pm-variant-mark" title="variants only">variant</span>' if t.gate else ""
-        sub = ", ".join(f"`{s}`" for s in immediate(code, codes))
-        rows[t.family].append(
-            (
-                band,
-                c.order,
-                f"| `{code}` | {name} | {variant} | {band_cell(band)} | {sub} | {' '.join(map(link, sorted(urls, key=_site_rank)))} |",
-            )
-        )
+        rows[t.family].append((band, c.order, row(code, band)))
     L = [
         "---",
         "title: Techniques",
@@ -151,12 +151,7 @@ def page():
     for fam, title in FAMILY_TITLES.items():
         if not rows[fam]:
             continue
-        L += [
-            f"## {title}",
-            "",
-            "| Code | Technique | Variant | Band | Special case of | Learn |",
-            "|---|---|---|---|---|---|",
-        ]
+        L += [f"## {title}", "", *head]
         L += [r for _, _, r in sorted(rows[fam], key=lambda x: (x[0], x[1]))]
         L.append("")
     col = sorted(
@@ -164,8 +159,8 @@ def page():
         for k in COLOUR_CODES
         if k in codes and k in tech_of
     )
-    L += COLOURING_INTRO + ["| Code | Technique | Band |", "|---|---|---|"]
-    L += [f"| `{k}` | {codes[k].name} | {band_cell(b)} |" for b, _, k in col]
+    L += COLOURING_INTRO + head
+    L += [row(k, b) for b, _, k in col]
     L.append("")
     return "\n".join(L)
 

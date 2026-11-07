@@ -34,14 +34,24 @@ def esc(s):
 
 
 def render(
-    doc, dark=False, cell=48, annotate=False, labels=False, background=True, colours=None, placed=None, marks=None
+    doc,
+    dark=False,
+    cell=48,
+    annotate=False,
+    labels=False,
+    background=True,
+    colours=None,
+    placed=None,
+    marks=None,
+    open_sides=(),
 ):
     """svg text. annotate: every element drawn for rules[i] carries data-rule="i" (pages link it to the JSON);
     labels: row numbers on the left and column numbers on top, outside the board and its outside clues.
     colours {cell name: [colour names]}: annotation colours over the cells (one fills the cell; n split it into n
     wedges, as SudokuPad draws them); placed {cell name: digit}: digits the solver has written, in the placed ink;
     marks {cell name: {"corner": [...], "centre": [...]}}: the solver's pencil marks (corner marks in the cell's corners
-    and edges, centre marks in a row across the middle), in the placed ink."""
+    and edges, centre marks in a row across the middle), in the placed ink. open_sides ("left", "right", "top",
+    "bottom"): leave the outer frame out there, for a cut-out of a larger board (the docs' small pictures)."""
     T = THEMES[bool(dark)]
     S = STYLE
     u = float(cell)
@@ -177,6 +187,9 @@ def render(
         ):
             nb = (r + dr, c + dc)
             k = thick((r, c), nb)
+            side = {(0, 1): "right", (1, 0): "bottom", (0, -1): "left", (-1, 0): "top"}[(dr, dc)]
+            if k == "frame" and side in open_sides:
+                continue
             if nb in exists and (dr < 0 or dc < 0):
                 continue  # each inner edge once
             segs[k].append((m + x1 * u, m + y1 * u, m + x2 * u, m + y2 * u))
