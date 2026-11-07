@@ -42,8 +42,7 @@
   "meta": {
    "title": "generated 9x9 classic, 24 givens",
    "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.",
-   "type": "Sudoku",
-   "generated_from": "c6fdee637d2bb03e8da6862375abf608559564b187d1872bf330939b4b7bb88a"
+   "type": "Sudoku"
   },
   "board": {
    "rows": 9,
@@ -233,7 +232,7 @@
  "card": {
   "band": "Medium",
   "difficulty": 6.5,
-  "time": 12.7,
+  "time": 12.5,
   "contains": [
    {
     "code": "HSI",

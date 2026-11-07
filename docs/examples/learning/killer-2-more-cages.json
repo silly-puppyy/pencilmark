@@ -50,8 +50,7 @@
   "meta": {
    "title": "generated 9x9 10 cage, 39 givens",
    "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nKiller: Digits in a cage sum to its small clue and don't repeat within the cage.",
-   "type": "Killer Sudoku",
-   "generated_from": "39279d4fd6531d03b23bfdce856b0809896fdaa964974c0ba650924e7f7cfde3"
+   "type": "Killer Sudoku"
   },
   "board": {
    "rows": 9,
@@ -342,7 +341,7 @@
  },
  "card": {
   "band": "Very Easy",
-  "difficulty": 2.2,
+  "difficulty": 2.8,
   "time": 3.0,
   "contains": [
    {

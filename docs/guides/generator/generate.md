@@ -44,7 +44,7 @@ print(card["band"], card["difficulty"], card["time"], [c["chip"] for c in card["
 
 ```
 .74.1...6........4..24..59....18.9...1.9.2.5...9.64....91..73..8........5...9.82.
-Hard 7.1 13.0 ['HSI', 'PPR/MSI', 'XWG/CSM/MCH']
+Hard 6.6 13.0 ['HSI', 'PPR/MSI', 'XWG/CSM/MCH']
 ```
 
 The run took under a second. The result has three parts:

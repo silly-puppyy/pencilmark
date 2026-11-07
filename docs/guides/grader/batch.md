@@ -26,7 +26,7 @@ $ pencilmark rate puzzles.txt -j 4
 Very Easy	3.5	4.5	Hidden Single
 Easy	4.1	5.2	Naked Single
 Hard	5.8	10.7	X-Wing
-Expert	6.6	13.7	Alternating Inference Chain
+Very Hard	6.7	13.7	WXYZ-Wing
 ```
 
 The columns are band, difficulty, time in minutes and the hardest technique.
@@ -40,7 +40,7 @@ $ pencilmark rate puzzles.txt -j 4 --print '%i,%b,%d,%m,%c'
 1,Very Easy,3.5,4.5,
 2,Easy,4.1,5.2,NSI
 3,Hard,5.8,10.7,NSI NPR/HPR XWG/KTE/CSM/MCH
-4,Expert,6.6,13.7,NSI PPRx2 HPR/NQDx2 KTE/SKY/MCH AIC/ALS/WIF
+4,Very Hard,6.7,13.7,NSI PPRx2 HPR/NQDx2 SKY/KTE/CSM/MCH WXZ
 ```
 
 [Usage](../../start/usage.mdx#command-line) lists every `%` field.
@@ -52,7 +52,7 @@ $ pencilmark rate puzzles.txt -j 4 --print '%i,%b,%d,%m,%c'
 ```
 $ pencilmark rate puzzles.txt -j 4 --json > cards.jsonl
 $ head -c 120 cards.jsonl
-{"line": 1, "format": "pencilmark-grade", "format_version": 1, "grader": {"name": "pencilmark", "version": "1.1.0"}, "diffic
+{"line": 1, "format": "pencilmark-grade", "format_version": 1, "grader": {"name": "pencilmark", "version": "1.1.0"}, "di
 ```
 
 ## Grade faster

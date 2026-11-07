@@ -125,7 +125,7 @@ which settles most of them.
 
 ```
 $ pencilmark rate killer.ipuz        # docs/examples/killer-4x4.json written with write.ipuz
-Very Easy	0.1	0.8	Hidden Single
+Very Easy	0.3	0.8	Hidden Single
 ```
 
 `pencilmark.read.ipuz` and `pencilmark.write.ipuz` convert in both directions for classic, diagonal, windoku,

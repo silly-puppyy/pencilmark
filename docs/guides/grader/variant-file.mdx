@@ -77,7 +77,7 @@ option of these rules. The complete file is now:
 
 ```
 $ pencilmark describe mini.json
-{"type": "Mini Variant Sudoku", "rules": {"Mini Sudoku": "Place 1–6 in every row, column and 2×3 box.", "Thermo": "Digits strictly increase along a thermometer from the bulb.", "Kropki": "Digits separated by a white dot are consecutive; digits separated by a black dot are in a 1:2 ratio."}}
+{"type": "Mini Variant Sudoku", "rules": {"Mini Sudoku": "Place 1–6 in every row, column and 2×3 box.", "Thermo": "Digits strictly increase along a thermometer from the bulb.", "Kropki": "Digits separated by a white dot are consecutive; digits separated by a black dot are in a 1:2 ratio."}, "rules_text": "Mini Sudoku: Place 1–6 in every row, column and 2×3 box.\nThermo: Digits strictly increase along a thermometer from the bulb.\nKropki: Digits separated by a white dot are consecutive; digits separated by a black dot are in a 1:2 ratio."}
 ```
 
 "Mini" is the size word for 6×6, and "Variant" means more than one variant is present. `pencilmark solve` proves the
@@ -102,12 +102,12 @@ Rules are counted from 0, so rule 5 is the sixth rule, the black dot.
 
 ```
 $ pencilmark rate mini.json --report
-#1  Medium  -  difficulty 6.1  -  time 9.8 min
-   contains: Clue Facts, Pair rules (dots, whispers, anti-knight...) x3, Two rules together (or Domino pairs (dots / XV))
+#1  Medium  -  difficulty 5.8  -  time 9.8 min
+   contains: Pair rules (dots, whispers, anti-knight...) x6, Two rules together (or Domino pairs (dots / XV))
 ```
 
 The puzzle is Medium: it needs no learned pattern, only reading the dots and the thermometers together. Its difficulty
-(6.1) is higher than you might expect for a 6×6, because difficulty measures how hard the steps are to find, not how
+(5.8) is higher than you might expect for a 6×6, because difficulty measures how hard the steps are to find, not how
 many there are. The variant rules make the steps harder to see.
 
 ## 6. Every clue matters
