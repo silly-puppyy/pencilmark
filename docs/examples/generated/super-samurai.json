@@ -398,9 +398,6 @@
     ]
    ]
   },
-  "quality": {
-   "preset": "standard"
-  },
   "limits": {
    "time": 3600,
    "seed": 1
@@ -409,11 +406,7 @@
  "puzzle": {
   "format": "pencilmark-puzzle",
   "format_version": 1,
-  "meta": {
-   "title": "generated 9x9 classic, 194 givens",
-   "rules_text": "Super Samurai: Each 9×9 grid follows normal sudoku rules: place 1–9 in every row, column and box; shared cells belong to both grids.\nX: Digits don't repeat on either of the two main diagonals. Only in the grid at r1c1, grid at r1c13 and grid at r1c25.\nWindoku: Digits don't repeat in any of the shaded 3×3 windows. Only in the grid at r7c7 and grid at r7c19.\nExtra Regions: Digits don't repeat in a shaded region.",
-   "type": "Variant Super Samurai Sudoku"
-  },
+  "meta": {},
   "board": {
    "rows": 21,
    "cols": 33
@@ -2165,7 +2158,7 @@
  "card": {
   "band": "Hard",
   "difficulty": 4.2,
-  "time": 69.3,
+  "time": 68.0,
   "contains": [
    {
     "code": "HSI",
@@ -2184,7 +2177,7 @@
     "chip": "PPR",
     "name": "Pointing / Box-Line Reduction",
     "band": 1,
-    "uses": 9
+    "uses": 8
    },
    {
     "code": "MSI",
@@ -2205,29 +2198,25 @@
    },
    {
     "code": "SKY",
-    "chip": "SKY",
+    "chip": "SKY/KTE",
     "name": "Skyscraper",
     "band": 3,
-    "uses": 2
-   },
-   {
-    "code": "TUR",
-    "chip": "TUR",
-    "name": "Turbot Fish",
-    "band": 3,
-    "uses": 5
+    "alternatives": [
+     "KTE"
+    ],
+    "uses": 1
    },
    {
     "code": "MCH",
     "chip": "MCH",
     "name": "Short chain in the head",
     "band": 3,
-    "uses": 2
+    "uses": 4
    }
   ]
  },
  "info": {
-  "seconds": 39.7,
+  "seconds": 42.1,
   "attempts": 1,
   "found": null,
   "givens": 194,

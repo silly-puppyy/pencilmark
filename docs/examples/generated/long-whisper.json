@@ -48,11 +48,7 @@
  "puzzle": {
   "format": "pencilmark-puzzle",
   "format_version": 1,
-  "meta": {
-   "title": "generated 9x9 1 whisper, 12 givens",
-   "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nGerman Whispers: Adjacent digits on a whisper line differ by at least 5.",
-   "type": "German Whispers Sudoku"
-  },
+  "meta": {},
   "board": {
    "rows": 9,
    "cols": 9
@@ -332,7 +328,7 @@
   ]
  },
  "info": {
-  "seconds": 36.8,
+  "seconds": 36.9,
   "attempts": 7,
   "found": null,
   "givens": 12,

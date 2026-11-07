@@ -22,7 +22,7 @@ from pathlib import Path
 from . import interop
 from .errors import FormatError
 
-LINK_PREFIXES = ("lmd:", "sudokupad:", "penpa:", "scl", "ctc", "fpuzzles", "fpuz")
+LINK_PREFIXES = ("lmd:", "sudokupad:", "penpa:", "scl", "ctc", "fpuzzles", "fpuz", "scv")
 
 
 def _json(x):
@@ -89,13 +89,15 @@ def ipuz(x: str | dict | Path) -> dict:
 
 
 def link(url: str) -> dict:
-    """Read a SudokuPad, f-puzzles, Penpa or Logic Masters link (or a short link to one; some need one request). A
-    reading the setter's embedded solution contradicts raises ReadingMismatch."""
+    """Read a SudokuPad, f-puzzles, Penpa, Logic Masters or sudoku.coach link (or a short link to one; some need one
+    request). A reading the setter's embedded solution contradicts raises ReadingMismatch."""
     from . import sources
 
     first = url.split()[0] if isinstance(url, str) and url.split() else url
     if not _is_link(first):
         raise FormatError(f"not a puzzle link: {str(url)[:80]!r}")
+    if sources.detect(first) == "coach":  # read straight into the format, the setter's look kept
+        return sources.coach.read(first)
     return _document(sources.load(first))
 
 

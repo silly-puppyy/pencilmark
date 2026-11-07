@@ -38,9 +38,6 @@
   "where": {
    "band": "Hard"
   },
-  "quality": {
-   "preset": "standard"
-  },
   "limits": {
    "time": 900,
    "seed": 1
@@ -49,11 +46,7 @@
  "puzzle": {
   "format": "pencilmark-puzzle",
   "format_version": 1,
-  "meta": {
-   "title": "generated 9x9 classic, 39 givens",
-   "rules_text": "Twodoku: Each 9×9 grid follows normal sudoku rules: place 1–9 in every row, column and box; shared cells belong to both grids.",
-   "type": "Twodoku"
-  },
+  "meta": {},
   "board": {
    "rows": 15,
    "cols": 15
@@ -542,7 +535,7 @@
  "card": {
   "band": "Hard",
   "difficulty": 6.2,
-  "time": 22.1,
+  "time": 21.9,
   "contains": [
    {
     "code": "HSI",
@@ -572,11 +565,10 @@
    },
    {
     "code": "SKY",
-    "chip": "SKY/KTE/CSM",
+    "chip": "SKY/CSM",
     "name": "Skyscraper",
     "band": 3,
     "alternatives": [
-     "KTE",
      "CSM"
     ],
     "uses": 1

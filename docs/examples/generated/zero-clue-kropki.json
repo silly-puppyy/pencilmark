@@ -53,8 +53,6 @@
   "format_version": 1,
   "meta": {
    "title": "0-clue 6x6 kropki",
-   "rules_text": "Mini Sudoku: Place 1–6 in every row, column and 2×3 box.\nKropki: Digits separated by a white dot are consecutive; digits separated by a black dot are in a 1:2 ratio.",
-   "type": "Mini Kropki Sudoku",
    "description": "No givens, a minimal set of kropki dots, difficulty at least 3."
   },
   "board": {
@@ -253,8 +251,8 @@
  },
  "card": {
   "band": "Expert",
-  "difficulty": 13.0,
-  "time": 27.1,
+  "difficulty": 13.1,
+  "time": 27.4,
   "contains": [
    {
     "code": "HSI",
@@ -263,11 +261,17 @@
     "band": 0
    },
    {
+    "code": "NSI",
+    "chip": "NSI",
+    "name": "Naked Single",
+    "band": 1
+   },
+   {
     "code": "PPR",
     "chip": "PPR",
     "name": "Pointing / Box-Line Reduction",
     "band": 1,
-    "uses": 7
+    "uses": 8
    },
    {
     "code": "PWC",
@@ -312,16 +316,13 @@
     "chip": "RUL",
     "name": "Two rules together",
     "band": 2,
-    "uses": 15
+    "uses": 18
    },
    {
-    "code": "CSM",
-    "chip": "CSM/TUR",
-    "name": "Simple Colouring",
-    "band": 3,
-    "alternatives": [
-     "TUR"
-    ],
+    "code": "FXW",
+    "chip": "FXW",
+    "name": "Finned X-Wing",
+    "band": 4,
     "uses": 1
    },
    {
@@ -329,7 +330,7 @@
     "chip": "BAN",
     "name": "Band set theory with cages",
     "band": 4,
-    "uses": 15
+    "uses": 13
    },
    {
     "code": "AIC",
@@ -355,7 +356,7 @@
   ]
  },
  "info": {
-  "seconds": 16.3,
+  "seconds": 18.2,
   "attempts": 1,
   "found": null,
   "givens": 0,

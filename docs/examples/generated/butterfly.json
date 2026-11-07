@@ -66,9 +66,6 @@
     ]
    }
   ],
-  "quality": {
-   "preset": "standard"
-  },
   "limits": {
    "time": 1800,
    "seed": 1
@@ -77,11 +74,7 @@
  "puzzle": {
   "format": "pencilmark-puzzle",
   "format_version": 1,
-  "meta": {
-   "title": "generated 9x9 17 cage, 2 givens",
-   "rules_text": "Butterfly: Each 9×9 grid follows normal sudoku rules: place 1–9 in every row, column and box; shared cells belong to both grids.\nKiller: Digits in a cage sum to its small clue and don't repeat within the cage.",
-   "type": "Killer Butterfly Sudoku"
-  },
+  "meta": {},
   "board": {
    "rows": 12,
    "cols": 12
@@ -107,7 +100,6 @@
    0,
    0,
    0,
-   1,
    0,
    0,
    0,
@@ -138,6 +130,52 @@
    0,
    0,
    0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   5,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   6,
    0,
    0,
    0,
@@ -149,51 +187,6 @@
    0,
    0,
    3,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
    0,
    0,
    0,
@@ -437,6 +430,14 @@
    },
    {
     "type": "cage",
+    "sum": 13,
+    "cells": [
+     "r10c3",
+     "r11c3"
+    ]
+   },
+   {
+    "type": "cage",
     "sum": 6,
     "cells": [
      "r7c3",
@@ -455,135 +456,137 @@
    },
    {
     "type": "cage",
-    "sum": 17,
-    "cells": [
-     "r2c5",
-     "r2c6"
-    ]
-   },
-   {
-    "type": "cage",
-    "sum": 6,
-    "cells": [
-     "r12c4",
-     "r12c5"
-    ]
-   },
-   {
-    "type": "cage",
-    "sum": 15,
-    "cells": [
-     "r5c8",
-     "r6c8"
-    ]
-   },
-   {
-    "type": "cage",
-    "sum": 33,
-    "cells": [
-     "r9c11",
-     "r10c9",
-     "r10c10",
-     "r10c11",
-     "r11c11"
-    ]
-   },
-   {
-    "type": "cage",
-    "sum": 33,
-    "cells": [
-     "r8c7",
-     "r8c8",
-     "r9c7",
-     "r9c8",
-     "r9c9"
-    ]
-   },
-   {
-    "type": "cage",
-    "sum": 28,
-    "cells": [
-     "r5c7",
-     "r6c5",
-     "r6c6",
-     "r6c7"
-    ]
-   },
-   {
-    "type": "cage",
-    "sum": 8,
-    "cells": [
-     "r1c6",
-     "r1c7"
-    ]
-   },
-   {
-    "type": "cage",
     "sum": 9,
     "cells": [
-     "r7c5",
-     "r7c6"
+     "r11c12",
+     "r12c12"
     ]
    },
    {
     "type": "cage",
-    "sum": 14,
+    "sum": 12,
     "cells": [
-     "r6c10",
-     "r7c10"
+     "r8c7",
+     "r9c7"
     ]
    },
    {
     "type": "cage",
-    "sum": 5,
+    "sum": 29,
     "cells": [
-     "r1c8",
-     "r2c8"
+     "r7c4",
+     "r8c4",
+     "r9c4",
+     "r10c4"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 4,
+    "cells": [
+     "r7c7",
+     "r7c8"
     ]
    },
    {
     "type": "cage",
     "sum": 7,
     "cells": [
-     "r2c9",
-     "r2c10"
+     "r2c1",
+     "r3c1",
+     "r4c1"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 9,
+    "cells": [
+     "r1c6",
+     "r2c6"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 5,
+    "cells": [
+     "r3c6",
+     "r3c7"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 15,
+    "cells": [
+     "r4c8",
+     "r4c9",
+     "r5c9",
+     "r5c10",
+     "r5c11"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 15,
+    "cells": [
+     "r9c9",
+     "r10c9"
     ]
    },
    {
     "type": "cage",
     "sum": 8,
     "cells": [
-     "r8c2",
-     "r9c2"
+     "r2c11",
+     "r3c11"
     ]
    },
    {
     "type": "cage",
-    "sum": 10,
+    "sum": 23,
     "cells": [
-     "r4c8",
-     "r4c9",
-     "r5c9",
-     "r5c10"
+     "r3c8",
+     "r3c9",
+     "r3c10"
     ]
    },
    {
     "type": "cage",
-    "sum": 17,
+    "sum": 12,
     "cells": [
-     "r5c2",
-     "r5c3",
-     "r5c4",
-     "r6c3",
-     "r6c4"
+     "r1c8",
+     "r2c8",
+     "r2c9",
+     "r2c10"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 32,
+    "cells": [
+     "r1c12",
+     "r2c12",
+     "r3c12",
+     "r4c11",
+     "r4c12"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 15,
+    "cells": [
+     "r9c8",
+     "r10c7",
+     "r10c8",
+     "r11c7",
+     "r11c8"
     ]
    }
   ]
  },
  "card": {
   "band": "Medium",
-  "difficulty": 11.0,
-  "time": 68.8,
+  "difficulty": null,
+  "time": null,
   "contains": [
    {
     "code": "HSI",
@@ -599,61 +602,43 @@
    },
    {
     "code": "NSI",
-    "chip": "NSI",
+    "chip": "NSI/MSI",
     "name": "Naked Single",
-    "band": 1
+    "band": 1,
+    "alternatives": [
+     "MSI"
+    ]
    },
    {
     "code": "PPR",
     "chip": "PPR",
     "name": "Pointing / Box-Line Reduction",
     "band": 1,
-    "uses": 73
-   },
-   {
-    "code": "MSI",
-    "chip": "MSI",
-    "name": "Notes in the head",
-    "band": 1,
-    "uses": 16
+    "uses": 89
    },
    {
     "code": "CGC",
     "chip": "CGC",
     "name": "Killer cage combinations",
     "band": 1,
-    "uses": 23
-   },
-   {
-    "code": "DGC",
-    "chip": "DGC",
-    "name": "Digit counting",
-    "band": 2,
-    "uses": 11
-   },
-   {
-    "code": "CBL",
-    "chip": "CBL",
-    "name": "Must-contain digits (cage / line)",
-    "band": 2,
-    "uses": 3
+    "uses": 39
    },
    {
     "code": "RUL",
     "chip": "RUL",
     "name": "Two rules together",
     "band": 2,
-    "uses": 11
+    "uses": 47
    }
   ]
  },
  "info": {
-  "seconds": 34.2,
+  "seconds": 91.8,
   "attempts": 1,
   "found": null,
-  "givens": 2,
+  "givens": 3,
   "elements": {
-   "cage": 17
+   "cage": 18
   },
   "rejected": {}
  }

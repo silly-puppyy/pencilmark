@@ -37,11 +37,7 @@
  "puzzle": {
   "format": "pencilmark-puzzle",
   "format_version": 1,
-  "meta": {
-   "title": "generated 6x6 10 cage, 0 givens",
-   "rules_text": "Mini Sudoku: Place 1–6 in every row, column and 2×3 box.\nKiller: Digits in a cage sum to its small clue and don't repeat within the cage.",
-   "type": "Mini Killer Sudoku"
-  },
+  "meta": {},
   "board": {
    "rows": 6,
    "cols": 6
@@ -274,7 +270,7 @@
   ]
  },
  "info": {
-  "seconds": 1.7,
+  "seconds": 1.8,
   "attempts": 5,
   "found": null,
   "givens": 0,

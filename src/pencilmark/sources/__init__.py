@@ -27,8 +27,8 @@ from ._common import USER_AGENT, Error, FetchError, FormatError, NotSupportedErr
 
 
 def detect(x):
-    """-> 'puzzle_json' | 'sudokupad' | 'fpuzzles' | 'penpa' | 'lmd' | 'short' | None."""
-    from . import fpuzzles, lmd, penpa, sudokupad
+    """-> 'puzzle_json' | 'sudokupad' | 'fpuzzles' | 'penpa' | 'lmd' | 'coach' | 'short' | None."""
+    from . import coach, fpuzzles, lmd, penpa, sudokupad
 
     if isinstance(x, dict):
         if x.get("format") == "penpa":
@@ -64,11 +64,15 @@ def detect(x):
             return "fpuzzles"
         if penpa.is_penpa_url(s):
             return "penpa"
+        if coach.is_coach_url(s):
+            return "coach"
         if re.match(r"https?://(?:www\.)?(?:%s)/" % "|".join(map(re.escape, lmd.SHORTENERS)), lo):
             return "short"
         return None
     if s.startswith(sudokupad.PAYLOAD_PREFIXES):
         return "sudokupad"
+    if re.match(r"SCv\d+_", s):
+        return "coach"
     return None
 
 
@@ -104,6 +108,11 @@ def load(x, rules_text=None, infer=False, fetch=True, verify=False, time_limit=3
         if isinstance(s, str) and s.lower().startswith("sudokupad:"):
             s = s[len("sudokupad:") :]
         pj = sudokupad.to_puzzle(s, page_text=rules_text, infer=infer, fetch=fetch)
+    elif kind == "coach":
+        from ..exchange import to_internal
+        from .coach import read as read_coach
+
+        pj = to_internal(read_coach(s, fetch=fetch, check_solution=False))
     elif kind == "fpuzzles":
         pj = fpuzzles.to_puzzle(s, rules_text=rules_text, infer=infer, fetch=fetch)
     else:
@@ -175,11 +184,12 @@ __all__ = [
     "fpuzzles",
     "penpa",
     "lmd",
+    "coach",
 ]
 
 
 def __getattr__(name):  # lazy submodule access: sources.sudokupad, sources.penpa, ...
-    if name in ("sudokupad", "fpuzzles", "penpa", "lmd"):
+    if name in ("sudokupad", "fpuzzles", "penpa", "lmd", "coach"):
         import importlib
 
         return importlib.import_module(f"{__name__}.{name}")

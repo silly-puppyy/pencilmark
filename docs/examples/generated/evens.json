@@ -38,11 +38,7 @@
  "puzzle": {
   "format": "pencilmark-puzzle",
   "format_version": 1,
-  "meta": {
-   "title": "generated 9x9 36 parity, 11 givens",
-   "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nOdd-Even: A digit in a grey square is even.",
-   "type": "Odd-Even Sudoku"
-  },
+  "meta": {},
   "board": {
    "rows": 9,
    "cols": 9
@@ -501,17 +497,17 @@
   ]
  },
  "info": {
-  "seconds": 300.2,
+  "seconds": 300.1,
   "attempts": 14,
-  "found": 150,
+  "found": 146,
   "givens": 11,
   "elements": {
    "even": 36
   },
   "rejected": {
-   "publishing check: thin": 33,
-   "publishing check: unusual": 18,
-   "publishing check: thin/unusual": 3,
+   "publishing check: thin": 31,
+   "publishing check: unusual": 17,
+   "publishing check: thin/unusual": 5,
    "publishing check: trivial": 1
   }
  }

@@ -42,11 +42,7 @@
  "puzzle": {
   "format": "pencilmark-puzzle",
   "format_version": 1,
-  "meta": {
-   "title": "generated 9x9 classic, 24 givens",
-   "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.",
-   "type": "Sudoku"
-  },
+  "meta": {},
   "board": {
    "rows": 9,
    "cols": 9
@@ -267,12 +263,12 @@
  "info": {
   "seconds": 300.0,
   "attempts": 1619,
-  "found": 14,
+  "found": 13,
   "givens": 24,
   "elements": {},
   "rejected": {
-   "band too low (logic pre-check)": 2877,
-   "publishing check: thin": 3
+   "band too low (logic pre-check)": 2871,
+   "publishing check: thin": 4
   }
  }
 }

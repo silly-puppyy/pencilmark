@@ -19,7 +19,7 @@ None of them is part of the format or required by it.
 | [HoDoKu](https://hodoku.sourceforge.net/) library lines | `read.hodoku` | – |
 | [sudokuwiki.org](https://www.sudokuwiki.org/) packed strings | `read.sudokuwiki` | `write.sudokuwiki` |
 | [ipuz](http://www.ipuz.org/) 1 and 2 sudoku | `read.ipuz` | `write.ipuz` (ipuz 2) |
-| [f-puzzles](https://www.f-puzzles.com/), [SudokuPad](https://sudokupad.app/) (CSM / fpuz / ctc), [Penpa](https://swaroopg92.github.io/penpa-edit/)+, [Logic Masters](https://logic-masters.de/) links | `read.link` (the host names the site) | – |
+| [f-puzzles](https://www.f-puzzles.com/), [SudokuPad](https://sudokupad.app/) (CSM / fpuz / ctc), [Penpa](https://swaroopg92.github.io/penpa-edit/)+, [Logic Masters](https://logic-masters.de/), [sudoku.coach](https://sudoku.coach/) links | `read.link` (the host names the site) | – |
 
 Every reader returns a pencilmark JSON dict. `rate`, `solve`, `describe`, `fingerprint` and the command line take any
 of these directly: `pencilmark.read.detect(x)` names the format (`read.auto(x)` reads it), and `format="sudokuwiki"`
@@ -122,3 +122,24 @@ block cells, and cages without a sum are refused.
 ctc), [Penpa+](https://swaroopg92.github.io/penpa-edit/) and [Logic Masters](https://logic-masters.de) links into
 pencilmark JSON; the link's host names the site. Writing those formats is not supported. Loaders that fetch pages identify
 themselves, obey robots.txt and pause between requests.
+
+### sudoku.coach
+
+`read.link` also reads [sudoku.coach](https://sudoku.coach/) puzzle pages (`https://sudoku.coach/en/s/<id>`, one
+request for the page) and the site's own puzzle strings (`SCv7_32_…`, offline). `pencilmark.sources.coach` has the
+steps: `fetch` (page to record), `decode` (string to the site's JSON) and `to_document`.
+
+- Only the current version, SCv7, is read. The older positional strings (SCv2 to SCv6) are refused with
+  `NotSupportedError`.
+- Every constraint type maps to a rule family. Lines, arrows, cages, dots, outside clues, quadruples, odd / even,
+  extra regions, diagonals, anti-knight / anti-king, minimum / maximum, global entropy (9×9) and fog are read. A type
+  with no family is refused by name. So are a clue whose number is text, and puzzles whose setter lists extra rules
+  in the description.
+- Settings that change the meaning become rules: a whisper's difference, and the "negative constraint" of white
+  and black dots (a `neighbours` rule that exempts the marked pairs). Line segments that touch are joined into one
+  line, as the site joins them for renban, palindrome, region-sum and consecutive lines.
+- When the page carries the setter's solution, a reading that breaks it is refused (`ReadingMismatch`).
+- The setter's look is kept as cosmetic `style` on each rule: colours, line width, outline, opacity, shape size and
+  angle. Cell colours become one `fill` decoration, with several colours in a cell kept as several parts. The
+  site's cosmetic lines, shapes, text and cages become `line`, `polygon`, `circle`, `rect` and `text` decorations.
+  None of this changes the puzzle's meaning.

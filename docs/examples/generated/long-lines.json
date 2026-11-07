@@ -51,11 +51,7 @@
  "puzzle": {
   "format": "pencilmark-puzzle",
   "format_version": 1,
-  "meta": {
-   "title": "generated 9x9 6 renban, 2 whisper, 6 givens",
-   "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nGerman Whispers: Adjacent digits on a whisper line differ by at least 5.\nRenban: A renban line holds a set of consecutive digits in any order, without repeats.",
-   "type": "Variant Sudoku"
-  },
+  "meta": {},
   "board": {
    "rows": 9,
    "cols": 9
@@ -418,7 +414,7 @@
   ]
  },
  "info": {
-  "seconds": 402.8,
+  "seconds": 413.7,
   "attempts": 5,
   "found": null,
   "givens": 6,

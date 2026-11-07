@@ -50,8 +50,6 @@
   "format_version": 1,
   "meta": {
    "title": "Hardest 0-clue 6x6 kropki",
-   "rules_text": "Mini Sudoku: Place 1–6 in every row, column and 2×3 box.\nKropki: Digits separated by a white dot are consecutive; digits separated by a black dot are in a 1:2 ratio.",
-   "type": "Mini Kropki Sudoku",
    "description": "No givens, a minimal set of kropki dots, as hard as the search can find in the time."
   },
   "board": {
@@ -259,7 +257,7 @@
  },
  "card": {
   "band": "Expert",
-  "difficulty": 14.9,
+  "difficulty": 15.0,
   "time": 24.4,
   "contains": [
    {
@@ -336,9 +334,9 @@
   ]
  },
  "info": {
-  "seconds": 612.4,
+  "seconds": 610.4,
   "attempts": 17,
-  "found": 47,
+  "found": 45,
   "givens": 0,
   "elements": {
    "kropki_black": 1,

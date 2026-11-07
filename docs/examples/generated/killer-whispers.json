@@ -68,8 +68,6 @@
   "format_version": 1,
   "meta": {
    "title": "Killer with German whispers and two givens",
-   "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nKiller: Digits in a cage sum to its small clue and don't repeat within the cage.\nGerman Whispers: Adjacent digits on a whisper line differ by at least 5.",
-   "type": "Variant Sudoku",
    "description": "Cages and whisper lines, exactly two givens, Hard."
   },
   "board": {
@@ -488,7 +486,7 @@
   ]
  },
  "info": {
-  "seconds": 486.2,
+  "seconds": 540.0,
   "attempts": 13,
   "found": null,
   "givens": 2,

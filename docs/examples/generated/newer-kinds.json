@@ -59,11 +59,7 @@
  "puzzle": {
   "format": "pencilmark-puzzle",
   "format_version": 1,
-  "meta": {
-   "title": "generated 9x9 1 palindrome, 3 quadruple, 4 sandwich, 7 givens",
-   "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nSandwich: Clues outside the grid give the sum of the digits between the 1 and the 9 in that row or column.\nPalindrome: A palindrome line reads the same from either end.\nQuadruple: Digits in a circle appear at least once among the cells around it.\nAnti-Knight: Cells a knight's move apart don't contain the same digit.",
-   "type": "Variant Sudoku"
-  },
+  "meta": {},
   "board": {
    "rows": 9,
    "cols": 9
@@ -82,7 +78,7 @@
    0,
    0,
    0,
-   0,
+   6,
    0,
    0,
    0,
@@ -130,7 +126,7 @@
    0,
    0,
    3,
-   0,
+   5,
    0,
    0,
    5,
@@ -371,8 +367,8 @@
  },
  "card": {
   "band": "Medium",
-  "difficulty": 10.7,
-  "time": 52.5,
+  "difficulty": 8.9,
+  "time": 38.1,
   "contains": [
    {
     "code": "HSI",
@@ -397,48 +393,58 @@
     "chip": "PPR",
     "name": "Pointing / Box-Line Reduction",
     "band": 1,
-    "uses": 17
+    "uses": 12
    },
    {
     "code": "PWC",
     "chip": "PWC",
     "name": "Pair rules (dots, whispers, anti-knight...)",
     "band": 1,
-    "uses": 9
+    "uses": 2
    },
    {
     "code": "SWC",
     "chip": "SWC",
     "name": "Sandwich sums",
     "band": 1,
-    "uses": 12
+    "uses": 9
+   },
+   {
+    "code": "NPR",
+    "chip": "NPR/HPR/CEQ/HQD",
+    "name": "Naked Pair",
+    "band": 2,
+    "alternatives": [
+     "HPR",
+     "CEQ",
+     "HQD"
+    ],
+    "uses": 2
    },
    {
     "code": "DGC",
-    "chip": "DGC/NPR/CEQ/CBL",
+    "chip": "DGC/CBL",
     "name": "Digit counting",
     "band": 2,
     "alternatives": [
-     "NPR",
-     "CEQ",
      "CBL"
     ],
-    "uses": 6
+    "uses": 4
    },
    {
     "code": "RUL",
     "chip": "RUL",
     "name": "Two rules together",
     "band": 2,
-    "uses": 25
+    "uses": 15
    }
   ]
  },
  "info": {
-  "seconds": 16.3,
+  "seconds": 16.6,
   "attempts": 1,
   "found": null,
-  "givens": 7,
+  "givens": 9,
   "elements": {
    "palindrome": 1,
    "quadruple": 3,

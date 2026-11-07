@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **sudoku.coach reader**: `pencilmark.read.link("https://sudoku.coach/en/s/<id>")` and raw `SCv7_...` payloads, with
+  the setter's colours and widths as style and cell colours as a `fill` decoration; the embedded solution is checked.
+  Of 16,436 coach puzzles, 13,407 read, 0 crash; refused: extra rules written only in the description (2,293), older
+  payload versions SCv3-SCv6 (716), and a few clues the site defines differently.
+- **Generator examples regenerated** under the band aim.
 - **No seed, a new puzzle.** A request without `limits.seed` draws a fresh seed each run (reported in `info.seed`,
   which reproduces it); 1.2 used seed 1, so every unseeded run gave the same puzzle.
 - **Style format**: rule `style` gains `size`, `angle`, `outline`, `outline_width` and `layer`; new decorations

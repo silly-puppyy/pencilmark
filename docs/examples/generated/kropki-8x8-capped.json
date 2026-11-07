@@ -43,11 +43,7 @@
  "puzzle": {
   "format": "pencilmark-puzzle",
   "format_version": 1,
-  "meta": {
-   "title": "generated 8x8 6 kropki, 14 givens",
-   "rules_text": "8x8 Sudoku: Place 1–8 in every row, column and 2×4 box.\nKropki: Digits separated by a white dot are consecutive; digits separated by a black dot are in a 1:2 ratio.",
-   "type": "8x8 Kropki Sudoku"
-  },
+  "meta": {},
   "board": {
    "rows": 8,
    "cols": 8
@@ -332,7 +328,7 @@
   ]
  },
  "info": {
-  "seconds": 13.3,
+  "seconds": 16.1,
   "attempts": 1,
   "found": null,
   "givens": 14,

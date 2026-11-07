@@ -45,11 +45,7 @@
  "puzzle": {
   "format": "pencilmark-puzzle",
   "format_version": 1,
-  "meta": {
-   "title": "generated 9x9 23 xv, 9 givens",
-   "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nXV: Digits separated by an X sum to 10.",
-   "type": "XV Sudoku"
-  },
+  "meta": {},
   "board": {
    "rows": 9,
    "cols": 9
@@ -478,9 +474,9 @@
   ]
  },
  "info": {
-  "seconds": 303.5,
+  "seconds": 300.8,
   "attempts": 5,
-  "found": 21,
+  "found": 19,
   "givens": 9,
   "elements": {
    "x": 23

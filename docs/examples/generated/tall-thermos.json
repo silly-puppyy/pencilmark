@@ -42,11 +42,7 @@
  "puzzle": {
   "format": "pencilmark-puzzle",
   "format_version": 1,
-  "meta": {
-   "title": "generated 9x9 3 thermo, 13 givens",
-   "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nThermo: Digits strictly increase along a thermometer from the bulb.",
-   "type": "Thermo Sudoku"
-  },
+  "meta": {},
   "board": {
    "rows": 9,
    "cols": 9
@@ -291,7 +287,7 @@
   ]
  },
  "info": {
-  "seconds": 73.2,
+  "seconds": 73.3,
   "attempts": 5,
   "found": null,
   "givens": 13,
