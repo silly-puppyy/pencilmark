@@ -8,6 +8,7 @@
 //     cell holds the opposite colour.
 // Single-digit clusters are left to Coloring.
 #include <algorithm>
+#include "debug.hpp"
 #include "portable.hpp"
 #include <set>
 #include <cstdlib>
@@ -258,7 +259,7 @@ const std::vector<int>& Solver::struct_colours() {
     for (int c : q->groups[anchor].cells) giv.push_back({c, ++sym});
     bool complete = true;
     auto sols = brute_solve(*q, giv, 2, 2000000, nullptr, nullptr, &complete);
-    if (std::getenv("COLOUR_DEBUG"))
+    if (debug_on(DBG_COLOR))
         fprintf(stderr, "struct colours: %d invariant relations, %zu solutions, complete %d\n", n_extra, sols.size(),
                 (int)complete);
     if (sols.size() == 1 && complete) {
@@ -300,7 +301,7 @@ const std::vector<int>& Solver::struct_colours() {
     for (int c = 0; c < N; ++c)
         if (v0[c]) cls[c] = v0[c];
         else if (popc(sup[c]) == 1) cls[c] = lowdigit(sup[c]), ++forced;
-    if (std::getenv("COLOUR_DEBUG")) fprintf(stderr, "struct colours: partial, %d forced cells\n", forced);
+    if (debug_on(DBG_COLOR)) fprintf(stderr, "struct colours: partial, %d forced cells\n", forced);
     if (forced < D) return struct_cls;
     struct_cls = cls;  // -1 = colour unknown
     return struct_cls;

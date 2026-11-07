@@ -1,6 +1,7 @@
 // Set and counting logic: digit counting, equal digits, local line scans, rules together, sum algebra, band logic
 // (split from extra.cpp).
 #include <algorithm>
+#include "debug.hpp"
 #include "portable.hpp"
 #include <climits>
 #include <cstdlib>
@@ -1766,7 +1767,7 @@ void Solver::band_logic(MoveBuf& out) {
             for (int c = 0; c < N; ++c)
                 if (in[c]) R.cells.push_back(c);
             if (wide && (!beyond || (int)R.cells.size() > P.band_wide_cells)) return;
-            if ((wide && std::getenv("BAND_DEBUG")) || std::getenv("BAND_DUMP")) {
+            if ((wide && debug_on(DBG_BAND)) || debug_on(DBG_BAND_DUMP)) {
                 fprintf(stderr, "wide region: houses");
                 for (int g : R.lines) fprintf(stderr, " %s", p.groups[g].name.c_str());
                 for (int g : R.boxes) fprintf(stderr, " %s", p.groups[g].name.c_str());
@@ -1990,7 +1991,7 @@ void Solver::band_logic(MoveBuf& out) {
                     regs[i].supers.push_back((int)j);
             }
     }
-    static const bool dbg = std::getenv("BAND_DEBUG") != nullptr;
+    static const bool dbg = debug_on(DBG_BAND);
     if (dbg) fprintf(stderr, "band: %zu regions\n", regs.size());
     if (regs.empty()) return;
     pm_long budget = BB;
@@ -2148,7 +2149,7 @@ void Solver::band_logic(MoveBuf& out) {
             if (!aborted && bcache.size() < 5000) bcache[ckey] = els;
         }
         ++n_regions;
-        if ((wide && dbg && R.cells.size() >= 20) || std::getenv("BAND_DUMP"))
+        if ((wide && dbg && R.cells.size() >= 20) || debug_on(DBG_BAND_DUMP))
             fprintf(stderr, "wide eval: %zu houses %zu rules %zu cells done %d els %zu nodes %ld budget %ld\n",
                     R.lines.size() + R.boxes.size(), R.rules.size(), R.cells.size(), (int)done, els.size(), nodes_used,
                     budget);

@@ -1,4 +1,5 @@
 #include <tuple>
+#include "debug.hpp"
 #include "portable.hpp"
 #include <map>
 #include <cmath>
@@ -1409,7 +1410,7 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
                     return v;
                 };
                 auto bl = lkey(buf.moves[best]);
-                if (std::getenv("CSOLVER_TIEDEBUG")) {
+                if (debug_on(DBG_TIE)) {
                     std::fprintf(stderr, "tie step %d n=%zu:", (int)out.steps.size(), tied.size());
                     for (int t : tied) {
                         auto l = lkey(buf.moves[t]);

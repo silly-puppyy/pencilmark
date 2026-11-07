@@ -4,6 +4,7 @@
 // fixpoint, line consistency), then mental subsets of size <= 3 and one more
 // relation round.
 #include <algorithm>
+#include "debug.hpp"
 #include "portable.hpp"
 #include <set>
 #include <unordered_map>
@@ -260,7 +261,7 @@ bool Solver::compute_mental(int level) {
         if (!md[c]) md[c] = snap[c];
         mex_ment[c] = p.full & ~ex[c] & ~md[c] & ~mex_rel[c];
     }
-    if (std::getenv("CSOLVER_MENTALDEBUG")) {
+    if (debug_on(DBG_MENTAL)) {
         for (int c = 0; c < N; ++c) std::fprintf(stderr, "%d:%x ", c, md[c]);
         std::fprintf(stderr, "\n");
     }

@@ -1,4 +1,5 @@
 #include <cstdio>
+#include "debug.hpp"
 #include "portable.hpp"
 #include "model.hpp"
 
@@ -644,7 +645,7 @@ void Puzzle::build_implied() {
         q->groups.push_back(g);
     }
     for (auto& sp : lol) q->nary_specs.push_back(sp);
-    if (getenv("CSOLVER_IMPLIED_DEBUG"))   // how much the implied puzzle adds
+    if (debug_on(DBG_IMPLIED))   // how much the implied puzzle adds
         fprintf(stderr, "implied: %zu derived houses, %zu leftover rules, %zu set-theory rules\n", newh.size(), lol.size(), q->nary_specs.size() - lol.size() - nary_specs.size());
     q->finalize();
     implied = q;
