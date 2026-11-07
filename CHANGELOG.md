@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **One meaning, one grade**: a numbered clue that is exactly a kropki dot or an XV mark (difference 1, ratio 2,
+  sum 5 or 10) is graded like the dot or mark (it was a digit table, priced differently). On the 26 development
+  puzzles with such clues, the rank correlation with players' times holds or improves.
 - **Cage limits work with tiled killers**: `{"type": "cage", "count": "tile", "sum": [null, 20]}` (and `size`, and
   a zero-given cage count): the tiling builds no cage over a maximum, merges cages under a minimum first, and draws
   again when one stays under.

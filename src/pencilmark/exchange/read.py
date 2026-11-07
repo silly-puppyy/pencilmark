@@ -167,6 +167,14 @@ class _ReadCtx:
                 return [{"type": "xv", "letter": r["letter"], "cells": list(r["cells"])}]
             if k == "greater":  # cells[0] > cells[1]: the engine's less-than of the reversed pair
                 return [{"type": "less", "cells": [r["cells"][1], r["cells"][0]]}]
+            # a numbered clue that means exactly a kropki dot or an XV mark takes their engine form, so one meaning
+            # grades one way (puzzle-format.md 8.2 gives them one fingerprint)
+            same = {("difference", 1): ("kropki", "white"), ("ratio", 2): ("kropki", "black"),
+                    ("sum", 5): ("xv", "V"), ("sum", 10): ("xv", "X")}.get((k, r.get("sum", r.get("value"))))  # fmt: skip
+            if same and same[0] == "kropki":
+                return [{"type": "kropki", "color": same[1], "cells": list(r["cells"])}]
+            if same:
+                return [{"type": "xv", "letter": same[1], "cells": list(r["cells"])}]
             if NUMBERED_PAIR_FORM == "table":
                 return [self.pair_table(a, b, _NUMBERED_OK[k](r))]
             rel = edge_relation(r, D)
