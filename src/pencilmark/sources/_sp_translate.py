@@ -1263,7 +1263,8 @@ def translate(sp, page_text=None, overrides=None):
     n = len(cells)
     if n < 4 or any(len(row) != n for row in cells):
         return None, "non-square grid"
-    regions = [reg for reg in (P.get("regions") or []) if reg]
+    # a region of only null cells ([null], as SudokuPad writes metadata) is no region
+    regions = [[c for c in reg if c] for reg in (P.get("regions") or []) if reg and any(reg)]
     whole = any(len({tuple(x) for x in reg if x}) == n * n for reg in regions)
     if whole:  # one region over the whole grid: no boxes, rows and columns only (Spiraling Circles, 000O94)
         regions = []

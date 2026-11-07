@@ -128,7 +128,11 @@ def compact_to_json(s):
             while j < n and (s[j].isalnum() or s[j] in ".-+"):
                 j += 1
             tok = s[i:j]
-            out.append(tok if re.fullmatch(r"-?\d*\.?\d+(?:[eE][-+]?\d+)?", tok) else '"' + tok + '"')
+            if re.fullmatch(r"-?\.\d+(?:[eE][-+]?\d+)?", tok):  # JS .5 -> JSON 0.5
+                tok = tok.replace(".", "0.", 1)
+            # a JSON number, else a string: bare hex colors (67f067, and all-digit ones like 020202: JSON numbers
+            # have no leading zero)
+            out.append(tok if re.fullmatch(r"-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][-+]?\d+)?", tok) else '"' + tok + '"')
             i = j
         elif ch.isalpha() or ch == "_":
             j = i
@@ -338,6 +342,9 @@ def to_puzzle(x, page_text=None, reading=None, infer=False, fetch=True, url=None
     draws its elements, which export writes as the rules' `style` (cosmetic)."""
     sp = decode(x, fetch=fetch)
     p, info = translate(sp, page_text=page_text, reading=reading, infer=infer)
+    gv = p.givens.values() if isinstance(p.givens, dict) else [v for v in p.givens if v]
+    if any(not 1 <= v <= p.D for v in gv):  # a 0 digit (digits 0..8) or one beyond the digit count
+        raise NotSupportedError(f"unsupported: a given outside the digits 1..{p.D} (the format's digits start at 1)")
     _read_summary("f-puzzles (in SudokuPad)" if sp["format"] == "fpuzzles" else "SudokuPad", info)
     md = metadata(sp)
     src = url or (x if isinstance(x, str) and "://" in x else (sp.get("url") if isinstance(sp, dict) else None))

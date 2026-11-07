@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **SudokuPad reader fixes** (Cracking the Cryptic screen): bare all-digit hex colors (`c:020202`) no longer break
+  decoding, `[null]` regions are skipped, and a 0 digit (digits 0..8) is refused clearly instead of failing as a
+  format error.
 - **One meaning, one grade**: a numbered clue that is exactly a kropki dot or an XV mark (difference 1, ratio 2,
   sum 5 or 10) is graded like the dot or mark (it was a digit table, priced differently). On the 26 development
   puzzles with such clues, the rank correlation with players' times holds or improves.

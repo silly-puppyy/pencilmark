@@ -550,7 +550,12 @@ def test_drawn_styles():
     doc = pm.write.document(pm.read._document(pj), describe=True)
     style = {r.get("kind"): r.get("style") for r in doc["rules"]}
     assert style["renban"] == {"color": "#c060c0", "width": 0.2}
-    assert style["kropki"] == {"fill": "#ffffff", "color": "#000000", "shape": "circle", "size": 0.3}  # the dot is 0.3 cells
+    assert style["kropki"] == {
+        "fill": "#ffffff",
+        "color": "#000000",
+        "shape": "circle",
+        "size": 0.3,
+    }  # the dot is 0.3 cells
     plain = dict(doc, rules=[{k: v for k, v in r.items() if k != "style"} for r in doc["rules"]])
     assert pm.fingerprint(doc) == pm.fingerprint(plain)  # styles are cosmetic
     # a SudokuPad thermometer stays a thermo line (with its color), a board-sized fill is the background decoration
@@ -1263,3 +1268,23 @@ def test_sudokupad_style_halos_and_leftover_artwork():
     assert kinds == ["line", "polygon", "text"], kinds  # the bulb-like circle on r1c1 belongs to the rule: not copied
     poly = next(d for d in out["decorations"] if d["kind"] == "polygon")
     assert len(poly["points"]) == 4 and poly["style"]["fill"] == "#88cc88"
+
+
+def test_sudokupad_screen_fixes():
+    """reader fixes from the CtC screen (2026-11-07): bare all-digit hex colors are strings (JSON numbers have no
+    leading zero), a [null] region is no region, a 0 digit is refused (the format's digits start at 1)"""
+    assert json.loads(SP.compact_to_json("{c:020202,d:004dd1,w:.5,x:-.25,n:10}")) == {
+        "c": "020202",
+        "d": "004dd1",
+        "w": 0.5,
+        "x": -0.25,
+        "n": 10,
+    }
+    sp = _sp4()
+    sp["puzzle"]["regions"].append([None])
+    doc = pencilmark.read._document(SP.to_puzzle(sp, page_text="Normal sudoku rules apply.", fetch=False))
+    assert sum(1 for r in doc["rules"] if r["type"] in ("box", "box_grid")) >= 1
+    sp = _sp4()
+    sp["puzzle"]["cells"][0][0] = {"value": 0, "given": True}
+    with pytest.raises(pencilmark.NotSupportedError, match="digits 1..4"):
+        SP.to_puzzle(sp, page_text="Normal sudoku rules apply.", fetch=False)
