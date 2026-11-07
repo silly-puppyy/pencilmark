@@ -246,12 +246,15 @@ def to_cpuzzle(p):
     relation kind (including ones registered at runtime) works. Cached on the full
     arguments, so a puzzle whose rules or domains change gets a new build."""
     args = _cpuzzle_args(p)
-    key = repr(args)
+    placed = sorted(getattr(p, "placed", None) or ())  # filled by the solver, not given (avoidable rectangles)
+    key = repr(args) + repr(placed)
     cp = _CPUZZLES.get(key)
     if cp is None:
         if len(_CPUZZLES) >= 16:  # a few recent puzzles: rate_many and the generator move on quickly
             _CPUZZLES.pop(next(iter(_CPUZZLES)))
         cp = _CPUZZLES[key] = _C.make_puzzle(*args)
+        if placed:
+            _C.set_placed(cp, placed)
     return cp
 
 

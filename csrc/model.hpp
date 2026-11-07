@@ -88,6 +88,7 @@ struct Puzzle {
     std::vector<std::pair<int, int>> coords;
     std::vector<Group> groups;
     std::vector<uint32_t> domains;  ///< empty -> all full
+    std::vector<int> placed;        ///< cells the solver placed, not the setter (pencilmark JSON `placed`): not givens
     std::vector<RelSpec> relations;
     std::vector<NSpec> nary_specs;  ///< n-ary constraints (grader Puzzle.constraints)
     /// regions to find (chaos construction, format 6.3): the cells of each chaos area, given borders (pairs in different

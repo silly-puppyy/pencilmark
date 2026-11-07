@@ -18,7 +18,7 @@ namespace cs {
 namespace {
 enum {
     CODE_UR1 = 3001, CODE_UR2, CODE_UR3, CODE_UR4, CODE_HUR, CODE_BUG,
-    CODE_IMH = 3201, CODE_UR5 = 3007, CODE_AR1 = 3008
+    CODE_IMH = 3201, CODE_UR5 = 3007, CODE_AR1 = 3008, CODE_UR6 = 3012
 };
 }  // namespace
 
@@ -40,6 +40,8 @@ void Solver::unique_rect(MoveBuf& out) {
     if (rects.empty()) return;
     const int D1 = p.D + 1;
     ElimSet es;
+    // "a only at u, w in a complete group" counts solved cells too: a corner may miss a digit placed elsewhere
+    // in the house (missing candidates), and that is no strong link
     // swapping x<->y in the rectangle must not change any pair-relation outcome
     auto rel_inv = [&](const int* cells, int x, int y) {
         // the swap puts x where y was and vice versa: every cell's domain must allow both (odd/even,
@@ -70,7 +72,7 @@ void Solver::unique_rect(MoveBuf& out) {
         Move& m = new_move(out, UNIQUE_RECT, shp, code - CODE_UR1 + 1);
         for (uint32_t e : el) add_elim(out, m, (int)(e / 32), (int)(e % 32));
         set_pattern(out, m, {cells[0], cells[1], cells[2], cells[3]});
-        meta9(m, 4 + extra_cells, 2, 2, 0, code == CODE_HUR || code == CODE_UR4, 0, 0, 1, shp);
+        meta9(m, 4 + extra_cells, 2, 2, 0, code == CODE_HUR || code == CODE_UR4 || code == CODE_UR6, 0, 0, 1, shp);
         m.code = code;
         pm_long xm[XM_N] = {code - CODE_UR1 + 1, x, y, extra_cells, (pm_long)el.size(), 0, 0, 0, 0, 0};
         std::copy(xm, xm + XM_N, m.xm);
@@ -94,70 +96,55 @@ void Solver::unique_rect(MoveBuf& out) {
         std::vector<uint32_t> el{(uint32_t)c[un] * 32 + x};
         emit(CODE_AR1, el, c, x, y, 0);
     }
-    // avoidable rectangle type 2 (newer techniques only): two side corners solved (not givens) as x / y; each
-    // unsolved corner holds its diagonal partner's digit plus one common extra z. Both taking the partner
-    // digit would leave a swappable rectangle of non-givens, so one of them is z: z leaves their common peers
-    if (!disabled[COLOUR_ALGEBRA])
-        for (const auto& r : rects) {
-            const int* c = r.c;
-            int un[2], nun = 0, so[2], nso = 0;
-            for (int i = 0; i < 4; ++i) {
-                if (!vals[c[i]]) {
-                    if (nun < 2) un[nun] = i;
-                    ++nun;
-                } else {
-                    if (nso < 2) so[nso] = i;
-                    ++nso;
-                }
-            }
-            if (nun != 2 || nso != 2 || so[0] + so[1] == 3) continue;  // solved corners must be a side, not a diagonal
-            if (is_given[c[so[0]]] || is_given[c[so[1]]]) continue;
-            const int x = vals[c[so[0]]], y = vals[c[so[1]]];
-            if (x == y) continue;
-            const int r0 = vals[c[3 - un[0]]], r1 = vals[c[3 - un[1]]];
-            const uint32_t e0 = cand[c[un[0]]] & ~bit(r0), e1 = cand[c[un[1]]] & ~bit(r1);
-            if (!(cand[c[un[0]]] & bit(r0)) || !(cand[c[un[1]]] & bit(r1))) continue;
-            if (popc(e0) != 1 || e0 != e1 || (e0 & (bit(x) | bit(y)))) continue;
-            if (!rel_inv(c, x, y)) continue;
-            const int z = lowdigit(e0);
-            std::vector<uint32_t> el;
-            for (int q = 0; q < p.N; ++q)
-                if (!vals[q] && q != c[un[0]] && q != c[un[1]] && (cand[q] & bit(z)) && tbit(p.peers(q), c[un[0]]) &&
-                    tbit(p.peers(q), c[un[1]]))
-                    el.push_back((uint32_t)q * 32 + z);
-            emit(3011, el, c, x, y, 0);
-        }
-    // type 1 with a fourth corner holding only one of the pair (HoDoKu 0600-2): three corners are exactly {x, y};
-    // the fourth taking that digit would leave the deadly pattern, so it goes (the loop below needs x and y in all four)
+    // avoidable rectangle type 2: two side corners solved (not givens) as x / y; each unsolved corner holds its
+    // diagonal partner's digit plus one common extra z. Both taking the partner digit would leave a swappable
+    // rectangle of non-givens, so one of them is z: z leaves their common peers (HoDoKu, sudokuwiki.org; it was
+    // tied to the colour-algebra switch, so default cards never saw it)
     for (const auto& r : rects) {
         const int* c = r.c;
-        if (vals[c[0]] || vals[c[1]] || vals[c[2]] || vals[c[3]]) continue;
-        for (int t = 0; t < 4; ++t) {
-            const int a = (t + 1) % 4, b = (t + 2) % 4, d = (t + 3) % 4;
-            const uint32_t xy = cand[c[a]];
-            if (popc(xy) != 2 || cand[c[b]] != xy || cand[c[d]] != xy) continue;
-            const uint32_t one = cand[c[t]] & xy;
-            if (popc(one) != 1 || cand[c[t]] == one) continue;  // both digits: the loop below; only it: a single
-            const int x = lowdigit(xy), y = lowdigit(xy & (xy - 1));
-            if (!rel_inv(c, x, y)) continue;
-            std::vector<uint32_t> el{(uint32_t)c[t] * 32 + lowdigit(one)};
-            emit(CODE_UR1, el, c, x, y, 0);
+        int un[2], nun = 0, so[2], nso = 0;
+        for (int i = 0; i < 4; ++i) {
+            if (!vals[c[i]]) {
+                if (nun < 2) un[nun] = i;
+                ++nun;
+            } else {
+                if (nso < 2) so[nso] = i;
+                ++nso;
+            }
         }
+        if (nun != 2 || nso != 2 || so[0] + so[1] == 3) continue;  // solved corners must be a side, not a diagonal
+        if (is_given[c[so[0]]] || is_given[c[so[1]]]) continue;
+        const int x = vals[c[so[0]]], y = vals[c[so[1]]];
+        if (x == y) continue;
+        const int r0 = vals[c[3 - un[0]]], r1 = vals[c[3 - un[1]]];
+        const uint32_t e0 = cand[c[un[0]]] & ~bit(r0), e1 = cand[c[un[1]]] & ~bit(r1);
+        if (!(cand[c[un[0]]] & bit(r0)) || !(cand[c[un[1]]] & bit(r1))) continue;
+        if (popc(e0) != 1 || e0 != e1 || (e0 & (bit(x) | bit(y)))) continue;
+        if (!rel_inv(c, x, y)) continue;
+        const int z = lowdigit(e0);
+        std::vector<uint32_t> el;
+        for (int q = 0; q < p.N; ++q)
+            if (!vals[q] && q != c[un[0]] && q != c[un[1]] && (cand[q] & bit(z)) && tbit(p.peers(q), c[un[0]]) &&
+                tbit(p.peers(q), c[un[1]]))
+                el.push_back((uint32_t)q * 32 + z);
+        emit(3011, el, c, x, y, 0);
     }
     for (const auto& r : rects) {
         const int* c = r.c;
         if (vals[c[0]] || vals[c[1]] || vals[c[2]] || vals[c[3]]) continue;
-        uint32_t common = cand[c[0]] & cand[c[1]] & cand[c[2]] & cand[c[3]];
-        if (popc(common) < 2) continue;
-        for (uint32_t mx = common; mx; mx &= mx - 1) {
+        // corners may miss one of x/y (HoDoKu's "missing candidates"): the deadly-pattern argument is about the
+        // final grid, so a floor is any corner holding only digits of {x, y}
+        const uint32_t uni = cand[c[0]] | cand[c[1]] | cand[c[2]] | cand[c[3]];
+        for (uint32_t mx = uni; mx; mx &= mx - 1) {
             int x = lowdigit(mx);
             for (uint32_t my = mx & (mx - 1); my; my &= my - 1) {
                 int y = lowdigit(my);
-                if (!rel_inv(c, x, y)) continue;
                 const uint32_t xy = bit(x) | bit(y);
+                if (!(cand[c[0]] & xy) || !(cand[c[1]] & xy) || !(cand[c[2]] & xy) || !(cand[c[3]] & xy)) continue;
+                if (!rel_inv(c, x, y)) continue;
                 unsigned fm = 0;
                 for (int i = 0; i < 4; ++i)
-                    if (cand[c[i]] == xy) fm |= 1u << i;
+                    if (!(cand[c[i]] & ~xy)) fm |= 1u << i;
                 const int nf = __builtin_popcount(fm);
                 std::vector<uint32_t> el;
                 // type 1
@@ -171,7 +158,7 @@ void Solver::unique_rect(MoveBuf& out) {
                     int r1 = c[__builtin_ctz(rm)], r2 = c[31 - __builtin_clz(rm)];
                     uint32_t E = (cand[r1] | cand[r2]) & ~xy;
                     // type 2
-                    if (cand[r1] == cand[r2] && popc(cand[r1]) == 3) {
+                    if (popc(E) == 1 && (cand[r1] & E) && (cand[r2] & E)) {
                         el.clear();
                         int z = lowdigit(E);
                         for (int q = 0; q < p.N; ++q)
@@ -226,7 +213,7 @@ void Solver::unique_rect(MoveBuf& out) {
                             for (int gk : gs) {
                                 bool only = true;
                                 for (int q : p.groups[gk].cells)
-                                    if (q != F && q != RF && !vals[q] && (cand[q] & bit(a2))) only = false;
+                                    if (q != F && q != RF && (vals[q] ? vals[q] == a2 : (cand[q] & bit(a2)))) only = false;
                                 strong |= only;
                             }
                             if (!strong || !(cand[RG] & bit(b2))) continue;
@@ -241,7 +228,7 @@ void Solver::unique_rect(MoveBuf& out) {
                             int a = t ? y : x, b2 = t ? x : y;
                             bool conf = true;
                             for (int q : p.groups[gi].cells)
-                                if (q != r1 && q != r2 && !vals[q] && (cand[q] & bit(a))) conf = false;
+                                if (q != r1 && q != r2 && (vals[q] ? vals[q] == a : (cand[q] & bit(a)))) conf = false;
                             if (!conf) continue;
                             el.clear();
                             for (int rr : {r1, r2})
@@ -274,6 +261,31 @@ void Solver::unique_rect(MoveBuf& out) {
                         emit(CODE_UR5, el, c, x, y, (int)roof.size());
                     }
                 }
+                // type 6: diagonal floor; a strong in both rows (or both columns) of the rectangle -> a roof
+                // corner taking a would force the floor to b and the other roof to a: the deadly pattern
+                if (fm == 9 || fm == 6) {
+                    const int R0 = c[fm == 9 ? 1 : 0], R1 = c[fm == 9 ? 2 : 3];
+                    for (int t = 0; t < 2; ++t) {
+                        const int a = t ? y : x;
+                        if (!(cand[R0] & bit(a)) && !(cand[R1] & bit(a))) continue;
+                        auto strong = [&](int u, int w) {
+                            common_groups2(u, w, true, gs);
+                            for (int gi : gs) {
+                                bool only = true;
+                                for (int q : p.groups[gi].cells)
+                                    if (q != u && q != w && (vals[q] ? vals[q] == a : (cand[q] & bit(a)))) only = false;
+                                if (only) return true;
+                            }
+                            return false;
+                        };
+                        if (!(strong(c[0], c[1]) && strong(c[2], c[3])) && !(strong(c[0], c[2]) && strong(c[1], c[3])))
+                            continue;
+                        el.clear();
+                        for (int rr : {R0, R1})
+                            if (cand[rr] & bit(a)) el.push_back((uint32_t)rr * 32 + a);
+                        emit(CODE_UR6, el, c, x, y, 0);
+                    }
+                }
                 // hidden rectangle: bivalue corner a, opposite o; x strong on both of o's sides
                 for (int i = 0; i < 4; ++i) {
                     if (!(fm >> i & 1)) continue;
@@ -287,7 +299,7 @@ void Solver::unique_rect(MoveBuf& out) {
                             for (int gi : gs) {
                                 bool only = true;
                                 for (int q : p.groups[gi].cells)
-                                    if (q != u && q != w && !vals[q] && (cand[q] & bit(a))) only = false;
+                                    if (q != u && q != w && (vals[q] ? vals[q] == a : (cand[q] & bit(a)))) only = false;
                                 if (only) return true;
                             }
                             return false;

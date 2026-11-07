@@ -157,51 +157,55 @@ def _ur(cd):
             cells = [r1 * 9 + c1, r1 * 9 + c2, r2 * 9 + c1, r2 * 9 + c2]
             if len({box(c) for c in cells}) != 2 or any(len(cd[c]) < 2 for c in cells):
                 continue
-            for t in cells:  # type 1 with the fourth corner holding only one of the pair (HoDoKu 0600-2)
-                rest = [c for c in cells if c != t]
-                xy = set(cd[rest[0]])
-                if (
-                    len(xy) == 2
-                    and all(set(cd[c]) == xy for c in rest)
-                    and len(set(cd[t]) & xy) == 1
-                    and len(cd[t]) > 1
-                ):
-                    out |= {(t, d) for d in set(cd[t]) & xy}
-            common = set.intersection(*[set(cd[c]) for c in cells])
-            for x, y in itertools.combinations(sorted(common), 2):
+            # corners may miss one of the pair (HoDoKu's missing candidates): a floor holds only digits of {x, y}
+            union = set().union(*[set(cd[c]) for c in cells])
+            for x, y in itertools.combinations(sorted(union), 2):
                 xy = {x, y}
-                bi = [c for c in cells if set(cd[c]) == xy]
+                if any(not set(cd[c]) & xy for c in cells):
+                    continue
+                bi = [c for c in cells if set(cd[c]) <= xy]
                 if len(bi) == 3:  # type 1
                     t = next(c for c in cells if c not in bi)
-                    out |= {(t, x), (t, y)}
+                    out |= {(t, d) for d in set(cd[t]) & xy}
                 if len(bi) == 2 and (bi[0] // 9 == bi[1] // 9 or bi[0] % 9 == bi[1] % 9):
                     roof = [c for c in cells if c not in bi]
                     e0, e1 = set(cd[roof[0]]) - xy, set(cd[roof[1]]) - xy
-                    if len(e0) == 1 and e0 == e1:  # type 2
+                    if len(e0 | e1) == 1 and e0 and e1:  # type 2
                         z = next(iter(e0))
                         out |= {(t, z) for t in PEERS[roof[0]] & PEERS[roof[1]] if z in cd[t] and len(cd[t]) > 1}
                     for h in HOUSES:  # type 4: x (or y) only in the roof within a house holding both
                         if roof[0] in h and roof[1] in h:
                             for a, b in ((x, y), (y, x)):
-                                if all(a not in cd[q] or q in roof for q in h if len(cd[q]) > 1):
-                                    out |= {(roof[0], b), (roof[1], b)}
+                                if all(a not in cd[q] or q in roof for q in h):
+                                    out |= {(q, b) for q in roof if b in cd[q]}
                     # hidden type 2: a strong on f-rf (their shared house) -> b leaves rg
                     for f in bi:
                         rf = next(q for q in roof if q // 9 == f // 9 or q % 9 == f % 9)
                         rg = next(q for q in roof if q != rf)
                         for a, b in ((x, y), (y, x)):
                             h = next(hh for hh in HOUSES[:18] if f in hh and rf in hh)
-                            if [q for q in h if a in cd[q] and len(cd[q]) > 1] == sorted([f, rf]) or set(
-                                q for q in h if a in cd[q] and len(cd[q]) > 1
-                            ) == {f, rf}:
+                            if {q for q in h if a in cd[q]} == {f, rf} and b in cd[rg]:
                                 out.add((rg, b))
+                if len(bi) == 2 and bi[0] // 9 != bi[1] // 9 and bi[0] % 9 != bi[1] % 9:  # type 6: an x-wing on a
+                    roof = [c for c in cells if c not in bi]
+                    for a in xy:
+                        rows = all(
+                            {q for q in HOUSES[r] if a in cd[q]} == {cells[2 * i], cells[2 * i + 1]}
+                            for i, r in enumerate((r1, r2))
+                        )
+                        cols = all(
+                            {q for q in HOUSES[9 + k] if a in cd[q]} == {cells[i], cells[i + 2]}
+                            for i, k in enumerate((c1, c2))
+                        )
+                        if rows or cols:
+                            out |= {(q, a) for q in roof if a in cd[q]}
                 for a_ in bi:  # hidden type 1: bivalue corner, opposite corner o with a strong on both its sides
                     o = next(c for c in cells if c // 9 != a_ // 9 and c % 9 != a_ % 9)
                     s1 = next(c for c in cells if c // 9 == o // 9 and c != o)
                     s2 = next(c for c in cells if c % 9 == o % 9 and c != o)
                     for a, b in ((x, y), (y, x)):
-                        row = {q for q in HOUSES[o // 9] if a in cd[q] and len(cd[q]) > 1}
-                        col = {q for q in HOUSES[9 + o % 9] if a in cd[q] and len(cd[q]) > 1}
+                        row = {q for q in HOUSES[o // 9] if a in cd[q]}
+                        col = {q for q in HOUSES[9 + o % 9] if a in cd[q]}
                         if row == {o, s1} and col == {o, s2} and b in cd[o]:
                             out.add((o, b))
     return out

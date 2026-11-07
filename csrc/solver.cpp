@@ -393,6 +393,8 @@ void Solver::init_state(const std::vector<std::pair<int, int>>& givens) {
         place(cv.first, cv.second);
         is_given[cv.first] = 1;
     }
+    for (int c : p.placed)  // filled, but by the solver (avoidable rectangles read the difference)
+        if (c >= 0 && c < p.N) is_given[c] = 0;
     lab.assign(has_regions() ? p.N : 0, 0);
     lcand.assign(has_regions() ? p.N : 0, 0);
     for (const auto& A : p.chaos)

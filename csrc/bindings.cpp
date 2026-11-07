@@ -707,6 +707,8 @@ PYBIND11_MODULE(_csolver, m) {
         .def_readonly("D", &Puzzle::D)
         .def_readonly("has_cages", &Puzzle::has_cages);
     m.def("make_puzzle", &make_puzzle);
+    m.def("set_placed", [](Puzzle& p, const std::vector<int>& cells) { p.placed = cells; },
+          "cells the solver placed (not givens): pencilmark JSON `placed`");
     m.def("set_deadline", [](double seconds) { set_deadline(seconds); }, py::arg("seconds"),
           "wall-clock limit for the following solves in this thread (seconds; <= 0 switches it off)");
     m.def("deadline_hit", []() { return g_deadline_hit; }, "True once the deadline set by set_deadline has passed");

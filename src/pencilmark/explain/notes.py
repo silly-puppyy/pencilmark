@@ -892,13 +892,13 @@ def _h_ur(ctx):
             continue
         if pc and sorted(cs) != sorted(pc):  # the engine's rectangle, not another one on the same digits
             continue
-        common = st.cand[cs[0]] & st.cand[cs[1]] & st.cand[cs[2]] & st.cand[cs[3]]
-        pairs = [(x, y)] if x and y else [(a, b) for a, b in combinations(digits_of(common), 2)]
+        union = st.cand[cs[0]] | st.cand[cs[1]] | st.cand[cs[2]] | st.cand[cs[3]]
+        pairs = [(x, y)] if x and y else [(a, b) for a, b in combinations(digits_of(union), 2)]
         for a, b in pairs:
             xy = bit(a) | bit(b)
-            if common & xy != xy:
+            if any(not st.cand[c] & xy for c in cs):
                 continue
-            floor = [c for c in cs if st.cand[c] == xy]
+            floor = [c for c in cs if not st.cand[c] & ~xy]  # a corner may miss one of the pair
             roof = [c for c in cs if c not in floor]
             if typ == 1 and not (len(floor) == 3 and tcells <= set(roof)):
                 continue
@@ -906,7 +906,9 @@ def _h_ur(ctx):
                 continue
             if typ == 4 and not tcells <= set(roof):
                 continue
-            if typ == 5 and not len(floor) >= 1:
+            if typ == 7 and not 1 <= len(floor) <= 2:
+                continue
+            if typ == 12 and not (len(floor) == 2 and tcells <= set(roof)):
                 continue
             if typ == 1:
                 t = roof[0]
@@ -922,8 +924,8 @@ def _h_ur(ctx):
                 z = next(digits_of(extra))
                 short = f"{fmt_elims(nm, ctx.elims)}: unique rectangle type 2 ({a}/{b}, extra {z})"
                 teach = (
-                    f"{nm.cells(floor)} hold just {{{a},{b}}}; the other corners {nm.cells(roof)} are "
-                    f"{{{a},{b},{z}}}. To avoid the deadly {a}/{b} rectangle one of those two must be {z}, so "
+                    f"{nm.cells(floor)} hold just {{{a},{b}}}; the other corners {nm.cells(roof)} hold "
+                    f"{a}/{b} plus {z}. To avoid the deadly {a}/{b} rectangle one of those two must be {z}, so "
                     f"any cell seeing both of them -- {nm.cells(sorted(tcells))} -- can't be {z}."
                 )
             elif typ == 3:
@@ -941,6 +943,25 @@ def _h_ur(ctx):
                     f"digits is forced (it has no other place in their shared house), so the roof can't also "
                     f"use the other one -- that would complete the deadly rectangle. Remove it: "
                     f"{fmt_elims(nm, ctx.elims)}."
+                )
+            elif typ == 7:
+                z = next(iter({d for _, d in ctx.elims}))
+                short = f"{fmt_elims(nm, ctx.elims)}: unique rectangle type 5 ({a}/{b}, extra {z})"
+                teach = (
+                    f"{nm.cells(floor)} hold just {{{a},{b}}}; the other corners {nm.cells(roof)} hold {a}/{b} plus "
+                    f"{z}. Without {z} the four corners could swap their {a}s and {b}s -- two solutions -- so one "
+                    f"of {nm.cells(roof)} is {z}, and every cell seeing all of them loses it: "
+                    f"{fmt_elims(nm, ctx.elims)}."
+                )
+            elif typ == 12:
+                d = next(iter({d for _, d in ctx.elims}))
+                o = b if d == a else a
+                short = f"{fmt_elims(nm, ctx.elims)}: unique rectangle type 6 ({a}/{b})"
+                teach = (
+                    f"{nm.cells(floor)} hold just {{{a},{b}}} on one diagonal of the rectangle {nm.cells(cs)}, and "
+                    f"{d} has only its two rectangle places in both of its rows (or both columns) -- an X-Wing. If "
+                    f"a roof corner {nm.cells(roof)} were {d}, the floor would be {o} and the other roof {d}: an "
+                    f"interchangeable {a}/{b} rectangle, two solutions. So {fmt_elims(nm, ctx.elims)}."
                 )
             else:
                 short = f"{fmt_elims(nm, ctx.elims)}: hidden unique rectangle ({a}/{b})"
