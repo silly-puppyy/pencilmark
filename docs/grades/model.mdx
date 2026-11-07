@@ -40,7 +40,7 @@ flowchart TD
 
 ## 1. Read and check
 
-The input is read into the engine's model of the puzzle: cells, houses and rules (`api.load`). The engine's exhaustive
+The input is read into the engine's model of the puzzle: cells, houses and rules (`read.auto`, then the internal `api._load`). The engine's exhaustive
 search then proves there is exactly one solution (`cpsat_verify.decide`); with OR-Tools installed, CP-SAT takes over if
 that search hits its node limit. A puzzle with no solution or several is refused before anything is graded.
 
@@ -146,15 +146,16 @@ $$
 Difficulty is the average value per empty cell, on a logarithmic scale, plus a technique-free search term:
 
 $$
-\ell = \ln \frac{\sum_i v_i}{\text{empty cells}} \;+\; 2\,\ln\!\Big(1 + \frac{1}{\text{empty cells}} \sum_{\text{stuck points}} \ln\frac{C}{R}\Big),
+\ell = \ln \frac{\sum_i v_i}{\text{empty cells}} \;+\; 4\,\ln\!\Big(1 + \frac{1}{\text{empty cells}} \sum_{\text{stuck points}} \ln\frac{C}{R}\Big),
 \qquad r = \frac{2\,\ell}{\ln 5}
 $$
 
 The second term is the work of searching when no technique applies: at each point where simple logic is stuck, the
-engine tries every candidate ($C$) and counts how many fail quickly ($R$) (`refute.cpp`). It is the only part that
+engine tries every candidate ($C$) and measures how quickly the fastest ones fail ($R$: the shortest refutations, in
+propagation rounds) (`refute.cpp`). It is the only part that
 knows nothing about techniques.
 
-$r$ is then mapped to the familiar scale. From difficulty 2 upwards one point means the same everywhere: about **2.6
+$r$ is then mapped to the familiar scale. From difficulty 2 upwards one point means the same everywhere: about **3.2
 times the effort per cell**. Below 2 the map turns gentler (difficulty proportional to roughly the square root of
 effort), so very easy puzzles keep apart and no puzzle goes below 0.
 

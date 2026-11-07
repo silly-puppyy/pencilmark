@@ -133,7 +133,7 @@ pencilmark.generate(dict(spec, where={"band": "Extreme"}, limits={"time": 10, "s
 A message like this one (the counts depend on the machine):
 
 ```
-pencilmark.api.GenerationFailed: no puzzle met the spec in 10 s (13 attempts; rejected: band too low (logic pre-check) x12, ...)
+pencilmark.errors.GenerationFailed: no puzzle met the spec in 10 s (13 attempts; rejected: band too low (logic pre-check) x12, ...)
 ```
 
 The message says what went wrong: every puzzle tried was too easy. Parts of the format kept for later versions are
@@ -144,5 +144,5 @@ pencilmark.generate(dict(spec, where={"band": "Hard", "not_contains": ["XWG"]}))
 ```
 
 ```
-pencilmark.exchange.NotSupportedError: where.not_contains is reserved for a later version of the spec (docs/formats/generator-spec.md 7)
+pencilmark.errors.NotSupportedError: where.not_contains is reserved for a later version of the spec (docs/formats/generator-spec.md 7)
 ```

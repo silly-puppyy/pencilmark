@@ -16,12 +16,13 @@ to one sentence, like the rule headers on [Logic Masters](https://logic-masters.
            "Argyle": "Digits don't repeat on any of the eight marked diagonals.",
            "Killer": "Digits in a cage sum to its small clue and don't repeat within the cage.",
            "Anti-Knight": "Cells a knight's move apart don't contain the same digit.",
-           "XV": "Digits separated by an X sum to 10; digits separated by a V sum to 5. All X's and V's are given."}}
+           "XV": "Digits separated by an X sum to 10; digits separated by a V sum to 5. All X's and V's are given."},
+ "rules_text": "Sudoku: Place 1–9 in every row, column and 3×3 box.\nArgyle: ..."}
 ```
 
-It is deterministic, never reads `meta`, and never feeds back into solving. `rules_text(described)` renders it as
-"Key: sentence" lines. `to_export` uses both only to fill an **empty** `meta.type` / `meta.rules_text`; it never
-overwrites them.
+It is deterministic, never reads `meta`, and never feeds back into solving. `rules_text` is the same map as
+"Key: sentence" lines. `write.document(..., describe=True)` and `write.pencilmark(..., describe=True)` use them only to
+fill an **empty** `meta.type` / `meta.rules_text`; they never overwrite them.
 
 They come from a registry in code (`pencilmark/variants.py`), so they generalise across sizes (a 16×16 windoku, a 6×6
 X).

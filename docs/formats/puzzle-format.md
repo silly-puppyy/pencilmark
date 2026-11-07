@@ -259,12 +259,13 @@ else in the format (`value` for a number, `sum` for a sum):
 Each rule family has its own page; the quick reference lists every `type` and `kind` with a link.
 
 - [Houses and regions](rules/houses-and-regions.mdx): 6.1 houses, 6.2 `region`, 6.3 regions to find
-- [Cages and sums](rules/cages-and-sums.mdx): 6.3 `cage`, 6.8 `sum`
+- [Cages and sums](rules/cages-and-sums.mdx): 6.21 `cage`, 6.8 `sum`
 - [Lines and arrows](rules/lines-and-arrows.mdx): 6.4 `line`, 6.5 `arrow`
 - [Edges and corners](rules/edges-and-corners.mdx): 6.6 `edge`, 6.7 `corner`
 - [Outside clues](rules/outside-clues.mdx): 6.9 `sandwich`, `xsum`, `skyscraper`, `rossini`, `first_seen`
-- [Whole-board rules](rules/whole-board-rules.mdx): 6.10 `neighbours`, 6.11 `relation`, 6.14 `negative`
+- [Whole-board rules](rules/whole-board-rules.mdx): 6.10 `neighbours`, 6.11 `relation`, 6.14 `negative`, 6.19 shading
 - [Cell clues](rules/cell-clues.mdx): 6.12 `cell`
+- [Custom rules](rules/custom.mdx): 6.18 rules written as expressions
 - [Other rules](rules/other.mdx): 6.13 other families, 6.15 vendor rules, 6.16 what is not a rule, 6.17 reserved, 6.20 `fog`
 - [Quick reference](quick-reference.mdx): every `type` and `kind` on one page
 
@@ -299,9 +300,9 @@ Coordinates are cell units `[row, col]` with the origin at the top-left corner o
 - Top-level key order: `format`, `format_version`, `$schema`, `meta`, `board`, `digits`, `givens`, `placed`, `solution`,
   `candidates`, `rules`, `decorations`, `style`. Inside `board`: `rows`, then `cols`.
 - Rule key order: `type`, `kind`, `of`, then the parameters (`op`, `any_of`, `color`, `letter`, `value`, `sum`, `split`,
-  `values`, `digits`, `groups`, `each`, `counts`, `arrow`, `size`, `repeat`, `box`, `where`, `within`, `area`, `closed`),
+  `values`, `digits`, `groups`, `each`, `counts`, `arrow`, `size`, `repeat`, `box`, `count`, `where`, `within`, `area`, `closed`),
   then `side`, then the cell keys (`origin`, `source`, `bulb`, `lines`, `cells`, `regions`, `segments`, `pairs`,
-  `except`), then `id`, `label`, `style`.
+  `except`, `allowed`), then `id`, `label`, `style`.
 - Houses as described in 6.1. Rules in the order given (a grader's tie-breaks can depend on it). Candidate lists ascending; `candidates` keys in reading order. Cells of sets as the source listed them (the
   fingerprint sorts them).
 - Defaults omitted (a `grid` / `box_grid` / `chaos` `origin` of `r1c1`; `closed: false`; whisper `value` 5, entropic `groups`, modular `value` 3, lockout `value` 4 on
@@ -336,14 +337,14 @@ print(pencilmark.write.pencilmark(messy))
 
 The keys are reordered, the default origin left out and the grid laid out row by row; the rules and the cage's cells
 keep their order.
-`dumps(doc, pretty=False)` gives the compact form, on one line.
+`pencilmark.write.pencilmark(doc, pretty=False)` gives the compact form, on one line.
 
 ### 8.2 Fingerprint
 
 `pencilmark.fingerprint(puzzle) -> "<64 hex>"` (SHA-256, lowercase):
 
 1. Read the puzzle and write it canonically (8.1).
-2. Keep only `format`, `format_version`, `board`, `digits`, `givens`, `candidates`, `rules`; in every rule drop `id`,
+2. Keep only `format`, `format_version`, `board`, `digits`, `givens`, `placed`, `candidates`, `rules`; in every rule drop `id`,
    `label`, `style`.
 3. Replace all house rules (`grid`, `box_grid`, `box`, `row`, `column`) by the houses they state, one
    `{"type": "row" | "column" | "box", "cells": [...]}` per distinct house, so every spelling of the same houses (a

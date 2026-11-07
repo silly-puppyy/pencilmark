@@ -11,7 +11,7 @@
       Default: "%b\t%d\t%m\t%h". --json prints the full card (add --steps for the step list, --explain for its
       explanations, --fields to choose fields); --report a readable summary. A puzzle without exactly one solution
       prints its error ({"line", "error"} with --json).
-  python -m pencilmark solve [FILE|-]      the solution (or 'not unique' / 'no solution') per puzzle
+  python -m pencilmark solve [FILE|-]      the solution (or 'not unique' / 'no solution' / 'undecided') per puzzle
   python -m pencilmark count [FILE|-] [--limit N]   how many solutions per puzzle (">=N" when it stops at N)
   python -m pencilmark generate [SPEC|-] [--result]
                                        a puzzle for a "pencilmark-spec" request (docs/formats/generator-spec.md), as a pencilmark-puzzle file
@@ -19,6 +19,7 @@
                                        each puzzle in another format; pencilmark JSON (docs/formats/puzzle-format.md) by default, canonical
   python -m pencilmark fingerprint [FILE|-]  the content fingerprint (64 hex digits) per puzzle
   python -m pencilmark describe [FILE|-]     variant name and rules per puzzle (JSON)
+
 Every command takes --log info (pages fetched, what a reader read, time limits reached, the generator's result) or
 --log debug (also stage timings, the uniqueness check, each generator attempt and each reading a reader tried), written
 to standard error.

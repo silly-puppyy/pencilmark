@@ -242,12 +242,12 @@ def area_cells(B, a):
     return _cells(B, a, "area")
 
 
-# Reserved for a planned custom rule type (docs/formats/rules/other.mdx, 6.17): explicit digit tables. Tables make files huge and no renderer
+# Reserved (docs/formats/rules/other.mdx, 6.17; custom rules, 6.18, express most of them): explicit digit tables. Tables make files huge and no renderer
 # can draw them, so format_version 1 readers refuse them and the writer never produces them. The engine still builds
 # tables internally (edge clues, lockout, entropy, ...); _reserved_ok() lets internal tooling read old files that hold them.
 RESERVED_MSG = (
-    "is reserved: digit tables are replaced by a custom rule type planned for a later version of the format; "
-    "use a rule family (docs/formats/puzzle-format.md 6)"
+    "is reserved: use a rule family (docs/formats/puzzle-format.md 6) or a custom rule "
+    "(docs/formats/rules/custom.mdx 6.18)"
 )
 _RESERVED_OK = [False]
 

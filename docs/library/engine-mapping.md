@@ -60,7 +60,8 @@ the same file and the same card whatever its source.
 
 Mechanics without a named rule (same-parity lines, maximin, minimax, ten-eleven and similar) can be graded when a loader
 builds them as engine tables, but cannot be written in format_version 1: `table` and the `allowed` operator are reserved
-for the planned custom rule type ([docs/formats/rules/other.mdx](../formats/rules/other.mdx), 6.17), and `to_export` refuses such puzzles.
+([docs/formats/rules/other.mdx](../formats/rules/other.mdx)), and `write.pencilmark` refuses such puzzles. Written by
+hand, most of them can be a custom rule ([docs/formats/rules/custom.mdx](../formats/rules/custom.mdx), 6.18).
 
 ## Adding a rule
 

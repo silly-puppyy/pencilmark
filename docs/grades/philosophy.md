@@ -58,8 +58,9 @@ available, so the band is the least a solver must know.
   pairs of puzzles of one type where the two disagree, solvers side with the difficulty number about three times in four
   (sudoku.coach, 384 puzzles; grandgames and Puzzle Duel the same way).
 - Where no technique in the catalogue applies, the engine proves the next step by search (Trial and error) and the
-  band is Extreme. **Unknown** means the band could not be determined: guessing was allowed and used, or the time
-  limit (`max_seconds`) passed first.
+  band is Extreme. **Unknown** means the band could not be determined: guessing was allowed and used, the time
+  limit (`max_seconds`) passed first, uniqueness could not be settled, the fog stops the route, or a rule has no human
+  technique yet (the card's `reason` says which).
 - The band depends on the technique catalogue, which can grow; a new technique can lower a puzzle's band.
 
 ### `difficulty`

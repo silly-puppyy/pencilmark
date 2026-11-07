@@ -70,13 +70,13 @@ of consecutive digits"). In a puzzle with lines of one colour, a rules text that
 a colour gives that rule to every line.
 
 A rule pencilmark cannot map exactly is refused with the list of what it could not read; nothing is dropped silently.
-The error is `pencilmark.sources.NotSupportedError`, and its message names each element, for example "pink line" or
+The error is `pencilmark.NotSupportedError`, and its message names each element, for example "pink line" or
 "generic line (meaning in rules text)": a line whose meaning only the rules text gives. A puzzle whose rules define a
 mechanic pencilmark does not model, such as equality cages or clones, is refused by name ("rule 'equality
 cage'") even when its elements look like familiar ones, so its cages never grade as killer cages.
 
 When the link embeds the setter's solution (most SudokuPad and f-puzzles links do), the reading is checked against it.
-A reading that the solution breaks is refused with `pencilmark.sources.ReadingMismatch` ("the reading contradicts the
+A reading that the solution breaks is refused with `pencilmark.ReadingMismatch` ("the reading contradicts the
 setter's embedded solution"). The usual cause is a one-off rule worded like a standard one: the reader takes the
 familiar meaning and the puzzle comes out different. `sources.load(link, check_solution=False)` skips the check.
 
@@ -117,8 +117,8 @@ Not read:
 - **Several grids on one canvas**, unless the setter drew the houses explicitly.
 - **Shading, loop and path genres.**
 
-Hard variants from these sites sometimes end in `pencilmark.Undecided`: the engine's search could not prove the
-puzzle unique within its limits. Installing the `verify` extra (`pip install "pencilmark[verify]"`) adds OR-Tools,
+Hard variants from these sites sometimes get band Unknown with the reason that uniqueness was not settled (`solve`
+raises `pencilmark.Undecided` instead): the engine's search could not prove the puzzle unique within its limits. Installing the `verify` extra (`pip install "pencilmark[verify]"`) adds OR-Tools,
 which settles most of them.
 
 ## ipuz files

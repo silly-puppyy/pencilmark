@@ -147,5 +147,6 @@ given, with the expression in its canonical spelling (single spaces around opera
 also what `fingerprint` reads: `2*max(c)==sum(c)` and `2 * max(c) == sum(c)` are the same rule.
 
 pencilmark grades a custom rule through the engine's generic rule reading (no named technique of its own). A rule
-over up to 5 cells becomes a table of the digit combinations it allows; a larger one is checked by the engine's own
-evaluator of the expression, which gives the same answers.
+over up to 5 cells becomes a table of the digit combinations it allows, and so does `concat(cells) in {...}` over any
+number of cells (its rows are the listed numbers); a larger one is checked by the engine's own evaluator of the
+expression, which gives the same answers.

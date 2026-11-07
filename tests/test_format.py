@@ -824,7 +824,7 @@ def test_operators_named_parameters():
 
 
 def test_tables_reserved():
-    """docs/formats/puzzle-format.md 6.17: digit tables and the allowed operator are reserved for the planned custom rule type"""
+    """docs/formats/puzzle-format.md 6.17: digit tables and the allowed operator are reserved (custom rules express them)"""
     d = pencilmark.read.auto(CLASSIC)
     for rule in (
         {"type": "table", "cells": ["r1c1", "r1c2"], "allowed": [[1, 2], [2, 1]]},

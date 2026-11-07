@@ -98,5 +98,3 @@ from .validate import (  # noqa: F401
 )
 from .write import _input_order, _Writer, write  # noqa: F401
 
-# the errors keep their public name in tracebacks (pencilmark.exchange.FormatError, not .common.FormatError)
-FormatError.__module__ = NotSupportedError.__module__ = __name__

@@ -1,6 +1,6 @@
 {
  "$comment": "pencilmark default drawing (docs/library/drawing-style.md): sizes in cell units, digit weights in font weight; colours per theme. Line colours are the community defaults measured on 6,217 LMD puzzles.",
- "format": "sudoku-palette",
+ "format": "pencilmark-palette",
  "format_version": 1,
  "sizes": {
   "thin": 0.031,

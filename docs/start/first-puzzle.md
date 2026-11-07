@@ -42,7 +42,7 @@ $ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7..
 
 - Hard is the band: what you need to know. Hard means the puzzle needs a pattern most people learn after the basics;
   here an X-Wing.
-- 5.9 is the difficulty: how hard the steps are, on a scale with no ceiling. A typical newspaper medium is about 5.
+- 5.8 is the difficulty: how hard the steps are, on a scale with no ceiling. A typical newspaper medium is about 5.
 - 10.7 min is the predicted median solve time; the median classic takes about 12 minutes.
 - `contains` lists the techniques the solve needs, easiest first (the report leaves out the singles). "X-Wing (or
   2-String Kite / …)" means any one of those does the job at that point.

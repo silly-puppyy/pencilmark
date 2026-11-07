@@ -596,7 +596,7 @@ class _Writer:
                     if op == "allowed" and not _RESERVED_OK[0]:
                         raise NotSupportedError(
                             "a pair clue with no rule family (an explicit digit-pair list); the allowed "
-                            "operator is reserved for the planned custom rule type"
+                            "operator is reserved in format_version 1 (a custom rule can express it, 6.18)"
                         )
                     params = _engine_params_to_op(kind, args)
                     last = items[-1]["rules"][-1] if items else None
@@ -908,8 +908,8 @@ class _Writer:
         if t == "table":
             if not _RESERVED_OK[0]:
                 raise NotSupportedError(
-                    "a digit table with no rule family (digit tables are replaced by a custom rule type planned for a "
-                    "later version of the format)"
+                    "a digit table with no rule family (reserved in format_version 1; a custom rule can express it, "
+                    "6.18)"
                 )
             return [{"type": "table", "cells": nm(c["cells"]), "allowed": [list(x) for x in c["allowed"]]}]
         if t == "count":

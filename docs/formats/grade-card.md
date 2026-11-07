@@ -36,11 +36,11 @@ A card exists only for a puzzle with exactly one solution. For any other puzzle,
 | `time` | default | number or null | Predicted median solving time in minutes over the people who solve puzzles like this one, without long breaks. Null when the band is `Unknown`. |
 | `time_mean`, `time_pNN` | optional | number or null | Spread of solve times over today's players: the mean, or the NN-th percentile (`time_p80` = 80% of players finish within it; NN from 1 to 99). Solves without long pauses; a log-normal fitted on two sources' per-player times. |
 | `time_dist` | optional | object or null | The time distribution's parameters: `{"type": "lognormal", "sigma_players": …, "sigma_model": …}`, around the median `time`. `sigma_players` is the spread of log solve time over today's players (0.79 for classics and multi-grid layouts, 0.62 for puzzles with any other rule; measured on grandgames and sudoku.coach), which `time_mean` and `time_pNN` use; `sigma_model` is the typical error of the predicted median itself (0.33 / 0.48). |
-| `band` | default | string | `"Very Easy"`, `"Easy"`, `"Medium"`, `"Hard"`, `"Very Hard"`, `"Expert"`, `"Extreme"`; `"Unknown"` when the band could not be determined: guessing was allowed and used, `max_seconds` passed in the difficulty route, the fog stops the route, or no human technique handles a rule yet (`reason` says which). The band orders the knowledge a puzzle needs, not its effort: a Hard puzzle can have a lower `difficulty` than a Medium one ([Philosophy](../grades/philosophy.md)). |
+| `band` | default | string | `"Very Easy"`, `"Easy"`, `"Medium"`, `"Hard"`, `"Very Hard"`, `"Expert"`, `"Extreme"`; `"Unknown"` when the band could not be determined: guessing was allowed and used, `max_seconds` passed in the difficulty route, uniqueness could not be settled, the fog stops the route, or no human technique handles a rule yet (`reason` says which). The band orders the knowledge a puzzle needs, not its effort: a Hard puzzle can have a lower `difficulty` than a Medium one ([Philosophy](../grades/philosophy.md)). |
 | `band_index` | optional | integer or null | 0 (Very Easy) … 6 (Extreme); null for `Unknown`. Handy for sorting, or for mapping the bands to other names. |
 | `contains` | default | list | The techniques met on the easiest route, easiest first (section 3). |
 | `stopped_at_step` | with `contains`, when human logic ran out | integer | The first step human logic could not make (band `Unknown` with guessing allowed); the `contains` list ends there. |
-| `reason` | when no route grades the puzzle | string | Why `band` is `"Unknown"` though the puzzle is a valid, unique one: the fog stops the route, or a rule no human technique reasons with yet (shading, unknowns / layers). Wrong inputs (unreadable, not unique, no solution) raise errors instead. |
+| `reason` | when no route grades the puzzle | string | Why `band` is `"Unknown"` though the input is valid: uniqueness could not be settled within the engine's limits, the fog stops the route, or a rule no human technique reasons with yet (shading, unknowns / layers). Wrong inputs (unreadable, not unique, no solution) raise errors instead. |
 | `fog` | on fog puzzles | object | What the fog route did: `lit_start` (cells lit at the start), `reveals`, `rounds`, `solved` (the route finished under the fog), and `stuck_empty` (empty cells left) when it did not. A fog puzzle is graded under the fog ([Fog of war](../guides/grader/fog.md)): when the route stops, `band` is `"Unknown"`, `difficulty` / `time` are null and `stopped_at_step` says where; `issues`, `steps`, `trace` and `se` are null on a fog card for now. |
 | `completed` | with `max_seconds` | boolean | True when grading finished within `max_seconds`; absent without a limit (grading then always finishes). False: the limit passed. If it passed in the difficulty route, `band` is `"Unknown"` and `difficulty` / `time` are null, with the techniques found so far in `contains`; if it passed only in the search for the shortest list, the grade stands but the list may not be minimal or may miss alternatives. `max_seconds` bounds the whole call (uniqueness proof, card, technique list); a puzzle whose uniqueness is not proven within it gets band `"Unknown"`, `completed` false and a `reason`. Band `"Unknown"` with `completed` true means human logic ran out (`allow_guessing`). |
 | `elapsed` | optional | number | Wall-clock seconds the grader took for this card (for `rate()`: the uniqueness proof plus the card). Machine-dependent; not part of the grade. |
@@ -87,7 +87,7 @@ The checks run only when the card is asked for `issues` (or `reject`); a default
 
 `{"code", "severity", "text", "rules"?, "ids"?}`. `severity` is `"reject"` (would not be published) or `"warning"`.
 `rules`, when present, lists the offending rules as indices into the `rules` array of the puzzle file that was graded
-(0-based; for other inputs, of the puzzle as `to_export` writes it); `ids` lists those rules' `id`s where they have one.
+(0-based; for other inputs, of the puzzle as `pencilmark.write.pencilmark` writes it); `ids` lists those rules' `id`s where they have one.
 
 Each check can be adjusted with a **quality object** keyed by code. Every entry is an object with `limit` (checks that
 have one) and / or `severity` (`"reject"`, `"warning"`, or `"off"` to turn the check off).
@@ -102,8 +102,8 @@ pencilmark.rate(puzzle, fields=["issues", "reject", "warning"],
                 quality={"trivial": {"limit": 0.5}, "trial": {"severity": "reject"}, "tedious": {"severity": "off"}})
 ```
 
-CLI: `--quality trivial.limit=0.5,trial.severity=reject,tedious.severity=off`, or `--quality preset=standard`. The generator spec reserves a `quality` block
-of the same shape for a later version ([Generator spec](generator-spec.md), section 7).
+CLI: `--quality trivial.limit=0.5,trial.severity=reject,tedious.severity=off`, or `--quality preset=standard`. The generator spec's `quality` block
+has the same shape and filters the candidates it generates ([Generator spec](generator-spec.md), section 4).
 
 | Code | Severity when asked for | Meaning | Limit (default) |
 |---|---|---|---|
@@ -186,7 +186,7 @@ extras, in the tradition of Sudoku Explainer's and Andrew Stuart's hint pages:
 Colours are names from a named palette (`yellow`, `blue`, `green`, `purple`, `orange`, `pink`, `cyan`, `grey`, `brown`;
 `red` for removals); each renderer picks its own shade for each name. Steps whose technique has no sub-step form yet leave
 `substeps` out; so far: locked candidates (pointing, claiming), naked and hidden subsets, line rules (thermo, whispers, renban, ...), low / high and odd / even colouring,
-simple colouring, regions to find (each region keeps one colour for the whole solve), killer cage combinations, fish (X-Wing, Swordfish, Jellyfish, finned), XY- and XYZ-Wings, and single chains (X-Chain, XY-Chain, AIC and the
+simple colouring, regions to find (each region keeps one colour for the whole solve), killer cage combinations, fish (X-Wing, Swordfish, Jellyfish, finned, Franken, Mutant), XY-, XYZ- and WXYZ-Wings (both types), and single chains (X-Chain, XY-Chain, AIC and the
 short chains such as Skyscraper and 2-String Kite; strong links drawn as `strong` arrows, weak ones as `weak`).
 
 ## 6. `trace`

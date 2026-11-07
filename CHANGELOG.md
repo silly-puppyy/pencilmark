@@ -9,8 +9,15 @@ What changes for you (details in the entries below):
   solver (bottleneck rollouts, +0.09 on average). Rank agreement with human times rises (fed +0.040, Wang 2024 +0.028).
 - **Some bands and technique lists move.** The band route is the human one (reference cards: 1 of 227 bands).
   Colouring as a solving method is opt in (`rate(colouring=True)`, `--colouring`).
+- **Technique names follow their cited sources** (the techniques page): Skyscraper vs Turbot Fish, XY-Chain vs AIC,
+  Mutant vs Franken fish, Empty Rectangle; the forms the sources describe are found (WXYZ-Wing type 2, Death Blossom
+  of any size, overlapping ALS-XZ, BUG+1 with a 4+ candidate cell, ...), each with its own explanation. Checked on
+  Andrew Stuart's examples (132 of 139 found, no wrong move) and by soundness walks.
+- **Faster on the slowest variants:** long lines, counting circles and killers; several cards that hit the time
+  limit (band Unknown) are graded now.
 - **Publishing checks.** `thin` replaces `spike`; the `unusual` ranges are re-measured; quality presets
-  (`{"preset": "standard"}`) and opt-in checks are new.
+  (`{"preset": "standard"}`) and opt-in checks are new;
+  rule use counts the steps where a rule acts without being named (a line's pair relations, anti-knight note erasures).
 - **Breaking, no aliases** (nobody depends on them yet): fingerprints drop the `sha256:` prefix; `box_grid` needs `count`; colouring codes share the prefix C
   (EQD -> CEQ, SCL -> CSM, MCL -> CMU, 3DM -> CMD, identity-layer codes CSG / CFL / CPR / CTR); generated puzzles carry
   `meta.generated_from` only when the spec asks.
@@ -100,8 +107,8 @@ What changes for you (details in the entries below):
   takes any almost locked set seeing both cells as a witness, and non-aligned pairs (sudokuwiki type 2). Reference
   cards: bands unchanged.
 - More names checked against every cited source (docs/research, 2026-11-07): a Skyscraper's pairs must share a line at
-  their inner ends (else Turbot Fish, HoDoKu / Sudopedia); a chain-found Empty Rectangle needs the box's candidates on
-  one row and one column; an XY-Chain has the same digit at both ends (else AIC); Remote Pairs need 4+ cells; basic
+  their inner ends (else Turbot Fish, HoDoKu / Sudopedia); Empty Rectangles come only from the direct finder (HoDoKu's
+  definition: the chain search no longer names a grouped X-Chain an Empty Rectangle); an XY-Chain has the same digit at both ends (else AIC); Remote Pairs need 4+ cells; basic
   X-Wings and Swordfish carry their shape, so Mutant fish are named Mutant (they were called Franken). Reference cards:
   bands unchanged.
 - Names that match the pattern (checked against sudokuwiki.org's examples by their cited page, and against reference
