@@ -61,7 +61,11 @@ fails until the handler exists. Follow the [writing style](../../dev/writing-sty
 ```
 python -m pytest -q -n auto tests           # the quick suite, about 10 s
 python tools/golden.py check                # which cards changed, and how
+python tools/reglib.py run reglib-1.3.txt   # a classic technique: HoDoKu's regression library (ships with HoDoKu)
 ```
+
+For a classic technique HoDoKu has, add its HoDoKu code to `MAP` in `tools/reglib.py`; `run` must still report 0
+unsound moves, and `show reglib-1.3.txt CODE` lists the cases it misses with what HoDoKu expects there.
 
 A new technique usually changes some cards: steps found earlier, a different band, a different time. Read the
 differences; if they are what the technique should do, rewrite the golden records (`tools/golden.py write`) in their
