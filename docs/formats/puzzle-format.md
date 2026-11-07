@@ -121,7 +121,7 @@ agree on the common ones:
 | `id` | That site's own id. |
 | `url` | Link to the puzzle. |
 | `date` | ISO 8601 date. |
-| `rules_text` | The setter's own wording of the rules. Tools never overwrite it. |
+| `rules_text` | The rules in words: the setter's own, or generated when someone asked for it (pencilmark: `describe=True`, or `"rules_text": true` in a generator spec's `meta`). Tools never overwrite one that is there and never fill an empty one unasked, so a file read from a source carries the setter's text. |
 | `type` | Display name of the variant, such as `"Killer Sudoku"`. Variant names live **only** here; they never change the rules. `describe()` ([How variants are named](../library/variant-naming.md)) fills it when it is empty. |
 | `variants` | The variants as snake_case ids, like tags: `["killer", "german_whispers"]` (`describe()` lists them; [How variants are named](../library/variant-naming.md)). |
 | `license` | Licence of the puzzle. |
