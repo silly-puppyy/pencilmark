@@ -619,6 +619,7 @@ struct Brute {
         if (!cages.empty()) {
             if (!cages_ok(vals)) return;
             std::vector<int> emp, avail, others;
+            std::vector<uint32_t> pre;
             for (int gi : cages) {
                 const Group& g = p.groups[gi];
                 emp.clear();
@@ -635,13 +636,21 @@ struct Brute {
                 for (int d = 1; d <= D; ++d)
                     if (!(used & bit(d))) avail.push_back(d);
                 if ((int)avail.size() < k) return;
-                for (int c : emp) {
+                // the other empty cells take distinct digits from their own candidates: bound with those only
+                pre.assign(k + 1, 0u);
+                for (int i = 0; i < k; ++i) pre[i + 1] = pre[i] | cand[emp[i]];
+                uint32_t suf = 0;
+                for (int j = k - 1; j >= 0; --j) {
+                    const int c = emp[j];
+                    const uint32_t rest = (pre[j] | suf) & ~used;
+                    suf |= cand[c];
                     uint32_t keep = 0;
                     for (uint32_t dm = cand[c]; dm; dm &= dm - 1) {
                         int d = lowdigit(dm);
                         others.clear();
                         for (int x : avail)
-                            if (x != d) others.push_back(x);
+                            if (x != d && (rest & bit(x))) others.push_back(x);
+                        if ((int)others.size() < k - 1) continue;
                         int m = (int)others.size(), t = k - 1;
                         int lo = 0, hi = 0;
                         for (int i = 0; i < std::min(t, m); ++i) lo += others[i];

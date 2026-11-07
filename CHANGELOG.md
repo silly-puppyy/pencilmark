@@ -63,6 +63,10 @@ What changes for you (details in the entries below):
   on the engine's own rectangle (before: a hidden-UR text, sometimes on another rectangle); Aligned Pair Exclusion names
   the base pair and the witness that rules out each value pair; BUG+1 with a 4+ candidate cell has its own text.
   Tests: each added rule's explanation names its pattern and every removed candidate.
+- Trial refutations on killers: the search bounds a cage's remaining sum with the digits its other empty cells can
+  still hold (before: any unused digit), so more refutations finish within budget. 331 frozen killers: 1,490 s ->
+  1,320 s, one Unknown at 300 s -> Extreme 21.6 (157 s; LMD 4 stars), 6 difficulties move by 0.1-0.2 within
+  their band. Reference cards: 1 killer 12.0 -> 12.1.
 - Sub-steps (`explain="substeps"`) for WXYZ-type wings (both types: the digits held at most once, then Z's places
   or every digit once, the removals), and Franken / Mutant fish name their shape in a sub-step.
 - Counting circles: the combination search runs one digit set at a time (digits summing to the number of circles,
