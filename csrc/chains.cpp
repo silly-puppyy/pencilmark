@@ -832,15 +832,15 @@ void Solver::empty_rect(MoveBuf& out) {
                                 if (zi == at.end()) continue;
                                 const int Z = zi->second;
                                 if (Z == Y || vals[Z] || !(cand[Z] & bit(v)) || tbit(p.gbits(hb), Z)) continue;
-                                const int lineZ = line_of(Z, orient ? 0 : 1);  // Z sees the box part X does not
-                                if (lineZ < 0) continue;
+                                const int line_z = line_of(Z, orient ? 0 : 1);  // Z sees the box part X does not
+                                if (line_z < 0) continue;
                                 // parts: the one X sees (its line through the box) and the rest, which Z's line holds
                                 std::vector<int> seenX, rest;
                                 for (int c : B)
                                     ((orient ? p.coords[c].second == cc : p.coords[c].first == r) ? seenX : rest)
                                         .push_back(c);
                                 bool zsees = true;
-                                for (int c : rest) zsees &= tbit(p.gbits(lineZ), c);
+                                for (int c : rest) zsees &= tbit(p.gbits(line_z), c);
                                 if (!zsees || rest.empty()) continue;
                                 std::vector<uint32_t> key{(uint32_t)Z * 32u + (uint32_t)v, (uint32_t)hb, (uint32_t)hl};
                                 if (!seen.insert(key).second) continue;

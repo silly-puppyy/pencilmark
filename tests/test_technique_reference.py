@@ -207,17 +207,17 @@ def _ape(cd, filled):
     for X, Y in itertools.combinations(un, 2):
         aligned = Y in PEERS[X]
         single = [set(cd[q]) for q in PEERS[X] & PEERS[Y] if q not in filled and len(cd[q]) == 1]
-        wit = [
+        witnesses = [
             ds for cs, ds in sets if X not in cs and Y not in cs and all(X in PEERS[q] and Y in PEERS[q] for q in cs)
         ]
-        if not single and not wit:
+        if not single and not witnesses:
             continue
         okX, okY = set(), set()
         for x in cd[X]:
             for y in cd[Y]:
                 if x == y and aligned:
                     continue
-                dead = any(w <= {x, y} for w in single) or (x != y and any({x, y} <= w for w in wit))
+                dead = any(w <= {x, y} for w in single) or (x != y and any({x, y} <= w for w in witnesses))
                 if not dead:
                     okX.add(x), okY.add(y)
         if okX and okY:
