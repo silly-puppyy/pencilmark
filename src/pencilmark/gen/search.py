@@ -237,28 +237,6 @@ def _cage_limits(lim):
     return within_max, below_min
 
 
-def _tile_sized(b, sol, cells, rng, size_lo, size_hi, within_max):
-    """cages of a template minimum size: grow each from a random free cell to a size drawn in [size_lo, size_hi]
-    (distinct digits, within the maxima); leftovers stay smaller (_lift_minima merges them)"""
-    free, els = set(cells), []
-    room = lambda j: sum(1 for k in b.nb[j] if k in free)  # noqa: E731
-    while free:  # the most cornered free cell first, and grow into cornered cells (no cell left stranded)
-        c = min(free, key=lambda j: (room(j), rng.random()))
-        cage, total, want = [c], sol[c], rng.randint(size_lo, size_hi)
-        free.discard(c)
-        while len(cage) < want:
-            opts = [j for x in cage for j in b.nb[x] if j in free and sol[j] not in {sol[y] for y in cage}]
-            opts = [j for j in opts if within_max(len(cage) + 1, total + sol[j])]
-            if not opts:
-                break
-            j = min(opts, key=lambda j: (room(j), rng.random()))
-            cage.append(j)
-            total += sol[j]
-            free.discard(j)
-        els.append(("cage", tuple(sorted(cage)), total))
-    return els
-
-
 def _lift_minima(b, sol, els, rng, within_max, below):
     """merge every cage under its template's minimum into a neighboring cage (distinct digits, within the maxima),
     smallest neighbor first; None when one cannot grow"""
@@ -295,10 +273,6 @@ def partition(b, rng, chk, n_givens=0, min_els=0, cover=True, lim=None):
     owner, els = dict.fromkeys(givens, 0), []
     cells = list(range(b.N))
     rng.shuffle(cells)
-    llo, lhi = (lim or {}).get("length", (None, None))
-    if llo is not None and llo > 2:  # cages of at least llo cells: built that size, not merged up from pairs
-        els = _tile_sized(b, sol, [c for c in cells if c not in owner], rng, llo, min(lhi or llo + 2, b.n), within_max)
-        owner.update(dict.fromkeys(cells, 1))
     for c in cells:
         if c in owner:
             continue
@@ -333,8 +307,7 @@ def partition(b, rng, chk, n_givens=0, min_els=0, cover=True, lim=None):
         h = min(hosts, key=lambda x: (EL.ncomb(b.n, len(x[1]) + 1, x[2] + sol[c]), rng.random()))
         els[els.index(h)] = ("cage", tuple(sorted(h[1] + (c,))), h[2] + sol[c])
         els.remove(e)
-    els = _lift_minima(b, sol, els, rng, within_max, below)  # cages under a minimum grow first, checked below
-    if els is None or not chk.ok(givens, els):
+    if not chk.ok(givens, els):
         return None
     for _ in range(400):
         changed = False
@@ -359,7 +332,7 @@ def partition(b, rng, chk, n_givens=0, min_els=0, cover=True, lim=None):
             if not cover and not below(ea):
                 moves.append([e for i_, e in enumerate(els) if i_ != a])
             rng.shuffle(moves)
-            for cand in moves[:4]:
+            for cand in moves if below(ea) else moves[:4]:  # a cage under its minimum tries every merge
                 if chk.ok(givens, cand):
                     els = cand
                     changed = True
@@ -368,8 +341,10 @@ def partition(b, rng, chk, n_givens=0, min_els=0, cover=True, lim=None):
             break
     if any(len(e[1]) == 1 for e in els) or len(els) < min_els:  # a 1-cell cage is a given in disguise
         return None
-    if any(below(e) for e in els):
-        return None
+    if any(below(e) for e in els):  # the merges kept it solvable; what is still under a minimum is merged now
+        els = _lift_minima(b, sol, els, rng, within_max, below)
+        if els is None or not chk.ok(givens, els):
+            return None
     return sol, givens, els
 
 
