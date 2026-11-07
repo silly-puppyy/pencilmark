@@ -52,7 +52,7 @@ PAGES = {
     ),
     "sources": (
         "Puzzle sources",
-        "Links and payloads from SudokuPad, f-puzzles, Penpa and Logic Masters, read into puzzles.",
+        "Links and payloads from SudokuPad, f-puzzles, Penpa, Logic Masters and sudoku.coach, read into puzzles.",
         ["sources/__init__", "sources/_common", "sources/sudokupad", "sources/_sp_translate", "sources/_sp_style",
          "sources/fpuzzles",
          "sources/_fpuz_translate", "sources/penpa", "sources/lmd", "sources/coach"],
