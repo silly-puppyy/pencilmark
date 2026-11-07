@@ -55,7 +55,7 @@ PAGES = {
         "Links and payloads from SudokuPad, f-puzzles, Penpa and Logic Masters, read into puzzles.",
         ["sources/__init__", "sources/_common", "sources/sudokupad", "sources/_sp_translate", "sources/_sp_style",
          "sources/fpuzzles",
-         "sources/_fpuz_translate", "sources/penpa", "sources/lmd"],
+         "sources/_fpuz_translate", "sources/penpa", "sources/lmd", "sources/coach"],
     ),
     "cli": ("The command line", "`python -m pencilmark` and the `pencilmark` command.", ["__main__"]),
 }  # fmt: skip
