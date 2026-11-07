@@ -84,7 +84,6 @@ SEVERITIES = ("reject", "warning", "off")
 # supported by published puzzles (thin: published Hard rarely below 0.26; unusual: outside the published range)
 PRESETS = {
     "standard": {"decorative": "reject", "trivial": "reject", "trial": "reject", "thin": "reject", "unusual": "reject"},
-    "none": {},  # every check off (a generator request that wants no filtering)
 }
 
 

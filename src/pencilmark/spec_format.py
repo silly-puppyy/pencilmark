@@ -424,7 +424,7 @@ def spec_to_gen(doc):
             raise NotSupportedError('where.elements takes {"max": n}')
         out["max_elements"] = w["elements"]["max"]
     # the publishing checks: a candidate with a reject issue is not returned; without "quality" the standard preset
-    # (user 2026-11-07: every generation passes the quality checks; {"preset": "none"} switches them off)
+    # (user 2026-11-07: every generation passes the quality checks)
     out["quality"] = dict(doc["quality"]) if doc.get("quality") is not None else dict(DEFAULT_QUALITY)
     lim = doc.get("limits") or {}
     if lim.get("results", 1) != 1:

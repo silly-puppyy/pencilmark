@@ -131,8 +131,8 @@
 
 ### Generator
 
-- Every request passes the standard publishing checks unless its `quality` says otherwise (`{"preset": "none"}`
-  switches them off; `{}` gives each check its own default severity, as `rate` does).
+- Every request passes the standard publishing checks unless its `quality` says otherwise (`{}` gives each check
+  its own default severity, as `rate` does).
 - Every line kind the engine grades: slow thermo, entropic, modular, parity, palindrome, zipper, region sum, lockout
   and double arrow, besides thermo, whisper, renban and between.
 - Corner clues (quadruples, mathrax), outside clues (sandwich, x-sum, skyscraper, little killer), and locked

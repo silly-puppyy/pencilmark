@@ -94,7 +94,7 @@ have one) and / or `severity` (`"reject"`, `"warning"`, or `"off"` to turn the c
 A **preset** turns on a named set of checks and switches the others off: `{"preset": "standard"}` rejects a rule
 family nobody needs (`decorative`), a puzzle that is mostly given (`trivial`), a solve that needs trial or forcing
 (`trial`), candidate steps that do little (`thin`) and a difficulty outside the published range for its band
-(`unusual`); `{"preset": "none"}` switches every check off. Checks named next to the preset adjust it:
+(`unusual`). Checks named next to the preset adjust it:
 `{"preset": "standard", "thin": {"limit": 0.2}}`.
 
 ```python

@@ -116,8 +116,8 @@ Conditions on the result's card, using the card's keys ([Grade card](grade-card.
 `quality` (top level) filters candidates by the publishing checks of the grade card: one with an issue of severity
 reject is not returned, and the run's `info.rejected` counts the candidates refused, by check. Without `quality` every
 request uses the standard preset (a few common-sense checks and two measured on published puzzles, [Grade
-card](grade-card.md) section 4); `{"preset": "none"}` switches every check off, and `{}` gives each check its own
-default severity, as `rate` does. An object adjusts them as [`rate(quality=...)`](grade-card.md) does:
+card](grade-card.md) section 4); `{}` gives each check its own default severity, as `rate` does, and a check
+named with `"severity": "off"` is switched off. An object adjusts them as [`rate(quality=...)`](grade-card.md) does:
 `{"trivial": {"limit": 0.45}}` refuses puzzles with more than 45% of the cells given, `{"thin": {"severity":
 "reject"}}` those whose candidate steps do little (mostly singles around one hard step), `{"trivial": {"severity": "off"}}` turns a check off (a learner's
 first puzzle may well be mostly given; with `"preset": "standard"` beside it, the rest of the preset stays).

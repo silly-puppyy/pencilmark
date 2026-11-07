@@ -13,6 +13,7 @@ import pencilmark
 from pencilmark import cpsat_verify as V
 from pencilmark.gen import GenerationFailed
 from pencilmark.gen import api as GA
+from pencilmark.publish_flags import QUALITY
 
 
 def spec(D=9, box=None, where=None, rules=(), givens=None, symmetry=None, seed=None, time_limit=300):
@@ -45,7 +46,7 @@ def unique(puzzle):
 def run(doc, budget=150):  # a runaway guard; CI on Windows is about 2x slower than Linux
     t = time.time()
     if isinstance(doc, dict) and "quality" not in doc:  # these tests check generation, not the checks (preset off)
-        doc = dict(doc, quality={"preset": "none"})
+        doc = dict(doc, quality={k: {"severity": "off"} for k in QUALITY})
     r = pencilmark.generate(doc)
     assert time.time() - t < budget
     asked = (doc.get("meta") or {}) if isinstance(doc, dict) else {}
@@ -444,10 +445,10 @@ def test_fingerprints_asked_for_in_the_spec():
 
 
 def test_standard_preset_by_default():
-    """a request without quality uses the standard preset (its checks reject); {"preset": "none"} turns them off"""
+    """a request without quality uses the standard preset (its checks reject); a quality object replaces it"""
     from pencilmark import spec_format as SF
 
     base = {"format": "pencilmark-spec", "format_version": 1, "board": {"rows": 4, "cols": 4}, "digits": 4,
             "rules": [{"type": "box_grid", "box": [2, 2], "count": [2, 2]}]}  # fmt: skip
     assert SF.spec_to_gen(base)["quality"] == {"preset": "standard"}
-    assert SF.spec_to_gen(dict(base, quality={"preset": "none"}))["quality"] == {"preset": "none"}
+    assert SF.spec_to_gen(dict(base, quality={}))["quality"] == {}
