@@ -26,7 +26,7 @@ toc_max_heading_level: 2
 | def [`read.hodoku`](#read-hodoku) | Read a HoDoKu library line: the puzzle and its removed candidates. |
 | def [`read.sudokuwiki`](#read-sudokuwiki) | Read a sudokuwiki.org packed string (S9B, J9B, X9B, W9B, C9B, L9B, M9B, S6B, L6C). |
 | def [`read.ipuz`](#read-ipuz) | Read an ipuz sudoku: a dict, its JSON text or a path to a .ipuz file. |
-| def [`read.link`](#read-link) | Read a SudokuPad, f-puzzles, Penpa or Logic Masters link (or a short link to one; some need one request). |
+| def [`read.link`](#read-link) | Read a SudokuPad, f-puzzles, Penpa, Logic Masters or sudoku.coach link (or a short link to one; some need… |
 | def [`write.pencilmark`](#write-pencilmark) | pencilmark JSON text of x: canonical key order, one line per rule (pretty) or one line. |
 | def [`write.document`](#write-document) | The pencilmark-puzzle dict of x, canonical. |
 | def [`write.plain`](#write-plain) | One string of D x D characters, '.' for an empty cell (classic sudoku with standard boxes only). |
@@ -171,13 +171,13 @@ One puzzle for a "pencilmark-spec" request ([Generator spec](../formats/generato
 
 ### `def read.auto(x: str | dict | Path, *, format: str | None=None) -> dict` {#read-auto}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/read.py#L158)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/read.py#L160)
 
 Read x in its format (detected, or named by format).
 
 ### `def read.detect(x) -> str | None` {#read-detect}
 
-[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/read.py#L135)
+[source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/read.py#L137)
 
 Name the format of x (a key of READERS: "pencilmark", "plain", ..., "link"), or None; reads nothing but a file named by a path.
 
@@ -233,7 +233,7 @@ Read an ipuz sudoku: a dict, its JSON text or a path to a .ipuz file.
 
 [source](https://github.com/silly-puppyy/pencilmark/blob/main/src/pencilmark/read.py#L91)
 
-Read a SudokuPad, f-puzzles, Penpa or Logic Masters link (or a short link to one; some need one request). A reading the setter's embedded solution contradicts raises ReadingMismatch.
+Read a SudokuPad, f-puzzles, Penpa, Logic Masters or sudoku.coach link (or a short link to one; some need one request). A reading the setter's embedded solution contradicts raises ReadingMismatch.
 
 ## Writing (pencilmark.write)
 
