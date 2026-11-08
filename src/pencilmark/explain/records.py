@@ -811,6 +811,14 @@ def _h_region(ctx):
             "region can still reach"
         )
         title = "region needs a digit"
+    elif ctx.tech == S.REGION_GROUP:
+        why = {
+            "7201": f"The cells {nm.cells(pc)} already share a region, and joining a neighboring group would need more"
+            f" than {D} cells",
+            "7202": f"The {D} cells {nm.cells(pc)} make a whole region, so every neighbor lies in another region",
+            "7203": f"The region of {nm.cells(pc)} still needs cells and only one neighbor may still join it",
+        }.get(str(ctx.code), f"The cells {nm.cells(pc)} hold the same digit, so they lie in different regions")
+        title = "region groups"
     elif ctx.tech == S.REGION_RULE:
         why = (
             f"The rule on {nm.cells(pc)} reads the regions: try every way of meeting it with the digits and regions its"

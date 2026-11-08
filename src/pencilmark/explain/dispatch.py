@@ -330,6 +330,15 @@ _X_HANDLERS = {
         "pocket_counting",
         ("Pocket counting", "A pocket too small for a region of its own belongs to the unfinished region around it."),
     ),
+    "REGION_GROUP": (
+        _h_region,
+        "region_group",
+        (
+            "Region groups",
+            "Cells known to share a region form a group: two groups too big together are different regions, a full "
+            "group is sealed, a group with one way out takes it, equal digits are in different regions.",
+        ),
+    ),
     "REGION_RULE": (
         _h_region,
         "region_rule",

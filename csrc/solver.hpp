@@ -98,6 +98,7 @@ enum Tech {
     CLASS_FISH = 117,     ///< identity layer: two houses confine a colour to two others (an X-Wing over a colour)
     CLASS_COMPLETE = 118, ///< identity layer: k complete colours with k digits between them: the other cells lose those
     REGION_RULE = 119,    ///< regions to find: a custom rule reading region() on its own: digits / labels no combination uses
+    REGION_GROUP = 120,   ///< regions to find: groups known to share a region: too big together, sealed, one way out, equal digits
     MENTAL_NOTES = 84,    ///< single after notes logic done in the head (subset / pointing / combination on the mental view)    // line consistency on 3-cell windows (local scan of a long line)  // both options of a 2-way choice lead to the same placement / elimination  // short chain (<= 5 links) on the no-notes mental view, leading to a single  // bounded case split: bivalue cell, contradiction within a few direct rounds
     N_TECH = 128
 };
@@ -746,6 +747,7 @@ public:
     void region_digit(MoveBuf& out);  ///< a region's missing digit with one reachable place: that cell joins the region
     void pocket(MoveBuf& out);        ///< pocket counting: a small pocket bordered by one unfinished region joins it
     void region_rule(MoveBuf& out);   ///< a rule reading region(): candidates no combination of what it reads supports
+    void region_group(MoveBuf& out);  ///< the relation layer's groups: size cap, sealed, one way out, equal digits
     /// facts read off the clues alone (relations on an empty grid; with line shape): fires once as one step
     void clue_facts(MoveBuf& out);
     /// relation dominoes: a digit every allowed pair uses leaves common houses; two dominoes locking four digits

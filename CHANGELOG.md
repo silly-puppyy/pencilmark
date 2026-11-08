@@ -22,6 +22,9 @@
   lie in different regions, before any region is named (seeded by the given borders and same-region sets). A rule
   that only compares regions (`region_sight`, custom rules with `region(a) == region(b)`) is read over partitions, so
   it teaches such facts while every label is open: a sight clue that sees only itself parts from its four neighbors.
+- **Region groups** (a new technique, RGP): cells known to share a region form a group; two neighboring groups with
+  more cells than a region holds are different regions, a full group is sealed from its neighbors, a group with one
+  way out takes it, and equal digits lie in different regions.
 
 - **Counting puzzles with regions to find and rules that read them**: CP-SAT now encodes `region()` and `take_while`
   with a lambda (such puzzles used to fall to the C++ search alone, which often could not finish); the C++ search

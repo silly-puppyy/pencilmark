@@ -505,4 +505,64 @@ void Solver::region_rule(MoveBuf& out) {
     }
 }
 
+// the relation layer's groups (cells known to share a region, named or not), as a solver reasons with drawn borders:
+// two neighbouring groups with more than D cells between them are different regions (code 7201); a group of D cells is
+// sealed from its neighbours (7202); a group short of D cells with one neighbour not known to differ takes it (7203);
+// two cells holding the same digit, side by side or one in a group, lie in different regions (7204)
+void Solver::region_group(MoveBuf& out) {
+    if (!has_regions() || disabled[REGION_GROUP]) return;
+    const int D = p.D;
+    std::map<int, std::vector<int>> grp;  // anchor -> members, every chaos cell (a lone cell is its own group)
+    for (const auto& A : p.chaos)
+        for (int c : A) grp[rg_anchor(c)].push_back(c);
+    auto emit = [&](int code, const std::vector<int>& pat, const std::vector<std::pair<int, int>>& neq,
+                    const std::vector<std::pair<int, int>>& join) {
+        if (neq.empty() && join.empty()) return;
+        Move& m = new_move(out, REGION_GROUP, 1.0, (int)(neq.size() + join.size()));
+        for (auto [a, b] : neq) add_aeff(out, m, AE_REG_NEQ, a, b);
+        for (auto [a, b] : join) add_aeff(out, m, AE_REG_JOIN, a, b);
+        set_pattern(out, m, pat);
+        m.code = code;
+    };
+    for (const auto& [a, ms] : grp) {
+        std::set<int> nb;  // outside neighbours
+        for (int c : ms)
+            for (int x : p.chaos_nbr[c])
+                if (rg_anchor(x) != a) nb.insert(x);
+        const int size = (int)ms.size();
+        if (size >= D) {  // sealed
+            std::vector<std::pair<int, int>> neq;
+            for (int x : nb)
+                if (!rg_differ(a, x)) neq.push_back({a, x});
+            emit(7202, ms, neq, {});
+            continue;
+        }
+        std::vector<std::pair<int, int>> neq;  // too big together
+        std::set<int> seen;
+        for (int x : nb) {
+            const int b = rg_anchor(x);
+            if (!seen.insert(b).second || rg_differ(a, b)) continue;
+            if (size + (int)grp[b].size() > D) neq.push_back({a, b});
+        }
+        emit(7201, ms, neq, {});
+        if (size >= 2 || !neq.empty()) {  // one way out (a lone cell is dead_end's / region_exit's)
+            std::vector<int> open;
+            std::set<int> anchors;
+            for (int x : nb)
+                if (!rg_differ(a, x) && anchors.insert(rg_anchor(x)).second) open.push_back(x);
+            if (open.size() == 1 && neq.empty()) emit(7203, ms, {}, {{a, open[0]}});
+        }
+    }
+    std::vector<std::pair<int, int>> neq;  // equal digits
+    for (const auto& A : p.chaos)
+        for (size_t i = 0; i < A.size(); ++i)
+            for (size_t j = i + 1; j < A.size(); ++j) {
+                const int x = A[i], y = A[j];
+                if (!vals[x] || vals[x] != vals[y] || rg_differ(x, y) || rg_anchor(x) == rg_anchor(y)) continue;
+                const bool near = std::find(p.chaos_nbr[x].begin(), p.chaos_nbr[x].end(), y) != p.chaos_nbr[x].end();
+                if (near || grp[rg_anchor(x)].size() > 1 || grp[rg_anchor(y)].size() > 1) neq.push_back({x, y});
+            }
+    for (auto [x, y] : neq) emit(7204, {x, y}, {{x, y}}, {});
+}
+
 }  // namespace cs
