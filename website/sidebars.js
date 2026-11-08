@@ -31,7 +31,7 @@ module.exports = {
         page('guides/generator/generate', 'generate', 'Generate a puzzle'),
         page('guides/generator/generator-examples', 'spec-examples', 'Generator examples'),
         page('guides/generator/generate-for-learning', 'learning', 'Generate for learning'),
-        {type: 'doc', id: 'guides/generator/variant-catalogue', className: 'pm-ico-variant-catalogue', label: 'Variant catalogue'},
+        {type: 'doc', id: 'guides/generator/variant-catalog', className: 'pm-ico-variant-catalogue', label: 'Variant catalog'},
       ]),
       group('Development', '/guides/development/', 'Build from source, find your way around the code, and add techniques or rules.', [
         page('guides/development/environment', 'environment', 'Development environment'),
