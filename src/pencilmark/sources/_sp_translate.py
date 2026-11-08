@@ -1577,15 +1577,38 @@ def path_points(d):
     return subs
 
 
+def path_circle(d):
+    """a circle drawn as a path ("M x y m r 0 a r r 0 1 0 -2r 0 a r r 0 1 0 2r 0") -> (center [row, col], diameter)
+    in cell units, or None"""
+    m = re.fullmatch(
+        r"\s*M\s*(-?[\d.]+)[ ,]+(-?[\d.]+)\s*m\s*(-?[\d.]+)[ ,]+0\s*a\s*([\d.]+)[ ,]+([\d.]+)[ ,]+0[ ,]+1[ ,]+[01][ ,]+"
+        r"(-?[\d.]+)[ ,]+0\s*a.*",
+        d or "",
+    )
+    if not m or abs(float(m.group(3)) - float(m.group(4))) > 1e-6:
+        return None
+    x, y, r = float(m.group(1)), float(m.group(2)), float(m.group(4))
+    return [y / SVG_CELL, x / SVG_CELL], 2 * r / SVG_CELL
+
+
 def path_lines(P):
-    """lines drawn as SVG paths (Sudoku Maker files: `d`, no `wayPoints`) -> ordinary lines, one per subpath"""
-    lines = []
+    """lines drawn as SVG paths (Sudoku Maker files: `d`, no `wayPoints`) -> ordinary lines, one per subpath; a filled
+    circle drawn as a path (a thermometer's bulb, 000PDY) -> a round overlay; other filled path shapes are no lines"""
+    lines, extra = [], []
     for ln in P.get("lines") or []:
         if isinstance(ln, dict) and ln.get("d") and not ln.get("wayPoints"):
+            if ln.get("fill"):
+                circ = path_circle(ln["d"])
+                if circ:
+                    extra.append({"center": circ[0], "width": circ[1], "height": circ[1], "rounded": True,
+                                  "backgroundColor": ln["fill"]})  # fmt: skip
+                continue
             lines += [dict({k: v for k, v in ln.items() if k != "d"}, wayPoints=pts) for pts in path_points(ln["d"])]
         else:
             lines.append(ln)
-    return dict(P, lines=lines) if P.get("lines") else P
+    if not P.get("lines"):
+        return P
+    return dict(P, lines=lines, overlays=(P.get("overlays") or []) + extra)
 
 
 def without_nulls(P):
@@ -1626,9 +1649,84 @@ def numbers_on_circles(P):
     return dict(P, overlays=[o for o in ov if id(o) not in drop]) if drop else P
 
 
-def emit_line(p, rule, lc, ids, circles, rules, used, unknown, box_of, renban_pieces, thermo_cells, hexcol=None):
+def branch_starts(lcs, circles):
+    """thermometer branches drawn without a bulb: a line with no circle at either end that starts or ends on the cells
+    of a line with a bulb (or of a branch found before) grows from there: {tuple(cells): the end it starts at (0 / -1)}
+    (000MOO: a branch drawn from its tip back to the thermometer was read backwards)"""
+    trunk = {c for lc in lcs if lc[0] in circles or lc[-1] in circles for c in lc}
+    out, left, changed = {}, [lc for lc in lcs if lc[0] not in circles and lc[-1] not in circles], True
+    while changed:
+        changed = False
+        for lc in list(left):
+            a, b = lc[0] in trunk, lc[-1] in trunk
+            if a != b:
+                out[tuple(lc)] = 0 if a else -1
+                trunk |= set(lc)
+                left.remove(lc)
+                changed = True
+    return out
+
+
+def thermo_network(p, pieces, bulb_cells, unknown):
+    """the board's thermometer strokes [(rule, drawn cells, ids)] read together. A stroke with a bulb at one end runs
+    from it (cells numbered from the bulb). A stroke with no bulb (a branch drawn from its tip, or touching a
+    thermometer mid-stroke: 000MOO) takes its direction from the strokes it joins: numbers spread from the bulbed
+    strokes' cells along the bulbless strokes, every step runs to the higher number, and a stroke is split where its
+    direction turns. Unreached strokes keep the drawn order; a step between two cells with the same number refuses."""
+    from collections import deque
+
+    dist, loose = {}, []
+    for rule, lc, ids in pieces:
+        if lc[-1] in bulb_cells and lc[0] not in bulb_cells:
+            lc, ids = lc[::-1], ids[::-1]
+        if lc[0] in bulb_cells:
+            p.constraints.append({"type": "line", "kind": rule, "cells": ids})
+            for k, c in enumerate(lc):
+                dist[c] = min(dist.get(c, k), k)
+        else:
+            loose.append((rule, lc, ids))
+    adj = defaultdict(set)
+    for _, lc, _ in loose:
+        for a, b in zip(lc, lc[1:]):
+            if a != b:
+                adj[a].add(b)
+                adj[b].add(a)
+    q = deque(sorted((c for c in dist if c in adj), key=lambda c: dist[c]))
+    while q:
+        c = q.popleft()
+        for d in adj[c]:
+            if d not in dist:
+                dist[d] = dist[c] + 1
+                q.append(d)
+    for rule, lc, ids in loose:
+        if not all(c in dist for c in lc):  # no bulb reaches it: as drawn
+            p.constraints.append({"type": "line", "kind": rule, "cells": ids})
+            continue
+        runs, cur, sign = [], [0], 0
+        for k in range(1, len(lc)):
+            d = dist[lc[k]] - dist[lc[k - 1]]
+            if d == 0 and lc[k] != lc[k - 1]:
+                unknown.append("thermometer step between cells as far from its bulb")
+                return
+            st = 1 if d > 0 else -1
+            if sign and st != sign:
+                runs.append((cur, sign))
+                cur = [k - 1]
+            sign = st
+            cur.append(k)
+        runs.append((cur, sign or 1))
+        for idx_, sg in runs:
+            cells = [ids[k] for k in idx_]
+            if len(cells) >= 2:
+                p.constraints.append({"type": "line", "kind": rule, "cells": cells if sg > 0 else cells[::-1]})
+
+
+def emit_line(p, rule, lc, ids, circles, rules, used, unknown, box_of, renban_pieces, thermo_cells, hexcol=None,
+              branches=None, bulbs=None, thermo_net=None):  # fmt: skip
     """one line read as `rule` (its drawn cells lc, their engine ids) -> the puzzle's constraints / relations / named
-    rules; refusals go to `unknown`. Shared by the square-grid reader and boards with declared houses"""
+    rules; refusals go to `unknown`. Shared by the square-grid reader and boards with declared houses. branches:
+    branch_starts() of the board's lines; bulbs: cells with a smaller round marker at their center (a thermometer's
+    bulb drawn half a cell wide, 000GQE)"""
     loop = len(ids) > 2 and ids[0] == ids[-1]
     if rule in ("renban", "region_sum") and len(set(ids)) != len(ids):
         ids = list(dict.fromkeys(ids))  # closed loop: the start cell is drawn twice, counted once
@@ -1637,7 +1735,12 @@ def emit_line(p, rule, lc, ids, circles, rules, used, unknown, box_of, renban_pi
         if THERMO_PARITY.search(rules.lower()):  # "each thermometer contains digits of a single parity"
             custom_line(p, "same_parity", ids)
             used["thermo_parity"] += 1
-        if lc[-1] in circles and lc[0] not in circles:
+        if thermo_net is not None:  # read with the board's other thermometers (thermo_network)
+            thermo_net.append((rule, list(lc), list(ids)))
+            used[rule] += 1
+            return
+        bulb = lambda x: x in circles or x in (bulbs or ())  # noqa: E731
+        if (bulb(lc[-1]) and not bulb(lc[0])) or (branches or {}).get(tuple(lc)) == -1:
             ids = ids[::-1]
         p.constraints.append({"type": "line", "kind": rule, "cells": ids})  # compiled by finalize (lt / le pairs)
     elif rule.startswith("whisper") and rule[7:].isdigit():  # "differ by at least 3": its own threshold
@@ -2122,6 +2225,15 @@ def translate(sp, page_text=None, overrides=None):
     told = set()  # line colors whose meaning is logged (once per color and reading)
     drawn_classes = {ci for ci, _, _ in line_items(P, n)}
     renban_pieces = []
+    bulbs = {
+        cell_of(o["center"])
+        for o in layers
+        if o.get("rounded") and 0.4 <= (o.get("width") or 0) < 0.6 and not _text_of(o).strip()
+        and all(abs(v - math.floor(v) - 0.5) < 0.15 for v in o["center"])
+    }  # fmt: skip
+    thermo_net = []  # thermometer strokes, read together after the loop (thermo_network)
+    branches = branch_starts([lc for cn, _, lc in line_items(P, n) if cn not in ("diagonal", "offcentre")],
+                             {**dict.fromkeys(bulbs), **circles})  # fmt: skip
     for cname, hexcol, lc in line_items(P, n):
         if cname == "offcentre":
             unknown.append("line drawn along grid lines")
@@ -2196,7 +2308,10 @@ def translate(sp, page_text=None, overrides=None):
             if rule in from_ and re.search(pat_, rules.lower()):
                 rule = var_
         ids = [idx(x) for x in lc]
-        emit_line(p, rule, lc, ids, circles, rules, used, unknown, box_of, renban_pieces, thermo_cells, hexcol)
+        emit_line(p, rule, lc, ids, circles, rules, used, unknown, box_of, renban_pieces, thermo_cells, hexcol,
+                  branches, bulbs, thermo_net)  # fmt: skip
+    ends = {x for _, lc, _ in thermo_net for x in (lc[0], lc[-1])}
+    thermo_network(p, thermo_net, {c for c in set(circles) | bulbs if c in ends}, unknown)  # bulbs at a stroke's end
     for ids in join_branches(renban_pieces):
         p.constraints.append({"type": "set", "cells": ids, "kind": "consecutive"})
     # global rules from text

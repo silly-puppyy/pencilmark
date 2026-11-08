@@ -1380,3 +1380,27 @@ def test_sudokupad_lines_drawn_as_svg_paths():
         [1.5, 0.5],
         [1.5, 1.5],
     ]
+
+
+def test_sudokupad_thermometer_branches():
+    """a thermometer branch drawn without a bulb runs away from the thermometer it joins, also when drawn from its tip
+    (000MOO); bulbs drawn half a cell wide count (000GQE)"""
+    from pencilmark.sources import _sp_translate as SP
+    from pencilmark.sources import sudokupad
+
+    bulbs = [
+        {"center": [0.5, 0.5], "width": 0.85, "height": 0.85, "rounded": True, "backgroundColor": "#CFCFCF"},
+        {"center": [3.5, 3.5], "width": 0.5, "height": 0.5, "rounded": True, "backgroundColor": "#139fe1"},
+    ]
+    lines = [
+        {"wayPoints": [[0.5, 0.5], [0.5, 3.5]], "color": "#CFCFCF", "thickness": 21},  # the trunk, from the bulb
+        {"wayPoints": [[2.5, 1.5], [1.5, 1.5], [0.5, 1.5]], "color": "#CFCFCF", "thickness": 21},  # drawn tip first
+        {"wayPoints": [[2.5, 3.5], [3.5, 3.5]], "color": "#CFCFCF", "thickness": 21},  # its small bulb at the end
+    ]  # fmt: skip
+    p, _ = SP.translate(
+        sudokupad.decode(_sp4(underlays=bulbs, lines=lines)), "Thermometers: digits increase from the bulb."
+    )
+    therm = [c["cells"] for c in p.constraints if c.get("kind") == "thermo"]
+    assert [0, 1, 2, 3] in therm  # r1c1 .. r1c4
+    assert [1, 5, 9] in therm  # r1c2 -> r2c2 -> r3c2: away from the trunk
+    assert [15, 11] in therm  # r4c4 (bulb) -> r3c4

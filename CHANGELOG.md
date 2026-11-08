@@ -82,6 +82,10 @@
   and silently dropped everything else: of 236 logic-masters.de puzzles read this way, 5 had one solution.
 - **Lines drawn as SVG paths** (Sudoku Maker files: `d`, no `wayPoints`) are read; they were dropped silently (174
   logic-masters.de puzzles; 70 of them read as if the lines were not there).
+- **Thermometers are read as networks**: a branch drawn without a bulb takes its direction from the thermometer it
+  joins (also when drawn from its tip, or touching the thermometer mid-stroke, where it is split); bulbs drawn half a
+  cell wide, and bulbs drawn as filled SVG circles, count. Checked on every logic-masters.de SudokuPad puzzle by
+  solution count: every reading that had one solution keeps it, 39 more now have one.
 - **The "Solved by" list of a logic-masters.de page is not rules**: solver names ("antiknight...", "Chaos...", "Fog...")
   added anti-knight or refused the puzzle. Also refused now: liar cells, split peas, helping cages, outside cells the
   solver fills, "choose a subset of the digits".
