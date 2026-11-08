@@ -874,7 +874,7 @@ def _alsxy_render(ctx, A, B, C, x, y, z):
     )
     J = _J(
         ctx,
-        digits=[x, y, z],
+        digits=[x, y, *zl],  # z may be the words for several digits ("3 and 8")
         z=z,
         rcc=[x, y],
         als=[{"cells": list(a[0]), "digits": list(digits_of(a[1]))} for a in (A, B, C)],

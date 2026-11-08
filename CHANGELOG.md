@@ -172,6 +172,10 @@
 - **Chains worked out in the head with a grouped end** (a box segment as one end) got the generic explanation (19 of
   2,937 classic development puzzles); they now read as the chain and the clash with both ends.
 
+- **An ALS-XY-Wing removing two digits** lost its explanation to the generic text (its digit list held the words "3 and
+  8", which broke the step's notation); explained in full now. Every step of the 2,937 classic development puzzles has
+  its own explanation.
+
 - **SudokuPad reader fixes** (Cracking the Cryptic screen): bare all-digit hex colors (`c:020202`) no longer break
   decoding, `[null]` regions are skipped, and a 0 digit (digits 0..8) is refused clearly instead of failing as a
   format error.
