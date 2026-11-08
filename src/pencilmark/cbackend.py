@@ -50,6 +50,7 @@ CTYPES = (
 _FORCING_KEYS = ("level", "options", "unit", "survivors", "steps", "contradictions")
 _COMBO_KEYS = ("ctype", "constraint", "combos", "set_unique", "sum", "distinct", "n_vars", "complete")
 _DESC_KEYS = ("log branches", "log depth", "search", "uniqueness", "counting", "contradiction", "held", "coverage")
+_DESC_NAMES = tuple("desc_" + k.replace(" ", "_") for k in _DESC_KEYS)  # their xmeta keys (built once, not per step)
 XMETA_KEYS = {
     S.SUM_COMBO: _COMBO_KEYS,
     S.ARROW_COMBO: _COMBO_KEYS,
@@ -594,7 +595,7 @@ def solve(
         keys = XMETA_KEYS.get(tech)
         m.xmeta = dict(zip(keys, xm)) if keys else None
         if len(xm) >= 16:  # structural descriptors (canonical mode): mirrored for explain / debug
-            m.xmeta = dict(m.xmeta or {}, **{"desc_" + k.replace(" ", "_"): v for k, v in zip(_DESC_KEYS, xm[10:18])})
+            m.xmeta = dict(m.xmeta or {}, **dict(zip(_DESC_NAMES, xm[10:18])))
         if m.xmeta and "ctype" in m.xmeta:
             m.xmeta["ctype"] = CTYPES[m.xmeta["ctype"]]
         lk_ = m.xmeta.get("line_kind", -1) if m.xmeta else -1
