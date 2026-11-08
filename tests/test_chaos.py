@@ -161,3 +161,29 @@ def test_region_rule_reads_custom_rules():
         assert pencilmark.solve(custom) == pencilmark.solve(doc)
     assert "RRU" in {s["code"] for s in b["steps"]}
     assert (a["band"], a["difficulty"]) == (b["band"], b["difficulty"])
+
+
+def test_cpsat_models_region_rules():
+    """CP-SAT encodes region() (the label Booleans) and take_while with a lambda, and agrees with the C++ search"""
+    import json
+    import re
+    from pathlib import Path
+
+    pytest.importorskip("ortools")
+    from pencilmark import api
+    from pencilmark import exchange as X
+
+    text = (Path(__file__).parents[1] / "docs/formats/rules/houses-and-regions.mdx").read_text(encoding="utf-8")
+    doc = json.loads(re.search(r"A complete 4×4 chaos construction.*?```json\n(.*?)```", text, re.S).group(1))
+    sight = {
+        "type": "custom",
+        "cells": {"x": ["r1c1"], "r": ["r1c2", "r1c3", "r1c4"]},
+        "holds": "len(take_while(r, y => region(y) == region(x))) <= 1",  # the given border after r1c2
+    }
+    puzzle = dict(doc, rules=doc["rules"][:1] + [doc["rules"][2], sight])  # chaos, the same-region set, the sight rule
+    with X._reserved_ok():
+        p = api._load(puzzle)
+        assert cpsat_verify.build_model(p)[0] is not None  # modelled, not left to the C++ search
+        by_cpsat = cpsat_verify.cpsat_solutions(p, limit=2)
+        by_search = cpsat_verify._engine(p, 2, 2_000_000, 60)[0]
+    assert sorted(map(list, by_cpsat)) == sorted(map(list, by_search))

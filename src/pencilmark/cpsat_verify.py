@@ -179,6 +179,7 @@ def _add_chaos(m, x, p):
             for c in con["cells"][1:]:
                 for k in range(D):
                     m.Add(lab[c][k] == lab[c0][k])
+    return lab
 
 
 class _Unmodelled(Exception):
@@ -199,18 +200,27 @@ class _Item:  # an element of a comprehension: its value, and the condition it e
         self.value, self.cond = value, cond
 
 
+class _Fn:  # a lambda: its parameter slots, body and the scope it was made in
+    __slots__ = ("params", "body", "scope")
+
+    def __init__(self, params, body, scope):
+        self.params, self.body, self.scope = params, body, scope
+
+
 class _ExprCP:
     """a custom rule's expression (its IR, custom.to_ir) as CP-SAT constraints: constants, linear expressions and
     Booleans; comprehensions over cell lists (with an optional condition), if-then-else, comparisons, and / or / not,
-    + - and products with a constant, sum, count, len, abs, odd, even, num, all, any, shaded(). Anything else raises
-    _Unmodelled (the model is then unsupported and the C++ search decides)."""
+    + - and products with a constant, sum, count, len, abs, odd, even, num, all, any, shaded(), region() (the label
+    Booleans of the regions to find), take_while with a lambda. Anything else raises _Unmodelled (the model is then
+    unsupported and the C++ search decides)."""
 
     BIG = 10_000
 
-    def __init__(self, m, con, x, shading):
+    def __init__(self, m, con, x, shading, labels=None):
         from .rules import custom as CU
 
         self.m, self.x, self.sh, self.CU = m, x, shading, CU
+        self.lab = labels or {}  # cell -> its D label Booleans (regions to find)
         self.cells, self.lists, self.ir = con["cells"], con["lists"], con["ir"]
         self.op = {i: o for o, i in CU.OPCODE.items()}
         self.fn = {i: f for f, i in CU.FNCODE.items()}
@@ -335,11 +345,35 @@ class _ExprCP:
             if not (isinstance(l, int) or isinstance(r, int)):
                 raise _Unmodelled("a product of two unknowns")
             return l * r
+        if o == "lambda":
+            return _Fn(a[0], a[1], scope)
         if o == "call":
             return self.call(self.fn[a[0]], [self.ev(y, scope) for y in a[1:]])
         raise _Unmodelled(o)
 
+    def take_while(self, L, f):
+        """the leading elements meeting f: each kept under "every element so far met f" (a Boolean chain)"""
+        if not isinstance(f, _Fn) or len(f.params) != 1:
+            raise _Unmodelled("take_while without a one-parameter lambda")
+        out, running = [], True
+        for item in self.items(L):
+            if item.cond is not None:
+                raise _Unmodelled("take_while over a filtered list")
+            ok = self.boolean(self.ev(f.body, {**f.scope, f.params[0]: item.value}))
+            running = self.logic("and", [running, ok])
+            if running is False:
+                break
+            out.append(_Item(item.value, None if running is True else running))
+        return out
+
     def call(self, f, args):
+        if f == "region":
+            v = args[0]
+            if not isinstance(v, _Cell) or self.cells[v.var] not in self.lab:
+                raise _Unmodelled("region() without regions to find")
+            return sum((k + 1) * b for k, b in enumerate(self.lab[self.cells[v.var]]))
+        if f == "take_while":
+            return self.take_while(args[0], args[1])
         if f == "shaded":
             v = args[0]
             if not isinstance(v, _Cell) or self.cells[v.var] not in self.sh:
@@ -687,15 +721,14 @@ def build_model(p):
             m.Add(sum(terms) == con["total"])
         else:
             return None, None
-    if has_chaos(p):
-        _add_chaos(m, x, p)
+    labels = _add_chaos(m, x, p) if has_chaos(p) else {}
     shading = {}
     if has_shading(p):
         _add_yin_yang(m, p, shading)
     for con in p.constraints:
         if con.get("type") == "expr":
             try:
-                m.Add(_ExprCP(m, con, x, shading).holds() == 1)
+                m.Add(_ExprCP(m, con, x, shading, labels).holds() == 1)
             except _Unmodelled:
                 return None, None
     return m, x

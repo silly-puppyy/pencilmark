@@ -10,6 +10,12 @@
   stops at its first border), within a budget, and removes nothing when the budget runs out. Before, such rules were
   only checked once every digit and region was known.
 
+- **Counting puzzles with regions to find and rules that read them**: CP-SAT now encodes `region()` and `take_while`
+  with a lambda (such puzzles used to fall to the C++ search alone, which often could not finish); the C++ search
+  prunes on a region rule as soon as its value is settled (a sight line stops at its first other region), and once
+  every digit is fixed it stops after the first valid set of regions (solutions count by digits): a fully given
+  jigsaw read as chaos went from "undecided" after 16 s to decided at once.
+
 ### Reading
 
 - **Regions to find in SudokuPad links** (still reserved for grading): more phrasings of the construction are read

@@ -143,6 +143,18 @@ struct Brute {
         for (int ki : layered) {
             const NConstraint& k = p.nary[ki];
             int dg[64], lb[64], sd[64];
+            if (!sh && k.nv() <= 64) {  // regions only: read lazily, so a rule already settled by what is known prunes
+                for (int i = 0; i < k.nv(); ++i) {  // now (a sight line stops at its first other region), not at the end
+                    const int c = k.vars[i];
+                    dg[i] = vals[c] ? vals[c] : -1;
+                    lb[i] = !lab || area_of[c] < 0 ? 0 : lab[c] ? lab[c] : -1;
+                }
+                try {
+                    if (!expr_holds_lazy(*k.expr, dg, lab ? lb : nullptr)) return false;
+                } catch (const ExprNeed&) {  // asks for a value not known yet: undecided here
+                }
+                continue;
+            }
             bool ready = true;
             for (int i = 0; i < k.nv() && ready; ++i) {
                 const int c = k.vars[i];
@@ -818,13 +830,16 @@ struct Brute {
             return;
         }
         if (lcell >= 0 && (c < 0 || lbest < best)) {
+            // solutions count by digits: once every digit is fixed, one valid set of regions confirms the solution and
+            // the other sets only repeat its digits (as for the shading above)
+            const size_t before = sols.size();
             const uint32_t snapshot = lcs[depth][lcell];
             for (uint32_t m = snapshot; m; m &= m - 1) {
                 copy_down();
                 ls[depth + 1][lcell] = (uint8_t)lowdigit(m);
                 lcs[depth + 1][lcell] = m & (~m + 1);
                 rec(depth + 1);
-                if ((int)sols.size() >= limit) return;
+                if ((int)sols.size() >= limit || (c < 0 && sols.size() > before)) return;
             }
             return;
         }
