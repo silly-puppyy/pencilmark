@@ -149,12 +149,14 @@ class _ReadCtx:
             return []
         if t == "chaos":  # the rows / columns are houses (read_houses); the regions to find are a constraint
             r0, c0 = parse_cell(r["origin"])
-            return [{"type": "chaos", "cells": [B.name(x) for x in sorted(grid_area(B, r0, c0))]}]
+            area = [B.name(x) for x in sorted(grid_area(B, r0, c0))]
+            extra = [{"type": "chaos_no_2x2", "cells": area}] if r.get("no_2x2") else []  # rules/region.py
+            return [{"type": "chaos", "cells": area}] + extra
         if t == "yin_yang":  # shading: a constraint over the board (cpsat_verify; the engine refuses grading it)
             return [{"type": "yin_yang", "shaded": list(r.get("shaded", [])), "unshaded": list(r.get("unshaded", []))}]
         if t in ("region_border", "same_region"):
             return [{"type": t, "cells": list(r["cells"])}]
-        if t in ("region_sight", "border_count"):  # rules/region.py: compiled to custom rules over region() later
+        if t in ("region_sight", "border_count", "other_region_sum"):  # rules/region.py: custom rules over region()
             return [{k: v for k, v in r.items() if k not in ("id", "label", "style")}]
         if t == "line":  # rules/line.py
             if r.get("kind") == "region_sum" and any(x["type"] == "chaos" for x in self.rules):

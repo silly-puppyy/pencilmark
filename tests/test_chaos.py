@@ -272,3 +272,22 @@ def test_region_sum_line_on_chaos():
         assert count(line, {"type": "region_border", "cells": ["r1c1", "r1c2"]},
                      {"type": "same_region", "cells": ["r1c2", "r1c3"]}) == 0  # 1 | 2 + 3  # fmt: skip
         assert pencilmark.write.document(dict(base, rules=[{"type": "chaos"}, line]))["rules"][1] == line
+
+
+def test_other_region_sum_and_no_2x2():
+    """other_region_sum (squares) and the chaos option no_2x2 (extra chaos), on a 4x4 whose regions are its boxes"""
+    from pencilmark import exchange as X
+
+    sol = [1, 2, 3, 4, 3, 4, 1, 2, 2, 1, 4, 3, 4, 3, 2, 1]
+    base = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 4, "cols": 4}, "digits": 4,
+            "givens": sol}  # fmt: skip
+    box = {"type": "same_region", "cells": ["r1c1", "r1c2", "r2c1", "r2c2"]}
+    square = {"type": "other_region_sum", "cells": ["r2c2"], "value": 3 + 2 + 1 + 4 + 1}  # r1c3 r2c3 r3c1 r3c2 r3c3
+    count = lambda *rs: pencilmark.count_solutions(dict(base, rules=list(rs)), limit=2)["count"]
+    with X._reserved_ok():
+        assert count({"type": "chaos"}, box, square) == 1
+        assert count({"type": "chaos"}, box, dict(square, value=10)) == 0
+        assert count({"type": "chaos", "no_2x2": True}, box) == 0
+        doc = dict(base, rules=[{"type": "chaos", "no_2x2": True}, square])
+        pencilmark.validate(doc)
+        assert pencilmark.write.document(doc)["rules"] == doc["rules"]

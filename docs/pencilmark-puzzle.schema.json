@@ -315,6 +315,9 @@
     "origin": {
      "$ref": "#/$defs/cell",
      "description": "the grid's top-left cell; default r1c1"
+    },
+    "no_2x2": {
+     "type": "boolean"
     }
    },
    "required": [
@@ -470,6 +473,39 @@
     },
     "total": {
      "type": "boolean"
+    },
+    "value": {
+     "type": "integer",
+     "minimum": 0
+    }
+   },
+   "required": [
+    "type",
+    "cells"
+   ],
+   "additionalProperties": false
+  },
+  "rule_other_region_sum": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "other_region_sum"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "cells": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/cell"
+     },
+     "minItems": 1
     },
     "value": {
      "type": "integer",
@@ -1857,6 +1893,9 @@
     },
     {
      "$ref": "#/$defs/rule_border_count"
+    },
+    {
+     "$ref": "#/$defs/rule_other_region_sum"
     },
     {
      "$ref": "#/$defs/rule_box_grid"

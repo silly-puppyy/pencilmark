@@ -11,6 +11,8 @@
   which region rules it supports; the engine reads it as custom rules over `region()`.
 - **`border_count`** (6.3): a clue counts the region borders between it and the edge of the board in each of its
   `directions` (`total` adds them up); setters' arrows to borders and passport arrows.
+- **`other_region_sum`** (6.3): a clue is the sum of its surrounding digits that lie in other regions (setters'
+  squares); and the chaos rule's **`no_2x2`** option: no 2×2 block of cells in one region (extra chaos).
 - **Region-sum lines on a board with regions to find** are split by the found regions (they were read as one segment,
   which silently dropped the rule); the engine reads them as a rule over `region()`.
 

@@ -28,11 +28,12 @@ from .common import (
 COMMON = {"type", "id", "label", "style"}
 RULE_KEYS = {
     "grid": (set(), {"origin"}),
-    "chaos": (set(), {"origin"}),
+    "chaos": (set(), {"origin", "no_2x2"}),
     "region_border": ({"cells"}, set()),
     "same_region": ({"cells"}, set()),
     "region_sight": ({"cells"}, {"directions", "self", "value"}),
     "border_count": ({"cells"}, {"directions", "total", "value"}),
+    "other_region_sum": ({"cells"}, {"value"}),
     "yin_yang": (set(), {"shaded", "unshaded"}),
     "box_grid": ({"box", "count"}, {"origin"}),
     "box": ({"cells"}, set()),
@@ -261,7 +262,7 @@ _RESERVED_OK = [False]
 # engine, but no human technique grades them yet; files that use them are refused until then (_reserved_ok() reads them).
 RESERVED_TYPES = {"yin_yang": "shading", "chaos": "regions to find", "region_border": "regions to find",
                   "same_region": "regions to find", "region_sight": "regions to find",
-                  "border_count": "regions to find"}  # fmt: skip
+                  "border_count": "regions to find", "other_region_sum": "regions to find"}  # fmt: skip
 
 
 class _reserved_ok:
@@ -331,7 +332,7 @@ def _validate_rule(r, B):
             _cells(B, x["when"], "when", minlen=1)
             _cells(B, x["light"], "light", minlen=1)
         return
-    if t in ("region_sight", "border_count"):  # 6.3: clues in a chaos area reading the regions
+    if t in ("region_sight", "border_count", "other_region_sum"):  # 6.3: clues in a chaos area reading the regions
         from ..rules.region import DIRECTIONS
 
         cs = _cells(B, r["cells"], minlen=1)
@@ -360,6 +361,8 @@ def _validate_rule(r, B):
                 raise FormatError("a region_border separates two orthogonal neighbors")
         return
     if t in ("grid", "box_grid", "chaos"):
+        if "no_2x2" in r and not isinstance(r["no_2x2"], bool):
+            raise FormatError("chaos no_2x2 must be true or false")
         if t == "box_grid":
             bx = r["box"]
             if not (

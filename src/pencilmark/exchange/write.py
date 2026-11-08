@@ -197,6 +197,9 @@ class _Writer:
             chaos = [set(c["cells"]) for c in self.p.constraints if c.get("type") == "chaos"]
             if not box and grid_area(B, r0, c0) in chaos:  # its regions are to be found (6.3)
                 rule["type"] = "chaos"
+                no2 = [r_ for r_, _ in getattr(self.p, "named_rules", []) if r_.get("type") == "chaos_no_2x2"]
+                if any({B.idx(x) for x in r_["cells"]} == grid_area(B, r0, c0) for r_ in no2):
+                    rule["no_2x2"] = True
             if box:
                 rule["box"] = list(box)
                 rule["count"] = [B.D // box[0], B.D // box[1]]
@@ -494,8 +497,10 @@ class _Writer:
             return [dict(rule, holds=_holds(rule["holds"]))]
         if t == "quadruple":
             return [{"type": "quadruple", "digits": [int(v) for v in rule["digits"]], "cells": nm(rule["cells"])}]
-        if t in ("region_sight", "border_count"):
+        if t in ("region_sight", "border_count", "other_region_sum"):
             return [dict(rule, cells=nm(rule["cells"]))]
+        if t == "chaos_no_2x2":  # written as the chaos rule's option (write_groups)
+            return []
         if t == "region_sum_line":  # a region-sum line on a board with regions to find
             return [{"type": "line", "kind": "region_sum", "cells": nm(rule["cells"])}]
         if t == "vudoku":

@@ -7,7 +7,10 @@ region_sight  a clue cell's digit (or the rule's `value`) counts the cells of th
               sightline arrows, internal x-sums, arrows (one direction, without the clue cell).
 border_count  a clue cell's digit (or `value`) counts the region borders crossed going from the clue to the edge of the
               board in each of its `directions` (each direction alone; `total` true: all of them together). Setters'
-              names: arrows (borders in that direction), passport arrows."""
+              names: arrows (borders in that direction), passport arrows.
+other_region_sum  a clue cell's digit (or `value`) is the sum of its (up to 8) surrounding digits that lie in other
+              regions. Setters' name: squares.
+The chaos rule's `no_2x2` option (extra chaos): no 2x2 block of cells lies in one region."""
 
 from __future__ import annotations
 
@@ -98,11 +101,48 @@ def region_sum_line_custom(rule, coords=None):
             "holds": "let s1 = sum(take_while(line, y => region(y) == region(c1))); " + " and ".join(conds)}  # fmt: skip
 
 
+def other_region_sum_custom(rule, coords):
+    """an other_region_sum rule -> one custom rule per clue: the surrounding digits in other regions add up to the
+    clue's digit (or value)"""
+    from ..exchange.common import parse_cell
+
+    out = []
+    for cell in rule["cells"]:
+        r0, c0 = parse_cell(cell)
+        names, terms = {"x": [cell.lower()]}, []
+        for dr in (-1, 0, 1):
+            for dc in (-1, 0, 1):
+                if (dr or dc) and (r0 + dr, c0 + dc) in coords:
+                    k = f"n{len(terms)}"
+                    names[k] = [_name(r0 + dr, c0 + dc)]
+                    terms.append(f"(if region({k}) != region(x) then {k} else 0)")
+        target = str(rule["value"]) if "value" in rule else "x"
+        out.append({"type": "custom", "cells": names, "holds": f"{' + '.join(terms) or '0'} == {target}"})
+    return out
+
+
+def no_2x2_custom(rule, coords):
+    """the chaos option no_2x2 (cells: the chaos area) -> one custom rule per 2x2 window: not all four in one region"""
+    from ..exchange.common import parse_cell
+
+    area = {parse_cell(c) for c in rule["cells"]}
+    out = []
+    for r, c in sorted(area):
+        win = [(r, c), (r, c + 1), (r + 1, c), (r + 1, c + 1)]
+        if all(x in area for x in win):
+            names = {k: [_name(*x)] for k, x in zip("abcd", win)}
+            out.append({"type": "custom", "cells": names,
+                        "holds": "not (region(a) == region(b) and region(a) == region(c) and region(a) == region(d))"})  # fmt: skip
+    return out
+
+
 # the named rules over regions to find: type -> its custom-rule form (puzzle_json compiles them, exchange reads /
 # validates / writes them by name)
 REGION_RULES = {
     "region_sight": region_sight_custom,
     "border_count": border_count_custom,
+    "other_region_sum": other_region_sum_custom,
+    "chaos_no_2x2": no_2x2_custom,  # engine-only: the chaos rule's no_2x2 option (written back as the option)
     # engine-only: a line kind region_sum read on a board with regions to find (written back as the line)
     "region_sum_line": lambda rule, coords: [region_sum_line_custom(rule, coords)],
 }

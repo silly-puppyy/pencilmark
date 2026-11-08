@@ -95,7 +95,8 @@ A complete 4×4 chaos construction (one solution, digits and regions; the dividi
 
 - **`chaos`**: a `grid` (its D rows and D columns are houses) whose boxes the solver finds: the area divides into D
   orthogonally connected regions of D cells, and every region holds each digit once (chaos construction). Every cell
-  of the area MUST exist; the area has no `box` / `box_grid` rules of its own.
+  of the area MUST exist; the area has no `box` / `box_grid` rules of its own. `no_2x2: true` adds that no 2×2 block
+  of cells lies in one region (setters' "extra chaos").
 - **`region_border`**: a given border between two orthogonal neighbors: they lie in different regions. A drawn
   border of several cell edges is one rule per edge.
 - **`same_region`**: the cells lie in one region (a rule such as "every thermometer lies in one region" is written
@@ -110,7 +111,10 @@ A complete 4×4 chaos construction (one solution, digits and regions; the dividi
   the board in each of its `directions` (all four by default); the count equals the clue cell's digit, or `value`.
   Every direction gives the count on its own; `total: true` counts all of them together. Setters call it arrows
   (borders in that direction) or passport arrows.
-- `region_border`, `same_region`, `region_sight` and `border_count` cells MUST lie in one `chaos` area.
+- **`other_region_sum`**: each listed cell is a clue whose digit (or `value`) is the sum of its up to eight
+  surrounding digits that lie in other regions. Setters call it squares.
+- `region_border`, `same_region`, `region_sight`, `border_count` and `other_region_sum` cells MUST lie in one `chaos`
+  area.
 
 Other rules that read the regions (sums of runs within a region) are not in format_version 1 yet;
 one-off rules are custom rules with `region()` (6.18). Regions to find are reserved in pencilmark 1.2 (see the note above): `describe` names such
