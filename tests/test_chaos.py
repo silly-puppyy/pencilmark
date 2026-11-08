@@ -109,3 +109,24 @@ def test_region_steps_on_the_card():
         (Path(__file__).parents[1] / "docs" / "pencilmark-grade.schema.json").read_text(encoding="utf-8")
     )
     assert not list(jsonschema.Draft202012Validator(schema).iter_errors(card))
+
+
+def test_region_sentences():
+    """the chaos reading of a rules text: the construction and placement rule in their usual phrasings are understood,
+    same / different statements name their elements, any other sentence about regions is a mechanic of its own (the
+    reader refuses the puzzle rather than drop it)"""
+    from pencilmark.sources._sp_translate import region_statements
+
+    known = (
+        "The grid is divided into nine hidden regions, each consisting of orthogonally connected cells. "
+        "Digits may not repeat in any row, column, or region. Place the digits 1-9 once in each row, column and "
+        "9-cell region. It is up to the solver to determine where these regions are."
+    )
+    assert region_statements(known) == ({}, [])
+    kinds, unknown = region_statements(
+        "Arrows do not cross region borders (i.e. a circle and its arrow are part of the same region). "
+        "Digits on a thermometer belong to the same region. Cells joined by a white dot are in different regions."
+    )
+    assert kinds == {"arrow": True, "thermo": True, "white": False} and unknown == []
+    _, unknown = region_statements("Region borders block vision. Cages within the same region have the same total.")
+    assert len(unknown) == 2

@@ -169,15 +169,18 @@ def unmodelled_rules(text, chaos_ok=False):
 
 # chaos construction (format 6.3): the rules say the solver finds the regions; read only when the file draws none
 CHAOS_TEXT = re.compile(
-    r"chaos construction|divide the grid into (?:\w+ )?(?:orthogonally[- ])?(?:connected )?regions"
+    r"chaos construction|divide the grid into (?:\w+ )?(?:orthogonally[- ])?(?:connected[- ])?(?:\w+[- ]cell )?regions"
+    # with no regions drawn (the reader only applies this then): "regions are irregular and orthogonally connected"
+    r"|regions are (?:irregular|unknown|not (?:given|shown|drawn))"
     r"|regions?[^.]{0,40}(?:must be|are to be|have to be|to be) (?:determined|located|found|deduced) by the solver"
     r"|the solver (?:must|has to|needs to) (?:determine|locate|find) (?:the )?regions"
 )
 # element kinds whose cells lie in one region / straddle a border, said explicitly ("digits along a thermometer belong
 # to the same region"); counting or seeing rules that merely mention regions are other mechanics and are refused
-REGION_VERB = r"(?:belong to|belongs to|lie in|lies in|are in|is in|stay in|stays in|located in)"
+REGION_VERB = r"(?:belong to|belongs to|lie in|lies in|are in|is in|stay in|stays in|located in|(?:be|are|is) part of)"
 REGION_KINDS = (
     ("thermo", r"thermo", ("lt", "le")),
+    ("arrow", r"arrow", ("arrow",)),
     ("black", r"black (?:dot|kropki|circle)", ("ratio",)),
     ("white", r"white (?:dot|kropki|circle)", ("diff",)),
     ("x", r"\bxs?\b(?! ?-)", ("sum10",)),
@@ -186,23 +189,43 @@ REGION_KINDS = (
 )
 
 
+# sentences about regions the chaos reading understands besides the same / different statements: the construction
+# itself, the placement rule, solution codes; any other sentence naming regions (regions blocking sight, counting
+# borders, region sums or numbers) is a mechanic of its own and the puzzle is refused
+REGION_KNOWN = re.compile(
+    CHAOS_TEXT.pattern + r"|row,? column,? (?:and|or|&) (?:\w+[- ])?(?:cell )?region"
+    r"|(?:each|every|in each|once in each|per) (?:\w+[- ])?(?:cell )?region"
+    r"|divided into (?:\w+ )?(?:hidden |irregular |unknown )?regions|up to the solver|by the solver\b"
+    r"|solution code|regions? (?:are|is|must be) (?:\w+ )?(?:orthogonally[- ])?connected|\d+ (?:continuous |connected )?regions"
+    r"|\w+[- ]cell regions|regions? of (?:\w+ )?cells|(?:irregular|jigsaw) regions"
+)
+
+
 def region_statements(text):
-    """element kind -> True (its cells share a region) / False (they lie in different regions)"""
-    out = {}
-    for sent in re.split(r"(?<=[.!\n])\s*", (text or "").lower()):
+    """(element kind -> True (its cells share a region) / False (they lie in different regions), the sentences about
+    regions that say something else)"""
+    out, unknown = {}, []
+    text = re.sub(r"\b(i\.e|e\.g)\.", lambda m: m.group(1).replace(".", ""), (text or "").lower())  # not a sentence end
+    for sent in re.split(r"(?<=[.!\n])\s*", text):
         if "region" not in sent:
             continue
         diff = re.search(
             rf"{REGION_VERB} (?:two )?different regions|(?:do not|does not|don't|never|cannot|can't) {REGION_VERB} "
-            r"(?:the )?same region|cross(?:es)? a region border|separated by a region border",
+            r"(?:the )?same region|(?<!not )(?<!n't )cross(?:es)? a region border|separated by a region border",
             sent,
         )
-        same = re.search(rf"{REGION_VERB} (?:the )?(?:same|one|a single) region", sent)
-        if diff or same:
-            for kind, pat, _ in REGION_KINDS:
-                if re.search(pat, sent):
-                    out[kind] = not diff
-    return out
+        same = re.search(
+            rf"{REGION_VERB} (?:the )?(?:same|one|a single) region"
+            r"|(?:do not|does not|don't|never|cannot|can't|may not) cross (?:a |any )?region borders?",
+            sent,
+        )
+        kinds = [kind for kind, pat, _ in REGION_KINDS if re.search(pat, sent)]
+        if (diff or same) and kinds:
+            for kind in kinds:
+                out[kind] = not diff
+        elif not REGION_KNOWN.search(sent):
+            unknown.append(sent.strip())
+    return out, unknown
 
 
 def chaos_rules(P, p, n, rules):
@@ -228,7 +251,8 @@ def chaos_rules(P, p, n, rules):
                         borders.add((idx[(y1 - 1, x)], idx[(y1, x)]))
     same = []
     kinds = {k: rels for k, _, rels in REGION_KINDS}
-    for kind, is_same in region_statements(rules).items():
+    statements, unknown = region_statements(rules)
+    for kind, is_same in statements.items():
         pairs = []
         for r in p.relations:
             k = r[0] + (str(r[3]) if r[0] == "sum" and len(r) > 3 else "")
@@ -236,6 +260,14 @@ def chaos_rules(P, p, n, rules):
                 pairs.append((r[1], r[2]))
         if "cage" in kinds[kind]:
             pairs += [(a, b) for g in p.groups if g.kind == "cage" for a, b in zip(g.cells, g.cells[1:])]
+        if "arrow" in kinds[kind]:  # an arrow's circle and shaft in one region
+            pairs += [
+                (a, b)
+                for c in p.constraints
+                if c.get("type") == "arrow"
+                for cs in [list(c.get("circle") or ()) + list(c.get("line") or ())]
+                for a, b in zip(cs, cs[1:])
+            ]
         for a, b in pairs:
             if is_same:
                 same.append([a, b])
@@ -243,7 +275,7 @@ def chaos_rules(P, p, n, rules):
                 borders.add((min(a, b), max(a, b)))
     cons += [{"type": "region_border", "cells": [a, b]} for a, b in sorted(borders)]
     cons += [{"type": "same_region", "cells": s} for s in same]
-    return cons
+    return cons, unknown
 
 
 RULE_WORDS = {
@@ -1881,7 +1913,9 @@ def translate(sp, page_text=None, overrides=None):
         add_yin_yang(p, yy, thermo_cells)
         used["yin_yang"] += 1
     if chaos:
-        p.constraints += chaos_rules(P, p, n, rules)
+        cons, other = chaos_rules(P, p, n, rules)
+        p.constraints += cons
+        unknown += [f"rule about regions {s[:60]!r}" for s in other]
         used["chaos"] += 1
     # rules handled above: the text mentions them, so something must have been built for them
     for kw, key in (

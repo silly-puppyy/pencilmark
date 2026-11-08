@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Reading
+
+- **Regions to find in SudokuPad links** (still reserved for grading): more phrasings of the construction are read
+  ("divide the grid into nine orthogonally-connected nine-cell regions", "regions are irregular and orthogonally
+  connected" with none drawn); "arrows do not cross region borders" and "part of the same region" become
+  `same_region`; any other sentence about regions (regions blocking sight, counting borders, region sums or numbers)
+  now refuses the puzzle instead of being dropped, which had read such puzzles with several solutions.
+
 ## 1.3.0 (2026-11-08)
 
 ### Breaking changes (files, specs and code using the old names need the new ones; no aliases)
