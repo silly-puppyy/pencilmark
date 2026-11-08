@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+## 1.3.0 (2026-11-08)
 
 ### Breaking changes (files, specs and code using the old names need the new ones; no aliases)
 

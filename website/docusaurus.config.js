@@ -59,9 +59,9 @@ module.exports = async function createConfig() {
         // no link, since an edit there is overwritten
         // versions: the latest release at the root, older ones under their number, and the docs of the next release
         // under /next/; each release freezes its docs (docs/dev/release.md, step 3)
-        lastVersion: '1.2',
-        versions: {current: {label: '1.3-dev', path: 'next', banner: 'unreleased'},
-                   '1.2': {label: '1.2'}, '1.1': {label: '1.1', path: '1.1'}},
+        lastVersion: '1.3',
+        versions: {current: {label: '1.4-dev', path: 'next', banner: 'unreleased'},
+                   '1.3': {label: '1.3'}, '1.2': {label: '1.2', path: '1.2'}, '1.1': {label: '1.1', path: '1.1'}},
         editUrl: ({docPath, version}) => {
           if (version !== 'current') return undefined;  // a released version's pages are frozen
           const copies = {'index.md': 'README.md', 'guides/development/architecture.md': 'ARCHITECTURE.md',

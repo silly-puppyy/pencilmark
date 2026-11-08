@@ -1,0 +1,178 @@
+---
+description: "How well pencilmark's difficulty and time follow real solve times, against other graders, on a frozen held-out set."
+---
+
+import {AccuracyChart, GradersChart} from '@site/src/components/BenchmarkCharts';
+import LabelsChart from '@site/src/components/LabelsChart';
+
+# Benchmark
+
+How well pencilmark's numbers track how long real people take and how hard they find puzzles, compared with other
+graders, on a frozen held-out set. Only aggregate numbers are published; no puzzles or per-puzzle data from the sources.
+
+## Summary
+
+- Within each group of comparable puzzles, pencilmark's `difficulty` ranks puzzles by human solve time with a Spearman
+  correlation of 0.62 to 0.81 depending on the source, and reaches 71-82% of the best any grader could reach (the noise
+  ceiling of each source's own data).
+- On the same classic puzzles it ranks closer to human times than the four other graders tested; on variants it is ahead of Rangsk's solver, the one other grader that rates them.
+- 99.8% of the 7,623 puzzles get a card; the median card takes 0.15 s (classics 0.03 s) on the machine below.
+
+## Method
+
+- **Frozen set.** 15% of every source, chosen by a hash of the puzzle (its solution where known), fixed before the 1.0 release and used only to measure releases.
+  Every fit and design decision since then used the other 85% only.
+- **Targets.** Real human data from each source (below). Where a source gives per-player times, the target is the
+  puzzle's effect after correcting for each player's skill.
+- **Metric.** Spearman rank correlation between a grader's rating and the human target, computed within each group (a
+  difficulty tab, a variant family, a board size) and averaged over groups weighted by their size; groups with fewer
+  than 15 puzzles are skipped. For sources with real minutes, also the median |log(real / predicted)| of `time`.
+- **pencilmark.** Version 1.3.0 (graded at commit 7ea8e8b), `rate()` with `max_seconds=300`, asking for band, difficulty
+  and time; coverage at smaller limits is read from each puzzle's grading time, and the speed of the default card (with
+  its technique list) from a random sample of 600 puzzles. [Version 1.2](/pencilmark/1.2/grades/benchmark) has the
+  1.2 numbers, [version 1.1](/pencilmark/1.1/grades/benchmark) the 1.0 ones.
+- **Other graders.** Sudoku Explainer (DiufSudoku fork, maximum difficulty), HoDoKu 2.2.0 (score), Rangsk's SudokuSolver
+  (hardest technique tier of its logical solve), Andrew Stuart's sudokuwiki.org grader (one puzzle every 30 s; classics
+  only on this set). Each is run on the puzzles it supports.
+- **Machine.** AMD Ryzen 7 7700X (8 cores / 16 threads, up to 5.5 GHz), 32 GB RAM, Linux; Python 3.14, OpenJDK 17 for the
+  Java graders. Grading ran 4 processes at once (one puzzle each). Times are wall-clock on this machine.
+
+## Sources
+
+| Source | Puzzles graded | Target |
+|---|---|---|
+| fed-sudoku.eu (classics, three tabs) | 540 | skill-corrected per-puzzle effect |
+| Wang et al. 2024 (classics) | 207 | mean solve seconds |
+| grandgames.net (classics, rule variants, multi-grid layouts) | 3,097 | era-adjusted per-player effect |
+| sudoku.today (classics and about 50 variant types) | 3,133 | median solve minutes (at least 5 solvers) |
+| sudoku.coach (classics and variants) | 211 | skill-corrected per-puzzle effect |
+| logic-masters.de (variants) | 385 | setter's star rating |
+| Puzzle Duel (variants) | 35 | skill-corrected effect (too few per type to score) |
+
+## Accuracy
+
+| Source | Groups | `difficulty` | `time` | `time` error (median, log) |
+|---|---|---|---|---|
+| sudoku.coach | 2 | 0.810 | 0.791 | |
+| grandgames.net | 22 | 0.766 | 0.760 | |
+| logic-masters.de | 5 | 0.718 | 0.685 | |
+| fed-sudoku.eu | 3 | 0.712 | 0.646 | |
+| Wang 2024 | 1 | 0.653 | 0.586 | 0.19 |
+| sudoku.today | 50 | 0.622 | 0.627 | 0.35 (0.32 after one overall scale) |
+
+## How well the sources agree with themselves
+
+Each puzzle's players split at random into two halves, a skill-adjusted time from each half, and the rank correlation
+between the halves (Spearman-Brown corrected, mean of 20 splits). Its square root is the **ceiling**: the best rank
+correlation any grader can reach against that source.
+
+| Source | Groups | Reliability | Ceiling | pencilmark | Share of ceiling |
+|---|---|---|---|---|---|
+| grandgames.net | 22 | 0.94 | 0.97 | 0.770 | 79% |
+| sudoku.coach | 2 | 0.96 | 0.98 | 0.778 | 79% |
+| fed-sudoku.eu | 3 | 0.98 | 0.99 | 0.700 | 71% |
+| sudoku.today | 50 | 0.60 (estimated) | 0.75 | 0.613 | 82% |
+
+sudoku.today publishes only a median of a few solves per puzzle (its reliability is estimated from that sampling error),
+so most of its gap is noise. On the other three the human signal is clean and the gap is grader error.
+
+<AccuracyChart version="1.3" />
+
+## An outside check: Cracking the Cryptic
+
+Not part of the frozen protocol, and never a fitting target. The Cracking the Cryptic solves in Sakana AI's
+[Sudoku-CTC-Reasoning](https://huggingface.co/datasets/SakanaAI/Sudoku-CTC-Reasoning) dataset (MIT) give one expert
+solve time per puzzle: Simon Anthony's or Mark Goodliffe's, from the first to the last action of the recorded solve.
+All 1,351 puzzles were read with pencilmark's own readers and graded with a 60 s limit; 330 get a card (the rest use
+rules pencilmark does not model, such as loops, shading and one-off mechanics, or read with several solutions). For the
+284 with a usable solve time (2 minutes to 4 hours, the times of the 1.1 measurement), measured on 2026-11-07 with
+1.2.0:
+
+| | Puzzles | Rank correlation with solve time |
+|---|---|---|
+| `difficulty` | 284 | 0.55 |
+| Simon's solves | 116 | 0.54 |
+| Mark's solves | 166 | 0.47 |
+
+Median solve minutes by band: Easy 15, Medium 26, Hard 21 (18 puzzles), Very Hard 31, Expert 36, Extreme 42 (5 puzzles).
+One solver per puzzle on one day, so the ceiling is unknown and lower than for the sources above. Among the hardest
+puzzles (Expert and Extreme) the order is weak: more steps there use computer-style search than the hosts' own solves.
+
+## Compared with other graders (same puzzles)
+
+| Set | Puzzles | pencilmark | Andrew Stuart | Rangsk | HoDoKu | Sudoku Explainer |
+|---|---|---|---|---|---|---|
+| fed-sudoku.eu classics | 540 | **0.712** | 0.594 | 0.357 | 0.326 | 0.291 |
+| Wang 2024 classics | 207 | **0.653** | 0.498 | 0.347 | 0.403 | 0.475 |
+| sudoku.today variants | 1,527 | **0.722** | – | 0.676 | – | – |
+
+<GradersChart version="1.3" />
+
+## Bands against other graders (frozen classics, 747 puzzles)
+
+| pencilmark band | Puzzles | HoDoKu level | pencilmark / sudokuwiki.org rating (median) |
+|---|---|---|---|
+| Very Easy | 295 | Easy 100% | 4.1 / 3.8 |
+| Easy | 373 | Easy 14%, Medium 86% | 5.5 / 5.3 |
+| Medium | 69 | Medium 90%, Hard 10% | 6.7 / 7.0 |
+| Hard | 8 | Hard 75%, Unfair 25% | 5.7 / 5.3 |
+
+The bands follow the same technique steps as HoDoKu's levels, and pencilmark's difficulty is within 0.4 of the
+sudokuwiki.org rating at every band. A Hard puzzle can rate below a Medium one: the band orders the knowledge a puzzle
+needs, the number its overall difficulty ([Philosophy](philosophy.md)); the sudokuwiki.org ratings show the same.
+
+## Other sites' labels on this scale
+
+Where each site's difficulty labels fall on pencilmark's scale: the bar is the median difficulty of the site's puzzles
+with that label, the line the middle half where it was measured. Each site rates for its own audience and neighboring
+labels overlap a lot, so treat this as a rough conversion.
+
+<LabelsChart version="1.2" />
+
+## Coverage and speed
+
+- **Coverage:** 7,608 of 7,623 puzzles get a band (99.8%). Not graded: 8 not unique and 2 without a solution after
+  conversion (readings of the sources' files), 1 unreadable; 4 hit the 300 s limit (band Unknown).
+- **By time limit** (band, difficulty and time within the limit): 10 s 96.5%, 30 s 98.6%, 60 s 99.2%, 120 s 99.6%,
+  300 s 99.8%.
+
+- **Speed** (default card, with the technique list; 600 random puzzles): median 0.15 s, 90th percentile 2.3 s;
+  classics median 0.035 s. Sudoku Explainer and HoDoKu
+  answer in under a millisecond (they do not model human solving); Rangsk 0.07-0.13 s; the sudokuwiki.org grader,
+  median 3.1 s per request.
+
+## Generator
+
+Five requests, 10 puzzles per tool, one process at a time. Seconds per kept puzzle = all attempts' time divided by the
+puzzles kept. Where a tool cannot express a request, its own output is filtered and the rejected puzzles' time counts.
+The HoDoKu and Sudoku Explainer columns, and pencilmark 1.0's, were measured on the 1.0 release candidate, when "Hard"
+meant needing wings or uniqueness; pencilmark 1.3 was measured on 2026-11-08 with today's bands (Hard = the first
+learned patterns), and every puzzle it kept meets its request by pencilmark's own grading.
+
+| Request | pencilmark 1.3 | pencilmark 1.0 | HoDoKu 2.2.0 | Sudoku Explainer |
+|---|---|---|---|---|
+| a Hard classic | 9.4 s | 18 s | 0.05 s | 0.17 s |
+| an X-Wing as the hardest step | 20 s | 66 s | 0.45 s | 1.6 s |
+| the same, 180° symmetric with at most 24 givens | 20 s | 64 s | 0.8 s (346 tries filtered) | 2.2 s (440 tries filtered) |
+| the hardest level | none within 120 s | none within 120 s | 0.05 s | 0.21 s |
+| a Medium killer | 13 s | 65 s | not supported | not supported |
+
+pencilmark is 10 to 200 times slower than the classic-only tools, lands on the requested band (the others' "Hard" is
+often an easier band on pencilmark's scale) and is the only one that generates killers and variants. The hardest band
+and speed are what the generator's rework is for.
+
+## Run it on your own data
+
+The frozen set stays private (its puzzles and times come from the sources above), but the measurement is public:
+`tools/benchmark.py` grades puzzles that carry a human target and prints the accuracy table above for them. Run on
+the frozen set's grades it reproduces every number on this page.
+
+```
+python tools/benchmark.py grade puzzles.jsonl -o grades.jsonl --jobs 8
+python tools/benchmark.py report grades.jsonl
+```
+
+One JSON object per line: `puzzle` (anything `pencilmark.rate` reads), `source`, `group` (puzzles that are comparable:
+correlations are computed within each group and averaged), `target` (the human measure, higher = harder) and,
+optionally, `target_kind` (`"minutes"`, `"log minutes"`, `"seconds"` or `"log seconds"` add the time error) and `key`.
+Grading resumes where it stopped.

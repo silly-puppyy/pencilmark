@@ -1,0 +1,173 @@
+---
+description: "Grading puzzles from Python and the command line: cards, fields, explanations, limits and labels."
+---
+
+
+# Usage
+
+pencilmark grades, solves, checks, converts and generates sudoku puzzles, from the command line or from Python. Every
+command and function accepts the same inputs: a classic string, a puzzle file in the [puzzle format](../formats/puzzle-format.md), a
+site link or another app's format ([Other formats](../formats/other-formats.md)).
+
+## Command line
+
+| Command | Prints, per puzzle |
+|---|---|
+| `pencilmark rate FILE` | band, difficulty, minutes and the hardest technique |
+| `pencilmark solve FILE` | the solution, or `not unique` / `no solution` / `undecided` |
+| `pencilmark count-solutions FILE` | the number of solutions (`>=1000` when it stops counting; `--limit N` to change) |
+| `pencilmark describe FILE` | the variant's name and its rules in words |
+| `pencilmark convert FILE` | the puzzle as canonical pencilmark JSON, one rule per line (`--compact`: one line; `--solution` adds the solution), or `--to plain`, `grid`, `sudokuwiki`, `ipuz` |
+| `pencilmark fingerprint FILE` | a content fingerprint, 64 hex digits |
+| `pencilmark generate SPEC` | a new puzzle for a [generator spec](../formats/generator-spec.md) |
+| `pencilmark draw FILE -o OUT.svg` | the first puzzle as an SVG picture (`--dark`, `--cell N`; [Draw a puzzle](../guides/grader/draw.mdx)) |
+
+`FILE` holds one puzzle per line, in any format pencilmark reads (a classic string, a sudokuwiki string, pencilmark JSON
+on one line, a link, the path of a `.json` file), detected per line; `--from FORMAT` names the format instead. `-` reads
+standard input. A `.json` or `.ipuz` file that holds one puzzle, or a list of puzzles, is read whole. A line that cannot
+be read prints `error`, its line number and the message, and the next line goes on. `python -m pencilmark` works the
+same way.
+
+```
+$ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9.......' | pencilmark rate - --report
+#1  Hard  -  difficulty 5.9  -  time 10.7 min
+   contains: Naked Pair (or Hidden Pair), X-Wing (or 2-String Kite / Simple Coloring / Short chain in the head)
+```
+
+### Options of `rate`
+
+| Option | Effect |
+|---|---|
+| `--report` | readable text; `-v` adds the steps in solvers' notation, `-vv` plain sentences, `-vvv` short lessons |
+| `--json` | the full card as one JSON line; `--steps` adds the steps (the same as `steps` in `--fields`), `--explain notation,short,teach` their explanations (`substeps`: each step as sub-steps with reasons and drawing annotations) |
+| `--fields difficulty,band,...` | only these card fields ([Grade card](../formats/grade-card.md) lists them) |
+| `--print '%b\|%d\|%m'` | your own columns (below) |
+| `-j N` | grade N puzzles at a time; the output keeps the input order |
+| `--max-seconds N` | stop each puzzle after N seconds (the card says `completed: false`) |
+| `--mode computer` | allow computer-style search (forcing chains, trial) as well as human techniques (default: `human`) |
+| `--allow-guessing` | guess where no technique applies (band Unknown), instead of proving by full search (Extreme) |
+| `--coloring` | allow coloring as a solving method: colors kept through the solve (off by default) |
+| `--techniques XWG,SKY` | grade for a solver who knows only these techniques (codes from [Techniques](../grades/techniques.md); singles always known): a puzzle needing more is band Unknown |
+| `--no-alternatives` | keep `contains` but skip the search for interchangeable techniques (faster) |
+| `--quality ...` | tune the publishing checks ([Check a puzzle before publishing](../guides/grader/publish-checks.md)) |
+
+| `--print` field | Meaning |
+|---|---|
+| `%b` `%d` `%m` | band, difficulty, minutes |
+| `%p` | minutes within which 80% of players finish |
+| `%h` | hardest technique met |
+| `%c` | technique chips above Very Easy (naked singles included), with uses |
+| `%n` | issue codes |
+| `%s` `%u` `%i` | status, unique?, line number |
+
+### Options of `generate`
+
+The spec's `limits` set the seed and the time. The puzzle is printed as pencilmark JSON and its band,
+difficulty and time go to standard error; `--result` prints `{"puzzle", "card", "info"}` as one JSON line instead.
+
+## Python
+
+### Grade
+
+```python
+import pencilmark
+
+card = pencilmark.rate("....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9.......")
+card["band"], card["difficulty"], card["time"], card["contains"]
+```
+
+`rate` takes the same options as the command line: `fields=[...]`, `max_seconds=60`, `explain="short"` (or
+`explain=["short", "substeps"]` for steps told as sub-steps, each with its reason and drawing annotations; see
+[the grade card](../formats/grade-card.md#5-steps)),
+`mode="computer"` (the default is `"human"`), `allow_guessing=True`, `coloring=True`,
+`quality={...}`, `techniques=["XWG", "SKY"]` (a whitelist: the solver knows only these and the singles; a
+puzzle needing more gets band Unknown with the reason, and difficulty can rise because fewer moves are on offer). `rate_many(puzzles, jobs=4)` grades a list in parallel and keeps its order; a puzzle that fails gives
+`{"error": ...}` in its place.
+
+### Solve and count
+
+```python
+solution = pencilmark.solve(puzzle)
+n = pencilmark.count_solutions(puzzle)
+```
+
+`solve` returns the unique solution as a list of digits, or raises `NotUnique` or `NoSolution`.
+`count_solutions` returns `{"count": 1, "exact": True}` for a proper puzzle. `count_solutions(puzzle, limit=1000)` counts up to `limit`; `exact` is
+false when it stopped there. Both use the engine's exhaustive search; when that search hits its node or time limit,
+[OR-Tools](https://developers.google.com/optimization) [CP-SAT](https://developers.google.com/optimization/cp/cp_solver)
+takes over if installed (`pip install "pencilmark[verify]"`), otherwise `solve` raises `Undecided`.
+
+### Convert and check
+
+```python
+doc = pencilmark.write.document(puzzle, solution=True, describe=True)
+doc["meta"].update(title="Escargot", author="Arto Inkala")
+text = pencilmark.write.pencilmark(doc)
+pencilmark.validate(doc)
+```
+
+`write.document` gives the puzzle as a pencilmark JSON dict, here with its solution and with `meta.type` and
+`meta.rules_text` filled in from `describe` when they are empty; `write.pencilmark` writes it in the canonical layout,
+one rule per line; `validate` raises `FormatError` with the exact problem. `describe(puzzle)` names the variant and its
+rules, `fingerprint(puzzle)` gives a fingerprint of the rules and grid (not the metadata), and `draw(puzzle)` an SVG
+picture ([Draw a puzzle](../guides/grader/draw.mdx)).
+`pencilmark.read.<format>` and `pencilmark.write.<format>` read and write the [other formats](../formats/other-formats.md)
+one at a time.
+
+### Generate
+
+```python
+result = pencilmark.generate(spec)
+result["puzzle"], result["card"], result["info"]
+```
+
+`spec` is a [generator spec](../formats/generator-spec.md) (a dict, JSON text or a path). The result is a `pencilmark-puzzle` with its solution,
+its grade card and how the run went; `GenerationFailed` says why when no puzzle met the spec in time. Example specs are
+in `docs/examples/specs/`.
+
+[Python API](../library/python-api.md) lists every function and argument.
+
+## The card
+
+What each field means, and how the techniques in `contains` are listed: [Grade card](../formats/grade-card.md). Where
+other sites' difficulty labels fall on pencilmark's scale: [Benchmark](../grades/benchmark.mdx#other-sites-labels-on-this-scale).
+
+## Logging
+
+pencilmark writes what it is doing to the standard Python logger `pencilmark`, which is silent until you switch it on.
+On the command line every command takes `--log info`, `--log debug` or `--log trace`, written to standard error, each
+line with the milliseconds since the program started, so the log alone shows where the time goes:
+
+```
+$ echo '....4.8.3.6...8..29.86.5..1235.........7..2.........96..2......8.12..7...9.......' | pencilmark rate - --log trace 2>&1
+     255 ms  pencilmark.cpsat_verify: uniqueness: 1 solution(s), by the C++ search, 0.188 s
+     264 ms  pencilmark.export: band route: 0.007 s
+     296 ms  pencilmark.export: card: 0.032 s
+     299 ms  pencilmark.band_path: technique list: without XWG needed (0.003 s)
+     304 ms  pencilmark.band_path: technique list: without PPR still solves: removed (0.005 s)
+     …
+     326 ms  pencilmark.band_path: alternatives: MCH instead of XWG works (0.002 s)
+     326 ms  pencilmark.export: technique list and alternatives: 0.030 s
+     326 ms  pencilmark.export: step 1: Hidden Single (HSI, band 0) places r2c7=9
+     …
+     327 ms  pencilmark.export: step 59: Full House (FHS, band 0) places r4c4=4
+     327 ms  pencilmark.export: graded in 0.071 s: Hard 5.9
+Hard	5.9	10.7	X-Wing
+```
+
+| Level | What it shows |
+|---|---|
+| `info` | pages fetched, what a reader read from a link, a reading it inferred, a time limit reached, the generator's result |
+| `debug` | also each stage's time (uniqueness, band route, card, technique list), each uniqueness check, each generator attempt and why it was rejected, and the meaning a reader gave each line color (and why) |
+| `trace` | also every step of the route the card shows (technique, band, placement or how many candidates it removes) and every test of the technique-list search (which technique was tried without, or as an alternative, the verdict and its time) |
+
+In Python, `pencilmark.log("debug")` does the same (`"info"`, `"debug"`, `"trace"`; `None` switches it off), or
+configure the logger as any other: logger names follow the modules (`pencilmark.gen`, `pencilmark.sources`, …), so one
+part can be switched on alone, and `pencilmark.TRACE` is the trace level's number. With `rate_many(jobs=N)` on Windows
+and macOS the worker processes start without your configuration (the command line's `-j` passes `--log` on).
+
+## Speed
+
+Most puzzles take under a second (median 0.15 s on the benchmark, classics 0.03 s); a few very hard variants take
+minutes while the technique list is made minimal ([Benchmark](../grades/benchmark.mdx#coverage-and-speed)).
+`max_seconds` caps any call. Without the cap the result is the same on every machine.

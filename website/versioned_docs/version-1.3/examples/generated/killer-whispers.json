@@ -1,0 +1,478 @@
+{
+ "title": "Killer with German whispers and two givens",
+ "shows": "",
+ "spec": {
+  "format": "pencilmark-spec",
+  "format_version": 1,
+  "meta": {
+   "title": "Killer with German whispers and two givens",
+   "description": "Cages and whisper lines, exactly two givens, Hard."
+  },
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "givens": {
+   "count": 2
+  },
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "count": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "cage",
+    "count": [
+     1,
+     null
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "count": [
+     1,
+     null
+    ],
+    "value": 5
+   }
+  ],
+  "where": {
+   "band": "Hard"
+  },
+  "quality": {
+   "preset": "standard"
+  },
+  "limits": {
+   "results": 1,
+   "seconds": 900,
+   "seed": 4
+  },
+  "fields": [
+   "difficulty",
+   "band",
+   "contains",
+   "issues"
+  ]
+ },
+ "puzzle": {
+  "format": "pencilmark-puzzle",
+  "format_version": 1,
+  "meta": {
+   "title": "Killer with German whispers and two givens",
+   "description": "Cages and whisper lines, exactly two givens, Hard."
+  },
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "givens": [
+   3,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   6,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "solution": [
+   3,
+   2,
+   5,
+   4,
+   1,
+   8,
+   7,
+   9,
+   6,
+   6,
+   1,
+   9,
+   2,
+   3,
+   7,
+   4,
+   5,
+   8,
+   4,
+   7,
+   8,
+   5,
+   6,
+   9,
+   1,
+   3,
+   2,
+   9,
+   5,
+   6,
+   1,
+   2,
+   4,
+   8,
+   7,
+   3,
+   7,
+   3,
+   4,
+   8,
+   9,
+   5,
+   6,
+   2,
+   1,
+   1,
+   8,
+   2,
+   6,
+   7,
+   3,
+   9,
+   4,
+   5,
+   8,
+   4,
+   7,
+   3,
+   5,
+   1,
+   2,
+   6,
+   9,
+   2,
+   9,
+   3,
+   7,
+   8,
+   6,
+   5,
+   1,
+   4,
+   5,
+   6,
+   1,
+   9,
+   4,
+   2,
+   3,
+   8,
+   7
+  ],
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "count": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 13,
+    "cells": [
+     "r4c8",
+     "r4c9",
+     "r5c8",
+     "r5c9"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 7,
+    "cells": [
+     "r1c4",
+     "r1c5",
+     "r2c4"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 5,
+    "cells": [
+     "r9c6",
+     "r9c7"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "value": 5,
+    "cells": [
+     "r3c6",
+     "r4c5",
+     "r5c4",
+     "r6c3",
+     "r7c3"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "value": 5,
+    "cells": [
+     "r2c5",
+     "r1c6"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "value": 5,
+    "cells": [
+     "r4c8",
+     "r5c8",
+     "r6c7",
+     "r7c6",
+     "r8c5",
+     "r7c4"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "value": 5,
+    "cells": [
+     "r9c5",
+     "r9c4",
+     "r9c3",
+     "r8c2",
+     "r8c1"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "value": 5,
+    "cells": [
+     "r1c8",
+     "r2c7"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "value": 5,
+    "cells": [
+     "r3c1",
+     "r4c1",
+     "r5c2",
+     "r6c2"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "value": 5,
+    "cells": [
+     "r9c7",
+     "r9c8",
+     "r8c8",
+     "r7c8"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "value": 5,
+    "cells": [
+     "r2c1",
+     "r2c2",
+     "r3c3",
+     "r2c4",
+     "r2c3",
+     "r1c2"
+    ]
+   }
+  ]
+ },
+ "card": {
+  "band": "Hard",
+  "difficulty": 9.0,
+  "time": null,
+  "contains": [
+   {
+    "code": "HSI",
+    "chip": "HSI",
+    "name": "Hidden Single",
+    "band_index": 0
+   },
+   {
+    "code": "LSI",
+    "chip": "LSI",
+    "name": "Line / dot read without notes",
+    "band_index": 0
+   },
+   {
+    "code": "PPR",
+    "chip": "PPR",
+    "name": "Pointing / Box-Line Reduction",
+    "band_index": 1,
+    "uses": 16
+   },
+   {
+    "code": "MSI",
+    "chip": "MSI",
+    "name": "Pair / triple in the head",
+    "band_index": 1,
+    "uses": 11
+   },
+   {
+    "code": "CGC",
+    "chip": "CGC",
+    "name": "Killer cage combinations",
+    "band_index": 1,
+    "uses": 7
+   },
+   {
+    "code": "LNR",
+    "chip": "LNR/LNS",
+    "name": "Line ranges (thermo / whisper bounds)",
+    "band_index": 1,
+    "alternatives": [
+     "LNS"
+    ],
+    "uses": 14
+   },
+   {
+    "code": "NPR",
+    "chip": "NPR/HPR/NQD/HQD/IOM",
+    "name": "Naked Pair",
+    "band_index": 2,
+    "alternatives": [
+     "HPR",
+     "NQD",
+     "HQD",
+     "IOM"
+    ],
+    "uses": 3
+   },
+   {
+    "code": "DGC",
+    "chip": "DGC/IOM/CBL",
+    "name": "Digit counting",
+    "band_index": 2,
+    "alternatives": [
+     "IOM",
+     "CBL"
+    ],
+    "uses": 1
+   },
+   {
+    "code": "RUL",
+    "chip": "RUL",
+    "name": "Two rules together",
+    "band_index": 2,
+    "uses": 8
+   },
+   {
+    "code": "MCH",
+    "chip": "MCH",
+    "name": "Short chain in the head",
+    "band_index": 3,
+    "uses": 1
+   }
+  ]
+ },
+ "info": {
+  "seconds": 630.6,
+  "attempts": 12,
+  "found": null,
+  "givens": 2,
+  "elements": {
+   "cage": 3,
+   "whisper": 8
+  },
+  "rejected": {
+   "band too low (logic pre-check)": 8,
+   "too many givens": 2,
+   "publishing check: unusual": 1
+  }
+ }
+}

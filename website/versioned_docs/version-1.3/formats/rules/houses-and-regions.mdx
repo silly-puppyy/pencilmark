@@ -1,0 +1,107 @@
+---
+description: "Grids, boxes, rows, columns and extra regions (diagonals, windows, colors) in the puzzle format."
+title: Houses and regions
+---
+
+
+# Houses and regions
+
+This page covers the rules that say where digits may not repeat: houses (6.1), regions (6.2) and regions to find
+(6.3).
+
+## 6.1 Houses: `grid`, `box_grid`, `box`, `row`, `column`
+
+```json
+{"type": "box_grid", "box": [3, 3], "count": [3, 3]}
+{"type": "grid"}
+{"type": "box", "cells": ["r1c1", "r1c2", "r1c3", "r2c1", "r2c2", "r2c3", "r3c1", "r3c2", "r4c1"]}
+{"type": "row", "cells": ["r1c1", "r1c2", "…"]}
+```
+
+A house holds no repeated digit; a house of exactly D cells holds every digit once. Houses come only from these rules:
+nothing is implied, so a board without house rules has no houses.
+
+- **`grid`**: a sudoku grid, the D × D area whose top-left cell is `origin` (default `r1c1`, left out when written). It
+  gives the area's D rows (top to bottom) and D columns (left to right). Every cell of the area MUST exist.
+- **`box_grid`**: a `grid` tiled with boxes: `box` = [box height, box width] repeated `count` = [boxes down, boxes
+  across] times, so box height × count down = box width × count across = D (a classic is `box` [3, 3], `count` [3, 3];
+  a 6×6 is `box` [2, 3], `count` [3, 2]). `origin` as for `grid`. It gives the grid's rows, columns, then its D boxes
+  (reading order of their top-left cells). A classic is one `box_grid`; a samurai is five; a super samurai is one per
+  grid.
+- **`box`**: one box with explicit `cells`, any shape. A jigsaw is a `grid` plus one `box` per piece.
+- **`row`** / **`column`**: explicit houses for rows and columns that are not those of a D × D area (staircase,
+  toroidal, sujiken).
+- A house with the same cell set as an earlier house is the same house (overlapping grids share boxes and lines).
+- Boxes, from any of these rules, are what a renderer draws with thick lines. The `grid` / `box_grid` areas also limit
+  negative constraints and battenburg windows to one grid (6.14).
+
+| Board | Houses |
+|---|---|
+| classic, 6×6, 16×16 | one `box_grid` |
+| jigsaw | one `grid` + D `box` rules |
+| Latin square | one `grid` |
+| samurai, twodoku, butterfly, … | one `box_grid` per grid |
+| samurai with a jigsaw corner | four `box_grid` + one `grid` + D `box` rules |
+| toroidal, staircase | `row` / `column` / `box` rules |
+
+Canonical writers emit a `box_grid` for every D × D area whose rows, columns and regular boxes are houses, a `grid`
+where the area's boxes are irregular or absent, and `box` / `row` / `column` rules for the remaining houses.
+
+## 6.2 `region`
+
+```json
+{"type": "region", "kind": "diagonal", "cells": ["r1c1", "r2c2", "r3c3", "r4c4", "r5c5", "r6c6", "r7c7", "r8c8", "r9c9"]}
+```
+
+- No digit repeats among the cells. Fewer than D cells is allowed; "contains every digit" follows only when the region
+  has exactly D cells.
+- `kind`: `diagonal` | `window` | `disjoint` | `color` | `extra` | `region`. To a solver all kinds mean the same; the
+  kind is a drawing and grouping hint: `diagonal` (a straight diagonal: X-sudoku, argyle lines; cells listed from
+  the top), `window` (windoku windows), `disjoint` (same position in every box), `color` (color groups), `extra`
+  (shaded extra regions: asterisk, center dot, …), `region` (anything else).
+
+## 6.3 Regions to find: `chaos`, `region_border`, `same_region`
+
+:::note[Reserved]
+
+Reserved for a later version of the format: pencilmark 1.2 refuses these rules (`NotSupportedError`), and custom rules that read `region()`. The section describes the planned rule.
+
+:::
+
+Since pencilmark 1.2.
+
+```json
+{"type": "chaos"}
+{"type": "region_border", "cells": ["r4c5", "r4c6"]}
+{"type": "same_region", "cells": ["r2c2", "r2c3", "r3c3"]}
+```
+
+A complete 4×4 chaos construction (one solution, digits and regions; the dividing line between r1c2 and r1c3 and the three cells of one region are its clues):
+
+```json
+{"format": "pencilmark-puzzle", "format_version": 1,
+ "board": {"rows": 4, "cols": 4},
+ "digits": 4,
+ "givens": [
+    0, 0, 0, 0,
+    0, 3, 1, 0,
+    0, 0, 0, 0,
+    2, 0, 0, 3],
+ "rules": [
+   {"type": "chaos"},
+   {"type": "region_border", "cells": ["r1c2", "r1c3"]},
+   {"type": "same_region", "cells": ["r3c1", "r4c1", "r4c2"]}]}
+```
+
+- **`chaos`**: a `grid` (its D rows and D columns are houses) whose boxes the solver finds: the area divides into D
+  orthogonally connected regions of D cells, and every region holds each digit once (chaos construction). Every cell
+  of the area MUST exist; the area has no `box` / `box_grid` rules of its own.
+- **`region_border`**: a given border between two orthogonal neighbors: they lie in different regions. A drawn
+  border of several cell edges is one rule per edge.
+- **`same_region`**: the cells lie in one region (a rule such as "every thermometer lies in one region" is written
+  as the thermometer plus `same_region` over its cells).
+- `region_border` and `same_region` cells MUST lie in one `chaos` area.
+
+Rules that read the regions themselves (sums of runs within a region, arrows counting the cells of their region) are
+not in format_version 1. Regions to find are reserved in pencilmark 1.2 (see the note above): `describe` names such
+a puzzle, while reading it to solve, count or grade is refused until a later version.

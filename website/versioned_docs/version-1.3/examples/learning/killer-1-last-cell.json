@@ -1,0 +1,333 @@
+{
+ "title": "Last cell of a cage",
+ "spec": {
+  "format": "pencilmark-spec",
+  "format_version": 1,
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "count": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "cage",
+    "size": [
+     2,
+     3
+    ],
+    "sum": [
+     3,
+     15
+    ],
+    "count": [
+     8,
+     14
+    ]
+   }
+  ],
+  "givens": {
+   "count": [
+    30,
+    46
+   ]
+  },
+  "where": {
+   "band": "Very Easy",
+   "contains": [
+    "CSI"
+   ],
+   "difficulty": "typical"
+  },
+  "quality": {
+   "preset": "standard"
+  },
+  "limits": {
+   "seconds": 600,
+   "seed": 1
+  }
+ },
+ "puzzle": {
+  "format": "pencilmark-puzzle",
+  "format_version": 1,
+  "meta": {},
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "givens": [
+   7,
+   3,
+   0,
+   6,
+   0,
+   0,
+   0,
+   0,
+   9,
+   0,
+   0,
+   0,
+   0,
+   0,
+   7,
+   4,
+   6,
+   0,
+   0,
+   0,
+   4,
+   1,
+   0,
+   0,
+   7,
+   0,
+   8,
+   4,
+   0,
+   0,
+   9,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   4,
+   2,
+   9,
+   8,
+   3,
+   4,
+   0,
+   0,
+   5,
+   0,
+   6,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   9,
+   0,
+   3,
+   7,
+   0,
+   2,
+   9,
+   1,
+   6,
+   0,
+   4,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   3,
+   0,
+   0
+  ],
+  "solution": [
+   7,
+   3,
+   1,
+   6,
+   8,
+   4,
+   2,
+   5,
+   9,
+   8,
+   2,
+   9,
+   3,
+   5,
+   7,
+   4,
+   6,
+   1,
+   6,
+   5,
+   4,
+   1,
+   2,
+   9,
+   7,
+   3,
+   8,
+   4,
+   6,
+   2,
+   9,
+   7,
+   5,
+   8,
+   1,
+   3,
+   5,
+   1,
+   7,
+   8,
+   3,
+   6,
+   9,
+   4,
+   2,
+   9,
+   8,
+   3,
+   4,
+   1,
+   2,
+   5,
+   7,
+   6,
+   2,
+   4,
+   8,
+   7,
+   6,
+   3,
+   1,
+   9,
+   5,
+   3,
+   7,
+   5,
+   2,
+   9,
+   1,
+   6,
+   8,
+   4,
+   1,
+   9,
+   6,
+   5,
+   4,
+   8,
+   3,
+   2,
+   7
+  ],
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "count": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 12,
+    "cells": [
+     "r6c7",
+     "r6c8"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 9,
+    "cells": [
+     "r4c1",
+     "r5c1"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 6,
+    "cells": [
+     "r3c3",
+     "r4c3"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 7,
+    "cells": [
+     "r2c8",
+     "r2c9"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 4,
+    "cells": [
+     "r7c6",
+     "r7c7"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 13,
+    "cells": [
+     "r8c5",
+     "r9c5"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 7,
+    "cells": [
+     "r8c4",
+     "r9c4"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 9,
+    "cells": [
+     "r3c5",
+     "r4c5"
+    ]
+   }
+  ]
+ },
+ "card": {
+  "band": "Very Easy",
+  "difficulty": 3.0,
+  "time": 4.5,
+  "contains": [
+   {
+    "code": "HSI",
+    "chip": "HSI",
+    "name": "Hidden Single",
+    "band_index": 0
+   },
+   {
+    "code": "CSI",
+    "chip": "CSI",
+    "name": "Last cell of a cage / line",
+    "band_index": 0
+   }
+  ]
+ },
+ "tries": 1
+}

@@ -1,0 +1,59 @@
+---
+title: Variant catalog
+description: The placement variants and multi-grid layouts pencilmark recognizes by name, with a drawing of each.
+---
+
+import Cards, {Card} from '@site/src/components/VariantCards';
+
+# Variant catalog
+
+To generate one of these, put its rules in a request as locked rules (rules with cells and no `count`; [Generator
+spec](../../formats/generator-spec.md), section 1): an X sudoku is the `box_grid` rule plus its two diagonal `region`
+rules, a samurai five `box_grid` rules at the layout's origins. The drawings below show what each adds.
+
+These are the names pencilmark gives a puzzle when its rules match a known pattern: `describe()` and `meta.type` use
+them ("Samurai Sudoku", "Argyle Sudoku"). They are a library feature, not part of the [puzzle format](../../formats/puzzle-format.md): a
+samurai file is five `box_grid` rules and an Argyle file a few `region` rules, so any reader that reads those reads the
+puzzle, and no reader needs to know the names. [How variants are named](../../library/variant-naming.md) gives the exact matching rules; rule
+families such as killer cages and thermometers have their own pages under [Rule families](../../formats/puzzle-format.md#6-rule-families). For an introduction to the popular variants, see Artisanal Sudoku's
+[basics of popular sudoku variants](https://artisanalsudoku.substack.com/p/the-basics-of-popular-sudoku-variants).
+
+## Placement variants
+
+A placement variant adds fixed regions to one grid. pencilmark recognizes it when every region it adds is present, on
+any board size where it is defined.
+
+<Cards>
+<Card img="variant-x" title="X (Diagonal)">Digits don't repeat on either main diagonal. Any size.</Card>
+<Card img="variant-windoku" title="Windoku (Hyper, NRC)">Digits don't repeat in the shaded windows. 9×9 has four; 16×16 has nine.</Card>
+<Card img="variant-argyle" title="Argyle">Digits don't repeat on any of the eight marked diagonals. 9×9 only.</Card>
+<Card img="variant-asterisk" title="Asterisk">Digits don't repeat in the nine shaded cells. 9×9 only.</Card>
+<Card img="variant-center-dot" title="Center-dot">Digits don't repeat among the center cells of the boxes. Boxes with odd sides.</Card>
+<Card img="variant-girandola" title="Girandola">Digits don't repeat in the nine shaded cells. 9×9 only.</Card>
+<Card img="variant-disjoint-groups" title="Disjoint Groups (Color)">Cells in the same position in each box contain different digits.</Card>
+</Cards>
+
+## Multi-grid layouts
+
+A multi-grid board is written as one `box_grid` per 9×9 grid ([Houses and regions](../../formats/rules/houses-and-regions.mdx)).
+When the grids' top-left cells match a named layout, the puzzle takes its name: "Samurai Sudoku", "Killer Twodoku". In
+the drawings, overlapping grids have different tints, so the shared boxes show as a blend. Another arrangement is a
+"Multi-Grid Sudoku" and is graded the same way.
+
+<Cards>
+<Card img="layout-twodoku" title="Twodoku">2 grids sharing one box. 15×15.</Card>
+<Card img="layout-doubledoku" title="Doubledoku">2 grids sharing four boxes. 12×12.</Card>
+<Card img="layout-twins" title="Twin">2 grids side by side with a one-column gap. 9×19.</Card>
+<Card img="layout-sensei" title="Sensei">2 grids sharing two boxes. 15×12.</Card>
+<Card img="layout-tridoku" title="Tridoku">3 grids in a triangle, each sharing boxes with the other two. 15×15.</Card>
+<Card img="layout-wing-3" title="Gattai-3">3 grids: two at the top, one below between them. 15×21.</Card>
+<Card img="layout-butterfly" title="Butterfly">4 grids in a 12×12 square.</Card>
+<Card img="layout-flower-4" title="Flower">4 grids around a center grid. 15×15.</Card>
+<Card img="layout-sohei" title="Sohei">4 grids in a diamond. 21×21.</Card>
+<Card img="layout-samurai" title="Samurai (Gattai-5)">4 corner grids joined by a center grid. 21×21.</Card>
+<Card img="layout-windmill" title="Windmill (Kazaguruma)">4 grids turning around a center grid. 21×21.</Card>
+<Card img="layout-super-samurai" title="Super Samurai">8 grids in rows of 3, 2 and 3. 21×33.</Card>
+<Card img="layout-clueless-1" title="Clueless 1 and 2">9 grids in a square, plus a tenth grid made of the center cells of every box (Clueless 1) or the center box of every grid (Clueless 2). 27×27.</Card>
+<Card img="layout-shogun" title="Shogun">11 grids in rows of 4, 3 and 4. 21×45.</Card>
+<Card img="layout-sumo" title="Sumo">13 grids in rows of 3, 2, 3, 2 and 3. 33×33.</Card>
+</Cards>

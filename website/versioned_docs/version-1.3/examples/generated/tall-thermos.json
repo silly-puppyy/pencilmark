@@ -1,0 +1,315 @@
+{
+ "title": "Three tall thermometers",
+ "shows": "an exact count with a length range: three thermos of 7 to 9 cells",
+ "spec": {
+  "format": "pencilmark-spec",
+  "format_version": 1,
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "count": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "thermo",
+    "length": [
+     7,
+     9
+    ],
+    "count": 3
+   }
+  ],
+  "quality": {
+   "preset": "standard"
+  },
+  "limits": {
+   "seconds": 180,
+   "seed": 1
+  }
+ },
+ "puzzle": {
+  "format": "pencilmark-puzzle",
+  "format_version": 1,
+  "meta": {},
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "givens": [
+   0,
+   6,
+   0,
+   8,
+   0,
+   0,
+   0,
+   0,
+   5,
+   0,
+   0,
+   9,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   4,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   9,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   6,
+   0,
+   0,
+   0,
+   4,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   7,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   1,
+   5,
+   0,
+   0
+  ],
+  "solution": [
+   7,
+   6,
+   2,
+   8,
+   9,
+   3,
+   4,
+   1,
+   5,
+   5,
+   3,
+   9,
+   4,
+   1,
+   6,
+   8,
+   2,
+   7,
+   8,
+   4,
+   1,
+   7,
+   5,
+   2,
+   9,
+   6,
+   3,
+   4,
+   2,
+   6,
+   9,
+   3,
+   5,
+   7,
+   8,
+   1,
+   3,
+   9,
+   8,
+   1,
+   7,
+   4,
+   2,
+   5,
+   6,
+   1,
+   7,
+   5,
+   2,
+   6,
+   8,
+   3,
+   9,
+   4,
+   2,
+   1,
+   3,
+   5,
+   8,
+   7,
+   6,
+   4,
+   9,
+   6,
+   5,
+   4,
+   3,
+   2,
+   9,
+   1,
+   7,
+   8,
+   9,
+   8,
+   7,
+   6,
+   4,
+   1,
+   5,
+   3,
+   2
+  ],
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "count": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "thermo",
+    "cells": [
+     "r5c7",
+     "r6c7",
+     "r7c8",
+     "r7c7",
+     "r7c6",
+     "r7c5",
+     "r8c6"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "thermo",
+    "cells": [
+     "r8c5",
+     "r8c4",
+     "r8c3",
+     "r8c2",
+     "r9c3",
+     "r9c2",
+     "r9c1"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "thermo",
+    "cells": [
+     "r2c5",
+     "r3c6",
+     "r4c5",
+     "r4c6",
+     "r4c7",
+     "r4c8",
+     "r3c7"
+    ]
+   }
+  ]
+ },
+ "card": {
+  "band": "Easy",
+  "difficulty": 6.7,
+  "time": 22.8,
+  "contains": [
+   {
+    "code": "HSI",
+    "chip": "HSI",
+    "name": "Hidden Single",
+    "band_index": 0
+   },
+   {
+    "code": "LSI",
+    "chip": "LSI",
+    "name": "Line / dot read without notes",
+    "band_index": 0
+   },
+   {
+    "code": "CSI",
+    "chip": "CSI",
+    "name": "Last cell of a cage / line",
+    "band_index": 0
+   },
+   {
+    "code": "MSI",
+    "chip": "MSI",
+    "name": "Pair / triple in the head",
+    "band_index": 1,
+    "uses": 2
+   }
+  ]
+ },
+ "info": {
+  "seconds": 34.0,
+  "attempts": 3,
+  "found": null,
+  "givens": 11,
+  "elements": {
+   "thermo": 3
+  },
+  "rejected": {
+   "kind pruned: thermo": 1,
+   "publishing check: unusual": 1
+  }
+ }
+}

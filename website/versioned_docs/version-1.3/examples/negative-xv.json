@@ -1,0 +1,19 @@
+{"format": "pencilmark-puzzle",
+ "format_version": 1,
+ "board": {"rows": 9, "cols": 9},
+ "digits": 9,
+ "givens": [
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0],
+ "rules": [
+  {"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+  {"type": "edge", "kind": "xv", "letter": "X", "cells": ["r1c1", "r1c2"]},
+  {"type": "edge", "kind": "xv", "letter": "V", "cells": ["r4c5", "r5c5"]},
+  {"type": "negative", "of": "xv"}]}

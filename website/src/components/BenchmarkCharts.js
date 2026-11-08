@@ -21,6 +21,13 @@ const ACCURACY_BY = {'1.1': [  // within-group Spearman of difficulty against hu
   {source: 'fed-sudoku.eu', rho: 0.697, ceiling: 0.99, share: 0.70},
   {source: 'Wang 2024', rho: 0.653, ceiling: null, share: null},
   {source: 'sudoku.today', rho: 0.611, ceiling: 0.75, share: 0.81},
+], '1.3': [
+  {source: 'sudoku.coach', rho: 0.778, ceiling: 0.98, share: 0.79},
+  {source: 'grandgames.net', rho: 0.770, ceiling: 0.97, share: 0.79},
+  {source: 'logic-masters.de', rho: 0.718, ceiling: null, share: null},
+  {source: 'fed-sudoku.eu', rho: 0.700, ceiling: 0.99, share: 0.71},
+  {source: 'Wang 2024', rho: 0.653, ceiling: null, share: null},
+  {source: 'sudoku.today', rho: 0.613, ceiling: 0.75, share: 0.82},
 ]};
 
 const graders = (fed, wang, today) => [  // same puzzles, within-group Spearman (the page's comparison table)
@@ -30,8 +37,9 @@ const graders = (fed, wang, today) => [  // same puzzles, within-group Spearman 
     .map(([grader, rho]) => ({set: 'Wang 2024 classics', grader, rho})),
   ...[['pencilmark', today], ['Rangsk', 0.676]].map(([grader, rho]) => ({set: 'sudoku.today variants', grader, rho})),
 ];
-const GRADERS_BY = {'1.1': graders(0.67, 0.663, 0.699), '1.2': graders(0.709, 0.653, 0.722)};
-const LATEST = '1.2';
+const GRADERS_BY = {'1.1': graders(0.67, 0.663, 0.699), '1.2': graders(0.709, 0.653, 0.722),
+                    '1.3': graders(0.712, 0.653, 0.722)};
+const LATEST = '1.3';
 
 function colours() {
   const css = getComputedStyle(document.documentElement);

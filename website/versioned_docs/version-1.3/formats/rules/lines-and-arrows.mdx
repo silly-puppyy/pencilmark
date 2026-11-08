@@ -1,0 +1,55 @@
+---
+description: "Line rules (thermo, whisper, renban, palindrome, entropic, lockout and more) and arrows in the puzzle format."
+title: Lines and arrows
+---
+
+
+import Swatch from '@site/src/components/Swatch';
+
+# Lines and arrows
+
+This page covers rules drawn along a path of cells: lines (6.4) and arrows (6.5).
+
+## 6.4 `line`
+
+```json
+{"type": "line", "kind": "thermo", "cells": ["r5c3", "r4c3", "r3c3", "r3c4"]}
+{"type": "line", "kind": "whisper", "value": 5, "cells": ["r7c7", "r7c8", "r8c8"]}
+{"type": "line", "kind": "renban", "closed": true, "cells": ["r2c2", "r2c3", "r3c3", "r3c2"]}
+```
+
+Common fields: `cells` (ordered, at least 2) and `closed` (default `false`): a loop, the last cell connects back to the
+first. `closed` is allowed only for `whisper`, `renban` and `parity`.
+
+<div className="pm-kinds">
+
+| `kind` | Parameters | Meaning | Drawing |
+|---|---|---|---|
+| `thermo` | – | Strictly increasing from `cells[0]` (the bulb). Branching thermos are separate rules sharing `cells[0]`. | <Swatch name="line-thermo" /> |
+| `slow_thermo` | – | Non-decreasing from `cells[0]`. | <Swatch name="line-slow_thermo" /> |
+| `whisper` | `value` k (1..D−1): REQUIRED when D ≠ 9; default 5 | Adjacent cells on the line differ by at least k (German whisper = 5, Dutch = 4). | <Swatch name="line-whisper" /> |
+| `renban` | – | The cells hold a set of consecutive digits, no repeats, any order. | <Swatch name="line-renban" /> |
+| `region_sum` | – | Split the line into segments wherever it passes from one box to another; every segment has the same sum. Boxes are those of `box_grid` and `box` rules (jigsaw pieces included); extra regions, windows and diagonals do not split the line. | <Swatch name="line-region_sum" /> |
+| `palindrome` | – | Reads the same from both ends. | <Swatch name="line-palindrome" /> |
+| `entropic` | `groups`: REQUIRED when D ≠ 9; default `[[1,2,3],[4,5,6],[7,8,9]]` | Every run of 3 consecutive cells holds one digit from each group. | <Swatch name="line-entropic" /> |
+| `modular` | `value` m (≥ 2): REQUIRED when D ≠ 9; default 3 | Every run of m consecutive cells holds one digit of each residue class mod m. | <Swatch name="line-modular" /> |
+| `parity` | – | Adjacent cells on the line differ in parity (alternate odd / even). | <Swatch name="line-parity" /> |
+| `zipper` | – | Cells equally far from the center of the line sum to the same total (the center digit, for an odd length). | <Swatch name="line-zipper" /> |
+| `between` | – | Digits strictly between those of the two ends `cells[0]` and `cells[-1]`, ends in either order. | <Swatch name="line-between" /> |
+| `lockout` | `value` k (1..D−1): REQUIRED when D ≠ 9; default 4 | The ends differ by at least k; every other digit lies outside the closed range of the ends. | <Swatch name="line-lockout" /> |
+| `double_arrow` | – | The two ends sum to the total of the cells between them. | <Swatch name="line-double_arrow" /> |
+
+</div>
+
+Repeats: allowed on every line (subject to houses), except `renban`.
+
+## 6.5 `arrow`
+
+```json
+{"type": "arrow", "bulb": ["r2c2"], "lines": [["r3c3", "r4c4", "r5c5"]]}
+{"type": "arrow", "bulb": ["r1c1", "r1c2"], "lines": [["r2c3", "r3c3"], ["r2c1", "r3c1", "r4c1"]]}
+```
+
+- `bulb`: 1 or more orthogonally connected cells, read as one number in `bulb` order (a pill `[a, b]` is 10·a + b).
+- `lines`: 1 or more shafts, each ordered away from the bulb; the first cell of each shaft touches a bulb cell.
+- Each shaft's digits sum to the bulb number. Repeats allowed.

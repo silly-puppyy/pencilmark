@@ -1,0 +1,461 @@
+{
+ "title": "A sampler of the newer rule kinds",
+ "shows": "outside clues, corner clues, a newer line kind and a locked rule in one request: sandwiches, quadruples, a palindrome and anti-knight, aimed at Medium",
+ "spec": {
+  "format": "pencilmark-spec",
+  "format_version": 1,
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "count": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "neighbors",
+    "kind": "antiknight"
+   },
+   {
+    "type": "sandwich",
+    "count": [
+     2,
+     4
+    ]
+   },
+   {
+    "type": "quadruple",
+    "count": [
+     1,
+     3
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "palindrome",
+    "count": 1
+   }
+  ],
+  "where": {
+   "band": "Medium",
+   "difficulty": "typical"
+  },
+  "quality": {
+   "preset": "standard"
+  },
+  "limits": {
+   "seconds": 600,
+   "seed": 1
+  }
+ },
+ "puzzle": {
+  "format": "pencilmark-puzzle",
+  "format_version": 1,
+  "meta": {},
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "givens": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   3,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   7,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   8,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   7,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "solution": [
+   8,
+   6,
+   4,
+   9,
+   1,
+   3,
+   2,
+   5,
+   7,
+   9,
+   1,
+   2,
+   7,
+   5,
+   8,
+   3,
+   6,
+   4,
+   7,
+   5,
+   3,
+   2,
+   6,
+   4,
+   8,
+   9,
+   1,
+   2,
+   7,
+   9,
+   8,
+   4,
+   6,
+   5,
+   1,
+   3,
+   1,
+   4,
+   8,
+   5,
+   3,
+   9,
+   6,
+   7,
+   2,
+   6,
+   3,
+   5,
+   1,
+   7,
+   2,
+   9,
+   4,
+   8,
+   3,
+   9,
+   1,
+   6,
+   2,
+   7,
+   4,
+   8,
+   5,
+   5,
+   2,
+   6,
+   4,
+   8,
+   1,
+   7,
+   3,
+   9,
+   4,
+   8,
+   7,
+   3,
+   9,
+   5,
+   1,
+   2,
+   6
+  ],
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "count": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "neighbors",
+    "kind": "antiknight"
+   },
+   {
+    "type": "sandwich",
+    "sum": 20,
+    "side": "left",
+    "cells": [
+     "r5c1",
+     "r5c2",
+     "r5c3",
+     "r5c4",
+     "r5c5",
+     "r5c6",
+     "r5c7",
+     "r5c8",
+     "r5c9"
+    ]
+   },
+   {
+    "type": "sandwich",
+    "sum": 13,
+    "side": "bottom",
+    "cells": [
+     "r9c3",
+     "r8c3",
+     "r7c3",
+     "r6c3",
+     "r5c3",
+     "r4c3",
+     "r3c3",
+     "r2c3",
+     "r1c3"
+    ]
+   },
+   {
+    "type": "quadruple",
+    "digits": [
+     3,
+     5,
+     7,
+     9
+    ],
+    "cells": [
+     "r3c2",
+     "r3c3",
+     "r4c2",
+     "r4c3"
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "palindrome",
+    "cells": [
+     "r1c5",
+     "r2c5",
+     "r3c5",
+     "r4c5",
+     "r4c6",
+     "r4c7",
+     "r4c8"
+    ]
+   },
+   {
+    "type": "quadruple",
+    "digits": [
+     1,
+     6,
+     8,
+     9
+    ],
+    "cells": [
+     "r1c1",
+     "r1c2",
+     "r2c1",
+     "r2c2"
+    ]
+   },
+   {
+    "type": "quadruple",
+    "digits": [
+     1,
+     5,
+     7
+    ],
+    "cells": [
+     "r8c6",
+     "r8c7",
+     "r9c6",
+     "r9c7"
+    ]
+   },
+   {
+    "type": "sandwich",
+    "sum": 0,
+    "side": "bottom",
+    "cells": [
+     "r9c8",
+     "r8c8",
+     "r7c8",
+     "r6c8",
+     "r5c8",
+     "r4c8",
+     "r3c8",
+     "r2c8",
+     "r1c8"
+    ]
+   }
+  ]
+ },
+ "card": {
+  "band": "Medium",
+  "difficulty": 9.0,
+  "time": 47.4,
+  "contains": [
+   {
+    "code": "HSI",
+    "chip": "HSI",
+    "name": "Hidden Single",
+    "band_index": 0
+   },
+   {
+    "code": "LSI",
+    "chip": "LSI",
+    "name": "Line / dot read without notes",
+    "band_index": 0
+   },
+   {
+    "code": "PPR",
+    "chip": "PPR",
+    "name": "Pointing / Box-Line Reduction",
+    "band_index": 1,
+    "uses": 22
+   },
+   {
+    "code": "MSI",
+    "chip": "MSI",
+    "name": "Notes in the head",
+    "band_index": 1,
+    "uses": 2
+   },
+   {
+    "code": "PWC",
+    "chip": "PWC",
+    "name": "Pair rules (dots, whispers, anti-knight...)",
+    "band_index": 1,
+    "uses": 14
+   },
+   {
+    "code": "TBL",
+    "chip": "TBL",
+    "name": "Allowed combinations of a rule",
+    "band_index": 1,
+    "uses": 3
+   },
+   {
+    "code": "LNR",
+    "chip": "LNR",
+    "name": "Line ranges (thermo / whisper bounds)",
+    "band_index": 1,
+    "uses": 1
+   },
+   {
+    "code": "SWC",
+    "chip": "SWC",
+    "name": "Sandwich sums",
+    "band_index": 1,
+    "uses": 6
+   },
+   {
+    "code": "NPR",
+    "chip": "NPR",
+    "name": "Naked Pair",
+    "band_index": 2,
+    "uses": 2
+   },
+   {
+    "code": "HPR",
+    "chip": "HPR/CEQ/DGC/NQD/HQD/CBL",
+    "name": "Hidden Pair",
+    "band_index": 2,
+    "alternatives": [
+     "CEQ",
+     "DGC",
+     "NQD",
+     "HQD",
+     "CBL"
+    ],
+    "uses": 2
+   },
+   {
+    "code": "RUL",
+    "chip": "RUL",
+    "name": "Two rules together",
+    "band_index": 2,
+    "uses": 8
+   }
+  ]
+ },
+ "info": {
+  "seconds": 15.2,
+  "attempts": 2,
+  "found": null,
+  "givens": 4,
+  "elements": {
+   "palindrome": 1,
+   "quadruple": 3,
+   "sandwich": 3
+  },
+  "rejected": {
+   "difficulty too low": 1
+  }
+ }
+}
