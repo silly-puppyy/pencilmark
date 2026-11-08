@@ -889,6 +889,11 @@ def _h_shading(ctx):
             f"Without this cell the cells of its colour ({nm.cells(pc)}) could no longer all join up",
             "cut cell",
         ),
+        "colour trial": (
+            f"Giving {nm.cells(pc)} the other colour leads, within a few steps of the shading rules and singles, to a "
+            "contradiction",
+            "colour trial",
+        ),
         "rule over the shading": (
             f"The rule on {nm.cells(pc)} reads the shading: try every digit and colour its cells can take, and some "
             "options never occur",

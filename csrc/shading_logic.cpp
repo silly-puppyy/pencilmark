@@ -245,4 +245,98 @@ void Solver::shade_rule(MoveBuf& out) {
     }
 }
 
+// a contradiction in the colours: a 2x2 of one colour, a colour whose known cells can no longer join, a cell without
+// candidates (a rule over the shading that nothing satisfies empties its cells)
+bool Solver::shade_dead() {
+    for (const auto& w : p.windows4)
+        if (shade[w[0]] && shade[w[0]] == shade[w[1]] && shade[w[0]] == shade[w[2]] && shade[w[0]] == shade[w[3]])
+            return true;
+    for (int c = 0; c < p.N; ++c)
+        if (!vals[c] && !cand[c]) return true;
+    std::vector<char> vis(p.N, 0);
+    for (int col = 1; col <= 2; ++col) {
+        std::vector<int> known;
+        for (int c = 0; c < p.N; ++c)
+            if (shade[c] == col) known.push_back(c);
+        if (known.size() < 2) continue;
+        std::fill(vis.begin(), vis.end(), 0);
+        std::vector<int> st{known[0]};
+        vis[known[0]] = 1;
+        size_t reached = 0;
+        while (!st.empty()) {
+            const int c = st.back();
+            st.pop_back();
+            if (shade[c] == col) ++reached;
+            for (int nb : p.grid_nbr[c])
+                if (!vis[nb] && (shade[nb] == col || !shade[nb])) vis[nb] = 1, st.push_back(nb);
+        }
+        if (reached != known.size()) return true;
+    }
+    return false;
+}
+
+// up to `rounds` rounds of the shading techniques and digit singles on the current state; the round at which a
+// contradiction shows, or 0 (the state is changed: callers save and restore it)
+int Solver::shade_propagate(int rounds) {
+    for (int r = 1; r <= rounds; ++r) {
+        if (shade_dead()) return r;
+        MoveBuf b;
+        shade_local(b);
+        shade_connect(b);
+        shade_rule(b);
+        bool any = false;
+        for (const Move& m : b.moves) {
+            for (int i = 0; i < m.aeff_n; ++i) {
+                const AEff& e = b.aeffs[m.aeff_off + i];
+                if (e.kind != AE_SHADE) continue;
+                if (shade[e.cell] && shade[e.cell] != e.arg) return r;
+                if (!shade[e.cell]) shade[e.cell] = (uint8_t)e.arg, any = true;
+            }
+            for (int i = 0; i < m.el_n; ++i) {
+                const uint32_t e = b.elims[m.el_off + i];
+                const int c = (int)(e / 32), v = (int)(e % 32);
+                if (!vals[c] && (cand[c] & bit(v))) {
+                    cand[c] &= ~bit(v), any = true;
+                    if (!cand[c]) return r;
+                }
+            }
+        }
+        for (int c = 0; c < p.N; ++c)  // digit singles
+            if (!vals[c] && popc(cand[c]) == 1) {
+                place(c, lowdigit(cand[c]));
+                any = true;
+            }
+        if (!any) break;
+    }
+    return shade_dead() ? rounds : 0;
+}
+
+// ShadeTrial (the CtC "bifurcation" family on colours): a cell next to a known colour is given one colour, and a
+// few rounds of the shading techniques and digit singles reach a contradiction: it is the other colour (7341)
+void Solver::shade_trial(MoveBuf& out) {
+    if (!has_shading() || disabled[SHADE_TRIAL]) return;
+    constexpr int ROUNDS = 4;
+    for (int c = 0; c < p.N; ++c) {
+        if (shade[c]) continue;
+        bool near = false;
+        for (int nb : p.grid_nbr[c]) near |= shade[nb] != 0;
+        if (!near) continue;
+        for (int col = 1; col <= 2; ++col) {
+            const std::vector<uint8_t> sv = vals, ss = shade;
+            const std::vector<uint32_t> sc = cand, sg = placed_g;
+            shade[c] = (uint8_t)col;
+            const int r = shade_propagate(ROUNDS);
+            vals = sv, shade = ss, cand = sc, placed_g = sg;
+            if (!r) continue;
+            Move& m = new_move(out, SHADE_TRIAL, 1.0, r);
+            set_colour(out, m, c, other(col));
+            set_pattern(out, m, {c});
+            m.code = 7341;
+            pm_long xm[XM_N] = {r, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+            std::copy(xm, xm + XM_N, m.xm);
+            break;
+        }
+    }
+}
+
 }  // namespace cs

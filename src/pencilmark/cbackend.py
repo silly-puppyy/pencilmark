@@ -217,7 +217,7 @@ def code_name(code):
                 7208: "would trap a region"}.get(code, f"region {code}")  # fmt: skip
     if 7300 <= code < 7400:  # shading (shading_logic.cpp)
         return {7301: "three of a colour in a 2x2", 7302: "no checkerboard", 7311: "single exit", 7312: "cut cell",
-                7321: "border colour runs", 7331: "rule over the shading"}.get(code, f"shading {code}")  # fmt: skip
+                7321: "border colour runs", 7331: "rule over the shading", 7341: "colour trial"}.get(code, f"shading {code}")  # fmt: skip
     if 4500 <= code < 4600:
         t = code - 4500
         return ("cage/sum" if t == 0 else CTYPES[t] if t < len(CTYPES) else f"rule{t}") + " in the head"

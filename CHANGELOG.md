@@ -22,7 +22,9 @@
   Cracking the Cryptic solves (docs/research/cell_layer_techniques.md): *Shading: 2x2* (three of a colour in a 2x2
   make the fourth the other; no checkerboard), *Shading: connected colours* (a group with one way out takes it; a cell
   without which a colour's cells could not join is that colour; the border holds one run of each colour) and *A rule
-  over the shading* (a custom rule reading `shaded()`, tried with every digit and colour its cells can take). Before,
+  over the shading* (a custom rule reading `shaded()`, tried with every digit and colour its cells can take), and
+  *Shading: colour trial* (a colour assumed next to a known one leads, within four rounds of those techniques and
+  singles, to a contradiction; band Hard). Before,
   a yin-yang puzzle was band Unknown. Every colour a route sets is checked against the solutions in the tests.
 
 - **Rules that read the shading have names** (format 6.19, reserved with shading): `shading_sight` (a clue counts

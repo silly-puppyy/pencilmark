@@ -122,6 +122,7 @@ changing a shipped value is a deliberate commit with a golden rewrite.
 | `route.price.ShadeLocal` | 2 | ″ |
 | `route.price.ShadeConnect` | 3 | ″ |
 | `route.price.ShadeRule` | 3 | ″ |
+| `route.price.ShadeTrial` | 4 | ″ |
 | `route.price.ClassSingle` | 5 | ″ |
 | `route.price.ClassPropagation` | 0.6942 | ″ |
 | `route.price.ClassPair` | 5 | ″ |
@@ -151,7 +152,7 @@ changing a shipped value is a deliberate commit with a golden rewrite.
 | `route.locality` | 0 | ″ |
 | `route.digit_cont` | 0 | ″ |
 | `route.spot_w` | list of 6 | ″ |
-| `route.spot_fam` | list of 124 | ″ |
+| `route.spot_fam` | list of 125 | ″ |
 | `route.spot_seed` | 1 | ″ |
 | `route.notes_live` | True | ″ |
 | `route.notes_lazy` | True | ″ |

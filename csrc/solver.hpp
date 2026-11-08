@@ -102,6 +102,7 @@ enum Tech {
     SHADE_LOCAL = 121,    ///< shading: a 2x2 with three of a colour, or the checkerboard it must not become
     SHADE_CONNECT = 122,  ///< shading: a colour's single exit, a cut cell, the border's colour runs
     SHADE_RULE = 123,     ///< shading: a custom rule reading shaded() on its own: digits / colours no combination uses
+    SHADE_TRIAL = 124,    ///< shading: a colour assumed leads to a contradiction within a few rounds: the other colour
     MENTAL_NOTES = 84,    ///< single after notes logic done in the head (subset / pointing / combination on the mental view)    // line consistency on 3-cell windows (local scan of a long line)  // both options of a 2-way choice lead to the same placement / elimination  // short chain (<= 5 links) on the no-notes mental view, leading to a single  // bounded case split: bivalue cell, contradiction within a few direct rounds
     N_TECH = 128
 };
@@ -520,6 +521,9 @@ public:
     void shade_local(MoveBuf& out);
     void shade_connect(MoveBuf& out);
     void shade_rule(MoveBuf& out);
+    void shade_trial(MoveBuf& out);
+    bool shade_dead();
+    int shade_propagate(int rounds);
     void rg_normalize();
     void rg_join(int a, int b);  ///< a and b lie in one region
     void rg_neq(int a, int b);   ///< a and b lie in different regions

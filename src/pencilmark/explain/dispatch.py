@@ -353,6 +353,14 @@ _X_HANDLERS = {
             "A rule reading the shading, tried with every digit and colour its cells can take.",
         ),
     ),
+    "SHADE_TRIAL": (
+        _h_shading,
+        "shade_trial",
+        (
+            "Shading: colour trial",
+            "Giving a cell one colour leads to a contradiction within a few steps: it is the other.",
+        ),
+    ),
     "REGION_GROUP": (
         _h_region,
         "region_group",
