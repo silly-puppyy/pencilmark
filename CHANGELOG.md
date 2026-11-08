@@ -2,44 +2,21 @@
 
 ## Unreleased
 
-- **f-puzzles style capture**: the colors and widths of f-puzzles' generic lines, cages, circles and rectangles
-  become the rules' `style`, as SudokuPad's already did (on 46 LMD f-puzzles, 414 of 905 rules keep their look).
-- **Logging you can time and follow**: `--log trace` (and `pencilmark.log("trace")` in Python) writes every step of the
-  card's route and every test of the technique-list search; every level's lines carry the milliseconds since start.
-  `pencilmark.log(level)` switches the log on from Python.
-- **Reusable custom rules**: a top-level `"definitions"` object names a custom rule once (`holds`, optional
-  `scope`, `each`, `label`, `style`, `draw`); `{"type": "custom", "use": name, "cells": {...}}` places it, with its own
-  style if wanted. A placement means the rule it spells out (same fingerprint and card). Custom rules also take `draw`
-  (`line`, `cage`, `cells`, `circle`, `dot`), which the renderer draws in the rule's style.
-- **Difficulty ranges spread**: `"difficulty": [lo, hi]` aims at a point drawn in the range for each seed
-  (`info.aimed_at`) instead of returning the first puzzle inside it, which sat at the low edge (Very Easy `[2, 4]`:
-  median 2.4, 2.2-2.9 before; 2.9, 2.2-4.0 now).
-- **Technique whitelist**: `rate(puzzle, techniques=["XWG", "SKY"])` / `--techniques XWG,SKY` grades for a solver who
-  knows only these techniques (and the singles); a puzzle needing more gets band Unknown with the reason. Difficulty
-  can be higher than the full card's: a solver with fewer techniques has fewer moves on offer at each step.
-- **SudokuPad reader fixes** (Cracking the Cryptic screen): bare all-digit hex colors (`c:020202`) no longer break
-  decoding, `[null]` regions are skipped, and a 0 digit (digits 0..8) is refused clearly instead of failing as a
-  format error.
-- **One meaning, one grade**: a numbered clue that is exactly a kropki dot or an XV mark (difference 1, ratio 2,
-  sum 5 or 10) is graded like the dot or mark (it was a digit table, priced differently). On the 26 development
-  puzzles with such clues, the rank correlation with players' times holds or improves.
-- **Cage limits work with tiled killers**: `{"type": "cage", "count": "tile", "sum": [null, 20]}` (and `size`, and
-  a zero-given cage count): the tiling builds no cage over a maximum, merges cages under a minimum first, and draws
-  again when one stays under.
-- **Line `turns` limit and hand-drawn lines**: line templates take `turns` (`[min, max]`, `0` = straight). Generated
-  lines may now step diagonally (never crossing a line of their kind) and are drawn as people draw them: human lines
-  (5,520 on the development set) turn at 54% of their inner cells, take 31% of their steps diagonally and are
-  straight 30% of the time; 1.2's were orthogonal only and turned at about 67%; now 58%, 34% and 22%.
+
+### Breaking changes (files, specs and code using the old names need the new ones; no aliases)
+
 - **American English throughout** (format and text): the rule type is `neighbors` (was `neighbours`), the custom
   rule scope key `neighbors`, the palette name `gray` (was `grey`), `render_svg.render(colors=...)`, technique names
   (Simple Coloring, Multi-Coloring, ...), explanations, rules text and the docs. Names of other sites' pages keep
   their own spelling.
+
 - **The fingerprint follows meaning, not spelling** (puzzle-format.md 8.2, new step 2): pair rules (edge clues,
   `relation`, `neighbors`, their negatives, thermo / slow thermo / whisper / palindrome / parity lines, mathrax) are
   hashed as one table of allowed digit pairs per cell pair, and cell clues (`cell`, corner `exclude`, `negative` of
   `cell`) as one allowed set per cell. A white kropki dot, a `difference` 1 circle and a `relation` `difference` 1 now
   share a fingerprint; so do a V and an edge `sum` 5, a thermometer and a chain of `less`, an `odd` and a `set` cell.
   Every fingerprint with such a rule changes.
+
 - **Renames (one name per thing, US spelling for keys).** No aliases; files and code using the old names need the
   new ones.
   - The quadruple rule is `{"type": "quadruple", ...}` (was `contains`, the community name is quadruple), so
@@ -58,56 +35,132 @@
   - `where.contains` has one shape, a list of codes the puzzle needs (each an entry of the card's `contains` with no
     alternative); the `{"codes": [...], "strict": true}` form is gone, and a lenient "an alternative will do" request
     is no longer offered (nothing used it).
+
 - **`quality` means one thing everywhere** (`rate()`, `--quality`, a generator spec): no object = the new
   `"default"` preset (every check that is not opt in, at its own severity; `rate()` only, a spec runs nothing), `{}` =
   no checks, a preset turns on its set, and without a preset only the checks named run. In 1.2 `rate()` treated
   `{"trial": ...}` as "all checks, trial adjusted" while a spec ran only `trial`. Generated puzzles report what the
   checks found in `info.issues` (1.2 dropped warnings).
+
 - **CLI and Python agree on `convert` / `write` defaults**: the solution is opt in (`--solution`, was on unless
   `--no-solution`), output is one rule per line (`--compact` for one line, was the default), and `write.document` /
   `write.pencilmark` take `style=False` like `--no-style` (which now also drops decorations and the top-level style).
+
 - `--steps` is the same as `steps` in `--fields` (it no longer turns on explanations; `--explain` does).
-- A multi-grid layout without `where.band` says in `info.warnings` that it was dug up to Hard.
-- **sudoku.coach reader**: `pencilmark.read.link("https://sudoku.coach/en/s/<id>")` and raw `SCv7_...` payloads, with
-  the setter's colors and widths as style and cell colors as a `fill` decoration; the embedded solution is checked.
-  Of 16,436 coach puzzles, 13,407 read, 0 crash; refused: extra rules written only in the description (2,293), older
-  payload versions SCv3-SCv6 (716), and a few clues the site defines differently.
-- **Generator examples regenerated** under the band aim.
-- **No seed, a new puzzle.** A request without `limits.seed` draws a fresh seed each run (reported in `info.seed`,
-  which reproduces it); 1.2 used seed 1, so every unseeded run gave the same puzzle.
-- **Style format**: rule `style` gains `size`, `angle`, `outline`, `outline_width` and `layer`; new decorations
-  `polygon` (any closed shape), `fill` (cell colors, several per cell) and `image`; named top-level style keys. The spec
-  says how much of it a renderer needs (13,451 sudoku.coach and 19,074 SudokuPad puzzles measured).
-- **`"difficulty": "typical"`** (with a band): the seed draws a window from where published puzzles of the band lie
-  (a bell curve fitted to them; `info.aimed_at`) and digging stops inside it; classic Very Easy centers on 3.3
-  (2.7-3.9), as generated sites' easy tiers do (sudoku.com easy / medium / hard: 2.5 / 3.1 / 3.6). It never fails a
-  request: with nothing in the window by half of the time limit, any difficulty in the band will do
-  (`info.aim_relaxed`). Opt in; without it a band request digs as far as the band allows, as before.
+
 - **Generator publishing checks are opt in.** A request without `quality`, or with `{}` (dropped when a spec is
   written), runs no checks; `{"preset": "standard"}` turns on the standard set; without a preset only the checks named
   run. 1.2 used the standard preset by default and `{}` meant every check at its own severity. The examples and guides
   now ask for the preset explicitly, and the generator spec's top example shows `quality` and both fingerprint keys.
+
 - **Generator metadata on request.** Everything in a spec's `meta` is optional and copied; nothing is filled unless
   asked (1.2 always added a machine title, `type` and `rules_text`). Requests: `title` / `subtitle` templates
   (`{type}`, `{type:list}`, `{variants}`, `{size}`, `{band}`, `{difficulty}`, `{time}`, `{givens}`, `{seed}`), `"type":
   true` or `{"scheme": "name" | "list"}` ("Jigsaw Killer Renban Kropki Sudoku"), `"variants": true` (snake_case ids
   like tags), `"rules_text": true`; `fingerprint` / `generated_from` now take only `true`. `describe()`, the card's
   `describe` field and `write.*(describe=True)` give `variants` too; `subtitle` and `variants` are suggested meta keys.
+
+### New
+
+- **f-puzzles style capture**: the colors and widths of f-puzzles' generic lines, cages, circles and rectangles
+  become the rules' `style`, as SudokuPad's already did (on 46 LMD f-puzzles, 414 of 905 rules keep their look).
+
+- **Logging you can time and follow**: `--log trace` (and `pencilmark.log("trace")` in Python) writes every step of the
+  card's route and every test of the technique-list search; every level's lines carry the milliseconds since start.
+  `pencilmark.log(level)` switches the log on from Python.
+
+- **Reusable custom rules**: a top-level `"definitions"` object names a custom rule once (`holds`, optional
+  `scope`, `each`, `label`, `style`, `draw`); `{"type": "custom", "use": name, "cells": {...}}` places it, with its own
+  style if wanted. A placement means the rule it spells out (same fingerprint and card). Custom rules also take `draw`
+  (`line`, `cage`, `cells`, `circle`, `dot`), which the renderer draws in the rule's style.
+
+- **Technique whitelist**: `rate(puzzle, techniques=["XWG", "SKY"])` / `--techniques XWG,SKY` grades for a solver who
+  knows only these techniques (and the singles); a puzzle needing more gets band Unknown with the reason. Difficulty
+  can be higher than the full card's: a solver with fewer techniques has fewer moves on offer at each step.
+
+- **sudoku.coach reader**: `pencilmark.read.link("https://sudoku.coach/en/s/<id>")` and raw `SCv7_...` payloads, with
+  the setter's colors and widths as style and cell colors as a `fill` decoration; the embedded solution is checked.
+  Of 16,436 coach puzzles, 13,407 read, 0 crash; refused: extra rules written only in the description (2,293), older
+  payload versions SCv3-SCv6 (716), and a few clues the site defines differently.
+
+- **Style format**: rule `style` gains `size`, `angle`, `outline`, `outline_width` and `layer`; new decorations
+  `polygon` (any closed shape), `fill` (cell colors, several per cell) and `image`; named top-level style keys. The spec
+  says how much of it a renderer needs (13,451 sudoku.coach and 19,074 SudokuPad puzzles measured).
+
 - **Puzzle format wording**: meaning and drawing are split per field (a kropki dot's color is meaning), and the
   fingerprint section says which spellings of one constraint meet.
+
+### Grading (the classic technique pass)
+
+- **One meaning, one grade**: a numbered clue that is exactly a kropki dot or an XV mark (difference 1, ratio 2,
+  sum 5 or 10) is graded like the dot or mark (it was a digit table, priced differently). On the 26 development
+  puzzles with such clues, the rank correlation with players' times holds or improves.
+
 - **All unique rectangle types.** New type 6 (an X-Wing on one floor digit across a diagonal floor), and every type
   allows corners that miss one of the pair (HoDoKu's "missing candidates": the deadly-pattern argument is about the
   final grid). Avoidable rectangle type 2 is no longer tied to the color-algebra switch, so default cards use it.
   `placed` digits now reach the engine as solved-but-not-given, which avoidable rectangles need. HoDoKu's regression
   library: all 69 uniqueness cases that were missing match now (types 1-6, hidden rectangles, avoidable rectangles 1-2),
   no unsound move anywhere in the library. Explanations name types 5 and 6 (type 5 used the hidden rectangle text).
+
 - **ALS chains of any ALS size** (HoDoKu's ALS-XY-Chain): four or five pairwise-disjoint almost locked sets linked
   by restricted common digits, listed under ALS-AIC.
+
 - **Grouped chain ends**: an AIC, X-chain or ALS chain may end on a box-line group (HoDoKu's grouped AICs and nice
   loops). Speed on 419 classic-source cards: within noise.
+
 - **Multi-Coloring type 2**: a color that sees both colors of another cluster is false.
+
 - **Sue de Coq** with line and box sets of up to 3 cells, without the almost-locked restriction (HoDoKu's form).
+
 - HoDoKu's regression library: missing 193 -> 64 cases over this pass, 0 unsound moves.
+
+### Generator
+
+- **Difficulty ranges spread**: `"difficulty": [lo, hi]` aims at a point drawn in the range for each seed
+  (`info.aimed_at`) instead of returning the first puzzle inside it, which sat at the low edge (Very Easy `[2, 4]`:
+  median 2.4, 2.2-2.9 before; 2.9, 2.2-4.0 now).
+
+- **Cage limits work with tiled killers**: `{"type": "cage", "count": "tile", "sum": [null, 20]}` (and `size`, and
+  a zero-given cage count): the tiling builds no cage over a maximum, merges cages under a minimum first, and draws
+  again when one stays under.
+
+- **Line `turns` limit and hand-drawn lines**: line templates take `turns` (`[min, max]`, `0` = straight). Generated
+  lines may now step diagonally (never crossing a line of their kind) and are drawn as people draw them: human lines
+  (5,520 on the development set) turn at 54% of their inner cells, take 31% of their steps diagonally and are
+  straight 30% of the time; 1.2's were orthogonal only and turned at about 67%; now 58%, 34% and 22%.
+
+- A multi-grid layout without `where.band` says in `info.warnings` that it was dug up to Hard.
+
+- **Generator examples and the learning ladder regenerated** with the 1.3 generator.
+
+- **No seed, a new puzzle.** A request without `limits.seed` draws a fresh seed each run (reported in `info.seed`,
+  which reproduces it); 1.2 used seed 1, so every unseeded run gave the same puzzle.
+
+- **`"difficulty": "typical"`** (with a band): the seed draws a window from where published puzzles of the band lie
+  (a bell curve fitted to them; `info.aimed_at`) and digging stops inside it; classic Very Easy centers on 3.3
+  (2.7-3.9), as generated sites' easy tiers do (sudoku.com easy / medium / hard: 2.5 / 3.1 / 3.6). It never fails a
+  request: with nothing in the window by half of the time limit, any difficulty in the band will do
+  (`info.aim_relaxed`). Opt in; without it a band request digs as far as the band allows, as before.
+
+- Generated lines never cross each other diagonally; tiled killers take a minimum cage `size` above 2 (a few givens
+  are added where the logic needs them; Medium or easier for now).
+
+### Fixes
+
+- **SudokuPad reader fixes** (Cracking the Cryptic screen): bare all-digit hex colors (`c:020202`) no longer break
+  decoding, `[null]` regions are skipped, and a 0 digit (digits 0..8) is refused clearly instead of failing as a
+  format error.
+
+- **Empty Rectangle on multi-grid boards** matched cells by board coordinates; on a butterfly or samurai that made an
+  unsound elimination (a generated butterfly's card lost its difficulty). It now checks the houses. A sweep of every
+  development puzzle's routes then found no unsound step.
+
+- **Speed: the quick uniqueness pass under `max_seconds`** took the whole time budget before CP-SAT got its turn: two
+  zero-given variants went from 213 s and 121 s to 6 s and 8 s; the classic-source benchmark set from 1,307 s to 868 s,
+  every grade unchanged.
+
+- Explanations: the last cell of a cage or line names its rule even when the engine's move does not.
 
 ## 1.2.0 (2026-11-07)
 
