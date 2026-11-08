@@ -99,6 +99,9 @@ enum Tech {
     CLASS_COMPLETE = 118, ///< identity layer: k complete colours with k digits between them: the other cells lose those
     REGION_RULE = 119,    ///< regions to find: a custom rule reading region() on its own: digits / labels no combination uses
     REGION_GROUP = 120,   ///< regions to find: groups known to share a region: too big together, sealed, one way out, equal digits
+    SHADE_LOCAL = 121,    ///< shading: a 2x2 with three of a colour, or the checkerboard it must not become
+    SHADE_CONNECT = 122,  ///< shading: a colour's single exit, a cut cell, the border's colour runs
+    SHADE_RULE = 123,     ///< shading: a custom rule reading shaded() on its own: digits / colours no combination uses
     MENTAL_NOTES = 84,    ///< single after notes logic done in the head (subset / pointing / combination on the mental view)    // line consistency on 3-cell windows (local scan of a long line)  // both options of a 2-way choice lead to the same placement / elimination  // short chain (<= 5 links) on the no-notes mental view, leading to a single  // bounded case split: bivalue cell, contradiction within a few direct rounds
     N_TECH = 128
 };
@@ -118,7 +121,8 @@ struct Move;
 /// AE_ID_NEQ the classes of cell and arg hold different digits (a cell without a class becomes one); AE_ID_USE the move
 /// relies on the class anchored at cell (no state change: route accounting charges the joins that built it)
 enum AEffKind { AE_LABEL_PLACE = 1, AE_LABEL_ELIM = 2, AE_ID_JOIN = 3, AE_ID_NEQ = 4, AE_ID_USE = 5,
-                AE_REG_JOIN = 6, AE_REG_NEQ = 7 };  ///< regions to find: two cells share / do not share a region
+                AE_REG_JOIN = 6, AE_REG_NEQ = 7,  ///< regions to find: two cells share / do not share a region
+                AE_SHADE = 8 };  ///< shading: the cell takes colour arg (1 shaded, 2 unshaded)
 struct AEff {
     int kind, cell, arg;
     bool operator<(const AEff& o) const {
@@ -509,6 +513,13 @@ public:
     /// anchor + 1 (0: on its own), then pairs of anchors + 1 known to lie in different regions (like idc)
     std::vector<int> rgc;
     std::vector<int> rgc_override;  ///< a mid-solve state's region relations (band_path)
+    /// shading (yin-yang): colour per cell, 0 unknown, 1 shaded, 2 unshaded
+    std::vector<uint8_t> shade;
+    std::vector<uint8_t> shade_override;  ///< a mid-solve state's colours (band_path)
+    bool has_shading() const { return p.shading; }
+    void shade_local(MoveBuf& out);
+    void shade_connect(MoveBuf& out);
+    void shade_rule(MoveBuf& out);
     void rg_normalize();
     void rg_join(int a, int b);  ///< a and b lie in one region
     void rg_neq(int a, int b);   ///< a and b lie in different regions

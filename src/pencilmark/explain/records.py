@@ -29,11 +29,13 @@ def _x_head(ctx):
         c, v = ctx.place
         return f"{nm.cell(c)} = {v}", f"{nm.cell(c)} must be {v}"
     if not ctx.elims:  # regions to find: a move that only places / rules out regions or relates cells
-        from ..cbackend import AE_REG_JOIN
+        from ..cbackend import AE_REG_JOIN, AE_SHADE
 
         m = ctx.m
         parts = [
-            f"{nm.cell(a)} and {nm.cell(b)} lie in {'one region' if k == AE_REG_JOIN else 'different regions'}"
+            f"{nm.cell(a)} is {'shaded' if b == 1 else 'unshaded'}"
+            if k == AE_SHADE
+            else f"{nm.cell(a)} and {nm.cell(b)} lie in {'one region' if k == AE_REG_JOIN else 'different regions'}"
             for k, a, b in getattr(m, "rfx", None) or ()
         ]
         if getattr(m, "lplace", None):
@@ -859,6 +861,45 @@ def _h_region(ctx):
             "holding the same digit belongs to another region"
         )
         title = "region exclusion"
+    J = _J(ctx, base_cells=pc)
+    return _result(ctx, J, f"{head}: {title}", f"{why}. So {goal}.", bool(pc), extra_cells=pc)
+
+
+def _h_shading(ctx):
+    """ShadeLocal / ShadeConnect (yin-yang): the 2x2 rule, the checkerboard, a colour's single exit, a cut cell, the
+    border's colour runs"""
+    nm = ctx.nm
+    pc = (ctx.raw_engine or {}).get("pattern_cells") or _changed_cells(ctx)
+    head, goal = _x_head(ctx)
+    why, title = {
+        "three of a colour in a 2x2": (
+            f"{nm.cells(pc)} are one colour, and no 2x2 block is all one colour",
+            "2x2 rule",
+        ),
+        "no checkerboard": (
+            f"With {nm.cells(pc)} as they are, the other colour here would make a checkerboard, which cuts one colour"
+            " in two",
+            "no checkerboard",
+        ),
+        "single exit": (
+            f"The group {nm.cells(pc)} must join the rest of its colour, and it has only one way out",
+            "single exit",
+        ),
+        "cut cell": (
+            f"Without this cell the cells of its colour ({nm.cells(pc)}) could no longer all join up",
+            "cut cell",
+        ),
+        "rule over the shading": (
+            f"The rule on {nm.cells(pc)} reads the shading: try every digit and colour its cells can take, and some "
+            "options never occur",
+            "a rule over the shading",
+        ),
+        "border colour runs": (
+            "With both colours connected, the border holds one run of each colour: the other colour here would start "
+            "a third run",
+            "border runs",
+        ),
+    }.get(ctx.code, (f"Each colour is connected and no 2x2 block is one colour ({nm.cells(pc)})", "shading"))
     J = _J(ctx, base_cells=pc)
     return _result(ctx, J, f"{head}: {title}", f"{why}. So {goal}.", bool(pc), extra_cells=pc)
 

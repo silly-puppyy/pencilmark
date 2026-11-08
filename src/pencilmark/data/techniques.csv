@@ -87,6 +87,9 @@ id,const,name,role,code,display,band,split,family,gate,direct,mental,price,price
 109,POCKET,PocketCounting,logic,RPK,Pocket counting (regions to find),Medium,0,intersections+combos,any,0,0,3,
 119,REGION_RULE,RegionRule,logic,RRU,A rule over regions read on its own,Medium,0,intersections+combos,any,0,0,3,
 120,REGION_GROUP,RegionGroup,logic,RGP,Region groups (borders drawn so far),Easy,0,intersections+combos,any,0,0,2,
+121,SHADE_LOCAL,ShadeLocal,logic,SHL,Shading: the 2x2 rule and the checkerboard,Easy,0,intersections+combos,any,0,0,2,
+122,SHADE_CONNECT,ShadeConnect,logic,SHC,Shading: connected colours (single exit / cut cell / border runs),Medium,0,intersections+combos,any,0,0,3,
+123,SHADE_RULE,ShadeRule,logic,SHR,A rule over the shading read on its own,Medium,0,intersections+combos,any,0,0,3,
 110,CLASS_SINGLE,ClassSingle,logic,CSG,Color Single,Medium,0,intersections+combos,any,0,0,,EqualDigits
 111,ID_PROPAGATE,ClassPropagation,logic,CFL,Color Fill,Medium,0,singles,any,0,0,,NakedSingle(notes)
 112,CLASS_PAIR,ClassPair,logic,CPR,Color Pair,Medium,0,intersections+combos,any,0,0,,EqualDigits

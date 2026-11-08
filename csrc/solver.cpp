@@ -197,7 +197,7 @@ static bool strategy_off(const char* name, const Flags& disabled) {
         {"digitcount", {DIGIT_COUNT}}, {"equaldigits", {EQUAL_DIGITS, CHAIN_COLOUR}}, {"colouralgebra", {COLOUR_ALGEBRA}}, {"classcolour", {CLASS_COLOUR}}, {"cluefacts", {CLUE_FACTS, CLUE_SHAPE}},
         {"ruleintersect", {RULE_INTERSECT}}, {"regioncap", {REGION_CAP}}, {"regionexcl", {REGION_EXCL}},
         {"regionreach", {REGION_REACH}}, {"deadend", {DEAD_END}}, {"regionexit", {REGION_EXIT}},
-        {"regiondigit", {REGION_DIGIT}}, {"pocket", {POCKET}}, {"regionrule", {REGION_RULE}}, {"regiongroup", {REGION_GROUP}}, {"shorttrial", {SHORT_TRIAL}}, {"humancase", {HUMAN_CASE}},
+        {"regiondigit", {REGION_DIGIT}}, {"pocket", {POCKET}}, {"regionrule", {REGION_RULE}}, {"regiongroup", {REGION_GROUP}}, {"shadelocal", {SHADE_LOCAL}}, {"shadeconnect", {SHADE_CONNECT}}, {"shaderule", {SHADE_RULE}}, {"shorttrial", {SHORT_TRIAL}}, {"humancase", {HUMAN_CASE}},
         {"whatif", {WHAT_IF}}, {"eitherway", {EITHER_WAY}}};
     auto it = TECHS.find(name);
     if (it == TECHS.end()) return false;
@@ -367,6 +367,21 @@ Solver::Solver(const Puzzle& pz, const Params& prm, const SolveOptions& o)
         for (int t : {UNIQUE_RECT, BUG_PLUS1, GURTH}) disabled.set(t, 1);
         any_disabled = true;
     }
+    if (has_shading()) {  // shading: colour moves come first; uniqueness arguments assume the digits alone decide
+        struct Fn : Strategy {
+            const char* n;
+            void (*f)(Solver&, MoveBuf&);
+            Fn(const char* name, void (*fn)(Solver&, MoveBuf&)) : n(name), f(fn) {}
+            const char* name() const override { return n; }
+            void collect(Solver& s, MoveBuf& b) override { f(s, b); }
+        };
+        tiers.insert(tiers.begin(),
+                     Tier{std::make_shared<Fn>("shadelocal", [](Solver& s, MoveBuf& b) { s.shade_local(b); }),
+                          std::make_shared<Fn>("shadeconnect", [](Solver& s, MoveBuf& b) { s.shade_connect(b); }),
+                          std::make_shared<Fn>("shaderule", [](Solver& s, MoveBuf& b) { s.shade_rule(b); })});
+        for (int t : {UNIQUE_RECT, BUG_PLUS1, GURTH}) disabled.set(t, 1);
+        any_disabled = true;
+    }
     if (id_on()) {  // identity layer: propagation competes with the singles, ClassSingle sits beside EqualDigits
         for (auto& t : tiers) {
             bool sg = false, eq = false;
@@ -415,6 +430,11 @@ void Solver::init_state(const std::vector<std::pair<int, int>>& givens) {
         }
     }
     label_normalize();
+    shade.assign(has_shading() ? p.N : 0, 0);  // shading: the given colours, or a mid-solve state's
+    if (has_shading()) {
+        if ((int)shade_override.size() == p.N) shade = shade_override;
+        else for (int c = 0; c < p.N; ++c) shade[c] = p.shade_given[c];
+    }
     idc.assign(id_on() ? p.N : 0, 0);
     if (id_on() && (int)idc_override.size() >= p.N) idc = idc_override;  // classes, then differences
     id_normalize();
@@ -1643,6 +1663,7 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
                     if (pass == 1 && e.kind == AE_ID_NEQ && id_on()) id_neq(e.cell, e.arg);
                     if (pass == 1 && e.kind == AE_REG_JOIN && has_regions()) rg_join(e.cell, e.arg);
                     if (pass == 1 && e.kind == AE_REG_NEQ && has_regions()) rg_neq(e.cell, e.arg);
+                    if (pass == 1 && e.kind == AE_SHADE && has_shading() && !shade[e.cell]) shade[e.cell] = (uint8_t)e.arg;
                 }
             if (has_regions()) label_normalize();
         }

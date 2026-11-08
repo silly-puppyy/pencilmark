@@ -110,6 +110,7 @@ struct Puzzle {
     int aux_u = 0, aux_layers = 0;
     std::vector<std::vector<int>> grid_nbr;      ///< derived (shading): orthogonal neighbours on the board
     std::vector<std::array<int, 4>> windows4;    ///< derived (shading): every 2x2 block of board cells
+    std::vector<int> border_cycle;               ///< derived (shading): the border cells of a full rectangular board, in order round it
 
     // ---- derived (finalize) ----
     int N = 0, G = 0, W = 1;

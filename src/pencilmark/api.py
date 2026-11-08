@@ -244,13 +244,7 @@ def rate(
     p = _load(puzzle)
     # rules no human technique reasons with yet: the puzzle is still proven unique (or refused as a wrong input), then
     # its card is band Unknown with the reason (user 2026-11-06: "Unknown if unknown, error if a reader mistake")
-    no_route = (
-        "shading (yin-yang): no human technique for shading yet"
-        if V.has_shading(p)
-        else "unknowns / layers (custom rules): no human technique for them yet"
-        if getattr(p, "aux", None)
-        else None
-    )
+    no_route = "unknowns / layers (custom rules): no human technique for them yet" if getattr(p, "aux", None) else None
     import time
 
     from . import cbackend as CB

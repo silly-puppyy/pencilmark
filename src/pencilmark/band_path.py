@@ -197,8 +197,14 @@ def band_path(
     ids = bool(P.get("colouring"))
     idc = [0] * N if ids else None
     rgc = CB.rg_seed(p) if chaos else None  # regions to find: the relation layer (cells sharing / not sharing a region)
-    labels = lambda: (lab, lcand, idc, rgc) if chaos or ids else None  # noqa: E731
-    lkey = lambda: (tuple(lab or ()), tuple(lcand or ()), tuple(idc or ()), tuple(rgc or ())) if chaos or ids else ()  # noqa: E731
+    shade = CB.shade_seed(p)  # shading: colour per cell (None without a yin_yang rule)
+    shading = shade is not None
+    labels = lambda: (lab, lcand, idc, rgc, shade) if chaos or ids or shading else None  # noqa: E731
+    lkey = lambda: (  # noqa: E731
+        (tuple(lab or ()), tuple(lcand or ()), tuple(idc or ()), tuple(rgc or ()), tuple(shade or ()))
+        if chaos or ids or shading
+        else ()
+    )
     q = copy.copy(p)  # the puzzle keeps its own domains; each state's candidates go in as a mask
     cp = getattr(p, "_bp_cpuzzle", None)
     if cp is None:
@@ -229,6 +235,8 @@ def band_path(
                     if lcand[c] and not lcand[c] & (lcand[c] - 1):
                         lab[c] = lcand[c].bit_length()
             CB.rg_apply(rgc, N, m.get("rfx"))
+        if shading:  # colour effects travel with the region relations
+            CB.shade_apply(shade, m.get("rfx"))
         if ids:  # class joins and differences; a placement may free a class
             CB.id_apply(idc, vals, m.get("idfx"))
 
@@ -237,6 +245,7 @@ def band_path(
             m["place"]
             or m["elim"]
             or (chaos and (m.get("lplace") or m.get("lelim") or m.get("rfx")))
+            or (shading and m.get("rfx"))
             or (ids and CB.id_changes(m.get("idfx")))
         )
 
@@ -299,7 +308,7 @@ def band_path(
                                 "lelim": list(getattr(x.move, "lelim", ())),
                                 "rfx": list(getattr(x.move, "rfx", None) or ()),
                             }
-                            if chaos
+                            if chaos or shading
                             else {}
                         ),
                         **({"idfx": list(getattr(x.move, "idfx", None) or ())} if ids else {}),
@@ -340,7 +349,7 @@ def band_path(
                                 "lelims": list(m.get("lelim") or ()),
                                 "rfx": list(m.get("rfx") or ()),
                             }
-                            if chaos
+                            if chaos or shading
                             else {}
                         ),
                         **({"idfx": list(m.get("idfx") or ())} if ids else {}),
@@ -428,6 +437,7 @@ def band_path(
                         x.move.place
                         or x.move.elim
                         or (chaos and (x.move.lplace or x.move.lelim or getattr(x.move, "rfx", None)))
+                        or (shading and getattr(x.move, "rfx", None))
                         or (ids and CB.id_changes(getattr(x.move, "idfx", None)))
                     )
                 ):
@@ -445,7 +455,7 @@ def band_path(
                                 "lelim": list(x.move.lelim),
                                 "rfx": list(getattr(x.move, "rfx", None) or ()),
                             }
-                            if chaos
+                            if chaos or shading
                             else {}
                         ),
                         **({"idfx": list(getattr(x.move, "idfx", None) or ())} if ids else {}),
@@ -479,7 +489,7 @@ def band_path(
                 "d": m.get("d"),
                 **(
                     {"lplace": m.get("lplace"), "lelims": list(m.get("lelim") or ()), "rfx": list(m.get("rfx") or ())}
-                    if chaos
+                    if chaos or shading
                     else {}
                 ),
                 **({"idfx": list(m.get("idfx") or ())} if ids else {}),
@@ -601,6 +611,7 @@ def _states(p, steps):
     ids = any("idfx" in st for st in steps)  # identity layer: the route carries its color classes
     idc = [0] * N
     rgc = CB.rg_seed(p) if chaos else None  # regions to find: the relation layer
+    shade = CB.shade_seed(p)  # shading: colour per cell
     for st in steps:
         q = copy.copy(p)
         q.givens = {c: v for c, v in enumerate(vals) if v}
@@ -611,8 +622,9 @@ def _states(p, steps):
                 list(lcand) if chaos else None,
                 list(idc) if ids else None,
                 list(rgc) if chaos else None,
+                list(shade) if shade is not None else None,
             )
-            if chaos or ids
+            if chaos or ids or shade is not None
             else None
         )
         yield q
@@ -633,6 +645,8 @@ def _states(p, steps):
                     if lcand[c] and not lcand[c] & (lcand[c] - 1):
                         lab[c] = lcand[c].bit_length()
             CB.rg_apply(rgc, N, st.get("rfx"))
+        if shade is not None:
+            CB.shade_apply(shade, st.get("rfx"))
         if ids:
             CB.id_apply(idc, vals, st.get("idfx"))
 

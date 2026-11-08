@@ -215,6 +215,9 @@ def code_name(code):
                 7202: "whole region sealed", 7203: "one way out", 7204: "equal digits split regions",
                 7205: "digit already in the group", 7206: "last place in a whole region", 7207: "only way to grow",
                 7208: "would trap a region"}.get(code, f"region {code}")  # fmt: skip
+    if 7300 <= code < 7400:  # shading (shading_logic.cpp)
+        return {7301: "three of a colour in a 2x2", 7302: "no checkerboard", 7311: "single exit", 7312: "cut cell",
+                7321: "border colour runs", 7331: "rule over the shading"}.get(code, f"shading {code}")  # fmt: skip
     if 4500 <= code < 4600:
         t = code - 4500
         return ("cage/sum" if t == 0 else CTYPES[t] if t < len(CTYPES) else f"rule{t}") + " in the head"
@@ -264,6 +267,7 @@ def to_cpuzzle(p):
 
 AE_LABEL_PLACE, AE_LABEL_ELIM, AE_ID_JOIN, AE_ID_NEQ, AE_ID_USE = 1, 2, 3, 4, 5  # csrc/solver.hpp AEffKind
 AE_REG_JOIN, AE_REG_NEQ = 6, 7  # regions to find: two cells share / do not share a region
+AE_SHADE = 8  # shading: the cell takes a colour (1 shaded, 2 unshaded); carried with the region relations ("rfx")
 
 
 def _label_fx(aeffs):
@@ -282,7 +286,7 @@ def _id_fx(aeffs):
 def _reg_fx(aeffs):
     """regions to find, the relation layer: the move's [(kind, cell, other)]: AE_REG_JOIN the two cells share a region,
     AE_REG_NEQ they lie in different regions"""
-    return [(k, c, a) for k, c, a in aeffs if k in (AE_REG_JOIN, AE_REG_NEQ)]
+    return [(k, c, a) for k, c, a in aeffs if k in (AE_REG_JOIN, AE_REG_NEQ, AE_SHADE)]
 
 
 def rg_norm(rgc, N):
@@ -330,6 +334,26 @@ def rg_apply(rgc, N, fx):
         elif k == AE_REG_NEQ:
             rgc += [rg_anchor(rgc, c) + 1, rg_anchor(rgc, a) + 1]
         rg_norm(rgc, N)
+
+
+def shade_seed(p):
+    """shading: the given colours per cell (0 unknown, 1 shaded, 2 unshaded), or None without a yin_yang rule"""
+    con = next((c for c in getattr(p, "constraints", ()) if c.get("type") == "yin_yang"), None)
+    if con is None:
+        return None
+    sh = [0] * p.N
+    for c in con.get("shaded", ()):
+        sh[c] = 1
+    for c in con.get("unshaded", ()):
+        sh[c] = 2
+    return sh
+
+
+def shade_apply(shade, fx):
+    """shading: a move's colour effects (AE_SHADE) on the colour state"""
+    for k, c, a in fx or ():
+        if k == AE_SHADE and not shade[c]:
+            shade[c] = a
 
 
 def rg_seed(p):
@@ -456,14 +480,19 @@ def id_held(N, givens, steps):
 
 
 def _ann_kw(labels):
-    """engine keywords of a mid-solve annotation state: labels = (region labels, label candidates[, color classes]);
-    either part may be None"""
+    """engine keywords of a mid-solve annotation state: labels = (region labels, label candidates[, color classes[,
+    region relations[, shading colours]]]); any part may be None"""
     kw = {}
     if labels is None:
         return kw
-    if labels[0] is not None:  # regions to find (with the relation layer when the state has one)
+    shade = labels[4] if len(labels) > 4 and labels[4] is not None else None  # shading: colour per cell
+    if labels[0] is not None or shade is not None:  # regions to find (with the relation layer) and / or shading
         rel = labels[3] if len(labels) > 3 and labels[3] is not None else None
-        kw["labels"] = (list(labels[0]), list(labels[1])) + ((list(rel),) if rel is not None else ())
+        kw["labels"] = (
+            list(labels[0]) if labels[0] is not None else None,
+            list(labels[1]) if labels[0] is not None else None,
+            list(rel) if rel is not None else None,
+        ) + ((list(shade),) if shade is not None else ())
     if len(labels) > 2 and labels[2] is not None:  # identity layer: class per cell (0 none)
         kw["idc"] = [int(x) for x in labels[2]]
     return kw
@@ -777,7 +806,10 @@ def state_moves(
     else:
         raw = _C.state_moves(*args, skip=[int(t) for t in skip], **kw)
     chaos = any(c.get("type") == "chaos" for c in getattr(puzzle, "constraints", ()))
-    ann = chaos or bool(sc.p.get("colouring"))  # regions to find / identity layer: annotation effects
+    shading = any(c.get("type") == "yin_yang" for c in getattr(puzzle, "constraints", ()))
+    ann = (
+        chaos or shading or bool(sc.p.get("colouring"))
+    )  # regions to find / shading / identity layer: annotation effects
     out = []
     for r in raw:
         lfx = None

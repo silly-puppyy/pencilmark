@@ -46,6 +46,7 @@ from .records import (
     _h_pattern_named,
     _h_region,
     _h_rule_intersect,
+    _h_shading,
     _h_snyder,
     _h_sum_algebra,
     _h_sum_bound,
@@ -329,6 +330,28 @@ _X_HANDLERS = {
         _h_region,
         "pocket_counting",
         ("Pocket counting", "A pocket too small for a region of its own belongs to the unfinished region around it."),
+    ),
+    "SHADE_LOCAL": (
+        _h_shading,
+        "shade_local",
+        ("Shading: 2x2", "No 2x2 block is one colour, and no 2x2 is a checkerboard (it would cut a colour in two)."),
+    ),
+    "SHADE_CONNECT": (
+        _h_shading,
+        "shade_connect",
+        (
+            "Shading: connected colours",
+            "Each colour is one connected area: a group with one way out takes it, a cell joining a colour's cells is "
+            "that colour, and the border holds one run of each colour.",
+        ),
+    ),
+    "SHADE_RULE": (
+        _h_shading,
+        "shade_rule",
+        (
+            "A rule over the shading",
+            "A rule reading the shading, tried with every digit and colour its cells can take.",
+        ),
     ),
     "REGION_GROUP": (
         _h_region,

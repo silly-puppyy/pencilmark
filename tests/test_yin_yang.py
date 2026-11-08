@@ -41,13 +41,13 @@ def test_read_write_describe():
         pencilmark.api._load(two)
 
 
-def test_count_couplings_and_rate_unknown():
+def test_count_couplings_and_rate():
     assert pencilmark.count_solutions(with_rule({"type": "yin_yang", "shaded": ["r1c1"]}))["count"] == 1
     checker = {"type": "yin_yang", "shaded": ["r1c1", "r2c2"], "unshaded": ["r1c2", "r2c1"]}  # disconnects a color
     assert pencilmark.count_solutions(with_rule(checker))["count"] == 0
-    card = pencilmark.rate(with_rule({"type": "yin_yang", "shaded": ["r1c1"]}))  # no human route: Unknown, with why
-    assert card["band"] == "Unknown" and card["difficulty"] is None and card["contains"] == []
-    assert "shading" in card["reason"]
+    # 1.4: shading has human techniques; a shading the digits do not read leaves the digits' own route
+    card = pencilmark.rate(with_rule({"type": "yin_yang", "shaded": ["r1c1"]}))
+    assert card["band"] != "Unknown" and card["difficulty"] is not None
     with pytest.raises(pencilmark.NoSolution):  # a wrong input is still an error
         pencilmark.rate(with_rule(checker))
 

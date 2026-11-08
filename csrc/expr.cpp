@@ -294,6 +294,7 @@ Val Ev::builtin(int id, const std::vector<Val>& a) {
             return Val::num(lab[a[0].var]);
         }
         case SHADED: {  // no shading (or not known yet): absent, so the rule fails and the caller decides later
+            if (lazy && a[0].k == Val::CELL && sh && sh[a[0].var] < 0) throw ExprNeed{a[0].var, false, true};
             if (a[0].k != Val::CELL || !sh || sh[a[0].var] <= 0) return Val();
             return Val::boolean(sh[a[0].var] == 1);
         }
@@ -478,13 +479,25 @@ bool relational_node(const ExprNode& e, int parent) {
 
 bool expr_region_relational(const ExprNode& e) { return relational_node(e, X_NONE); }
 
-bool expr_holds_lazy(const ExprProgram& prog, const int* digits, const int* labels) {
-    Ev ev(prog, digits, labels, nullptr, nullptr);
+bool expr_holds_lazy(const ExprProgram& prog, const int* digits, const int* labels, const int* shading) {
+    Ev ev(prog, digits, labels, shading, nullptr);
     ev.lazy = true;
     Val r = ev.eval(prog.root);
     return r.k == Val::BOOL && r.b;
 }
 
 bool expr_layered(const ExprNode& e) { return layered_node(e); }
+
+namespace {
+bool calls(const ExprNode& e, int fn) {
+    if (e.op == X_CALL && e.v == fn) return true;
+    for (const ExprNode& k : e.kids)
+        if (calls(k, fn)) return true;
+    return false;
+}
+}  // namespace
+
+bool expr_reads_shading(const ExprNode& e) { return calls(e, SHADED); }
+bool expr_reads_regions(const ExprNode& e) { return calls(e, REGION); }
 
 }  // namespace cs

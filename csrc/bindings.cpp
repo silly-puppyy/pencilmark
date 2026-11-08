@@ -474,10 +474,16 @@ static py::tuple py_solve(const Puzzle& p, const std::vector<std::pair<int, int>
         if (!labels.is_none()) {  // a mid-solve state's region labels (chaos): (labels, label candidates)
             py::gil_scoped_acquire acq;
             py::tuple lt = labels.cast<py::tuple>();
-            auto l0 = lt[0].cast<std::vector<int>>();
-            s.lab_override.assign(l0.begin(), l0.end());
-            s.lcand_override = lt[1].cast<std::vector<uint32_t>>();
+            if (!lt[0].is_none()) {
+                auto l0 = lt[0].cast<std::vector<int>>();
+                s.lab_override.assign(l0.begin(), l0.end());
+                s.lcand_override = lt[1].cast<std::vector<uint32_t>>();
+            }
             if (py::len(lt) > 2 && !lt[2].is_none()) s.rgc_override = lt[2].cast<std::vector<int>>();  // relations
+            if (py::len(lt) > 3 && !lt[3].is_none()) {  // shading: colour per cell
+                auto sh = lt[3].cast<std::vector<int>>();
+                s.shade_override.assign(sh.begin(), sh.end());
+            }
         }
         if (!idc.is_none()) {  // identity layer: a mid-solve state's colour classes
             py::gil_scoped_acquire acq;
@@ -510,7 +516,7 @@ static py::tuple py_solve(const Puzzle& p, const std::vector<std::pair<int, int>
         auto row = py::make_tuple(alts, st.chosen, place, el, py::make_tuple(st.move.nk, st.move.na, st.move.nb),
                                   st.move.d, st.mode, st.n_empty, st.erasures, st.notes_written, xm, st.move.code,
                                   pats, exs, st.n_cands);
-        if (!p.chaos.empty() || P.id_layer) {  // annotations: a 16th element, the step's effects as (kind, cell, arg)
+        if (!p.chaos.empty() || P.id_layer || p.shading) {  // annotations: a 16th element, the step's effects as (kind, cell, arg)
             py::tuple ae(st.move.aeff_n);
             for (int i = 0; i < st.move.aeff_n; ++i) {
                 const AEff& e = r.aeffs[st.move.aeff_off + i];
@@ -571,10 +577,16 @@ static py::list py_state_moves(const Puzzle& p, const std::vector<std::pair<int,
         if (!labels.is_none()) {
             py::gil_scoped_acquire acq;
             py::tuple lt = labels.cast<py::tuple>();
-            auto l0 = lt[0].cast<std::vector<int>>();
-            s.lab_override.assign(l0.begin(), l0.end());
-            s.lcand_override = lt[1].cast<std::vector<uint32_t>>();
+            if (!lt[0].is_none()) {
+                auto l0 = lt[0].cast<std::vector<int>>();
+                s.lab_override.assign(l0.begin(), l0.end());
+                s.lcand_override = lt[1].cast<std::vector<uint32_t>>();
+            }
             if (py::len(lt) > 2 && !lt[2].is_none()) s.rgc_override = lt[2].cast<std::vector<int>>();  // relations
+            if (py::len(lt) > 3 && !lt[3].is_none()) {  // shading: colour per cell
+                auto sh = lt[3].cast<std::vector<int>>();
+                s.shade_override.assign(sh.begin(), sh.end());
+            }
         }
         if (!idc.is_none()) {  // identity layer: a mid-solve state's colour classes
             py::gil_scoped_acquire acq;
@@ -594,7 +606,7 @@ static py::list py_state_moves(const Puzzle& p, const std::vector<std::pair<int,
             el.append(py::make_tuple((int)(e / 32), (int)(e % 32)));
         }
         py::object labfx = py::none();  // annotations: the move's effects as (kind, cell, arg), appended last
-        const bool ann = !p.chaos.empty() || P.id_layer;
+        const bool ann = !p.chaos.empty() || P.id_layer || p.shading;
         if (ann) {
             py::tuple ae(m.aeff_n);
             for (int i = 0; i < m.aeff_n; ++i) {

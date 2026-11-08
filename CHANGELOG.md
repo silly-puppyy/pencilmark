@@ -16,6 +16,15 @@
 - **Region-sum lines on a board with regions to find** are split by the found regions (they were read as one segment,
   which silently dropped the rule); the engine reads them as a rule over `region()`.
 
+### Grading (shading; still reserved)
+
+- **Shading is graded** (yin-yang, format 6.19): the solver keeps a colour per cell and has three techniques mined from
+  Cracking the Cryptic solves (docs/research/cell_layer_techniques.md): *Shading: 2x2* (three of a colour in a 2x2
+  make the fourth the other; no checkerboard), *Shading: connected colours* (a group with one way out takes it; a cell
+  without which a colour's cells could not join is that colour; the border holds one run of each colour) and *A rule
+  over the shading* (a custom rule reading `shaded()`, tried with every digit and colour its cells can take). Before,
+  a yin-yang puzzle was band Unknown. Every colour a route sets is checked against the solutions in the tests.
+
 ### Grading (regions to find; still reserved)
 
 - **Rules that read the regions are reasoned with** (a new technique, *A rule over regions*, RRU): a custom rule

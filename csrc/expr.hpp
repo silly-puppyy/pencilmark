@@ -61,10 +61,15 @@ bool expr_region_relational(const ExprNode& e);
 struct ExprNeed {
     int var;
     bool label;
+    bool shade = false;  ///< the variable's colour (shading) is needed
 };
 /// expr_holds with unknowns: digits[v] < 0 / labels[v] < 0 mark an unknown digit / label; reading one throws
 /// ExprNeed{v, label} instead of guessing, so a caller can branch on exactly the values the rule reads (cell values
 /// used only as cells, e.g. passed to region(), never need their digit)
-bool expr_holds_lazy(const ExprProgram& prog, const int* digits, const int* labels);
+bool expr_holds_lazy(const ExprProgram& prog, const int* digits, const int* labels, const int* shading = nullptr);
+/// does the program call shaded()?
+bool expr_reads_shading(const ExprNode& e);
+/// does the program call region()?
+bool expr_reads_regions(const ExprNode& e);
 
 }  // namespace cs

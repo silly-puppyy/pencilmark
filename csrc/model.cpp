@@ -67,6 +67,16 @@ void Puzzle::finalize() {
             auto a = at.find({r0, c0 + 1}), b = at.find({r0 + 1, c0}), d = at.find({r0 + 1, c0 + 1});
             if (a != at.end() && b != at.end() && d != at.end()) windows4.push_back({c, a->second, b->second, d->second});
         }
+        border_cycle.clear();  // a full rectangle: top row left to right, right column down, bottom row back, left up
+        int r0 = 1 << 30, r1 = -1, c0 = 1 << 30, c1 = -1;
+        for (const auto& rc : coords)
+            r0 = std::min(r0, rc.first), r1 = std::max(r1, rc.first), c0 = std::min(c0, rc.second), c1 = std::max(c1, rc.second);
+        if (N >= 4 && (long)(r1 - r0 + 1) * (c1 - c0 + 1) == N && r1 > r0 && c1 > c0) {
+            for (int c = c0; c <= c1; ++c) border_cycle.push_back(at[{r0, c}]);
+            for (int r = r0 + 1; r <= r1; ++r) border_cycle.push_back(at[{r, c1}]);
+            for (int c = c1 - 1; c >= c0; --c) border_cycle.push_back(at[{r1, c}]);
+            for (int r = r1 - 1; r > r0; --r) border_cycle.push_back(at[{r, c0}]);
+        }
     }
     chaos_of.assign(chaos.empty() ? 0 : N, -1);  // regions to find: areas in reading order, neighbours within an area
     chaos_nbr.assign(chaos.empty() ? 0 : N, {});
@@ -222,6 +232,8 @@ void Puzzle::finalize() {
         q->chaos = chaos;  // regions to find travel with every copy the solver may use
         q->region_border = region_border;
         q->same_region = same_region;
+        q->shading = shading;  // ... and so does the shading
+        q->shade_given = shade_given;
         q->exact_shapes = true;
         q->finalize();
         canonical = q;
@@ -630,6 +642,8 @@ void Puzzle::build_implied() {
     q->chaos = chaos;
     q->region_border = region_border;
     q->same_region = same_region;
+    q->shading = shading;
+    q->shade_given = shade_given;
     q->is_derived = true;
     q->exact_shapes = exact_shapes;
     q->base_G = G;

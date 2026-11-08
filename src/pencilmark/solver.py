@@ -87,6 +87,10 @@ REGION_DIGIT = 108  # a region's missing digit fits one cell it can reach: that 
 POCKET = 109  # pocket counting: a pocket too small for a new region, touching one unfinished region, joins it
 REGION_RULE = 119  # a rule reading region() on its own: digits / labels no combination of what it reads supports
 REGION_GROUP = 120  # cells known to share a region: too big together, sealed, one way out, equal digits
+# shading (yin-yang): colour per cell, each colour connected, no 2x2 of one colour
+SHADE_LOCAL = 121  # a 2x2 with three of a colour, or the checkerboard it must not become
+SHADE_CONNECT = 122  # a colour's single exit, a cut cell, the border's colour runs
+SHADE_RULE = 123  # a rule reading shaded() on its own: digits / colours no combination of what it reads supports
 # identity layer (C++ only, params coloring): persistent color classes of cells holding one unknown digit
 CLASS_SINGLE = 110  # in a house only one cell can hold a class's digit (the others see a member): it joins the class
 ID_PROPAGATE = 111  # a class member's lost candidate leaves every member; a placed member places the others
