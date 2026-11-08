@@ -116,7 +116,8 @@ struct Move;
 /// colour class whose anchor (first cell in reading order) is arg -- its own class, if any, merges into that one;
 /// AE_ID_NEQ the classes of cell and arg hold different digits (a cell without a class becomes one); AE_ID_USE the move
 /// relies on the class anchored at cell (no state change: route accounting charges the joins that built it)
-enum AEffKind { AE_LABEL_PLACE = 1, AE_LABEL_ELIM = 2, AE_ID_JOIN = 3, AE_ID_NEQ = 4, AE_ID_USE = 5 };
+enum AEffKind { AE_LABEL_PLACE = 1, AE_LABEL_ELIM = 2, AE_ID_JOIN = 3, AE_ID_NEQ = 4, AE_ID_USE = 5,
+                AE_REG_JOIN = 6, AE_REG_NEQ = 7 };  ///< regions to find: two cells share / do not share a region
 struct AEff {
     int kind, cell, arg;
     bool operator<(const AEff& o) const {
@@ -503,6 +504,15 @@ public:
     /// cells known to hold one common unknown digit, followed by the class differences (id_neq): sorted pairs of class
     /// ids (lo, hi), flattened; empty when the layer is off
     std::vector<int> idc;
+    /// regions to find, the relation layer (what a solver draws as borders, before naming regions): per cell its group's
+    /// anchor + 1 (0: on its own), then pairs of anchors + 1 known to lie in different regions (like idc)
+    std::vector<int> rgc;
+    std::vector<int> rgc_override;  ///< a mid-solve state's region relations (band_path)
+    void rg_normalize();
+    void rg_join(int a, int b);  ///< a and b lie in one region
+    void rg_neq(int a, int b);   ///< a and b lie in different regions
+    int rg_anchor(int c) const { return rgc.empty() || !rgc[c] ? c : rgc[c] - 1; }
+    bool rg_differ(int a, int b) const;  ///< recorded: the regions of a and b differ
     std::vector<int> idc_override;  ///< a mid-solve state's classes (band_path), applied after the givens
     bool id_on() const { return P.id_layer > 0; }
     /// canonical class ids (1 + first member), a class with every member placed (or one member left) freed

@@ -4,6 +4,8 @@
 // "r4c5 is in the region of the third region's first cell".
 #include <algorithm>
 #include <functional>
+#include <map>
+#include <set>
 #include "expr.hpp"
 #include "portable.hpp"
 #include "solver.hpp"
@@ -38,17 +40,92 @@ void Solver::label_normalize() {
                 if (m) maxlab = std::max(maxlab, 32 - __builtin_clz(m));
             }
         }
-        for (const auto& e : p.region_border) {
-            if (lab[e.first]) keep(e.second, ~bit(lab[e.first]));
-            if (lab[e.second]) keep(e.first, ~bit(lab[e.second]));
-        }
-        for (const auto& s : p.same_region) {
+        // the relation layer (rgc): a group shares its label candidates; a cell known to differ from a labelled cell
+        // loses that label; two labelled cells are related by their labels
+        std::map<int, std::vector<int>> groups;
+        for (int c = 0; c < (int)rgc.size() && c < p.N; ++c)
+            if (rgc[c]) groups[rgc[c] - 1].push_back(c);
+        for (const auto& kv : groups) {
             uint32_t m = p.full;
-            for (int c : s) m &= lab[c] ? bit(lab[c]) : lcand[c];
+            for (int c : kv.second) m &= lab[c] ? bit(lab[c]) : lcand[c];
             if (m)
-                for (int c : s) keep(c, m);
+                for (int c : kv.second) keep(c, m);
+        }
+        for (size_t i = (size_t)p.N; i + 1 < rgc.size(); i += 2) {
+            const int a = rgc[i] - 1, b = rgc[i + 1] - 1;
+            for (const auto& [x, y] : {std::pair<int, int>{a, b}, {b, a}}) {
+                uint32_t known = 0;  // labels fixed somewhere in x's group
+                auto it = groups.find(x);
+                if (it != groups.end()) {
+                    for (int c : it->second)
+                        if (lab[c]) known |= bit(lab[c]);
+                } else if (lab[x]) {
+                    known = bit(lab[x]);
+                }
+                if (!known) continue;
+                auto jt = groups.find(y);
+                if (jt != groups.end())
+                    for (int c : jt->second) keep(c, ~known);
+                else
+                    keep(y, ~known);
+            }
         }
     }
+    for (const auto& A : p.chaos)  // labelled cells side by side: one region or two
+        for (int c : A)
+            for (int nb : p.chaos_nbr[c])
+                if (nb > c && lab[c] && lab[nb]) {
+                    if (lab[c] == lab[nb] && rg_anchor(c) != rg_anchor(nb)) rg_join(c, nb);
+                    else if (lab[c] != lab[nb] && !rg_differ(c, nb)) rg_neq(c, nb);
+                }
+}
+
+// ------------------------------------------------------------------------------------------- the region relation layer
+void Solver::rg_normalize() {
+    if (rgc.empty()) return;
+    const int N = p.N;
+    std::map<int, int> lo;  // group -> its smallest cell
+    for (int c = 0; c < N; ++c)
+        if (rgc[c]) lo[rgc[c]] = lo.count(rgc[c]) ? std::min(lo[rgc[c]], c) : c;
+    std::vector<int> anc(N);
+    for (int c = 0; c < N; ++c) anc[c] = rgc[c] ? lo[rgc[c]] : c;
+    std::set<std::pair<int, int>> prs;
+    for (size_t i = (size_t)N; i + 1 < rgc.size(); i += 2) {
+        int a = rgc[i] - 1, b = rgc[i + 1] - 1;
+        a = a >= 0 && a < N ? anc[a] : a, b = b >= 0 && b < N ? anc[b] : b;
+        if (a != b) prs.insert({std::min(a, b), std::max(a, b)});
+    }
+    std::vector<int> cnt(N, 0);
+    for (int c = 0; c < N; ++c) cnt[anc[c]]++;
+    for (int c = 0; c < N; ++c) rgc[c] = cnt[anc[c]] > 1 ? anc[c] + 1 : 0;
+    rgc.resize(N);
+    for (const auto& pr : prs) rgc.push_back(pr.first + 1), rgc.push_back(pr.second + 1);
+}
+
+void Solver::rg_join(int a, int b) {
+    if (rgc.empty() || a == b) return;
+    const int ka = rg_anchor(a), kb = rg_anchor(b), nk = std::min(ka, kb) + 1;
+    for (int x = 0; x < p.N; ++x)
+        if (rg_anchor(x) == ka || rg_anchor(x) == kb) rgc[x] = nk;
+    for (size_t i = (size_t)p.N; i < rgc.size(); ++i)  // differences naming either group now name the joined one
+        if (rgc[i] - 1 == ka || rgc[i] - 1 == kb) rgc[i] = nk;
+    rg_normalize();
+}
+
+void Solver::rg_neq(int a, int b) {
+    if (rgc.empty() || a == b) return;
+    rgc.push_back(rg_anchor(a) + 1);
+    rgc.push_back(rg_anchor(b) + 1);
+    rg_normalize();
+}
+
+bool Solver::rg_differ(int a, int b) const {
+    const int ka = rg_anchor(a), kb = rg_anchor(b);
+    for (size_t i = (size_t)p.N; i + 1 < rgc.size(); i += 2) {
+        const int x = rgc[i] - 1, y = rgc[i + 1] - 1;
+        if ((x == ka && y == kb) || (x == kb && y == ka)) return true;
+    }
+    return false;
 }
 
 // "that would be more than nine cells": a region whose D cells are known is sealed (no other cell takes its label);

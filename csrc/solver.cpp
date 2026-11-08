@@ -403,6 +403,16 @@ void Solver::init_state(const std::vector<std::pair<int, int>>& givens) {
         for (int c : A) lcand[c] = p.full;
     if (has_regions() && (int)lab_override.size() == p.N && (int)lcand_override.size() == p.N)
         lab = lab_override, lcand = lcand_override;
+    rgc.assign(has_regions() ? p.N : 0, 0);
+    if (has_regions()) {
+        if ((int)rgc_override.size() >= p.N) {
+            rgc = rgc_override;
+        } else {  // the given borders and same-region sets are the first relations
+            for (const auto& s : p.same_region)
+                for (size_t i = 1; i < s.size(); ++i) rg_join(s[0], s[i]);
+            for (const auto& e : p.region_border) rg_neq(e.first, e.second);
+        }
+    }
     label_normalize();
     idc.assign(id_on() ? p.N : 0, 0);
     if (id_on() && (int)idc_override.size() >= p.N) idc = idc_override;  // classes, then differences
@@ -1630,6 +1640,8 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
                     if (pass == 1 && e.kind == AE_LABEL_PLACE) lab[e.cell] = (uint8_t)e.arg, lcand[e.cell] = bit(e.arg);
                     if (pass == 1 && e.kind == AE_ID_JOIN && id_on()) id_join(e.cell, e.arg);
                     if (pass == 1 && e.kind == AE_ID_NEQ && id_on()) id_neq(e.cell, e.arg);
+                    if (pass == 1 && e.kind == AE_REG_JOIN && has_regions()) rg_join(e.cell, e.arg);
+                    if (pass == 1 && e.kind == AE_REG_NEQ && has_regions()) rg_neq(e.cell, e.arg);
                 }
             if (has_regions()) label_normalize();
         }
