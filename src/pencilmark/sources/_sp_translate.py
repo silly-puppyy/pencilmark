@@ -1015,7 +1015,9 @@ def yin_yang_reading(rules):
         if re.search(r"(?:other|opposite) colou?r blocks? (?:the )?(?:vision|view|sight)", sent):
             continue  # part of the sight rule below
         if (
-            re.search(r"(?:digits?|numbers?) in (?:the )?caged cells", sent)
+            re.search(
+                r"(?:digits?|numbers?) in (?:the )?caged cells|(?:a|the) (?:digit|number) in (?:a|the) cage\b", sent
+            )
             and re.search(r"same colou?r", sent)
             and re.search(r"\bseen\b|\bsees?\b", sent)
             and not re.search(r"diamond|total", sent)
@@ -1024,6 +1026,11 @@ def yin_yang_reading(rules):
             continue
         if re.fullmatch(r"\W*yin[- ]?yang\W*(?:rules?\W*)?(?:apply\W*)?", sent.strip()):
             continue
+        if len(sent.split()) <= 5 and not re.search(
+            r"\b(?:is|are|must|may|can|cannot|contains?|sums?|counts?|indicates?|gives?|shows?|equals?|act|acts)\b",
+            sent,
+        ):
+            continue  # a heading ("Yin-Yang sight lines:")
         scope = "cage" if re.search(r"\bcages?\b", sent) else "thermo" if re.search(r"\bthermo", sent) else "all"
         pairs = _YY_PAIR.findall(sent)
         m = re.search(r"shaded cells? (?:contain|are|must be|must contain|hold)s? (?:an? |only )?(odd|even)", sent)
@@ -1031,7 +1038,7 @@ def yin_yang_reading(rules):
             out += [(scope, par, col == "shaded") for par, col in pairs]
         elif m and scope == "all":
             out.append(("all-shaded", m.group(1), True))
-        elif re.search(r"shaded cells? (?:act|acts|behave) as (?:a |an )?german whispers?", sent):
+        elif re.search(r"shaded (?:cells?|region|area) (?:act|acts|behaves?) as (?:a |an )?german whispers?", sent):
             out.append(("whisper", 5))
         else:
             return None
@@ -2500,7 +2507,9 @@ def translate(sp, page_text=None, overrides=None):
                 p.constraints.append({"type": "clone", "regions": [[idx(rc) for rc in comp] for comp in comps]})
             unknown = [u for u in unknown if u != "rule 'clone'"]
             used["clone"] += 1
-    yy = yin_yang_reading(text_rules)
+    file_rules = (meta.get("rules") or "").translate(TYPO_QUOTES)
+    # the file's own rules text when it has one (a page around it adds the setter's notes, which read as rules)
+    yy = yin_yang_reading(file_rules if YY_WORD.search(file_rules.lower()) else text_rules)
     if yy is not None:  # shading read: the frame and every coupling sentence understood
         unknown = [u for u in unknown if u not in ("rule 'yin'", "rule 'shading'")]
         add_yin_yang(p, yy, thermo_cells)
