@@ -206,8 +206,8 @@ def _rollout_sum(p, P, cfg, w, seed, n_play, solve=None):
     """expected step-value sum of a human-like solver, from ONE human route plus cheap playthroughs (score
     route_rollouts): singles are confluent (every order of them reaches the same next bottleneck), so the route's
     bottleneck steps are kept and each stretch of singles between bottlenecks is replayed n_play times from the state
-    the route reached, in random human order, same settings and note mode, cut at the stretch's length. None if the
-    route is not the plain card route (guessing / full-search fallback)."""
+    the route reached, in random human order, same settings and note mode, cut at the stretch's length. -> (the sum,
+    its singles' part); None if the route is not the plain card route (guessing / full-search fallback)."""
     import copy
 
     from .band_path import variant_gate
@@ -274,13 +274,14 @@ def _rollout_sum(p, P, cfg, w, seed, n_play, solve=None):
             r2, c2 = _record(q, st2)
             acc += sum(value(nm, d, f, cc) for (nm, d, f), cc in zip(r2, c2) if nm in _SINGLE_NAMES)
         total += acc / n_play
-    return total
+    return total, total - bott
 
 
 def score_parts(p, model=None, solve=None, overrides=None):
     """(card score, L1 = log of the step-value sum) for one puzzle; None if the engine must guess. The score is priced
     with the model's difficulty prices, L1 (the effort the time model reads) with its route prices; both on the
-    written route each price set produces. overrides: engine params for every route (rate(coloring=True))."""
+    written route each price set produces. With score time_effort "difficulty", L1 is the difficulty's own log effort
+    per empty cell instead (_finish). overrides: engine params for every route (rate(coloring=True))."""
     model = model or GM.default()
     cfg = model.score
     w = cfg.get("enum_w", 0.0)
@@ -290,10 +291,18 @@ def score_parts(p, model=None, solve=None, overrides=None):
     cr = dict(cn, **(cfg.get("card_route") or {}), **(overrides or {}))
     P_route, P_price = dict(model.route, **cr), dict(model.price, **cr)
     P_human = dict(model.price, **cn, **(overrides or {}))  # human routes for rollouts / samples, with the card's notes
-    pth_time = _route(p, P_route, w, solve)
-    if not pth_time:
-        return None
-    pth = _route(p, P_price, w, solve) or pth_time
+    if (
+        cfg.get("time_effort") == "difficulty"
+    ):  # time reads the difficulty's effort: the route-price route is a fallback
+        pth = _route(p, P_price, w, solve) or _route(p, P_route, w, solve)
+        if not pth:
+            return None
+        pth_time = None
+    else:
+        pth_time = _route(p, P_route, w, solve)
+        if not pth_time:
+            return None
+        pth = _route(p, P_price, w, solve) or pth_time
 
     def values(path):
         return sorted(
@@ -306,6 +315,7 @@ def score_parts(p, model=None, solve=None, overrides=None):
 
     v = values(pth)
     tot = sum(v)
+    singles = None  # the singles' part of tot (score single_blend), from the rollouts
     ro = cfg.get("route_rollouts")
     if ro:  # expected effort of a human-like solver: human routes' bottlenecks + playthroughs of the singles between
         sums = [
@@ -314,7 +324,8 @@ def score_parts(p, model=None, solve=None, overrides=None):
         ]
         sums = [x for x in sums if x is not None]
         if sums:
-            tot = sum(sums) / len(sums)
+            tot = sum(x for x, _ in sums) / len(sums)
+            singles = sum(s for _, s in sums) / len(sums)
     elif cfg.get("route_samples"):  # expected effort of a human-like solver: mean step sum over sampled spotting routes
         Ps = _spot_params(P_human, cfg)
         nt = min(len(Ps), ROUTE_THREADS or os.cpu_count() or 1)
@@ -327,14 +338,22 @@ def score_parts(p, model=None, solve=None, overrides=None):
             paths = [_route(p, P_k, w, solve) for P_k in Ps]
         sums = [sum(values(x or pth)) for x in paths]
         tot = sum(sums) / len(sums)
-    return _finish(p, cfg, tot, v, pth_time, w)
+    return _finish(p, cfg, tot, v, pth_time, w, singles)
 
 
-def _finish(p, cfg, tot, v, pth_time, w):
-    """(card score, L1) from a route's step-value sum tot (v: its values, hardest first) and the route the time reads"""
+def _finish(p, cfg, tot, v, pth_time, w, singles=None):
+    """(card score, L1) from a route's step-value sum tot (v: its values, hardest first) and the route the time reads;
+    singles: the singles' part of tot. With score time_effort "difficulty" (pth_time None), L1 is the difficulty's own
+    log effort per empty cell (search term included): the time model adds the number of empty cells itself."""
+    lpc = None
     if cfg.get("stat") == "per_cell":  # average effort to discover one cell = step sum / empty cells
         empty = max(p.N - len(p.givens), 1)
         lpc = math.log(max(tot / empty, 1e-9))
+        sb = cfg.get("single_blend", 0.0)
+        if (
+            sb and singles and 0 < singles < tot
+        ):  # the singles' own effort per cell, blended in: 0 on all-singles routes
+            lpc += sb * (math.log(singles) - math.log(tot))
         if cfg.get("refute_w"):  # technique-free search effort (refute.cpp): + w * log1p(sum log(C/R) / empty cells)
             lpc += cfg["refute_w"] * refute_lr_cell(p)
         r = 2 * lpc / math.log(5)
@@ -348,6 +367,8 @@ def _finish(p, cfg, tot, v, pth_time, w):
     score = _softplus_map(mp, r)
     if score < 2.0:
         score = 2.0 * math.exp(mp["A"] * (r - _r_at(mp, 2.0)) / 2.0)
+    if pth_time is None:
+        return score, lpc
     return score, math.log(
         max(
             sum(
