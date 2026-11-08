@@ -32,7 +32,7 @@ PAGES = {
         "The engine interface",
         "The Python side of the C++ engine: the puzzle model, the calls into the engine, its move records, the "
         "technique registry.",
-        ["model", "cbackend", "engine_records", "solver", "registry", "cpsat_verify", "_data"],
+        ["model", "layers", "cbackend", "engine_records", "solver", "registry", "cpsat_verify", "_data"],
     ),
     "explain": (
         "Explanations",
@@ -55,7 +55,7 @@ PAGES = {
         "Links and payloads from SudokuPad, f-puzzles, Penpa, Logic Masters and sudoku.coach, read into puzzles.",
         ["sources/__init__", "sources/_common", "sources/sudokupad", "sources/_sp_translate", "sources/_sp_style",
          "sources/fpuzzles",
-         "sources/_fpuz_translate", "sources/penpa", "sources/lmd", "sources/coach"],
+         "sources/_fpuz_translate", "sources/_fpuz_style", "sources/penpa", "sources/lmd", "sources/coach"],
     ),
     "cli": ("The command line", "`python -m pencilmark` and the `pencilmark` command.", ["__main__"]),
 }  # fmt: skip
