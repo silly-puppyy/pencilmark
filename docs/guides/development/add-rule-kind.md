@@ -48,7 +48,7 @@ The engine knows no public kinds: the reader translates each rule. Choose the ch
 
 - **JSON Schema.** Add the kind to the `kind` enum of `rule_line` in `docs/pencilmark-puzzle.schema.json`, and any new
   parameter to its properties.
-- **Default color.** Add it to `lines` in `docs/palette.json`. Use the color most setters use for it, if there is
+- **Default color.** Add it to `lines` in `src/pencilmark/data/palette.json`. Use the color most setters use for it, if there is
   one; [Drawing and style](../../library/drawing-style.md) says where the current defaults come from.
 - **Width in Drawing and style.** If `width` is a number rather than a palette size name, state it in the kind's row of
   `docs/library/drawing-style.md` (`tests/test_format.py` checks the two agree).
@@ -78,7 +78,7 @@ an `edge-<kind>` swatch.
 
 A **cell** kind is a `CellKind` in `CELL` (`rules/cell.py`): its variant name, its parameter, whether the negative is
 defined, and its mark. Its meaning is a domain restriction on the cell; follow how `odd` and `low` reach the engine in
-`exchange/read.py`. If it is drawn shaded, give it a color of its own name in both themes of `docs/palette.json` (the
+`exchange/read.py`. If it is drawn shaded, give it a color of its own name in both themes of `src/pencilmark/data/palette.json` (the
 renderer reads the color by kind). Then the schema, `docs/formats/rules/cell-clues.mdx` and a swatch.
 
 ## 7. Check and record

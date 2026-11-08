@@ -8,7 +8,7 @@ Adding a layer: one LAYERS row here (the reader, the custom rule language and th
 `layers_of`); the engine, the card and the renderer then say what they do with it.
 
 The identity colors a card draws (regions found, digit classes, pair coloring) are named here too, so every module
-picks them from one list (docs/palette.json gives each name its shade)."""
+picks them from one list (data/palette.json gives each name its shade)."""
 
 from __future__ import annotations
 

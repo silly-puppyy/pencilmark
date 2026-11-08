@@ -1,4 +1,4 @@
-"""Write docs/library/palette.md from docs/palette.json: every size and color of the default drawing, with a light and a dark
+"""Write docs/library/palette.md from src/pencilmark/data/palette.json: every size and color of the default drawing, with a light and a dark
 preview drawn by tools/render_svg.py (the docs build's swatches). Plain Markdown; the site puts a color chip beside
 each hex color (website/src/plugins/inline-json.mjs).
   python tools/gen_palette_md.py"""
@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-PAL = json.loads((ROOT / "docs" / "palette.json").read_text(encoding="utf-8"))
+PAL = json.loads((ROOT / "src" / "pencilmark" / "data" / "palette.json").read_text(encoding="utf-8"))
 PREVIEWS = ["example-mini-thermo-kropki", "example-killer-4x4", "example-jigsaw-6x6"]
 SIZES = {  # size -> what it measures
     "thin": "grid lines",
@@ -16,7 +16,7 @@ SIZES = {  # size -> what it measures
     "box_dark": "box borders in the dark theme (light lines on dark read thinner)",
     "digit": "digit height",
     "given_w": "font weight of givens",
-    "placed_w": "font weight of placed digits (solver output; not drawn by render_svg)",
+    "placed_w": "font weight of placed digits (solver output)",
     "halo_light": "outline in the board color around each digit, so it reads over lines (light theme)",
     "halo_dark": "the same outline, dark theme",
     "line": "default width of line rules (whisper, renban, ...)",
@@ -29,7 +29,7 @@ ROLES = {  # theme color -> where it is used
     "ink": "box borders and the frame",
     "thin": "grid lines",
     "given": "given digits, cage outlines, clue circle rims",
-    "placed": "placed digits (solver output; not drawn by render_svg)",
+    "placed": "placed digits (solver output)",
     "cand": "candidates, row / column labels, equal-sum segment outlines",
     "shade": "window / extra region shading",
     "diag": "diagonals",
@@ -38,7 +38,7 @@ ROLES = {  # theme color -> where it is used
     "even": "even-cell squares",
     "low": "diamonds in cells marked low",
     "high": "diamonds in cells marked high",
-    "text": "running text beside a board (not drawn by render_svg)",
+    "text": "running text beside a board (not drawn by pencilmark.draw)",
 }
 
 
@@ -47,7 +47,7 @@ def page():
     L = [
         "---",
         "title: Palette",
-        "description: Every size and color of pencilmark's default drawing, generated from docs/palette.json.",
+        "description: Every size and color of pencilmark's default drawing, generated from pencilmark's palette.json.",
         "---",
         "",
         "# Palette",
@@ -59,7 +59,7 @@ def page():
         "",
         "## Preview",
         "",
-        "The example puzzles drawn by `tools/render_svg.py`, light theme above, dark below.",
+        "The example puzzles drawn by `pencilmark.draw`, light theme above, dark below.",
         "",
         " ".join(f"![{n.removeprefix('example-')}](/img/swatches/{n}.svg)" for n in PREVIEWS),
         "",
@@ -86,7 +86,7 @@ def page():
           "the way round clockwise from the top center (two colors: a near-vertical diagonal).", "",
           "| Name | Light | Dark |", "|---|---|---|"]  # fmt: skip
     L += [f"| `{k}` | `{v}` | `{A['dark'][k]}` |" for k, v in A["light"].items()]
-    L += ["", "## Bands", "", "A color per band, for software that shows a card (render_svg draws boards only).", "",
+    L += ["", "## Bands", "", "A color per band, for software that shows a card (pencilmark.draw draws boards only).", "",
           "| Band | Color |", "|---|---|"]  # fmt: skip
     L += [f"| {k} | `{v}` |" for k, v in PAL["bands"].items()]
     L += ["", "## Sizes", "", "In cell units (1 = a cell's side); font weights as CSS weights.", "",

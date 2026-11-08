@@ -19,6 +19,8 @@
                                        each puzzle in another format; pencilmark JSON (docs/formats/puzzle-format.md) by default, canonical
   python -m pencilmark fingerprint [FILE|-]  the content fingerprint (64 hex digits) per puzzle
   python -m pencilmark describe [FILE|-]     variant name and rules per puzzle (JSON)
+  python -m pencilmark draw [FILE|-] [-o OUT.svg] [--dark] [--cell N] [--card CARD.json --position N]
+                                       the first puzzle as SVG (pencilmark.draw); with a card, one position of its trace
 
 Every command takes --log info (pages fetched, what a reader read, time limits reached, the generator's result) or
 --log debug (also stage timings, the uniqueness check, each generator attempt and each reading a reader tried), written
@@ -349,6 +351,20 @@ def cmd_describe(a):
     _each(a, lambda k, obj: print(json.dumps(describe(obj), ensure_ascii=False), flush=True))
 
 
+def cmd_draw(a):
+    """`draw` command: the first input puzzle as SVG, to standard output or -o; --card / --position draw one position
+    of a card's trace"""
+    from .api import draw
+
+    k, obj = next(iter(_inputs(a.file, a.input_format)))
+    card = json.loads(Path(a.card).read_text(encoding="utf-8")) if a.card else None
+    out = draw(_ok(obj), dark=a.dark, cell=a.cell, labels=a.labels, card=card, position=a.position)
+    if a.output:
+        Path(a.output).write_text(out, encoding="utf-8")
+    else:
+        print(out)
+
+
 def main(argv=None):
     """command-line entry point: parse argv, set UTF-8 on stdin and stdout, run the chosen command"""
     for f in (sys.stdin, sys.stdout):  # UTF-8 on every platform (Windows pipes default to the ANSI code page)
@@ -475,6 +491,15 @@ def main(argv=None):
     ds = sub.add_parser("describe", parents=[common])
     ds.add_argument("file", nargs="?")
     ds.set_defaults(fn=cmd_describe)
+    dr = sub.add_parser("draw", parents=[common])
+    dr.add_argument("file", nargs="?")
+    dr.add_argument("-o", "--output", help="write the SVG here (default: standard output)")
+    dr.add_argument("--dark", action="store_true", help="the dark theme")
+    dr.add_argument("--cell", type=int, default=48, help="cell size in pixels")
+    dr.add_argument("--labels", action="store_true", help="row and column numbers outside the board")
+    dr.add_argument("--card", help="a card rated with the trace field (rate --json --fields trace)")
+    dr.add_argument("--position", type=int, default=0, help="the trace position --card draws")
+    dr.set_defaults(fn=cmd_draw)
     a = ap.parse_args(argv)
     _log_to_stderr(a.log)
     from .api import GenerationFailed

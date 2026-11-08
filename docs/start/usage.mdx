@@ -20,6 +20,7 @@ site link or another app's format ([Other formats](../formats/other-formats.md))
 | `pencilmark convert FILE` | the puzzle as canonical pencilmark JSON, one rule per line (`--compact`: one line; `--solution` adds the solution), or `--to plain`, `grid`, `sudokuwiki`, `ipuz` |
 | `pencilmark fingerprint FILE` | a content fingerprint, 64 hex digits |
 | `pencilmark generate SPEC` | a new puzzle for a [generator spec](../formats/generator-spec.md) |
+| `pencilmark draw FILE -o OUT.svg` | the first puzzle as an SVG picture (`--dark`, `--cell N`; [Draw a puzzle](../guides/grader/draw.mdx)) |
 
 `FILE` holds one puzzle per line, in any format pencilmark reads (a classic string, a sudokuwiki string, pencilmark JSON
 on one line, a link, the path of a `.json` file), detected per line; `--from FORMAT` names the format instead. `-` reads
@@ -108,7 +109,8 @@ pencilmark.validate(doc)
 `write.document` gives the puzzle as a pencilmark JSON dict, here with its solution and with `meta.type` and
 `meta.rules_text` filled in from `describe` when they are empty; `write.pencilmark` writes it in the canonical layout,
 one rule per line; `validate` raises `FormatError` with the exact problem. `describe(puzzle)` names the variant and its
-rules, `fingerprint(puzzle)` gives a fingerprint of the rules and grid (not the metadata).
+rules, `fingerprint(puzzle)` gives a fingerprint of the rules and grid (not the metadata), and `draw(puzzle)` an SVG
+picture ([Draw a puzzle](../guides/grader/draw.mdx)).
 `pencilmark.read.<format>` and `pencilmark.write.<format>` read and write the [other formats](../formats/other-formats.md)
 one at a time.
 

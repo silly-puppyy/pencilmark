@@ -903,7 +903,7 @@ def test_line_registry_matches_schema_palette_docs():
     rl = schema["$defs"]["rule_line"]
     assert set(rl["properties"]["kind"]["enum"]) == set(LINE)
     assert {p for k in LINE.values() for p in k.params} <= set(rl["properties"])
-    palette = json.loads((ROOT / "docs" / "palette.json").read_text(encoding="utf-8"))["lines"]
+    palette = json.loads((ROOT / "src" / "pencilmark" / "data" / "palette.json").read_text(encoding="utf-8"))["lines"]
     assert set(LINE) <= set(palette), set(LINE) - set(palette)
     page = (ROOT / "docs" / "formats" / "rules" / "lines-and-arrows.mdx").read_text(encoding="utf-8")
     assert all(f"| `{k}` |" in page for k in LINE), [k for k in LINE if f"| `{k}` |" not in page]

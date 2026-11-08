@@ -23,6 +23,7 @@ GROUPS = {  # section -> (file, public name, how it is called), in reading order
     "Writing (pencilmark.write)": [(WR, n, f"write.{n}") for n in ("pencilmark", "document", "plain", "grid",
                                    "sudokuwiki", "ipuz")],
     "Checking": [(API, "validate", "validate"), (API, "fingerprint", "fingerprint")],
+    "Drawing": [(API, "draw", "draw")],
     "Errors": [(ERR, n, n) for n in ("Error", "FormatError", "NotSupportedError", "FetchError", "ReadingMismatch",
                                      "NotUnique", "NoSolution", "Undecided", "GenerationFailed")],
 }  # fmt: skip

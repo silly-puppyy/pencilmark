@@ -6,7 +6,7 @@
 ### Breaking changes (files, specs and code using the old names need the new ones; no aliases)
 
 - **American English throughout** (format and text): the rule type is `neighbors` (was `neighbours`), the custom
-  rule scope key `neighbors`, the palette name `gray` (was `grey`), `render_svg.render(colors=...)`, technique names
+  rule scope key `neighbors`, the palette name `gray` (was `grey`), `draw(colors=...)`, technique names
   (Simple Coloring, Multi-Coloring, ...), explanations, rules text and the docs. Names of other sites' pages keep
   their own spelling.
 
@@ -61,6 +61,12 @@
   `describe` field and `write.*(describe=True)` give `variants` too; `subtitle` and `variants` are suggested meta keys.
 
 ### New
+
+- **`pencilmark.draw(puzzle)` and `pencilmark draw FILE`**: the puzzle as SVG in the default drawing, from anything
+  `rate` reads; `dark`, `cell`, `labels`, and `card` / `position` for one position of a card's trace with its
+  placed digits, pencil marks and colors. The reference renderer moved from `tools/render_svg.py` into the package
+  (`pencilmark/render.py`), and the palette with it (`pencilmark/data/palette.json`; the docs keep a copy at
+  `docs/palette.json`).
 
 - **f-puzzles style capture**: the colors and widths of f-puzzles' generic lines, cages, circles and rectangles
   become the rules' `style`, as SudokuPad's already did (on 46 LMD f-puzzles, 414 of 905 rules keep their look).

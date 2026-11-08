@@ -110,7 +110,7 @@ def page():
     for r in csv.DictReader(LINKS.open(encoding="utf-8")):
         extra.setdefault(r["code"], []).append(r["url"])
 
-    def band_cell(b):  # the band; custom.css tints its cell in the band's color (docs/palette.json "bands")
+    def band_cell(b):  # the band; custom.css tints its cell in the band's color (data/palette.json "bands")
         name = R.BANDS[b]
         return f'<span class="pm-band-{name.lower().replace(" ", "-")}">{name.replace(" ", "&nbsp;")}</span>'
 

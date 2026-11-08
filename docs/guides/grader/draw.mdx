@@ -8,12 +8,22 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
 
 # Draw a puzzle
 
-The repository has a reference renderer, `tools/render_svg.py`, that draws a `pencilmark-puzzle` file as SVG in the
-default style of [Drawing and style](../../library/drawing-style.md). It is not part of the installed package; run it from a clone.
+`pencilmark.draw` draws a puzzle as SVG in the default style of [Drawing and style](../../library/drawing-style.md).
+It takes anything `rate` takes: a file in any format pencilmark reads, a link, a plain string, or a document.
+
+```python
+import pencilmark
+
+svg = pencilmark.draw("docs/examples/mini-thermo-kropki.json")
+dark = pencilmark.draw("docs/examples/mini-thermo-kropki.json", dark=True, cell=36)
+open("mini.svg", "w").write(svg)
+```
+
+From the command line, `pencilmark draw` writes the first puzzle of its input:
 
 ```
-python tools/render_svg.py docs/examples/mini-thermo-kropki.json mini.svg
-python tools/render_svg.py docs/examples/mini-thermo-kropki.json mini-dark.svg --dark
+pencilmark draw docs/examples/mini-thermo-kropki.json -o mini.svg
+pencilmark draw docs/examples/mini-thermo-kropki.json -o mini-dark.svg --dark
 ```
 
 <div className="pm-graphic" style={{maxWidth: '16rem', margin: '0 0 1rem'}}>
@@ -22,34 +32,31 @@ python tools/render_svg.py docs/examples/mini-thermo-kropki.json mini-dark.svg -
               dark: useBaseUrl('/img/swatches/example-mini-thermo-kropki-dark.svg')}}/>
 </div>
 
-This is the puzzle from [Write a variant puzzle file](variant-file.mdx). `--cell N` sets the size of a
-cell in pixels (48 by default).
-
-From Python, with the `tools` folder on the path:
-
-```python
-import json, render_svg
-
-doc = json.load(open("docs/examples/mini-thermo-kropki.json"))
-svg = render_svg.render(doc, dark=False, cell=48)
-```
+This is the puzzle from [Write a variant puzzle file](variant-file.mdx). `cell` (`--cell`) sets the size of a cell in
+pixels (48 by default), `labels=True` (`--labels`) numbers the rows and columns, and `background=False` leaves the page
+transparent around the board.
 
 ## A position of a solve, with its colors
 
 A card's `trace` ([Grade card](../../formats/grade-card.md) section 6) holds the board after each step, with the colors
-an expert would have painted. `--card` and `--position` draw one position: its placed digits and pencil marks (corner and center, as
+an expert would have painted. `card` and `position` draw one position: its placed digits and pencil marks (corner and center, as
 the trace's `marks` layer writes them) in the solver's ink, and its colors over the cells: over region shading and shaded cell shapes (odd / even circles and squares show
 through, their outlines drawn again on top), under lines, arrows, cages, dots, clues and digits. A cell in two colors is split along a near-vertical
 diagonal, in three into three wedges, and so on, as SudokuPad draws several colors in one cell:
 
-```
-pencilmark rate puzzle.json --json --fields band,trace > card.json
-python tools/render_svg.py puzzle.json step38.svg --card card.json --position 38
+```python
+card = pencilmark.rate(puzzle, fields=["band", "trace"])
+svg = pencilmark.draw(puzzle, card=card, position=10)
 ```
 
-From Python, `render_svg.render(doc, colors={"r2c5": ["green", "yellow"]}, placed={"r1c2": 8})` draws any colors
-you choose, and `marks={"r4c4": {"corner": [1, 2], "center": [3, 4, 5]}}` any pencil marks; [Palette](../../library/palette.md#annotation-colors) lists the color names and their shades.
+```
+pencilmark rate puzzle.json --json --fields band,trace > card.json
+pencilmark draw puzzle.json -o step38.svg --card card.json --position 38
+```
+
+`colors={"r2c5": ["green", "yellow"]}`, `placed={"r1c2": 8}` and `marks={"r4c4": {"corner": [1, 2], "center": [3, 4, 5]}}`
+draw any colors, digits and pencil marks you choose, on top of a card position's; [Palette](../../library/palette.md#annotation-colors) lists the color names and their shades.
 
 The small drawings on the [rule pages](../../formats/puzzle-format.md#6-rule-families) come from this renderer. It always uses the default style, with
 line colors most puzzle setters use; [Drawing and style](../../library/drawing-style.md) lists every size and color, and
-`docs/palette.json` holds them in one file for other renderers.
+[`palette.json`](../../palette.json) (`pencilmark/data/palette.json` in the package) holds them in one file for other renderers.

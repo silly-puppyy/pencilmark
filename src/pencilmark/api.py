@@ -29,6 +29,7 @@ __all__ = [
     "fingerprint",
     "validate",
     "generate",
+    "draw",
     "Error",
     "FormatError",
     "NotSupportedError",
@@ -518,6 +519,27 @@ def describe(puzzle: str | dict | Path) -> dict:
     from .variants import public
 
     return public(d(puzzle))
+
+
+def draw(puzzle: str | dict | Path, **options) -> str:
+    """The puzzle as SVG text, in the default drawing (docs/library/drawing-style.md; pencilmark/render.py).
+
+    Parameters
+    ----------
+    puzzle : str, dict, Path or Puzzle
+        Any format pencilmark.read reads (detected), or its document.
+    **options
+        dark (False), cell (48 pixels), labels (row and column numbers), background (True), card and position (one
+        position of a card's trace, rated with fields=["trace"]), colors / placed / marks (layers drawn on top).
+
+    Returns
+    -------
+    str
+        An SVG document.
+    """
+    from .render import svg
+
+    return svg(puzzle, **options)
 
 
 def generate(spec: str | dict | Path) -> dict:

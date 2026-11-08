@@ -38,7 +38,7 @@ class LineKind:
     params: tuple = ()  # optional keys on 9 x 9, required otherwise
     closable: bool = False  # "closed": true allowed (the last cell connects back to the first)
     name_fn: object = None  # fn(rules) -> the name for these rules, when it depends on them
-    width: object = "line"  # drawn line width: a docs/palette.json size name, or cell units
+    width: object = "line"  # drawn line width: a data/palette.json size name, or cell units
     ends: str = ""  # end markers: "bulb" (filled, cells[0]), "hollow bulb", "circles", "diamonds", "center dot"
     generated: bool = False  # the generator can place it (a pencilmark-spec template; pencilmark/gen/elements.py)
 

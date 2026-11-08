@@ -23,6 +23,7 @@ from .api import (
     __all__,  # noqa: F401
     count_solutions,
     describe,
+    draw,
     fingerprint,
     generate,
     rate,

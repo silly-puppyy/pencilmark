@@ -13,6 +13,7 @@ python tools/tasks.py release VERSION   check that main is ready to release VERS
 """
 
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -71,6 +72,7 @@ def prepare():
         meta = f'description: "{description}"\n' if description else "image: img/social-dark.png\n"  # homepage
         head = f"---\n{meta}---\n\n"
         (ROOT / dst).write_text(head + text, encoding="utf-8")
+    shutil.copyfile(ROOT / "src/pencilmark/data/palette.json", ROOT / "docs/palette.json")  # the docs link it
     return 0
 
 

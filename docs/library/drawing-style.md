@@ -11,7 +11,7 @@ carry a setter's own choices.
 
 The line colors below are the community defaults, as measured on 6,217 published puzzles drawn in
 [SudokuPad](https://sudokupad.app/). All values, with a dark theme, are in [`palette.json`](../palette.json);
-`tools/render_svg.py` is a reference renderer that follows this page.
+`pencilmark.draw` ([Draw a puzzle](../guides/grader/draw.mdx)) follows this page.
 
 A renderer needs nothing beyond the rules. Sizes are in cell units (1 = a cell's side); colors are defaults that
 `style` may override, and the [Palette](palette.md) page shows every one in both themes. Grid lines 0.031, box borders
