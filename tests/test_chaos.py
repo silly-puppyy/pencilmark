@@ -134,7 +134,7 @@ def test_region_sentences():
 
 def test_region_rule_reads_custom_rules():
     """a custom rule reading region() is read on its own (RegionRule): the 4x4 example of houses-and-regions.mdx with
-    its given border and same-region set written as custom rules grades like the version with the given clues"""
+    its given border and same-region set written as custom rules solves by logic, like the version with the given clues"""
     import json
     import re
     from pathlib import Path
@@ -159,8 +159,8 @@ def test_region_rule_reads_custom_rules():
         a = pencilmark.rate(doc, fields=["band", "difficulty", "steps"])
         b = pencilmark.rate(custom, fields=["band", "difficulty", "steps"])
         assert pencilmark.solve(custom) == pencilmark.solve(doc)
-    assert "RRU" in {s["code"] for s in b["steps"]}
-    assert (a["band"], a["difficulty"]) == (b["band"], b["difficulty"])
+    assert "RRU" in {s["code"] for s in b["steps"]}  # the rules are read (a Medium step; given clues cost nothing)
+    assert not {"TRL", "GUE"} & {s["code"] for s in a["steps"] + b["steps"]}  # both by logic alone
 
 
 def test_cpsat_models_region_rules():

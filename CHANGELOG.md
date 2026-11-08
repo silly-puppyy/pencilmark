@@ -24,7 +24,10 @@
   it teaches such facts while every label is open: a sight clue that sees only itself parts from its four neighbors.
 - **Region groups** (a new technique, RGP): cells known to share a region form a group; two neighboring groups with
   more cells than a region holds are different regions, a full group is sealed from its neighbors, a group with one
-  way out takes it, and equal digits lie in different regions.
+  way out takes it, and equal digits lie in different regions. A lone cell walled in on all sides but one joins its only neighbor;
+  a group's placed digits leave its other cells; a group of D cells is a house. Steps record these facts as
+  `same_region` / `different_regions` (grade-card section 5) and explain them in words. Connecting the Dots 6x6
+  (Skunkworks pack) grades Medium by logic alone (was Extreme with trial).
 
 - **Counting puzzles with regions to find and rules that read them**: CP-SAT now encodes `region()` and `take_while`
   with a lambda (such puzzles used to fall to the C++ search alone, which often could not finish); the C++ search

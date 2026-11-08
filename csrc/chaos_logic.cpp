@@ -545,12 +545,41 @@ void Solver::region_group(MoveBuf& out) {
             if (size + (int)grp[b].size() > D) neq.push_back({a, b});
         }
         emit(7201, ms, neq, {});
-        if (size >= 2 || !neq.empty()) {  // one way out (a lone cell is dead_end's / region_exit's)
+        {  // one way out (a lone cell too: with every label open only a join can say it)
             std::vector<int> open;
             std::set<int> anchors;
             for (int x : nb)
                 if (!rg_differ(a, x) && anchors.insert(rg_anchor(x)).second) open.push_back(x);
             if (open.size() == 1 && neq.empty()) emit(7203, ms, {}, {{a, open[0]}});
+        }
+    }
+    for (const auto& [a, ms] : grp) {  // a group is part of one region: its digits do not repeat (7205); a whole
+        if (ms.size() < 2) continue;    // region is a house: a digit with one place left in it goes there (7206)
+        uint32_t placed = 0;
+        for (int c : ms)
+            if (vals[c]) placed |= bit(vals[c]);
+        std::vector<std::pair<int, int>> off;
+        for (int c : ms)
+            if (!vals[c] && (cand[c] & placed))
+                for (uint32_t o = cand[c] & placed; o; o &= o - 1) off.push_back({c, lowdigit(o)});
+        if (!off.empty()) {
+            Move& m = new_move(out, REGION_GROUP, 1.0, (int)off.size());
+            for (auto [c, d] : off) add_elim(out, m, c, d);
+            set_pattern(out, m, ms);
+            m.code = 7205;
+            continue;
+        }
+        if ((int)ms.size() != D) continue;
+        for (int d = 1; d <= D; ++d) {
+            if (placed & bit(d)) continue;
+            int at = -1, n = 0;
+            for (int c : ms)
+                if (!vals[c] && (cand[c] & bit(d))) at = c, ++n;
+            if (n != 1) continue;
+            Move& m = new_move(out, REGION_GROUP, 1.0, 1);
+            m.pc = at, m.pv = d;
+            set_pattern(out, m, ms);
+            m.code = 7206;
         }
     }
     std::vector<std::pair<int, int>> neq;  // equal digits

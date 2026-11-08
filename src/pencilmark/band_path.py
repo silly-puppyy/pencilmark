@@ -1037,6 +1037,9 @@ def explain_steps(p, P, steps):
                 place=tuple(st["place"]) if st["place"] else None,
                 elim=tuple(map(tuple, st["elims"])),
                 code=st.get("ecode"),
+                lplace=st.get("lplace"),  # regions to find: label and relation effects (explained when nothing else is)
+                lelim=list(st.get("lelims") or ()),
+                rfx=list(st.get("rfx") or ()),
                 # the engine's justification of this very move (units, chains, ALS, ...), else its pattern cells
                 explain=CB.explain_record(
                     p,

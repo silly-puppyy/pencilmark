@@ -28,6 +28,19 @@ def _x_head(ctx):
     if ctx.place:
         c, v = ctx.place
         return f"{nm.cell(c)} = {v}", f"{nm.cell(c)} must be {v}"
+    if not ctx.elims:  # regions to find: a move that only places / rules out regions or relates cells
+        from ..cbackend import AE_REG_JOIN
+
+        m = ctx.m
+        parts = [
+            f"{nm.cell(a)} and {nm.cell(b)} lie in {'one region' if k == AE_REG_JOIN else 'different regions'}"
+            for k, a, b in getattr(m, "rfx", None) or ()
+        ]
+        if getattr(m, "lplace", None):
+            parts.append(f"{nm.cell(m.lplace[0])} is in region {m.lplace[1]}")
+        parts += [f"{nm.cell(c)} is not in region {k}" for c, k in getattr(m, "lelim", None) or ()]
+        if parts:
+            return "; ".join(parts), _join(parts)
     by = defaultdict(list)
     for c, d in ctx.elims:
         by[c].append(d)
@@ -813,12 +826,17 @@ def _h_region(ctx):
         title = "region needs a digit"
     elif ctx.tech == S.REGION_GROUP:
         why = {
-            "7201": f"The cells {nm.cells(pc)} already share a region, and joining a neighboring group would need more"
-            f" than {D} cells",
-            "7202": f"The {D} cells {nm.cells(pc)} make a whole region, so every neighbor lies in another region",
-            "7203": f"The region of {nm.cells(pc)} still needs cells and only one neighbor may still join it",
-        }.get(str(ctx.code), f"The cells {nm.cells(pc)} hold the same digit, so they lie in different regions")
-        title = "region groups"
+            "groups too big together": f"The cells {nm.cells(pc)} share a region, and joining a neighboring group "
+            f"would need more than {D} cells",
+            "whole region sealed": f"The {D} cells {nm.cells(pc)} make a whole region, so every neighbor lies in "
+            "another region",
+            "one way out": f"The region of {nm.cells(pc)} still needs cells and only one neighbor may still join it",
+            "digit already in the group": f"The cells {nm.cells(pc)} share a region, so a digit placed in one of them "
+            "cannot repeat in the others",
+            "last place in a whole region": f"The cells {nm.cells(pc)} make a whole region: a digit with one place left "
+            "in it goes there",
+        }.get(ctx.code, f"The cells {nm.cells(pc)} hold the same digit, and a region holds each digit once")
+        title = ctx.code or "region groups"
     elif ctx.tech == S.REGION_RULE:
         why = (
             f"The rule on {nm.cells(pc)} reads the regions: try every way of meeting it with the digits and regions its"

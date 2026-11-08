@@ -559,6 +559,11 @@ def _f_steps(c):
             r["region"] = f"{cn(st['lplace'][0])}@{st['lplace'][1]}"
         if st.get("lelims"):
             r["region_eliminations"] = [f"{cn(x)}@!{k}" for x, k in st["lelims"]]
+        rel = st.get("rfx") or ()  # regions to find: cells now known to share / not to share a region
+        if any(k == CB.AE_REG_JOIN for k, _, _ in rel):
+            r["same_region"] = [[cn(a), cn(b)] for k, a, b in rel if k == CB.AE_REG_JOIN]
+        if any(k == CB.AE_REG_NEQ for k, _, _ in rel):
+            r["different_regions"] = [[cn(a), cn(b)] for k, a, b in rel if k == CB.AE_REG_NEQ]
         if st.get("idfx"):  # identity layer (params coloring, experiment): the cell joins the color class of anchor /
             fx = st["idfx"]  # the two cells' classes hold different digits
             if any(k == CB.AE_ID_JOIN for k, _, _ in fx):
