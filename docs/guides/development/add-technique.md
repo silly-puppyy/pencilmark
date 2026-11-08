@@ -10,6 +10,18 @@ in this order. `tests/test_registry.py` fails until the engine, the registry and
 each step. The restructure planned in [Architecture](architecture.md)
 will shorten this list.
 
+## Worked examples
+
+Two techniques carry comments that walk through the steps below; read one before writing your own.
+
+- **Classic: Empty Rectangle**, `Solver::empty_rect` in `csrc/chains.cpp`. A single-digit pattern over houses: the
+  search over the solver's state, the move with its elimination and pattern cells, a chain record so the generic
+  chain text and drawing apply, the descriptors the price reads, and a pattern code. Its header lists every other
+  file it touches (id, tier, `techniques.csv`, `codes.csv`, explanation, `tools/reglib.py`).
+- **Variant: Local line scan**, `Solver::line_scan` in `csrc/set_logic.cpp`. A rule-reading technique: it works on
+  the 3-cell windows of long lines that the puzzle builds when it is loaded, names the rule the move reads (so the
+  explanation can name the line), and is gated so that only puzzles with lines try it.
+
 ## 1. The engine (`csrc/`)
 
 1. **The id.** Add the technique to `enum Tech` in `csrc/solver.hpp`, with the next free number and a one-line

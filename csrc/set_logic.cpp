@@ -920,9 +920,19 @@ void Solver::class_trap(MoveBuf& out) {
 }
 
 // Local scan of a long line: consistency over each window of 3 consecutive cells.
+//
+// WORKED EXAMPLE of a variant technique (docs/guides/development/add-technique.md, "Worked examples"); compare the
+// classic one, Solver::empty_rect in chains.cpp. A variant technique reads the puzzle's rules, not only its houses:
+// here the 3-cell windows of every long line, built once when the puzzle is loaded (p.line_windows, model.cpp). The
+// places it touches: the id LINE_SCAN (solver.hpp, solver.py); the tier entry in default_notes_tiers()
+// (solver.cpp); its row in data/techniques.csv (gate `any`: switched on for puzzles with the matching rules); the
+// explanation _h_line_scan (explain/trial.py) registered in explain/dispatch.py; the extra numbers named in
+// cbackend.XMETA_KEYS.
 void Solver::line_scan(MoveBuf& out) {
     if (disabled[LINE_SCAN]) return;
     uint32_t dom[64];
+    // each window: the digits every cell can still take with the rule satisfied (generalized arc consistency,
+    // cached per window and domain); a candidate without such support goes
     for (const NConstraint& w : p.line_windows) {
         int unplaced = 0;
         for (int c : w.vars) unplaced += !vals[c];
@@ -943,8 +953,9 @@ void Solver::line_scan(MoveBuf& out) {
             for (uint32_t x = cand[c] & ~o.sup[i]; x; x &= x - 1) add_elim(out, m, c, lowdigit(x));
         }
         set_pattern(out, m, pc);
-        m.nk = NM_NARY;
+        m.nk = NM_NARY;  // the rule the move reads (the explanation names the line)
         m.na = w.index;
+        // descriptors: cells, houses (one rule), digits, links, hidden, arithmetic, relation (a pair rule), notes, spread
         meta9(m, (int)pc.size(), 1, popc(dom[0] | dom[1] | dom[2]), 0, 0, 0, 1, 1, w.shape);
         m.code = 4000 + 10 * w.line_kind + 6;  // "<kind> scan"
         pm_long xm[XM_N] = {w.line_kind, w.index, 3, (pm_long)pc.size(), 0, 0, 0, 0, 0, 0};

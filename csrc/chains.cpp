@@ -785,8 +785,17 @@ void Solver::build_aic(int maxl, bool with_als) {
     }
 }
 
+// WORKED EXAMPLE of a classic technique (docs/guides/development/add-technique.md, "Worked examples"). The places it
+// touches: the id EMPTY_RECT in csrc/solver.hpp and src/pencilmark/solver.py; the tier entry "emptyrect" in
+// default_notes_tiers() (csrc/solver.cpp); its row in data/techniques.csv (band Very Hard, family chains, price 4.6);
+// the chip ERE in data/codes.csv; the explanation _h_empty_rect (explain/records.py) registered in explain/dispatch.py;
+// HoDoKu codes 0402 / 0405 in tools/reglib.py's MAP. The steps below are marked (1)-(6).
+//
+// Empty Rectangle: in box hb the candidates of v lie on one row r and one column cc (a cross), so v is in the box on
+// row r or on column cc. A conjugate pair X-Y of v on a line hl outside the box, X on the cross's row (or column),
+// then removes v from Z, the cell seeing Y and the other arm of the cross.
 void Solver::empty_rect(MoveBuf& out) {
-    if (disabled[EMPTY_RECT]) return;
+    if (disabled[EMPTY_RECT]) return;  // (1) every technique can be switched off (disabled_techniques, bands)
     const int GRP0 = -1000000;
     auto line_of = [&](int c, int orient) {  // the row (0) / column (1) house of a cell, or -1
         for (int gi : p.groups_of[c])
@@ -796,6 +805,9 @@ void Solver::empty_rect(MoveBuf& out) {
     std::map<std::pair<int, int>, int> at;
     for (int c = 0; c < p.N; ++c) at[p.coords[c]] = c;
     std::set<std::vector<uint32_t>> seen;
+    // (2) the search reads only the solver's state: vals (placed digits), cand (candidate masks), placed_g (digits
+    // placed per house) and the puzzle's houses (p.groups, p.group_line: 0 row, 1 column, 2 box). Read houses through
+    // p, never through coordinates alone: boards with several grids (samurai, butterfly) reuse coordinates.
     for (int hb : p.houses) {
         if (p.group_line[hb] != 2 || !p.groups[hb].complete) continue;
         for (int v = 1; v <= p.D; ++v) {
@@ -856,14 +868,17 @@ void Solver::empty_rect(MoveBuf& out) {
                                 for (int c : seenX) xsees &= c == X || tbit(p.peers(X), c);
                                 if (!xsees || !tbit(p.peers(Y), Z)) continue;
                                 std::vector<uint32_t> key{(uint32_t)Z * 32u + (uint32_t)v, (uint32_t)hb, (uint32_t)hl};
-                                if (!seen.insert(key).second) continue;
+                                if (!seen.insert(key).second) continue;  // one move per (target, box, line)
                                 std::vector<int> cells = B;
                                 cells.push_back(X), cells.push_back(Y);
                                 const double shp = pspread(cells);
+                                // (3) the move: technique, shape (spread of its cells), size; then its eliminations
+                                // and the cells that make the pattern (what an app highlights)
                                 Move& m = new_move(out, EMPTY_RECT, shp, 3);
                                 add_elim(out, m, Z, v);
                                 set_pattern(out, m, cells);
-                                // chain record: rest = seenX (box) - X (weak) = Y (the pair)
+                                // (4) explanation records (optional): here a chain, so the generic chain text and
+                                // drawing work; rest = seenX (box) - X (weak) = Y (the pair)
                                 auto node = [&](const std::vector<int>& g, int id) {
                                     return g.size() == 1 ? g[0] : GRP0 - id;
                                 };
@@ -881,7 +896,11 @@ void Solver::empty_rect(MoveBuf& out) {
                                 for (int i = 1; i < 4; ++i)
                                     hop = std::max(hop, std::max(std::abs(p.coords[seq[i]].first - p.coords[seq[i - 1]].first),
                                                                  std::abs(p.coords[seq[i]].second - p.coords[seq[i - 1]].second)));
+                                // (5) descriptors the price reads (struct Move in solver.hpp): cells, houses, digits,
+                                // links, hidden form, arithmetic, relation, notes needed, spread
                                 set_meta9(m, (int)cells.size(), 3, 1, 3, true, false, false, 1, shp);
+                                // (6) a pattern code (data/patterns.csv names the shape) and up to XM_N extra numbers
+                                // for the explanation (named in cbackend.XMETA_KEYS)
                                 m.code = CODE_ER;
                                 pm_long xm[XM_N] = {3, 0, 2, 0, 0, 0, 1, 0, hop, 1};
                                 std::copy(xm, xm + XM_N, m.xm);
