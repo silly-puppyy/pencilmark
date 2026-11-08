@@ -62,6 +62,11 @@
 
 ### New
 
+- **`{"preset": "relaxed"}`** (rate, `--quality preset=relaxed`, generator specs): the standard five checks, but only
+  `decorative`, `trivial` and `trial` reject; `thin` and `unusual` warn. On published development puzzles `standard`
+  rejects 19% of classics (nearly all `unusual`, which marks the outer fifth of each band by design) and 12% of
+  variants. Generation is rarely held up by the preset: in 11 standard-preset classic runs it refused one candidate.
+
 - **`pencilmark.draw(puzzle)` and `pencilmark draw FILE`**: the puzzle as SVG in the default drawing, from anything
   `rate` reads; `dark`, `cell`, `labels`, and `card` / `position` for one position of a card's trace with its
   placed digits, pencil marks and colors. The reference renderer moved from `tools/render_svg.py` into the package

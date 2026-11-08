@@ -1083,6 +1083,9 @@ def test_quality_preset():
         {"preset": "standard", "thin": {"limit": 0.2, "severity": "warning"}, "tedious": {"severity": "warning"}}
     )
     assert q["thin"] == {"limit": 0.2, "severity": "warning"} and q["tedious"]["severity"] == "warning"
+    q = quality_limits({"preset": "relaxed"})  # the same five; only the common-sense ones reject
+    assert {k for k, v in q.items() if v["severity"] == "reject"} == {"decorative", "trivial", "trial"}
+    assert q["thin"]["severity"] == q["unusual"]["severity"] == "warning"
     with pytest.raises(ValueError):
         quality_limits({"preset": "lenient"})
 

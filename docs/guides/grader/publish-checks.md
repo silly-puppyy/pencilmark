@@ -67,8 +67,8 @@ pencilmark.rate(g, fields=["band", "issues", "reject"])
 ## Tune the checks
 
 Without a `quality` object, `rate()` runs the `"default"` preset: every check that is not opt in, at its own severity.
-A `quality` object says exactly which checks run: a preset turns on its set (`"default"`, or `"standard"`, the five
-the generator examples use), and without a preset only the checks named run. Every check takes a `severity`
+A `quality` object says exactly which checks run: a preset turns on its set (`"default"`, `"standard"`, the five
+the generator examples use, or `"relaxed"`, the same five with only the common-sense ones rejecting), and without a preset only the checks named run. Every check takes a `severity`
 (`reject`, `warning`, or `off`) and, where it has one, a `limit`:
 
 ```python

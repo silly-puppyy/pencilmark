@@ -134,6 +134,10 @@ what it means in `rate()`: the checks, their limits and the presets are those of
 
 - `"preset": "standard"` turns on the standard set, each at severity `reject`: `decorative`, `trivial`, `trial`,
   `thin` and `unusual`. The preset is the only thing that turns on checks you do not name.
+- `"preset": "relaxed"` turns on the same five, but only `decorative`, `trivial` and `trial` reject; `thin` and
+  `unusual` become warnings in `info.issues`. Published puzzles fail `unusual` by design about one time in five
+  (it marks the outer fifth of each band), so `standard` refuses some puzzles a setter would publish; `relaxed`
+  refuses under 1% of published classics.
 - A check named next to the preset adjusts it: `{"preset": "standard", "thin": {"limit": 0.2}}` relaxes `thin`,
   `{"preset": "standard", "trivial": {"severity": "off"}}` drops `trivial` (a learner's first puzzle may well be
   mostly given).
