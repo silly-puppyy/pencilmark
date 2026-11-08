@@ -9,7 +9,7 @@ Older payloads (SCv2..SCv6, positional) are refused with NotSupportedError.
 
 The JSON: gridSize, givenDigits (one character per cell), regions (missing: standard boxes, [] none, else one region
 number per cell), givenConstraints [{type, segments: [{cells, parameters}], settings}], colours + givenColours (cell
-colours, several per cell possible). Cells are 0-based indices r * N + c; cosmetic types give [y, x] points in cell
+colours, several per cell possible). Cells are 0-based indices r * N + c; cosmetic types give [x, y] points in cell
 units. Every constraint type maps to a rule family (to_document); a type with no family, a cage sum that is not a
 number, rules stated only in the description (`custom_constraints`) are refused, never dropped. Settings that carry
 meaning (a whisper's difference, a negative constraint) become rules; the rest is the cosmetic `style` of each rule,
@@ -66,6 +66,10 @@ LINE_KINDS = {
 }
 # cosmetic shape defaults of the app's editor (size in % of a cell, fill color)
 SHAPE_SIZE, SHAPE_FILL, TEXT_SIZE = 63, "#d5e2ff", 110
+# the app's line colors for types drawn without a colour setting (measured on its pictures: EfWN, Jjze, LW4k, CaPn); a
+# type missing here draws in the family's default look
+DEFAULT_COLOUR = {"palindromeLine": "#f5e4cc", "modularLine": "#f5e4cc", "entropicLine": "#ffccaa",
+                  "thermometer": "#d5e2ff"}  # fmt: skip
 ORTHO = ((0, 1), (1, 0), (0, -1), (-1, 0))
 
 
@@ -461,6 +465,11 @@ def _groups(segs):
     return out
 
 
+def _loop(B, cells):
+    """a segment that comes back to its first cell, touching all the way: a closed line"""
+    return len(cells) > 3 and cells[0] == cells[-1] and all(_touch(B, a, b) for a, b in zip(cells, cells[1:]))
+
+
 def _touch(B, a, b):
     (ra, ca), (rb, cb) = divmod(a, B.n), divmod(b, B.n)
     return max(abs(ra - rb), abs(ca - cb)) == 1
@@ -519,6 +528,9 @@ def _lines(ctype, segs, B, settings, style):
     if kind in ("renban", "palindrome", "region_sum"):
         lines = []
         for cells, members in _groups(segs):
+            if kind == "renban" and len(members) == 1 and _loop(B, members[0]):  # a ring drawn closed (B6cX)
+                lines.append(members[0])
+                continue
             if kind == "renban":
                 path = _path(B, cells)
                 if path is None:
@@ -538,7 +550,7 @@ def _lines(ctype, segs, B, settings, style):
             out += _jumping_whisper(B, cells, params.get("value", 5), style)
             continue
         rule = {"type": "line", "kind": kind, **params}
-        if kind == "whisper" and len(cells) > 3 and cells[0] == cells[-1]:
+        if kind in ("whisper", "renban", "parity") and _loop(B, cells):
             rule["closed"] = True
             cells = cells[:-1]
         rule["cells"] = B.names(cells)
@@ -727,12 +739,12 @@ def _cell_fills(P, n, B):
 
 def _point(p):
     if not (isinstance(p, (list, tuple)) and len(p) == 2 and all(_num(v) is not None for v in p)):
-        raise FormatError(f"cosmetic point {p!r} is not [y, x]")
-    return [p[0], p[1]]
+        raise FormatError(f"cosmetic point {p!r} is not [x, y]")
+    return [p[1], p[0]]  # coach writes [x, y] (checked on drawn shapes: L1nG, Jjze); decorations are [row, col]
 
 
 def _shape_points(kind, y, x, size, angle):
-    """a regular polygon ('polygon-N', first corner up) or a plus sign, centred at (y, x), size wide, turned angle"""
+    """a regular polygon ('polygon-N', resting on a flat side) or a plus sign, centred at (y, x), size wide, turned angle"""
     if kind == "plus":
         a, b = size / 2, size / 6
         pts = [
@@ -751,7 +763,11 @@ def _shape_points(kind, y, x, size, angle):
         ]
     else:
         k = int(kind.split("-")[1])
-        pts = [(-math.cos(2 * math.pi * j / k) * size / 2, math.sin(2 * math.pi * j / k) * size / 2) for j in range(k)]
+        a0 = (
+            0 if k % 2 else math.pi / k
+        )  # the app rests a polygon on a flat side: an even one has no corner on top (Jjze)
+        pts = [(-math.cos(2 * math.pi * j / k + a0) * size / 2, math.sin(2 * math.pi * j / k + a0) * size / 2)
+               for j in range(k)]  # fmt: skip
     t = math.radians(angle or 0)
     rot = lambda dy, dx: [
         round(y + dy * math.cos(t) + dx * math.sin(t), 4),
@@ -875,6 +891,8 @@ SHAPE_TYPES = {"odd", "even", "region", "minimum", "maximum", "quadruple"}
 def _rules_of(c, B, givens, solution):
     """one coach constraint -> rules (houses and negatives are made elsewhere)"""
     t, segs, settings = c["type"], c.get("segments") or [], c.get("settings") or {}
+    if t in DEFAULT_COLOUR and not settings.get("colour"):  # drawn in the app's own color for the type
+        settings = dict(settings, colour=DEFAULT_COLOUR[t])
     style = style_of(settings, shape=t in SHAPE_TYPES)
     n = B.n
     if t in ("ratio", "difference", "twoCellSum", "greaterLess"):

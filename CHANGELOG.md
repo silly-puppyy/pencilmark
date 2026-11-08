@@ -57,6 +57,34 @@
   `same_region`; any other sentence about regions (regions blocking sight, counting borders, region sums or numbers)
   now refuses the puzzle instead of being dropped, which had read such puzzles with several solutions.
 
+- **Coloured dots** (SudokuPad): a dot of a colour other than white or black is read from the clause of the rules that
+  names its colour: opposite or same parity, not consecutive (nabner), neither consecutive nor 1:2, the same third
+  (low / medium / high) or residue mod 3, a difference of at least k, any 1:k ratio, a sum or a forbidden sum,
+  both of two conditions, and grey kropki (consecutive or 1:2, or exactly one of them); "all possible ... dots are
+  given" adds the negative constraint. Wording with other alternatives refuses the dot. A grey dot the text defines is
+  no longer read as a black dot.
+- **Anti-knight and anti-king are decided per sentence**: "cells one chess knight move apart may not contain the same
+  digit" and "knight's move constraint" are read; any other sentence about a knight's or king's move (paired knights,
+  knightmare, consecutive knights in regions, prime knights, tours, counting sensors) now refuses the puzzle. Before,
+  any mention of a knight's move added a global anti-knight rule: 45 logic-masters.de puzzles were read with a wrong
+  rule.
+- **Refused instead of misread**: digits from 0 (0-8 / 0-9 sudokus were read as 1-9, shifting every sum and ratio;
+  97 logic-masters.de puzzles), cages that sum or multiply, every clue modulo 9, domino placement, digits appearing
+  three times on a diagonal. Latin squares worded "each row and column must contain the digits 1-9" get no boxes.
+- Between lines that cross themselves (an X between two circles) and the quadruple wording "digits in circles must
+  appear in cells that touch the circle" are read.
+
+### Drawing and style
+
+- **sudoku.coach artwork lands in the right cells**: coach writes cosmetic points as [x, y] (shapes and texts were
+  drawn transposed), and its polygons rest on a flat side (a hexagon is flat-topped unless turned). Closed renban and
+  parity rings stay closed; lines coach draws in its own colour without a setting keep that colour (palindrome and
+  modular beige, entropic peach, thermometer light blue).
+- **The renderer draws more of a rule's style**: a line's `outline` (a wider line in the outline colour under it),
+  between-line end circles in the style's fill, size and outline, thermometer bulbs in the line's colour and size,
+  cell shapes (odd / even) at the style's `size` with its border, extra regions as smaller squares when `size` is below
+  one cell. The setter's cell colours (decorations) are drawn under the rules' shapes, not over them.
+
 ## 1.3.0 (2026-11-08)
 
 ### Breaking changes (files, specs and code using the old names need the new ones; no aliases)

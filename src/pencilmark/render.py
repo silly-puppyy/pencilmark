@@ -73,7 +73,21 @@ def render(
     ctr = lambda name: (cx(rc(name)[1]), cy(rc(name)[0]))
     exists = {(r, c) for r, c in B.coords}
     layers = {
-        k: [] for k in ("shade", "colour", "marks", "lines", "cages", "grid", "clues", "digits", "outside", "over")
+        k: []
+        for k in (
+            "board",
+            "backdrop",
+            "shade",
+            "colour",
+            "marks",
+            "lines",
+            "cages",
+            "grid",
+            "clues",
+            "digits",
+            "outside",
+            "over",
+        )
     }
     cur = [None]  # the rule being drawn (annotate)
     labelled = set()  # cells with a cage total in their top-left corner (corner marks start elsewhere there)
@@ -111,7 +125,7 @@ def render(
 
     # ---- board, houses
     for r, c in B.coords:
-        add("shade", f'<rect x="{m + c * u}" y="{m + r * u}" width="{u}" height="{u}" fill="{T["board"]}"/>')
+        add("board", f'<rect x="{m + c * u}" y="{m + r * u}" width="{u}" height="{u}" fill="{T["board"]}"/>')
     # ---- annotation colors, over the board, region shading and cell shapes (they show through) and under every line,
     # arrow, cage, dot, clue and digit (drawn later, so they stay readable). One per cell fills it; several split it into equal wedges from the center, as
     # SudokuPad draws them: wedge i spans 25 + i * 360 / n to 25 + (i + 1) * 360 / n "degrees", each mapped to a point
@@ -133,32 +147,33 @@ def render(
 
     corners = (45, 135, 225, 315)  # the corners, in the same measure
 
-    def cell_colours(name, cols, opacity, pattern="wedges"):
+    def cell_colours(name, cols, opacity, pattern="wedges", layer="colour"):
         """one color fills the cell; k split it into k wedges from the center (SudokuPad) or k slanted stripes
-        (sudoku.coach)"""
+        (sudoku.coach). layer: "colour" (a solver's colors, over the rules' shapes) or "backdrop" (the setter's cell
+        colors, under every rule)"""
         r, c = rc(name)
         x0, y0 = m + c * u, m + r * u
         if len(cols) == 1:
             add(
-                "colour",
+                layer,
                 f'<rect x="{x0}" y="{y0}" width="{u}" height="{u}" fill="{cols[0]}" fill-opacity="{opacity}"/>',
             )
             return
         if pattern == "stripes":  # parallelograms leaning right, cut to the cell
             lean, w = 0.25 * u, (u + 0.5 * u) / len(cols)
             cid = f"cc{r}_{c}"
-            add("colour", f'<clipPath id="{cid}"><rect x="{x0}" y="{y0}" width="{u}" height="{u}"/></clipPath>')
+            add(layer, f'<clipPath id="{cid}"><rect x="{x0}" y="{y0}" width="{u}" height="{u}"/></clipPath>')
             for i, col in enumerate(cols):
                 xa = x0 - lean + i * w
                 d = f"{xa + lean:.1f},{y0:.1f} {xa + lean + w:.1f},{y0:.1f} {xa + w:.1f},{y0 + u:.1f} {xa:.1f},{y0 + u:.1f}"
-                add("colour", f'<polygon points="{d}" fill="{col}" fill-opacity="{opacity}" clip-path="url(#{cid})"/>')
+                add(layer, f'<polygon points="{d}" fill="{col}" fill-opacity="{opacity}" clip-path="url(#{cid})"/>')
             return
         for i, col in enumerate(cols):
             a1, a2 = 25 + i * 360 / len(cols), 25 + (i + 1) * 360 / len(cols)
             turn = [k for k in corners for k in (k, k + 360) if a1 < k < a2]
             pts = [(x0 + u / 2, y0 + u / 2)] + [perim(x0, y0, a) for a in (a1, *sorted(turn), a2)]
             d = " ".join(f"{x:.1f},{y:.1f}" for x, y in pts)
-            add("colour", f'<polygon points="{d}" fill="{col}" fill-opacity="{opacity}"/>')
+            add(layer, f'<polygon points="{d}" fill="{col}" fill-opacity="{opacity}"/>')
 
     for name, cols in (colors or {}).items():
         cell_colours(name, [shades[x] for x in cols], alpha)
@@ -274,11 +289,14 @@ def render(
                     f'stroke="{T["diag"]}" stroke-width="{0.04 * u:.1f}"/>',
                 )
             elif k in ("window", "extra"):
+                sz = (r.get("style") or {}).get("size")
+                d = (1 - sz) / 2 * u if isinstance(sz, (int, float)) and 0 < sz < 1 else 0  # a smaller square (CaPn)
                 for x in r["cells"]:
                     rr, cc = rc(x)
                     add(
                         "shade",
-                        f'<rect x="{m + cc * u}" y="{m + rr * u}" width="{u}" height="{u}" fill="{T["shade"]}"/>',
+                        f'<rect x="{m + cc * u + d:.1f}" y="{m + rr * u + d:.1f}" width="{u - 2 * d:.1f}" '
+                        f'height="{u - 2 * d:.1f}" fill="{T["shade"]}"/>',
                     )
             elif k in ("color", "disjoint"):
                 col = PALETTE[colour_i % len(PALETTE)]
@@ -306,24 +324,37 @@ def render(
         elif t == "line":  # width and end markers from the line registry (pencilmark/rules/line.py)
             lk = LINE[k]
             col = DUTCH if (k == "whisper" and r.get("value", 5) == 4) else LINE_COLOURS.get(k, "#aaaaaa")
-            add(
-                "lines",
-                polyline(
-                    r["cells"], col, S[lk.width] if isinstance(lk.width, str) else lk.width, r.get("closed", False)
-                ),
-            )
+            st_ = r.get("style") or {}
+            lw = S[lk.width] if isinstance(lk.width, str) else lk.width
+            ocol, ow = colour_of(st_.get("outline")), st_.get("outline_width")
+            if ocol and isinstance(ow, (int, float)) and ow > 0:  # the line's edge: a wider line in the outline color
+                own, cur[0] = cur[0], None  # drawn as is (the rule's style would recolor it)
+                w_ = st_["width"] if isinstance(st_.get("width"), (int, float)) else lw
+                add("lines", polyline(r["cells"], ocol, w_ + 2 * ow, r.get("closed", False)))
+                cur[0] = own
+            add("lines", polyline(r["cells"], col, lw, r.get("closed", False)))
             if lk.ends in ("bulb", "hollow bulb"):
                 x, y = ctr(r["cells"][0])
-                fill = col if lk.ends == "bulb" else T["board"]
-                ring = "" if lk.ends == "bulb" else f' stroke="{col}" stroke-width="{0.12 * u:.1f}"'
-                add("lines", f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{S["bulb"] * u:.1f}" fill="{fill}"{ring}/>')
-            if lk.ends == "circles":
+                bcol = colour_of(st_.get("color"), col)  # a bulb in the line's own color (its `fill` restyles it)
+                br = st_["size"] / 2 if isinstance(st_.get("size"), (int, float)) and st_["size"] > 0 else S["bulb"]
+                fill = bcol if lk.ends == "bulb" else T["board"]
+                ring = "" if lk.ends == "bulb" else f' stroke="{bcol}" stroke-width="{0.12 * u:.1f}"'
+                add("lines", f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{br * u:.1f}" fill="{fill}"{ring}/>')
+            if lk.ends == "circles":  # the style's fill and size; the ring in its outline color, else the line's
+                cr = st_["size"] / 2 if isinstance(st_.get("size"), (int, float)) and st_["size"] > 0 else 0.375
+                ring = ocol or colour_of(st_.get("color"), col)
+                cfill = colour_of(st_.get("fill"), T["board"])
+                own, cur[0] = cur[0], None
                 for e in (r["cells"][0], r["cells"][-1]):
                     x, y = ctr(e)
                     add(
                         "lines",
-                        f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{0.375 * u:.1f}" fill="{T["board"]}" stroke="{col}" stroke-width="{0.05 * u:.1f}"/>',
+                        f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{cr * u:.1f}" fill="{cfill}" stroke="{ring}" '
+                        f'stroke-width="{max(0.05, 2 * (ow or 0)) * u:.1f}"'
+                        + (f' opacity="{st_["opacity"]}"' if isinstance(st_.get("opacity"), (int, float)) else "")
+                        + "/>",
                     )
+                cur[0] = own
             if lk.ends == "diamonds":
                 for e in (r["cells"][0], r["cells"][-1]):
                     x, y = ctr(e)
@@ -513,18 +544,24 @@ def render(
                         if mk == "square"
                         else f'<polygon points="{cxx},{cyy - d} {cxx + d},{cyy} {cxx},{cyy + d} {cxx - d},{cyy}" {edge}/>',
                     )
+                # the rule's style: its size (diameter / side) and its border (color, outline_width) when it has one
+                st_ = r.get("style") or {}
+                h = (st_["size"] / 2 if isinstance(st_.get("size"), (int, float)) and st_["size"] > 0 else 0.4) * u
+                bc = colour_of(st_.get("color") or st_.get("outline"))
+                bw = (st_.get("outline_width") or 0.03) * u
+                border = f' stroke="{bc}" stroke-width="{bw:.1f}"' if bc else ""
                 if mk == "circle":
-                    add("shade", f'<circle cx="{cxx:.1f}" cy="{cyy:.1f}" r="{0.4 * u:.1f}" fill="{T["odd"]}"/>')
+                    add("shade", f'<circle cx="{cxx:.1f}" cy="{cyy:.1f}" r="{h:.1f}" fill="{T["odd"]}"{border}/>')
                 elif mk == "square":
                     add(
                         "shade",
-                        f'<rect x="{cxx - 0.4 * u:.1f}" y="{cyy - 0.4 * u:.1f}" width="{0.8 * u:.1f}" height="{0.8 * u:.1f}" fill="{T["even"]}"/>',
+                        f'<rect x="{cxx - h:.1f}" y="{cyy - h:.1f}" width="{2 * h:.1f}" height="{2 * h:.1f}" fill="{T["even"]}"{border}/>',
                     )
                 elif mk == "diamond":
-                    d = 0.42 * u
+                    d = h * 1.05
                     add(
                         "shade",
-                        f'<polygon points="{cxx},{cyy - d} {cxx + d},{cyy} {cxx},{cyy + d} {cxx - d},{cyy}" fill="{T[k]}"/>',
+                        f'<polygon points="{cxx},{cyy - d} {cxx + d},{cyy} {cxx},{cyy + d} {cxx - d},{cyy}" fill="{T[k]}"{border}/>',
                     )
                 else:
                     add(
@@ -612,7 +649,7 @@ def render(
         if kind == "fill":
             for name, cols in (dec.get("cells") or {}).items():
                 cols = [colour_of(x) for x in (cols if isinstance(cols, list) else [cols])]
-                cell_colours(name, [x for x in cols if x], op, st.get("pattern", "wedges"))
+                cell_colours(name, [x for x in cols if x], op, st.get("pattern", "wedges"), layer="backdrop")
         elif kind in ("polygon", "line", "arrow") and dec.get("points"):
             pts = " ".join(f"{x:.1f},{y:.1f}" for x, y in map(P, dec["points"]))
             tag = "polygon" if kind == "polygon" else "polyline"
@@ -689,7 +726,20 @@ def render(
             add("digits", small_text(x, y, d, size=0.24, col=T["cand"], weight=400))
     body = "".join(
         "".join(layers[k])
-        for k in ("shade", "colour", "marks", "lines", "cages", "grid", "clues", "digits", "outside", "over")
+        for k in (
+            "board",
+            "backdrop",
+            "shade",
+            "colour",
+            "marks",
+            "lines",
+            "cages",
+            "grid",
+            "clues",
+            "digits",
+            "outside",
+            "over",
+        )
     )
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{W:.0f}" height="{H:.0f}" viewBox="0 0 {W:.1f} {H:.1f}">'

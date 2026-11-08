@@ -50,7 +50,11 @@ UNMODELLED_RULES = (
     ("pick-up sticks", r"\bstick (?:which |that )?lies on top|pick-up sticks"),
     ("multi-renban", r"multi[- ]?renban"),  # sets of consecutive digits with repeats: not the renban rule
     ("magic square", r"magic square somewhere|somewhere in the grid lies a 3 ?[x×] ?3 magic square"),
-    ("unique dominoes", r"every possible domino\b"),
+    ("cage sum or product", r"either sum or multiply|\bsum or (?:the )?product\b"),  # 000SPZ
+    ("anti-diagonal", r"appear (?:exactly )?(?:three|3) times on (?:it|the diagonal)"),  # each digit 3x on it (000LM7)
+    ("digit 0", r"\bdigits? (?:from )?0 ?(?:to|-|\u2013|through) ?\d"),  # digits 0-9: read as 1-10 they shift (000KA2)
+    ("clues modulo n", r"\ball (?:the )?clues (?:work|are|apply) modulo\b"),  # a series where every clue wraps (000LR6)
+    ("unique dominoes", r"every possible domino\b|\bplace (?:non-overlapping )?dominoes\b"),
     ("dice", r"\broll a [^.]{0,30}dic?e\b|fold into (?:legitimate )?dice"),
     (
         "clues to place",
@@ -555,6 +559,126 @@ DOT_CUSTOM = {
     ),
 }
 
+# coloured dots (not white / black kropki): the sentence naming the dot's colour says what the pair holds; most specific
+# first (meaning -> (wording, custom condition on the pair a / b, label)); unclear or negative ("all ... are given")
+# sentences leave the dot unread
+DOT_MEANINGS = (
+    (
+        "anti_kropki",
+        r"neither consecutive nor (?:in )?a (?:1:2|1 ?: ?2) ratio|not consecutive (?:and|or|nor) (?:in )?a (?:1:2|1 ?: ?2) ratio",
+        "abs(a - b) != 1 and a != 2 * b and b != 2 * a",
+        "Anti-kropki dot",
+    ),
+    (
+        "nabner",
+        r"nabner|neither consecutive nor (?:the )?same|not consecutive|non-?consecutive",
+        "abs(a - b) > 1",
+        "Nabner dot",
+    ),
+    (
+        "parity",
+        r"one (?:is )?even and one (?:is )?odd|one (?:is )?odd and one (?:is )?even|opposite parit|different parit"
+        r"|parity dot",
+        "a mod 2 != b mod 2",
+        "Parity dot",
+    ),
+    ("same_parity", r"same parity|both (?:odd|even) or both (?:odd|even)", "a mod 2 == b mod 2", "Same-parity dot"),
+    (
+        "same_third",
+        r"both low[^.]{0,60}medium[^.]{0,60}high|same (?:group|set|third) of",
+        "(a - 1) div 3 == (b - 1) div 3",
+        "Same-third dot",
+    ),
+    (
+        "consecutive",
+        r"(?<!non)(?<!non-)(?<!not )consecutive|differ by (?:exactly )?(?:1|one)\b",
+        "abs(a - b) == 1",
+        "Consecutive dot",
+    ),
+    (
+        "same_residue",
+        r"same residue|same (?:remainder|class) (?:when divided by|modulo|mod) 3",
+        "a mod 3 == b mod 3",
+        "Same-residue dot",
+    ),
+    (
+        "ratio",
+        r"\b1 ?[:/] ?[2-9]\b|\b[2-9] ?: ?1\b|ratio of (?:1:2|2)|(?:two|three|four) times the other|(?:one|a) (?:digit |number )?is (?:double|twice) the other",
+        "a == 2 * b or b == 2 * a",
+        "Ratio dot",
+    ),
+)
+
+
+def dot_color_rules(rules):
+    """colour -> (holds, label, all given) for dots of colours other than white / black whose sentence says what they
+    mean (the clause naming the colour: one sentence often defines every dot colour); all given: a sentence says every
+    such pair is marked (a negative constraint). Several conditions in one clause ("sum to 10 and differ by at least 4")
+    hold together; alternatives ("either ... or") leave the dot unread."""
+    out, neg = {}, set()
+    _NOT = r"(?:cannot|can't|can not|may not|must not|do not|don't|does not|never|not)"
+    for sent in re.split(r"(?<=[.\n])\s*", (rules or "").lower()):
+        cols = [{"gray": "grey"}.get(c, c) for c in COLOR_WORDS
+                if re.search(rf"\b{c}\s+(?:\w+\s+)?(?:dots?|circles?|kropki)\b", sent)]  # fmt: skip
+        mine = [c for c in cols if c not in ("white", "black")]
+        if len(mine) != 1:
+            continue
+        col = mine[0]
+        if len(cols) > 1:  # the clause about this colour only
+            parts = re.split(
+                r";|,? (?:and )?(?=(?:digits|numbers|cells|two digits|a|an|the) (?:\w+ )?(?:joined|separated|connected|on|by|in)\b)",
+                sent,
+            )
+            sent = next((x for x in parts if re.search(rf"\b{col}", x)), sent)
+        if re.search(
+            rf"(?<!not )\ball\b[^.]{{0,60}}\b(?:given|shown|marked|drawn)|\bare (?:all )?marked with an? {col}", sent
+        ):
+            neg.add(col)  # "all possible yellow dots are given"; "all pairs that ... are marked with a green dot"
+            if not re.search(r"differ|sum|consecutive|ratio|parity|odd|even|residue", sent):
+                continue
+        cons = re.search(r"consecutive|differ(?:ence)? (?:of |by )?(?:exactly )?(?:1|one)\b|one apart", sent)
+        rat = re.search(r"\b1 ?[:/] ?2\b|\b2 ?: ?1\b|ratio|double|twice", sent)
+        if cons and rat and re.search(r"\bor\b", sent) and not re.search(r"\bif\b|determined|acts? as|turns?\b", sent):
+            # grey kropki: consecutive or 1:2 (or both); "but not both": exactly one
+            one, two = "abs(a - b) == 1", "a == 2 * b or b == 2 * a"
+            xor = re.search(r"not both", sent)
+            out.setdefault(col, (f"({one}) != ({two})" if xor else f"{one} or {two}", "Kropki-either dot"))
+            continue
+        if re.search(r"\bif\b|\bmay\b|\bcan be\b|\beither\b|\bor (?:both|in a)\b", sent):
+            continue  # other alternatives: no single reading
+        conds = []
+        k = diff_rule(sent)
+        if k:
+            m = re.match(r"whisper(\d)?$", k)
+            conds.append((f"abs(a - b) >= {4 if k == 'dutch' else (m.group(1) or 5)}", "Difference dot"))
+        sm = re.search(rf"(?:({_NOT}) )?(?:\w+ )?\b(?:sums?|add) (?:up )?to (\d{{1,2}})\b", sent)
+        if sm:
+            conds.append((f"a + b {'!=' if sm.group(1) else '=='} {sm.group(2)}", "Sum dot"))
+        if not k:
+            rm = re.search(r"\b(?:1 ?[:/] ?(\d)|(\d) ?: ?1)\b", sent) or re.search(
+                r"\b(two|three|four)() times the other", sent
+            )
+            if rm and rm.group(1) in _NUMW:
+                rm = re.match(r"(\d)()", str(_NUMW[rm.group(1)]))
+            for _, rx, h, lab in DOT_MEANINGS:
+                if re.search(rx, sent) and not (
+                    lab == "Consecutive dot" and any(l_ == "Nabner dot" for _, l_ in conds)
+                ):
+                    if lab == "Ratio dot" and rm:  # the ratio the clause names (1:3, 000K3F)
+                        q = rm.group(1) or rm.group(2)
+                        h = f"a == {q} * b or b == {q} * a"
+                    conds.append((h, lab))
+        if not conds or (len(conds) > 1 and not re.search(r"\bboth\b|\band\b", sent)):
+            continue
+        hit = (
+            conds[0]
+            if len(conds) == 1
+            else (" and ".join(f"({h})" for h, _ in conds), " / ".join(l_ for _, l_ in conds))
+        )
+        out.setdefault(col, hit)
+    return {c: (h, lab, c in neg) for c, (h, lab) in out.items()}
+
+
 # lexicon: phrasings for supported mechanics that never use the rule's name
 DIFF_K = re.compile(
     r"differ(?:ence)?s?\b[^.]{0,50}?(at least|>=|≥|a minimum of|more than|greater than)\s*(?:a\s+)?(\d|five|four|three|two|six|seven|eight)\b"
@@ -572,6 +696,7 @@ SLOW_ALL = re.compile(
 TYPO_QUOTES = str.maketrans({"\u2018": "'", "\u2019": "'", "\u201c": '"', "\u201d": '"'})
 NO_BOXES = re.compile(
     r"(?:once|exactly once)(?: each)? in (?:every|each) row and (?:every |each )?column(?![^.]{0,40}(?:box|region|cage|block|nonet))"
+    r"|\beach row and (?:each )?column must contain the digits 1 ?(?:-|to) ?\d(?![^.]{0,40}(?:box|region|cage|block|nonet))"
     r"|no (?:3x3 )?box(?:es)?\b|(?:there are )?no boxes|without boxes"
 )
 BATTENBURG_TEXT = re.compile(r"battenburg|checkerboard")
@@ -590,6 +715,7 @@ QUAD_TEXT = re.compile(
     r"(?:four|4) (?:surrounding|adjacent|touching) cells|(?:four|4) cells (?:surrounding|around) the circle|"
     r"\bquads?\s*:|(?:four|4) cells (?:the|that|this|it) (?:circle )?touch|"  # "Quads: ..." (000RL6, 000QJZ)
     r"(?:digits?|numbers?) (?:in|inside) (?:a|the) circle[^.]{0,60}\bcells? touching|in a cell touching the circle|"
+    r"(?:digits?|numbers?) in (?:\w+ )?circles?[^.]{0,60}\bcells? (?:that|which) touch (?:the|that|this) circle|"  # 000VCI
     r"(?:digits?|numbers?) in (?:a|the) circle[^.]{0,40}\b(?:assigned|placed|put) (?:to|in|into) (?:one of )?the (?:surrounding|adjacent|touching) cells"
 )
 
@@ -1069,16 +1195,61 @@ def negative_markers(rules):
     return neg
 
 
+def _chess_sentences(piece, t):
+    """(global, other): sentences about a chess move of the piece that state the anti rule over the whole grid
+    ("cells one chess knight move apart may not contain the same digit"), and the ones that state something else (a
+    move from marked cells, a piece that moves, another relation a move apart, "at least one ... a knight's move away")"""
+    mv = rf"{piece}'?s?(?:'s)? (?:move\b|moves? (?:apart|away)|jump|step)|anti[- ]?{piece}"
+    glob, other = [], []
+    for sent in re.split(r"(?<=[.\n;])\s*", t):
+        if not re.search(mv, sent):
+            continue
+        if (re.search(r"\bsame\b|repeat|identical|\bequal\b|different|\bdiffer\b", sent)
+                and not re.search(r"ratio|consecutive|\bsums?\b|differ by|at least one|prime|in the same region|"
+                                  r"(?:digits?|numbers?) (?:on|in) (?:a|an|the|each) (?!knight's move)(?:\w+ )?(?:cells?|constraint|circle|line)|"
+                                  r"themselves|from (?:a|an|the|any) (?!cell\b|same\b|other\b)\w+ cell", sent)):  # fmt: skip
+            glob.append(sent)
+        elif re.search(
+            rf"\banti[- ]?{piece}|{piece}'?s? move (?:constraint|rule|restriction)s?\b(?! for)", sent
+        ) and not re.search(r"yellow|gr[ae]y|shaded|marked|circled|colou?red|highlighted", sent):
+            glob.append(sent)  # the rule's name alone ("Anti-knight." / "Anti-knight applies")
+        else:
+            other.append(sent)
+    return glob, other
+
+
+def chess_rule(piece, t):
+    """anti-knight / anti-king over the whole grid (_chess_sentences)"""
+    if KNIGHT_FROM.search(t) and piece == "knight":
+        return False
+    return bool(_chess_sentences(piece, t)[0])
+
+
+def chess_other(t):
+    """a knight / king move rule the readers do not model: a sentence about the move that is neither the global rule
+    nor a move from marked cells (KNIGHT_FROM, read by text_cell_rules)"""
+    for piece in ("knight", "king"):
+        glob, other = _chess_sentences(piece, t)
+        other = [
+            x
+            for x in other
+            if not KNIGHT_FROM.search(x) and not re.search(r"\(cracking the cryptic\)|\bas defined\b", x)
+        ]
+        if other and not glob:
+            return f"{piece} move rule"
+    return None
+
+
 def rule_flags(rules):
     t = (rules or "").lower()
     neg = negative_markers(rules)
     return {
         "negative_markers": neg,
-        "antiknight": bool(re.search(r"anti[- ]?knight|knight'?s move|(?:chess )?knight(?:'s)? jump", t))
-        and not KNIGHT_FROM.search(t),  # "the digit in the yellow cell ... a knight's move away": not every cell
-        "antiking": bool(
+        "antiknight": chess_rule("knight", t),
+        "antiking": chess_rule("king", t)
+        or bool(
             re.search(
-                r"anti[- ]?king|king'?s move|diagonally adjacent cells|\bno[- ]touch\b"
+                r"diagonally adjacent cells|\bno[- ]touch\b"
                 r"|(?:equal|identical|same) digits?[^.]{0,30}(?:can ?not|may not|must not|never) touch[^.]{0,20}diagonal",
                 t,
             )
@@ -1530,6 +1701,8 @@ def translate(sp, page_text=None, overrides=None):
     )
     dot_t = next(((k, m) for k, v in DOT_CUSTOM.items() if (m := re.search(v[0], rules.lower()))), None)
     dot_pairs = []
+    dot_meaning = dot_color_rules(rules)
+    dotted = {}  # colour -> the pairs its dots join
     layers = [
         x for x in (P.get("underlays") or []) + (P.get("overlays") or []) if isinstance(x, dict) and "center" in x
     ]
@@ -1597,8 +1770,8 @@ def translate(sp, page_text=None, overrides=None):
                 if bg == "white":
                     p.relations.append(("diff", idx(a), idx(b), 1))
                     used["kropki_white"] += 1
-                elif bg in ("black", "grey"):
-                    p.relations.append(("ratio", idx(a), idx(b), 2))
+                elif bg == "black" or (bg == "grey" and not re.search(r"\bgr[ae]y (?:dots?|kropki|circles?)\b", low)):
+                    p.relations.append(("ratio", idx(a), idx(b), 2))  # a grey dot the text defines: below (000SC3)
                     used["kropki_black"] += 1
                 elif re.search(r"shifter dots?\s*:", low):  # one of parity / polarity shared, never both; never 5
                     from .. import puzzle_json as PJ
@@ -1611,6 +1784,15 @@ def translate(sp, page_text=None, overrides=None):
                     PJ.add_named(p, {"type": "custom", "cells": {"a": [nm(idx(a))], "b": [nm(idx(b))]}, "holds": holds,
                                      "label": "Shifter dot"})  # fmt: skip
                     used["shifter_dot"] += 1
+                elif bg in dot_meaning:  # a coloured dot its sentence defines ("a red dot: one even, one odd")
+                    from .. import puzzle_json as PJ
+
+                    nm = lambda i: f"r{p.coords[i][0] + 1}c{p.coords[i][1] + 1}"
+                    holds, label, _ = dot_meaning[bg]
+                    PJ.add_named(p, {"type": "custom", "cells": {"a": [nm(idx(a))], "b": [nm(idx(b))]}, "holds": holds,
+                                     "label": label})  # fmt: skip
+                    dotted.setdefault(bg, set()).add(frozenset((idx(a), idx(b))))
+                    used["colour_dot"] += 1
                 else:  # a dot of another color: its meaning is in the text, which no reading took
                     unknown.append(f"{bg} dot")
             elif re.fullmatch(r"\d{1,2}", txt):
@@ -1648,6 +1830,19 @@ def translate(sp, page_text=None, overrides=None):
         for small, big in inequality_signs(P, n, rules):
             p.relations.append(("lt", idx(small), idx(big)))
             used["greater"] += 1
+    for col_, (holds, label, all_given) in dot_meaning.items():  # every pair not marked breaks the rule
+        if not all_given or col_ not in dotted:
+            continue
+        from .. import puzzle_json as PJ
+
+        nm = lambda i: f"r{p.coords[i][0] + 1}c{p.coords[i][1] + 1}"
+        for i_ in range(n * n):
+            r_, c_ = divmod(i_, n)
+            for j_ in ((i_ + 1) if c_ + 1 < n else None, (i_ + n) if r_ + 1 < n else None):
+                if j_ is not None and frozenset((i_, j_)) not in dotted[col_]:
+                    PJ.add_named(p, {"type": "custom", "cells": {"a": [nm(i_)], "b": [nm(j_)]}, "holds": f"not ({holds})",
+                                     "label": f"{label} (none here)"})  # fmt: skip
+        used["colour_dot_negative"] += 1
     # lines
     text_mentions = {k for k, pats in RULE_WORDS.items() if any(re.search(pt, rules.lower()) for pt in pats)}
     if "dutch" in text_mentions and not re.search(r"(?<!dutch )whisper", rules.lower()):
@@ -1809,8 +2004,15 @@ def translate(sp, page_text=None, overrides=None):
                 continue
             p.constraints.append({"type": "line", "kind": rule, "cells": ids})
         elif rule == "between":
-            if not (lc[0] in circles and lc[-1] in circles) or len(set(ids)) != len(ids):
+            if not (lc[0] in circles and lc[-1] in circles):
                 unknown.append("between line without end circles")
+                continue
+            if len(set(ids)) != len(ids):  # a line crossing itself (an X between two circles, 000VCI): each cell once
+                mid = list(dict.fromkeys(ids[1:-1]))
+                if ids[0] == ids[-1] or {ids[0], ids[-1]} & set(mid) or any(x in circles for x in lc[1:-1]):
+                    unknown.append("self-crossing between line")
+                    continue
+                p.constraints.append({"type": "line", "kind": "between", "cells": [ids[0], *mid, ids[-1]]})
                 continue
             stops = [k for k, x in enumerate(lc) if x in circles]  # a line through several circles: one between line
             for i, j in zip(stops, stops[1:]):  # per stretch from circle to circle
@@ -1970,6 +2172,8 @@ def translate(sp, page_text=None, overrides=None):
     used.pop("_quad_neg")
     unknown += [u for u in unmodelled_rules(text_rules, chaos_ok=chaos)
                 if not (u == "rule 'equality cage'" and EQUALITY_TEXT.search(text_rules))]  # fmt: skip
+    if chess_other(text_rules.lower()):  # a knight / king move rule other than the anti rule ("prime knights")
+        unknown.append(chess_other(text_rules.lower()))
     if EQUALITY_TEXT.search(text_rules):
         used["equality_cage"] += equality_cages(p, n)
     if CLONE_TEXT.search(text_rules):  # clones drawn as colored shapes
@@ -2122,8 +2326,8 @@ def plain_sudoku(p, n, used):
 
 
 KNIGHT_FROM = re.compile(
-    r"(?:digit|number)s? in the (\w+) cells? (?:may|can|must) not (?:repeat|appear)[^.]{0,40}knight'?s move"
-    r"|knight'?s move away from (?:a|an|the) (?!cell\b|same\b|other\b|it\b)\w+"
+    r"(?:digit|number)s? in the (\w+) cells? (?:may|can|must) not (?:repeat|appear)[^.]{0,40}knight'?s? move"
+    r"|knight'?s? move away from (?:a|an|the|any) (?!cell\b|same\b|other\b|it\b)\w+"
 )
 
 

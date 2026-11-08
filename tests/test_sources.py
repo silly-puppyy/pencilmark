@@ -1302,3 +1302,41 @@ def test_fpuzzles_style_capture():
     assert got[("r1c1", "r1c2", "r2c2")] == {"color": "#67f067", "width": 0.3}
     assert ("r5c5", "r5c6") not in got and got[("r6c6",)] == {"color": "#ff0000"}
     assert got[("r9c9",)] == {"fill": "#ffffff", "color": "#000000", "shape": "circle", "size": 0.5}
+
+
+def test_coloured_dots_read_from_their_clause():
+    from pencilmark.sources._sp_translate import dot_color_rules
+
+    one = ("Digits joined by a black dot are in 1:2 ratio, digits joined by a white dot are consecutive, and digits "
+           "joined by a yellow dot are both low {123}, medium {456}, or high {789}.")  # fmt: skip
+    assert dot_color_rules(one) == {"yellow": ("(a - 1) div 3 == (b - 1) div 3", "Same-third dot", False)}
+    assert (
+        dot_color_rules("Digits joined by a purple dot are in a 1:3 ratio.")["purple"][0] == "a == 3 * b or b == 3 * a"
+    )
+    assert dot_color_rules("Digits in cells joined by a yellow dot cannot sum to 7.")["yellow"][0] == "a + b != 7"
+    tien = dot_color_rules("Digits separated by an orange Tien dot must sum to 10, AND must also differ by at least 4.")
+    assert tien["orange"][0] == "(abs(a - b) >= 4) and (a + b == 10)"
+    neg = dot_color_rules("Yellow dots separate digits that differ by more than 2. All possible yellow dots are given.")
+    assert neg == {"yellow": ("abs(a - b) >= 3", "Difference dot", True)}
+    # grey kropki: consecutive or 1:2 (or both); "not both": exactly one; other alternatives are left unread
+    either = dot_color_rules("Digits connected by a gray dot are either consecutive or in a 1:2 ratio (or both).")
+    assert either["grey"][0] == "abs(a - b) == 1 or a == 2 * b or b == 2 * a"
+    xor = dot_color_rules("Grey dots: digits are EITHER one apart OR in the ratio of 1:2 but NOT both.")
+    assert xor["grey"][0] == "(abs(a - b) == 1) != (a == 2 * b or b == 2 * a)"
+    assert dot_color_rules("The grey dot is either a white dot or a black dot, to be determined by the solver.") == {}
+
+
+def test_knight_move_wording():
+    from pencilmark.sources._sp_translate import rule_flags
+
+    assert rule_flags("Cells one chess knight move apart may not contain the same digit.")["antiknight"]
+    both = rule_flags(
+        "Cells that are either a Knight move (in chess), or a King move apart cannot contain the same digit."
+    )
+    assert both["antiknight"] and both["antiking"]
+    for other in (
+        "The knight moves like knight in chess.",  # a piece, not a rule
+        "Cells one chess knight's move apart may not contain digits in 1:2 ratio.",  # another relation
+        "Digits in cells a knight move away from any caged cell must differ from it by more than 1.",
+    ):  # local
+        assert not rule_flags(other)["antiknight"], other

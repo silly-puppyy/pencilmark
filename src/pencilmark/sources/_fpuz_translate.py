@@ -185,6 +185,7 @@ def translate(fp, line_kinds=None, join=True):
         for u in ST.unmodelled_rules(text0)
         if not (u == "rule 'equality cage'" and ST.EQUALITY_TEXT.search(text0)) and not (u == "rule 'fog'" and fog)
     ]
+    refused += [x for x in [ST.chess_other(text0.lower())] if x]  # a knight / king move rule we do not model
     outside_texts = []  # numbers left outside the grid: clues for the SudokuPad reader's outside-clue reading
     for t in fp.get("text") or []:
         cs = t.get("cells") or []
@@ -304,11 +305,8 @@ def translate(fp, line_kinds=None, join=True):
                 cells = tuple(r * n + c for r in range(n) for c in range(n) if r % bh == i and c % bw == j)
                 p.groups.append(M.Group(f"dj{i}{j}", cells, "extra", True))
     text = (fp.get("ruleset") or "").lower()
-    knight = fp.get("antiknight") or (
-        bool(re.search(r"anti[- ]?knight|knight'?s move|(?:chess )?knight(?:'s)? jump", text))
-        and not ST.KNIGHT_FROM.search(text)  # anti-knight from marked cells only: text_cell_rules
-    )
-    king = fp.get("antiking") or bool(re.search(r"anti[- ]?king|king'?s move", text))
+    knight = fp.get("antiknight") or ST.chess_rule("knight", text)  # from marked cells only: text_cell_rules
+    king = fp.get("antiking") or ST.chess_rule("king", text)
     if fp.get("nonconsecutive") is None and re.search(r"non[- ]?consecutive", text) and not fp.get("difference"):
         fp = dict(fp, nonconsecutive=True)
     used.update({k: True for k, v in (("antiknight", knight), ("antiking", king)) if v})

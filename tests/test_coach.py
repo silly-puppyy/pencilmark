@@ -96,7 +96,8 @@ def test_rule_types():
         )
     )
     lines = rules_of(doc, "line")
-    assert lines[0] == {"type": "line", "kind": "thermo", "cells": ["r1c1", "r1c2", "r1c3", "r1c4"]}
+    assert lines[0] == {"type": "line", "kind": "thermo", "cells": ["r1c1", "r1c2", "r1c3", "r1c4"],
+                        "style": {"color": "#d5e2ff"}}  # the app's own thermometer color, kept as style  # fmt: skip
     assert lines[1] == {"type": "line", "kind": "whisper", "value": 2, "cells": ["r3c1", "r4c1"]}  # value: a setting
     edges = rules_of(doc, "edge")
     assert {"type": "edge", "kind": "kropki", "color": "black", "cells": ["r1c2", "r2c2"]} in edges
@@ -190,6 +191,12 @@ def test_cosmetic_shapes_become_decorations():
     assert tri["kind"] == "polygon" and len(tri["points"]) == 3 and tri["points"][0] == [0.185, 0.5]
     assert circle == {"kind": "circle", "center": [1, 1], "size": [0.63, 0.63], "style": {"fill": "#d5e2ff"}}
     assert doc["rules"] == [{"type": "box_grid", "box": [2, 2], "count": [2, 2]}]  # artwork carries no rule
+
+
+def test_cosmetic_points_are_x_then_y():
+    # coach writes [x, y]: a shape at [3.5, 0.5] sits in row 1, column 4 (L1nG, Jjze drawn by coach)
+    doc = coach.to_document(puzzle({"type": "cosmeticShape", "segments": [seg([[3.5, 0.5]], shape="circle")]}))
+    assert doc["decorations"][0]["center"] == [0.5, 3.5]
 
 
 def test_unknown_type_is_refused_by_name():
