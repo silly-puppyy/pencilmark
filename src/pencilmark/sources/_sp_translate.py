@@ -201,11 +201,32 @@ REGION_KNOWN = re.compile(
 )
 
 
+# a circle counting the cells of its own region it sees (region_sight; setters' circles, cave, internal x-sums), and
+# the sentences that go with it (borders / other regions block the view)
+SIGHT_TEXT = re.compile(
+    r"(?:digit|number)s? (?:in|on) (?:a |the |each )?(?:circle|circled cell|ring)s?[^.]{0,140}"
+    r"(?:same|own|its|their) region|cells? of (?:its|their) (?:own )?region (?:it|they) sees?"
+)
+VISION_TEXT = re.compile(
+    r"(?:borders?|other regions?|different regions?)[^.]{0,30}(?:block|obstruct)s?[^.]{0,10}(?:vision|view|sight)"
+    r"|(?:entering|crossing) (?:a )?(?:different|other) regions? (?:blocks?|obstructs?|stops?)"
+)
+
+
+def sight_counts_itself(text):
+    """does a region_sight clue count its own cell? (the rules text says so; most setters' circles do)"""
+    t = (text or "").lower()
+    if re.search(r"not includ\w* (?:itself|the circled? cell)|excluding (?:itself|the circled? cell)", t):
+        return False
+    return True
+
+
 def region_statements(text):
     """(element kind -> True (its cells share a region) / False (they lie in different regions), the sentences about
     regions that say something else)"""
     out, unknown = {}, []
     text = re.sub(r"\b(i\.e|e\.g)\.", lambda m: m.group(1).replace(".", ""), (text or "").lower())  # not a sentence end
+    sight = bool(SIGHT_TEXT.search(text))  # a sight rule: its sentences and the vision ones are read by translate()
     for sent in re.split(r"(?<=[.!\n])\s*", text):
         if "region" not in sent:
             continue
@@ -223,7 +244,7 @@ def region_statements(text):
         if (diff or same) and kinds:
             for kind in kinds:
                 out[kind] = not diff
-        elif not REGION_KNOWN.search(sent):
+        elif not REGION_KNOWN.search(sent) and not (sight and (SIGHT_TEXT.search(sent) or VISION_TEXT.search(sent))):
             unknown.append(sent.strip())
     return out, unknown
 
@@ -1915,6 +1936,17 @@ def translate(sp, page_text=None, overrides=None):
     if chaos:
         cons, other = chaos_rules(P, p, n, rules)
         p.constraints += cons
+        if circles and SIGHT_TEXT.search(rules.lower()):  # circles counting the cells of their region they see
+            on_lines = {x for con in p.constraints for x in (con.get("cells") or con.get("line") or [])}
+            cc = sorted(idx(rc_) for rc_ in circles if inside(rc_) and idx(rc_) not in on_lines)
+            if cc:
+                from ..puzzle_json import add_named
+
+                rule = {"type": "region_sight", "cells": cc}
+                if not sight_counts_itself(rules):
+                    rule["self"] = False
+                add_named(p, rule)
+                used["region_sight"] += 1
         unknown += [f"rule about regions {s[:60]!r}" for s in other]
         used["chaos"] += 1
     # rules handled above: the text mentions them, so something must have been built for them

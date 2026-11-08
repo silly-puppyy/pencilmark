@@ -513,7 +513,7 @@ def add_named(p, rule):
     # a custom rule reading the shading / regions compiles only beside them: the layer rides along, then is dropped
     from .layers import BY_KEY, layers_of
 
-    layers = [{"type": BY_KEY[k].rule} for k in layers_of(getattr(p, "constraints", ())) if k == "shaded"]
+    layers = [{"type": BY_KEY[k].rule} for k in layers_of(getattr(p, "constraints", ())) if k in ("shaded", "region")]
     q = from_json({"digits": p.D, "shape": shape, "regions": [], "rules": layers + [r]})
     a, b = len(p.relations), len(p.constraints)
     p.relations += q.relations

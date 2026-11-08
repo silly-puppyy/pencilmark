@@ -291,3 +291,17 @@ def test_other_region_sum_and_no_2x2():
         doc = dict(base, rules=[{"type": "chaos", "no_2x2": True}, square])
         pencilmark.validate(doc)
         assert pencilmark.write.document(doc)["rules"] == doc["rules"]
+
+
+def test_sight_sentences_read():
+    """a circle counting the cells of its own region it sees is understood (region_sight), with the sentences that go
+    with it; the same vision sentence without a sight rule still refuses the puzzle"""
+    from pencilmark.sources._sp_translate import region_statements, sight_counts_itself
+
+    text = (
+        "A digit in a circle equals the number of cells seen horizontally and vertically that are in the same region "
+        "as the circled digit, including itself. Region borders block vision."
+    )
+    assert region_statements(text)[1] == [] and sight_counts_itself(text)
+    assert region_statements("Region borders block vision.")[1]
+    assert not sight_counts_itself("A digit in a circle counts its region's cells it sees, not including itself.")
