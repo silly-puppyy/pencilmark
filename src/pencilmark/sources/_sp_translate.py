@@ -1487,6 +1487,107 @@ def edge_number_rule(rules):
     return None
 
 
+SVG_CELL = 64  # SudokuPad's pixels per cell in path data
+
+
+def path_points(d):
+    """an SVG path (M / L / H / V / Q / C / Z, absolute or relative) -> its subpaths as lists of [row, col] points in
+    cell units. A quadratic curve is a rounded corner (Sudoku Maker): its control point is the corner's cell center and
+    its end lies on the straight run to the next point, kept only where the path ends (on a cell edge it would add a
+    cell the line does not pass); a cubic is sampled in quarter steps"""
+    toks = re.findall(r"[MmLlHhVvQqCcZzTtSs]|-?\d*\.?\d+(?:e-?\d+)?", d or "")
+    subs, cur, x, y, x0, y0, cmd, i, pend = [], [], 0.0, 0.0, 0.0, 0.0, None, 0, None
+
+    def num():
+        nonlocal i
+        v = float(toks[i])
+        i += 1
+        return v
+
+    def put(px, py):
+        nonlocal pend
+        pend = None
+        cur.append([py / SVG_CELL, px / SVG_CELL])
+
+    def close():
+        if pend:
+            put(*pend)
+        pts = []
+        for q in cur:  # points on a straight run between their neighbours go (an edge point would skip a cell)
+            if len(pts) >= 2:
+                (ay, ax), (by, bx) = pts[-2], pts[-1]
+                if (
+                    abs((by - ay) * (q[1] - bx) - (bx - ax) * (q[0] - by)) < 1e-9
+                    and (by - ay) * (q[0] - by) + (bx - ax) * (q[1] - bx) >= 0
+                ):
+                    pts[-1] = q
+                    continue
+            if not pts or q != pts[-1]:
+                pts.append(q)
+        if len(pts) >= 2:
+            subs.append(pts)
+        cur.clear()
+
+    while i < len(toks):
+        if re.fullmatch(r"[A-Za-z]", toks[i]):
+            cmd = toks[i]
+            i += 1
+            if cmd in "Zz":
+                if cur:
+                    put(x0, y0)
+                x, y = x0, y0
+                continue
+        if cmd is None:
+            return []
+        rel = cmd.islower()
+        c = cmd.upper()
+        if c == "M":
+            close()
+            x, y = (x + num(), y + num()) if rel else (num(), num())
+            x0, y0 = x, y
+            put(x, y)
+            cmd = "l" if rel else "L"  # further pairs are line-tos
+        elif c == "L" or c == "T":
+            x, y = (x + num(), y + num()) if rel else (num(), num())
+            put(x, y)
+        elif c == "H":
+            x = x + num() if rel else num()
+            put(x, y)
+        elif c == "V":
+            y = y + num() if rel else num()
+            put(x, y)
+        elif c in "QS":
+            cx, cy = (x + num(), y + num()) if rel else (num(), num())
+            ex, ey = (x + num(), y + num()) if rel else (num(), num())
+            put(cx, cy)
+            pend = (ex, ey)
+            x, y = ex, ey
+        elif c == "C":
+            c1 = (x + num(), y + num()) if rel else (num(), num())
+            c2 = (x + num(), y + num()) if rel else (num(), num())
+            ex, ey = (x + num(), y + num()) if rel else (num(), num())
+            for t in (0.25, 0.5, 0.75, 1.0):
+                u = 1 - t
+                put(u**3 * x + 3 * u * u * t * c1[0] + 3 * u * t * t * c2[0] + t**3 * ex,
+                    u**3 * y + 3 * u * u * t * c1[1] + 3 * u * t * t * c2[1] + t**3 * ey)  # fmt: skip
+            x, y = ex, ey
+        else:
+            return []
+    close()
+    return subs
+
+
+def path_lines(P):
+    """lines drawn as SVG paths (Sudoku Maker files: `d`, no `wayPoints`) -> ordinary lines, one per subpath"""
+    lines = []
+    for ln in P.get("lines") or []:
+        if isinstance(ln, dict) and ln.get("d") and not ln.get("wayPoints"):
+            lines += [dict({k: v for k, v in ln.items() if k != "d"}, wayPoints=pts) for pts in path_points(ln["d"])]
+        else:
+            lines.append(ln)
+    return dict(P, lines=lines) if P.get("lines") else P
+
+
 def without_nulls(P):
     """the puzzle's element lists without null entries (SudokuPad skips them; some files carry them, in a list or in an
     element's cells / way points); the cell grid keeps its nulls, where a position matters"""
@@ -1662,7 +1763,7 @@ def translate(sp, page_text=None, overrides=None):
     """sp: decoded dict from sudokupad.fetch; page_text: the puzzle page's
     rules (e.g. the Logic Masters text) when the SudokuPad file has none.
     Returns (Puzzle, info) or (None, reason)."""
-    sp = dict(sp, puzzle=numbers_on_circles(without_nulls(sp["puzzle"])))
+    sp = dict(sp, puzzle=numbers_on_circles(path_lines(without_nulls(sp["puzzle"]))))
     P = sp["puzzle"]
     meta = sp.get("meta", {})
     page_text = re.split(r"\b(?:Solved by|Gel\u00f6st von)\b", page_text or "")[0]  # solvers' names are not rules

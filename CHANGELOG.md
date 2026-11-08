@@ -80,6 +80,8 @@
   (unmodelled rules refuse, anti-knight / anti-king), read kropki dots, X / V, coloured dots and coloured lines over
   their houses, and refuse clues off the houses and any other drawn element. Before, they read cages and arrows only
   and silently dropped everything else: of 236 logic-masters.de puzzles read this way, 5 had one solution.
+- **Lines drawn as SVG paths** (Sudoku Maker files: `d`, no `wayPoints`) are read; they were dropped silently (174
+  logic-masters.de puzzles; 70 of them read as if the lines were not there).
 - **The "Solved by" list of a logic-masters.de page is not rules**: solver names ("antiknight...", "Chaos...", "Fog...")
   added anti-knight or refused the puzzle. Also refused now: liar cells, split peas, helping cages, outside cells the
   solver fills, "choose a subset of the digits".

@@ -1363,3 +1363,20 @@ def test_sudokupad_hidden_houses_and_solver_lists():
     framed["puzzle"]["cells"][3][3] = {"value": 7}  # a clue off the declared 3x3 houses
     p, reason = SP.translate(sudokupad.decode(framed), "Digits 1 to 3.")
     assert p is None and "outside the houses" in reason
+
+
+def test_sudokupad_lines_drawn_as_svg_paths():
+    """Sudoku Maker files draw lines as SVG paths (`d`, 64 px per cell, rounded corners as quadratic curves) with no
+    `wayPoints`; the reader dropped them silently (174 logic-masters.de puzzles). A curve gives its corner cell; points
+    on a straight run go, so an edge point cannot skip a cell (000MO1)"""
+    from pencilmark.sources import _sp_translate as SP
+
+    assert SP.path_points("M32 352L288 96") == [[[5.5, 0.5], [1.5, 4.5]]]
+    # straight along row 1 to an edge point, then a rounded corner down column 5
+    run = SP.path_points("M32 32L192 32Q224 32 256 64L320 128")
+    assert run == [[[0.5, 0.5], [0.5, 3.5], [2.0, 5.0]]]
+    assert [c for c in SP.line_cells(run[0])][:4] == [(0, 0), (0, 1), (0, 2), (0, 3)]
+    assert SP.path_lines({"lines": [{"color": "#f00", "d": "m32 32h64M32 96h64"}]})["lines"][1]["wayPoints"] == [
+        [1.5, 0.5],
+        [1.5, 1.5],
+    ]
