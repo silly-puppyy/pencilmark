@@ -18,6 +18,11 @@
   stops at its first border), within a budget, and removes nothing when the budget runs out. Before, such rules were
   only checked once every digit and region was known.
 
+- **What a solver draws as borders**: the engine keeps which cells are known to share a region and which are known to
+  lie in different regions, before any region is named (seeded by the given borders and same-region sets). A rule
+  that only compares regions (`region_sight`, custom rules with `region(a) == region(b)`) is read over partitions, so
+  it teaches such facts while every label is open: a sight clue that sees only itself parts from its four neighbors.
+
 - **Counting puzzles with regions to find and rules that read them**: CP-SAT now encodes `region()` and `take_while`
   with a lambda (such puzzles used to fall to the C++ search alone, which often could not finish); the C++ search
   prunes on a region rule as soon as its value is settled (a sight line stops at its first other region), and once

@@ -214,3 +214,25 @@ def test_region_sight():
         for bad in ({"directions": ["north"]}, {"directions": []}, {"self": 1}, {"value": -1}):
             with pytest.raises(FormatError):
                 pencilmark.validate(dict(doc, rules=[{"type": "chaos"}, dict(arrow, **bad)]))
+
+
+def test_region_rule_learns_borders():
+    """a rule comparing regions only (region_sight) teaches which cells share a region while every label is open: a
+    sight clue that sees only itself lies in a different region from each of its four neighbors"""
+    from pencilmark import api
+    from pencilmark import cbackend as CB
+    from pencilmark import exchange as X
+
+    doc = {
+        "format": "pencilmark-puzzle",
+        "format_version": 1,
+        "board": {"rows": 4, "cols": 4},
+        "digits": 4,
+        "givens": [0] * 16,
+        "rules": [{"type": "chaos"}, {"type": "region_sight", "cells": ["r2c2"], "value": 1}],
+    }
+    with X._reserved_ok():
+        p = api._load(doc)
+        moves = CB.state_moves(p, api._params("human"), limit_per_tech=8, details=True)
+    rfx = next(m["rfx"] for m in moves if m["name"] == "RegionRule")
+    assert sorted((c, a) for k, c, a in rfx if k == CB.AE_REG_NEQ) == [(5, 1), (5, 4), (5, 6), (5, 9)]

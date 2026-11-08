@@ -53,6 +53,10 @@ bool expr_holds(const ExprProgram& prog, const int* digits, const int* labels = 
 /// does the program call region() (or another layer built-in)?
 bool expr_layered(const ExprNode& e);
 
+/// does the rule use region() only to compare regions (== / !=)? Then which cells share a region is all it reads, and a
+/// search may name regions freely (partitions instead of labels)
+bool expr_region_relational(const ExprNode& e);
+
 /// what a lazy evaluation needs next: the digit (label false) or the region label (label true) of a variable
 struct ExprNeed {
     int var;

@@ -369,14 +369,21 @@ void Solver::region_rule(MoveBuf& out) {
         if (k.type != NT_EXPR || !k.expr || !k.expr->layered) continue;
         const int nv = k.nv();
         if (nv > 64) continue;
+        // a rule comparing regions only (==, !=) reads which cells share a region: regions are named freely as the
+        // search meets them (partitions), so it learns "same region" / "different regions" while every label is open
+        const bool rel = expr_region_relational(k.expr->root);
         int dg[64], lb[64];
         uint32_t dsup[64] = {0}, lsup[64] = {0};
         bool dall[64] = {false}, lall[64] = {false};
+        int cellv[64];
         for (int i = 0; i < nv; ++i) {
-            const int c = k.vars[i];
+            const int c = cellv[i] = k.vars[i];
             dg[i] = vals[c] ? vals[c] : -1;
-            lb[i] = p.chaos_of[c] < 0 ? 0 : lab[c] ? lab[c] : -1;
+            lb[i] = p.chaos_of[c] < 0 ? 0 : (!rel && lab[c]) ? lab[c] : -1;
         }
+        // partitions: symbol per read variable (lb), each symbol's known label (0: none)
+        std::vector<int> sym_label(1, 0);
+        std::vector<uint64_t> same(nv, 0), diff(nv, 0), unread(nv, 0);  // per pair (i, j): bits of j
         long budget = BUDGET;
         bool complete = true;
         std::function<void()> go = [&]() {
@@ -389,40 +396,107 @@ void Solver::region_rule(MoveBuf& out) {
             bool need_label = false;
             try {
                 if (!expr_holds_lazy(*k.expr, dg, lb)) return;
-            } catch (const ExprNeed& e) {
-                need = e.var, need_label = e.label;
+            } catch (const ExprNeed& ex) {
+                need = ex.var, need_label = ex.label;
             }
-            if (need < 0) {  // satisfied: what it read is supported; what it never read keeps every candidate
+            if (need < 0) {  // satisfied: supports
                 for (int i = 0; i < nv; ++i) {
                     if (dg[i] > 0) dsup[i] |= bit(dg[i]);
                     else dall[i] = true;
-                    if (lb[i] > 0) lsup[i] |= bit(lb[i]);
-                    else if (lb[i] < 0) lall[i] = true;
+                    if (!rel) {
+                        if (lb[i] > 0) lsup[i] |= bit(lb[i]);
+                        else if (lb[i] < 0) lall[i] = true;
+                    }
                 }
+                if (rel)
+                    for (int i = 0; i < nv; ++i)
+                        for (int j = i + 1; j < nv; ++j) {
+                            if (lb[i] <= 0 || lb[j] <= 0) unread[i] |= 1ull << j;
+                            else if (lb[i] == lb[j]) same[i] |= 1ull << j;
+                            else diff[i] |= 1ull << j;
+                        }
                 return;
             }
-            const int c = k.vars[need];
-            int* slot = need_label ? &lb[need] : &dg[need];
-            for (uint32_t o = need_label ? lcand[c] : cand[c]; o && complete; o &= o - 1) {
-                *slot = lowdigit(o);
-                go();
+            const int c = cellv[need];
+            if (!need_label) {
+                for (uint32_t o = cand[c]; o && complete; o &= o - 1) {
+                    dg[need] = lowdigit(o);
+                    go();
+                }
+                dg[need] = -1;
+                return;
             }
-            *slot = -1;
+            if (!rel) {
+                for (uint32_t o = lcand[c]; o && complete; o &= o - 1) {
+                    lb[need] = lowdigit(o);
+                    go();
+                }
+                lb[need] = -1;
+                return;
+            }
+            // which symbols c may take: a cell of its group already named forces that symbol; otherwise any symbol
+            // no recorded difference or known label rules out, or a new one
+            const int nsym = (int)sym_label.size();
+            std::vector<char> ok(nsym + 1, 1);
+            ok[0] = 0;
+            int forced = 0;
+            for (int j = 0; j < nv; ++j) {
+                if (lb[j] <= 0) continue;
+                if (rg_anchor(cellv[j]) == rg_anchor(c)) forced = lb[j];
+                if (rg_differ(cellv[j], c)) ok[lb[j]] = 0;
+            }
+            for (int s = 1; s < nsym; ++s) {
+                const int L = sym_label[s];
+                if (L && (lab[c] ? lab[c] != L : !(lcand[c] & bit(L)))) ok[s] = 0;
+                if (lab[c] && L == lab[c] && !forced) forced = s;  // its label is that symbol's
+            }
+            std::vector<int> opts;
+            if (forced) {
+                if (ok[forced]) opts.push_back(forced);
+            } else {
+                for (int s = 1; s < nsym; ++s)
+                    if (ok[s]) opts.push_back(s);
+                opts.push_back(nsym);  // a region not met yet
+            }
+            for (int s : opts) {
+                const bool fresh = s == nsym;
+                if (fresh) sym_label.push_back(lab[c] ? lab[c] : 0);
+                const int keep_label = sym_label[s];
+                if (!fresh && !sym_label[s] && lab[c]) sym_label[s] = lab[c];
+                lb[need] = s;
+                go();
+                lb[need] = -1;
+                sym_label[s] = keep_label;
+                if (fresh) sym_label.pop_back();
+                if (!complete) break;
+            }
         };
         go();
         if (!complete) continue;
-        std::vector<std::pair<int, int>> d_off, l_off;
+        std::vector<std::pair<int, int>> d_off, l_off, joins, neqs;
         for (int i = 0; i < nv; ++i) {
-            const int c = k.vars[i];
+            const int c = cellv[i];
             if (!vals[c] && !dall[i])
                 for (uint32_t o = cand[c] & ~dsup[i]; o; o &= o - 1) d_off.push_back({c, lowdigit(o)});
-            if (p.chaos_of[c] >= 0 && !lab[c] && !lall[i])
+            if (!rel && p.chaos_of[c] >= 0 && !lab[c] && !lall[i])
                 for (uint32_t o = lcand[c] & ~lsup[i]; o; o &= o - 1) l_off.push_back({c, lowdigit(o)});
         }
-        if (d_off.empty() && l_off.empty()) continue;
-        Move& m = new_move(out, REGION_RULE, 1.0, (int)(d_off.size() + l_off.size()));
+        if (rel)
+            for (int i = 0; i < nv; ++i)
+                for (int j = i + 1; j < nv; ++j) {
+                    const int a = cellv[i], b = cellv[j];
+                    const uint64_t bj = 1ull << j;
+                    if ((unread[i] & bj) || p.chaos_of[a] < 0 || p.chaos_of[a] != p.chaos_of[b]) continue;
+                    if ((same[i] & bj) && !(diff[i] & bj) && rg_anchor(a) != rg_anchor(b)) joins.push_back({a, b});
+                    if ((diff[i] & bj) && !(same[i] & bj) && !rg_differ(a, b)) neqs.push_back({a, b});
+                }
+        const int n = (int)(d_off.size() + l_off.size() + joins.size() + neqs.size());
+        if (!n) continue;
+        Move& m = new_move(out, REGION_RULE, 1.0, n);
         for (auto [c, d] : d_off) add_elim(out, m, c, d);
         for (auto [c, l] : l_off) add_lel(out, m, c, l);
+        for (auto [a, b] : joins) add_aeff(out, m, AE_REG_JOIN, a, b);
+        for (auto [a, b] : neqs) add_aeff(out, m, AE_REG_NEQ, a, b);
         set_pattern(out, m, k.vars);
         m.nk = NM_NARY;  // the rule (explanations name it)
         m.na = k.index;

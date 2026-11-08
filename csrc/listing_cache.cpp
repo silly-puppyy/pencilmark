@@ -33,6 +33,7 @@ struct LEntry {
     std::vector<uint8_t> lab;      // regions to find: the label state (empty without regions)
     std::vector<uint32_t> lcand;
     std::vector<int> idc;          // identity layer: the colour classes (empty with params colouring off)
+    std::vector<int> rgc;          // regions to find: the region relations (empty without regions)
     // band logic: the per-solve state its output depends on (its two early-return caps, the escalation pass) and
     // what one call spends of the budget, replayed on a hit
     int band_state;
@@ -193,6 +194,7 @@ void Solver::collect_strategy(Strategy& s, MoveBuf& b) {
     h = mix(mix(mix(h, vals), cand), written_override);
     if (has_regions()) h = mix(mix(h, lab), lcand);  // regions to find: the listing depends on the labels too
     if (!idc.empty()) h = mix(h, idc);               // identity layer: ... and on the colour classes
+    if (!rgc.empty()) h = mix(h, rgc);               // ... and on the region relations
     const size_t n0 = b.moves.size();
     const LEntry* hit = g_lcache.find(
         h,
@@ -200,7 +202,8 @@ void Solver::collect_strategy(Strategy& s, MoveBuf& b) {
             if (e.pz != &p || e.uid != p.uid || e.params != lcache_params || e.canon != canon ||
                 e.assume_unique != opt.assume_unique || e.strat != name || e.vals != vals || e.cand != cand ||
                 e.written != written_override || e.solution != opt.solution || e.colours != opt.colours ||
-                e.band_state != bstate || e.band_now != bnow || e.lab != lab || e.lcand != lcand || e.idc != idc)
+                e.band_state != bstate || e.band_now != bnow || e.lab != lab || e.lcand != lcand || e.idc != idc ||
+                e.rgc != rgc)
                 return false;
             for (const auto& r : e.reads)
                 if (disabled.v[r.first] != r.second) return false;
@@ -220,7 +223,7 @@ void Solver::collect_strategy(Strategy& s, MoveBuf& b) {
     disabled.rec = nullptr;
     if (deadline_passed() || b.moves.size() < n0) return;  // cut short, or it removed moves listed before it
     LEntry e{&p,           p.uid, lcache_params, canon, opt.assume_unique, name, vals, cand, written_override, opt.solution,
-             opt.colours,  lab,   lcand,         idc,           bstate, bnow, band_spent - spent0, band_total - total0, {}, n0,
+             opt.colours,  lab,   lcand,         idc,           rgc,           bstate, bnow, band_spent - spent0, band_total - total0, {}, n0,
              b.moves.size() - n0, {}};
     for (size_t t = 0; t < rec.size(); ++t)
         if (rec[t]) e.reads.emplace_back((int)t, disabled.v[t]);

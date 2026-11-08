@@ -466,6 +466,18 @@ bool expr_holds(const ExprProgram& prog, const int* digits, const int* labels, c
     return r.k == Val::BOOL && r.b;
 }
 
+namespace {
+bool relational_node(const ExprNode& e, int parent) {
+    if (e.op == X_CALL && e.v == REGION) return parent == X_EQ || parent == X_NE;
+    if (e.op == X_AUXCELL) return false;  // a layer read some other way
+    for (const ExprNode& k : e.kids)
+        if (!relational_node(k, e.op)) return false;
+    return true;
+}
+}  // namespace
+
+bool expr_region_relational(const ExprNode& e) { return relational_node(e, X_NONE); }
+
 bool expr_holds_lazy(const ExprProgram& prog, const int* digits, const int* labels) {
     Ev ev(prog, digits, labels, nullptr, nullptr);
     ev.lazy = true;
