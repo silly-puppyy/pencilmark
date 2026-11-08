@@ -723,6 +723,7 @@ def build_model(p):
         else:
             return None, None
     labels = _add_chaos(m, x, p) if has_chaos(p) else {}
+    m.pm_labels = labels  # regions to find: cell -> its label Booleans (tools read the solution's regions)
     shading = {}
     if has_shading(p):
         _add_yin_yang(m, p, shading)

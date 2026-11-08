@@ -582,6 +582,57 @@ void Solver::region_group(MoveBuf& out) {
             m.code = 7206;
         }
     }
+    // reach (CTC "region exit" / "do not trap"): a group's region grows through cells not known to lie in another
+    // region; it needs D cells in all. Without neighbour X a group would fall short: it takes X (7207). If X joined
+    // the group, a neighbouring group would be walled in short of D cells: X lies in another region (7208).
+    auto reach = [&](int anc, const std::vector<char>& blocked) {
+        std::vector<char> seen(p.N, 0);
+        std::vector<int> todo;
+        int n = 0;
+        for (int c : grp[anc]) seen[c] = 1, todo.push_back(c), ++n;
+        while (!todo.empty() && n < D) {
+            const int c = todo.back();
+            todo.pop_back();
+            for (int x : p.chaos_nbr[c]) {
+                if (seen[x] || blocked[x] || rg_differ(anc, x)) continue;
+                seen[x] = 1, todo.push_back(x), ++n;
+            }
+        }
+        return n;
+    };
+    std::vector<char> none(p.N, 0);
+    for (const auto& [a, ms] : grp) {
+        if ((int)ms.size() >= D) continue;
+        std::set<int> nb;
+        for (int c : ms)
+            for (int x : p.chaos_nbr[c])
+                if (rg_anchor(x) != a && !rg_differ(a, x)) nb.insert(x);
+        for (int x : nb) {  // bottleneck: blocked X (and its group)
+            std::vector<char> bl(p.N, 0);
+            for (int y : grp[rg_anchor(x)]) bl[y] = 1;
+            if (reach(a, bl) < D) emit(7207, ms, {}, {{a, x}});
+        }
+        for (int x : nb) {  // trap: with X's group in this one, could a neighbouring group still grow to D cells?
+            const int bx = rg_anchor(x);
+            std::vector<char> bl(p.N, 0);
+            for (int y : ms) bl[y] = 1;
+            for (int y : grp[bx]) bl[y] = 1;
+            if ((int)(ms.size() + grp[bx].size()) > D) continue;  // size cap's job
+            std::set<int> others;
+            for (int y : ms)
+                for (int z : p.chaos_nbr[y]) others.insert(rg_anchor(z));
+            for (int y : grp[bx])
+                for (int z : p.chaos_nbr[y]) others.insert(rg_anchor(z));
+            for (int k : others) {
+                // only a group known to lie in another region is walled in by the joined cells
+                if (k == a || k == bx || (int)grp[k].size() >= D || !(rg_differ(k, a) || rg_differ(k, bx))) continue;
+                if (reach(k, bl) < D) {
+                    emit(7208, grp[k], {{a, x}}, {});
+                    break;
+                }
+            }
+        }
+    }
     std::vector<std::pair<int, int>> neq;  // equal digits
     for (const auto& A : p.chaos)
         for (size_t i = 0; i < A.size(); ++i)

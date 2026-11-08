@@ -213,7 +213,8 @@ def code_name(code):
                 7122: "too small for a region", 7131: "dead end", 7141: "region exit", 7151: "region needs a digit",
                 7161: "pocket counting", 7190: "rule over regions", 7201: "groups too big together",
                 7202: "whole region sealed", 7203: "one way out", 7204: "equal digits split regions",
-                7205: "digit already in the group", 7206: "last place in a whole region"}.get(code, f"region {code}")  # fmt: skip
+                7205: "digit already in the group", 7206: "last place in a whole region", 7207: "only way to grow",
+                7208: "would trap a region"}.get(code, f"region {code}")  # fmt: skip
     if 4500 <= code < 4600:
         t = code - 4500
         return ("cage/sum" if t == 0 else CTYPES[t] if t < len(CTYPES) else f"rule{t}") + " in the head"

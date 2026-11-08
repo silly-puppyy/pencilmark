@@ -835,6 +835,10 @@ def _h_region(ctx):
             "cannot repeat in the others",
             "last place in a whole region": f"The cells {nm.cells(pc)} make a whole region: a digit with one place left "
             "in it goes there",
+            "only way to grow": f"The region of {nm.cells(pc)} needs {D} cells, and without one neighbor it could not "
+            "reach that many",
+            "would trap a region": f"The region of {nm.cells(pc)} needs {D} cells; if the other group grew into its "
+            "neighbor, it could no longer reach them",
         }.get(ctx.code, f"The cells {nm.cells(pc)} hold the same digit, and a region holds each digit once")
         title = ctx.code or "region groups"
     elif ctx.tech == S.REGION_RULE:
