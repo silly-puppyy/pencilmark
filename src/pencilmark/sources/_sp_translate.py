@@ -1084,8 +1084,9 @@ def described_line_rules(rules):
 
 
 def rules_color_map(rules):
-    """colour word -> rule key, from sentences mentioning both."""
-    out = {}
+    """colour word -> rule key, from sentences mentioning both; None for a colour a line sentence names with a rule this
+    reading does not know ("brown 3-way lines: ...", 000UR7)."""
+    out, unread = {}, set()
     text = (rules or "").lower()
     for sent in re.split(r"(?<=[.\n])\s*", text):
         rules_here = [k for k, pats in RULE_WORDS.items() if any(re.search(p, sent) for p in pats)]
@@ -1112,6 +1113,14 @@ def rules_color_map(rules):
             rk = dk or ("dutch" if "dutch" in rules_here else rules_here[0])
             for c in cols:
                 out.setdefault({"gray": "grey"}.get(c, c), rk)
+        elif re.search(r"\blines?\b", sent) and re.search(
+            r"\b(?:must|cannot|can't|may not|are|is|contain|sum|differ)\b", sent
+        ):
+            unread.update({"gray": "grey"}.get(c, c) for c in cols)  # a line rule this reading does not know
+    for c in unread:
+        out.setdefault(
+            c, None
+        )  # named, not understood: a line of that colour (or a near one) is not given another's rule
     return out
 
 
@@ -1334,8 +1343,12 @@ def line_rule_from_text(hexcol, cmap, drawn=()):
             d = min(d, 360 - d)
             if d < bd:
                 best, bd = rk, d
+    if best is None and bd < 41:  # the nearest colour word names a rule the text gives and the reading does not know
+        return None
     if best is None:  # a shade the text names by a neighboring word (a pinkish line called purple): one such word only
         near = [cmap[w] for w in COLOR_NEAR.get(cname, ()) if w in cmap and w not in drawn]
+        if None in near:
+            return None
         if len(set(near)) == 1:
             best = near[0]
     return best
@@ -2292,7 +2305,7 @@ def translate(sp, page_text=None, overrides=None):
             how = "a circle at one end and the rules text"
         if rule == "thermo" and "slow_thermo" in text_mentions and "thermo" not in text_mentions:
             rule, how = "slow_thermo", how + " (slow)"
-        if rule is None and not cmap and default_evidence(DEFAULT_LINE.get(cname), rules):
+        if rule is None and not any(cmap.values()) and default_evidence(DEFAULT_LINE.get(cname), rules):
             rule, how = DEFAULT_LINE.get(cname), "SudokuPad's default colours (the rules text names none)"
         if all_lines and cname != "diagonal" and overrides is None:
             if rule is None:

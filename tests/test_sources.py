@@ -333,7 +333,10 @@ def test_line_colour_from_described_rule():
         "blue": "region_sum"
     }
     assert SP.rules_color_map("Digits in a cage form a consecutive set. Red circles are odd.") == {}
-    assert SP.rules_color_map("The sum of any three consecutive digits along a red line is divisible by 3.") == {}
+    # a rule the reading does not know: red is named but unread (no other colour's rule is borrowed for it)
+    assert SP.rules_color_map("The sum of any three consecutive digits along a red line is divisible by 3.") == {
+        "red": None
+    }
     assert (
         SP.rules_color_map("Digits on lines of the same color sum to the same total.") == {}
     )  # no boxes: not a region sum

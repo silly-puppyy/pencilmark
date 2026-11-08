@@ -850,9 +850,13 @@ def _text_line_reading(fp, text):
     named = {k for k, pats in ST.RULE_WORDS.items() if any(re.search(p, text.lower()) for p in pats)}
     dk = ST.diff_rule(text.lower())
     # rules drawn by their own f-puzzles element (a between line, a thermometer) are not what generic lines mean
-    own = lambda r: any(r.replace("_", "") in k for k, v in fp.items() if v and k != "line" and not k.startswith("_"))
+    own = lambda r: (
+        bool(r) and any(r.replace("_", "") in k for k, v in fp.items() if v and k != "line" and not k.startswith("_"))
+    )
     only = (named | ST.described_line_rules(text) | ({dk} if dk else set())) - {"ten"}
-    if any(not own(r) for r in cmap.values()):  # the text gives its lines colors: an unnamed color is not the one rule
+    if any(
+        r and not own(r) for r in cmap.values()
+    ):  # the text gives its lines colors: an unnamed color is not the one rule
         only = set()
     every = ST.every_line_rule(text)
     drawn = {ST.color_name(c) for c in colours if c.startswith("#")}

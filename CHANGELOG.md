@@ -89,6 +89,9 @@
 - **Region-sum lines need their wording**: a blue line reads as a region-sum line only when a sentence says boxes or
   regions cut it (or names the rule); "dots divide lines into segments", "each segment sums to 4 or 13" and similar
   one-off rules are refused instead of read as region sums.
+- **A line colour the text names with a rule the reader does not know is not given another colour's rule**: a brown
+  "8-line" next to red parity lines no longer borrows the parity rule by hue (it is refused); SudokuPad's default
+  colours still apply when the text names no rule the reader knows.
 - **The "Solved by" list of a logic-masters.de page is not rules**: solver names ("antiknight...", "Chaos...", "Fog...")
   added anti-knight or refused the puzzle. Also refused now: liar cells, split peas, helping cages, outside cells the
   solver fills, "choose a subset of the digits".
