@@ -361,10 +361,15 @@ def to_puzzle(x, page_text=None, reading=None, infer=False, fetch=True, url=None
 
         sol = solution_of(sp["puzzle"]) or sol
     out = to_puzzle_json(p, solution=sol, meta=meta)
-    if style and sp["format"] != "fpuzzles":
-        from ._sp_style import elements
+    if style:
+        if sp["format"] == "fpuzzles":
+            from ._fpuz_style import elements as fpuz_elements
 
-        drawn = elements(sp)
+            drawn = fpuz_elements(sp.get("puzzle"))
+        else:
+            from ._sp_style import elements
+
+            drawn = elements(sp)
         if drawn:
             out["drawn"] = drawn
     return out

@@ -1288,3 +1288,17 @@ def test_sudokupad_screen_fixes():
     sp["puzzle"]["cells"][0][0] = {"value": 0, "given": True}
     with pytest.raises(pencilmark.NotSupportedError, match="digits 1..4"):
         SP.to_puzzle(sp, page_text="Normal sudoku rules apply.", fetch=False)
+
+
+def test_fpuzzles_style_capture():
+    """f-puzzles colors its generic elements (M4): a line's outlineC and width, a cage's outline (a transparent one is
+    no style), a circle's fill / outline and size become the drawn elements apply() turns into rule styles"""
+    from pencilmark.sources._fpuz_style import elements
+
+    fp = {"line": [{"lines": [["R1C1", "R1C2", "R2C2"]], "outlineC": "#67F067", "width": 0.3}],
+          "cage": [{"cells": ["R5C5", "R5C6"], "outlineC": "#ffffff00"}, {"cells": ["R6C6"], "outlineC": "#FF0000"}],
+          "circle": [{"cells": ["R9C9"], "baseC": "#FFFFFF", "outlineC": "#000000", "width": 0.5, "height": 0.5}]}  # fmt: skip
+    got = {tuple(e["cells"]): e["style"] for e in elements(fp)}
+    assert got[("r1c1", "r1c2", "r2c2")] == {"color": "#67f067", "width": 0.3}
+    assert ("r5c5", "r5c6") not in got and got[("r6c6",)] == {"color": "#ff0000"}
+    assert got[("r9c9",)] == {"fill": "#ffffff", "color": "#000000", "shape": "circle", "size": 0.5}

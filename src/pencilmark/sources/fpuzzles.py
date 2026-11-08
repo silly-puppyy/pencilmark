@@ -115,8 +115,9 @@ def translate(x, rules_text=None, reading=None, infer=False, fetch=True):
 
 
 @reads("f-puzzles")
-def to_puzzle(x, rules_text=None, reading=None, infer=False, fetch=True, url=None):
-    """f-puzzles link / payload / dict -> puzzle JSON dict (title, author, rules_text, source, embedded solution)."""
+def to_puzzle(x, rules_text=None, reading=None, infer=False, fetch=True, url=None, style=True):
+    """f-puzzles link / payload / dict -> puzzle JSON dict (title, author, rules_text, source, embedded solution).
+    style: keep the colors and widths of its generic elements as the rules' `style` (cosmetic)."""
     from ._fpuz_translate import solution_of
 
     fp = decode(x, fetch=fetch)
@@ -129,7 +130,14 @@ def to_puzzle(x, rules_text=None, reading=None, infer=False, fetch=True, url=Non
         "rules_text": fp.get("ruleset") or rules_text,
         "source": src,
     }
-    return to_puzzle_json(p, solution=solution_of(fp), meta=meta)
+    out = to_puzzle_json(p, solution=solution_of(fp), meta=meta)
+    if style:
+        from ._fpuz_style import elements
+
+        drawn = elements(fp)
+        if drawn:
+            out["drawn"] = drawn
+    return out
 
 
 __all__ = ["decode", "fetch", "translate", "to_puzzle", "payload_of", "short_id", "is_fpuzzles_url"]

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **f-puzzles style capture**: the colors and widths of f-puzzles' generic lines, cages, circles and rectangles
+  become the rules' `style`, as SudokuPad's already did (on 46 LMD f-puzzles, 414 of 905 rules keep their look).
 - **Logging you can time and follow**: `--log trace` (and `pencilmark.log("trace")` in Python) writes every step of the
   card's route and every test of the technique-list search; every level's lines carry the milliseconds since start.
   `pencilmark.log(level)` switches the log on from Python.
