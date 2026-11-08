@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Grading (regions to find; still reserved)
+
+- **Rules that read the regions are reasoned with** (a new technique, *A rule over regions*, RRU): a custom rule
+  calling `region()` is read on its own, trying every way of meeting it with the digits and regions its cells can still
+  take; digits and regions no way allows are removed. The search asks only for the values the rule reads (a sight line
+  stops at its first border), within a budget, and removes nothing when the budget runs out. Before, such rules were
+  only checked once every digit and region was known.
+
 ### Reading
 
 - **Regions to find in SudokuPad links** (still reserved for grading): more phrasings of the construction are read

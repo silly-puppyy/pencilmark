@@ -53,4 +53,14 @@ bool expr_holds(const ExprProgram& prog, const int* digits, const int* labels = 
 /// does the program call region() (or another layer built-in)?
 bool expr_layered(const ExprNode& e);
 
+/// what a lazy evaluation needs next: the digit (label false) or the region label (label true) of a variable
+struct ExprNeed {
+    int var;
+    bool label;
+};
+/// expr_holds with unknowns: digits[v] < 0 / labels[v] < 0 mark an unknown digit / label; reading one throws
+/// ExprNeed{v, label} instead of guessing, so a caller can branch on exactly the values the rule reads (cell values
+/// used only as cells, e.g. passed to region(), never need their digit)
+bool expr_holds_lazy(const ExprProgram& prog, const int* digits, const int* labels);
+
 }  // namespace cs

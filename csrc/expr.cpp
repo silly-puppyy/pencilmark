@@ -9,6 +9,7 @@ namespace cs {
 namespace {
 
 using i64 = long long;
+constexpr i64 NEED_N = -(i64(1) << 62);  ///< a cell value whose digit is not known yet (lazy evaluation)
 
 struct Val {
     enum Kind : uint8_t { NUM, BOOL, LIST, ABSENT, FN, CELL } k = ABSENT;
@@ -39,7 +40,10 @@ struct Val {
     }
     bool absent() const { return k == ABSENT; }
     bool numeric() const { return k == NUM || k == CELL; }
-    i64 nn() const { return n; }                    ///< numerator (a cell: its digit)
+    i64 nn() const {  ///< numerator (a cell: its digit; an unknown one is asked for)
+        if (k == CELL && n == NEED_N) throw ExprNeed{var, false};
+        return n;
+    }
     i64 dd() const { return k == CELL ? 1 : d; }    ///< denominator
     bool integer() const { return numeric() && dd() == 1; }
 };
@@ -57,6 +61,7 @@ struct Ev {
     const int* lab;  ///< region label per variable, or null
     const int* sh;   ///< colour per variable (1 shaded, 2 unshaded, 0 unknown), or null
     const int* aux;  ///< value per aux variable (AUX_UNSET: not known), or null
+    bool lazy = false;  ///< expr_holds_lazy: an unknown digit / label is asked for (ExprNeed), not absent
     std::vector<Val> slots;
 
     Ev(const ExprProgram& p, const int* d, const int* l, const int* s, const int* a = nullptr)
@@ -68,7 +73,7 @@ struct Ev {
 
     Val cell(int var) {
         Val v;
-        v.k = Val::CELL, v.n = dig[var], v.var = var;
+        v.k = Val::CELL, v.n = lazy && dig[var] < 0 ? NEED_N : dig[var], v.var = var;
         return v;
     }
     Val list_value(const ExprList& L) {
@@ -284,6 +289,7 @@ Val Ev::builtin(int id, const std::vector<Val>& a) {
             return Val::num((r - 1) / P.box_h * P.box_h + (c - 1) / P.box_w + 1);
         }
         case REGION: {  // no labels (or no label yet): absent, so comparisons with it fail and the caller decides later
+            if (lazy && a[0].k == Val::CELL && lab && lab[a[0].var] < 0) throw ExprNeed{a[0].var, true};
             if (a[0].k != Val::CELL || !lab || lab[a[0].var] <= 0) return Val();
             return Val::num(lab[a[0].var]);
         }
@@ -456,6 +462,13 @@ bool layered_node(const ExprNode& e) {
 
 bool expr_holds(const ExprProgram& prog, const int* digits, const int* labels, const int* shading, const int* aux) {
     Ev ev(prog, digits, labels, shading, aux);
+    Val r = ev.eval(prog.root);
+    return r.k == Val::BOOL && r.b;
+}
+
+bool expr_holds_lazy(const ExprProgram& prog, const int* digits, const int* labels) {
+    Ev ev(prog, digits, labels, nullptr, nullptr);
+    ev.lazy = true;
     Val r = ev.eval(prog.root);
     return r.k == Val::BOOL && r.b;
 }

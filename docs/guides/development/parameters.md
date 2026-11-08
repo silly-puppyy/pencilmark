@@ -117,6 +117,7 @@ changing a shipped value is a deliberate commit with a golden rewrite.
 | `route.price.RegionExit` | 2.2 | ″ |
 | `route.price.RegionDigit` | 3 | ″ |
 | `route.price.PocketCounting` | 3 | ″ |
+| `route.price.RegionRule` | 3 | ″ |
 | `route.price.ClassSingle` | 5 | ″ |
 | `route.price.ClassPropagation` | 0.6942 | ″ |
 | `route.price.ClassPair` | 5 | ″ |
@@ -146,7 +147,7 @@ changing a shipped value is a deliberate commit with a golden rewrite.
 | `route.locality` | 0 | ″ |
 | `route.digit_cont` | 0 | ″ |
 | `route.spot_w` | list of 6 | ″ |
-| `route.spot_fam` | list of 119 | ″ |
+| `route.spot_fam` | list of 120 | ″ |
 | `route.spot_seed` | 1 | ″ |
 | `route.notes_live` | True | ″ |
 | `route.notes_lazy` | True | ″ |

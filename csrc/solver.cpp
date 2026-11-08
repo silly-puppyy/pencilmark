@@ -197,7 +197,7 @@ static bool strategy_off(const char* name, const Flags& disabled) {
         {"digitcount", {DIGIT_COUNT}}, {"equaldigits", {EQUAL_DIGITS, CHAIN_COLOUR}}, {"colouralgebra", {COLOUR_ALGEBRA}}, {"classcolour", {CLASS_COLOUR}}, {"cluefacts", {CLUE_FACTS, CLUE_SHAPE}},
         {"ruleintersect", {RULE_INTERSECT}}, {"regioncap", {REGION_CAP}}, {"regionexcl", {REGION_EXCL}},
         {"regionreach", {REGION_REACH}}, {"deadend", {DEAD_END}}, {"regionexit", {REGION_EXIT}},
-        {"regiondigit", {REGION_DIGIT}}, {"pocket", {POCKET}}, {"shorttrial", {SHORT_TRIAL}}, {"humancase", {HUMAN_CASE}},
+        {"regiondigit", {REGION_DIGIT}}, {"pocket", {POCKET}}, {"regionrule", {REGION_RULE}}, {"shorttrial", {SHORT_TRIAL}}, {"humancase", {HUMAN_CASE}},
         {"whatif", {WHAT_IF}}, {"eitherway", {EITHER_WAY}}};
     auto it = TECHS.find(name);
     if (it == TECHS.end()) return false;
@@ -361,7 +361,8 @@ Solver::Solver(const Puzzle& pz, const Params& prm, const SolveOptions& o)
                           std::make_shared<Fn>("deadend", [](Solver& s, MoveBuf& b) { s.dead_end(b); }),
                           std::make_shared<Fn>("regionexit", [](Solver& s, MoveBuf& b) { s.region_exit(b); }),
                           std::make_shared<Fn>("regiondigit", [](Solver& s, MoveBuf& b) { s.region_digit(b); }),
-                          std::make_shared<Fn>("pocket", [](Solver& s, MoveBuf& b) { s.pocket(b); })});
+                          std::make_shared<Fn>("pocket", [](Solver& s, MoveBuf& b) { s.pocket(b); }),
+                          std::make_shared<Fn>("regionrule", [](Solver& s, MoveBuf& b) { s.region_rule(b); })});
         for (int t : {UNIQUE_RECT, BUG_PLUS1, GURTH}) disabled.set(t, 1);
         any_disabled = true;
     }

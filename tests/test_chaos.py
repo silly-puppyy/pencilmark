@@ -130,3 +130,34 @@ def test_region_sentences():
     assert kinds == {"arrow": True, "thermo": True, "white": False} and unknown == []
     _, unknown = region_statements("Region borders block vision. Cages within the same region have the same total.")
     assert len(unknown) == 2
+
+
+def test_region_rule_reads_custom_rules():
+    """a custom rule reading region() is read on its own (RegionRule): the 4x4 example of houses-and-regions.mdx with
+    its given border and same-region set written as custom rules grades like the version with the given clues"""
+    import json
+    import re
+    from pathlib import Path
+
+    text = (Path(__file__).parents[1] / "docs/formats/rules/houses-and-regions.mdx").read_text(encoding="utf-8")
+    doc = json.loads(re.search(r"A complete 4×4 chaos construction.*?```json\n(.*?)```", text, re.S).group(1))
+    custom = dict(
+        doc,
+        rules=[
+            {"type": "chaos"},
+            {"type": "custom", "cells": {"a": ["r1c2"], "b": ["r1c3"]}, "holds": "region(a) != region(b)"},
+            {
+                "type": "custom",
+                "cells": {"a": ["r3c1"], "b": ["r4c1"], "c": ["r4c2"]},
+                "holds": "region(a) == region(b) and region(b) == region(c)",
+            },
+        ],
+    )
+    from pencilmark import exchange as X
+
+    with X._reserved_ok():
+        a = pencilmark.rate(doc, fields=["band", "difficulty", "steps"])
+        b = pencilmark.rate(custom, fields=["band", "difficulty", "steps"])
+        assert pencilmark.solve(custom) == pencilmark.solve(doc)
+    assert "RRU" in {s["code"] for s in b["steps"]}
+    assert (a["band"], a["difficulty"]) == (b["band"], b["difficulty"])

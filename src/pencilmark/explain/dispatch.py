@@ -330,6 +330,15 @@ _X_HANDLERS = {
         "pocket_counting",
         ("Pocket counting", "A pocket too small for a region of its own belongs to the unfinished region around it."),
     ),
+    "REGION_RULE": (
+        _h_region,
+        "region_rule",
+        (
+            "A rule over regions",
+            "A rule that reads the regions (what a clue sees within its own region, borders it crosses) read on its own: "
+            "a digit or region no way of meeting the rule allows is ruled out.",
+        ),
+    ),
     "REGION_EXCL": (
         _h_region,
         "region_exclusion",

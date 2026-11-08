@@ -85,6 +85,7 @@ id,const,name,role,code,display,band,split,family,gate,direct,mental,price,price
 107,REGION_EXIT,RegionExit,logic,RXT,Region exit (a region's only way out),Easy,0,intersections+combos,any,0,0,2.2,
 108,REGION_DIGIT,RegionDigit,logic,RDG,Region needs a digit it can reach,Medium,0,intersections+combos,any,0,0,3,
 109,POCKET,PocketCounting,logic,RPK,Pocket counting (regions to find),Medium,0,intersections+combos,any,0,0,3,
+119,REGION_RULE,RegionRule,logic,RRU,A rule over regions read on its own,Medium,0,intersections+combos,any,0,0,3,
 110,CLASS_SINGLE,ClassSingle,logic,CSG,Color Single,Medium,0,intersections+combos,any,0,0,,EqualDigits
 111,ID_PROPAGATE,ClassPropagation,logic,CFL,Color Fill,Medium,0,singles,any,0,0,,NakedSingle(notes)
 112,CLASS_PAIR,ClassPair,logic,CPR,Color Pair,Medium,0,intersections+combos,any,0,0,,EqualDigits

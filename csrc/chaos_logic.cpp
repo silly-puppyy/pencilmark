@@ -3,6 +3,8 @@
 // label k + 1 in reading order (the exhaustive search uses the same rule), so a step "r4c5 is in region 3" reads as
 // "r4c5 is in the region of the third region's first cell".
 #include <algorithm>
+#include <functional>
+#include "expr.hpp"
 #include "portable.hpp"
 #include "solver.hpp"
 #include "solver_util.hpp"
@@ -274,6 +276,81 @@ void Solver::pocket(MoveBuf& out) {
             set_pattern(out, m, cells);
             m.code = 7161;
         }
+    }
+}
+
+// a rule that reads the regions (a custom rule calling region(): sight blocked by other regions, counting the cells of
+// its own region, borders crossed, ...) read on its own: the combinations of the digits and labels it actually reads
+// that satisfy it, found lazily (expr_holds_lazy asks for the next unknown value it needs, so a sight line stops at its
+// first border and cells used only as cells never branch on their digit), within a budget; a candidate digit or label
+// that no combination uses is removed. Sound: a satisfying combination that never read a value supports all its
+// candidates, extra (non-canonical) label combinations only add support, and nothing is removed when the budget runs out.
+void Solver::region_rule(MoveBuf& out) {
+    if (!has_regions() || disabled[REGION_RULE]) return;
+    constexpr long BUDGET = 20000;  // satisfiability checks per rule and step
+    for (const NConstraint& k : p.nary) {
+        if (k.type != NT_EXPR || !k.expr || !k.expr->layered) continue;
+        const int nv = k.nv();
+        if (nv > 64) continue;
+        int dg[64], lb[64];
+        uint32_t dsup[64] = {0}, lsup[64] = {0};
+        bool dall[64] = {false}, lall[64] = {false};
+        for (int i = 0; i < nv; ++i) {
+            const int c = k.vars[i];
+            dg[i] = vals[c] ? vals[c] : -1;
+            lb[i] = p.chaos_of[c] < 0 ? 0 : lab[c] ? lab[c] : -1;
+        }
+        long budget = BUDGET;
+        bool complete = true;
+        std::function<void()> go = [&]() {
+            if (!complete) return;
+            if (--budget < 0) {
+                complete = false;
+                return;
+            }
+            int need = -1;
+            bool need_label = false;
+            try {
+                if (!expr_holds_lazy(*k.expr, dg, lb)) return;
+            } catch (const ExprNeed& e) {
+                need = e.var, need_label = e.label;
+            }
+            if (need < 0) {  // satisfied: what it read is supported; what it never read keeps every candidate
+                for (int i = 0; i < nv; ++i) {
+                    if (dg[i] > 0) dsup[i] |= bit(dg[i]);
+                    else dall[i] = true;
+                    if (lb[i] > 0) lsup[i] |= bit(lb[i]);
+                    else if (lb[i] < 0) lall[i] = true;
+                }
+                return;
+            }
+            const int c = k.vars[need];
+            int* slot = need_label ? &lb[need] : &dg[need];
+            for (uint32_t o = need_label ? lcand[c] : cand[c]; o && complete; o &= o - 1) {
+                *slot = lowdigit(o);
+                go();
+            }
+            *slot = -1;
+        };
+        go();
+        if (!complete) continue;
+        std::vector<std::pair<int, int>> d_off, l_off;
+        for (int i = 0; i < nv; ++i) {
+            const int c = k.vars[i];
+            if (!vals[c] && !dall[i])
+                for (uint32_t o = cand[c] & ~dsup[i]; o; o &= o - 1) d_off.push_back({c, lowdigit(o)});
+            if (p.chaos_of[c] >= 0 && !lab[c] && !lall[i])
+                for (uint32_t o = lcand[c] & ~lsup[i]; o; o &= o - 1) l_off.push_back({c, lowdigit(o)});
+        }
+        if (d_off.empty() && l_off.empty()) continue;
+        Move& m = new_move(out, REGION_RULE, 1.0, (int)(d_off.size() + l_off.size()));
+        for (auto [c, d] : d_off) add_elim(out, m, c, d);
+        for (auto [c, l] : l_off) add_lel(out, m, c, l);
+        set_pattern(out, m, k.vars);
+        m.nk = NM_NARY;  // the rule (explanations name it)
+        m.na = k.index;
+        m.nb = k.group;
+        m.code = 7190;
     }
 }
 

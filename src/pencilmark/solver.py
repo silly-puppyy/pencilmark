@@ -85,6 +85,7 @@ DEAD_END = 106  # a cell shares its region with a neighbor (no one-cell region)
 REGION_EXIT = 107  # a region short of cells with one way out takes that cell
 REGION_DIGIT = 108  # a region's missing digit fits one cell it can reach: that cell joins it
 POCKET = 109  # pocket counting: a pocket too small for a new region, touching one unfinished region, joins it
+REGION_RULE = 119  # a rule reading region() on its own: digits / labels no combination of what it reads supports
 # identity layer (C++ only, params coloring): persistent color classes of cells holding one unknown digit
 CLASS_SINGLE = 110  # in a house only one cell can hold a class's digit (the others see a member): it joins the class
 ID_PROPAGATE = 111  # a class member's lost candidate leaves every member; a placed member places the others

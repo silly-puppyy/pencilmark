@@ -811,6 +811,12 @@ def _h_region(ctx):
             "region can still reach"
         )
         title = "region needs a digit"
+    elif ctx.tech == S.REGION_RULE:
+        why = (
+            f"The rule on {nm.cells(pc)} reads the regions: try every way of meeting it with the digits and regions its"
+            " cells can still take, and some options never occur"
+        )
+        title = "a rule over regions"
     elif ctx.tech == S.POCKET:
         why = (
             f"The undecided cells {nm.cells(pc)} form a pocket of fewer than {D} cells: no region fits inside it, and "
