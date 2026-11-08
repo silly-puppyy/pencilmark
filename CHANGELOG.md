@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Format (regions to find; still reserved)
+
+- **`region_sight`** (puzzle-format 6.3), the most common rule that reads the regions (setters' circles, cave,
+  sightlines, sightline arrows, internal X-sums, arrows): a clue counts the cells of its own region it sees in its
+  `directions` (all four by default), sight stopping at the first cell of another region; `self` counts the clue cell
+  (default true), `value` gives the count when it is not the clue's digit. Named in the format so a program can say
+  which region rules it supports; the engine reads it as custom rules over `region()`.
+
 ### Grading (regions to find; still reserved)
 
 - **Rules that read the regions are reasoned with** (a new technique, *A rule over regions*, RRU): a custom rule

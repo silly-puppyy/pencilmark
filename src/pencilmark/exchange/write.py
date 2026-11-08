@@ -494,6 +494,8 @@ class _Writer:
             return [dict(rule, holds=_holds(rule["holds"]))]
         if t == "quadruple":
             return [{"type": "quadruple", "digits": [int(v) for v in rule["digits"]], "cells": nm(rule["cells"])}]
+        if t == "region_sight":
+            return [dict(rule, cells=nm(rule["cells"]))]
         if t == "vudoku":
             return [{"type": "vudoku", "cells": nm(rule["cells"])}]
         if t == "increasing":

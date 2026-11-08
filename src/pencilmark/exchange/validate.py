@@ -31,6 +31,7 @@ RULE_KEYS = {
     "chaos": (set(), {"origin"}),
     "region_border": ({"cells"}, set()),
     "same_region": ({"cells"}, set()),
+    "region_sight": ({"cells"}, {"directions", "self", "value"}),
     "yin_yang": (set(), {"shaded", "unshaded"}),
     "box_grid": ({"box", "count"}, {"origin"}),
     "box": ({"cells"}, set()),
@@ -258,7 +259,7 @@ _RESERVED_OK = [False]
 # Reserved for a later version (user, 2026-11-07): shading (6.19) and regions to find (6.3) load, solve and count in the
 # engine, but no human technique grades them yet; files that use them are refused until then (_reserved_ok() reads them).
 RESERVED_TYPES = {"yin_yang": "shading", "chaos": "regions to find", "region_border": "regions to find",
-                  "same_region": "regions to find"}  # fmt: skip
+                  "same_region": "regions to find", "region_sight": "regions to find"}  # fmt: skip
 
 
 class _reserved_ok:
@@ -327,6 +328,22 @@ def _validate_rule(r, B):
                 raise FormatError('a fog trigger is {"when": [cells], "light": [cells]}')
             _cells(B, x["when"], "when", minlen=1)
             _cells(B, x["light"], "light", minlen=1)
+        return
+    if t == "region_sight":  # 6.3: clues in a chaos area counting the cells of their region they see
+        from ..rules.region import DIRECTIONS
+
+        cs = _cells(B, r["cells"], minlen=1)
+        if len(set(cs)) != len(cs):
+            raise FormatError("cells repeat")
+        if not any(set(cs) <= a for a in getattr(B, "chaos_areas", [])):
+            raise FormatError("region_sight cells must lie in one chaos area")
+        ds = r.get("directions", list(DIRECTIONS))
+        if not isinstance(ds, list) or not ds or len(set(ds)) != len(ds) or set(ds) - set(DIRECTIONS):
+            raise FormatError(f"region_sight directions must be a list of distinct {', '.join(DIRECTIONS)}")
+        if "self" in r and not isinstance(r["self"], bool):
+            raise FormatError("region_sight self must be true or false")
+        if "value" in r and (isinstance(r["value"], bool) or not isinstance(r["value"], int) or r["value"] < 0):
+            raise FormatError("region_sight value must be a whole number >= 0")
         return
     if t in ("region_border", "same_region"):  # 6.3: relations between the regions of a chaos area
         cs = _cells(B, r["cells"], n=2 if t == "region_border" else None, minlen=2)

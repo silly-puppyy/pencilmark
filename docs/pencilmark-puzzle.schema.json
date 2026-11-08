@@ -382,6 +382,56 @@
    ],
    "additionalProperties": false
   },
+  "rule_region_sight": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "region_sight"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "cells": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/cell"
+     },
+     "minItems": 1
+    },
+    "directions": {
+     "type": "array",
+     "items": {
+      "enum": [
+       "up",
+       "down",
+       "left",
+       "right"
+      ]
+     },
+     "minItems": 1,
+     "maxItems": 4,
+     "uniqueItems": true
+    },
+    "self": {
+     "type": "boolean"
+    },
+    "value": {
+     "type": "integer",
+     "minimum": 0
+    }
+   },
+   "required": [
+    "type",
+    "cells"
+   ],
+   "additionalProperties": false
+  },
   "rule_box_grid": {
    "type": "object",
    "properties": {
@@ -1751,6 +1801,9 @@
     },
     {
      "$ref": "#/$defs/rule_same_region"
+    },
+    {
+     "$ref": "#/$defs/rule_region_sight"
     },
     {
      "$ref": "#/$defs/rule_box_grid"

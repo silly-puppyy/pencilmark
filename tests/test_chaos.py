@@ -187,3 +187,30 @@ def test_cpsat_models_region_rules():
         by_cpsat = cpsat_verify.cpsat_solutions(p, limit=2)
         by_search = cpsat_verify._engine(p, 2, 2_000_000, 60)[0]
     assert sorted(map(list, by_cpsat)) == sorted(map(list, by_search))
+
+
+def test_region_sight():
+    """region_sight (6.3): clues counting the cells of their own region they see; validated, written back by name,
+    described, and solved (a 4x4 whose regions to find are its 2x2 boxes, every sight clue true for them)"""
+    from pencilmark import exchange as X
+
+    sol = [1, 2, 3, 4, 3, 4, 1, 2, 2, 1, 4, 3, 4, 3, 2, 1]
+    doc = {
+        "format": "pencilmark-puzzle",
+        "format_version": 1,
+        "board": {"rows": 4, "cols": 4},
+        "digits": 4,
+        "givens": [1, 0, 0, 0, 0, 4, 0, 0, 0, 0, 4, 0, 0, 0, 0, 1],
+        "rules": [{"type": "chaos"}, {"type": "region_sight", "cells": ["r1c3", "r2c1", "r3c4", "r4c2"]}],
+    }
+    with X._reserved_ok():
+        pencilmark.validate(doc)
+        assert pencilmark.write.document(doc)["rules"][1] == doc["rules"][1]
+        assert pencilmark.count_solutions(doc, limit=2)["count"] == 1
+        assert pencilmark.solve(doc) == sol
+        assert "sees" in pencilmark.describe(doc)["rules_text"]
+        arrow = {"type": "region_sight", "cells": ["r1c1"], "directions": ["right"], "self": False, "value": 1}
+        pencilmark.validate(dict(doc, rules=[{"type": "chaos"}, arrow]))
+        for bad in ({"directions": ["north"]}, {"directions": []}, {"self": 1}, {"value": -1}):
+            with pytest.raises(FormatError):
+                pencilmark.validate(dict(doc, rules=[{"type": "chaos"}, dict(arrow, **bad)]))

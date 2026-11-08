@@ -100,8 +100,14 @@ A complete 4×4 chaos construction (one solution, digits and regions; the dividi
   border of several cell edges is one rule per edge.
 - **`same_region`**: the cells lie in one region (a rule such as "every thermometer lies in one region" is written
   as the thermometer plus `same_region` over its cells).
-- `region_border` and `same_region` cells MUST lie in one `chaos` area.
+- **`region_sight`**: each listed cell is a clue that counts the cells of its own region it sees in the given
+  `directions` (`up`, `down`, `left`, `right`; all four by default), sight stopping at the first cell of another region
+  or the edge of the board. `self` (true by default) counts the clue cell too. The count equals the clue cell's digit,
+  or `value` when the rule has one (a number printed beside the grid). Setters call it circles, cave, sightlines,
+  sightline arrows or internal X-sums; an arrow counting the run of its own region in one direction, without itself, is
+  `{"type": "region_sight", "cells": ["r2c3"], "directions": ["right"], "self": false}`.
+- `region_border`, `same_region` and `region_sight` cells MUST lie in one `chaos` area.
 
-Rules that read the regions themselves (sums of runs within a region, arrows counting the cells of their region) are
-not in format_version 1. Regions to find are reserved in pencilmark 1.2 (see the note above): `describe` names such
+Other rules that read the regions (border counts, sums of runs within a region) are not in format_version 1 yet;
+one-off rules are custom rules with `region()` (6.18). Regions to find are reserved in pencilmark 1.2 (see the note above): `describe` names such
 a puzzle, while reading it to solve, count or grade is refused until a later version.
