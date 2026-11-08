@@ -86,6 +86,9 @@
   joins (also when drawn from its tip, or touching the thermometer mid-stroke, where it is split); bulbs drawn half a
   cell wide, and bulbs drawn as filled SVG circles, count. Checked on every logic-masters.de SudokuPad puzzle by
   solution count: every reading that had one solution keeps it, 39 more now have one.
+- **Region-sum lines need their wording**: a blue line reads as a region-sum line only when a sentence says boxes or
+  regions cut it (or names the rule); "dots divide lines into segments", "each segment sums to 4 or 13" and similar
+  one-off rules are refused instead of read as region sums.
 - **The "Solved by" list of a logic-masters.de page is not rules**: solver names ("antiknight...", "Chaos...", "Fog...")
   added anti-knight or refused the puzzle. Also refused now: liar cells, split peas, helping cages, outside cells the
   solver fills, "choose a subset of the digits".

@@ -478,7 +478,11 @@ DEFAULT_EVIDENCE = {
     "whisper": r"whisper|(?:least|minimum difference of|difference of) (?:5|five)\b|\b(?:5|five) or (?:more|greater)",
     "zipper": r"zipper|equal(?:ly)? (?:distance|distant|far)|equidistant|cent(?:re|er)",
     "renban": r"renban|(?<!non)(?<!non-)consecutive",
-    "region_sum": r"region[- ]sum|\bsegments?\b.*\b(?:sums?|totals?|value)\b|(?:\bsums?\b|\btotal).*\b(?:box|region)|\b(?:box|region).*(?:\bsums?\b|\btotal)",
+    # within one sentence: the boxes / regions cut the line ("dots divide lines into segments" is another rule)
+    "region_sum": r"region[- ]sum|equal[- ]sum lines?|\b(?:box|region|nonet)[- ]?(?:borders?|boundar(?:y|ies)|edges?)\b[^.\n]{0,80}"
+    r"\b(?:segments?|sections?|parts?|pieces?)\b|\b(?:segments?|sections?)\b[^.\n]{0,80}\b(?:box|region|nonet)"
+    r"|(?:\bsums?\b|\btotal)[^.\n]{0,60}\b(?:in|within) (?:each|every|any) (?:3x3 )?(?:box|region)"
+    r"|either side of (?:a|the|each) (?:box|region) border|(?:box|region) borders? (?:split|divide|cut|separate)",
     "thermo": r"thermo|bulb",
     "dutch": r"dutch|(?:least|minimum difference of|difference of) (?:4|four)\b|\b(?:4|four) or (?:more|greater)",
     "parity": r"parity|\bodd\b.{0,40}\beven\b|\beven\b.{0,40}\bodd\b",
