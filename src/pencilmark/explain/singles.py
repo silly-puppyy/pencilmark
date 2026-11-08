@@ -509,27 +509,34 @@ def _rule_from_move(ctx):
     return None
 
 
-def _completed_rule(ctx, c, v):
-    """the rule the move completes, found from the position when the move does not name it: one with c as its only
-    empty cell whose digits leave exactly v there (F1, 2026-11-08: two thirds of the generic explanations)"""
+def rule_for_move(ctx):
+    """the rule that explains a move when the move does not name it (F1, 2026-11-08: two thirds of the generic
+    explanations): the smallest rule holding every cell the move touches whose digits, with the candidates as they
+    stand, leave the placed digit alone in its cell or none of the eliminated ones"""
     p, st = ctx.p, ctx.st
+    touched = {c for c, _ in ctx.elims} | ({ctx.place[0]} if ctx.place else set())
+    best = None
     for rule in rules(p).values():
-        cells = getattr(rule, "cells", None) or ()
-        if c not in cells or any(not st.vals[q] for q in cells if q != c):
+        cells = list(getattr(rule, "cells", None) or ())
+        if not touched or not touched <= set(cells) or (best is not None and len(cells) >= len(best.cells)):
             continue
-        dom = [bit(st.vals[q]) if st.vals[q] else p.domains[q] for q in cells]
+        dom = [bit(st.vals[q]) if st.vals[q] else st.cand[q] for q in cells]
         try:
-            if enum_rule(p, rule, dom)["sup"][list(cells).index(c)] == bit(v):
-                return rule
+            sup = enum_rule(p, rule, dom)["sup"]
         except Exception:  # noqa: BLE001  (a rule enum_rule does not model)
             continue
-    return None
+        if ctx.place and sup[cells.index(ctx.place[0])] != bit(ctx.place[1]):
+            continue
+        if any(sup[cells.index(c)] & bit(d) for c, d in ctx.elims):
+            continue
+        best = rule
+    return best
 
 
 def _h_nary_direct(ctx):
     nm, p, st = ctx.nm, ctx.p, ctx.st
     c, v = ctx.place
-    rule = _rule_from_move(ctx) or _completed_rule(ctx, c, v)
+    rule = _rule_from_move(ctx) or rule_for_move(ctx)
     if rule is None:
         return _generic(ctx)
     known = [(q, st.vals[q]) for q in rule.cells if st.vals[q]]

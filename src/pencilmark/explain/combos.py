@@ -24,7 +24,7 @@ from .base import (
 )
 from .facts import RULE_FACTS, rule_fact
 from .grid import Rule, _rule_dom, enum_rule
-from .singles import _con_json, _rule_from_move
+from .singles import _con_json, _rule_from_move, rule_for_move
 
 
 # --------------------------------------------------------------- innies -----
@@ -267,7 +267,7 @@ def _combo_phrase(combos, distinct=True, limit=6, sets=False):
 # ---------------------------------------------------- combinations / lines --
 def _h_combo(ctx):
     nm, p, st = ctx.nm, ctx.p, ctx.st
-    rule = _rule_from_move(ctx)
+    rule = _rule_from_move(ctx) or rule_for_move(ctx)
     if rule is None:
         if ctx.tech == S.LOL_COMBO:
             return _h_lol(ctx)
