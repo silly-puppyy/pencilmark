@@ -387,6 +387,8 @@ def _chaos_text(rs, c):
         out.append("Some region borders are given.")
     if any(r["type"] == "same_region" for r in rs):
         out.append("Marked cells lie in one region.")
+    if any(r["type"] == "border_count" for r in rs):
+        out.append("A clue counts the region borders between it and the edge of the grid in its directions.")
     if any(r["type"] == "region_sight" for r in rs):
         out.append(
             "A clue counts the cells of its own region it sees in its directions (itself included unless stated), "
@@ -396,7 +398,9 @@ def _chaos_text(rs, c):
 
 
 family(
-    "Chaos Construction", lambda r: r["type"] in ("chaos", "region_border", "same_region", "region_sight"), _chaos_text
+    "Chaos Construction",
+    lambda r: r["type"] in ("chaos", "region_border", "same_region", "region_sight", "border_count"),
+    _chaos_text,
 )
 family(
     "Yin Yang",

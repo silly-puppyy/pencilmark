@@ -106,8 +106,12 @@ A complete 4×4 chaos construction (one solution, digits and regions; the dividi
   or `value` when the rule has one (a number printed beside the grid). Setters call it circles, cave, sightlines,
   sightline arrows or internal X-sums; an arrow counting the run of its own region in one direction, without itself, is
   `{"type": "region_sight", "cells": ["r2c3"], "directions": ["right"], "self": false}`.
-- `region_border`, `same_region` and `region_sight` cells MUST lie in one `chaos` area.
+- **`border_count`**: each listed cell is a clue that counts the region borders crossed going from it to the edge of
+  the board in each of its `directions` (all four by default); the count equals the clue cell's digit, or `value`.
+  Every direction gives the count on its own; `total: true` counts all of them together. Setters call it arrows
+  (borders in that direction) or passport arrows.
+- `region_border`, `same_region`, `region_sight` and `border_count` cells MUST lie in one `chaos` area.
 
-Other rules that read the regions (border counts, sums of runs within a region) are not in format_version 1 yet;
+Other rules that read the regions (sums of runs within a region) are not in format_version 1 yet;
 one-off rules are custom rules with `region()` (6.18). Regions to find are reserved in pencilmark 1.2 (see the note above): `describe` names such
 a puzzle, while reading it to solve, count or grade is refused until a later version.

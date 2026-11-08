@@ -411,16 +411,15 @@ def from_json(obj) -> M.Puzzle:
                 win = [(r_, c_), (r_, c_ + 1), (r_ + 1, c_), (r_ + 1, c_ + 1)]
                 if all(x in cid for x in win):
                     p.constraints.append({"type": "table", "cells": [cid[x] for x in win], "allowed": allowed})
-        elif t in ("custom", "region_sight"):  # the rule language (rules/custom.py), kept by name; region rules
+        elif t == "custom" or t in REGION_RULES:  # the rule language (rules/custom.py), kept by name; region rules
             from .exchange.board import Board  # (rules/region.py) compile to custom rules over region()
             from .layers import layers_of
             from .rules import custom as CU
-            from .rules.region import region_sight_custom
 
             layers = layers_of(d.get("rules"))
             Bc = Board(coords, D)
             Bc.unknowns, Bc.layers = d.get("unknowns") or {}, d.get("layers") or {}
-            parts = region_sight_custom(r, set(coords)) if t == "region_sight" else [r]
+            parts = REGION_RULES[t](r, set(coords)) if t in REGION_RULES else [r]
             compiled = [x for part in parts for x in CU.compile_rule(part, Bc, D, layers)]
             width, height = max(c for _, c in coords) + 1, max(rr for rr, _ in coords) + 1
             shape = ["".join("#" if (y, x) in cid else "." for x in range(width)) for y in range(height)]
@@ -472,7 +471,9 @@ def from_json(obj) -> M.Puzzle:
 # well-known rules that expand into engine relations / tables when read; the puzzle remembers them so they are written back
 # by name, not as their expansion (a global-entropy puzzle was 64 copies of a 2,916-row table). One-off rules are
 # custom rules (the rule language), also kept by name.
-NAMED_RULES = {"global_entropy", "quadruple", "rossini", "vudoku", "increasing", "isomorphic", "custom", "region_sight"}
+from .rules.region import REGION_RULES  # noqa: E402  (named rules over regions to find)
+
+NAMED_RULES = {"global_entropy", "quadruple", "rossini", "vudoku", "increasing", "isomorphic", "custom", *REGION_RULES}
 
 
 def _remember(p, rule, rels, cons):

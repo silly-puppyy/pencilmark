@@ -9,6 +9,8 @@
   `directions` (all four by default), sight stopping at the first cell of another region; `self` counts the clue cell
   (default true), `value` gives the count when it is not the clue's digit. Named in the format so a program can say
   which region rules it supports; the engine reads it as custom rules over `region()`.
+- **`border_count`** (6.3): a clue counts the region borders between it and the edge of the board in each of its
+  `directions` (`total` adds them up); setters' arrows to borders and passport arrows.
 
 ### Grading (regions to find; still reserved)
 

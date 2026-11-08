@@ -432,6 +432,56 @@
    ],
    "additionalProperties": false
   },
+  "rule_border_count": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "border_count"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "cells": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/cell"
+     },
+     "minItems": 1
+    },
+    "directions": {
+     "type": "array",
+     "items": {
+      "enum": [
+       "up",
+       "down",
+       "left",
+       "right"
+      ]
+     },
+     "minItems": 1,
+     "maxItems": 4,
+     "uniqueItems": true
+    },
+    "total": {
+     "type": "boolean"
+    },
+    "value": {
+     "type": "integer",
+     "minimum": 0
+    }
+   },
+   "required": [
+    "type",
+    "cells"
+   ],
+   "additionalProperties": false
+  },
   "rule_box_grid": {
    "type": "object",
    "properties": {
@@ -1804,6 +1854,9 @@
     },
     {
      "$ref": "#/$defs/rule_region_sight"
+    },
+    {
+     "$ref": "#/$defs/rule_border_count"
     },
     {
      "$ref": "#/$defs/rule_box_grid"

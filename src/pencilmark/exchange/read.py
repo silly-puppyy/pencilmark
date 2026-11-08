@@ -154,7 +154,7 @@ class _ReadCtx:
             return [{"type": "yin_yang", "shaded": list(r.get("shaded", [])), "unshaded": list(r.get("unshaded", []))}]
         if t in ("region_border", "same_region"):
             return [{"type": t, "cells": list(r["cells"])}]
-        if t == "region_sight":  # rules/region.py: compiled to custom rules over region() where the puzzle is built
+        if t in ("region_sight", "border_count"):  # rules/region.py: compiled to custom rules over region() later
             return [{k: v for k, v in r.items() if k not in ("id", "label", "style")}]
         if t == "line":  # rules/line.py
             return line_to_engine(r, D, B, self.pairs_rule)

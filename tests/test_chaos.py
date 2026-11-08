@@ -236,3 +236,23 @@ def test_region_rule_learns_borders():
         moves = CB.state_moves(p, api._params("human"), limit_per_tech=8, details=True)
     rfx = next(m["rfx"] for m in moves if m["name"] == "RegionRule")
     assert sorted((c, a) for k, c, a in rfx if k == CB.AE_REG_NEQ) == [(5, 1), (5, 4), (5, 6), (5, 9)]
+
+
+def test_border_count():
+    """border_count (6.3): borders crossed from a clue to the edge; validated, written back, true clues consistent and
+    an impossible one (more borders than a row can hold) without solution"""
+    from pencilmark import exchange as X
+
+    sol = [1, 2, 3, 4, 3, 4, 1, 2, 2, 1, 4, 3, 4, 3, 2, 1]
+    base = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 4, "cols": 4}, "digits": 4,
+            "givens": sol}  # fmt: skip
+    rule = {"type": "border_count", "cells": ["r1c1", "r3c2"], "directions": ["right"]}  # true for 2x2 boxes
+    doc = dict(base, rules=[{"type": "chaos"}, rule])
+    with X._reserved_ok():
+        pencilmark.validate(doc)
+        assert pencilmark.write.document(doc)["rules"][1] == rule
+        assert pencilmark.count_solutions(doc, limit=2)["count"] == 1
+        never = {"type": "border_count", "cells": ["r1c1"], "directions": ["right"], "value": 4}
+        assert pencilmark.count_solutions(dict(base, rules=[{"type": "chaos"}, never]), limit=2)["count"] == 0
+        with pytest.raises(FormatError):
+            pencilmark.validate(dict(base, rules=[{"type": "chaos"}, dict(rule, total="yes")]))

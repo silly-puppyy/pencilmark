@@ -4,7 +4,10 @@ rule types, each compiled to custom rules over region() (rules/custom.py), which
 region_sight  a clue cell's digit (or the rule's `value`) counts the cells of the clue's own region it sees in the
               given `directions` (default all four), sight stopping at the first cell of another region or the edge of
               the board; `self` (default true) counts the clue cell too. Setters' names: circles, cave, sightlines,
-              sightline arrows, internal x-sums, arrows (one direction, without the clue cell)."""
+              sightline arrows, internal x-sums, arrows (one direction, without the clue cell).
+border_count  a clue cell's digit (or `value`) counts the region borders crossed going from the clue to the edge of the
+              board in each of its `directions` (each direction alone; `total` true: all of them together). Setters'
+              names: arrows (borders in that direction), passport arrows."""
 
 from __future__ import annotations
 
@@ -44,3 +47,30 @@ def region_sight_custom(rule, coords):
         out.append({"type": "custom", "cells": {"x": [cell.lower()], **rays},
                     "holds": f"{' + '.join(terms) or '0'} == {target}"})  # fmt: skip
     return out
+
+
+def border_count_custom(rule, coords):
+    """a border_count rule -> one custom rule per clue cell: per direction, a border between each pair of consecutive
+    cells from the clue to the edge"""
+    dirs = list(rule.get("directions") or DIRECTIONS)
+    out = []
+    for cell in rule["cells"]:
+        names, counts = {"x": [cell.lower()]}, []
+        for d, ray in sight_lines(cell, coords, dirs).items():
+            seq = ["x"]
+            for i, c in enumerate(ray):
+                names[f"{d}{i}"] = [c]
+                seq.append(f"{d}{i}")
+            counts.append(" + ".join(f"num(region({a}) != region({b}))" for a, b in zip(seq, seq[1:])) or "0")
+        target = str(rule["value"]) if "value" in rule else "x"
+        if rule.get("total"):
+            holds = f"{' + '.join(f'({c})' for c in counts)} == {target}"
+        else:
+            holds = " and ".join(f"({c}) == {target}" for c in counts)
+        out.append({"type": "custom", "cells": names, "holds": holds})
+    return out
+
+
+# the named rules over regions to find: type -> its custom-rule form (puzzle_json compiles them, exchange reads /
+# validates / writes them by name)
+REGION_RULES = {"region_sight": region_sight_custom, "border_count": border_count_custom}
