@@ -477,6 +477,7 @@ static py::tuple py_solve(const Puzzle& p, const std::vector<std::pair<int, int>
             auto l0 = lt[0].cast<std::vector<int>>();
             s.lab_override.assign(l0.begin(), l0.end());
             s.lcand_override = lt[1].cast<std::vector<uint32_t>>();
+            if (py::len(lt) > 2 && !lt[2].is_none()) s.rgc_override = lt[2].cast<std::vector<int>>();  // relations
         }
         if (!idc.is_none()) {  // identity layer: a mid-solve state's colour classes
             py::gil_scoped_acquire acq;
@@ -573,6 +574,7 @@ static py::list py_state_moves(const Puzzle& p, const std::vector<std::pair<int,
             auto l0 = lt[0].cast<std::vector<int>>();
             s.lab_override.assign(l0.begin(), l0.end());
             s.lcand_override = lt[1].cast<std::vector<uint32_t>>();
+            if (py::len(lt) > 2 && !lt[2].is_none()) s.rgc_override = lt[2].cast<std::vector<int>>();  // relations
         }
         if (!idc.is_none()) {  // identity layer: a mid-solve state's colour classes
             py::gil_scoped_acquire acq;

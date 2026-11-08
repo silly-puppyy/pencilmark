@@ -235,7 +235,7 @@ class CMove(S.Move):
     """pencilmark.solver.Move plus structured metadata of the C++-only
     techniques: xmeta (dict, see XMETA_KEYS), family, code."""
 
-    __slots__ = ("xmeta", "family", "code", "explain", "lplace", "lelim", "idfx")
+    __slots__ = ("xmeta", "family", "code", "explain", "lplace", "lelim", "idfx", "rfx")
 
 
 _CPUZZLES = {}  # repr of the make_puzzle arguments -> C++ puzzle; a card builds the same puzzle about 6 times
@@ -260,6 +260,7 @@ def to_cpuzzle(p):
 
 
 AE_LABEL_PLACE, AE_LABEL_ELIM, AE_ID_JOIN, AE_ID_NEQ, AE_ID_USE = 1, 2, 3, 4, 5  # csrc/solver.hpp AEffKind
+AE_REG_JOIN, AE_REG_NEQ = 6, 7  # regions to find: two cells share / do not share a region
 
 
 def _label_fx(aeffs):
@@ -273,6 +274,72 @@ def _id_fx(aeffs):
     into the class whose first cell is arg; AE_ID_NEQ the classes of cell and arg differ; AE_ID_USE the move relies on
     the class anchored at cell"""
     return [(k, c, a) for k, c, a in aeffs if k in (AE_ID_JOIN, AE_ID_NEQ, AE_ID_USE)]
+
+
+def _reg_fx(aeffs):
+    """regions to find, the relation layer: the move's [(kind, cell, other)]: AE_REG_JOIN the two cells share a region,
+    AE_REG_NEQ they lie in different regions"""
+    return [(k, c, a) for k, c, a in aeffs if k in (AE_REG_JOIN, AE_REG_NEQ)]
+
+
+def rg_norm(rgc, N):
+    """region relations in place, as the engine's rg_normalize (csrc/chaos_logic.cpp): rgc = per cell its group's
+    anchor + 1 (0: on its own), then the pairs of anchors + 1 known to differ, sorted and flattened"""
+    lo = {}
+    for c in range(N):
+        if rgc[c]:
+            lo[rgc[c]] = min(lo.get(rgc[c], c), c)
+    anc = [lo[rgc[c]] if rgc[c] else c for c in range(N)]
+    prs = set()
+    for i in range(N, len(rgc) - 1, 2):
+        a, b = rgc[i] - 1, rgc[i + 1] - 1
+        a, b = anc[a] if 0 <= a < N else a, anc[b] if 0 <= b < N else b
+        if a != b:
+            prs.add((min(a, b), max(a, b)))
+    cnt = {}
+    for c in range(N):
+        cnt[anc[c]] = cnt.get(anc[c], 0) + 1
+    rgc[N:] = []
+    for c in range(N):
+        rgc[c] = anc[c] + 1 if cnt[anc[c]] > 1 else 0
+    for a, b in sorted(prs):
+        rgc += [a + 1, b + 1]
+
+
+def rg_anchor(rgc, c):
+    return rgc[c] - 1 if rgc[c] else c
+
+
+def rg_apply(rgc, N, fx):
+    """apply a move's region relations (as the engine: joins and differences in order) and normalize"""
+    for k, c, a in fx or ():
+        if c == a:
+            continue
+        if k == AE_REG_JOIN:
+            ka, kb = rg_anchor(rgc, c), rg_anchor(rgc, a)
+            nk = min(ka, kb) + 1
+            for x in range(N):
+                if rg_anchor(rgc, x) in (ka, kb):
+                    rgc[x] = nk
+            for i in range(N, len(rgc)):
+                if rgc[i] - 1 in (ka, kb):
+                    rgc[i] = nk
+        elif k == AE_REG_NEQ:
+            rgc += [rg_anchor(rgc, c) + 1, rg_anchor(rgc, a) + 1]
+        rg_norm(rgc, N)
+
+
+def rg_seed(p):
+    """the relations a puzzle starts with: its same-region sets joined, its given borders apart (None without regions
+    to find)"""
+    cons = getattr(p, "constraints", ())
+    if not any(c_.get("type") == "chaos" for c_ in cons):
+        return None
+    rgc = [0] * p.N
+    fx = [(AE_REG_JOIN, s["cells"][0], x) for s in cons if s.get("type") == "same_region" for x in s["cells"][1:]]
+    fx += [(AE_REG_NEQ, *e["cells"]) for e in cons if e.get("type") == "region_border"]
+    rg_apply(rgc, p.N, fx)
+    return rgc
 
 
 def id_joins(fx):
@@ -391,8 +458,9 @@ def _ann_kw(labels):
     kw = {}
     if labels is None:
         return kw
-    if labels[0] is not None:  # regions to find
-        kw["labels"] = (list(labels[0]), list(labels[1]))
+    if labels[0] is not None:  # regions to find (with the relation layer when the state has one)
+        rel = labels[3] if len(labels) > 3 and labels[3] is not None else None
+        kw["labels"] = (list(labels[0]), list(labels[1])) + ((list(rel),) if rel is not None else ())
     if len(labels) > 2 and labels[2] is not None:  # identity layer: class per cell (0 none)
         kw["idc"] = [int(x) for x in labels[2]]
     return kw
@@ -589,6 +657,7 @@ def solve(
         m.elim = el
         m.lplace, m.lelim = _label_fx(row[15]) if len(row) > 15 else (None, ())  # annotations: region labels
         m.idfx = _id_fx(row[15]) if len(row) > 15 else []  # ... and identity effects (color classes)
+        m.rfx = _reg_fx(row[15]) if len(row) > 15 else []  # ... and region relations (regions to find)
         m.name = _name(puzzle, *nm)
         m.d = d
         tech = m.feat[0]
@@ -726,6 +795,9 @@ def state_moves(
             ij = _id_fx(lfx)
             if ij:
                 m["idfx"] = ij
+            rj = _reg_fx(lfx)
+            if rj:
+                m["rfx"] = rj
         if len(r) > 9:  # the engine's explanation records and naming triple (decode with explain_record)
             m["ex"], m["nm"] = list(r[9]), tuple(r[10])
         if len(r) > 5:

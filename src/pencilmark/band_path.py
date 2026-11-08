@@ -196,8 +196,9 @@ def band_path(
     # identity layer (params coloring): color class per cell (0 none), canonical ids as the engine keeps them
     ids = bool(P.get("colouring"))
     idc = [0] * N if ids else None
-    labels = lambda: (lab, lcand, idc) if chaos or ids else None  # noqa: E731
-    lkey = lambda: (tuple(lab or ()), tuple(lcand or ()), tuple(idc or ())) if chaos or ids else ()  # noqa: E731
+    rgc = CB.rg_seed(p) if chaos else None  # regions to find: the relation layer (cells sharing / not sharing a region)
+    labels = lambda: (lab, lcand, idc, rgc) if chaos or ids else None  # noqa: E731
+    lkey = lambda: (tuple(lab or ()), tuple(lcand or ()), tuple(idc or ()), tuple(rgc or ())) if chaos or ids else ()  # noqa: E731
     q = copy.copy(p)  # the puzzle keeps its own domains; each state's candidates go in as a mask
     cp = getattr(p, "_bp_cpuzzle", None)
     if cp is None:
@@ -227,6 +228,7 @@ def band_path(
                     lcand[c] &= ~(1 << (k - 1))
                     if lcand[c] and not lcand[c] & (lcand[c] - 1):
                         lab[c] = lcand[c].bit_length()
+            CB.rg_apply(rgc, N, m.get("rfx"))
         if ids:  # class joins and differences; a placement may free a class
             CB.id_apply(idc, vals, m.get("idfx"))
 
@@ -234,7 +236,7 @@ def band_path(
         return (
             m["place"]
             or m["elim"]
-            or (chaos and (m.get("lplace") or m.get("lelim")))
+            or (chaos and (m.get("lplace") or m.get("lelim") or m.get("rfx")))
             or (ids and CB.id_changes(m.get("idfx")))
         )
 
@@ -264,6 +266,7 @@ def band_path(
                 "elim": stp["elims"],
                 "lplace": stp.get("lplace"),
                 "lelim": stp.get("lelims"),
+                "rfx": stp.get("rfx"),
                 "idfx": stp.get("idfx"),
             }
         )
@@ -291,7 +294,11 @@ def band_path(
                         "xmeta": getattr(x.move, "xmeta", None),
                         "d": float(x.move.d) if x.move.d is not None else None,
                         **(
-                            {"lplace": getattr(x.move, "lplace", None), "lelim": list(getattr(x.move, "lelim", ()))}
+                            {
+                                "lplace": getattr(x.move, "lplace", None),
+                                "lelim": list(getattr(x.move, "lelim", ())),
+                                "rfx": list(getattr(x.move, "rfx", None) or ()),
+                            }
                             if chaos
                             else {}
                         ),
@@ -327,7 +334,15 @@ def band_path(
                         "elims": list(m["elim"]),
                         "seg": seg,
                         "d": m.get("d"),
-                        **({"lplace": m.get("lplace"), "lelims": list(m.get("lelim") or ())} if chaos else {}),
+                        **(
+                            {
+                                "lplace": m.get("lplace"),
+                                "lelims": list(m.get("lelim") or ()),
+                                "rfx": list(m.get("rfx") or ()),
+                            }
+                            if chaos
+                            else {}
+                        ),
                         **({"idfx": list(m.get("idfx") or ())} if ids else {}),
                     }
                 )
@@ -412,7 +427,7 @@ def band_path(
                     and (
                         x.move.place
                         or x.move.elim
-                        or (chaos and (x.move.lplace or x.move.lelim))
+                        or (chaos and (x.move.lplace or x.move.lelim or getattr(x.move, "rfx", None)))
                         or (ids and CB.id_changes(getattr(x.move, "idfx", None)))
                     )
                 ):
@@ -424,7 +439,15 @@ def band_path(
                         "elim": [tuple(e) for e in (x.move.elim or ())],
                         "xmeta": getattr(x.move, "xmeta", None),
                         "d": float(x.move.d) if x.move.d is not None else None,
-                        **({"lplace": x.move.lplace, "lelim": list(x.move.lelim)} if chaos else {}),
+                        **(
+                            {
+                                "lplace": x.move.lplace,
+                                "lelim": list(x.move.lelim),
+                                "rfx": list(getattr(x.move, "rfx", None) or ()),
+                            }
+                            if chaos
+                            else {}
+                        ),
                         **({"idfx": list(getattr(x.move, "idfx", None) or ())} if ids else {}),
                     }
                 if key1 is not None:
@@ -454,7 +477,11 @@ def band_path(
                 "elims": [tuple(e) for e in m["elim"]],
                 "seg": seg,
                 "d": m.get("d"),
-                **({"lplace": m.get("lplace"), "lelims": list(m.get("lelim") or ())} if chaos else {}),
+                **(
+                    {"lplace": m.get("lplace"), "lelims": list(m.get("lelim") or ()), "rfx": list(m.get("rfx") or ())}
+                    if chaos
+                    else {}
+                ),
                 **({"idfx": list(m.get("idfx") or ())} if ids else {}),
             }
         )
@@ -573,12 +600,18 @@ def _states(p, steps):
             lcand[x] = (1 << D) - 1
     ids = any("idfx" in st for st in steps)  # identity layer: the route carries its color classes
     idc = [0] * N
+    rgc = CB.rg_seed(p) if chaos else None  # regions to find: the relation layer
     for st in steps:
         q = copy.copy(p)
         q.givens = {c: v for c, v in enumerate(vals) if v}
         q.domains = [cand[c] if not vals[c] else 1 << (vals[c] - 1) for c in range(N)]
         q._pm_labels = (
-            (list(lab) if chaos else None, list(lcand) if chaos else None, list(idc) if ids else None)
+            (
+                list(lab) if chaos else None,
+                list(lcand) if chaos else None,
+                list(idc) if ids else None,
+                list(rgc) if chaos else None,
+            )
             if chaos or ids
             else None
         )
@@ -599,6 +632,7 @@ def _states(p, steps):
                     lcand[c] &= ~(1 << (k - 1))
                     if lcand[c] and not lcand[c] & (lcand[c] - 1):
                         lab[c] = lcand[c].bit_length()
+            CB.rg_apply(rgc, N, st.get("rfx"))
         if ids:
             CB.id_apply(idc, vals, st.get("idfx"))
 
