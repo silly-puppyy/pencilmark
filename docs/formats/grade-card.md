@@ -98,8 +98,8 @@ Which checks run is set by a **quality object** keyed by code, with one meaning 
   table that is not opt in, at its own severity. `{"preset": "standard"}`: rejects a rule family nobody needs
   (`decorative`), a puzzle that is mostly given (`trivial`), a solve that needs trial or forcing (`trial`), candidate
   steps that do little (`thin`) and a difficulty outside the published range for its band (`unusual`).
-  `{"preset": "relaxed"}`: the same five, with `thin` and `unusual` as warnings (standard rejects 19% of published
-  classics, almost all for `unusual`; relaxed under 1%).
+  `{"preset": "relaxed"}`: the same five, with `thin` and `unusual` as warnings (standard rejects 14% of published
+  classics, almost all for `unusual`, and 17% of variants; relaxed 0.1% and 4%).
 - Without a preset, only the checks named run. A check named next to a preset adjusts it:
   `{"preset": "standard", "thin": {"limit": 0.2}}`.
 
