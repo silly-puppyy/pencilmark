@@ -26,13 +26,13 @@ mistakes it for a puzzle), plus blocks that say what the result must satisfy and
   {"type": "line", "kind": "whisper", "count": [1, null]}],
  "where": {"band": "Hard"},
  "quality": {"preset": "standard"},
- "limits": {"seconds": 900, "seed": 3},
+ "limits": {"seconds": 900, "seed": 4},
  "fields": ["difficulty", "time", "band", "contains", "issues"]}
 ```
 
 The result is an ordinary `pencilmark-puzzle` with its `solution`. Its `meta` is the spec's: every key is optional,
-copied as written, and a few are requests the generator fills in (section 5.1). This one took about nine minutes and came back with
-`"title": "Killer German Whispers Sudoku #3"`, `"subtitle": "Hard, 9.6"`, `"type": "Killer German Whispers Sudoku"`,
+copied as written, and a few are requests the generator fills in (section 5.1). This one took about eleven minutes and came back with
+`"title": "Killer German Whispers Sudoku #4"`, `"subtitle": "Hard, 9.0"`, `"type": "Killer German Whispers Sudoku"`,
 `"variants": ["killer", "german_whispers"]`, the rules in words and both fingerprints; its card has no issues.
 
 ## 1. Board

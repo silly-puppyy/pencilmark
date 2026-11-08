@@ -43,8 +43,7 @@
   }
  ],
  "where": {
-  "band": "Hard",
-  "difficulty": "typical"
+  "band": "Hard"
  },
  "quality": {
   "preset": "standard"
@@ -52,7 +51,7 @@
  "limits": {
   "results": 1,
   "seconds": 900,
-  "seed": 3
+  "seed": 4
  },
  "fields": [
   "difficulty",
