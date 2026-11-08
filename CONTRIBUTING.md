@@ -52,6 +52,10 @@ export and the engine's input against `tests/golden/expected.jsonl`, and prints 
   line under "Unreleased" in `CHANGELOG.md`, then the rewritten records (`python tools/golden.py write`) on their own,
   after you have read every difference and agree with it.
 
+- **A change made because of a measurement** (a price, a term, a default), and a measured idea that was dropped,
+  gets its row in the [experiment log](https://silly-puppyy.github.io/pencilmark/grades/experiments/) in the same commit: what was tried, on which data,
+  the numbers, and the verdict.
+
 Write commit messages that say what changed and why, and what the checks showed.
 
 ## Style
