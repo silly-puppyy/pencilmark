@@ -239,6 +239,28 @@ def _cage_limits(lim):
     return within_max, below_min
 
 
+def _tile_sized(b, sol, cells, rng, size_lo, size_hi, within_max):
+    """cages of a template minimum size: grow each from a random free cell to a size drawn in [size_lo, size_hi]
+    (distinct digits, within the maxima); leftovers stay smaller (_lift_minima merges them)"""
+    free, els = set(cells), []
+    room = lambda j: sum(1 for k in b.nb[j] if k in free)  # noqa: E731
+    while free:  # the most cornered free cell first, and grow into cornered cells (no cell left stranded)
+        c = min(free, key=lambda j: (room(j), rng.random()))
+        cage, total, want = [c], sol[c], rng.randint(size_lo, size_hi)
+        free.discard(c)
+        while len(cage) < want:
+            opts = [j for x in cage for j in b.nb[x] if j in free and sol[j] not in {sol[y] for y in cage}]
+            opts = [j for j in opts if within_max(len(cage) + 1, total + sol[j])]
+            if not opts:
+                break
+            j = min(opts, key=lambda j: (room(j), rng.random()))
+            cage.append(j)
+            total += sol[j]
+            free.discard(j)
+        els.append(("cage", tuple(sorted(cage)), total))
+    return els
+
+
 def _lift_minima(b, sol, els, rng, within_max, below):
     """merge every cage under its template's minimum into a neighboring cage (distinct digits, within the maxima),
     smallest neighbor first; None when one cannot grow"""
@@ -261,7 +283,33 @@ def _lift_minima(b, sol, els, rng, within_max, below):
         els = [x for x in els if x is not e and x is not h] + [("cage", tuple(sorted(e[1] + h[1])), e[2] + h[2])]
 
 
-def partition(b, rng, chk, n_givens=0, min_els=0, cover=True, lim=None):
+def _sized_with_givens(b, rng, chk, sol, lim, within_max, below, n_givens, max_givens):
+    """cages of at least lim's minimum size (pairs merged up rarely stay solvable): tile at that size, merge what is
+    left under it, then add givens from the solution until the logic solves it (the user allows the generator to change
+    the clues to keep cage limits) and dig the givens it does not need back out, never below n_givens"""
+    lo, hi = lim["length"]
+    els = _lift_minima(b, sol, _tile_sized(b, sol, list(range(b.N)), rng, lo, min(hi or lo + 2, b.n), within_max),
+                       rng, within_max, below)  # fmt: skip
+    if els is None:
+        return None
+    cap = max_givens if max_givens is not None else 24
+    order = sorted(range(b.N), key=lambda _: rng.random())
+    givens = {c: sol[c] for c in order[:n_givens]}
+    while not chk.ok(givens, els):
+        if len(givens) >= cap:
+            return None
+        c = order[len(givens)]
+        givens[c] = sol[c]
+    for c in sorted(givens, key=lambda _: rng.random()):
+        if len(givens) <= n_givens:
+            break
+        g2 = {k: v for k, v in givens.items() if k != c}
+        if chk.ok(g2, els):
+            givens = g2
+    return sol, givens, els
+
+
+def partition(b, rng, chk, n_givens=0, min_els=0, cover=True, lim=None, max_givens=None):
     """killer covering the board: keep `n_givens` random givens, tile the other cells with 2-cell informative cages,
     then merge neighboring cages (distinct digits, <= 6 cells) -- or delete cages if cover=False -- while the puzzle
     stays solvable within the checker's cap. A cell left alone becomes a given (a 1-cell cage is a given in disguise)
@@ -270,6 +318,8 @@ def partition(b, rng, chk, n_givens=0, min_els=0, cover=True, lim=None):
     within_max, below = _cage_limits(lim)
     cap = max(6, (lim or {}).get("length", (None, None))[0] or 0)
     sol = b.solution(rng)
+    if ((lim or {}).get("length", (None, None))[0] or 0) > 2:  # a minimum cage size above pairs
+        return _sized_with_givens(b, rng, chk, sol, lim, within_max, below, n_givens, max_givens)
     NB = b.nb
     givens = {i: sol[i] for i in sorted(range(b.N), key=lambda _: rng.random())[:n_givens]}
     owner, els = dict.fromkeys(givens, 0), []

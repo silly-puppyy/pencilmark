@@ -98,8 +98,9 @@ With `"tile"` or a zero-given cage count, the tiling keeps to them: no cage is b
 minimum are merged first, and a tiling that leaves one under is drawn again (`{"type": "cage", "count": "tile",
 "sum": [null, 20]}` caps every cage at 20). The tiling starts from 2-cell cages, so maxima and sum ranges come about
 as fast as no limit (a 9 × 9 Hard tiling: 16 a minute without limits, 38 with `sum` at most 20, 26 with `sum`
-`[8, 18]` and `size` `[2, 4]`), while a minimum `size` above 2 is rarely reached in time: every pair must merge and
-stay solvable.
+`[8, 18]` and `size` `[2, 4]`), and a minimum `size` above 2 tiles at that size and adds givens until the logic solves
+it (a few, dug back out where not needed; a request allowing no givens cannot): such killers come out Medium or
+easier (Hard size-3+ tilings are not found yet).
 
 ## 3. Givens and symmetry
 

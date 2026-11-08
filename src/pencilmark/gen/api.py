@@ -682,7 +682,7 @@ def _generate(spec):
                 keep=best is not None,  # that has a result already, kept as dug so far
             )
         elif mode == "partition":
-            r = SR.partition(b, rng, chk, n_givens=s.min_givens, lim=_shape(s).get("cage"))
+            r = SR.partition(b, rng, chk, n_givens=s.min_givens, lim=_shape(s).get("cage"), max_givens=s.max_givens)
         elif mode == "cage_count":
             r = SR.cage_count(b, value, rng, deadline=deadline, lim=_shape(s).get("cage"))
         elif mode == "kropki_full":
