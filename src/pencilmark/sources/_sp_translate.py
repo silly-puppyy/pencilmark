@@ -50,6 +50,13 @@ UNMODELLED_RULES = (
     ("pick-up sticks", r"\bstick (?:which |that )?lies on top|pick-up sticks"),
     ("multi-renban", r"multi[- ]?renban"),  # sets of consecutive digits with repeats: not the renban rule
     ("magic square", r"magic square somewhere|somewhere in the grid lies a 3 ?[x×] ?3 magic square"),
+    (
+        "outside cells to fill",
+        r"outside cells[^.]{0,40}must contain a digit|digits? (?:out of|outside) the grid (?:are|is) not restricted",
+    ),
+    ("liar cells", r"\bliar cells?\b"),  # a cell per house whose real value differs from its digit (000VXC)
+    ("split peas", r"\bsplit[- ]peas?\b"),
+    ("helping cages", r"\bhelp(?:ing|er) cages?\b|receives help from"),  # a clue sums two cages (000VC4)
     ("cage sum or product", r"either sum or multiply|\bsum or (?:the )?product\b"),  # 000SPZ
     ("anti-diagonal", r"appear (?:exactly )?(?:three|3) times on (?:it|the diagonal)"),  # each digit 3x on it (000LM7)
     ("digit 0", r"\bdigits? (?:from )?0 ?(?:to|-|\u2013|through) ?\d"),  # digits 0-9: read as 1-10 they shift (000KA2)
@@ -65,7 +72,8 @@ UNMODELLED_RULES = (
     (
         "digit subset",
         r"\buses? (?:\w+|\d+) of the digits\b|\btake (?:two|three|four|five|six|seven|eight|\d) \(?(?:different|distinct)?\)? ?digits from"
-        r"|digit in each (?:row|column|box|house)?[^.]{0,30}does not fit|\bpick (?:two|three|four|five|six|seven|eight|\d) digits from",
+        r"|digit in each (?:row|column|box|house)?[^.]{0,30}does not fit|\bpick (?:two|three|four|five|six|seven|eight|\d) digits from"
+        r"|\b(?:choose|pick|select) a subset of the digits",
     ),
     # a digit used once by all clues of a kind across the grid ("if a cage contained a 1, no other cage can")
     (
@@ -1517,6 +1525,139 @@ def numbers_on_circles(P):
     return dict(P, overlays=[o for o in ov if id(o) not in drop]) if drop else P
 
 
+def emit_line(p, rule, lc, ids, circles, rules, used, unknown, box_of, renban_pieces, thermo_cells, hexcol=None):
+    """one line read as `rule` (its drawn cells lc, their engine ids) -> the puzzle's constraints / relations / named
+    rules; refusals go to `unknown`. Shared by the square-grid reader and boards with declared houses"""
+    loop = len(ids) > 2 and ids[0] == ids[-1]
+    if rule in ("renban", "region_sum") and len(set(ids)) != len(ids):
+        ids = list(dict.fromkeys(ids))  # closed loop: the start cell is drawn twice, counted once
+    if rule in ("thermo", "slow_thermo"):
+        thermo_cells += [c_ for c_ in ids if c_ not in thermo_cells]
+        if THERMO_PARITY.search(rules.lower()):  # "each thermometer contains digits of a single parity"
+            custom_line(p, "same_parity", ids)
+            used["thermo_parity"] += 1
+        if lc[-1] in circles and lc[0] not in circles:
+            ids = ids[::-1]
+        p.constraints.append({"type": "line", "kind": rule, "cells": ids})  # compiled by finalize (lt / le pairs)
+    elif rule.startswith("whisper") and rule[7:].isdigit():  # "differ by at least 3": its own threshold
+        p.constraints.append({"type": "line", "kind": "whisper", "cells": ids, "k": int(rule[7:])})
+    elif rule == "whisper":
+        p.constraints.append({"type": "line", "kind": "whisper", "cells": ids})
+    elif rule == "dutch":
+        p.constraints.append({"type": "line", "kind": "dutch_whisper", "cells": ids})
+    elif rule == "renban":
+        renban_pieces.append((hexcol, ids))
+    elif rule == "region_sum":
+        segs, cur = [], [ids[0]]
+        for c in ids[1:]:
+            if box_of.get(c) == box_of.get(cur[-1]):
+                cur.append(c)
+            else:
+                segs.append(cur)
+                cur = [c]
+        segs.append(cur)
+        if loop and len(segs) > 1 and box_of.get(segs[0][0]) == box_of.get(segs[-1][-1]):
+            segs[0] = segs.pop() + segs[0]  # a loop's last and first segments join through the closing edge
+        if len({box_of.get(sg[0]) for sg in segs}) < len(segs) and RS_PER_BOX.search(rules.lower()):
+            unknown.append("region sum line re-entering a box (sum per box)")  # one total per box, not per segment
+            return
+        if len(segs) > 1:
+            p.constraints.append({"type": "equal_sum", "segments": segs})
+    elif rule == "palindrome":
+        p.relations += [("eq", ids[k], ids[-1 - k]) for k in range(len(ids) // 2) if ids[k] != ids[-1 - k]]
+    elif rule == "entropic":  # model line compile: thirds of 1..D on 6x6 etc., fixed 1-3/4-6/7-9 on 9x9
+        p.constraints.append({"type": "line", "kind": "entropic", "cells": ids})
+    elif rule == "parity" and len(set(ids)) != len(ids):
+        p.relations += [("parity", a, b) for a, b in zip(ids, ids[1:]) if a != b]
+    elif rule == "modular" and len(set(ids)) != len(ids):
+        for k in range(len(ids)):
+            for j in range(k + 1, min(k + 4, len(ids))):
+                if ids[k] != ids[j]:
+                    p.relations.append(("samemod3" if j - k == 3 else "diffmod3", ids[k], ids[j]))
+    elif rule == "same_parity":  # no rule family: a custom rule, kept by name
+        from .. import puzzle_json as PJ
+
+        # neighbors along the line share a parity (the same rule as "all odd or all even", in 2-cell instances: the
+        # engine reads small rules as digit tables, which propagate as the cells fill)
+        name = lambda i: f"r{p.coords[i][0] + 1}c{p.coords[i][1] + 1}"
+        PJ.add_named(
+            p,
+            {
+                "type": "custom",
+                "cells": {"pair": [[name(a), name(b)] for a, b in zip(ids, ids[1:])]},
+                "each": "pair",
+                "holds": "pair[1] mod 2 == pair[2] mod 2",
+                "label": "Same-parity line",
+            },
+        )
+    elif rule in ("parity", "modular", "zipper"):
+        if len(set(ids)) != len(ids):
+            unknown.append(f"self-crossing {rule} line")
+            return
+        p.constraints.append({"type": "line", "kind": rule, "cells": ids})
+    elif rule == "between":
+        if not (lc[0] in circles and lc[-1] in circles):
+            unknown.append("between line without end circles")
+            return
+        if len(set(ids)) != len(ids):  # a line crossing itself (an X between two circles, 000VCI): each cell once
+            mid = list(dict.fromkeys(ids[1:-1]))
+            if ids[0] == ids[-1] or {ids[0], ids[-1]} & set(mid) or any(x in circles for x in lc[1:-1]):
+                unknown.append("self-crossing between line")
+                return
+            p.constraints.append({"type": "line", "kind": "between", "cells": [ids[0], *mid, ids[-1]]})
+            return
+        stops = [k for k, x in enumerate(lc) if x in circles]  # a line through several circles: one between line
+        for i, j in zip(stops, stops[1:]):  # per stretch from circle to circle
+            if j > i + 1:
+                p.constraints.append({"type": "line", "kind": "between", "cells": ids[i : j + 1]})
+    elif rule == "nabner":
+        u = list(dict.fromkeys(ids))
+        for i_ in range(len(u)):
+            for j_ in range(i_ + 1, len(u)):
+                p.relations.append(("neq", u[i_], u[j_]))
+                p.relations.append(("nonconsec", u[i_], u[j_]))
+    elif rule == "lockout":
+        a, b = ids[0], ids[-1]
+        if a == b or len(set(ids)) != len(ids):
+            unknown.append("malformed lockout line")
+            return
+        m_ = re.search(r"lockout.{0,200}?(?:at least|by|difference of) (\d)", rules.lower(), re.S)
+        k_ = int(m_.group(1)) if m_ else 4
+        p.constraints.append({"type": "line", "kind": "lockout", "cells": ids, "k": k_})  # compiled by finalize
+    elif rule == "consecutive_line":  # neighbors along the line differ by 1 (repeats allowed off the houses)
+        p.relations += [("diff", a, b, 1) for a, b in zip(ids, ids[1:])]
+    elif rule.startswith("linesum") or rule == "shifter":  # "numbers on blue lines sum to 20"; shifter lines
+        custom_line(p, rule, ids)
+    elif rule in LINE_CUSTOM:  # no rule family: custom rules over each run of cells along the line
+        from .. import puzzle_json as PJ
+
+        name = lambda i: f"r{p.coords[i][0] + 1}c{p.coords[i][1] + 1}"
+        k, holds, label = LINE_CUSTOM[rule]
+        holds = holds(len(ids)) if callable(holds) else holds
+        runs = (
+            [[name(c_) for c_ in ids[i : i + k]] for i in range(len(ids) - k + 1)] if k else [[name(c_) for c_ in ids]]
+        )
+        if runs:
+            PJ.add_named(p, {"type": "custom", "cells": {"t": runs}, "each": "t", "holds": holds, "label": label})
+    elif rule == "double_arrow":  # the two circle digits sum to the line's digits between them
+        if len(ids) < 3 or ids[0] == ids[-1]:
+            unknown.append("malformed double arrow")
+            return
+        p.constraints.append({"type": "equal_sum", "segments": [[ids[0], ids[-1]], ids[1:-1]]})
+    elif rule == "arrow":
+        circ = [x for x in (lc[0], lc[-1]) if x in circles]
+        if not circ:
+            unknown.append("arrow without circle")
+            return
+        if lc[-1] in circles and lc[0] not in circles:
+            ids = ids[::-1]
+        p.constraints.append({"type": "arrow", "circle": [ids[0]], "line": ids[1:]})
+    else:
+        unknown.append(f"{rule} line")
+        return
+    used[rule] += 1
+
+
 def translate(sp, page_text=None, overrides=None):
     """sp: decoded dict from sudokupad.fetch; page_text: the puzzle page's
     rules (e.g. the Logic Masters text) when the SudokuPad file has none.
@@ -1524,7 +1665,8 @@ def translate(sp, page_text=None, overrides=None):
     sp = dict(sp, puzzle=numbers_on_circles(without_nulls(sp["puzzle"])))
     P = sp["puzzle"]
     meta = sp.get("meta", {})
-    rules = (meta.get("rules") or "") + "\n" + (page_text or "")
+    page_text = re.split(r"\b(?:Solved by|Gel\u00f6st von)\b", page_text or "")[0]  # solvers' names are not rules
+    rules = (meta.get("rules") or "") + "\n" + page_text
     rules = rules.translate(TYPO_QUOTES)  # "king’s move": the patterns spell apostrophes plainly
     if not rules.strip():
         return None, "no rules text"
@@ -1538,7 +1680,11 @@ def translate(sp, page_text=None, overrides=None):
         and cg.get("cells")
         and cg.get("value") in (None, "")
     ]
-    if hidden_houses and (len(hidden_houses) >= 6 or any(len(row) != len(cells) for row in cells)):
+    square = all(len(row) == len(cells) for row in cells)
+    hidden_cover = {tuple(x) for cg in hidden_houses for x in cg["cells"] if isinstance(x, (list, tuple))}
+    if hidden_houses and not (square and hidden_cover <= {(r, c) for r in range(len(cells)) for c in range(len(cells))}
+                              and (len(hidden_houses) < 6 or len(hidden_cover) == len(cells) ** 2)):  # fmt: skip
+        # a board of another shape, or a grid inside a larger drawing (clues, legends): its houses are declared
         return translate_explicit(sp, rules, hidden_houses)
     n = len(cells)
     if n < 4 or any(len(row) != n for row in cells):
@@ -1554,6 +1700,16 @@ def translate(sp, page_text=None, overrides=None):
         p.groups.append(M.Group(f"r{r + 1}", tuple(r * n + c for c in range(n)), "row", True))
     for c in range(n):
         p.groups.append(M.Group(f"c{c + 1}", tuple(r * n + c for r in range(n)), "col", True))
+    # hidden 'unique' cages on the grid: houses the file declares (disjoint groups, irregular regions drawn with lines);
+    # not on a chaos board, where they may hold the regions the solver is to find
+    hidden = [] if chaos else [tuple(sorted(x[0] * n + x[1] for x in cg["cells"] if isinstance(x, (list, tuple))))
+                               for cg in hidden_houses]  # fmt: skip
+    lines_ = {tuple(r * n + c for c in range(n)) for r in range(n)} | {
+        tuple(r * n + c for r in range(n)) for c in range(n)
+    }
+    part = [h for h in dict.fromkeys(hidden) if len(h) == n and h not in lines_]
+    if not regions and part and len({c for h in part for c in h}) == n * n == sum(len(h) for h in part):
+        regions = [[divmod(c, n) for c in h] for h in part]  # the regions, declared only as hidden cages
     boxes = [tuple(sorted(x[0] * n + x[1] for x in reg if x)) for reg in regions]
     if regions:  # one region short (unparsed / implicit cells) and the leftover cells fill it exactly
         left = sorted(set(range(n * n)) - {c for b in boxes for c in b})
@@ -1564,6 +1720,9 @@ def translate(sp, page_text=None, overrides=None):
             boxes.append(tuple(left))
     for k, cs in enumerate(boxes):
         p.groups.append(M.Group(f"b{k + 1}", cs, "box", len(cs) == n))
+    for h in dict.fromkeys(hidden):  # the other declared houses: no repeats in them
+        if len(h) > 1 and h not in lines_ and h not in set(boxes):
+            p.groups.append(M.Group(f"u{len(p.groups)}", h, "extra", len(h) == n))
     if not regions and (whole or chaos or NO_BOXES.search(rules.lower())):
         pass  # rows and columns only ("Latin square"): no implied boxes
     elif not regions:  # SudokuPad implies standard boxes when none are drawn
@@ -1936,136 +2095,7 @@ def translate(sp, page_text=None, overrides=None):
             if rule in from_ and re.search(pat_, rules.lower()):
                 rule = var_
         ids = [idx(x) for x in lc]
-        loop = len(ids) > 2 and ids[0] == ids[-1]
-        if rule in ("renban", "region_sum") and len(set(ids)) != len(ids):
-            ids = list(dict.fromkeys(ids))  # closed loop: the start cell is drawn twice, counted once
-        if rule in ("thermo", "slow_thermo"):
-            thermo_cells += [c_ for c_ in ids if c_ not in thermo_cells]
-            if THERMO_PARITY.search(rules.lower()):  # "each thermometer contains digits of a single parity"
-                custom_line(p, "same_parity", ids)
-                used["thermo_parity"] += 1
-            if lc[-1] in circles and lc[0] not in circles:
-                ids = ids[::-1]
-            p.constraints.append({"type": "line", "kind": rule, "cells": ids})  # compiled by finalize (lt / le pairs)
-        elif rule.startswith("whisper") and rule[7:].isdigit():  # "differ by at least 3": its own threshold
-            p.constraints.append({"type": "line", "kind": "whisper", "cells": ids, "k": int(rule[7:])})
-        elif rule == "whisper":
-            p.constraints.append({"type": "line", "kind": "whisper", "cells": ids})
-        elif rule == "dutch":
-            p.constraints.append({"type": "line", "kind": "dutch_whisper", "cells": ids})
-        elif rule == "renban":
-            renban_pieces.append((hexcol, ids))
-        elif rule == "region_sum":
-            segs, cur = [], [ids[0]]
-            for c in ids[1:]:
-                if box_of.get(c) == box_of.get(cur[-1]):
-                    cur.append(c)
-                else:
-                    segs.append(cur)
-                    cur = [c]
-            segs.append(cur)
-            if loop and len(segs) > 1 and box_of.get(segs[0][0]) == box_of.get(segs[-1][-1]):
-                segs[0] = segs.pop() + segs[0]  # a loop's last and first segments join through the closing edge
-            if len({box_of.get(sg[0]) for sg in segs}) < len(segs) and RS_PER_BOX.search(rules.lower()):
-                unknown.append("region sum line re-entering a box (sum per box)")  # one total per box, not per segment
-                continue
-            if len(segs) > 1:
-                p.constraints.append({"type": "equal_sum", "segments": segs})
-        elif rule == "palindrome":
-            p.relations += [("eq", ids[k], ids[-1 - k]) for k in range(len(ids) // 2) if ids[k] != ids[-1 - k]]
-        elif rule == "entropic":  # model line compile: thirds of 1..D on 6x6 etc., fixed 1-3/4-6/7-9 on 9x9
-            p.constraints.append({"type": "line", "kind": "entropic", "cells": ids})
-        elif rule == "parity" and len(set(ids)) != len(ids):
-            p.relations += [("parity", a, b) for a, b in zip(ids, ids[1:]) if a != b]
-        elif rule == "modular" and len(set(ids)) != len(ids):
-            for k in range(len(ids)):
-                for j in range(k + 1, min(k + 4, len(ids))):
-                    if ids[k] != ids[j]:
-                        p.relations.append(("samemod3" if j - k == 3 else "diffmod3", ids[k], ids[j]))
-        elif rule == "same_parity":  # no rule family: a custom rule, kept by name
-            from .. import puzzle_json as PJ
-
-            # neighbors along the line share a parity (the same rule as "all odd or all even", in 2-cell instances: the
-            # engine reads small rules as digit tables, which propagate as the cells fill)
-            name = lambda i: f"r{p.coords[i][0] + 1}c{p.coords[i][1] + 1}"
-            PJ.add_named(
-                p,
-                {
-                    "type": "custom",
-                    "cells": {"pair": [[name(a), name(b)] for a, b in zip(ids, ids[1:])]},
-                    "each": "pair",
-                    "holds": "pair[1] mod 2 == pair[2] mod 2",
-                    "label": "Same-parity line",
-                },
-            )
-        elif rule in ("parity", "modular", "zipper"):
-            if len(set(ids)) != len(ids):
-                unknown.append(f"self-crossing {rule} line")
-                continue
-            p.constraints.append({"type": "line", "kind": rule, "cells": ids})
-        elif rule == "between":
-            if not (lc[0] in circles and lc[-1] in circles):
-                unknown.append("between line without end circles")
-                continue
-            if len(set(ids)) != len(ids):  # a line crossing itself (an X between two circles, 000VCI): each cell once
-                mid = list(dict.fromkeys(ids[1:-1]))
-                if ids[0] == ids[-1] or {ids[0], ids[-1]} & set(mid) or any(x in circles for x in lc[1:-1]):
-                    unknown.append("self-crossing between line")
-                    continue
-                p.constraints.append({"type": "line", "kind": "between", "cells": [ids[0], *mid, ids[-1]]})
-                continue
-            stops = [k for k, x in enumerate(lc) if x in circles]  # a line through several circles: one between line
-            for i, j in zip(stops, stops[1:]):  # per stretch from circle to circle
-                if j > i + 1:
-                    p.constraints.append({"type": "line", "kind": "between", "cells": ids[i : j + 1]})
-        elif rule == "nabner":
-            u = list(dict.fromkeys(ids))
-            for i_ in range(len(u)):
-                for j_ in range(i_ + 1, len(u)):
-                    p.relations.append(("neq", u[i_], u[j_]))
-                    p.relations.append(("nonconsec", u[i_], u[j_]))
-        elif rule == "lockout":
-            a, b = ids[0], ids[-1]
-            if a == b or len(set(ids)) != len(ids):
-                unknown.append("malformed lockout line")
-                continue
-            m_ = re.search(r"lockout.{0,200}?(?:at least|by|difference of) (\d)", rules.lower(), re.S)
-            k_ = int(m_.group(1)) if m_ else 4
-            p.constraints.append({"type": "line", "kind": "lockout", "cells": ids, "k": k_})  # compiled by finalize
-        elif rule == "consecutive_line":  # neighbors along the line differ by 1 (repeats allowed off the houses)
-            p.relations += [("diff", a, b, 1) for a, b in zip(ids, ids[1:])]
-        elif rule.startswith("linesum") or rule == "shifter":  # "numbers on blue lines sum to 20"; shifter lines
-            custom_line(p, rule, ids)
-        elif rule in LINE_CUSTOM:  # no rule family: custom rules over each run of cells along the line
-            from .. import puzzle_json as PJ
-
-            name = lambda i: f"r{p.coords[i][0] + 1}c{p.coords[i][1] + 1}"
-            k, holds, label = LINE_CUSTOM[rule]
-            holds = holds(len(ids)) if callable(holds) else holds
-            runs = (
-                [[name(c_) for c_ in ids[i : i + k]] for i in range(len(ids) - k + 1)]
-                if k
-                else [[name(c_) for c_ in ids]]
-            )
-            if runs:
-                PJ.add_named(p, {"type": "custom", "cells": {"t": runs}, "each": "t", "holds": holds, "label": label})
-        elif rule == "double_arrow":  # the two circle digits sum to the line's digits between them
-            if len(ids) < 3 or ids[0] == ids[-1]:
-                unknown.append("malformed double arrow")
-                continue
-            p.constraints.append({"type": "equal_sum", "segments": [[ids[0], ids[-1]], ids[1:-1]]})
-        elif rule == "arrow":
-            circ = [x for x in (lc[0], lc[-1]) if x in circles]
-            if not circ:
-                unknown.append("arrow without circle")
-                continue
-            if lc[-1] in circles and lc[0] not in circles:
-                ids = ids[::-1]
-            p.constraints.append({"type": "arrow", "circle": [ids[0]], "line": ids[1:]})
-        else:
-            unknown.append(f"{rule} line")
-            continue
-        used[rule] += 1
+        emit_line(p, rule, lc, ids, circles, rules, used, unknown, box_of, renban_pieces, thermo_cells, hexcol)
     for ids in join_branches(renban_pieces):
         p.constraints.append({"type": "set", "cells": ids, "kind": "consecutive"})
     # global rules from text
@@ -3315,11 +3345,30 @@ def translate_explicit(sp, rules, hidden_houses):
             cs = [pos[tuple(x)] for x in cg["cells"] if tuple(x) in pos]
             p.groups.append(M.Group(f"k{len(p.groups)}", tuple(sorted(cs)), "cage", len(cs) == D, int(cg["value"])))
             used["killer"] += 1
-    circles = {
-        cell_of(o["center"])
-        for o in (P.get("overlays") or []) + (P.get("underlays") or [])
-        if isinstance(o, dict) and o.get("rounded") and (o.get("width") or 0) >= 0.6 and "center" in o
-    }
+    text = rules.lower()
+    # the text checks of the square-grid reader: mechanics no reading models refuse the puzzle
+    unknown += unmodelled_rules(text)
+    if chess_other(text):
+        unknown.append(chess_other(text))
+    flags = rule_flags(rules)
+    for piece, steps in (("antiknight", ((1, 2), (2, 1), (2, -1), (1, -2))), ("antiking", ((1, 1), (1, -1)))):
+        if flags[piece]:  # every pair of active cells the move apart (orthogonal king steps share a house anyway)
+            for (r, c), i in pos.items():
+                for dr, dc in steps:
+                    if (r + dr, c + dc) in pos:
+                        p.relations.append(("neq", i, pos[(r + dr, c + dc)]))
+            used[piece] += 1
+    if flags["nonconsec"] or flags["diag_pos"] or flags["diag_neg"] or flags["negative_markers"]:
+        unknown.append("global rule on explicit-house board")
+    layers = [
+        x for x in (P.get("underlays") or []) + (P.get("overlays") or []) if isinstance(x, dict) and "center" in x
+    ]
+    circles = {}
+    for o in layers:  # circles inside active cells: bulbs, arrow circles, between-line ends
+        cx, cy = o["center"]
+        if o.get("rounded") and (o.get("width") or 0) >= 0.6 and cell_of((cx, cy)) in pos:
+            circles[cell_of((cx, cy))] = color_name(o.get("backgroundColor") or o.get("borderColor"))
+    used_circles = set()
     for ar in P.get("arrows") or []:
         wp = ar.get("wayPoints") or []
         if len(wp) < 2:
@@ -3330,12 +3379,88 @@ def translate_explicit(sp, rules, hidden_houses):
         path = [x for x in line_cells(wp) if x in pos and x != start]
         if path and start in pos:
             p.constraints.append({"type": "arrow", "circle": [pos[start]], "line": [pos[x] for x in path]})
+            used_circles.add(start)
             used["arrow"] += 1
-    if any(
-        isinstance(ln, dict) and ln.get("target") != "overlay" and color_name(ln.get("color")) not in ("white", "black")
-        for ln in (P.get("lines") or [])
-    ):
-        unknown.append("coloured lines on explicit-house board")
+    # clues off the houses (outside sums, numbered rooms, legends with numbers): no reading on these boards yet
+    off = [str(cell.get("value")) for r, row in enumerate(cells) for c, cell in enumerate(row)
+           if isinstance(cell, dict) and str(cell.get("value", "")).strip() and (r, c) not in pos]  # fmt: skip
+    off += [t for t in (_text_of(o).strip() for o in layers if cell_of(o["center"]) not in pos) if re.search(r"\d", t)]
+    if off:
+        unknown.append("clues outside the houses of an explicit-house board")
+    # edge markers between two active cells: kropki, X / V, coloured dots the text defines
+    dot_meaning = dot_color_rules(rules)
+    name = lambda i: f"r{p.coords[i][0] + 1}c{p.coords[i][1] + 1}"
+    for o in layers:
+        cx, cy = o["center"]
+        w, txt = o.get("width") or 0, _text_of(o).strip()
+        on_r, on_c = abs(cx - round(cx)) < 0.05, abs(cy - round(cy)) < 0.05
+        if on_r == on_c or w >= 0.5:  # not on one edge (a cell, a corner) or a large shape: read below / elsewhere
+            continue
+        a, b = (
+            ((round(cx) - 1, int(cy)), (round(cx), int(cy)))
+            if on_r
+            else ((int(cx), round(cy) - 1), (int(cx), round(cy)))
+        )
+        if a not in pos or b not in pos:
+            continue
+        ia, ib = pos[a], pos[b]
+        bg = color_name(o.get("backgroundColor"))
+        if txt.upper() in ("X", "V"):
+            p.relations.append(("sum", ia, ib, 10 if txt.upper() == "X" else 5))
+            used["xv"] += 1
+        elif txt == "" and o.get("rounded") and bg == "white":
+            p.relations.append(("diff", ia, ib, 1))
+            used["kropki_white"] += 1
+        elif txt == "" and o.get("rounded") and bg == "black":
+            p.relations.append(("ratio", ia, ib, 2))
+            used["kropki_black"] += 1
+        elif txt == "" and o.get("rounded") and bg in dot_meaning:
+            from .. import puzzle_json as PJ
+
+            holds, label, _ = dot_meaning[bg]
+            PJ.add_named(p, {"type": "custom", "cells": {"a": [name(ia)], "b": [name(ib)]}, "holds": holds,
+                             "label": label})  # fmt: skip
+            used["colour_dot"] += 1
+        else:
+            unknown.append(f"edge marker {txt or bg!r} on explicit-house board")
+    # lines over active cells, read as on a square grid (emit_line); frames and legends off the houses are drawing
+    N = max([len(cells)] + [len(row) for row in cells])
+    cmap = rules_color_map(rules)
+    items = line_items(P, N)
+    drawn = {ci for ci, _, _ in items}
+    box_of = {}
+    for k, h in enumerate(houses):
+        if len({r for r, _ in h}) > 1 and len({c for _, c in h}) > 1:  # not a row or a column: a box / region
+            for rc in h:
+                box_of[pos[rc]] = k
+    renban_pieces, thermo_cells = [], []
+    for cname, hexcol, lc in items:
+        if cname == "offcentre" or (cname in ("white", "black") and not all(x in pos for x in lc)):
+            continue  # house outlines, frames and legends
+        if cname == "diagonal" or not all(x in pos for x in lc):
+            unknown.append(f"{cname} line off the houses")  # every coloured line is read or refuses the puzzle
+            continue
+        rule = line_rule_from_text(hexcol, cmap, drawn)
+        ends = [x for x in (lc[0], lc[-1]) if x in circles]
+        if rule is None and len(ends) == 2 and "between" in text:
+            rule = "between"
+        if rule is None and len(ends) == 1:
+            rule = "thermo" if "thermo" in text else None
+        if rule is None:
+            if cname in ("white", "black"):
+                continue  # frame / grid drawing
+            unknown.append(f"{cname} line")
+            continue
+        if rule == "ignore":
+            continue
+        used_circles |= set(ends)
+        emit_line(p, rule, lc, [pos[x] for x in lc], circles, rules, used, unknown, box_of, renban_pieces, thermo_cells,
+                  hexcol)  # fmt: skip
+    for ids in join_branches(renban_pieces):
+        p.constraints.append({"type": "set", "cells": ids, "kind": "consecutive"})
+    for rc, col in circles.items():  # a circle no arrow or line uses carries a rule of its own the reader does not read
+        if rc not in used_circles:
+            unknown.append(f"{col} circle on explicit-house board")
     if unknown:
         return None, "unsupported: " + ", ".join(unknown)
     used["explicit_houses"] = len(houses)

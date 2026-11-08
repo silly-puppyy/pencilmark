@@ -1340,3 +1340,26 @@ def test_knight_move_wording():
         "Digits in cells a knight move away from any caged cell must differ from it by more than 1.",
     ):  # local
         assert not rule_flags(other)["antiknight"], other
+
+
+def test_sudokupad_hidden_houses_and_solver_lists():
+    """hidden 'unique' cages on a square grid are extra houses (disjoint groups, 000K61: with six or more the reader
+    took the declared-board path and dropped rows, columns and boxes); a grid inside a larger drawing is a declared
+    board, where clues off the houses refuse; the "Solved by" list of an LMD page is not rules (a solver named
+    antiknight... added anti-knight, 000KLT)"""
+    from pencilmark.sources import _sp_translate as SP
+    from pencilmark.sources import sudokupad
+
+    disjoint = [[[r, c] for r in (i // 2, i // 2 + 2) for c in (i % 2, i % 2 + 2)] for i in range(4)]
+    diagonals = [[[i, i] for i in range(4)], [[i, 3 - i] for i in range(4)]]
+    hidden = [{"cells": cs, "unique": True, "hidden": True} for cs in disjoint + diagonals]  # six, covering the grid
+    p, _ = SP.translate(sudokupad.decode(_sp4(cages=hidden)), "Normal sudoku rules apply.")
+    kinds = [g.kind for g in p.groups]
+    assert kinds.count("row") == 4 and kinds.count("box") == 4 and kinds.count("extra") == 6
+    p, _ = SP.translate(sudokupad.decode(_sp4()), "Normal sudoku rules apply.\nSolved by antiknight_fan, Fog99")
+    assert p is not None and not any(r[0] == "neq" for r in p.relations)  # no anti-knight, no fog from the names
+    rows_cols = [[[r, c] for c in range(3)] for r in range(3)] + [[[r, c] for r in range(3)] for c in range(3)]
+    framed = _sp4(cages=[{"cells": cs, "unique": True, "hidden": True} for cs in rows_cols])  # a 3x3 in a 4x4 frame
+    framed["puzzle"]["cells"][3][3] = {"value": 7}  # a clue off the declared 3x3 houses
+    p, reason = SP.translate(sudokupad.decode(framed), "Digits 1 to 3.")
+    assert p is None and "outside the houses" in reason

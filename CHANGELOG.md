@@ -73,6 +73,16 @@
   three times on a diagonal. Latin squares worded "each row and column must contain the digits 1-9" get no boxes.
 - Between lines that cross themselves (an X between two circles) and the quadruple wording "digits in circles must
   appear in cells that touch the circle" are read.
+- **Hidden houses on a square grid** (SudokuPad's hidden "unique" cages: disjoint groups, regions declared only as
+  cages) are read as extra houses or as the regions; with six or more such cages the reader used to switch to the
+  declared-board path, which dropped rows, columns and boxes.
+- **Declared boards** (other shapes, a grid inside a larger drawing) get the same text checks as square grids
+  (unmodelled rules refuse, anti-knight / anti-king), read kropki dots, X / V, coloured dots and coloured lines over
+  their houses, and refuse clues off the houses and any other drawn element. Before, they read cages and arrows only
+  and silently dropped everything else: of 236 logic-masters.de puzzles read this way, 5 had one solution.
+- **The "Solved by" list of a logic-masters.de page is not rules**: solver names ("antiknight...", "Chaos...", "Fog...")
+  added anti-knight or refused the puzzle. Also refused now: liar cells, split peas, helping cages, outside cells the
+  solver fills, "choose a subset of the digits".
 
 ### Drawing and style
 
