@@ -145,6 +145,7 @@ def test_capped_classes_budget():
     assert any("information budget" in p for p in probs), probs
 
 
+@pytest.mark.slow  # generation coverage: the slow gate (quick suite stays fast, E3)
 def test_element_classes_and_ranges():
     """per-class counts: 6 givens, exactly 2 black kropki, any number of white (the dense-seeding path)"""
     r = run(
@@ -202,6 +203,7 @@ def test_parity_templates():
         assert [r for r in back["rules"] if r["type"] == "cell"] == [{"type": "cell", "kind": kind, "count": 6}]
 
 
+@pytest.mark.slow  # generation coverage: the slow gate (quick suite stays fast, E3)
 def test_shape_limits_and_max():
     """docs/formats/generator-spec.md 2: a cage `sum` with the count "max" (every cage sums to 7, as many as fit) and a
     line `length` (one whisper of at least 8 cells)"""
@@ -240,6 +242,7 @@ def test_shape_round_trip_and_refusals():
     assert GA.feasibility(SF.spec_to_gen(spec(rules=[{"type": "cage", "count": 2, "size": [12, None]}])))
 
 
+@pytest.mark.slow  # generation coverage: the slow gate (quick suite stays fast, E3)
 def test_max_leaves_room_for_required_classes():
     """a "max" class is packed after the other classes' minimums: every cell marked odd or even would leave no room for
     the two whispers asked for (every attempt was pruned before)"""
