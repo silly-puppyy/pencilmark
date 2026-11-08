@@ -509,10 +509,27 @@ def _rule_from_move(ctx):
     return None
 
 
+def _completed_rule(ctx, c, v):
+    """the rule the move completes, found from the position when the move does not name it: one with c as its only
+    empty cell whose digits leave exactly v there (F1, 2026-11-08: two thirds of the generic explanations)"""
+    p, st = ctx.p, ctx.st
+    for rule in rules(p).values():
+        cells = getattr(rule, "cells", None) or ()
+        if c not in cells or any(not st.vals[q] for q in cells if q != c):
+            continue
+        dom = [bit(st.vals[q]) if st.vals[q] else p.domains[q] for q in cells]
+        try:
+            if enum_rule(p, rule, dom)["sup"][list(cells).index(c)] == bit(v):
+                return rule
+        except Exception:  # noqa: BLE001  (a rule enum_rule does not model)
+            continue
+    return None
+
+
 def _h_nary_direct(ctx):
     nm, p, st = ctx.nm, ctx.p, ctx.st
     c, v = ctx.place
-    rule = _rule_from_move(ctx)
+    rule = _rule_from_move(ctx) or _completed_rule(ctx, c, v)
     if rule is None:
         return _generic(ctx)
     known = [(q, st.vals[q]) for q in rule.cells if st.vals[q]]
