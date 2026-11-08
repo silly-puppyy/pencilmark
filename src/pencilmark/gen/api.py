@@ -719,9 +719,11 @@ def _generate(spec):
             continue
         if low is not None and mode not in ("cage_count", "kropki_full") and low.ok(givens, els):
             got = None
-            # too easy: every other attempt, re-dig with every technique and pull back to the cap (search.pull); measured
-            # 2026-10-24 on 9x9 classics: ~1 in 4-6 hits for band targets, never for a required technique, ~2 s each
-            if mode in ("classic", "dig") and cap < 5 and not top and stats["attempts"] % 2 == 0:
+            # too easy: re-dig with every technique and pull back to the cap (search.pull); measured 2026-10-24 on 9x9
+            # classics: ~1 in 4-6 hits for band targets, never for a required technique, ~2 s each. On every attempt
+            # since 2026-11-08 (was every other): classic Medium in 180 s 5 of 9 seeds (was 1 of 9); more pulls per dig
+            # did not help (0 of 6)
+            if mode in ("classic", "dig") and cap < 5 and not top:
                 rf = SR.dig(
                     b,
                     kinds,

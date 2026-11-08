@@ -390,7 +390,7 @@ def test_outside_clues():
 
 @pytest.mark.slow  # about 10 s
 def test_corner_clues():
-    """quadruples (corner circles) and mathrax clues are true in the solution and are written as `contains` and
+    """quadruples (corner circles) and mathrax clues are true in the solution and are written as `quadruple` and
     `corner` rules (the generator's pair tables per diagonal read back as one mathrax corner)"""
     from pencilmark.gen import elements as EL
 
@@ -401,10 +401,11 @@ def test_corner_clues():
         sol = r["puzzle"]["solution"]
         for x in clues:
             ds = [sol[(int(c[1]) - 1) * 6 + int(c[3]) - 1] for c in x["cells"]]
-            if t["type"] == "contains":
+            if t["type"] == "quadruple":
                 assert EL.corner_holds("quadruple", ds, x["digits"])
-            else:
-                assert (x["op"], x.get("value")) in EL.mathrax_clues(ds)
+            else:  # the format's operator names; the generator's tables use + - x /
+                sign = {"sum": "+", "difference": "-", "product": "x", "ratio": "/"}.get(x["op"], x["op"])
+                assert (sign, x.get("sum", x.get("value"))) in EL.mathrax_clues(ds)
 
 
 def test_locked_nonconsecutive():

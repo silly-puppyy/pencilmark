@@ -34,7 +34,9 @@ def examples():
 
 
 def norm(lines):
-    return [re.sub(r"\d+\.\d+ s\b", "N s", re.sub(r"\s+", " ", x)).strip() for x in lines if x.strip()]
+    # timings vary run to run: seconds in messages and the log's milliseconds prefix
+    out = [re.sub(r"\d+\.\d+ s\b", "N s", re.sub(r"\s+", " ", x)).strip() for x in lines if x.strip()]
+    return [re.sub(r"^\d+ ms ", "N ms ", x) for x in out]
 
 
 @pytest.mark.slow

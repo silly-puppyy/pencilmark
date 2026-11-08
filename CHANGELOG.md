@@ -128,6 +128,11 @@
 
 ### Generator
 
+- **Classic Medium requests succeed far more often**: a candidate that comes out too easy is re-dug with every
+  technique and pulled back to the band on every attempt (was every other). Classic Medium in 180 s: 5 of 9 seeds
+  (was 1 of 9); Hard unchanged. Medium classics need a written subset (pairs and triples seen in the head are Easy),
+  so they remain the slowest classic band to hit.
+
 - **Difficulty ranges spread**: `"difficulty": [lo, hi]` aims at a point drawn in the range for each seed
   (`info.aimed_at`) instead of returning the first puzzle inside it, which sat at the low edge (Very Easy `[2, 4]`:
   median 2.4, 2.2-2.9 before; 2.9, 2.2-4.0 now).
