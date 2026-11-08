@@ -108,7 +108,7 @@ void Solver::shade_connect(MoveBuf& out) {
                 }
                 return reached == known.size();
             };
-            for (int c = 0; c < N; ++c) {
+            for (int c = 0; c < N && !shade_light; ++c) {  // (not inside a colour trial's propagation: costly)
                 if (shade[c]) continue;
                 bool touches = false;  // only cells next to the may-graph's paths can be cuts; cheap filter
                 for (int nb : p.grid_nbr[c]) touches |= may(nb);
@@ -122,7 +122,7 @@ void Solver::shade_connect(MoveBuf& out) {
         (void)more_cells;
     }
     // perimeter runs: the border cycle of a full rectangular board
-    if (p.border_cycle.empty()) return;
+    if (p.border_cycle.empty() || shade_light) return;
     const auto& B = p.border_cycle;
     const int L = (int)B.size();
     auto changes = [&](const std::vector<uint8_t>& colour) {  // fewest colour changes possible around the cycle
@@ -325,7 +325,9 @@ void Solver::shade_trial(MoveBuf& out) {
             const std::vector<uint8_t> sv = vals, ss = shade;
             const std::vector<uint32_t> sc = cand, sg = placed_g;
             shade[c] = (uint8_t)col;
+            shade_light = true;  // the trial's propagation: 2x2, single exit, rules, singles (shade_dead checks joins)
             const int r = shade_propagate(ROUNDS);
+            shade_light = false;
             vals = sv, shade = ss, cand = sc, placed_g = sg;
             if (!r) continue;
             Move& m = new_move(out, SHADE_TRIAL, 1.0, r);

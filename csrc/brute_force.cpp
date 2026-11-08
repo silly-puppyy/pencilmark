@@ -118,6 +118,37 @@ struct Brute {
         const int N = p.N;
         std::vector<char> seen(N);
         std::vector<int> stack;
+        // single exit: with a colour in several known groups, a group with one open neighbour takes it
+        std::vector<int> comp(N);
+        for (bool grew = true; grew;) {
+            grew = false;
+            for (int col = 1; col <= 2 && !grew; ++col) {
+                std::fill(comp.begin(), comp.end(), -1);
+                int ng = 0;
+                std::vector<int> exit_of, n_exit;
+                for (int s0 = 0; s0 < N; ++s0) {
+                    if (sh[s0] != col || comp[s0] >= 0) continue;
+                    stack.assign(1, s0);
+                    comp[s0] = ng;
+                    int ex = -1, nx = 0;
+                    std::fill(seen.begin(), seen.end(), 0);
+                    while (!stack.empty()) {
+                        const int c = stack.back();
+                        stack.pop_back();
+                        for (int q : p.grid_nbr[c]) {
+                            if (sh[q] == col && comp[q] < 0) comp[q] = ng, stack.push_back(q);
+                            else if (!sh[q] && !seen[q]) seen[q] = 1, ex = q, ++nx;
+                        }
+                    }
+                    exit_of.push_back(ex), n_exit.push_back(nx), ++ng;
+                }
+                if (ng < 2) continue;
+                for (int g = 0; g < ng; ++g) {
+                    if (n_exit[g] == 0) return false;  // sealed while its colour lies elsewhere too
+                    if (n_exit[g] == 1) sh[exit_of[g]] = (uint8_t)col, grew = true;
+                }
+            }
+        }
         for (int col = 1; col <= 2; ++col) {
             int start = -1, total = 0;
             for (int c = 0; c < N; ++c)
@@ -771,10 +802,17 @@ struct Brute {
                     const int n = aux_count(as[depth].data(), (int)a);
                     if (n > 1 && n < abest) abest = n, avar = (int)a;
                 }
-        int scell = -1;  // a cell whose colour is still open (shading)
-        if (shade_on)
-            for (int x = 0; x < N && scell < 0; ++x)
-                if (!ss[depth][x]) scell = x;
+        int scell = -1;  // a cell whose colour is still open (shading): the one with the most coloured neighbours, so
+        if (shade_on) {  // connectivity and the 2x2 rule prune at once
+            int sbest = -1;
+            for (int x = 0; x < N; ++x) {
+                if (ss[depth][x]) continue;
+                int k = 0;
+                for (int q : p.grid_nbr[x]) k += ss[depth][q] != 0;
+                if (k > sbest) sbest = k, scell = x;
+                if (k == 4) break;
+            }
+        }
         if (c < 0 && lcell < 0 && scell < 0 && avar < 0) {
             if (!valid(vals)) return;  // a full grid must satisfy every rule
             if (chaos_on && !chaos_valid(vals, ls[depth].data())) return;

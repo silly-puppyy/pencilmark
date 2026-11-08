@@ -518,6 +518,7 @@ public:
     std::vector<uint8_t> shade;
     std::vector<uint8_t> shade_override;  ///< a mid-solve state's colours (band_path)
     bool has_shading() const { return p.shading; }
+    bool shade_light = false;  ///< inside a colour trial: the cheap shading techniques only
     void shade_local(MoveBuf& out);
     void shade_connect(MoveBuf& out);
     void shade_rule(MoveBuf& out);
