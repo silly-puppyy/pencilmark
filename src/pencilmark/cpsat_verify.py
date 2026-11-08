@@ -12,6 +12,7 @@ Pair relations are encoded generically as allowed-pair tables from model.RELATIO
 """
 
 import logging
+import os
 import time
 
 from . import model as M
@@ -819,7 +820,11 @@ def _decide(p, limit, node_limit, time_limit):
     if complete or len(sols) >= limit:
         return sols, True, "the C++ search"
     if ortools:
-        s = cpsat_solutions(p, limit=limit, time_limit=time_limit)
+        # regions to find / shading: large label models where CP-SAT's portfolio pays (a chaos puzzle with one sight
+        # rule: 103 s on one worker, 4.6 s on eight); everything else stays on one worker (rate_many runs processes)
+        heavy = has_chaos(p) or has_shading(p)
+        workers = min(8, os.cpu_count() or 1) if heavy else 1
+        s = cpsat_solutions(p, limit=limit, time_limit=time_limit, workers=workers)
         if s is not None:
             return s, True, "CP-SAT"
         if first < node_limit:  # a rule CP-SAT does not model, or its time ran out: the full C++ search

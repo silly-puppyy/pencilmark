@@ -14,7 +14,8 @@
   with a lambda (such puzzles used to fall to the C++ search alone, which often could not finish); the C++ search
   prunes on a region rule as soon as its value is settled (a sight line stops at its first other region), and once
   every digit is fixed it stops after the first valid set of regions (solutions count by digits): a fully given
-  jigsaw read as chaos went from "undecided" after 16 s to decided at once.
+  jigsaw read as chaos went from "undecided" after 16 s to decided at once. The uniqueness check gives CP-SAT up to eight workers on puzzles with regions
+  to find or shading (one sight rule: 103 s on one worker, 4.6 s on eight); other puzzles keep one.
 
 ### Reading
 
