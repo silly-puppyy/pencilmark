@@ -25,7 +25,8 @@
    "band": "Medium",
    "contains": [
     "NTR"
-   ]
+   ],
+   "difficulty": "typical"
   },
   "quality": {
    "preset": "standard"

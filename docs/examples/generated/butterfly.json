@@ -585,8 +585,8 @@
  },
  "card": {
   "band": "Medium",
-  "difficulty": null,
-  "time": null,
+  "difficulty": 9.8,
+  "time": 83.0,
   "contains": [
    {
     "code": "HSI",
@@ -633,7 +633,7 @@
   ]
  },
  "info": {
-  "seconds": 91.8,
+  "seconds": 305.0,
   "attempts": 1,
   "found": null,
   "givens": 3,

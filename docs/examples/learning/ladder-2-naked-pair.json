@@ -25,7 +25,8 @@
    "band": "Medium",
    "contains": [
     "NPR"
-   ]
+   ],
+   "difficulty": "typical"
   },
   "quality": {
    "preset": "standard"

@@ -118,7 +118,7 @@ CURIOSITIES = {
                 {"type": "line", "kind": "whisper", "length": [7, None], "count": 2},
                 {"type": "line", "kind": "renban", "length": [5, None], "count": "auto"},
             ],
-            time=600,
+            time=1200,
         ),
     ),
     "tall-thermos": (
@@ -287,7 +287,7 @@ def load(name):
 
 def took(d):
     """how the run went, in words (with the candidates the publishing checks refused, if any)"""
-    i, lim = d.get("info") or {}, d["spec"].get("limits", {}).get("time", 120)
+    i, lim = d.get("info") or {}, d["spec"].get("limits", {}).get("seconds", 120)
     checks = {k.split(": ", 1)[1]: v for k, v in (i.get("rejected") or {}).items() if k.startswith("publishing check")}
     refused = (
         f"; the publishing checks refused {sum(checks.values())} other candidate{'s' if sum(checks.values()) != 1 else ''}"

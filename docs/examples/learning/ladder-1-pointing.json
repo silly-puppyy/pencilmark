@@ -25,7 +25,8 @@
    "band": "Easy",
    "contains": [
     "PPR"
-   ]
+   ],
+   "difficulty": "typical"
   },
   "quality": {
    "preset": "standard"

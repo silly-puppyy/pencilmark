@@ -497,7 +497,7 @@
   ]
  },
  "info": {
-  "seconds": 300.1,
+  "seconds": 300.3,
   "attempts": 14,
   "found": 146,
   "givens": 11,
@@ -505,10 +505,9 @@
    "even": 36
   },
   "rejected": {
-   "publishing check: thin": 31,
+   "publishing check: thin": 32,
    "publishing check: unusual": 17,
-   "publishing check: thin/unusual": 5,
-   "publishing check: trivial": 1
+   "publishing check: thin/unusual": 5
   }
  }
 }

@@ -264,7 +264,7 @@
   "givens": 24,
   "elements": {},
   "rejected": {
-   "band too low (logic pre-check)": 2871,
+   "band too low (logic pre-check)": 2868,
    "publishing check: thin": 4
   }
  }

@@ -25,7 +25,8 @@
    "band": "Hard",
    "contains": [
     "XWG"
-   ]
+   ],
+   "difficulty": "typical"
   },
   "quality": {
    "preset": "standard"
