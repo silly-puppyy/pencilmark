@@ -497,7 +497,8 @@ class _Writer:
             return [dict(rule, holds=_holds(rule["holds"]))]
         if t == "quadruple":
             return [{"type": "quadruple", "digits": [int(v) for v in rule["digits"]], "cells": nm(rule["cells"])}]
-        if t in ("region_sight", "border_count", "other_region_sum"):
+        if t in ("region_sight", "border_count", "other_region_sum", "shading_sight", "shaded_count", "same_shading",
+                 "different_shading"):  # fmt: skip
             return [dict(rule, cells=nm(rule["cells"]))]
         if t == "chaos_no_2x2":  # written as the chaos rule's option (write_groups)
             return []

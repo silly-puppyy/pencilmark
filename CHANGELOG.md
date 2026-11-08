@@ -25,6 +25,13 @@
   over the shading* (a custom rule reading `shaded()`, tried with every digit and colour its cells can take). Before,
   a yin-yang puzzle was band Unknown. Every colour a route sets is checked against the solutions in the tests.
 
+- **Rules that read the shading have names** (format 6.19, reserved with shading): `shading_sight` (a clue counts
+  the cells of its own colour it sees), `shaded_count` (a clue counts the shaded cells in its directions),
+  `same_shading` and `different_shading`. They compile to custom rules over `shaded()`. The SudokuPad reader reads
+  dots on the border between the colours and sight clues in caged cells, and refuses a yin-yang whose frame sentence
+  also changes values (shaded digits negative) or whose colours have names ("blue cells are halved"); both were read
+  with the coupling dropped.
+
 ### Grading (regions to find; still reserved)
 
 - **Rules that read the regions are reasoned with** (a new technique, *A rule over regions*, RRU): a custom rule

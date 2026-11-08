@@ -156,6 +156,8 @@ class _ReadCtx:
             return [{"type": "yin_yang", "shaded": list(r.get("shaded", [])), "unshaded": list(r.get("unshaded", []))}]
         if t in ("region_border", "same_region"):
             return [{"type": t, "cells": list(r["cells"])}]
+        if t in ("shading_sight", "shaded_count", "same_shading", "different_shading"):  # rules/shading.py: shaded()
+            return [{k: v for k, v in r.items() if k not in ("id", "label", "style")}]
         if t in ("region_sight", "border_count", "other_region_sum"):  # rules/region.py: custom rules over region()
             return [{k: v for k, v in r.items() if k not in ("id", "label", "style")}]
         if t == "line":  # rules/line.py

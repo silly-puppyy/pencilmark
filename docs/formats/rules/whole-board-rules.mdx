@@ -116,6 +116,25 @@ A complete 4×4 yin-yang sudoku (one solution, digits and shading):
 |---|---|
 | `shaded`, `unshaded` | Optional: cells whose shading is given. |
 
+### Rules that read the shading
+
+Recurring couplings of shading and digits have names (found in the logic-masters.de yin-yang rules texts); each needs
+the `yin_yang` rule. One-off couplings use a [custom rule (6.18)](custom.mdx) with `shaded(c)`.
+
+```json
+{"type": "shading_sight", "cells": ["r2c3", "r5c7"]}
+{"type": "shaded_count", "cells": ["r1c4"], "directions": ["down"]}
+{"type": "same_shading", "cells": ["r4c4", "r4c5", "r5c5"]}
+{"type": "different_shading", "cells": ["r3c3", "r3c4"]}
+```
+
+| Type | Meaning |
+|---|---|
+| `shading_sight` | Each clue cell's digit (or `value`) counts the cells of its own colour it sees in its `directions` (default all four), sight stopping at the first cell of the other colour or the edge; `self` (default true) counts the clue cell. Setters: sight lines, "digits in caged cells show how many cells of the same colour they see". |
+| `shaded_count` | Each clue cell's digit (or `value`) counts the shaded cells in each of its `directions` up to the edge (each direction on its own; `total`: all together). Setters: arrows counting shaded cells. |
+| `same_shading` | The cells all have one colour. |
+| `different_shading` | The two cells have different colours. Setters: dots on the border between the shaded and unshaded cells. |
+
 At most one `yin_yang` rule per puzzle; it covers the whole board. Rules may read the shading with `shaded(c)` in a
 [custom rule (6.18)](custom.mdx). A puzzle is unique when its digits are; the shading itself need not be. Shading is
 reserved in pencilmark 1.2 (see the note above): `describe` names such a puzzle, while solving, counting and grading it

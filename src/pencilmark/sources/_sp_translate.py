@@ -986,6 +986,12 @@ def yin_yang_reading(rules):
         return None
     if re.search(r"nurikabe|heyawake|\bcaves?\b|star battle|\bloop\b|\bislands?\b|\bpaths?\b|\byong\b", text):
         return None  # another shading genre beside it
+    if re.search(
+        r"shaded (?:either )?(?:" + "|".join(COLOR_WORDS) + r") or (?:" + "|".join(COLOR_WORDS) + r")\b"
+        r"|\bis shaded (?:" + "|".join(COLOR_WORDS) + r")\b",
+        text,
+    ):
+        return None  # the shading's colours have names ("blue cells are halved", 000M58): rules this reading misses
     out = []
     for sent in re.split(r"(?<=[.\n;])\s*|\s*[•\u2022]\s*", text):
         if not re.search(
@@ -994,8 +1000,28 @@ def yin_yang_reading(rules):
             sent,
         ):
             continue  # not about the shading (clue colors such as "a green line" are not)
-        if re.search(r"connected|2 ?x ?2|2 by 2|two by two", sent) and not _YY_PAIR.search(sent):
-            continue  # the frame
+        if (
+            re.search(r"connected|2 ?x ?2|2 by 2|two by two", sent)
+            and not _YY_PAIR.search(sent)
+            and not re.search(r"\b(?:values?|digits?|negative|sums?|halved?|doubled?|counts?|numbers?)\b", sent)
+        ):
+            continue  # the frame (a frame sentence that also changes values is not only the frame: 000PYY)
+        if re.search(
+            r"dots? (?:lie|lies|are|sit|sits) on the (?:border|boundary|edge) between (?:the )?shaded and unshaded",
+            sent,
+        ):
+            out.append(("dots_border", "all" if re.search(r"\ball (?:the )?dots\b", sent) else "white"))
+            continue
+        if re.search(r"(?:other|opposite) colou?r blocks? (?:the )?(?:vision|view|sight)", sent):
+            continue  # part of the sight rule below
+        if (
+            re.search(r"(?:digits?|numbers?) in (?:the )?caged cells", sent)
+            and re.search(r"same colou?r", sent)
+            and re.search(r"\bseen\b|\bsees?\b", sent)
+            and not re.search(r"diamond|total", sent)
+        ):
+            out.append(("sight", "cage", bool(re.search(r"including (?:itself|the cell itself|that cell)", sent))))
+            continue
         if re.fullmatch(r"\W*yin[- ]?yang\W*(?:rules?\W*)?(?:apply\W*)?", sent.strip()):
             continue
         scope = "cage" if re.search(r"\bcages?\b", sent) else "thermo" if re.search(r"\bthermo", sent) else "all"
@@ -1020,6 +1046,20 @@ def add_yin_yang(p, specs, thermo_cells):
     name = lambda i: f"r{p.coords[i][0] + 1}c{p.coords[i][1] + 1}"
     cage_cells = sorted({c for g in p.groups if g.kind == "cage" for c in g.cells})
     for spec in specs:
+        if spec[0] == "dots_border":  # the dotted pairs straddle the colours
+            kinds = ("diff",) if spec[1] == "white" else ("diff", "ratio")
+            for rel in p.relations:
+                if rel[0] in kinds and (rel[0] != "diff" or rel[3] == 1) and (rel[0] != "ratio" or rel[3] == 2):
+                    PJ.add_named(p, {"type": "different_shading", "cells": [name(rel[1]), name(rel[2])]})
+            continue
+        if spec[0] == "sight":  # caged cells (cages without totals) count the cells of their own colour they see
+            clue = sorted({c for g in p.groups if g.kind == "cage" and g.total is None for c in g.cells})
+            if clue:
+                rule = {"type": "shading_sight", "cells": [name(c) for c in clue]}
+                if not spec[2]:
+                    rule["self"] = False
+                PJ.add_named(p, rule)
+            continue
         if spec[0] == "whisper":
             at = {p.coords[c]: c for c in range(p.N)}
             for c in range(p.N):

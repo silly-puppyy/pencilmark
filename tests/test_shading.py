@@ -40,3 +40,24 @@ def test_shading_steps_are_sound():
         yy.setdefault("unshaded" if col == 1 else "shaded", []).append(f"r{c // 6 + 1}c{c % 6 + 1}")
         with X._reserved_ok():
             assert pm.count_solutions(d2, limit=1)["count"] == 0
+
+
+def test_named_shading_rules_compile_to_shaded():
+    """shading_sight / shaded_count / same_shading / different_shading (rules/shading.py) need the yin_yang rule and
+    compile to custom rules over shaded()"""
+    import pytest
+
+    from pencilmark.rules.shading import SHADING_RULES
+
+    coords = {(r, c) for r in range(4) for c in range(4)}
+    sight = SHADING_RULES["shading_sight"]({"cells": ["r1c1"], "directions": ["right"]}, coords)[0]
+    assert sight["holds"] == "1 + len(take_while(right, y => shaded(y) == shaded(x))) == x"
+    count = SHADING_RULES["shaded_count"]({"cells": ["r1c1"], "directions": ["down"], "value": 2}, coords)[0]
+    assert count["holds"] == "count(y for y in down if shaded(y)) == 2"
+    assert SHADING_RULES["different_shading"]({"cells": ["r1c1", "r1c2"]})[0]["holds"] == "shaded(a) != shaded(b)"
+    doc = _doc()
+    doc["rules"] = [r for r in doc["rules"] if r["type"] != "yin_yang"] + [
+        {"type": "different_shading", "cells": ["r1c1", "r1c2"]}
+    ]
+    with X._reserved_ok(), pytest.raises(pm.FormatError, match="yin_yang"):
+        pm.count_solutions(doc)

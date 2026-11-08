@@ -411,7 +411,8 @@ def from_json(obj) -> M.Puzzle:
                 win = [(r_, c_), (r_, c_ + 1), (r_ + 1, c_), (r_ + 1, c_ + 1)]
                 if all(x in cid for x in win):
                     p.constraints.append({"type": "table", "cells": [cid[x] for x in win], "allowed": allowed})
-        elif t == "custom" or t in REGION_RULES:  # the rule language (rules/custom.py), kept by name; region rules
+        elif t == "custom" or t in REGION_RULES or t in SHADING_RULES:  # the rule language (rules/custom.py); region /
+            # shading rules (rules/region.py, rules/shading.py) compile to custom rules over region() / shaded()
             from .exchange.board import Board  # (rules/region.py) compile to custom rules over region()
             from .layers import layers_of
             from .rules import custom as CU
@@ -419,7 +420,8 @@ def from_json(obj) -> M.Puzzle:
             layers = layers_of(d.get("rules"))
             Bc = Board(coords, D)
             Bc.unknowns, Bc.layers = d.get("unknowns") or {}, d.get("layers") or {}
-            parts = REGION_RULES[t](r, set(coords)) if t in REGION_RULES else [r]
+            named = REGION_RULES.get(t) or SHADING_RULES.get(t)
+            parts = named(r, set(coords)) if named else [r]
             compiled = [x for part in parts for x in CU.compile_rule(part, Bc, D, layers)]
             width, height = max(c for _, c in coords) + 1, max(rr for rr, _ in coords) + 1
             shape = ["".join("#" if (y, x) in cid else "." for x in range(width)) for y in range(height)]
@@ -472,8 +474,19 @@ def from_json(obj) -> M.Puzzle:
 # by name, not as their expansion (a global-entropy puzzle was 64 copies of a 2,916-row table). One-off rules are
 # custom rules (the rule language), also kept by name.
 from .rules.region import REGION_RULES  # noqa: E402  (named rules over regions to find)
+from .rules.shading import SHADING_RULES  # noqa: E402  (named rules over the shading)
 
-NAMED_RULES = {"global_entropy", "quadruple", "rossini", "vudoku", "increasing", "isomorphic", "custom", *REGION_RULES}
+NAMED_RULES = {
+    "global_entropy",
+    "quadruple",
+    "rossini",
+    "vudoku",
+    "increasing",
+    "isomorphic",
+    "custom",
+    *REGION_RULES,
+    *SHADING_RULES,
+}
 
 
 def _remember(p, rule, rels, cons):

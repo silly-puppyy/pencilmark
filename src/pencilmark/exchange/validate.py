@@ -35,6 +35,10 @@ RULE_KEYS = {
     "border_count": ({"cells"}, {"directions", "total", "value"}),
     "other_region_sum": ({"cells"}, {"value"}),
     "yin_yang": (set(), {"shaded", "unshaded"}),
+    "shading_sight": ({"cells"}, {"directions", "self", "value"}),
+    "shaded_count": ({"cells"}, {"directions", "total", "value"}),
+    "same_shading": ({"cells"}, set()),
+    "different_shading": ({"cells"}, set()),
     "box_grid": ({"box", "count"}, {"origin"}),
     "box": ({"cells"}, set()),
     "row": ({"cells"}, set()),
@@ -179,6 +183,7 @@ def validate(doc):
         for r in doc["rules"]
         if isinstance(r, dict) and r.get("type") in ("grid", "box_grid", "chaos") and isinstance(r.get("origin"), str)
     }
+    B.has_shading = any(isinstance(x, dict) and x.get("type") == "yin_yang" for x in doc["rules"])
     B.chaos_areas = [
         grid_area(B, *parse_cell(r["origin"]))
         for r in doc["rules"]
@@ -262,7 +267,9 @@ _RESERVED_OK = [False]
 # engine, but no human technique grades them yet; files that use them are refused until then (_reserved_ok() reads them).
 RESERVED_TYPES = {"yin_yang": "shading", "chaos": "regions to find", "region_border": "regions to find",
                   "same_region": "regions to find", "region_sight": "regions to find",
-                  "border_count": "regions to find", "other_region_sum": "regions to find"}  # fmt: skip
+                  "border_count": "regions to find", "other_region_sum": "regions to find",
+                  "shading_sight": "shading", "shaded_count": "shading", "same_shading": "shading",
+                  "different_shading": "shading"}  # fmt: skip
 
 
 class _reserved_ok:
@@ -331,6 +338,26 @@ def _validate_rule(r, B):
                 raise FormatError('a fog trigger is {"when": [cells], "light": [cells]}')
             _cells(B, x["when"], "when", minlen=1)
             _cells(B, x["light"], "light", minlen=1)
+        return
+    if t in ("shading_sight", "shaded_count", "same_shading", "different_shading"):  # 6.19: rules reading the shading
+        from ..rules.region import DIRECTIONS
+
+        if not getattr(B, "has_shading", False):
+            raise FormatError(f"{t} needs the board's shading (a yin_yang rule)")
+        cs = _cells(B, r["cells"], minlen=2 if t == "same_shading" else 1)
+        if len(set(cs)) != len(cs):
+            raise FormatError("cells repeat")
+        if t == "different_shading" and len(cs) != 2:
+            raise FormatError("different_shading takes two cells")
+        if t in ("shading_sight", "shaded_count"):
+            ds = r.get("directions", list(DIRECTIONS))
+            if not isinstance(ds, list) or not ds or len(set(ds)) != len(ds) or set(ds) - set(DIRECTIONS):
+                raise FormatError(f"{t} directions must be a list of distinct {', '.join(DIRECTIONS)}")
+            for k in ("self", "total"):
+                if k in r and not isinstance(r[k], bool):
+                    raise FormatError(f"{t} {k} must be true or false")
+            if "value" in r and (isinstance(r["value"], bool) or not isinstance(r["value"], int) or r["value"] < 0):
+                raise FormatError(f"{t} value must be a whole number >= 0")
         return
     if t in ("region_sight", "border_count", "other_region_sum"):  # 6.3: clues in a chaos area reading the regions
         from ..rules.region import DIRECTIONS
