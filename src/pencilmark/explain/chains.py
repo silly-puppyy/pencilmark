@@ -1073,6 +1073,17 @@ def _db_render(ctx, stem, sds, petals, z):
     return _result(ctx, J, short, teach, tz == set(ctx.elims))
 
 
+def _sees_end(p, st, end, t):
+    """does candidate t clash with a chain end? A group end (one of its cells holds the digit): t has the digit, is
+    outside the group and sees all of it"""
+    if end[0] == "grp":
+        q, d = t
+        return d == end[2] and q not in end[1] and all(q in p.peers[g] for g in end[1])
+    if end[0] == "als":
+        return False
+    return _weak(p, st, end, t)
+
+
 def _mental_chain_single(ctx, ps, path):
     """Engine elimination chain on the mental view, after which the target is a single."""
     nm, p, st = ctx.nm, ctx.p, ctx.st
@@ -1083,7 +1094,7 @@ def _mental_chain_single(ctx, ps, path):
         for q in range(p.N)
         if not st.vals[q]
         for d in digits_of(ps.cand[q])
-        if (q, d) not in (a, z) and _weak(p, ps, a, (q, d)) and _weak(p, ps, z, (q, d))
+        if (q, d) not in (a, z) and _sees_end(p, ps, a, (q, d)) and _sees_end(p, ps, z, (q, d))
     ]
     md2 = list(ps.cand)
     for q, d in gone:
@@ -1105,13 +1116,9 @@ def _mental_chain_single(ctx, ps, path):
     links = _chain_links(path)
     short = f"{nm.cell(c)} = {v}: a short chain in the head clears the way"
     teach = (
-        f"Without pencil marks, think about what the cells can still be. Suppose {nm.cell(a[0])} is NOT {a[1]}: "
+        f"Without pencil marks, think about what the cells can still be. Suppose {_is(nm, a, False)}: "
         f"{', '.join(_chain_text(nm, p, path, alsc))}. So "
-        + (
-            f"{nm.cell(a[0])} must be {a[1]} or {z[1]}"
-            if a[0] == z[0]
-            else f"{nm.cell(a[0])} is {a[1]} or {nm.cell(z[0])} is {z[1]}"
-        )
+        + (f"{nm.cell(a[0])} must be {a[1]} or {z[1]}" if a[0] == z[0] else f"{_is(nm, a)} or {_is(nm, z)}")
         + f", and anything clashing with both is impossible -- in particular "
         f"{fmt_elims(nm, rel[:6]) if rel else 'the candidates in the way'}. Now {how}."
     )

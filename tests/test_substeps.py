@@ -211,3 +211,19 @@ def test_rule_facts_follow_the_digit_range():
     assert derived("arrow", 9, 2).startswith("With digits 1-9, 9 cannot sit on its 2-cell shaft")
     assert derived("renban", 6, 4) == "A 4-cell renban with digits 1-6 always holds 3 and 4."
     assert derived("kropki_chain", 6) == "With digits 1-6, 5 never sits on a black dot."
+
+
+def test_chain_group_end_clash():
+    """a grouped chain end (one of its cells holds the digit) clashes with a candidate of that digit outside the
+    group that sees all of it; on classics such mental chains fell to the generic text (2026-11-08: 19 of 2,937)"""
+    from pencilmark import api
+    from pencilmark.explain.chains import _sees_end
+
+    p = api._load("." * 81)
+    grp = ("grp", (0, 1), 5)  # r1c1, r1c2
+    assert _sees_end(p, None, grp, (2, 5))  # r1c3 sees both
+    assert not _sees_end(p, None, grp, (2, 4))  # another digit
+    assert not _sees_end(p, None, grp, (1, 5))  # inside the group
+    assert _sees_end(p, None, grp, (9, 5))  # r2c1: the same box, sees both
+    assert not _sees_end(p, None, grp, (27, 5))  # r4c1 sees r1c1 only
+    assert not _sees_end(p, None, grp, (30, 5))  # r4c4 sees neither
