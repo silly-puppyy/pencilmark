@@ -157,6 +157,9 @@ class _ReadCtx:
         if t in ("region_sight", "border_count"):  # rules/region.py: compiled to custom rules over region() later
             return [{k: v for k, v in r.items() if k not in ("id", "label", "style")}]
         if t == "line":  # rules/line.py
+            if r.get("kind") == "region_sum" and any(x["type"] == "chaos" for x in self.rules):
+                # regions to find: the segments are cut by the found regions (rules/region.py), not by boxes
+                return [{"type": "region_sum_line", "cells": list(r["cells"])}]
             return line_to_engine(r, D, B, self.pairs_rule)
         if t == "arrow":
             return [{"type": "arrow", "circle": list(r["bulb"]), "line": list(sh)} for sh in r["lines"]]

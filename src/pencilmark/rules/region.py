@@ -71,6 +71,38 @@ def border_count_custom(rule, coords):
     return out
 
 
+def region_sum_line_custom(rule, coords=None):
+    """a region-sum line on a board whose regions are to be found -> one custom rule: the segments the found regions
+    cut the line into have equal sums. Without products of two unknowns (CP-SAT models it): the first segment's sum
+    s1; at every border the sum so far equals (borders so far) x s1; the whole line (borders + 1) x s1."""
+    cells = [c.lower() for c in rule["cells"]]
+    n = len(cells)
+    names = {f"c{i}": [c] for i, c in enumerate(cells, 1)}
+    names["line"] = cells
+
+    def times_s1(b, kmax):  # b x s1 for b in 0..kmax, as nested ifs (b is a sum of 0 / 1 terms)
+        out = "0"
+        for k in range(kmax, 0, -1):
+            out = f"(if {b} == {k} then {k} * s1 else {out})"
+        return out
+
+    brd = [f"num(region(c{j}) != region(c{j + 1}))" for j in range(1, n)]
+    conds = []
+    for i in range(1, n):
+        b_i = " + ".join(brd[:i])
+        p_i = " + ".join(f"c{j}" for j in range(1, i + 1))
+        conds.append(f"(region(c{i}) == region(c{i + 1}) or {p_i} == {times_s1(f'({b_i})', i)})")
+    total = " + ".join(brd) or "0"
+    conds.append(f"sum(line) == {times_s1(f'({total}) + 1', n)}")
+    return {"type": "custom", "cells": names,
+            "holds": "let s1 = sum(take_while(line, y => region(y) == region(c1))); " + " and ".join(conds)}  # fmt: skip
+
+
 # the named rules over regions to find: type -> its custom-rule form (puzzle_json compiles them, exchange reads /
 # validates / writes them by name)
-REGION_RULES = {"region_sight": region_sight_custom, "border_count": border_count_custom}
+REGION_RULES = {
+    "region_sight": region_sight_custom,
+    "border_count": border_count_custom,
+    # engine-only: a line kind region_sum read on a board with regions to find (written back as the line)
+    "region_sum_line": lambda rule, coords: [region_sum_line_custom(rule, coords)],
+}

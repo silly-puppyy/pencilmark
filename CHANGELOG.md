@@ -11,6 +11,8 @@
   which region rules it supports; the engine reads it as custom rules over `region()`.
 - **`border_count`** (6.3): a clue counts the region borders between it and the edge of the board in each of its
   `directions` (`total` adds them up); setters' arrows to borders and passport arrows.
+- **Region-sum lines on a board with regions to find** are split by the found regions (they were read as one segment,
+  which silently dropped the rule); the engine reads them as a rule over `region()`.
 
 ### Grading (regions to find; still reserved)
 

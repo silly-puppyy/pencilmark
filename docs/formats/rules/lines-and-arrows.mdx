@@ -29,7 +29,7 @@ first. `closed` is allowed only for `whisper`, `renban` and `parity`.
 | `slow_thermo` | – | Non-decreasing from `cells[0]`. | <Swatch name="line-slow_thermo" /> |
 | `whisper` | `value` k (1..D−1): REQUIRED when D ≠ 9; default 5 | Adjacent cells on the line differ by at least k (German whisper = 5, Dutch = 4). | <Swatch name="line-whisper" /> |
 | `renban` | – | The cells hold a set of consecutive digits, no repeats, any order. | <Swatch name="line-renban" /> |
-| `region_sum` | – | Split the line into segments wherever it passes from one box to another; every segment has the same sum. Boxes are those of `box_grid` and `box` rules (jigsaw pieces included); extra regions, windows and diagonals do not split the line. | <Swatch name="line-region_sum" /> |
+| `region_sum` | – | Split the line into segments wherever it passes from one box to another; every segment has the same sum. Boxes are those of `box_grid` and `box` rules (jigsaw pieces included); extra regions, windows and diagonals do not split the line. On a board whose regions are to be found (`chaos`, 6.3) the found regions split it. | <Swatch name="line-region_sum" /> |
 | `palindrome` | – | Reads the same from both ends. | <Swatch name="line-palindrome" /> |
 | `entropic` | `groups`: REQUIRED when D ≠ 9; default `[[1,2,3],[4,5,6],[7,8,9]]` | Every run of 3 consecutive cells holds one digit from each group. | <Swatch name="line-entropic" /> |
 | `modular` | `value` m (≥ 2): REQUIRED when D ≠ 9; default 3 | Every run of m consecutive cells holds one digit of each residue class mod m. | <Swatch name="line-modular" /> |

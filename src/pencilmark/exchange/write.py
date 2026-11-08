@@ -496,6 +496,8 @@ class _Writer:
             return [{"type": "quadruple", "digits": [int(v) for v in rule["digits"]], "cells": nm(rule["cells"])}]
         if t in ("region_sight", "border_count"):
             return [dict(rule, cells=nm(rule["cells"]))]
+        if t == "region_sum_line":  # a region-sum line on a board with regions to find
+            return [{"type": "line", "kind": "region_sum", "cells": nm(rule["cells"])}]
         if t == "vudoku":
             return [{"type": "vudoku", "cells": nm(rule["cells"])}]
         if t == "increasing":

@@ -256,3 +256,19 @@ def test_border_count():
         assert pencilmark.count_solutions(dict(base, rules=[{"type": "chaos"}, never]), limit=2)["count"] == 0
         with pytest.raises(FormatError):
             pencilmark.validate(dict(base, rules=[{"type": "chaos"}, dict(rule, total="yes")]))
+
+
+def test_region_sum_line_on_chaos():
+    """a region-sum line on a chaos board is split by the found regions (it was one segment: the rule was lost)"""
+    from pencilmark import exchange as X
+
+    sol = [1, 2, 3, 4, 3, 4, 1, 2, 2, 1, 4, 3, 4, 3, 2, 1]
+    base = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 4, "cols": 4}, "digits": 4,
+            "givens": sol}  # fmt: skip
+    line = {"type": "line", "kind": "region_sum", "cells": ["r1c1", "r1c2", "r1c3"]}
+    count = lambda *rs: pencilmark.count_solutions(dict(base, rules=[{"type": "chaos"}, *rs]), limit=2)["count"]
+    with X._reserved_ok():
+        assert count(line, {"type": "region_border", "cells": ["r1c2", "r1c3"]}) == 1  # 1 + 2 | 3
+        assert count(line, {"type": "region_border", "cells": ["r1c1", "r1c2"]},
+                     {"type": "same_region", "cells": ["r1c2", "r1c3"]}) == 0  # 1 | 2 + 3  # fmt: skip
+        assert pencilmark.write.document(dict(base, rules=[{"type": "chaos"}, line]))["rules"][1] == line
