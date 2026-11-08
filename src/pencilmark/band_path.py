@@ -676,6 +676,7 @@ def _contents(p, P, alternatives, deadline=None, base=None):
                 break
             b = spots[0][0]["band"]
             seen = set()
+            t1 = time.perf_counter()
             for st, q in spots[:6]:  # what else of this band was on offer where X was used
                 g = copy.copy(p)
                 g.givens = q.givens
@@ -698,14 +699,21 @@ def _contents(p, P, alternatives, deadline=None, base=None):
                         )
                     ):
                         seen.add(c2)
+            _log.log(5, "alternatives: listed what else was on offer where %s was used: %s (%.3f s)", code,
+                     " ".join(sorted(seen)) or "nothing", time.perf_counter() - t1)  # fmt: skip
             alt0 = None
             for y in sorted(seen, key=lambda c_: (_order(c_), c_)):  # ties by code: deterministic in every process
                 if y in bp["profile"] or covered(y, {code}) or covered(code, {y}):
                     continue  # listed already, or on X's chain: the subset table covers it
                 base = (ban - {y}) | {code}  # a technique dropped in the shrink may still be an alternative
                 if y not in ban:
-                    if alt0 is None:  # no guard: shared by every candidate y (each may differ in what's allowed)
-                        alt0 = band_path(p, P, ban_codes=base, max_band=bp["band_index"])
+                    if alt0 is None:  # shared by every candidate y: its guard allows all of them, so it stops only
+                        # a route no candidate can pass (a stopped route falls to the per-candidate test below);
+                        # unguarded, banning a single on an Expert puzzle took 110 s (1.3 benchmark, 2026-11-08)
+                        g0, _ = _check(bp, code, base, extra=seen)
+                        t1 = time.perf_counter()
+                        alt0 = band_path(p, P, ban_codes=base, guard=g0, max_band=bp["band_index"])
+                        _log.log(5, "alternatives: route without %s (%.3f s)", code, time.perf_counter() - t1)
                     if alt0["profile"].get(y) and _route_ok(bp, alt0, code, extra={y}):
                         alts.setdefault(code, []).append(y)
                         continue

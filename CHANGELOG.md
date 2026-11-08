@@ -164,6 +164,11 @@
 
 ### Fixes
 
+- **The technique list's alternatives search could run for minutes**: the route shared by every candidate alternative
+  ran without the guard the other tests use, so banning a single on an Expert puzzle solved the whole puzzle the hard
+  way (one sudoku.today thermo: 2.4 s in 1.2, 132 s, now 4.8 s; same card). `--log trace` now also times that route
+  and the listing of what else was on offer.
+
 - **Chains worked out in the head with a grouped end** (a box segment as one end) got the generic explanation (19 of
   2,937 classic development puzzles); they now read as the chain and the clash with both ends.
 
