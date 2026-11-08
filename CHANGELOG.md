@@ -44,6 +44,13 @@
 
 ### Reading
 
+- **Chaos puzzles from SudokuPad read their region rules**: circles counting the cells of their own region they see
+  (`region_sight`, also when drawn small), arrows in cells counting region borders (`border_count`) or own-region
+  cells (`region_sight`) in their directions, thermometers and dots said to lie in one region, extra chaos
+  (`no_2x2`); hidden cages (helpers not drawn) are no longer read as killer cages, and counting circles no longer claim
+  a chaos puzzle's sight circles. Of 467 logic-masters.de chaos puzzles with a cached payload, 7 read with one solution
+  matching the setter's (was 0); the others still use mechanics the format does not name.
+
 - **Regions to find in SudokuPad links** (still reserved for grading): more phrasings of the construction are read
   ("divide the grid into nine orthogonally-connected nine-cell regions", "regions are irregular and orthogonally
   connected" with none drawn); "arrows do not cross region borders" and "part of the same region" become

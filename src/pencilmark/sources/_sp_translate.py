@@ -198,19 +198,62 @@ REGION_KNOWN = re.compile(
     r"|divided into (?:\w+ )?(?:hidden |irregular |unknown )?regions|up to the solver|by the solver\b"
     r"|solution code|regions? (?:are|is|must be) (?:\w+ )?(?:orthogonally[- ])?connected|\d+ (?:continuous |connected )?regions"
     r"|\w+[- ]cell regions|regions? of (?:\w+ )?cells|(?:irregular|jigsaw) regions"
+    r"|(?:region[- ]borders?|regions?|shape and position of the regions?) (?:must|have to|has to) be (?:deduced|determined|found)"
+    r"|(?:some|all) region (?:borders|boundaries) are given|edges between regions count as borders"
+    r"|region borders divide[^.]{0,40}segments with equal sums|region sum line"
 )
 
 
 # a circle counting the cells of its own region it sees (region_sight; setters' circles, cave, internal x-sums), and
 # the sentences that go with it (borders / other regions block the view)
-SIGHT_TEXT = re.compile(
+_SIGHT_CLUE = re.compile(
     r"(?:digit|number)s? (?:in|on) (?:a |the |each )?(?:circle|circled cell|ring)s?[^.]{0,140}"
     r"(?:same|own|its|their) region|cells? of (?:its|their) (?:own )?region (?:it|they) sees?"
+    r"|circled (?:digit|number)s?[^.]{0,80}(?:same|own) region"
 )
+
+
+class _Sight:
+    """a sight clue's sentence: it talks about seeing (sight lines along the row and column), not about the cells a
+    clue touches or surrounds (another mechanic, refused)"""
+
+    SEE = re.compile(
+        r"\bsees?\b|\bseen\b|sight|vision|view|horizontally and vertically|in (?:its |the )?rows? and columns?"
+    )
+    NOT = re.compile(r"touch|surround|adjacent|neighbou?r|diagonal")
+
+    def search(self, text):
+        for sent in re.split(r"(?<=[.!\n])\s*", text or ""):
+            if _SIGHT_CLUE.search(sent) and self.SEE.search(sent) and not self.NOT.search(sent):
+                return True
+        return False
+
+
+SIGHT_TEXT = _Sight()
 VISION_TEXT = re.compile(
     r"(?:borders?|other regions?|different regions?)[^.]{0,30}(?:block|obstruct)s?[^.]{0,10}(?:vision|view|sight)"
     r"|(?:entering|crossing) (?:a )?(?:different|other) regions? (?:blocks?|obstructs?|stops?)"
 )
+
+
+# arrows in cells reading the regions: the borders in their direction (border_count), or the cells of the own region
+# seen that way (region_sight)
+ARROW_BORDER_TEXT = re.compile(
+    r"arrows?[^.]{0,80}(?:number|how many) (?:of )?(?:region )?borders|passport arrows?|"
+    r"(?:number|how many) (?:of )?region borders? (?:it|they|that it) (?:will )?cross"
+)
+ARROW_SIGHT_TEXT = re.compile(
+    r"arrows?[^.]{0,140}(?:same|own|its|their) region|arrows?[^.]{0,80}run of cells[^.]{0,120}region"
+)
+
+
+def arrow_sight_counts_itself(text):
+    """does an arrow's own-region count include the arrow cell? ("beyond the arrow", "starting from the next cell": no)"""
+    t = (text or "").lower()
+    return not re.search(r"beyond the arrow|starting from the next cell|not include the arrow cell|does not include", t)
+
+
+EXTRA_CHAOS_TEXT = re.compile(r"no 2 ?x ?2 (?:square|block|area)[^.]{0,60}(?:same|one|single) region|extra chaos")
 
 
 def sight_counts_itself(text):
@@ -226,7 +269,7 @@ def region_statements(text):
     regions that say something else)"""
     out, unknown = {}, []
     text = re.sub(r"\b(i\.e|e\.g)\.", lambda m: m.group(1).replace(".", ""), (text or "").lower())  # not a sentence end
-    sight = bool(SIGHT_TEXT.search(text))  # a sight rule: its sentences and the vision ones are read by translate()
+    sight = bool(SIGHT_TEXT.search(text) or ARROW_SIGHT_TEXT.search(text) or ARROW_BORDER_TEXT.search(text))
     for sent in re.split(r"(?<=[.!\n])\s*", text):
         if "region" not in sent:
             continue
@@ -244,7 +287,13 @@ def region_statements(text):
         if (diff or same) and kinds:
             for kind in kinds:
                 out[kind] = not diff
-        elif not REGION_KNOWN.search(sent) and not (sight and (SIGHT_TEXT.search(sent) or VISION_TEXT.search(sent))):
+        elif (
+            not REGION_KNOWN.search(sent)
+            and not EXTRA_CHAOS_TEXT.search(sent)
+            and not (
+                sight and any(rx.search(sent) for rx in (SIGHT_TEXT, VISION_TEXT, ARROW_SIGHT_TEXT, ARROW_BORDER_TEXT))
+            )
+        ):
             unknown.append(sent.strip())
     return out, unknown
 
@@ -281,6 +330,13 @@ def chaos_rules(P, p, n, rules):
                 pairs.append((r[1], r[2]))
         if "cage" in kinds[kind]:
             pairs += [(a, b) for g in p.groups if g.kind == "cage" for a, b in zip(g.cells, g.cells[1:])]
+        if kind == "thermo":  # thermometers read as lines: their consecutive cells
+            pairs += [
+                (a, b)
+                for con in p.constraints
+                if con.get("type") == "line" and con.get("kind") in ("thermo", "slow_thermo")
+                for a, b in zip(con["cells"], con["cells"][1:])
+            ]
         if "arrow" in kinds[kind]:  # an arrow's circle and shaft in one region
             pairs += [
                 (a, b)
@@ -1365,6 +1421,8 @@ def translate(sp, page_text=None, overrides=None):
             continue  # no cells, or a metadata cage (`cells: [null]`, its value "title: ...")
         if str(cg.get("value", "")).lower().startswith("foglight"):
             continue  # fog of war's lit cells (read by fog_of())
+        if cg.get("hidden"):
+            continue  # not drawn: a helper the setter's file uses (a non-unique corner pair, 000V..), not a rule
         cs = [idx(tuple(x)) for x in cg["cells"] if isinstance(x, (list, tuple)) and inside(tuple(x))]
         if not cs:  # every cell outside the grid (a frame drawn as cages): nothing to read
             continue
@@ -1444,7 +1502,9 @@ def translate(sp, page_text=None, overrides=None):
             own = [x for x in line_cells(wp) if inside(x) and x != start]
             attached.append((stem[0], stem[1][: stem[1].index(start) + 1] + [x for x in own if x not in stem[1]]))
         if len(left) == len(branches):
-            marker_arrows = any(v[1] == "arrow" and re.search(v[0], rules.lower()) for v in MARKED_CUSTOM.values())
+            marker_arrows = any(v[1] == "arrow" and re.search(v[0], rules.lower()) for v in MARKED_CUSTOM.values()) or (
+                chaos and bool(ARROW_BORDER_TEXT.search(rules.lower()) or ARROW_SIGHT_TEXT.search(rules.lower()))
+            )  # in-cell arrows read below (marked_cells / the chaos arrows)
             in_cell = lambda w: len({cell_of(pt) for pt in w}) == 1
             unknown.extend(["arrow without circle"] * sum(1 for w in left if not (marker_arrows and in_cell(w))))
             break
@@ -1491,7 +1551,8 @@ def translate(sp, page_text=None, overrides=None):
         w = lay.get("width", 0)
         txt = _text_of(lay).strip()
         on_edge = abs(cx - round(cx)) < 0.05 or abs(cy - round(cy)) < 0.05
-        if lay.get("rounded") and w >= 0.6 and not on_edge and inside(cell_of((cx, cy))):
+        small_ok = chaos and w >= 0.45  # regions to find: sight circles are often drawn small (Chilly's 0.5)
+        if lay.get("rounded") and (w >= 0.6 or small_ok) and not on_edge and inside(cell_of((cx, cy))):
             circles[cell_of((cx, cy))] = color_name(lay.get("backgroundColor") or lay.get("borderColor"))
         elif txt and not on_edge and w < 0.6 and inside(cell_of((cx, cy))):
             # text inside a cell away from its center is a clue of some kind (run sums in a corner, 000V90): no reading
@@ -1874,11 +1935,15 @@ def translate(sp, page_text=None, overrides=None):
         used["negative_" + "".join(t[0] for t in MARKER_TYPES if t in neg)] += 1
     text_rules = rules.lower()
     # counting circles: every digit in a circle appears in exactly that many circles (circles not used by lines)
-    if circles and re.search(
-        r"counting circle|(?:digit|number) in a circle.{0,60}(?:circles|number of)|"
-        r"circled digits?.{0,40}(?:how many|exactly that many|number of)|(?:digit|number) in a ring.{0,40}how many rings|"
-        r"number of times (?:a )?digits? appears? in (?:a )?circles?|(?:digit|number) n in a circle[^.]{0,40}\bappears? exactly n times",
-        text_rules,
+    if (
+        circles
+        and not (chaos and SIGHT_TEXT.search(text_rules))
+        and re.search(  # chaos sight circles: read below
+            r"counting circle|(?:digit|number) in a circle.{0,60}(?:circles|number of)|"
+            r"circled digits?.{0,40}(?:how many|exactly that many|number of)|(?:digit|number) in a ring.{0,40}how many rings|"
+            r"number of times (?:a )?digits? appears? in (?:a )?circles?|(?:digit|number) n in a circle[^.]{0,40}\bappears? exactly n times",
+            text_rules,
+        )
     ):
         on_lines = {
             x
@@ -1937,7 +2002,12 @@ def translate(sp, page_text=None, overrides=None):
         cons, other = chaos_rules(P, p, n, rules)
         p.constraints += cons
         if circles and SIGHT_TEXT.search(rules.lower()):  # circles counting the cells of their region they see
-            on_lines = {x for con in p.constraints for x in (con.get("cells") or con.get("line") or [])}
+            on_lines = {  # circles that belong to a line / arrow (not the regions' own constraints, which hold every cell)
+                x
+                for con in p.constraints
+                if con.get("type") not in ("chaos", "region_border", "same_region", "expr")
+                for x in (con.get("cells") or con.get("line") or [])
+            }
             cc = sorted(idx(rc_) for rc_ in circles if inside(rc_) and idx(rc_) not in on_lines)
             if cc:
                 from ..puzzle_json import add_named
@@ -1947,6 +2017,14 @@ def translate(sp, page_text=None, overrides=None):
                     rule["self"] = False
                 add_named(p, rule)
                 used["region_sight"] += 1
+        chaos_arrows(P, n, p, rules, used, unknown, inside)
+        if EXTRA_CHAOS_TEXT.search(rules.lower()):  # extra chaos: no 2x2 block in one region (the chaos option no_2x2)
+            from ..puzzle_json import add_named
+
+            add_named(
+                p, {"type": "chaos_no_2x2", "cells": [f"r{r_ + 1}c{c_ + 1}" for r_ in range(n) for c_ in range(n)]}
+            )
+            used["no_2x2"] += 1
         unknown += [f"rule about regions {s[:60]!r}" for s in other]
         used["chaos"] += 1
     # rules handled above: the text mentions them, so something must have been built for them
@@ -2561,6 +2639,37 @@ def _cell_markers(P, n, inside):
         ang = round(math.atan2(dy, dx) / (math.pi / 4)) % 8
         out["arrow"].append(((r, c), [(0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1), (-1, 0), (-1, 1)][ang]))
     return out
+
+
+def chaos_arrows(P, n, p, rules, used, unknown, inside):
+    """in-cell arrows of a chaos puzzle: border counts (ARROW_BORDER_TEXT) or own-region sight (ARROW_SIGHT_TEXT) in
+    the arrows' directions, the arrows of one cell together; a diagonal arrow is refused"""
+    t = (rules or "").lower()
+    border, sight = bool(ARROW_BORDER_TEXT.search(t)), bool(ARROW_SIGHT_TEXT.search(t))
+    if border == sight:  # neither, or both (which arrow is which cannot be told apart)
+        return
+    names = {(-1, 0): "up", (1, 0): "down", (0, -1): "left", (0, 1): "right"}
+    by_cell = defaultdict(list)
+    for cell, d in _cell_markers(P, n, inside).get("arrow", []):
+        if d not in names:
+            unknown.append("diagonal arrow")
+            continue
+        if names[d] not in by_cell[cell]:
+            by_cell[cell].append(names[d])
+    if not by_cell:
+        return
+    from ..puzzle_json import add_named
+
+    for (r, c), dirs in sorted(by_cell.items()):
+        rule = {
+            "type": "border_count" if border else "region_sight",
+            "cells": [f"r{r + 1}c{c + 1}"],
+            "directions": dirs,
+        }
+        if sight and not arrow_sight_counts_itself(rules):
+            rule["self"] = False
+        add_named(p, rule)
+        used[rule["type"]] += 1
 
 
 def marked_cells(P, n, p, rules, used, inside):
