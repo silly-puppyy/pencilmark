@@ -101,7 +101,13 @@ PRESETS = {
     # relaxed: the common-sense rejects only; the two checks measured on published puzzles (thin, unusual) warn. On
     # published development puzzles (2026-11-08) standard rejects 19% of classics (unusual 17%, thin 2%) and 12% of
     # variants; relaxed rejects under 1% of classics and 4% of variants
-    "relaxed": {"decorative": "reject", "trivial": "reject", "trial": "reject", "thin": "warning", "unusual": "warning"},
+    "relaxed": {
+        "decorative": "reject",
+        "trivial": "reject",
+        "trial": "reject",
+        "thin": "warning",
+        "unusual": "warning",
+    },
     "default": {k: None for k in QUALITY if k not in OPT_IN},
 }
 
