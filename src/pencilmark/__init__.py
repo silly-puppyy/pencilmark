@@ -5,7 +5,7 @@ Example:
     card = pencilmark.rate("....4.8.3.6...8..2...")      # difficulty, minutes, band, contains
 """
 
-__version__ = "1.3.0"
+__version__ = "1.4.0"
 
 import logging
 

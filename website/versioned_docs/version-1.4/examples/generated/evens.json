@@ -1,0 +1,513 @@
+{
+ "title": "Every even cell shaded",
+ "shows": "the count `\"max\"` on a cell template: every even cell is marked, and the run keeps the result with the fewest givens",
+ "spec": {
+  "format": "pencilmark-spec",
+  "format_version": 1,
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "count": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "count": "max"
+   }
+  ],
+  "quality": {
+   "preset": "standard"
+  },
+  "limits": {
+   "seconds": 300,
+   "seed": 1
+  }
+ },
+ "puzzle": {
+  "format": "pencilmark-puzzle",
+  "format_version": 1,
+  "meta": {},
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "givens": [
+   0,
+   0,
+   0,
+   6,
+   0,
+   0,
+   0,
+   0,
+   1,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   5,
+   0,
+   0,
+   0,
+   0,
+   0,
+   3,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   2,
+   3,
+   0,
+   0,
+   1,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   2,
+   0,
+   0,
+   9,
+   0,
+   0,
+   5,
+   0,
+   4,
+   0,
+   0,
+   0,
+   0
+  ],
+  "solution": [
+   5,
+   2,
+   7,
+   6,
+   8,
+   9,
+   4,
+   3,
+   1,
+   1,
+   8,
+   3,
+   7,
+   5,
+   4,
+   2,
+   9,
+   6,
+   4,
+   9,
+   6,
+   1,
+   2,
+   3,
+   7,
+   8,
+   5,
+   8,
+   5,
+   2,
+   4,
+   3,
+   1,
+   9,
+   6,
+   7,
+   6,
+   4,
+   9,
+   5,
+   7,
+   8,
+   3,
+   1,
+   2,
+   3,
+   7,
+   1,
+   2,
+   9,
+   6,
+   8,
+   5,
+   4,
+   2,
+   3,
+   4,
+   9,
+   1,
+   5,
+   6,
+   7,
+   8,
+   7,
+   1,
+   8,
+   3,
+   6,
+   2,
+   5,
+   4,
+   9,
+   9,
+   6,
+   5,
+   8,
+   4,
+   7,
+   1,
+   2,
+   3
+  ],
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "count": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r5c1"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r9c2"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r8c8"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r3c1"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r4c1"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r1c7"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r1c4"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r4c4"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r4c8"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r9c8"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r2c9"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r8c5"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r9c5"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r6c6"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r2c7"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r7c7"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r8c3"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r7c1"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r6c4"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r5c6"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r6c7"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r6c9"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r5c2"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r9c4"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r3c3"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r4c3"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r1c5"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r2c2"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r5c9"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r3c8"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r2c6"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r3c5"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r7c3"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r1c2"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r8c6"
+    ]
+   },
+   {
+    "type": "cell",
+    "kind": "even",
+    "cells": [
+     "r7c9"
+    ]
+   }
+  ]
+ },
+ "card": {
+  "band": "Easy",
+  "difficulty": 5.4,
+  "time": 12.0,
+  "contains": [
+   {
+    "code": "HSI",
+    "chip": "HSI",
+    "name": "Hidden Single",
+    "band_index": 0
+   },
+   {
+    "code": "PPR",
+    "chip": "PPR",
+    "name": "Pointing Pair (in the head)",
+    "band_index": 1,
+    "uses": 1
+   }
+  ]
+ },
+ "info": {
+  "seconds": 300.3,
+  "attempts": 14,
+  "found": 146,
+  "givens": 11,
+  "elements": {
+   "even": 36
+  },
+  "rejected": {
+   "publishing check: thin": 32,
+   "publishing check: unusual": 17,
+   "publishing check: thin/unusual": 5
+  }
+ }
+}

@@ -1,0 +1,22 @@
+{"format": "pencilmark-puzzle",
+ "format_version": 1,
+ "board": {"rows": 9, "cols": 9},
+ "digits": 9,
+ "givens": [
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0],
+ "rules": [
+  {"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+  {"type": "line", "kind": "thermo", "cells": ["r9c1", "r8c1", "r7c1", "r7c2"]},
+  {"type": "line", "kind": "thermo", "cells": ["r9c1", "r9c2", "r9c3"]},
+  {"type": "arrow", "bulb": ["r2c2"], "lines": [["r3c3", "r4c4", "r5c5"]]},
+  {"type": "arrow", "bulb": ["r1c7", "r1c8"], "lines": [["r2c8", "r3c8"]]},
+  {"type": "edge", "kind": "kropki", "color": "white", "cells": ["r5c7", "r5c8"]},
+  {"type": "edge", "kind": "kropki", "color": "black", "cells": ["r6c7", "r7c7"]}]}

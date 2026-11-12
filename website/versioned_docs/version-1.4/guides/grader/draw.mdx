@@ -1,0 +1,62 @@
+---
+title: Draw a puzzle
+description: Draw a puzzle file as an SVG picture in the default style, light or dark.
+---
+
+import ThemedImage from '@theme/ThemedImage';
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
+# Draw a puzzle
+
+`pencilmark.draw` draws a puzzle as SVG in the default style of [Drawing and style](../../library/drawing-style.md).
+It takes anything `rate` takes: a file in any format pencilmark reads, a link, a plain string, or a document.
+
+```python
+import pencilmark
+
+svg = pencilmark.draw("docs/examples/mini-thermo-kropki.json")
+dark = pencilmark.draw("docs/examples/mini-thermo-kropki.json", dark=True, cell=36)
+open("mini.svg", "w").write(svg)
+```
+
+From the command line, `pencilmark draw` writes the first puzzle of its input:
+
+```
+pencilmark draw docs/examples/mini-thermo-kropki.json -o mini.svg
+pencilmark draw docs/examples/mini-thermo-kropki.json -o mini-dark.svg --dark
+```
+
+<div className="pm-graphic" style={{maxWidth: '16rem', margin: '0 0 1rem'}}>
+  <ThemedImage alt="The 6×6 thermo and Kropki puzzle"
+    sources={{light: useBaseUrl('/img/swatches/example-mini-thermo-kropki.svg'),
+              dark: useBaseUrl('/img/swatches/example-mini-thermo-kropki-dark.svg')}}/>
+</div>
+
+This is the puzzle from [Write a variant puzzle file](variant-file.mdx). `cell` (`--cell`) sets the size of a cell in
+pixels (48 by default), `labels=True` (`--labels`) numbers the rows and columns, and `background=False` leaves the page
+transparent around the board.
+
+## A position of a solve, with its colors
+
+A card's `trace` ([Grade card](../../formats/grade-card.md) section 6) holds the board after each step, with the colors
+an expert would have painted. `card` and `position` draw one position: its placed digits and pencil marks (corner and center, as
+the trace's `marks` layer writes them) in the solver's ink, and its colors over the cells: over region shading and shaded cell shapes (odd / even circles and squares show
+through, their outlines drawn again on top), under lines, arrows, cages, dots, clues and digits. A cell in two colors is split along a near-vertical
+diagonal, in three into three wedges, and so on, as SudokuPad draws several colors in one cell:
+
+```python
+card = pencilmark.rate(puzzle, fields=["band", "trace"])
+svg = pencilmark.draw(puzzle, card=card, position=10)
+```
+
+```
+pencilmark rate puzzle.json --json --fields band,trace > card.json
+pencilmark draw puzzle.json -o step38.svg --card card.json --position 38
+```
+
+`colors={"r2c5": ["green", "yellow"]}`, `placed={"r1c2": 8}` and `marks={"r4c4": {"corner": [1, 2], "center": [3, 4, 5]}}`
+draw any colors, digits and pencil marks you choose, on top of a card position's; [Palette](../../library/palette.md#annotation-colors) lists the color names and their shades.
+
+The small drawings on the [rule pages](../../formats/puzzle-format.md#6-rule-families) come from this renderer. It always uses the default style, with
+line colors most puzzle setters use; [Drawing and style](../../library/drawing-style.md) lists every size and color, and
+[`palette.json`](../../palette.json) (`pencilmark/data/palette.json` in the package) holds them in one file for other renderers.

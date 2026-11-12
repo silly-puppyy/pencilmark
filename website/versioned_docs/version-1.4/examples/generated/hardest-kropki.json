@@ -1,0 +1,349 @@
+{
+ "title": "The hardest 0-clue 6×6 kropki",
+ "shows": "difficulty `\"max\"`: no givens, a minimal set of dots (count `\"min\"`), the hardest found in the time",
+ "spec": {
+  "format": "pencilmark-spec",
+  "format_version": 1,
+  "meta": {
+   "title": "Hardest 0-clue 6x6 kropki",
+   "description": "No givens, a minimal set of kropki dots, as hard as the search can find in the time."
+  },
+  "board": {
+   "rows": 6,
+   "cols": 6
+  },
+  "digits": 6,
+  "givens": {
+   "count": 0
+  },
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     2,
+     3
+    ],
+    "count": [
+     3,
+     2
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "count": "min"
+   }
+  ],
+  "where": {
+   "difficulty": "max"
+  },
+  "quality": {
+   "preset": "standard"
+  },
+  "limits": {
+   "seconds": 600,
+   "seed": 5
+  }
+ },
+ "puzzle": {
+  "format": "pencilmark-puzzle",
+  "format_version": 1,
+  "meta": {
+   "title": "Hardest 0-clue 6x6 kropki",
+   "description": "No givens, a minimal set of kropki dots, as hard as the search can find in the time."
+  },
+  "board": {
+   "rows": 6,
+   "cols": 6
+  },
+  "digits": 6,
+  "givens": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "solution": [
+   4,
+   5,
+   3,
+   6,
+   1,
+   2,
+   6,
+   1,
+   2,
+   5,
+   4,
+   3,
+   1,
+   2,
+   6,
+   4,
+   3,
+   5,
+   5,
+   3,
+   4,
+   1,
+   2,
+   6,
+   3,
+   6,
+   1,
+   2,
+   5,
+   4,
+   2,
+   4,
+   5,
+   3,
+   6,
+   1
+  ],
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     2,
+     3
+    ],
+    "count": [
+     3,
+     2
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "color": "white",
+    "cells": [
+     "r1c3",
+     "r2c3"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "color": "white",
+    "cells": [
+     "r1c5",
+     "r1c6"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "color": "white",
+    "cells": [
+     "r2c2",
+     "r2c3"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "color": "white",
+    "cells": [
+     "r2c4",
+     "r3c4"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "color": "white",
+    "cells": [
+     "r2c5",
+     "r3c5"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "color": "white",
+    "cells": [
+     "r3c1",
+     "r3c2"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "color": "white",
+    "cells": [
+     "r3c5",
+     "r4c5"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "color": "white",
+    "cells": [
+     "r4c2",
+     "r4c3"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "color": "white",
+    "cells": [
+     "r4c4",
+     "r5c4"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "color": "white",
+    "cells": [
+     "r5c5",
+     "r5c6"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "color": "white",
+    "cells": [
+     "r5c5",
+     "r6c5"
+    ]
+   },
+   {
+    "type": "edge",
+    "kind": "kropki",
+    "color": "black",
+    "cells": [
+     "r6c1",
+     "r6c2"
+    ]
+   }
+  ]
+ },
+ "card": {
+  "band": "Expert",
+  "difficulty": 15.0,
+  "time": 24.4,
+  "contains": [
+   {
+    "code": "HSI",
+    "chip": "HSI",
+    "name": "Hidden Single",
+    "band_index": 0
+   },
+   {
+    "code": "PPR",
+    "chip": "PPR",
+    "name": "Pointing / Box-Line Reduction",
+    "band_index": 1,
+    "uses": 9
+   },
+   {
+    "code": "PWC",
+    "chip": "PWC",
+    "name": "Pair rules (dots, whispers, anti-knight...)",
+    "band_index": 1,
+    "uses": 13
+   },
+   {
+    "code": "LNR",
+    "chip": "LNR/CSH",
+    "name": "Line ranges (thermo / whisper bounds)",
+    "band_index": 1,
+    "alternatives": [
+     "CSH"
+    ],
+    "uses": 4
+   },
+   {
+    "code": "NPR",
+    "chip": "NPR/HQD",
+    "name": "Naked Pair",
+    "band_index": 2,
+    "alternatives": [
+     "HQD"
+    ],
+    "uses": 1
+   },
+   {
+    "code": "RUL",
+    "chip": "RUL",
+    "name": "Two rules together",
+    "band_index": 2,
+    "uses": 23
+   },
+   {
+    "code": "KTE",
+    "chip": "KTE/CSM",
+    "name": "2-String Kite",
+    "band_index": 3,
+    "alternatives": [
+     "CSM"
+    ],
+    "uses": 1
+   },
+   {
+    "code": "BAN",
+    "chip": "BAN",
+    "name": "Band set theory with cages",
+    "band_index": 4,
+    "uses": 8
+   },
+   {
+    "code": "CAS",
+    "chip": "CAS",
+    "name": "Case analysis",
+    "band_index": 5,
+    "uses": 3
+   }
+  ]
+ },
+ "info": {
+  "seconds": 605.3,
+  "attempts": 17,
+  "found": 45,
+  "givens": 0,
+  "elements": {
+   "kropki_black": 1,
+   "kropki_white": 11
+  },
+  "rejected": {
+   "construction failed": 14
+  }
+ }
+}

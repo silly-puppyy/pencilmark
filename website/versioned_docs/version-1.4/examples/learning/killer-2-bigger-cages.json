@@ -1,0 +1,341 @@
+{
+ "title": "Bigger cages",
+ "spec": {
+  "format": "pencilmark-spec",
+  "format_version": 1,
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "count": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "cage",
+    "size": [
+     3,
+     5
+    ],
+    "sum": [
+     6,
+     25
+    ],
+    "count": [
+     8,
+     14
+    ]
+   }
+  ],
+  "givens": {
+   "count": [
+    24,
+    36
+   ]
+  },
+  "where": {
+   "band": "Very Easy",
+   "contains": [
+    "CSI"
+   ],
+   "difficulty": "typical"
+  },
+  "quality": {
+   "preset": "standard"
+  },
+  "limits": {
+   "seconds": 600,
+   "seed": 2
+  }
+ },
+ "puzzle": {
+  "format": "pencilmark-puzzle",
+  "format_version": 1,
+  "meta": {},
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "givens": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   4,
+   6,
+   0,
+   0,
+   4,
+   0,
+   1,
+   0,
+   6,
+   0,
+   0,
+   0,
+   2,
+   8,
+   0,
+   0,
+   0,
+   4,
+   0,
+   0,
+   0,
+   8,
+   2,
+   0,
+   0,
+   0,
+   0,
+   6,
+   7,
+   0,
+   0,
+   0,
+   0,
+   7,
+   0,
+   2,
+   3,
+   0,
+   1,
+   0,
+   0,
+   0,
+   0,
+   0,
+   1,
+   8,
+   0,
+   0,
+   0,
+   0,
+   5,
+   0,
+   1,
+   0,
+   2,
+   0,
+   6,
+   0,
+   0,
+   0,
+   0,
+   3,
+   7,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "solution": [
+   5,
+   1,
+   9,
+   3,
+   2,
+   8,
+   4,
+   6,
+   7,
+   7,
+   4,
+   3,
+   1,
+   9,
+   6,
+   5,
+   8,
+   2,
+   2,
+   8,
+   6,
+   5,
+   7,
+   4,
+   1,
+   3,
+   9,
+   8,
+   2,
+   1,
+   9,
+   4,
+   3,
+   6,
+   7,
+   5,
+   6,
+   5,
+   4,
+   7,
+   8,
+   2,
+   3,
+   9,
+   1,
+   9,
+   3,
+   7,
+   6,
+   5,
+   1,
+   8,
+   2,
+   4,
+   3,
+   7,
+   5,
+   8,
+   1,
+   9,
+   2,
+   4,
+   6,
+   1,
+   6,
+   2,
+   4,
+   3,
+   7,
+   9,
+   5,
+   8,
+   4,
+   9,
+   8,
+   2,
+   6,
+   5,
+   7,
+   1,
+   3
+  ],
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "count": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 21,
+    "cells": [
+     "r3c9",
+     "r4c8",
+     "r4c9"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 9,
+    "cells": [
+     "r3c3",
+     "r4c2",
+     "r4c3"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 10,
+    "cells": [
+     "r3c7",
+     "r4c6",
+     "r4c7"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 21,
+    "cells": [
+     "r1c8",
+     "r1c9",
+     "r2c8"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 7,
+    "cells": [
+     "r5c9",
+     "r6c8",
+     "r6c9"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 13,
+    "cells": [
+     "r1c3",
+     "r1c4",
+     "r2c4"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 21,
+    "cells": [
+     "r6c3",
+     "r6c4",
+     "r7c4"
+    ]
+   },
+   {
+    "type": "cage",
+    "sum": 12,
+    "cells": [
+     "r5c2",
+     "r5c3",
+     "r6c2"
+    ]
+   }
+  ]
+ },
+ "card": {
+  "band": "Very Easy",
+  "difficulty": 4.4,
+  "time": 6.8,
+  "contains": [
+   {
+    "code": "HSI",
+    "chip": "HSI",
+    "name": "Hidden Single",
+    "band_index": 0
+   },
+   {
+    "code": "CSI",
+    "chip": "CSI",
+    "name": "Last cell of a cage / line",
+    "band_index": 0
+   }
+  ]
+ },
+ "tries": 2
+}

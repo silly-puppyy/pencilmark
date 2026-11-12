@@ -1,0 +1,337 @@
+{
+ "title": "One whisper, 25 cells or more",
+ "shows": "a line `length` with no upper bound, and 180° symmetry of the givens",
+ "spec": {
+  "format": "pencilmark-spec",
+  "format_version": 1,
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "count": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "length": [
+     25,
+     null
+    ],
+    "count": 1
+   }
+  ],
+  "symmetry": [
+   {
+    "kind": "rot180",
+    "of": "givens"
+   }
+  ],
+  "quality": {
+   "preset": "standard"
+  },
+  "limits": {
+   "seconds": 300,
+   "seed": 1
+  }
+ },
+ "puzzle": {
+  "format": "pencilmark-puzzle",
+  "format_version": 1,
+  "meta": {},
+  "board": {
+   "rows": 9,
+   "cols": 9
+  },
+  "digits": 9,
+  "givens": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   1,
+   0,
+   5,
+   2,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   5,
+   0,
+   0,
+   0,
+   2,
+   0,
+   0,
+   0,
+   0,
+   0,
+   8,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   6,
+   0,
+   0,
+   0,
+   0,
+   0,
+   2,
+   0,
+   0,
+   0,
+   6,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   7,
+   3,
+   0,
+   2,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "solution": [
+   6,
+   8,
+   3,
+   5,
+   9,
+   4,
+   2,
+   7,
+   1,
+   1,
+   5,
+   2,
+   6,
+   3,
+   7,
+   9,
+   4,
+   8,
+   9,
+   7,
+   4,
+   2,
+   8,
+   1,
+   5,
+   6,
+   3,
+   4,
+   2,
+   1,
+   9,
+   6,
+   5,
+   3,
+   8,
+   7,
+   7,
+   3,
+   5,
+   1,
+   2,
+   8,
+   6,
+   9,
+   4,
+   8,
+   6,
+   9,
+   7,
+   4,
+   3,
+   1,
+   2,
+   5,
+   3,
+   1,
+   6,
+   8,
+   7,
+   9,
+   4,
+   5,
+   2,
+   5,
+   9,
+   8,
+   4,
+   1,
+   2,
+   7,
+   3,
+   6,
+   2,
+   4,
+   7,
+   3,
+   5,
+   6,
+   8,
+   1,
+   9
+  ],
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     3,
+     3
+    ],
+    "count": [
+     3,
+     3
+    ]
+   },
+   {
+    "type": "line",
+    "kind": "whisper",
+    "value": 5,
+    "cells": [
+     "r2c9",
+     "r3c9",
+     "r4c8",
+     "r4c7",
+     "r5c8",
+     "r6c7",
+     "r7c6",
+     "r6c6",
+     "r5c6",
+     "r5c5",
+     "r6c4",
+     "r5c4",
+     "r4c5",
+     "r3c6",
+     "r2c7",
+     "r1c6",
+     "r1c5",
+     "r2c5",
+     "r3c5",
+     "r3c4",
+     "r4c4",
+     "r4c3",
+     "r3c2",
+     "r2c1",
+     "r3c1",
+     "r4c1"
+    ]
+   }
+  ]
+ },
+ "card": {
+  "band": "Medium",
+  "difficulty": 9.4,
+  "time": 29.6,
+  "contains": [
+   {
+    "code": "HSI",
+    "chip": "HSI",
+    "name": "Hidden Single",
+    "band_index": 0
+   },
+   {
+    "code": "LSI",
+    "chip": "LSI",
+    "name": "Line / dot read without notes",
+    "band_index": 0
+   },
+   {
+    "code": "NSI",
+    "chip": "NSI/MSI",
+    "name": "Naked Single",
+    "band_index": 1,
+    "alternatives": [
+     "MSI"
+    ]
+   },
+   {
+    "code": "PPR",
+    "chip": "PPR",
+    "name": "Pointing / Box-Line Reduction",
+    "band_index": 1,
+    "uses": 11
+   },
+   {
+    "code": "LNS",
+    "chip": "LNS",
+    "name": "Local line scan",
+    "band_index": 1,
+    "uses": 27
+   },
+   {
+    "code": "NPR",
+    "chip": "NPR/HPR/NQD/HQD/RUL/NTR/HTR",
+    "name": "Naked Pair",
+    "band_index": 2,
+    "alternatives": [
+     "HPR",
+     "NQD",
+     "HQD",
+     "RUL",
+     "NTR",
+     "HTR"
+    ],
+    "uses": 3
+   }
+  ]
+ },
+ "info": {
+  "seconds": 3.0,
+  "attempts": 1,
+  "found": null,
+  "givens": 12,
+  "elements": {
+   "whisper": 1
+  },
+  "rejected": {}
+ }
+}

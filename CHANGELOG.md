@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 1.4.0 (2026-11-12)
+
+Variant puzzles are now solved the way Cracking the Cryptic hosts solve them. Over 572 host solves of named-rule
+puzzles, replayed from the host's own notes, the engine's hardest step tracks how long the host thought (median 13 s
+for Very Easy steps, about a minute for Medium, about five minutes for Very Hard), and its placement order follows
+theirs. New in this release: coloring as hosts color (equal cells, low / high and odd / even, a digit followed
+through the houses), set equivalences that carry rule sums and cage contents, parity counts over rows with dots as
+units, values rules for modifier puzzles, and more rules read from the rules text.
+
 ### Format (regions to find; still reserved)
 
 - **`region_sight`** (puzzle-format 6.3), the most common rule that reads the regions (setters' circles, cave,
@@ -15,6 +24,75 @@
   squares); and the chaos rule's **`no_2x2`** option: no 2×2 block of cells in one region (extra chaos).
 - **Region-sum lines on a board with regions to find** are split by the found regions (they were read as one segment,
   which silently dropped the rule); the engine reads them as a rule over `region()`.
+
+### Grading (variants with modifiers and unknowns)
+
+- **Coloring is on by default for variant puzzles**: `rate(coloring=None)` (the default) colors when the puzzle is
+  not plain classic, has fog or has unknowns / layers; `--coloring auto|on|off`. Cracking the Cryptic hosts color in
+  87% of 1,177 solves. Classic puzzles grade as before.
+- **New readings for rules over modifiers and unknowns** (doublers, negators, copycats, +-1 cells, focus cells):
+  joint candidates (a cell's digit and its layer value as one candidate, up to 16 values), fish over them, cages
+  read with their modifier ("a 19 needs a doubler"), segments with equal sums (region-sum lines: multiplied, added and
+  formula values, two segments in one house on different digits), equal products, chains of two-cell rules read as
+  one, set equivalence with modifiers, facts confined to a rule's cells, two rules on shared cells read together, and
+  the layer rules of one house read together (*the cages filling this box need different digits*). Every route is
+  checked step by step against the solution in the tests.
+- **Cells a rule makes equal are colored alike** (coloring on): when a rule leaves two cells that share no house only
+  combinations with the same digit, they become one color class (*two cells a rule fills alike*), and rule readings
+  then hold the class to one digit.
+- On a held-out batch of 25 Logic Masters puzzles with modifiers, 8 grade (1-3 stars); 4-5 star puzzles mostly stall
+  and grade Unknown.
+
+### Grading (named variants, against Cracking the Cryptic solves)
+
+- **Low / high and odd / even coloring as hosts do it**: a house's quota of a class is the digits the class's cells
+  can actually hold (a difference-6 whisper's low cells hold 1-3: three per house), separate lines' colorings join
+  by counting (*the sixth one in its row is purple*), a cell whose houses fill a quota either way loses those digits
+  (*three greens in its row, three purples in its box: a middle digit*), and a cell joined to every cell of a full
+  quota must suit each (*it touches all three highs, one is a 7: it's a 1*).
+- **Color steps see through rules**: two cells of one thermometer, renban or cage, an arrow's circle and its arrow
+  cells, a zipper's center and the rest of its line hold different digits; a single cell's digit is tracked through
+  the houses when a rule rules out places (*the center digit can't go on its own line, so in the top row it goes
+  there*). Coloring on only, so classic puzzles grade as before.
+- **Columns against rows with the arrows cancelled**: a set of columns holds so many sets of the digits, a set of
+  rows so many, and an arrow with its line on one side and its circle on the other adds the same to both -- what is
+  left is a sum the cells' smallest / largest digits bound (*these 8 cells add up to 45 more than those 7*).
+- **White dots in one house make a run**: five or more cells chained by white dots inside a row, column or box
+  hold consecutive digits, read like a renban (*they always include the 5*).
+- **Cells a rule makes equal start as one color** (a palindrome's mirror cells, clones, a region-sum line's one-cell
+  segments: *this line enters three boxes once each, so these three digits are the same*), and color steps are
+  priced as following one symbol, however many cells carry it -- coloring now makes such puzzles easier, as it does
+  for a solver.
+- **Odd / even and low / high counts over rows with the dots as units** (*rows 3 and 4 hold exactly 8 even digits;
+  every white dot holds one, every black dot at least one, an X two or none*): a house or 2-3 neighboring rows /
+  columns, single cells and dot / X / V pairs, each with the counts it can still hold.
+- **Set equivalences carry what cages must contain** (*the four cages in the Phistomefel ring each have a 1, so each
+  corner square has one*).
+- Measured on 572 CtC videos with named rules only, the engine started from the host's own notes before each
+  placement: host think time per placement rises with the engine's band (median 13 s Very Easy, 40 s Easy, 64 s
+  Medium, 80 s Hard, ~5 min for band set theory). Coloring puzzles now place in a closer order to the host's.
+
+### Reading (SudokuPad)
+
+- Rules stated only in the text: disjoint groups spelled out (*the same position in two 3x3 boxes*), no adjacent
+  cells summing to given totals with no marker drawn, quadruple circles worded *appear in the surrounding cells*, and
+  colored shapes that *are high (6,7,8,9)* / *low* / *contain a prime* (also on line cells, when the text names
+  their color).
+- Lines drawn from a circle's edge no longer skip the cell next to it.
+
+### Reading (custom rules)
+
+- **CP-SAT models `position(L, f)`, `L[i]` with a variable `i` and ranges with variable ends** (`{a..b}`), with the
+  language's ABSENT (a comparison with an absent value is false, `!=` too; `defined()` tells): pointer clues such as
+  coordinate arrows and sandwiches between two positions can be written as such, and `rate` proves their uniqueness.
+- A comprehension with two `for` clauses now names the fix: nest them, `all(all(P for b in L) for a in L)`.
+- **Values rules** (custom rules of kind `values`): `{"type": "custom", "kind": "values", "value": "x * dbl(x)"}` says
+  what cells count as -- doublers, negators, cells off by one, focus cells -- and every clue then reads values, so a
+  modifier puzzle is written with plain cages, arrows, dots and lines instead of a custom rule per clue. A clue opts
+  out with `"on": "digits"`. 31 Logic Masters puzzles rewritten this way keep their solutions and grade identically.
+- **Technique names**: modifier readings report under their own codes -- MCG *Cages with modifiers*, EQV *Equal sums
+  on values*, HCG *Cages of a house together* (priced as before); descriptive names in sentence case;
+  *Multi-Coloring* (US spelling).
 
 ### Grading (shading; still reserved)
 

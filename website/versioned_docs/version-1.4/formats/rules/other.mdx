@@ -1,0 +1,100 @@
+---
+description: "The remaining rule families: quadruple, appears, clone, count, global entropy, equal sums, vudoku."
+title: Other rules
+---
+
+
+import Swatch from '@site/src/components/Swatch';
+
+# Other rules
+
+This page covers the remaining rule families (6.13), vendor rules (6.15), what is not a rule (6.16), reserved names (6.17) and fog of war (6.20); custom rules (6.18) have [their own page](custom.mdx).
+
+## 6.13 Other families
+
+```json
+{"type": "quadruple", "digits": [1, 9], "cells": ["r1c1", "r1c2", "r2c1", "r2c2"]}
+{"type": "appears", "source": "r5c5", "cells": ["r5c6", "r5c7", "r5c8", "r5c9"]}
+{"type": "clone", "regions": [["r1c1", "r1c2"], ["r9c8", "r9c9"]]}
+{"type": "isomorphic", "regions": [["r1c1", "…81 cells…"], ["r1c11", "…81 cells…"]]}
+{"type": "count", "each": 2, "cells": ["r1c1", "…"]}
+{"type": "count", "kind": "circles", "cells": ["r1c1", "r4c7"]}
+{"type": "distinct_count", "value": 2, "side": "top", "cells": ["r1c2", "r2c3", "r3c4"]}
+{"type": "global_entropy"}
+{"type": "equal_sum", "segments": [["r1c1", "r1c2"], ["r2c3"]]}
+{"type": "vudoku", "cells": ["r2c2", "r1c2", "r2c3"]}
+```
+
+<div className="pm-kinds">
+
+| `type` | Meaning | Drawing |
+|---|---|---|
+| `quadruple` | Every listed digit (a multiset) appears among `cells` at least as often as it is listed. Usually the four cells of a 2×2 block, drawn as a circle on their shared corner; any cell set is allowed. | <Swatch name="quadruple" /> |
+| `appears` | The digit in `source` appears in at least one of `cells` (an in-cell arrow whose digit occurs again along its ray). |  |
+| `clone` | ≥ 2 equal-sized ordered `regions`; corresponding cells hold equal digits. |  |
+| `isomorphic` | 2 ordered `regions` (twins): one fixed relabelling of the digits maps every cell of the first region to the corresponding cell of the second. |  |
+| `count` | `each` k: every digit appears exactly k times among `cells` (Double Sudoku rows). Or `counts` `[[digit, times], …]`: those digits appear exactly that often. Kind `circles`: a digit that appears among the cells appears exactly as many times as its own value. The cells of an `each` or `counts` rule MUST NOT also form a house (their digits repeat: a Double Sudoku row is a `count`, not a `row`); counting circles may sit on any cells. |  |
+| `distinct_count` | Exactly `value` different digits among `cells`. With `side` it is an outside clue (ordered cells). |  |
+| `global_entropy` | Every 2×2 window of existing cells holds a low, a middle and a high digit (thirds of 1..D; D divisible by 3). |  |
+| `equal_sum` | Every segment (a cell set) has the same sum. For lines, use the `line` kinds `zipper`, `region_sum`, `double_arrow`. |  |
+| `vudoku` | `cells` = [vertex, arm, arm], usually an L of three cells (the arms beside the vertex): the vertex digit is the sum or the difference of the two arm digits. | <Swatch name="vudoku" /> |
+
+</div>
+
+## 6.15 Vendor rules
+
+`{"type": "com.example:my_rule", …}`: must-understand like every other rule; a reader that does not implement it
+refuses the file.
+
+## 6.16 What is not a rule
+
+Variant names (Argyle, Windoku, …) are not rules: they are `meta.type` only. Colors, fonts and artwork are `style`
+and `decorations` only.
+
+## 6.17 Reserved
+
+- `"type": "table"` and the operator `allowed` (explicit lists of allowed digit tuples): reserved and refused. Such
+  lists make files large and cannot be drawn; [custom rules (6.18)](custom.mdx) replace them.
+- `digits` as an object (`{"values": [0, …, 8], "symbols": {…}}`, with an `empty` sentinel) for digit sets other
+  than 1..D, and digit-selection puzzles: reserved; refused in format_version 1.
+
+## 6.20 Fog of war
+
+```json
+{"type": "fog", "lit": ["r5c5"]}
+{"type": "fog", "lit": ["r1c1", "r1c2"], "triggers": [{"when": ["r1c1"], "light": ["r4c4", "r4c5"]}]}
+```
+
+A complete 4×4 puzzle under fog (lit at the start: the givens' cells; placing r1c1 lights two more; a fog puzzle carries its solution, since a correct digit is what lights the fog):
+
+```json
+{"format": "pencilmark-puzzle", "format_version": 1,
+ "board": {"rows": 4, "cols": 4},
+ "digits": 4,
+ "givens": [
+    0, 0, 0, 0,
+    0, 0, 1, 0,
+    0, 2, 0, 3,
+    0, 3, 0, 0],
+ "solution": [
+    2, 1, 3, 4,
+    3, 4, 1, 2,
+    1, 2, 4, 3,
+    4, 3, 2, 1],
+ "rules": [
+   {"type": "box_grid", "box": [2, 2], "count": [2, 2]},
+   {"type": "fog", "lit": ["r2c3", "r3c2", "r3c4", "r4c2"], "triggers": [{"when": ["r1c1"], "light": ["r1c2", "r2c1"]}]}]}
+```
+
+The grid is covered in fog except the `lit` cells: everything visible at the start, givens included where the puzzle
+shows them. A digit entered that matches the solution lights more:
+
+- without `triggers`: the 3×3 block around it, clipped at the board edge;
+- with `triggers`: only the triggers. Each lights its `light` cells once every cell of its `when` holds its digit (the
+  setter's reveal pattern).
+
+A file with fog MUST carry its `solution`: "a correct digit" is defined by it. Clues on fogged cells are hidden; a clue
+on the edge of a lit cell, outside clues and rules stated for the whole board are seen. Fog changes no solution, but
+it is a rule of play: the puzzle is solved from what the fog shows. A grader that cannot grade under fog refuses the
+puzzle; it never grades the revealed grid. SudokuPad, f-puzzles and sudoku.coach store fog in their own ways (see their
+documentation); pencilmark's readers translate them.

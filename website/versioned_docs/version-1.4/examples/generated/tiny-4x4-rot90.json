@@ -1,0 +1,119 @@
+{
+ "title": "A 4×4 with quarter-turn symmetry",
+ "shows": "the smallest board; 90° symmetry (it needs square boxes)",
+ "spec": {
+  "format": "pencilmark-spec",
+  "format_version": 1,
+  "board": {
+   "rows": 4,
+   "cols": 4
+  },
+  "digits": 4,
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     2,
+     2
+    ],
+    "count": [
+     2,
+     2
+    ]
+   }
+  ],
+  "symmetry": [
+   {
+    "kind": "rot90",
+    "of": "givens"
+   }
+  ],
+  "quality": {
+   "preset": "standard"
+  },
+  "limits": {
+   "seconds": 180,
+   "seed": 1
+  }
+ },
+ "puzzle": {
+  "format": "pencilmark-puzzle",
+  "format_version": 1,
+  "meta": {},
+  "board": {
+   "rows": 4,
+   "cols": 4
+  },
+  "digits": 4,
+  "givens": [
+   0,
+   3,
+   0,
+   0,
+   0,
+   0,
+   0,
+   4,
+   2,
+   0,
+   0,
+   0,
+   0,
+   0,
+   2,
+   0
+  ],
+  "solution": [
+   4,
+   3,
+   1,
+   2,
+   1,
+   2,
+   3,
+   4,
+   2,
+   1,
+   4,
+   3,
+   3,
+   4,
+   2,
+   1
+  ],
+  "rules": [
+   {
+    "type": "box_grid",
+    "box": [
+     2,
+     2
+    ],
+    "count": [
+     2,
+     2
+    ]
+   }
+  ]
+ },
+ "card": {
+  "band": "Very Easy",
+  "difficulty": 0.4,
+  "time": 0.7,
+  "contains": [
+   {
+    "code": "HSI",
+    "chip": "HSI",
+    "name": "Hidden Single",
+    "band_index": 0
+   }
+  ]
+ },
+ "info": {
+  "seconds": 0.0,
+  "attempts": 1,
+  "found": null,
+  "givens": 4,
+  "elements": {},
+  "rejected": {}
+ }
+}
