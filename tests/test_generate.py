@@ -207,7 +207,8 @@ def test_parity_templates():
 def test_shape_limits_and_max():
     """docs/formats/generator-spec.md 2: a cage `sum` with the count "max" (every cage sums to 7, as many as fit) and a
     line `length` (one whisper of at least 8 cells)"""
-    r = run(spec(6, rules=[{"type": "cage", "sum": 7, "count": "max"}], seed=1, time_limit=5))
+    # (time_limit: room for slow CI runners -- the test is about the shape, not the speed; 5 s fit one attempt there)
+    r = run(spec(6, rules=[{"type": "cage", "sum": 7, "count": "max"}], seed=1, time_limit=20))
     cages = [x for x in r["puzzle"]["rules"] if x["type"] == "cage"]
     assert len(cages) >= 4 and all(c["sum"] == 7 for c in cages), cages
     assert r["info"]["found"] >= 1

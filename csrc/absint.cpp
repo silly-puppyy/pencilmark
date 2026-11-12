@@ -14,6 +14,7 @@
 #include <string>
 #include <unordered_map>
 
+#include "portable.hpp"
 #include "expr.hpp"
 
 namespace cs {
