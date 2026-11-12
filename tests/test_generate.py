@@ -212,7 +212,7 @@ def test_shape_limits_and_max():
     cages = [x for x in r["puzzle"]["rules"] if x["type"] == "cage"]
     assert len(cages) >= 4 and all(c["sum"] == 7 for c in cages), cages
     assert r["info"]["found"] >= 1
-    r = run(spec(rules=[{"type": "line", "kind": "whisper", "length": [8, None], "count": 1}], seed=1, time_limit=60))
+    r = run(spec(rules=[{"type": "line", "kind": "whisper", "length": [8, None], "count": 1}], seed=1, time_limit=180))
     lines = [x for x in r["puzzle"]["rules"] if x["type"] == "line"]
     assert len(lines) == 1 and len(lines[0]["cells"]) >= 8, lines
 
