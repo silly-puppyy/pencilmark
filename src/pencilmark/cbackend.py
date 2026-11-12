@@ -115,7 +115,7 @@ XMETA_KEYS = {
     S.COMBO_LOCK: ("ctype", "constraint", "combos", "mode", "digit", "group", "n_cells", "cage_group"),
     S.NARY_D: ("ctype", "constraint", "n_vars"),
     S.RULE_INTERSECT: ("cells", "n_elims", "rules", "nodes"),
-    S.SUM_ALGEBRA: ("houses", "pieces", "n_elims", "rounds"),
+    S.SUM_ALGEBRA: ("houses", "pieces", "n_elims", "rounds", "rows", "cols", "k", "n_more", "n_less", "cross"),
     S.BAND_LOGIC: ("lines", "boxes", "rules", "n_elims", "cells", "level", "cases"),
     S.FIREWORKS: ("cell_x", "cell_a", "cell_b", "digit_mask", "n_elims", "region"),
     S.HUMAN_CASE: ("cases", "rounds", "placed", "refutation", "options", "house"),
@@ -205,6 +205,8 @@ def code_name(code):
         return "inequality chain"
     if code == 4408:
         return "mental subset chain"
+    if code == 6990:
+        return "one-off rule enumeration"
     if 6000 <= code < 7000:
         return "named table rule"
     if 7100 <= code < 7300:  # regions to find (chaos_logic.cpp)
@@ -218,6 +220,41 @@ def code_name(code):
     if 7300 <= code < 7400:  # shading (shading_logic.cpp)
         return {7301: "three of a colour in a 2x2", 7302: "no checkerboard", 7311: "single exit", 7312: "cut cell",
                 7321: "border colour runs", 7331: "rule over the shading", 7341: "colour trial"}.get(code, f"shading {code}")  # fmt: skip
+    if 7400 <= code < 7500:  # unknowns / layers (variant_logic.cpp aux_rule)
+        return {
+            7401: "rule over unknowns",
+            7402: "total of an unknown",
+            7403: "unknown totals in a house",
+            7406: "layer counted in a house",
+            7407: "layer value tried",
+            7408: "bounds of an unknown total",
+            7409: "a digit's place carries a layer value",
+            7410: "layer fish",
+            7411: "rules in a house cannot all take one layer value",
+            7412: "a decided layer literal clears its house",
+            7413: "a layer literal with one place left",
+            7414: "one layer house inside another",
+            7415: "a decided layer literal clears its digit inventory",
+            7416: "a layer digit with one place left in the grid",
+            7417: "one layer house inside a digit inventory",
+            7418: "unknown totals of two houses compared",
+            7419: "an unknown's value tried",
+            7420: "unknown totals of segments sharing a house",
+            7421: "modified digits from equal house groups",
+            7422: "two layer houses inside two others",
+            7423: "a layer value's digit confined to houses",
+            7424: "a cage of modified values read whole",
+            7425: "a rule read with the facts confined to its cells",
+            7426: "modified cells counted on one side of equal house groups",
+            7427: "equal products share their large primes",
+            7428: "a chain of rules read as one",
+            7429: "segments with equal sums share their totals",
+            7430: "houses sharing one layer literal as a budget",
+            7431: "colors over the parity of values",
+            7432: "two rules on shared cells read together",
+            7433: "two cells a rule fills alike",
+            7434: "every option of a rule breaks a house",
+        }.get(code, f"unknowns {code}")
     if 4500 <= code < 4600:
         t = code - 4500
         return ("cage/sum" if t == 0 else CTYPES[t] if t < len(CTYPES) else f"rule{t}") + " in the head"
@@ -259,7 +296,14 @@ def to_cpuzzle(p):
     if cp is None:
         if len(_CPUZZLES) >= 16:  # a few recent puzzles: rate_many and the generator move on quickly
             _CPUZZLES.pop(next(iter(_CPUZZLES)))
-        cp = _CPUZZLES[key] = _C.make_puzzle(*args)
+        cp = _C.make_puzzle(*args)
+        if cp.nary_dropped:  # a rule the engine cannot hold would be ignored: refuse rather than answer without it
+            from .errors import NotSupportedError
+
+            raise NotSupportedError(
+                f"{cp.nary_dropped} rule(s) over more than 64 cells (only custom rules may be wider)"
+            )
+        _CPUZZLES[key] = cp
         if placed:
             _C.set_placed(cp, placed)
     return cp
@@ -268,6 +312,8 @@ def to_cpuzzle(p):
 AE_LABEL_PLACE, AE_LABEL_ELIM, AE_ID_JOIN, AE_ID_NEQ, AE_ID_USE = 1, 2, 3, 4, 5  # csrc/solver.hpp AEffKind
 AE_REG_JOIN, AE_REG_NEQ = 6, 7  # regions to find: two cells share / do not share a region
 AE_SHADE = 8  # shading: the cell takes a colour (1 shaded, 2 unshaded); carried with the region relations ("rfx")
+AE_AUX = 9  # unknowns / layers: variable `cell` loses its value at index arg; carried with the region relations ("rfx")
+AE_JOINT = 10  # joint candidates: layer variable `cell` loses the pair (digit, value): arg = digit * 16 + value index
 
 
 def _label_fx(aeffs):
@@ -286,7 +332,7 @@ def _id_fx(aeffs):
 def _reg_fx(aeffs):
     """regions to find, the relation layer: the move's [(kind, cell, other)]: AE_REG_JOIN the two cells share a region,
     AE_REG_NEQ they lie in different regions"""
-    return [(k, c, a) for k, c, a in aeffs if k in (AE_REG_JOIN, AE_REG_NEQ, AE_SHADE)]
+    return [(k, c, a) for k, c, a in aeffs if k in (AE_REG_JOIN, AE_REG_NEQ, AE_SHADE, AE_AUX, AE_JOINT)]
 
 
 def rg_norm(rgc, N):
@@ -347,6 +393,34 @@ def shade_seed(p):
     for c in con.get("unshaded", ()):
         sh[c] = 2
     return sh
+
+
+def aux_seed(p):
+    """unknowns / layers: a flag per (variable, value), in the engine's order (the unknowns, then each layer's value
+    per board cell; csrc bindings aux_defs), the given layer values alone set -> (flags, offsets, joint), or None
+    without any; joint: per variable the (digit, value) pairs ruled out, as the engine's bits (Solver::jbit)"""
+    aux = getattr(p, "aux", None)
+    if not aux:
+        return None
+    flags, offs = [], []
+    for u in aux["unknowns"]:
+        offs.append(len(flags))
+        flags += [1] * len(u["values"])
+    for L in aux["layers"]:
+        for c in range(p.N):
+            offs.append(len(flags))
+            g = L["given"].get(c)
+            flags += [1 if g is None or v == g else 0 for v in L["values"]]
+    return flags, offs, [0] * len(offs)
+
+
+def aux_apply(aux, fx):
+    """unknowns / layers: a move's value eliminations (AE_AUX) and pair eliminations (AE_JOINT) on the state"""
+    for k, c, a in fx or ():
+        if k == AE_AUX:
+            aux[0][aux[1][c] + a] = 0
+        elif k == AE_JOINT and len(aux) > 2:
+            aux[2][c] |= 1 << ((a // 16 - 1) * 16 + a % 16)  # Solver::jbit: digit d, value index v at 16 (d - 1) + v
 
 
 def shade_apply(shade, fx):
@@ -481,18 +555,23 @@ def id_held(N, givens, steps):
 
 def _ann_kw(labels):
     """engine keywords of a mid-solve annotation state: labels = (region labels, label candidates[, color classes[,
-    region relations[, shading colours]]]); any part may be None"""
+    region relations[, shading colours[, unknowns' value flags]]]]); any part may be None"""
     kw = {}
     if labels is None:
         return kw
     shade = labels[4] if len(labels) > 4 and labels[4] is not None else None  # shading: colour per cell
-    if labels[0] is not None or shade is not None:  # regions to find (with the relation layer) and / or shading
+    auxf = labels[5] if len(labels) > 5 and labels[5] is not None else None  # unknowns / layers: flags (aux_seed)
+    jx = labels[6] if len(labels) > 6 and labels[6] is not None else None  # joint candidates: pairs ruled out
+    if labels[0] is not None or shade is not None or auxf is not None:  # regions / shading / unknowns
         rel = labels[3] if len(labels) > 3 and labels[3] is not None else None
         kw["labels"] = (
             list(labels[0]) if labels[0] is not None else None,
             list(labels[1]) if labels[0] is not None else None,
             list(rel) if rel is not None else None,
-        ) + ((list(shade),) if shade is not None else ())
+            list(shade) if shade is not None else None,
+            list(auxf) if auxf is not None else None,
+            [(x >> (64 * w)) & 0xFFFFFFFFFFFFFFFF for x in jx for w in range(3)] if jx is not None else None,
+        )  # (the pairs as Solver::JW = 3 words per variable)
     if len(labels) > 2 and labels[2] is not None:  # identity layer: class per cell (0 none)
         kw["idc"] = [int(x) for x in labels[2]]
     return kw
@@ -706,7 +785,7 @@ def solve(
             m.xmeta["line_kind"] = CTYPES[lk_ - 100] if lk_ - 100 < len(CTYPES) else lk_
         m.family = S.TECH_NAMES[tech]
         m.code = code_name(code)
-        if 6000 <= code < 7000:  # a named table rule (pencilmark.model.add_predicate)
+        if 6000 <= code < 7000 and code != 6990:  # a named table rule (pencilmark.model.add_predicate)
             cons = getattr(puzzle, "constraints", ())
             nm_ = cons[code - 6000].get("name") if code - 6000 < len(cons) else None
             m.code = f"{nm_ or 'table'} rule" + (" in the head" if tech in (S.LINE_D, S.MENTAL_D) else "")
@@ -808,8 +887,8 @@ def state_moves(
     chaos = any(c.get("type") == "chaos" for c in getattr(puzzle, "constraints", ()))
     shading = any(c.get("type") == "yin_yang" for c in getattr(puzzle, "constraints", ()))
     ann = (
-        chaos or shading or bool(sc.p.get("colouring"))
-    )  # regions to find / shading / identity layer: annotation effects
+        chaos or shading or bool(sc.p.get("colouring")) or bool(getattr(puzzle, "aux", None))
+    )  # regions to find / shading / identity layer / unknowns: annotation effects
     out = []
     for r in raw:
         lfx = None

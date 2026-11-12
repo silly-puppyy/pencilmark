@@ -290,6 +290,13 @@
     "origin": {
      "$ref": "#/$defs/cell",
      "description": "the grid's top-left cell; default r1c1"
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -318,6 +325,13 @@
     },
     "no_2x2": {
      "type": "boolean"
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -348,6 +362,13 @@
      },
      "minItems": 2,
      "maxItems": 2
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -377,6 +398,13 @@
       "$ref": "#/$defs/cell"
      },
      "minItems": 2
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -427,6 +455,13 @@
     "value": {
      "type": "integer",
      "minimum": 0
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -477,6 +512,13 @@
     "value": {
      "type": "integer",
      "minimum": 0
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -510,6 +552,199 @@
     "value": {
      "type": "integer",
      "minimum": 0
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
+    }
+   },
+   "required": [
+    "type",
+    "cells"
+   ],
+   "additionalProperties": false
+  },
+  "rule_shading_sight": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "shading_sight"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "cells": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/cell"
+     },
+     "minItems": 1
+    },
+    "directions": {
+     "type": "array",
+     "items": {
+      "enum": [
+       "up",
+       "down",
+       "left",
+       "right"
+      ]
+     },
+     "minItems": 1,
+     "maxItems": 4,
+     "uniqueItems": true
+    },
+    "self": {
+     "type": "boolean"
+    },
+    "value": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
+    }
+   },
+   "required": [
+    "type",
+    "cells"
+   ],
+   "additionalProperties": false
+  },
+  "rule_shaded_count": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "shaded_count"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "cells": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/cell"
+     },
+     "minItems": 1
+    },
+    "directions": {
+     "type": "array",
+     "items": {
+      "enum": [
+       "up",
+       "down",
+       "left",
+       "right"
+      ]
+     },
+     "minItems": 1,
+     "maxItems": 4,
+     "uniqueItems": true
+    },
+    "total": {
+     "type": "boolean"
+    },
+    "value": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
+    }
+   },
+   "required": [
+    "type",
+    "cells"
+   ],
+   "additionalProperties": false
+  },
+  "rule_same_shading": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "same_shading"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "cells": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/cell"
+     },
+     "minItems": 2
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
+    }
+   },
+   "required": [
+    "type",
+    "cells"
+   ],
+   "additionalProperties": false
+  },
+  "rule_different_shading": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "const": "different_shading"
+    },
+    "id": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "style": {
+     "$ref": "#/$defs/style"
+    },
+    "cells": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/cell"
+     },
+     "minItems": 2
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -556,6 +791,13 @@
     "origin": {
      "$ref": "#/$defs/cell",
      "description": "the grid's top-left cell; default r1c1"
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -582,6 +824,13 @@
     },
     "cells": {
      "$ref": "#/$defs/cells"
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -607,6 +856,13 @@
     },
     "cells": {
      "$ref": "#/$defs/cells"
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -632,6 +888,13 @@
     },
     "cells": {
      "$ref": "#/$defs/cells"
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -667,6 +930,13 @@
       "region",
       "window"
      ]
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -697,6 +967,13 @@
     "sum": {
      "type": "integer",
      "minimum": 0
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -760,6 +1037,13 @@
     },
     "value": {
      "type": "integer"
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -793,6 +1077,13 @@
       "$ref": "#/$defs/cells"
      },
      "minItems": 1
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -854,6 +1145,13 @@
     },
     "value": {
      "type": "integer"
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -908,6 +1206,13 @@
     },
     "sum": {
      "type": "integer"
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -954,6 +1259,13 @@
     "sum": {
      "type": "integer",
      "minimum": 0
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -993,6 +1305,13 @@
     "sum": {
      "type": "integer",
      "minimum": 0
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -1032,6 +1351,13 @@
     "sum": {
      "type": "integer",
      "minimum": 0
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -1070,6 +1396,13 @@
     },
     "value": {
      "type": "integer"
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -1116,6 +1449,13 @@
       "left",
       "right"
      ]
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -1162,6 +1502,13 @@
     },
     "value": {
      "type": "integer"
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -1173,7 +1520,7 @@
    ],
    "additionalProperties": false
   },
-  "rule_neighbours": {
+  "rule_neighbors": {
    "type": "object",
    "properties": {
     "type": {
@@ -1293,6 +1640,13 @@
        }
       }
      }
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -1444,6 +1798,13 @@
        }
       }
      }
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -1492,6 +1853,13 @@
       "minimum": 1
      },
      "minItems": 1
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -1501,11 +1869,11 @@
    ],
    "additionalProperties": false
   },
-  "rule_contains": {
+  "rule_quadruple": {
    "type": "object",
    "properties": {
     "type": {
-     "const": "contains"
+     "const": "quadruple"
     },
     "id": {
      "type": "string"
@@ -1526,6 +1894,13 @@
       "minimum": 1
      },
      "minItems": 1
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -1555,6 +1930,13 @@
     },
     "source": {
      "$ref": "#/$defs/cell"
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -1585,6 +1967,13 @@
       "$ref": "#/$defs/cells"
      },
      "minItems": 2
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -1614,6 +2003,13 @@
       "$ref": "#/$defs/cells"
      },
      "minItems": 2
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -1660,6 +2056,13 @@
      "enum": [
       "circles"
      ]
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -1713,6 +2116,13 @@
     },
     "value": {
      "type": "integer"
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -1736,6 +2146,13 @@
     },
     "style": {
      "$ref": "#/$defs/style"
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -1764,6 +2181,13 @@
       "$ref": "#/$defs/cells"
      },
      "minItems": 2
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -1794,6 +2218,13 @@
      },
      "minItems": 3,
      "maxItems": 3
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -1863,6 +2294,13 @@
     },
     "value": {
      "type": "integer"
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -1896,6 +2334,18 @@
     },
     {
      "$ref": "#/$defs/rule_other_region_sum"
+    },
+    {
+     "$ref": "#/$defs/rule_shading_sight"
+    },
+    {
+     "$ref": "#/$defs/rule_shaded_count"
+    },
+    {
+     "$ref": "#/$defs/rule_same_shading"
+    },
+    {
+     "$ref": "#/$defs/rule_different_shading"
     },
     {
      "$ref": "#/$defs/rule_box_grid"
@@ -1946,7 +2396,7 @@
      "$ref": "#/$defs/rule_first_seen"
     },
     {
-     "$ref": "#/$defs/rule_neighbours"
+     "$ref": "#/$defs/rule_neighbors"
     },
     {
      "$ref": "#/$defs/rule_relation"
@@ -1955,7 +2405,7 @@
      "$ref": "#/$defs/rule_cell"
     },
     {
-     "$ref": "#/$defs/rule_contains"
+     "$ref": "#/$defs/rule_quadruple"
     },
     {
      "$ref": "#/$defs/rule_appears"
@@ -2125,6 +2575,21 @@
       }
      },
      "additionalProperties": false
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
+    },
+    "kind": {
+     "const": "values",
+     "description": "a values rule: what cells count as (value instead of holds)"
+    },
+    "value": {
+     "type": "string",
+     "description": "values rule: the value of a cell, an expression over the cell named in cells (x when cells is absent)"
     }
    },
    "additionalProperties": false,
@@ -2137,6 +2602,12 @@
     {
      "required": [
       "use"
+     ]
+    },
+    {
+     "required": [
+      "kind",
+      "value"
      ]
     }
    ]
@@ -2167,6 +2638,13 @@
      "items": {
       "$ref": "#/$defs/cell"
      }
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [
@@ -2220,6 +2698,13 @@
       ],
       "additionalProperties": false
      }
+    },
+    "on": {
+     "enum": [
+      "digits",
+      "values"
+     ],
+     "description": "with a values rule in the file: whether this clue reads its cells' values (default) or digits"
     }
    },
    "required": [

@@ -538,8 +538,9 @@ def test_concat_table_matches_enumeration():
     assert _concat_table(tree, {"c": names[::-1]}, names, 9) is None
 
 
-def test_rate_unknowns_is_unknown_with_reason():
-    """a puzzle with unknowns: no human technique reasons with them yet, so its card is band Unknown with the reason"""
+def test_rate_unknowns_reads_the_rules():
+    """a puzzle with unknowns: the route reads each rule over them on its own (AuxRule, 2026-11-09; before, the card
+    was band Unknown: no human technique reasoned with them)"""
     doc = {
         "format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 4, "cols": 4}, "digits": 4,
         "givens": [0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 4, 0, 0, 0], "unknowns": {"X": {"range": [3, 7]}},
@@ -548,9 +549,9 @@ def test_rate_unknowns_is_unknown_with_reason():
                   {"type": "custom", "cells": {"b": ["r4c3", "r4c4"]}, "holds": "sum(b) == X"},
                   {"type": "custom", "cells": {"c": ["r2c3", "r3c2"]}, "holds": "sum(c) == X"}],
     }  # fmt: skip
-    card = pencilmark.rate(doc, fields=["band", "difficulty", "time", "band_index"])
-    assert card["band"] == "Unknown" and card["band_index"] is None and card["time"] is None
-    assert "unknowns" in card["reason"]
+    card = pencilmark.rate(doc, fields=["band", "difficulty", "time", "contains"])
+    assert card["band"] != "Unknown" and card["time"] is not None
+    assert "AXR" in {c["code"] for c in card["contains"]}
 
 
 def test_definitions_place_one_rule_many_times():
@@ -575,3 +576,641 @@ def test_definitions_place_one_rule_many_times():
                 dict(definitions=defs, rules=base["rules"] + [{"type": "custom", "use": "no_five", "holds": "a == 1"}])):  # fmt: skip
         with pytest.raises(pencilmark.FormatError):
             pencilmark.validate(dict(base, **bad))
+
+
+def test_wide_custom_rule_is_not_ignored():
+    """a custom rule over more than 64 cells (the techniques' limit) is still checked by the exhaustive search: the
+    engine once dropped it, so a puzzle it makes impossible counted solutions (2026-11-09, a chaos port)"""
+    from pencilmark import api
+
+    sol = "534678912672195348198342567859761423426853791713924856961537284287419635345286179"
+    givens = [int(x) for x in sol]
+    for i in (0, 10, 20, 30, 40):
+        givens[i] = 0
+    cells = [f"r{r}c{c}" for r in range(1, 10) for c in range(1, 10)]
+    doc = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
+           "givens": givens, "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}]}  # fmt: skip
+    assert api.count_solutions(doc, limit=2) == {"count": 1, "exact": True}
+    doc["rules"].append({"type": "custom", "cells": {"A": cells}, "holds": "sum(A) == 404"})
+    assert api.count_solutions(doc, limit=2) == {"count": 0, "exact": True}
+
+
+def test_all_different_rule_is_a_house():
+    """all_different(L) over one list of cells becomes an extra house (the engine reasons with it as it goes; as an
+    expression it was only checked once all nine cells were fixed: seconds per step on a port, 2026-11-09)"""
+    from pencilmark import api
+
+    diag = [f"r{i}c{i}" for i in range(1, 10)]
+    doc = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
+           "givens": [0] * 81, "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+                                         {"type": "custom", "cells": {"A": diag}, "holds": "all_different(A)"}]}  # fmt: skip
+    p = api._load(doc)
+    want = {(i - 1) * 9 + i - 1 for i in range(1, 10)}
+    assert [g.kind for g in p.groups if set(g.cells) == want] == ["region"]
+    assert not p.constraints
+    doc["rules"][1]["holds"] = "all_different(A) and A[0] < A[1]"  # any other shape: not a house
+    assert not [g for g in api._load(doc).groups if set(g.cells) == want]
+
+
+def test_unknown_totals_in_a_house():
+    """AuxHouse: four dominoes of the center box each add up to X, so 4X + center = 45 and the center is 1, 5 or 9 (the
+    Four Primes break-in; before, no single-rule reading found it and the route stalled, 2026-11-09)"""
+    from pencilmark import api
+    from pencilmark import cbackend as CB
+
+    pairs = [["r4c4", "r4c5"], ["r4c6", "r5c6"], ["r6c6", "r6c5"], ["r6c4", "r5c4"]]
+    doc = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
+           "givens": [0] * 81, "unknowns": {"X": {"range": [2, 17]}},
+           "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}]
+           + [{"type": "custom", "cells": {"L": L}, "holds": "sum(L) == X"} for L in pairs]}  # fmt: skip
+    steps, _ = CB.solve(api._load(doc), assume_unique=False, max_steps=3)
+    first = next(s.move for s in steps if s.move.family == "AuxHouse")
+    assert sorted(first.elim) == [(40, d) for d in (2, 3, 4, 6, 7, 8)]
+
+
+def test_rule_holds_reads_unknowns():
+    """rule_holds takes the file's unknowns with their values"""
+    from pencilmark.rules.custom import rule_holds
+
+    rule = {"type": "custom", "cells": {"L": ["r1c1", "r1c2"]}, "holds": "sum(L) == X"}
+    grid = {"r1c1": 4, "r1c2": 7}
+    assert rule_holds(rule, grid, unknowns={"X": 11}) and not rule_holds(rule, grid, unknowns={"X": 10})
+
+
+def test_cpsat_models_unknowns():
+    """CP-SAT reads rules over unknowns (unknowns, prime, product, a product of two variables, {a..b}); before, every
+    such rule was unmodelled and uniqueness fell back to the C++ search (60 s and Unknown on the arithmetic ports)"""
+    pytest.importorskip("ortools")
+    from pencilmark import api
+    from pencilmark import cpsat_verify as V
+
+    sol = "534678912672195348198342567859761423426853791713924856961537284287419635345286179"
+    givens = [int(x) for x in sol]
+    for i in (0, 1, 2, 9, 10):
+        givens[i] = 0
+    doc = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
+           "givens": givens, "unknowns": {"X": {"range": [2, 30]}, "K": {"range": [1, 9]}},
+           "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+                     {"type": "custom", "cells": {"L": ["r1c2", "r1c3"]}, "holds": "sum(L) == X and prime(X)"},
+                     {"type": "custom", "cells": {"L": ["r1c1", "r1c2", "r1c3"]}, "holds": "product(L) == 60"},
+                     {"type": "custom", "cells": {"a": ["r2c3"], "b": ["r3c1"]}, "holds": "a == K * b"},
+                     {"type": "custom", "cells": {}, "holds": "all(K != n for n in {2..9})"}]}  # fmt: skip
+    p = api._load(doc)
+    p.finalize()
+    assert V.build_model(p)[0] is not None
+    sols = V.cpsat_solutions(p, limit=2, time_limit=20)
+    assert sols is not None and len(sols) == 0  # r2c3 = 2 = K * r3c1 = K * 1 needs K = 2: no solution
+    doc["rules"][-1]["holds"] = "K in {1..9}"
+    sols = V.cpsat_solutions(api._load(doc), limit=2, time_limit=20)
+    assert sols is not None and ["".join(map(str, s)) for s in sols] == [sol]
+    # a function defined with let, slices, div and mod (5, 3, 4 on row 1)
+    doc["rules"].append({"type": "custom", "cells": {"L": ["r1c1", "r1c2", "r1c3"]},
+                         "holds": "let f(a, b) = a + b; f(L[1], L[2]) div 2 == 4 and sum(L[2..3]) mod 5 == 2"})  # fmt: skip
+    p = api._load(doc)
+    p.finalize()
+    assert V.build_model(p)[0] is not None
+    assert ["".join(map(str, s)) for s in V.cpsat_solutions(p, limit=2, time_limit=20)] == [sol]
+
+
+def test_layer_counted_in_a_house():
+    """LayerCount: "one doubler per row" read like a house -- r1c1 is doubled, so no other cell of row 1 is (the hosts'
+    first move on doubler puzzles; before, only the exhaustive search read such rules, 2026-11-09)"""
+    from pencilmark import api
+    from pencilmark import cbackend as CB
+
+    row1 = [f"r1c{c}" for c in range(1, 10)]
+    doc = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
+           "givens": [0] * 81, "layers": {"dbl": {"values": [1, 2], "given": {"r1c1": 2}}},
+           "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+                     {"type": "custom", "cells": {"H": [row1]}, "each": "H", "holds": "count(dbl(x) == 2 for x in H) == 1"}]}  # fmt: skip
+    steps, _ = CB.solve(api._load(doc), assume_unique=False, max_steps=4)
+    lc = [s.move for s in steps if s.move.family == "LayerCount"]
+    assert lc and len([fx for fx in lc[0].rfx if fx[0] == CB.AE_AUX]) == 8
+
+
+def test_weighted_house_sum_with_a_known_total():
+    """AuxRule: six cells of box 1, one tripled, add up to a known 24 -- six different digits make at least 21, so the
+    tripled digit adds at most 3 over its own: it is 1 (Trouble's step 13; too many combinations to list, and with the
+    total decided the bounds said nothing until each digit got its own, 2026-11-09)"""
+    from pencilmark import api
+    from pencilmark import cbackend as CB
+    from pencilmark import solver as S
+
+    seg = ["r3c1", "r2c2", "r1c2", "r1c3", "r2c3", "r3c3"]
+    doc = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
+           "givens": [0] * 81, "unknowns": {"X": {"range": [24, 24]}},
+           "layers": {"mult": {"values": [1, 3], "given": {c: 3 if c == "r1c3" else 1 for c in seg}}},
+           "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+                     {"type": "custom", "cells": {"S": seg}, "holds": "sum(x * mult(x) for x in S) == X"}]}  # fmt: skip
+    steps, _ = CB.solve(api._load(doc), disabled=(S.GUESS,), assume_unique=False, max_steps=4)
+    gone = {e for s in steps if s.move.family == "AuxRule" for e in s.move.elim}
+    assert {(2, d) for d in range(2, 10)} <= gone  # r1c3 (cell 2) keeps only 1
+
+
+def test_value_thermo_read_case_by_case():
+    """AuxRule: a 5-cell thermometer on values (digit + shift, shift -1 / 0 / +1) has too many combinations to list; each
+    digit is tried and the other cells narrowed link by link -- the bulb's value is at most 6, so it is no 8 or 9
+    (Reversing Valve's thermos; before, such a rule said nothing, 2026-11-09)"""
+    from pencilmark import api
+    from pencilmark import cbackend as CB
+    from pencilmark import solver as S
+
+    T = ["r7c4", "r6c4", "r5c4", "r4c4", "r3c4"]
+    doc = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
+           "givens": [0] * 81, "layers": {"shift": {"values": [-1, 0, 1]}},
+           "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+                     {"type": "custom", "cells": {"T": T},
+                      "holds": "let V = [x + shift(x) for x in T]; all(V[i] < V[i + 1] for i in {1..len(V) - 1})"}]}  # fmt: skip
+    steps, _ = CB.solve(api._load(doc), disabled=(S.GUESS,), assume_unique=False, max_steps=3)
+    gone = {e for s in steps if s.move.family == "AuxRule" for e in s.move.elim}
+    assert {(57, 8), (57, 9), (21, 1), (21, 2)} <= gone  # bulb r7c4, tip r3c4
+
+
+def test_rule_always_holds_the_house_layer_cell():
+    """AuxRule with the count rules: a 14 cage of 6 and 7 (values = digit + shift) is hot once -- never twice in one row
+    -- so row 4's hot cell is in the cage and the rest of the row is not hot (Reversing Valve, 2026-11-09)"""
+    from pencilmark import api
+    from pencilmark import cbackend as CB
+    from pencilmark import solver as S
+
+    rows = [[f"r{r}c{c}" for c in range(1, 10)] for r in range(1, 10)]
+    cols = [[f"r{r}c{c}" for r in range(1, 10)] for c in range(1, 10)]
+    doc = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
+           "givens": [0] * 81, "layers": {"shift": {"values": [-1, 0, 1]}},
+           "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+                     {"type": "custom", "cells": {"H": rows + cols}, "each": "H",
+                      "holds": "count(shift(x) == 1 for x in H) == 1 and count(shift(x) == -1 for x in H) == 1"},
+                     {"type": "custom", "cells": {"C": ["r4c8", "r4c9"]}, "holds": "sum(x + shift(x) for x in C) == 14"},
+                     {"type": "custom", "cells": {"C": ["r4c8", "r4c9"]}, "holds": "all(x == 6 or x == 7 for x in C)"}]}  # fmt: skip
+    steps, _ = CB.solve(api._load(doc), disabled=(S.GUESS,), assume_unique=False, max_steps=6)
+    gone = {(a, i) for s in steps if s.move.family == "AuxRule" for k, a, i in s.move.rfx if k == CB.AE_AUX}
+    assert {(c, 2) for c in range(27, 34)} <= gone  # r4c1-r4c7 (cells 27-33) not hot (value index 2 = +1)
+
+
+def test_joint_candidates_from_a_digit_inventory():
+    """joint candidates (design review stage 4): "each digit is cold once" is a house of (cell, 5, cold) literals per
+    digit; r1c1 is a cold 5, so no other cell can be "5 and cold" -- a pair removed, not a digit or a value (a cell
+    can still be a plain 5 or a cold 4). Reversing Valve's inventory steps, 2026-11-10."""
+    from pencilmark import api
+    from pencilmark import cbackend as CB
+    from pencilmark import solver as S
+
+    G = [f"r{r}c{c}" for r in range(1, 10) for c in range(1, 10)]
+    giv = [0] * 81
+    giv[0] = 5
+    doc = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
+           "givens": giv, "layers": {"shift": {"values": [-1, 0, 1], "given": {"r1c1": -1}}},
+           "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+                     {"type": "custom", "cells": {"G": G},
+                      "holds": "all(count(shift(x) == -1 and x == d for x in G) == 1 for d in {1..9})"}]}  # fmt: skip
+    steps, _ = CB.solve(api._load(doc), disabled=(S.GUESS,), assume_unique=False, max_steps=4)
+    pairs = {(a, arg) for s in steps for k, a, arg in (s.move.rfx or ()) if k == CB.AE_JOINT}
+    assert (80, 5 * 16 + 0) in pairs  # r9c9 (layer variable 80, no unknowns) is not (5, cold = value index 0)
+    assert not any(a == 0 for a, _ in pairs)  # r1c1 keeps its own
+
+
+def test_layer_value_tried_against_counts():
+    """LayerTrial: one doubler and one tripler per house, adjusted cells never touching (king steps) -- a box's center
+    touches every other cell of its box, so it is neither (Trouble's opening, 2026-11-09)"""
+    from pencilmark import api
+    from pencilmark import cbackend as CB
+    from pencilmark import solver as S
+
+    rows = [[f"r{r}c{c}" for c in range(1, 10)] for r in range(1, 10)]
+    cols = [[f"r{r}c{c}" for r in range(1, 10)] for c in range(1, 10)]
+    boxes = [
+        [f"r{br * 3 + i + 1}c{bc * 3 + j + 1}" for i in range(3) for j in range(3)]
+        for br in range(3)
+        for bc in range(3)
+    ]
+    doc = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
+           "givens": [0] * 81, "layers": {"mult": {"values": [1, 2, 3]}},
+           "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+                     {"type": "custom", "cells": {"H": rows + cols + boxes}, "each": "H",
+                      "holds": "count(mult(x) == 2 for x in H) == 1 and count(mult(x) == 3 for x in H) == 1"},
+                     {"type": "custom", "cells": {}, "scope": {"pairs": "king"},
+                      "holds": "(a, b) => mult(a) == 1 or mult(b) == 1"}]}  # fmt: skip
+    steps, _ = CB.solve(api._load(doc), disabled=(S.GUESS,), assume_unique=False, max_steps=10)  # notes, the centers
+    out = {(a, i) for s in steps if s.move.family == "LayerTrial" for k, a, i in s.move.rfx}
+    # layer "mult" at board cell c is aux variable c (no unknowns); values [1, 2, 3]: index 1 = 2, index 2 = 3
+    assert (40, 1) in out and (40, 2) in out  # r5c5, the center of box 5
+
+
+def test_layer_fish():
+    """LayerFish: one doubler and one tripler per house; rows 1-2 are plain in columns 7-9, so their four special cells
+    lie in boxes 1-2, which take only four: row 3's cells of those boxes are neither (a star battle's row / box count)"""
+    from pencilmark import api
+    from pencilmark import cbackend as CB
+    from pencilmark import solver as S
+
+    rows = [[f"r{r}c{c}" for c in range(1, 10)] for r in range(1, 10)]
+    cols = [[f"r{r}c{c}" for r in range(1, 10)] for c in range(1, 10)]
+    boxes = [
+        [f"r{br * 3 + i + 1}c{bc * 3 + j + 1}" for i in range(3) for j in range(3)]
+        for br in range(3)
+        for bc in range(3)
+    ]
+    given = {f"r{r}c{c}": 1 for r in (1, 2) for c in (7, 8, 9)}
+    doc = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
+           "givens": [0] * 81, "layers": {"mult": {"values": [1, 2, 3], "given": given}},
+           "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+                     {"type": "custom", "cells": {"H": rows + cols + boxes}, "each": "H",
+                      "holds": "count(mult(x) == 2 for x in H) == 1 and count(mult(x) == 3 for x in H) == 1"}]}  # fmt: skip
+    steps, _ = CB.solve(api._load(doc), disabled=(S.GUESS,), assume_unique=False, max_steps=6)  # no guess: slow here
+    # the fish, or its simplest form on joint literals: box 3's special cells can only be in row 3
+    fish = {
+        a for s in steps if s.move.code in ("layer fish", "one layer house inside another") for k, a, i in s.move.rfx
+    }
+    assert {18, 19, 20, 21, 22, 23} <= fish  # r3c1-r3c6 (layer variable = board cell; no unknowns)
+
+
+def test_rule_read_with_facts_confined_to_its_cells():
+    """AuxRule's confined facts (code 7425): row 1's one doubled cell can only be r1c1 or r1c2 (the rest are given
+    plain), so the 2-cell rule "a * mult(a) + b * mult(b) == 5" read with that fact has exactly one doubled cell:
+    {1, 3} or {1, 2} -- the 4 goes, which the rule alone (4 + 1 with nothing doubled) keeps (plusminus1's dot,
+    2026-11-10)"""
+    from pencilmark import api
+    from pencilmark import cbackend as CB
+    from pencilmark import solver as S
+
+    row = [f"r1c{c}" for c in range(1, 10)]
+    doc = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
+           "givens": [0] * 81, "layers": {"mult": {"values": [1, 2], "given": {c: 1 for c in row[2:]}}},
+           "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+                     {"type": "custom", "cells": {"R": row}, "holds": "count(mult(x) == 2 for x in R) == 1"},
+                     {"type": "custom", "cells": {"a": ["r1c1"], "b": ["r1c2"]},
+                      "holds": "a * mult(a) + b * mult(b) == 5"}]}  # fmt: skip
+    steps, _ = CB.solve(api._load(doc), disabled=(S.GUESS,), assume_unique=False, max_steps=12)
+    names = (
+        "a rule read with the facts confined to its cells",
+        "two rules on shared cells read together",
+    )  # 7425, 7432
+    elim = {e for s in steps if s.move.code in names for e in s.move.elim}
+    assert (0, 4) in elim and (1, 4) in elim, elim
+
+
+def test_equal_products_share_large_primes():
+    """EqualProducts (code 7427): two lines with one product P hold as many 7s each (7 is the only digit with the
+    factor 7); row 1's 7 is given outside the first line, so neither line has a 7 (misconduct's break-in, 2026-11-10)"""
+    from pencilmark import api
+    from pencilmark import cbackend as CB
+    from pencilmark import solver as S
+
+    giv = [0] * 81
+    giv[8] = 7  # r1c9
+    doc = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
+           "givens": giv, "unknowns": {"P": {"range": [1, 729]}},
+           "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+                     {"type": "custom", "cells": {"L": ["r1c1", "r1c2", "r1c3"]}, "holds": "product(L) == P"},
+                     {"type": "custom", "cells": {"L": ["r9c7", "r9c8", "r9c9"]}, "holds": "product(L) == P"}]}  # fmt: skip
+    steps, _ = CB.solve(api._load(doc), disabled=(S.GUESS,), assume_unique=False, max_steps=12)
+    name = "equal products share their large primes"
+    gone = {e for s in steps if s.move.code == name for e in s.move.elim}
+    assert {(78, 7), (79, 7)} <= gone, gone  # r9c7, r9c8 (r9c9 sees the given 7 in column 9)
+
+
+def test_joint_fish_from_a_value_coverage():
+    """JointHouses' fish (codes 7422 / 7423): an 11-cell line in rows 8-9 holds every value 0-10 of "digit + shift"
+    once; 0 is only a shifted 1 and 10 only a shifted 9, so rows 8-9's one shifted cell each are both on the line
+    (7422: the rest of rows 8-9 is plain), and values 0 and 1 are both 1s, so both rows' 1s are on the line (7423)
+    -- plusminus1's opening, 2026-11-10"""
+    from pencilmark import api
+    from pencilmark import cbackend as CB
+    from pencilmark import solver as S
+
+    rows = [[f"r{r}c{c}" for c in range(1, 10)] for r in range(1, 10)]
+    cols = [[f"r{r}c{c}" for r in range(1, 10)] for c in range(1, 10)]
+    boxes = [
+        [f"r{br * 3 + i + 1}c{bc * 3 + j + 1}" for i in range(3) for j in range(3)]
+        for br in range(3)
+        for bc in range(3)
+    ]
+    line = ["r9c8", "r9c9", "r8c8", "r8c7", "r8c6", "r8c5", "r8c4", "r9c4", "r9c5", "r9c6", "r9c7"]
+    doc = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
+           "givens": [0] * 81, "layers": {"shift": {"values": [-1, 0, 1]}},
+           "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+                     {"type": "custom", "each": "H", "cells": {"H": rows + cols + boxes},
+                      "holds": "count(shift(x) != 0 for x in H) == 1"},
+                     {"type": "custom", "cells": {"G": [c for r in rows for c in r]},
+                      "holds": "all(count(shift(x) != 0 and x == d for x in G) == 1 for d in {1..9})"},
+                     {"type": "custom", "cells": {"L": line},
+                      "holds": "let V = [x + shift(x) for x in L]; all_different(V) and max(V) - min(V) == len(V) - 1"}]}  # fmt: skip
+    steps, _ = CB.solve(api._load(doc), disabled=(S.GUESS,), assume_unique=False, max_steps=40)
+    codes = {s.move.code for s in steps}
+    assert "two layer houses inside two others" in codes, codes  # 7422
+    gone = {e for s in steps if s.move.code == "a layer value's digit confined to houses" for e in s.move.elim}  # 7423
+    assert (63, 1) in gone and (72, 1) in gone, gone  # r8c1, r9c1 lose 1
+
+
+def test_derived_totals_in_a_house():
+    """AuxHouse with derived totals (2026-11-10): row 1 is two cages, "sum(C) == X * X" (3 cells) and "== Y * Y" (6
+    cells); alone they leave X in {3, 4} and Y in {5, 6}, together X * X + Y * Y = 45 leaves X = 3, Y = 6 (squircles'
+    column equations, where totals are squares of the letters)"""
+    from pencilmark import api
+    from pencilmark import cbackend as CB
+    from pencilmark import solver as S
+
+    doc = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
+           "givens": [0] * 81, "unknowns": {"X": {"range": [1, 6]}, "Y": {"range": [1, 6]}},
+           "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+                     {"type": "custom", "cells": {"C": ["r1c1", "r1c2", "r1c3"]}, "holds": "sum(C) == X * X"},
+                     {"type": "custom", "cells": {"C": [f"r1c{c}" for c in range(4, 10)]}, "holds": "sum(C) == Y * Y"}]}  # fmt: skip
+    steps, _ = CB.solve(api._load(doc), disabled=(S.GUESS,), assume_unique=False, max_steps=12)
+    gone = {(a, arg) for s in steps for k, a, arg in (s.move.rfx or ()) if k == CB.AE_AUX}
+    assert (0, 3) in gone and (1, 4) in gone, gone  # X = 4 (value index 3) and Y = 5 (index 4) ruled out
+
+
+def test_cpsat_counts_cells_and_reverses():
+    """CP-SAT reads count() over cells as the language does (no item is a condition: the elements are counted, each
+    under its filter) and reverse() of a plain list -- ns_counting_thermos' "count(y for y in B if y == x) == x" was
+    unmodelled, so rate could not prove uniqueness (2026-11-10)"""
+    pytest.importorskip("ortools")
+    from pencilmark import api
+    from pencilmark import cpsat_verify as V
+    from pencilmark.rules import custom as CU
+
+    sol = "534678912672195348198342567859761423426853791713924856961537284287419635345286179"
+    givens = [int(x) for x in sol]
+    for i in (0, 1, 2, 9, 10, 11):
+        givens[i] = 0
+    row = ["r1c1", "r1c2", "r1c3", "r2c1", "r2c2", "r2c3"]
+    rules = ["count(y for y in L if y > 4) == 3", "reverse(L)[6] == 5"]  # 5, 6, 7 above 4; reversed, r1c1 = 5 last
+    for text in rules:
+        assert CU.rule_holds({"cells": {"L": row}, "holds": text}, dict(zip(row, [5, 3, 4, 6, 7, 2])))
+    doc = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
+           "givens": givens, "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}] +
+           [{"type": "custom", "cells": {"L": row}, "holds": h} for h in rules]}  # fmt: skip
+    p = api._load(doc)
+    p.finalize()
+    assert V.build_model(p)[0] is not None
+    assert ["".join(map(str, s)) for s in V.cpsat_solutions(p, limit=2, time_limit=20)] == [sol]
+
+
+def test_cpsat_reads_positions_and_variable_indices():
+    """CP-SAT models position(L, f), L[i] with a variable i and ranges with variable ends, with the language's ABSENT
+    (no match / outside the list: a comparison is false, != too; defined() tells) -- the LMD test batch spelled
+    coordinate arrows and sandwiches out cell by cell because these were unmodelled (2026-11-11)"""
+    pytest.importorskip("ortools")
+    from pencilmark import api
+    from pencilmark import cpsat_verify as V
+    from pencilmark.rules import custom as CU
+
+    sol = "534678912672195348198342567859761423426853791713924856961537284287419635345286179"
+    givens = [int(x) for x in sol]
+    for i in range(9):  # row 1 blank: the columns fix it
+        givens[i] = 0
+    row = [f"r1c{c}" for c in range(1, 10)]  # 5 3 4 6 7 8 9 1 2
+    rules = ["position(L, x => x == 9) == 7",
+             "L[L[2]] == 4",  # L[2] = 3, L[3] = 4
+             "sum(L[i] for i in {position(L, x => x == 9) - 3 .. position(L, x => x == 9) - 1}) == 21",  # 6 + 7 + 8
+             "not defined(position(L, x => x == 10))"]  # fmt: skip
+    for text in rules:
+        assert CU.rule_holds({"cells": {"L": row}, "holds": text}, dict(zip(row, [5, 3, 4, 6, 7, 8, 9, 1, 2])))
+
+    def solve(texts):
+        doc = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
+               "givens": givens, "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}] +
+               [{"type": "custom", "cells": {"L": row}, "holds": h} for h in texts]}  # fmt: skip
+        p = api._load(doc)
+        p.finalize()
+        assert V.build_model(p)[0] is not None
+        return ["".join(map(str, s)) for s in V.cpsat_solutions(p, limit=2, time_limit=20)]
+
+    assert solve(rules) == [sol]
+    assert solve(rules + ["L[L[2]] == 5"]) == []  # the variable index constrains
+    assert solve(rules + ["position(L, x => x == 10) != 3"]) == []  # with ABSENT, != is false too
+
+
+def test_chain_of_rules_read_as_one():
+    """ChainRule (code 7428): r1c1 = r5c5 = r1c2 on values (digit x doubler). Link by link every digit survives; as a
+    chain, r1c1 and r1c2 share row 1, so equal values with different digits need one doubled and the other its double:
+    an odd digit 5, 7 or 9 at r1c1 has no partner (LMD Thermokilometer's slow thermo loop, 2026-11-10)"""
+    from pencilmark import api
+    from pencilmark import cbackend as CB
+    from pencilmark import solver as S
+
+    doc = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
+           "givens": [0] * 81, "layers": {"dbl": {"values": [1, 2]}},
+           "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+                     {"type": "custom", "cells": {"a": ["r1c1"], "b": ["r5c5"]}, "holds": "a * dbl(a) == b * dbl(b)"},
+                     {"type": "custom", "cells": {"a": ["r5c5"], "b": ["r1c2"]}, "holds": "a * dbl(a) == b * dbl(b)"}]}  # fmt: skip
+    steps, _ = CB.solve(api._load(doc), disabled=(S.GUESS,), assume_unique=False, max_steps=12)
+    gone = {e for s in steps if s.move.code == "a chain of rules read as one" for e in s.move.elim}
+    assert {(0, 5), (0, 7), (0, 9)} <= gone, gone
+
+
+def test_a_rule_reads_only_the_layer_cells_it_names():
+    """a rule's layer reads are the cells it applies the layer to: "val(x) == (if cc(x) == 1 then o else x)" reads
+    cc(x) and val(x), not cc(o) / val(o) -- with all four the enumeration passed its cap and the rule was only bounded,
+    so a value 9 ruled out at x never reached the pair (9, plain) (copycat 18 -> 173 steps, 2026-11-10)"""
+    from pencilmark import api
+    from pencilmark import cbackend as CB
+    from pencilmark import solver as S
+
+    doc = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
+           "givens": [0] * 81, "layers": {"cc": {"values": [0, 1]}, "val": {"values": list(range(1, 10))}},
+           "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+                     {"type": "custom", "cells": {"x": ["r1c1"]}, "holds": "val(x) != 9"},
+                     {"type": "custom", "cells": {"x": ["r1c1"], "o": ["r9c9"]},
+                      "holds": "val(x) == (if cc(x) == 1 then o else x)"}]}  # fmt: skip
+    p = api._load(doc)
+    assert [c["aux"]["read"] for c in p.constraints if c.get("type") == "expr"][-1] == [0, 81]  # cc(r1c1), val(r1c1)
+    steps, _ = CB.solve(p, disabled=(S.GUESS,), assume_unique=False, max_steps=10)
+    pairs = {(a, arg) for s in steps for k, a, arg in (s.move.rfx or ()) if k == CB.AE_JOINT}
+    assert (0, 9 * 16 + 0) in pairs, pairs  # r1c1 is not a plain 9
+
+
+def test_equal_sums_read_added_values():
+    """EqualSums (code 7429) on additive values "x + kd(x)" (knapp daneben: kd -1 / 0 / +1): r1c1 equals three
+    different digits of box 2, each at least one less, so at least 0 + 1 + 2 = 3 -- r1c1 is no 1 (OBOE's region sum
+    lines, 2026-11-11)"""
+    from pencilmark import api
+    from pencilmark import cbackend as CB
+    from pencilmark import solver as S
+
+    doc = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
+           "givens": [0] * 81, "layers": {"kd": {"values": [-1, 0, 1]}},
+           "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+                     {"type": "custom", "cells": {"A": ["r1c1"], "B": ["r2c4", "r2c5", "r2c6"]},
+                      "holds": "sum(x + kd(x) for x in A) == sum(x + kd(x) for x in B)"}]}  # fmt: skip
+    steps, _ = CB.solve(api._load(doc), disabled=(S.GUESS,), assume_unique=False, max_steps=12)
+    name = "segments with equal sums share their totals"  # code 7429
+    elim = {e for s in steps if s.move.code == name for e in s.move.elim}
+    assert (0, 1) in elim, elim
+
+
+def test_values_rule_clues_read_values():
+    """A values rule (custom, kind "values"; docs/research/values_rule.md) makes the clues read values: a cage and a
+    kropki dot with r1c1 / r1c2 doubled solve exactly as the same clues written out as custom rules; a clue with
+    "on": "digits" reads digits; two values rules on one cell, a condition as a value, a bad "on" are refused
+    (2026-11-11)"""
+    pytest.importorskip("ortools")
+    from pencilmark import api
+    from pencilmark import cpsat_verify as V
+    from pencilmark.errors import FormatError
+
+    sol = "534678912672195348198342567859761423426853791713924856961537284287419635345286179"
+    givens = [int(x) for x in sol]
+    for i in (0, 1, 2, 9, 10, 11):
+        givens[i] = 0
+    base = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
+            "givens": givens}  # fmt: skip
+    dbl = {"type": "custom", "kind": "values", "cells": {"x": ["r1c1", "r1c2"]}, "value": "2 * x"}
+    new = [
+        dbl,
+        {"type": "cage", "cells": ["r1c1", "r1c2"], "sum": 16},  # 2 * 5 + 2 * 3
+        {"type": "edge", "kind": "kropki", "color": "black", "cells": ["r1c3", "r2c3"]},  # 4 and 2
+        {"type": "edge", "kind": "kropki", "color": "white", "cells": ["r2c1", "r2c2"], "on": "digits"},
+    ]  # 6, 7
+    old = [{"type": "custom", "cells": {"a": ["r1c1"], "b": ["r1c2"]}, "holds": "a != b and 2 * a + 2 * b == 16"},
+           {"type": "custom", "cells": {"a": ["r1c3"], "b": ["r2c3"]}, "holds": "a == 2 * b or b == 2 * a"},
+           {"type": "custom", "cells": {"a": ["r2c1"], "b": ["r2c2"]}, "holds": "abs(a - b) == 1"}]  # fmt: skip
+
+    def sols(rules):
+        p = api._load(dict(base, rules=[{"type": "box_grid", "box": [3, 3], "count": [3, 3]}] + rules))
+        p.finalize()
+        return sorted("".join(map(str, s)) for s in V.cpsat_solutions(p, limit=20, time_limit=20))
+
+    got = sols(new)
+    assert sol in got and got == sols(old)
+    for bad in (
+        [dbl, dict(dbl, cells={"y": ["r1c2"]})],  # r1c2 has two values
+        [dict(dbl, value="x > 2")],  # a condition, not a number
+        [dbl, {"type": "cage", "cells": ["r1c1", "r1c2"], "sum": 16, "on": "both"}],
+    ):
+        with pytest.raises(FormatError):
+            sols(bad)
+
+
+def test_cells_a_rule_fills_alike_join_a_class():
+    """AuxRule's equal cells (code 7433): "a + 0 * m(a) == b + 0 * m(b)" (a rule over a layer that, whatever the
+    layer, makes r1c1 and r2c4 -- no shared house -- the same digit) -- with coloring on they become one identity
+    class, as a host colors them alike (2026-11-11)"""
+    from pencilmark import api
+    from pencilmark import cbackend as CB
+    from pencilmark import solver as S
+
+    doc = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
+           "givens": [0] * 81, "layers": {"m": {"values": [0, 1]}},
+           "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+                     {"type": "custom", "cells": {"a": ["r1c1"], "b": ["r2c4"]}, "holds": "a + 0 * m(a) == b + 0 * m(b)"}]}  # fmt: skip
+    P = dict(api._params("human"), colouring=1)
+    steps, _ = CB.solve(api._load(doc), params=P, disabled=(S.GUESS,), assume_unique=False, max_steps=12)
+    assert "two cells a rule fills alike" in {s.move.code for s in steps}
+
+
+def test_every_option_of_a_rule_breaks_a_house():
+    """RuleCase (code 7434, designer's fifth pass): "a * m(a) * b + c == 26" on r1c1 {3, 4}, r2c4 {6, 7}, r5c5 {2, 5}
+    (it reads a layer, as the modifier ports' rules do: a digit-only rule this small compiles to a table). With r1c1 =
+    3 the rule's one option is 3, 7, 5; by house singles r2c9 {5, 7} is then 5 and r1c9 {3, 5} has no place left -- so
+    r1c1 is no 3 (2026-11-11)"""
+    from pencilmark import api
+    from pencilmark import cbackend as CB
+    from pencilmark import solver as S
+
+    doc = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
+           "givens": [0] * 81, "layers": {"m": {"values": [1]}},
+           "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+                     {"type": "custom", "cells": {"a": ["r1c1"], "b": ["r2c4"], "c": ["r5c5"]},
+                      "holds": "a * m(a) * b + c == 26"}]}  # fmt: skip
+    p = api._load(doc)
+    full = (1 << 9) - 1
+    m = lambda *ds: sum(1 << (d - 1) for d in ds)
+    cand = [full] * 81
+    cand[0], cand[12], cand[40] = m(3, 4), m(6, 7), m(2, 5)  # r1c1, r2c4, r5c5
+    cand[17], cand[26], cand[8] = m(5, 7), m(3, 5), m(3, 5)  # r2c9, r3c9, r1c9
+    off = set(S.TECH_NAMES) - {S.RULE_CASE}
+    ms = CB.state_moves(p, api._params("human"), cand=cand, disabled=off)
+    assert any(x["tech"] == S.RULE_CASE and (0, 3) in x["elim"] for x in ms), [x["elim"] for x in ms]
+
+
+def _class_moves(rules, cand_of, tech):
+    from pencilmark import api
+    from pencilmark import cbackend as CB
+    from pencilmark import solver as S
+
+    doc = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
+           "givens": [0] * 81, "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}] + rules}  # fmt: skip
+    p = api._load(doc)
+    full = (1 << 9) - 1
+    cand = [full] * 81
+    for c, ds in cand_of.items():
+        cand[c] = sum(1 << (d - 1) for d in ds)
+    off = set(S.TECH_NAMES) - {tech}
+    return CB.state_moves(p, dict(api._params("human"), colouring=1), cand=cand, disabled=off)
+
+
+def test_low_high_quota_is_the_digits_the_cells_can_hold():
+    """Difference-6 whispers (CtC btiuVhfbTtI): r2c1 touches r1c1, r1c2, r3c2 in box 1 -- one color, three cells, and
+    on this line a low cell holds only 1-3: the three are exactly 1,2,3 or 7,8,9 either way round, so r2c1, joined to
+    all three, is 9 or 1 (the quota was the split's four lows before, which never filled)"""
+    from pencilmark import solver as S
+
+    rules = [{"type": "line", "kind": "whisper", "cells": ["r1c1", "r2c1"], "value": 6},
+             {"type": "line", "kind": "whisper", "cells": ["r1c2", "r2c1", "r3c2"], "value": 6}]  # fmt: skip
+    ms = _class_moves(rules, {c: (1, 2, 3, 7, 8, 9) for c in (0, 1, 9, 19)}, S.CLASS_COLOUR)
+    assert any(set(x["elim"]) == {(9, 2), (9, 3), (9, 7), (9, 8)} for x in ms), [x["elim"] for x in ms]
+
+
+def test_digit_tracked_off_its_own_line():
+    """A zipper's center is on none of its line's other cells (each is a summand of it), so its digit can be tracked
+    through a house as a one-cell color (CtC siOW_5tj8ao: "the center digit can't go on its own line, so in the top
+    row it goes there"). Center r1c5 {8, 9}; box 3: r1c7-r1c9 see it by row, r2c7-r2c9 are on its line, r3c7 / r3c8
+    hold only 1 and 2 -- so r3c9 has the center's digit"""
+    from pencilmark import api
+    from pencilmark import cbackend as CB
+    from pencilmark import solver as S
+
+    line = ["r2c1", "r2c2", "r2c3", "r2c4", "r1c5", "r2c6", "r2c7", "r2c8", "r2c9"]
+    doc = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
+           "givens": [0] * 81, "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+                                         {"type": "line", "kind": "zipper", "cells": line}]}  # fmt: skip
+    p = api._load(doc)
+    full = (1 << 9) - 1
+    cand = [full] * 81
+    cand[4] = (1 << 7) | (1 << 8)  # r1c5 {8, 9}
+    cand[24] = cand[25] = 0b11  # r3c7, r3c8 {1, 2}
+    off = set(S.TECH_NAMES) - {S.CLASS_SINGLE}
+    ms = CB.state_moves(p, dict(api._params("human"), colouring=1), cand=cand, disabled=off, details=True)
+    assert any(x["tech"] == S.CLASS_SINGLE and set(x.get("pattern") or ()) == {4, 26} for x in ms), ms
+
+
+def test_set_equivalence_carries_cage_contents():
+    """Phistomefel with cage contents (CtC XVLO5AXcnq8: "each of the four cages in the ring has a 1, so you've got to
+    allocate four ones to the corner squares, one in each"): four 3-cages {1, 2} in the ring put four 1s (and 2s) in
+    the corner 2x2s, so the corner boxes' other cells -- r3c3 in the cage too -- hold no 1"""
+    from pencilmark import api
+    from pencilmark import cbackend as CB
+    from pencilmark import solver as S
+
+    cages = [["r3c3", "r3c4"], ["r3c6", "r3c7"], ["r7c3", "r7c4"], ["r7c6", "r7c7"]]
+    doc = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
+           "givens": [0] * 81, "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}]
+           + [{"type": "cage", "cells": c, "sum": 3} for c in cages]}  # fmt: skip
+    ms = CB.state_moves(api._load(doc), api._params("human"))
+    ones = [set(x["elim"]) for x in ms if x["tech"] == S.LOL_COMBO]
+    want = {(c, 1) for c in (2, 11, 18, 19, 20)}  # box 1 outside r1c1-r2c2: r1c3, r2c3, r3c1, r3c2, r3c3
+    assert any(want <= e for e in ones), ones
+
+
+def test_columns_against_rows_with_arrows_cancelled():
+    """Column 2 against row 5 (CtC dKZqSLK31HU's break-in, on a made-up grid): two arrows run along column 2 from
+    circles in row 5, so each cancels (line on the column side, circle on the row side), and r5c2 is in both. Left:
+    r1c2 + r2c2 + r8c2 + r9c2 = r5c5 + .. + r5c9. With the column cells at most 6 (18 together) and r5c5-r5c8 a
+    1-2-3-4 quad (10), r5c9 is at most 8"""
+    from pencilmark import api
+    from pencilmark import cbackend as CB
+    from pencilmark import solver as S
+
+    arrows = [("r5c1", ["r4c2", "r3c2"]), ("r5c3", ["r6c2", "r7c2"])]
+    doc = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
+           "givens": [0] * 81, "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]}]
+           + [{"type": "arrow", "bulb": [o], "lines": [line]} for o, line in arrows]}  # fmt: skip
+    cand = [(1 << 9) - 1] * 81
+    for c in (1, 10, 64, 73):  # r1c2, r2c2, r8c2, r9c2
+        cand[c] = (1 << 6) - 1
+    for c in (40, 41, 42, 43):  # r5c5 .. r5c8
+        cand[c] = (1 << 4) - 1
+    off = set(S.TECH_NAMES) - {S.SUM_ALGEBRA}
+    ms = CB.state_moves(api._load(doc), api._params("human"), cand=cand, disabled=off)
+    assert any((44, 9) in x["elim"] for x in ms if x["tech"] == S.SUM_ALGEBRA), [x["elim"] for x in ms]

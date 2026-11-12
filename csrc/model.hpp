@@ -126,6 +126,9 @@ struct Puzzle {
     std::vector<std::vector<int8_t>> rel_dir;
     std::vector<std::vector<int>> peer_list;     ///< sorted
     std::vector<uint64_t> peer_bits, neq_bits, rel_bits, group_bits;
+    /// cells whose digits must differ: peers, rule pairs that never allow equal digits, strict order chains (two
+    /// cells of one thermometer), members of one all-different rule (a renban, a cage) -- a human's "sees"
+    std::vector<uint64_t> diff_bits;
     std::vector<char> group_overlap;  ///< G*G, cells shared
     std::vector<int> group_line;      ///< 0 row, 1 column (same coordinate), 2 other (box/region/diagonal...)
     std::vector<int> group_cat;       ///< GroupCat
@@ -134,6 +137,10 @@ struct Puzzle {
     std::vector<InnieSet> innies;
     std::vector<std::vector<int>> house_unions;  ///< for inspection / tests
     std::vector<NConstraint> nary;      ///< from nary_specs (same order)
+    /// custom rules over more than 64 cells: no technique reads them (their buffers hold 64 variables); the exhaustive
+    /// search checks them, so uniqueness and the solution obey every rule
+    std::vector<NConstraint> nary_big;
+    int nary_dropped = 0;  ///< other rules over more than 64 cells: not modeled (rate refuses the puzzle)
     std::vector<NConstraint> cage_nary; ///< sum-cage groups as sum constraints (combo-lock)
     std::vector<InnieSet> big_innies;   ///< rule-of-45 regions of 5..BIG_INNIE_MAX cells
     std::vector<NConstraint> innie_nary; ///< ... as derived sum constraints
@@ -166,6 +173,8 @@ struct Puzzle {
 
     const uint64_t* peers(int c) const { return &peer_bits[(size_t)c * W]; }
     const uint64_t* neqb(int c) const { return &neq_bits[(size_t)c * W]; }
+    const uint64_t* diffb(int c) const { return &diff_bits[(size_t)c * W]; }
+    void build_diff();
     const uint64_t* relb(int c) const { return &rel_bits[(size_t)c * W]; }
     const uint64_t* gbits(int g) const { return &group_bits[(size_t)g * W]; }
     /// rel_ex[x][y] table (y must be a relation partner of x)

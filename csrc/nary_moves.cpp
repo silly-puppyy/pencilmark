@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <functional>
+#include <map>
 #include <set>
 #include <tuple>
 #include "portable.hpp"
@@ -61,7 +62,7 @@ const GacOut& Solver::gac_cached(const NConstraint& k, const uint32_t* dom, int 
     e.dom.assign(dom, dom + k.nv());
     e.valid = true;
     XKey xk{p.uid, &k, req_v, req_mask, e.dom};
-    auto it = g_xcache.find(xk);
+    auto it = memo_off("gac") ? g_xcache.end() : g_xcache.find(xk);
     if (it != g_xcache.end()) {
         e.out = it->second;
         return e.out;
@@ -78,7 +79,7 @@ const GacOut& Solver::gac_cached(const NConstraint& k, const uint32_t* dom, int 
 // (never a requirement) and the budget in the mask field, so these entries never meet gac_cached's
 void Solver::gac_prop(const NConstraint& k, const uint32_t* dom, pm_long budget, GacOut& out) {
     XKey xk{p.uid, &k, -1, (uint64_t)budget, std::vector<uint32_t>(dom, dom + k.nv())};
-    auto it = g_xcache.find(xk);
+    auto it = memo_off("gac") ? g_xcache.end() : g_xcache.find(xk);
     if (it != g_xcache.end()) {
         out = it->second;
         return;
@@ -107,7 +108,10 @@ void Solver::nary_combination(MoveBuf& out, int part) {
     uint32_t dom[64];
     static const std::vector<GacReq> noreq;
     for (const NConstraint& k : p.nary) {
-        if ((part == 0 && k.type == NT_SAMESET) || (part == 1 && k.type != NT_SAMESET)) continue;
+        // part 1 (the leftovers slot, priced against pointing and the dots' own pair relations): set equivalences and
+        // the runs derived from white-dot chains (a derived rule should not jump the queue ahead of the dots)
+        const bool late = k.type == NT_SAMESET || (k.type == NT_SET && p.base_nary >= 0 && k.index >= p.base_nary);
+        if ((part == 0 && late) || (part == 1 && !late)) continue;
         if (k.index >= 0 && p.nary_specs[k.index].gated) continue;  // its lemmas stand in for it
         int unplaced = 0;
         for (int c : k.vars) unplaced += !vals[c];
@@ -136,8 +140,10 @@ void Solver::nary_combination(MoveBuf& out, int part) {
         m.code = k.type == NT_SANDWICH ? 3301 : k.type == NT_XSUM ? 3302 : k.type == NT_SKYLINE ? 3303
                  : k.type == NT_TABLE && k.named && k.index >= 0 && k.index < 1000 ? 6000 + k.index
                  : k.type == NT_DIGITSET ? 3320
+                 : k.type == NT_SET && k.index >= p.base_nary && p.base_nary >= 0 ? 3321  // white dots in a house
                  : k.type == NT_SAMESET ? (k.setkind == 4 ? 3308 : k.setkind == 3 ? 3307 : k.setkind == 2 ? 3306 : k.setkind ? 3305 : 3304) : 0;
         if (k.type == NT_TABLE) m.tab_live = table_live(k);
+        if (one_off_table(k)) m.code = 6990;
         pm_long line_xm[4] = {0, 0, 0, 0};
         if (k.line_kind >= 0) {  // LineRange: one move per line insight
             int placed = 0, changed = 0, depth = 0, w5 = 1;
@@ -170,6 +176,122 @@ void Solver::nary_combination(MoveBuf& out, int part) {
             std::copy(lx, lx + XM_N, xm);
         }
         std::copy(xm, xm + XM_N, m.xm);
+    }
+}
+
+// Set equivalence with counts (CtC XVLO5AXcnq8: "each of the four cages in the Phistomefel ring has a 1, so you've
+// got to allocate four ones to the orange squares -- one in each"): sides X and Y hold the same digits. Y's disjoint
+// units that must contain d (a cage whose every combination has d, a house whose only places for d lie in Y, a
+// placed d) give a lower bound on d's count in Y, so in X; X's cells by box give an upper bound (one d per box).
+// When they meet, every box of X with a place for d holds its d inside X: d leaves the box's other cells.
+void Solver::sameset_counts(MoveBuf& out) {
+    if (disabled[LOL_COMBO] || in_branch) return;  // a top-level step: not inside forcing / trial searches
+    const int N = p.N, D = p.D;
+    uint32_t dom[64];
+    bool any_set = false;
+    for (const NConstraint& k : p.nary) any_set = any_set || k.type == NT_SAMESET;
+    if (!any_set) return;
+    std::vector<std::pair<int, uint32_t>> musts;  // cages: (nary index into the list below, digits it must contain)
+    std::vector<const NConstraint*> cages;
+    bool have_musts = false;
+    auto ensure_musts = [&]() {  // worked out on first need: most calls end at the cheap test below
+        if (have_musts) return;
+        have_musts = true;
+        for (int pass = 0; pass < 2; ++pass)
+            for (const NConstraint& k : pass == 0 ? p.nary : p.cage_nary) {
+                if (k.type != NT_SUM || !k.distinct || k.nv() > 9 || k.set_theory) continue;
+                nary_dom(k, dom);
+                const GacOut& o = gac_cached(k, dom);
+                if (!o.any || !o.must) continue;
+                cages.push_back(&k);
+                musts.push_back({(int)cages.size() - 1, o.must});
+            }
+    };
+    std::vector<int> box_of(N, -1);
+    for (int hi : p.houses)
+        if (p.group_cat[hi] == GC_BOX)
+            for (int c : p.groups[hi].cells) box_of[c] = hi;
+    for (const NConstraint& k : p.nary) {
+        if (k.type != NT_SAMESET || k.index < 0 || k.index >= (int)p.nary_specs.size()) continue;
+        const auto& segs = p.nary_specs[k.index].segs;
+        if (segs.size() != 2) continue;
+        for (int side = 0; side < 2; ++side) {
+            const std::vector<int>& X = segs[side];
+            const std::vector<int>& Y = segs[1 - side];
+            std::vector<char> inY(N, 0), inX(N, 0);
+            for (int c : Y) inY[c] = 1;
+            for (int c : X) inX[c] = 1;
+            for (int d = 1; d <= D; ++d) {
+                const uint32_t b = bit(d);
+                // upper bound in X first (cheap): one d per box with a place for it; nothing to do unless such a box
+                // still has d outside X
+                std::map<int, std::vector<int>> piece;
+                bool unboxed = false, any_el = false;
+                for (int c : X) {
+                    if (!(vals[c] == d || (!vals[c] && (cand[c] & b)))) continue;
+                    if (box_of[c] < 0) unboxed = true;
+                    piece[box_of[c]].push_back(c);
+                }
+                if (unboxed || piece.empty()) continue;
+                for (auto& pc : piece) {
+                    bool has = false;
+                    for (int c : pc.second) has = has || vals[c] == d;
+                    if (has) continue;
+                    for (int c : p.groups[pc.first].cells) any_el = any_el || (!inX[c] && !vals[c] && (cand[c] & b));
+                }
+                if (!any_el) continue;
+                // lower bound in Y: disjoint units that must contain d
+                ensure_musts();
+                std::vector<char> used(N, 0);
+                int L = 0;
+                std::vector<int> unit_cells;
+                for (int c : Y)
+                    if (vals[c] == d) used[c] = 1, ++L;
+                for (auto& mu : musts) {
+                    const NConstraint& cg = *cages[mu.first];
+                    if (!(mu.second & b)) continue;
+                    bool inside = true, free = true;
+                    for (int c : cg.vars) inside = inside && inY[c], free = free && !used[c];
+                    if (!inside || !free) continue;
+                    for (int c : cg.vars) used[c] = 1, unit_cells.push_back(c);
+                    ++L;
+                }
+                for (int hi : p.houses) {  // a house whose places for d all lie in Y (and are still free)
+                    std::vector<int> pl;
+                    bool ok = true, placed = false;
+                    for (int c : p.groups[hi].cells) {
+                        if (vals[c] == d) placed = true;
+                        if (!vals[c] && (cand[c] & b)) pl.push_back(c);
+                    }
+                    if (placed || pl.empty()) continue;
+                    for (int c : pl) ok = ok && inY[c] && !used[c];
+                    if (!ok) continue;
+                    for (int c : pl) used[c] = 1, unit_cells.push_back(c);
+                    ++L;
+                }
+                if (L == 0 || (int)piece.size() != L) continue;
+                std::vector<std::pair<int, int>> el;
+                for (auto& pc : piece) {
+                    bool has = false;
+                    for (int c : pc.second) has = has || vals[c] == d;
+                    if (has) continue;
+                    for (int c : p.groups[pc.first].cells)
+                        if (!inX[c] && !vals[c] && (cand[c] & b)) el.push_back({c, d});
+                }
+                if (el.empty()) continue;
+                Move& m = new_move(out, LOL_COMBO, k.shape, (int)X.size());
+                for (auto& e : el) add_elim(out, m, e.first, e.second);
+                m.nk = NM_NARY;
+                m.na = k.index;
+                std::vector<int> pc(X.begin(), X.end());
+                pc.insert(pc.end(), unit_cells.begin(), unit_cells.end());
+                set_pattern(out, m, pc);
+                m.code = 3309;
+                set_meta(m, (int)X.size(), 1 + (int)piece.size(), 1, 0, 1, 1, 0, 1, k.shape);
+                pm_long xm[XM_N] = {NT_SAMESET, k.index, L, 0, 1, 0, (pm_long)X.size(), 0, d, 0};
+                std::copy(xm, xm + XM_N, m.xm);
+            }
+        }
     }
 }
 
@@ -386,6 +508,7 @@ void Solver::nary_direct(MoveBuf& out) {
         if (k.type == NT_TABLE) {
             m.tab_live = table_live(k);
             if (k.named && k.index >= 0 && k.index < 1000) m.code = 6000 + k.index;
+            if (one_off_table(k)) m.code = 6990;
         }
     }
 }

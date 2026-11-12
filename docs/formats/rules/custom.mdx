@@ -33,6 +33,7 @@ one ("No fours: for every pair of orthogonal neighbors a, b: the difference betw
 let s = sum(c); s in {10, 15, 20}                  bindings; several: let a = 1, b = a + 1; ...
 count(x for x in c if odd(x)) == 2                 a value per element: f(e for x in L if P)
 all(x != 5 for x in c)                             all / any take conditions
+all(all(a != b for b in c if b != a) for a in c)  one `for` per comprehension: nest them
 sum(upto(ray, x => x == 9)) == 15                  predicates are lambdas: x => ..., (a, b) => ...
 ray[ray[1]] == 5                                   indexes start at 1; a digit may be the index
 (if odd(c[1]) then c[2] else c[3]) == 4            if ... then ... else ...
@@ -136,8 +137,40 @@ A complete 4×4 puzzle with a layer: one cell in every row is shifted (counts on
 
 They are part of the solution: a reader that cannot solve them refuses the puzzle rather than ignoring a rule.
 pencilmark reads, checks and writes them, evaluates rules with them, and its exhaustive search solves and counts such
-puzzles (uniqueness is by digits; the hidden values only have to exist). The search can be slow where the hidden values
-say little until most digits are known. `rate` gives them band Unknown with a `reason`: no human technique reasons with them yet.
+puzzles (uniqueness is by digits; the hidden values only have to exist). With OR-Tools installed, CP-SAT models most
+rules over unknowns too and settles uniqueness quickly. `rate` grades them: one technique reads a rule with every value
+its unknowns can still take, and another adds up rules like `sum(L) == X` that lie inside one house against the house
+total (four equal domino totals and the center make 45).
+
+### Values: what cells count as
+
+In modifier puzzles (doublers, negators, cells off by one) a clue counts each cell's **value**, not its digit: a
+doubled 4 counts 8 in a cage. A custom rule of kind `values` says what cells count as, and every clue then reads
+values:
+
+```json
+{"type": "custom", "kind": "values", "cells": {"x": ["r2c3", "r5c5", "r8c7"]}, "value": "2 * x"}
+{"type": "custom", "kind": "values", "value": "x * dbl(x)"}
+```
+
+- `value` replaces `holds`: a number from the cell (its digit in arithmetic), its layers, its position and the file's
+  unknowns -- `2 * x` on gray circles, `x * dbl(x)` with a doubler layer the solver places, `x * neg(x)` (negators),
+  `x + kd(x)` (one more or one less), `if fc(x) == 1 then row(x) + col(x) else x` (focus cells), `if x == D then 2 * x
+  else x` (one digit, an unknown, doubled everywhere). It reads no other cell.
+- `cells` is one named list: the cells the rule covers, its name the cell in `value`. Without it the rule covers
+  every cell, as `x`. Several values rules may cover different cells (circles double, squares negate); two on one
+  cell are an error. A cell no values rule covers counts its digit.
+- Clues read values: cages (their sum; no repeats stays about digits), arrows (one bulb cell), little killers, dots
+  and XV, difference / sum / product / ratio / greater-than edges, and thermo, slow thermo, whisper, renban,
+  palindrome, zipper, between, double-arrow, region-sum and parity lines, equal sums. A clue says `"on": "digits"`
+  to read digits instead (a parity line on the digits of a negator puzzle). Another clue type in a file with values
+  rules is refused (`NotSupportedError`) unless it says `"on": "digits"`.
+- Houses, givens, the solution and the custom rules other than values rules stay digits, and so do the rules about
+  which digit a cell holds: quadruples, clones, anti-knight / anti-king, regions, shading and fog.
+
+pencilmark reads each clue as the custom rule it stands for (a cage `{"cells": {"C": [...]}, "holds":
+"all_different(C) and sum(x * dbl(x) for x in C) == 16"}`), so a values file solves, rates and grades exactly as the
+same puzzle with its clues written out.
 
 ### Definitions: one rule, many places
 

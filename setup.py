@@ -15,7 +15,7 @@ from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 
 SOURCES = ["model", "nary", "solver", "direct_view", "notes_view", "nary_moves", "brute_force", "chaos_logic", "shading_logic", "chains", "uniqueness", "als", "set_logic", "loads", "canon", "mental", "explain",
-           "forcing", "colour", "variant_logic", "sudokuwiki", "desc", "refute", "listing_cache", "expr", "bindings"]          # order as in the reference build
+           "forcing", "colour", "variant_logic", "sudokuwiki", "desc", "refute", "listing_cache", "expr", "absint", "bindings"]          # order as in the reference build
 GCC_FLAGS = ["-O3", "-std=c++17", "-ffp-contract=off", "-fno-fast-math", "-Wall", "-Wno-unused-function", "-pthread"]
 MSVC_FLAGS = ["/O2", "/std:c++17", "/fp:precise", "/EHsc", "/bigobj"]   # also accepted by clang-cl
 
@@ -54,6 +54,27 @@ class BuildExt(build_ext):
         elif c.compiler_type == "msvc":
             for ext in self.extensions:
                 ext.extra_compile_args = MSVC_FLAGS + extra
+        if c.compiler_type == "unix":
+            # compile the sources in parallel (one extension, ~40 files: a header change took a minute serially)
+            import types
+            from concurrent.futures import ThreadPoolExecutor
+
+            def parallel_compile(cc, sources, output_dir=None, macros=None, include_dirs=None, debug=0,
+                                 extra_preargs=None, extra_postargs=None, depends=None):
+                macros, objects, extra_postargs, pp_opts, build = cc._setup_compile(
+                    output_dir, macros, include_dirs, sources, depends, extra_postargs)
+                cc_args = cc._get_cc_args(pp_opts, debug, extra_preargs)
+
+                def one(obj):
+                    if obj in build:
+                        src, ext_ = build[obj]
+                        cc._compile(obj, src, ext_, cc_args, extra_postargs, pp_opts)
+
+                with ThreadPoolExecutor(max_workers=os.cpu_count() or 4) as pool:
+                    list(pool.map(one, objects))
+                return objects
+
+            c.compile = types.MethodType(parallel_compile, c)
         super().build_extensions()
 
 

@@ -25,7 +25,7 @@ from .common import (
 )
 
 # -------------------------------------------------------------------------------------------------------- validation
-COMMON = {"type", "id", "label", "style"}
+COMMON = {"type", "id", "label", "style", "on"}  # on: "digits" / "values" (a clue in a file with values rules)
 RULE_KEYS = {
     "grid": (set(), {"origin"}),
     "chaos": (set(), {"origin", "no_2x2"}),
@@ -301,6 +301,8 @@ def _validate_rule(r, B):
     t = r["type"]
     if not isinstance(t, str):
         raise FormatError(f"a rule type must be a string, not {t!r}")
+    if "on" in r and r["on"] not in ("digits", "values"):
+        raise FormatError(f'"on" takes "digits" or "values", not {r["on"]!r}')
     if t == "custom":
         return _validate_custom(r, B)
     if t == "table" and not _RESERVED_OK[0]:
@@ -679,13 +681,51 @@ def _hidden_vars(doc, B):
     return unk, lay
 
 
+def _validate_values(r, B):
+    """a values rule (custom, kind "values"; docs/research/values_rule.md): what cells count as. cells: one named list
+    (the name is the cell in value), or none (every cell, as x); value: a number from the cell, its layers, its
+    position and the file's unknowns ("if x == D then 2 * x else x": the doubled digit unknown) -- no other cell"""
+    from ..rules import custom as CU
+
+    for k in r:
+        if k not in {"type", "kind", "cells", "value", "id", "label", "style"}:
+            raise FormatError(f"values rule: unknown key {k!r}")
+    if not isinstance(r.get("value"), str):
+        raise FormatError('values rule: "value" must be an expression (text), e.g. "x * dbl(x)"')
+    cells = r.get("cells")
+    if cells is not None and (not isinstance(cells, dict) or len(cells) != 1):
+        raise FormatError('values rule: "cells" is one named list, {"x": ["r1c1", ...]} (or absent: every cell)')
+    name, cs = next(iter(cells.items())) if cells else ("x", None)
+    if not re.fullmatch(r"[A-Za-z_]\w*", name) or name in CU.KEYWORDS:
+        raise FormatError(f"values rule: {name!r} is not a usable name")
+    if cs is not None:
+        if not isinstance(cs, list) or not cs or not all(isinstance(c, str) for c in cs):
+            raise FormatError(f"values rule: cells {name!r} must be a non-empty list of cell names")
+        for c in cs:
+            B.idx(c)
+    layers = getattr(B, "layers", {})
+    if name in layers or name in getattr(B, "unknowns", {}):
+        raise FormatError(f"values rule: {name!r} is a layer or unknown name; name the cell otherwise")
+    try:
+        tree = CU.parse(r["value"])
+        top = CU.check(tree, {name}, getattr(B, "unknowns", {}), layers)
+    except CU.LangError as e:
+        raise FormatError(f"values rule: {e}") from None
+    if top in ("bool", "fn"):
+        raise FormatError("values rule: value must be a number, e.g. 2 * x")
+
+
 def _validate_custom(r, B):
     """a custom rule (docs/formats/rules/custom.mdx, since pencilmark 1.2): known keys, existing cells, a well-formed
     scope, and an expression that parses and type-checks (a predicate when scoped, a condition otherwise)"""
     from ..rules import custom as CU
 
+    if r.get("kind") == "values":
+        return _validate_values(r, B)
+    if "kind" in r:
+        raise FormatError(f'custom rule: kind {r["kind"]!r} (custom rules take kind "values" or none)')
     for k in r:
-        if k not in {"type", "holds", "cells", "scope", "each", "draw"} | COMMON:
+        if k not in {"type", "holds", "cells", "scope", "each", "draw"} | COMMON - {"on"}:
             raise FormatError(f"unknown key {k!r}")
     if "draw" in r and r["draw"] not in CUSTOM_DRAW:
         raise FormatError(f"custom rule: draw must be one of {list(CUSTOM_DRAW)}")

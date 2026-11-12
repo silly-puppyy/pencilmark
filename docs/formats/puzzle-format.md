@@ -220,6 +220,7 @@ semantics and drawing). Every rule MAY carry:
 | `id` | String. Ignorable. |
 | `label` | Short plain text. Ignorable. Optional everywhere; for vendor rules it is what a renderer shows. |
 | `style` | Cosmetic drawing hints for this rule (section 7). Ignorable. |
+| `on` | `"values"` (the default) or `"digits"`: in a file with a [values rule (6.18)](rules/custom.mdx#values-what-cells-count-as), whether a clue reads its cells' values or their digits. Not ignorable. |
 
 **Areas.** A rule that applies to part of the board says where with `area`: the `origin` of a `grid` / `box_grid` rule
 in the file (that grid's D × D cells), or a list of cells. The same key means the same thing everywhere it appears

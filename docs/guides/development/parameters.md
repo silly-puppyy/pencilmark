@@ -123,6 +123,13 @@ changing a shipped value is a deliberate commit with a golden rewrite.
 | `route.price.ShadeConnect` | 3 | ″ |
 | `route.price.ShadeRule` | 3 | ″ |
 | `route.price.ShadeTrial` | 4 | ″ |
+| `route.price.AuxRule` | 3 | ″ |
+| `route.price.AuxHouse` | 4 | ″ |
+| `route.price.ModifierCage` | 4 | ″ |
+| `route.price.EqualSumValues` | 4 | ″ |
+| `route.price.HouseCages` | 3 | ″ |
+| `route.price.LayerCount` | 2 | ″ |
+| `route.price.LayerTrial` | 3.5 | ″ |
 | `route.price.ClassSingle` | 5 | ″ |
 | `route.price.ClassPropagation` | 0.6942 | ″ |
 | `route.price.ClassPair` | 5 | ″ |
@@ -132,6 +139,7 @@ changing a shipped value is a deliberate commit with a golden rewrite.
 | `route.price.ColourPointing` | 5 | ″ |
 | `route.price.ColourFish` | 8.707 | ″ |
 | `route.price.CompleteColours` | 5 | ″ |
+| `route.price.RuleCase` | 6.988 | ″ |
 | `route.K` | list of 9 | Engine parameters (data/params.json): the step-price model and the scan / note costs, fitted on human solve times; they also price the time effort and the band route's tie-breaks. |
 | `route.gamma` | -0.6291 | ″ |
 | `route.alpha` | 1 | ″ |
@@ -149,10 +157,12 @@ changing a shipped value is a deliberate commit with a golden rewrite.
 | `route.meta_theta_full` | list of 18 | Structural step-price weights (18 features), fitted on human solve times. |
 | `route.meta_theta_interact` | 0.02882, 0.2858, 0.1108 | Depth interaction weights of the step price (D6). |
 | `route.dc_lines` | 1 | Engine parameters (data/params.json): the step-price model and the scan / note costs, fitted on human solve times; they also price the time effort and the band route's tie-breaks. |
+| `route.cf_nary` | 0 | ″ |
+| `route.custom_table_w` | 0 | ″ |
 | `route.locality` | 0 | ″ |
 | `route.digit_cont` | 0 | ″ |
 | `route.spot_w` | list of 6 | ″ |
-| `route.spot_fam` | list of 125 | ″ |
+| `route.spot_fam` | list of 133 | ″ |
 | `route.spot_seed` | 1 | ″ |
 | `route.notes_live` | True | ″ |
 | `route.notes_lazy` | True | ″ |

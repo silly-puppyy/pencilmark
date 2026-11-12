@@ -416,7 +416,14 @@ def _explain(p, m, nm, pats, exs, info=None):
                 "orientation": orient,  # side 0 holds the first class (low / odd) when 0, the second when 1; -1 open
                 "anchor": anchor if anchor >= 0 else None,
                 "houses": [_group(p, g, info) for g in houses],
-                "links": [{"cells": [a, b], "opposite": bool(w), "relation": _relkinds(p, a, b)} for a, b, w in links],
+                # w 0 / 1: a rule link (same / opposite classes); 2 + opposite + 2 * house: two colorings joined by
+                # counting that house
+                "links": [
+                    {"cells": [a, b], "opposite": bool(w % 2), "relation": _relkinds(p, a, b)}
+                    if w < 2
+                    else {"cells": [a, b], "opposite": bool(w % 2), "count_house": _group(p, (w - 2) // 2, info)}
+                    for a, b, w in links
+                ],
                 "sides": {rest[k]: rest[k + 1] for k in range(0, len(rest) - 1, 2)},
             }
         elif tag == 13 and n >= 2:

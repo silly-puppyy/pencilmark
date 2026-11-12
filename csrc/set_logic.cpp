@@ -10,6 +10,8 @@
 #include <functional>
 #include <map>
 #include <set>
+#include <array>
+#include <tuple>
 #include <unordered_set>
 
 #include "solver.hpp"
@@ -410,30 +412,35 @@ static bool class_differs(const Solver& s, int c, int a, const std::map<int, std
 
 void Solver::class_single(MoveBuf& out) {
     if (!id_on() || disabled[CLASS_SINGLE]) return;
-    const int W = p.W;
-    const auto all = id_classes(idc, p.N);
-    for (const auto& kv : all) {
-        const int a = kv.first;
-        const std::vector<int>& ms = kv.second;
+    const int W = p.W, N = p.N;
+    const auto all = id_classes(idc, N);
+    // need_rule: a one-cell "class" (a digit tracked from a single cell, CtC: "the center digit can't go on its own
+    // line, so in the top row it goes there") -- only when a rule, not just the houses, rules out one of the places
+    auto track = [&](int a, const std::vector<int>& ms, bool need_rule) {
         int pv = 0;
         const uint32_t I = id_digits(ms, &pv);
-        if (pv || !I) continue;  // a placed member: ClassPropagation's job
-        std::vector<uint64_t> sees(W, 0);
+        if (pv || !I) return;  // a placed member: ClassPropagation's job
+        std::vector<uint64_t> sees(W, 0), house_sees(W, 0);
         for (int c : ms)
-            for (int w = 0; w < W; ++w) sees[w] |= p.peers(c)[w];
+            for (int w = 0; w < W; ++w) sees[w] |= p.diffb(c)[w], house_sees[w] |= p.peers(c)[w];
         for (int hi : p.houses) {
             bool inside = false;
             for (int c : ms) inside |= tbit(p.gbits(hi), c);
             if (inside) continue;
             int X = -1, n = 0;
+            bool by_rule = false;
             for (int c : p.groups[hi].cells) {
-                if (tbit(sees.data(), c)) continue;
                 if (!((vals[c] ? bit(vals[c]) : cand[c]) & I)) continue;
+                if (tbit(sees.data(), c)) {
+                    by_rule |= !tbit(house_sees.data(), c);
+                    continue;
+                }
                 if (!vals[c] && class_differs(*this, c, a, all, sees)) continue;  // known to hold a different digit
                 ++n;
                 X = c;
             }
             if (n != 1 || vals[X] || id_anchor(X) == a || id_paired(id_anchor(X), a)) continue;
+            if (need_rule && (!by_rule || id_live() + 1 > ID_CAP)) continue;
             Move& m = new_move(out, CLASS_SINGLE, 1.0, (int)ms.size());
             const int x = id_anchor(X);
             add_aeff(out, m, AE_ID_JOIN, std::max(x, a), std::min(x, a));
@@ -443,11 +450,16 @@ void Solver::class_single(MoveBuf& out) {
             set_pattern(out, m, pc);
             add_expl(out, m, EX_BASE, {hi});
             m.shape = pspread(pc);
-            meta9(m, (int)ms.size() + 1 + (int)p.groups[hi].cells.size() / 3, 2, popc(I), 1, 1, 0, 0, 1, m.shape);
+            // a color is one symbol however many cells carry it or digits it may still be (CtC: "where does grey go in
+            // box 5?" -- the same look whatever grey is): priced on the house scan, one cell and one digit
+            meta9(m, 2 + (int)p.groups[hi].cells.size() / 3, 2, 1, 1, 1, 0, 0, 1, m.shape);
             pm_long xm[XM_N] = {X, a, hi, (pm_long)ms.size(), popc(I), 0, 0, 0, 0, 0};
             std::copy(xm, xm + XM_N, m.xm);
         }
-    }
+    };
+    for (const auto& kv : all) track(kv.first, kv.second, false);
+    for (int c = 0; c < N; ++c)
+        if (!vals[c] && !idc[c]) track(c, {c}, true);
 }
 
 // Colour pointing (CtC, Restricted Access: "orange is in one of these two positions [in box 1] ... where is orange in
@@ -461,15 +473,16 @@ void Solver::class_pointing(MoveBuf& out) {
     const int W = p.W;
     std::set<std::pair<int, std::vector<int>>> seen;  // a class and its cells ruled out: one move (two houses may agree)
     const auto all = id_classes(idc, p.N);
-    for (const auto& kv : all) {
-        const int a = kv.first;
-        const std::vector<int>& ms = kv.second;
+    // need_rule: a one-cell "class" (a digit tracked from one cell, CtC ksfzctPhQog: "red, whatever red is, can only
+    // be in this domino in box 3 ... so it's ruled out of those squares") -- only when a rule, not just the houses,
+    // rules out one of its places in the house
+    auto point = [&](int a, const std::vector<int>& ms, bool need_rule) {
         int pv = 0;
         const uint32_t I = id_digits(ms, &pv);
-        if (pv || !I) continue;
-        std::vector<uint64_t> sees(W, 0);
+        if (pv || !I) return;
+        std::vector<uint64_t> sees(W, 0), house_sees(W, 0);
         for (int c : ms)
-            for (int w = 0; w < W; ++w) sees[w] |= p.peers(c)[w];
+            for (int w = 0; w < W; ++w) sees[w] |= p.diffb(c)[w], house_sees[w] |= p.peers(c)[w];
         auto place = [&](int c) {  // c could be this class's cell
             if (tbit(sees.data(), c)) return false;
             if (!((vals[c] ? bit(vals[c]) : cand[c]) & I)) return false;
@@ -486,6 +499,13 @@ void Solver::class_pointing(MoveBuf& out) {
             for (int c : p.groups[hi].cells)
                 if (place(c)) P.push_back(c);
             if (P.size() < 2) continue;  // one place: a class single
+            if (need_rule) {
+                bool by_rule = false;
+                for (int c : p.groups[hi].cells)
+                    by_rule = by_rule || (tbit(sees.data(), c) && !tbit(house_sees.data(), c) &&
+                                          ((vals[c] ? bit(vals[c]) : cand[c]) & I));
+                if (!by_rule || id_live() + 1 > ID_CAP) continue;
+            }
             for (int li : p.houses) {
                 if (li == hi || has_member(li)) continue;
                 bool all = true;
@@ -517,12 +537,15 @@ void Solver::class_pointing(MoveBuf& out) {
                 set_pattern(out, m, pc);
                 add_expl(out, m, EX_BASE, {hi, li});
                 m.shape = pspread(pc);
-                meta9(m, (int)pc.size(), 2, popc(I), 1, 1, 0, 0, 1, m.shape);
+                meta9(m, 1 + (int)P.size() + (int)keep.size(), 2, 1, 1, 1, 0, 0, 1, m.shape);  // one symbol, as ClassSingle
                 pm_long xm[XM_N] = {a, hi, li, (pm_long)P.size(), (pm_long)keep.size(), (pm_long)ms.size(), 0, 0, 0, 0};
                 std::copy(xm, xm + XM_N, m.xm);
             }
         }
-    }
+    };
+    // (one-cell classes here too -- point(c, {c}, true) -- were tried on the 572 CtC replays, 2026-11-12: no gain,
+    // Spearman 0.567 -> 0.565, two more time-outs; left out)
+    for (const auto& kv : all) point(kv.first, kv.second, false);
 }
 
 // Colour fish (CtC, Restricted Access: orange sits in rows 8-9 in both box 7 and box 8, so in box 9 it is in row
@@ -542,7 +565,7 @@ void Solver::class_fish(MoveBuf& out) {
         if (pv || !I) continue;
         std::vector<uint64_t> sees(W, 0);
         for (int c : ms)
-            for (int w = 0; w < W; ++w) sees[w] |= p.peers(c)[w];
+            for (int w = 0; w < W; ++w) sees[w] |= p.diffb(c)[w];
         auto place = [&](int c) {
             if (tbit(sees.data(), c)) return false;
             if (!((vals[c] ? bit(vals[c]) : cand[c]) & I)) return false;
@@ -826,7 +849,7 @@ void Solver::class_pair(MoveBuf& out) {
         if (vals[X] || popc(cand[X]) != 2) continue;
         const int kx = id_anchor(X);
         if (idc[X] && id_paired(kx, -1)) continue;  // already two-coloured: extended below
-        const uint64_t* px = p.peers(X);
+        const uint64_t* px = p.diffb(X);
         for (int Y = X + 1; Y < N; ++Y) {
             if (vals[Y] || cand[Y] != cand[X] || !tbit(px, Y)) continue;
             const int ky = id_anchor(Y);
@@ -855,7 +878,7 @@ void Solver::class_pair(MoveBuf& out) {
             const auto& K2 = dir ? *i1 : *i2;  // ... so Z joins K2
             std::vector<uint64_t> sees(W, 0);
             for (int c : K1.second)
-                for (int w = 0; w < W; ++w) sees[w] |= p.peers(c)[w];
+                for (int w = 0; w < W; ++w) sees[w] |= p.diffb(c)[w];
             for (int Z = 0; Z < N; ++Z) {
                 if (vals[Z] || !cand[Z] || (cand[Z] & ~U) || !tbit(sees.data(), Z)) continue;
                 const int kz = id_anchor(Z);
@@ -892,9 +915,9 @@ void Solver::class_trap(MoveBuf& out) {
         if (pv1 || pv2 || !I1 || !I2 || popc(U) != 2) continue;
         std::vector<uint64_t> s1(W, 0), s2(W, 0);
         for (int c : i1->second)
-            for (int w = 0; w < W; ++w) s1[w] |= p.peers(c)[w];
+            for (int w = 0; w < W; ++w) s1[w] |= p.diffb(c)[w];
         for (int c : i2->second)
-            for (int w = 0; w < W; ++w) s2[w] |= p.peers(c)[w];
+            for (int w = 0; w < W; ++w) s2[w] |= p.diffb(c)[w];
         std::vector<int> tg;
         for (int C = 0; C < N; ++C) {
             if (vals[C] || !(cand[C] & U) || !tbit(s1.data(), C) || !tbit(s2.data(), C)) continue;
@@ -1252,6 +1275,192 @@ void Solver::rule_intersect(MoveBuf& out) {
             budget -= std::max(nodes, -nodes);
             if (!el.empty()) emit(ids, F, el, nodes);
         }
+    }
+}
+
+// Rows against columns with the rules' sums cancelled (CtC dKZqSLK31HU: "four columns are four sets of 1-9, three
+// rows three sets, so green is 45 more than orange ... these two arrow cells are in green, their circle in orange:
+// take both out, the difference stays 45 ... eight cells 45 more than seven: at most 60, at least 15"). Per puzzle:
+// for row sets R and column sets C (at most 4 each), sum(C) - sum(R) = T (|C| - |R|); a cell in both cancels; an
+// arrow whose line lies on one side and circle on the other cancels (line = circle); a sum cage on one side becomes
+// its total. Identities left with at most 18 cells (and a rule cancelled) are kept. Per step: each side bounded by
+// distinct digits per row / column / box (the tightest); a cell's digit outside what the identity allows goes.
+namespace {
+struct CrossIdent { std::vector<int> A, B; long K; int nrules; std::vector<int> R, C; };
+}
+
+void Solver::cross_sums(MoveBuf& out) {
+    if (disabled[SUM_ALGEBRA] || in_branch) return;
+    const int N = p.N, D = p.D;
+    for (const NConstraint& k : p.nary)
+        if (k.type == NT_DIGITSET) return;  // house totals unknown
+    thread_local std::map<uint64_t, std::vector<CrossIdent>> memo;
+    auto it = memo.find(p.uid);
+    if (it == memo.end()) {
+        if (memo.size() > 64) memo.clear();
+        std::vector<CrossIdent> ids;
+        std::vector<int> rows, cols;
+        for (int gi = 0; gi < (int)p.groups.size(); ++gi) {
+            const Group& g = p.groups[gi];
+            if (!g.complete || (int)g.cells.size() != D) continue;
+            if (g.kind == "row") rows.push_back(gi);
+            else if (g.kind == "col") cols.push_back(gi);
+        }
+        struct Arrow { int o; std::vector<int> line; };
+        std::vector<Arrow> arrows;
+        for (const NConstraint& k : p.nary)
+            if ((k.type == NT_SUM || k.type == NT_ARROW) && k.ncircle == 1 && k.offset == 0 && k.pvar.size() >= 2) {
+                Arrow a{k.vars[k.pvar[0]], {}};
+                for (size_t i = 1; i < k.pvar.size(); ++i) a.line.push_back(k.vars[k.pvar[i]]);
+                arrows.push_back(a);
+            }
+        std::vector<int> cages;
+        for (int gi = 0; gi < (int)p.groups.size(); ++gi)
+            if (p.groups[gi].kind == "cage" && p.groups[gi].has_total) cages.push_back(gi);
+        const long T = (long)D * (D + 1) / 2;
+        if ((int)rows.size() == D && (int)cols.size() == D && D <= 9 && (!arrows.empty() || !cages.empty())) {
+            std::vector<std::vector<int>> subsets;  // index sets of size 0..4
+            for (int m = 0; m < (1 << D); ++m)
+                if (__builtin_popcount(m) <= 4) {
+                    std::vector<int> v;
+                    for (int i = 0; i < D; ++i)
+                        if (m >> i & 1) v.push_back(i);
+                    subsets.push_back(v);
+                }
+            std::set<std::tuple<std::vector<int>, std::vector<int>, long>> seen;
+            std::vector<int> w(N);
+            for (const auto& Rs : subsets)
+                for (const auto& Cs : subsets) {
+                    if (Cs.empty() || Rs.empty()) continue;
+                    std::fill(w.begin(), w.end(), 0);
+                    for (int i : Cs)
+                        for (int c : p.groups[cols[i]].cells) w[c] += 1;
+                    for (int i : Rs)
+                        for (int c : p.groups[rows[i]].cells) w[c] -= 1;
+                    long K = T * ((long)Cs.size() - (long)Rs.size());
+                    int nrules = 0;
+                    for (const Arrow& a : arrows) {
+                        const int s = -w[a.o];
+                        if (s == 0) continue;
+                        bool ok = true;
+                        for (int c : a.line) ok = ok && w[c] == s;
+                        if (!ok) continue;
+                        w[a.o] = 0;
+                        for (int c : a.line) w[c] = 0;
+                        ++nrules;
+                    }
+                    for (int gi : cages) {
+                        const Group& g = p.groups[gi];
+                        const int s = w[g.cells[0]];
+                        if (s == 0) continue;
+                        bool ok = true;
+                        for (int c : g.cells) ok = ok && w[c] == s;
+                        if (!ok) continue;
+                        K -= (long)s * g.total;
+                        for (int c : g.cells) w[c] = 0;
+                        ++nrules;
+                    }
+                    if (!nrules) continue;
+                    CrossIdent id;
+                    for (int c = 0; c < N; ++c)
+                        if (w[c] == 1) id.A.push_back(c);
+                        else if (w[c] == -1) id.B.push_back(c);
+                    const int n = (int)(id.A.size() + id.B.size());
+                    if (n == 0 || n > 18) continue;
+                    // the side with fewer cells on the right: sum(A) - sum(B) = K as built
+                    id.K = K, id.nrules = nrules, id.R = Rs, id.C = Cs;
+                    if (!seen.insert({id.A, id.B, id.K}).second) continue;
+                    ids.push_back(id);
+                }
+        }
+        it = memo.emplace(p.uid, std::move(ids)).first;
+    }
+    if (it->second.empty()) return;
+    // house index of each cell per partition: rows, columns, boxes (distinct digits inside one)
+    std::vector<std::array<int, 3>> hof(N, {-1, -1, -1});
+    for (int gi = 0; gi < (int)p.groups.size(); ++gi) {
+        const Group& g = p.groups[gi];
+        if (!g.complete) continue;
+        const int k = g.kind == "row" ? 0 : g.kind == "col" ? 1 : p.group_cat[gi] == GC_BOX ? 2 : -1;
+        if (k < 0) continue;
+        for (int c : g.cells) hof[c][k] = gi;
+    }
+    // bounds of the sum of cells, skipping `skip`: the tightest over the three partitions; false when a group
+    // cannot be filled
+    auto bounds = [&](const std::vector<int>& cs, int skip, long& lo, long& hi) {
+        lo = LONG_MIN, hi = LONG_MAX;
+        for (int k = 0; k < 3; ++k) {
+            std::map<int, std::vector<int>> grp;
+            bool ok = true;
+            for (int c : cs)
+                if (c != skip) {
+                    if (hof[c][k] < 0) { ok = false; break; }
+                    grp[hof[c][k]].push_back(c);
+                }
+            if (!ok) continue;
+            long l = 0, h = 0;
+            for (auto& g : grp) {
+                uint32_t U = 0, used = 0;
+                int open = 0;
+                for (int c : g.second)
+                    if (vals[c]) l += vals[c], h += vals[c], used |= bit(vals[c]);
+                    else U |= cand[c], ++open;
+                U &= ~used;
+                if (popc(U) < open) return false;
+                int t = 0;
+                for (int d = 1; d <= D && t < open; ++d)
+                    if (U & bit(d)) l += d, ++t;
+                t = 0;
+                for (int d = D; d >= 1 && t < open; --d)
+                    if (U & bit(d)) h += d, ++t;
+            }
+            lo = std::max(lo, l), hi = std::min(hi, h);
+        }
+        return lo != LONG_MIN;
+    };
+    for (const CrossIdent& id : it->second) {
+        bool open = false;
+        for (int c : id.A) open = open || !vals[c];
+        for (int c : id.B) open = open || !vals[c];
+        if (!open) continue;
+        long aLo, aHi, bLo, bHi;
+        if (!bounds(id.A, -1, aLo, aHi) || !bounds(id.B, -1, bLo, bHi)) continue;
+        std::vector<std::pair<int, int>> el;
+        auto cut = [&](int c, long lo, long hi) {
+            if (vals[c]) return;
+            for (uint32_t m = cand[c]; m; m &= m - 1) {
+                const int d = lowdigit(m);
+                if (d < lo || d > hi) el.push_back({c, d});
+            }
+        };
+        for (int a : id.A) {  // x_a = K + sum(B) - sum(A \ a)
+            long l, h;
+            if (vals[a] || !bounds(id.A, a, l, h)) continue;
+            cut(a, id.K + bLo - h, id.K + bHi - l);
+        }
+        for (int b : id.B) {  // y_b = sum(A) - K - sum(B \ b)
+            long l, h;
+            if (vals[b] || !bounds(id.B, b, l, h)) continue;
+            cut(b, aLo - id.K - h, aHi - id.K - l);
+        }
+        if (el.empty()) continue;
+        Move& m = new_move(out, SUM_ALGEBRA, 1.0, (int)(id.A.size() + id.B.size()));
+        for (auto& e : el) add_elim(out, m, e.first, e.second);
+        std::vector<int> pc(id.A);
+        pc.insert(pc.end(), id.B.begin(), id.B.end());
+        set_pattern(out, m, pc);
+        m.code = 3360;
+        const int nh = (int)(id.R.size() + id.C.size());
+        meta9(m, (int)pc.size(), nh, D, 0, 0, 1, 0, 1, pspread(pc));
+        pm_long rmask = 0, cmask = 0;
+        for (int i : id.R) rmask |= pm_long(1) << i;
+        for (int i : id.C) cmask |= pm_long(1) << i;
+        // (houses, pieces = rules cancelled, eliminations, rounds) as SumAlgebra's; then the rows / columns (bit
+        // masks), K, the two sides' sizes and the marker of this kind
+        pm_long xm[XM_N] = {nh, id.nrules, (pm_long)el.size(), 1, rmask, cmask, (pm_long)id.K, (pm_long)id.A.size(),
+                            (pm_long)id.B.size(), 1};
+        std::copy(xm, xm + XM_N, m.xm);
+        return;  // one identity per call: the cheapest-first route takes it, the next call finds the next
     }
 }
 

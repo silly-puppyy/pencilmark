@@ -1407,3 +1407,51 @@ def test_sudokupad_thermometer_branches():
     assert [0, 1, 2, 3] in therm  # r1c1 .. r1c4
     assert [1, 5, 9] in therm  # r1c2 -> r2c2 -> r3c2: away from the trunk
     assert [15, 11] in therm  # r4c4 (bulb) -> r3c4
+
+
+def test_text_only_global_rules():
+    """Global rules stated only in the rules text (CtC named-rule replays, 2026-11-12): disjoint groups spelled out,
+    anti-sums with no marker drawn, and quadruple circles described as "appear in the surrounding cells"."""
+    from pencilmark.sources import _sp_translate as SP
+
+    for t in (
+        "Cells in the same position in two 3x3 boxes may not contain the same digit.",
+        "The same digit cannot appear twice in the same position within two 3x3 boxes.",
+        "Each digit must occupy each possible position in a 3x3 box.",
+        "Disjoint groups apply.",
+    ):
+        assert SP.rule_flags(t)["disjoint"], t
+    assert not SP.rule_flags("Normal sudoku rules apply. Digits in a cage may not repeat.")["disjoint"]
+    assert SP.anti_sums("no two cells which share an edge may contain digits adding to 5 or 10.") == [5, 10]
+    assert SP.anti_sums("no two orthogonally connected cells can sum to 5.") == [5]
+    assert SP.anti_sums("no two unmarked adjacent cells sum to 10.") == []  # the markers' negative constraint
+    for t in ("Digits in circles must appear in the surrounding cells.",
+              "Digits shown in a circle appear in at least one of the surrounding cells.",
+              "A digit inside a white circle must appear in at least one of the four cells surrounding that circle."):  # fmt: skip
+        assert SP.QUAD_TEXT.search(t.lower()), t
+
+
+def test_prime_cells_from_text():
+    """'Grey cells contain a prime (1 is by definition not prime!)' (0cLFwxKRDbQ): the shaded cells take 2, 3, 5, 7 --
+    the parenthesis' 'not prime' is no negation of the rule"""
+    from pencilmark.sources import _sp_translate as SP
+    from pencilmark.sources import sudokupad
+
+    grey = [
+        {"center": [r + 0.5, c + 0.5], "width": 1, "height": 1, "backgroundColor": "#CFCFCF"}
+        for r, c in ((0, 0), (1, 2))
+    ]
+    p, _ = SP.translate(
+        sudokupad.decode(_sp4(underlays=grey)), "Grey cells contain a prime (1 is by definition not prime!)."
+    )
+    assert p.domains[0] == p.domains[6] == 0b110  # the primes of a 4x4: {2, 3}
+
+
+def test_line_cells_from_circle_edges():
+    """Lines drawn from a circle's edge have fractional lengths: every cell they cross is on the line (2.3 - 0.8 =
+    1.4999.. once rounded down and skipped the middle cell; GuJdAmwSonI, toRVKc3uty4)"""
+    from pencilmark.sources import _sp_translate as SP
+
+    assert SP.line_cells([[0.8, 0.8], [2.3, 2.3]]) == [(0, 0), (1, 1), (2, 2)]
+    assert SP.line_cells([[1.5, 1.8], [1.5, 4.2]]) == [(1, 1), (1, 2), (1, 3), (1, 4)]
+    assert SP.line_cells([[0.5, 0.5], [2.5, 2.5]]) == [(0, 0), (1, 1), (2, 2)]  # center to center: as before

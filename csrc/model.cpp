@@ -217,6 +217,7 @@ void Puzzle::finalize() {
     if (!sum_cages.empty()) build_innies();
     build_nary();
     build_set_theory();
+    build_diff();
     rect_cache = std::make_shared<RectCache>();
     implied.reset();
     if (!is_derived) build_implied();
@@ -234,9 +235,76 @@ void Puzzle::finalize() {
         q->same_region = same_region;
         q->shading = shading;  // ... and so does the shading
         q->shade_given = shade_given;
+        q->aux_values = aux_values, q->aux_given = aux_given;  // ... and the unknowns / layers
+        q->aux_u = aux_u, q->aux_layers = aux_layers;
         q->exact_shapes = true;
         q->finalize();
         canonical = q;
+    }
+}
+
+// cells that must hold different digits, beyond houses: a rule pair excluding equal digits for every digit (a
+// thermometer step, a whisper, a dot), cells joined by a strict order chain (both ends of a thermometer), and the
+// members of an all-different n-ary rule (a renban, a cage)
+void Puzzle::build_diff() {
+    diff_bits = peer_bits;
+    auto link = [&](int a, int b) {
+        if (a == b) return;
+        sbit(&diff_bits[(size_t)a * W], b);
+        sbit(&diff_bits[(size_t)b * W], a);
+    };
+    std::vector<std::vector<int>> up(N);  // strictly greater partners
+    for (int c = 0; c < N; ++c)
+        for (size_t j = 0; j < rel[c].size(); ++j) {
+            const int b = rel[c][j];
+            bool noeq = true;
+            for (int v = 1; v <= D && noeq; ++v) noeq = (rel_out[c][j * (D + 1) + v] >> (v - 1)) & 1u;
+            if (noeq) link(c, b);
+            if (j < rel_dir[c].size() && rel_dir[c][j] > 0) up[c].push_back(b);
+        }
+    for (int c = 0; c < N; ++c) {  // every cell reached by a strictly increasing chain from c
+        if (up[c].empty()) continue;
+        std::vector<char> seen(N, 0);
+        std::vector<int> st(up[c]);
+        while (!st.empty()) {
+            const int x = st.back();
+            st.pop_back();
+            if (seen[x]) continue;
+            seen[x] = 1;
+            link(c, x);
+            for (int y : up[x]) st.push_back(y);
+        }
+    }
+    for (const NConstraint& k : nary) {
+        if (k.distinct)
+            for (int a : k.vars)
+                for (int b : k.vars) link(a, b);
+        // a sum of two or more digits exceeds each of them: an arrow's circle is on none of its arrow's cells, a
+        // zipper's center on none of the other cells of its line ("the center digit can't go on its own line")
+        if ((k.type == NT_SUM || k.type == NT_ARROW) && k.ncircle == 1 && k.offset == 0 && (int)k.pvar.size() - 1 >= 2) {
+            const int o = k.vars[k.pvar[0]];
+            for (size_t i = 1; i < k.pvar.size(); ++i) link(o, k.vars[k.pvar[i]]);
+        }
+        // equal sums (a zipper's pairs and center, region-sum segments): a one-cell segment equals a sum of two or
+        // more digits, so it is on none of those cells
+        if (k.type == NT_EQSUM && k.offset == 0 && k.seg_start.size() >= 2) {
+            const int ns = (int)k.seg_start.size();
+            auto seg = [&](int s) {
+                const int a = k.seg_start[s], b = s + 1 < ns ? k.seg_start[s + 1] : (int)k.pvar.size();
+                std::vector<int> cs;
+                for (int i = a; i < b; ++i) cs.push_back(k.vars[k.pvar[i]]);
+                return cs;
+            };
+            for (int s = 0; s < ns; ++s) {
+                const std::vector<int> one = seg(s);
+                if (one.size() != 1) continue;
+                for (int t = 0; t < ns; ++t) {
+                    const std::vector<int> many = seg(t);
+                    if (t != s && many.size() >= 2)
+                        for (int b : many) link(one[0], b);
+                }
+            }
+        }
     }
 }
 
@@ -631,6 +699,64 @@ void Puzzle::build_implied() {
             if (seen_lol.insert({A, B}).second) lol.push_back(sp);
         }
     }
+    // white-dot chains inside one house (CtC W1yhxduxbJo: five cells joined by white dots in row 3): distinct digits
+    // a step apart along a path climb or fall all the way, so the chain holds a run of consecutive digits -- a renban
+    // ("the five-cell run always has its 5")
+    if (D >= 4) {
+        auto consec = [&](int c, size_t j) {  // the relation allows exactly v - 1, v + 1
+            for (int v = 1; v <= D; ++v) {
+                uint32_t ok = full & ~rel_out[c][j * (D + 1) + v];
+                uint32_t want = (v > 1 ? bit(v - 1) : 0) | (v < D ? bit(v + 1) : 0);
+                if (ok != want) return false;
+            }
+            return true;
+        };
+        std::set<std::vector<int>> seen_runs;
+        for (int hi : houses) {
+            const Group& g = groups[hi];
+            std::vector<char> in(N, 0);
+            for (int c : g.cells) in[c] = 1;
+            std::map<int, std::vector<int>> adj;
+            for (int c : g.cells)
+                for (size_t j = 0; j < rel[c].size(); ++j)
+                    if (in[rel[c][j]] && consec(c, j)) adj[c].push_back(rel[c][j]);
+            std::set<int> done;
+            for (auto& kv : adj) {
+                if (done.count(kv.first)) continue;
+                std::vector<int> comp, st{kv.first};
+                bool path = true;
+                while (!st.empty()) {
+                    int x = st.back();
+                    st.pop_back();
+                    if (done.count(x)) continue;
+                    done.insert(x);
+                    comp.push_back(x);
+                    std::vector<int> nb = adj[x];
+                    std::sort(nb.begin(), nb.end());
+                    nb.erase(std::unique(nb.begin(), nb.end()), nb.end());
+                    if (nb.size() > 2) path = false;
+                    for (int y : nb) st.push_back(y);
+                }
+                size_t edges = 0;
+                for (int x : comp) {
+                    std::vector<int> nb = adj[x];
+                    std::sort(nb.begin(), nb.end());
+                    edges += std::unique(nb.begin(), nb.end()) - nb.begin();
+                }
+                // a simple path of 5+ cells: from five on a run has a digit it must hold (the 5 of a 1-9 grid); shorter
+                // runs cost the search more than they teach (A/B on the CtC replays: +9% time, no gain)
+                if (!path || edges / 2 != comp.size() - 1 || (int)comp.size() < (D + 1) / 2) continue;
+                std::sort(comp.begin(), comp.end());
+                if (!seen_runs.insert(comp).second) continue;
+                NSpec sp;
+                sp.type = NT_SET;
+                sp.setkind = 0;
+                sp.a = comp;
+                sp.distinct = 1;
+                lol.push_back(sp);
+            }
+        }
+    }
     if (newh.empty() && lol.empty()) return;
     auto q = std::make_shared<Puzzle>();
     q->D = D;
@@ -644,6 +770,8 @@ void Puzzle::build_implied() {
     q->same_region = same_region;
     q->shading = shading;
     q->shade_given = shade_given;
+    q->aux_values = aux_values, q->aux_given = aux_given;  // unknowns / layers
+    q->aux_u = aux_u, q->aux_layers = aux_layers;
     q->is_derived = true;
     q->exact_shapes = exact_shapes;
     q->base_G = G;
@@ -903,7 +1031,12 @@ void Puzzle::build_nary() {
                 for (int p = 0; p < k.arity; ++p) k.rows.push_back((uint8_t)(p < (int)r.size() ? r[p] : 0));
         }
         const bool aux_only = s.type == NT_EXPR && s.expr && !s.expr->aux_read.empty();  // unknowns only: no cells
-        if (k.nv() > 64 || (k.nv() == 0 && !aux_only)) continue;  // unsupported (kept out of the engine)
+        if (k.nv() == 0 && !aux_only) continue;
+        if (k.nv() > 64) {  // too wide for the techniques' buffers: custom rules go to the search alone, others are refused
+            if (k.type == NT_EXPR) nary_big.push_back(std::move(k));
+            else ++nary_dropped;
+            continue;
+        }
         nary.push_back(std::move(k));
     }
     // (CSOLVER_OVERLAP_DIFF=0 disables): overlapping sum clues -- two sums sharing >= 2 cells, each with a

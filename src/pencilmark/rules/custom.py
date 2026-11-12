@@ -256,6 +256,11 @@ class Parser:
         if self.at("if"):
             self.take()
             cond = self.disj()
+        if self.at("for"):
+            raise LangError(
+                f"one 'for' per comprehension at {self.peek()[2]}: nest them instead, "
+                "e.g. all(all(a != b for b in L if b != a) for a in L)"
+            )
         return N("comp", (body, var, src, cond))
 
     def atom(self):
@@ -989,21 +994,23 @@ def _name(r, c):
     return f"r{r}c{c}"
 
 
-def rule_holds(rule, grid, box=(3, 3), layers=None):
+def rule_holds(rule, grid, box=(3, 3), layers=None, unknowns=None):
     """does a custom rule {"type": "custom", "cells": {...}, "holds": "...", "scope"?, "each"?} hold for a filled grid?
     scope: {"pairs": kind} (holds is a predicate (a, b)), {"windows": [h, w]} (a predicate over the window's cells in
     reading order), {"cells": name, "neighbors": kind, "within": "box"?} (a predicate (x, N)); each with "except" (cell
-    lists to skip). "each": name -> the rule holds for every tuple of that list of lists, bound to the name."""
+    lists to skip). "each": name -> the rule holds for every tuple of that list of lists, bound to the name. unknowns:
+    the file's unknowns with their values ({"X": 11})."""
     cells, tree = dict(rule.get("cells") or {}), parse(rule["holds"])
     scope, skip = rule.get("scope"), {tuple(sorted(x)) for x in (rule.get("scope") or {}).get("except", [])}
-    env = Env(cells, grid, box, layers=layers)
+    env = Env(cells, grid, box, layers=layers, unknowns=unknowns)
     if rule.get("each"):
         name = rule["each"]
         return all(
-            rule_holds(dict(rule, each=None, cells=dict(cells, **{name: t})), grid, box, layers) for t in cells[name]
+            rule_holds(dict(rule, each=None, cells=dict(cells, **{name: t})), grid, box, layers, unknowns)
+            for t in cells[name]
         )
     if not scope:
-        return holds(tree, cells, grid, box, layers)
+        return holds(tree, cells, grid, box, layers, unknowns)
     f = evaluate(tree, env)
     if not (isinstance(f, tuple) and f[0] == "fn"):
         raise LangError("a scoped rule's holds is a predicate: (a, b) => ..., (x, N) => ... or (w) => ...")
@@ -1094,6 +1101,91 @@ def _concat_table(tree, cells, names, D):
     return [[int(ch) for ch in t] for t in sorted(rows) if len(t) == len(names) and all(ch in digits for ch in t)]
 
 
+def _distinct_group(tree, cells):
+    """all_different(L) over one list of distinct cells: the cells as an extra house (a region the engine reasons with
+    as it goes, where an expression is only checked once every cell is fixed); None for any other shape"""
+    if tree.op != "call" or tree.args[0] != "all_different" or len(tree.args[1]) != 1 or tree.args[1][0].op != "name":
+        return None
+    names = cells.get(tree.args[1][0].args[0])
+    if not isinstance(names, list) or not all(isinstance(x, str) for x in names) or len(set(names)) != len(names):
+        return None
+    return list(names) if len(names) > 1 else None
+
+
+def _linear(tree, cells):
+    """a sum over cells with integer coefficients: ({cell: coef}, const), or None (sum(L), len(L), single-cell names,
+    numbers, + - * and unary minus, a product with one constant side)"""
+    op, a = tree.op, tree.args
+    one = lambda n: (
+        cells.get(n) if isinstance(cells.get(n), list) and all(isinstance(x, str) for x in cells[n]) else None
+    )
+    if op == "num":
+        return ({}, a[0]) if isinstance(a[0], int) and not isinstance(a[0], bool) else None
+    if op == "name":
+        L = one(a[0])
+        return ({L[0]: 1}, 0) if L and len(L) == 1 else None
+    if op == "call" and a[0] in ("sum", "len") and len(a[1]) == 1 and a[1][0].op == "name":
+        L = one(a[1][0].args[0])
+        if not L:
+            return None
+        if a[0] == "len":
+            return {}, len(L)
+        co = {}
+        for x in L:
+            co[x] = co.get(x, 0) + 1
+        return co, 0
+    if op == "neg":
+        x = _linear(a[0], cells)
+        return x and ({k: -v for k, v in x[0].items()}, -x[1])
+    if op in ("+", "-", "*"):
+        x, y = _linear(a[0], cells), _linear(a[1], cells)
+        if x is None or y is None:
+            return None
+        if op == "*":
+            if x[0] and y[0]:
+                return None
+            (c, k), (_, m) = (x, y) if x[0] else (y, x)
+            return {n: v * m for n, v in c.items()}, k * m
+        s = 1 if op == "+" else -1
+        co = dict(x[0])
+        for n, v in y[0].items():
+            co[n] = co.get(n, 0) + s * v
+        return co, x[1] + s * y[1]
+    return None
+
+
+def _unknowns_only(tree, cells, unk):
+    """an expression over the file's unknowns alone (numbers, unknowns, + - * **), e.g. uD * uD, (uB - uG) ** 2"""
+    if not isinstance(tree, N):
+        return False
+    if tree.op == "num":
+        return True
+    if tree.op == "name":
+        return tree.args[0] in unk and tree.args[0] not in cells
+    if tree.op in ("+", "-", "*", "neg", "**"):
+        return all(_unknowns_only(a, cells, unk) for a in tree.args)
+    return False
+
+
+def _lin_unknown(tree, cells, unk):
+    """'LINEAR == U' (either side) with U one of the file's unknowns: ({cell: coef}, const, U's index); with U an
+    expression over unknowns only ("sum(C) == uD * uD"): ({cell: coef}, const, -2) -- the engine's AuxHouse evaluates
+    that side per combination of the unknowns' values; else None"""
+    if tree.op != "==":
+        return None
+    for lhs, rhs in (tree.args, tree.args[::-1]):
+        if rhs.op == "name" and rhs.args[0] in unk and rhs.args[0] not in cells:
+            x = _linear(lhs, cells)
+            if x and x[0]:
+                return x[0], x[1], unk.index(rhs.args[0])
+    for lhs, rhs in (tree.args, tree.args[::-1]):
+        if rhs.op != "name" and _unknowns_only(rhs, cells, unk):
+            x = _linear(lhs, cells)
+            if x and x[0]:
+                return x[0], x[1], -2
+    return None
+
+
 def _expr(rule, B):
     """an unscoped rule as the engine's expression constraint (csrc/expr.cpp): checked once its cells are fixed"""
     unk, lay = list(getattr(B, "unknowns", {}) or ()), list(getattr(B, "layers", {}) or ())
@@ -1105,8 +1197,15 @@ def _expr(rule, B):
     if hid:  # the aux variables it reads: its unknowns, and each read layer's value at each of its cells
         Nb = len(B.coords)
         read = [unk.index(h) for h in hid if h in unk]
-        read += [len(unk) + lay.index(h) * Nb + B.idx(n) for h in hid if h in lay for n in names]
+        tree = parse(rule["holds"])
+        lc = _layer_cells(tree, set(lay), dict(rule.get("cells") or {}), _bound_names(tree))
+        # each read layer at the cells it is applied to (all the rule's cells when that is not a named cell)
+        read += [len(unk) + lay.index(h) * Nb + B.idx(n) for h in hid if h in lay
+                 for n in (names if lc.get(h) is None else sorted(lc[h]))]  # fmt: skip
         out["aux"] = {"u": len(unk), "n": Nb, "read": sorted(set(read))}
+        lin = _lin_unknown(parse(rule["holds"]), dict(rule.get("cells") or {}), unk)
+        if lin:  # "sum of coef * digit + const == U": the engine combines such rules with a house total (AuxHouse)
+            out["lin"] = {"coef": [lin[0].get(n, 0) for n in names], "const": lin[1], "u": lin[2]}
     return out
 
 
@@ -1136,6 +1235,57 @@ def _hidden(tree, unknowns, layers):
         elif isinstance(x, tuple):
             for y in x:
                 out |= _hidden(y, unknowns, layers)
+    return out
+
+
+def _bound_names(tree):
+    """names an expression binds (comprehension, let, lambda and function variables)"""
+    out = set()
+    if not isinstance(tree, N):
+        return out
+    a = tree.args
+    if tree.op == "comp":
+        out.add(a[1])
+    elif tree.op == "let":
+        out.add(a[0])
+    elif tree.op == "lambda":
+        out |= set(a[0]) if isinstance(a[0], (list, tuple)) else {a[0]}
+    elif tree.op == "letfn":
+        out.add(a[0])
+        out |= set(a[1]) if isinstance(a[1], (list, tuple)) else {a[1]}
+    for x in a:
+        if isinstance(x, N):
+            out |= _bound_names(x)
+        elif isinstance(x, tuple):
+            for y in x:
+                out |= _bound_names(y)
+    return out
+
+
+def _layer_cells(tree, layers, cells, bound):
+    """per layer the rule's cell names it reads: a layer applied to a named one-cell list reads that cell; applied to
+    anything else (a comprehension variable, a computed cell) it may read every cell of the rule (None)"""
+    out = {}
+    if not isinstance(tree, N):
+        return out
+    if tree.op == "call" and tree.args[0] in layers and tree.args[0] not in BUILTINS:
+        args = tree.args[1]
+        x = args[0] if isinstance(args, (list, tuple)) and len(args) == 1 else None
+        n = x.args[0] if isinstance(x, N) and x.op == "name" else None
+        one = cells.get(n) if n is not None and n not in bound else None
+        if isinstance(one, list) and len(one) == 1 and isinstance(one[0], str):
+            if out.get(tree.args[0], set()) is not None:
+                out.setdefault(tree.args[0], set()).add(one[0])
+        else:
+            out[tree.args[0]] = None
+    for x in tree.args:
+        for y in x if isinstance(x, tuple) else (x,):
+            if isinstance(y, N):
+                for k, v in _layer_cells(y, layers, cells, bound).items():
+                    if v is None or out.get(k, set()) is None:
+                        out[k] = None
+                    else:
+                        out.setdefault(k, set()).update(v)
     return out
 
 
@@ -1247,6 +1397,9 @@ def compile_rule(rule, B, D, layers=()):
         return [_expr(rule, B)]
     cells = dict(rule.get("cells") or {})
     scope = rule.get("scope") or {}
+    grp = None if scope or rule.get("each") else _distinct_group(tree, cells)
+    if grp:
+        return [{"type": "group", "cells": grp}]
     skip = {tuple(sorted(x)) for x in scope.get("except", [])}
     pos = _positional(tree)
     out = []

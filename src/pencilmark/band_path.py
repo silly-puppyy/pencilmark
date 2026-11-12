@@ -13,7 +13,9 @@ a technique also covers its special cases (covered(), lesson()).
 """
 
 import copy
+import json
 import logging
+import math
 from collections import Counter
 
 from . import cbackend as CB
@@ -89,6 +91,8 @@ def classify(m, p):
     if n == "LawOfLeftovers" and c in _LEFTOVERS:
         code, name = _LEFTOVERS[c]
         return code, name, _shape_band(code)
+    if n == "TableCombination" and c == "one-off rule enumeration":  # params custom_table_w: not a known combination
+        return "TBX", "Enumerating a one-off rule", _shape_band("TBX")
     if n == "Jellyfish" and c and "franken" in str(c).lower():
         return "FRK", "Franken Jellyfish", _shape_band("FRK")
     code, band = E2.chip_of(t, str(c) if c and n in E2.SPLIT else None)
@@ -149,7 +153,7 @@ _CACHE = None  # position -> state_moves, shared by the many routes of one conte
 def band_path(
     p,
     P,
-    max_steps=500,
+    max_steps=None,
     disabled=(),
     target=None,
     rng=None,
@@ -168,7 +172,19 @@ def band_path(
     a placement in one of these cells (the fog route: a placement that lights new cells ends the round)."""
     if not hasattr(p, "groups_of"):
         p.finalize()
+    if max_steps is None:  # 500, and room for the layer steps of a layered puzzle (13 layers: ~2,600)
+        aux = getattr(p, "aux", None) or {}
+        max_steps = 500 + 2 * p.N * len(aux.get("layers") or ())
     P = dict(P or {}, search="human")
+    attend = int(P.get("attend_local") or 0)
+    # params attend_model (off by default; experiment, design review stage 7): a fitted choice model {"names", "w",
+    # "mu", "sd"} (runs/replay/choice.py) orders the PLACEMENTS within a band -- hosts' next placement, not the
+    # cheapest; eliminations keep the study order after them. The band is still the lowest one with a move.
+    amodel = P.get("attend_model")
+    if isinstance(amodel, str):
+        with open(amodel) as fh_:
+            amodel = json.load(fh_)
+    last_digit = [0]
     notes = set(S.NOTE_TECHS)
     comp = set(CB.search_disabled(P)) | {S.GUESS}
     ct = _code_techs(P)  # whole-technique codes are switched off in the engine (it then reports a
@@ -199,12 +215,17 @@ def band_path(
     rgc = CB.rg_seed(p) if chaos else None  # regions to find: the relation layer (cells sharing / not sharing a region)
     shade = CB.shade_seed(p)  # shading: colour per cell (None without a yin_yang rule)
     shading = shade is not None
-    labels = lambda: (lab, lcand, idc, rgc, shade) if chaos or ids or shading else None  # noqa: E731
-    lkey = lambda: (  # noqa: E731
-        (tuple(lab or ()), tuple(lcand or ()), tuple(idc or ()), tuple(rgc or ()), tuple(shade or ()))
-        if chaos or ids or shading
-        else ()
+    aux = CB.aux_seed(p)  # unknowns / layers: (value flags, offsets), None without any
+    auxs = aux is not None
+    labels = lambda: (  # noqa: E731
+        (lab, lcand, idc, rgc, shade, aux and aux[0], aux and aux[2]) if chaos or ids or shading or auxs else None
     )
+    lkey = lambda: (  # noqa: E731
+        (tuple(lab or ()), tuple(lcand or ()), tuple(idc or ()), tuple(rgc or ()), tuple(shade or ()),
+         tuple(aux[0] if aux else ()), tuple(aux[2] if aux else ()))
+        if chaos or ids or shading or auxs
+        else ()
+    )  # fmt: skip
     q = copy.copy(p)  # the puzzle keeps its own domains; each state's candidates go in as a mask
     cp = getattr(p, "_bp_cpuzzle", None)
     if cp is None:
@@ -217,9 +238,12 @@ def band_path(
     allowed0 = {t for t in human if tband[t] == 0}
     off0 = set(S.TECH_NAMES) - allowed0 - notes
 
+    last_cell = [None]  # params attend_local: the last placement, for the within-band locality preference
+
     def apply(m):
         if m["place"]:
             c, d = m["place"]
+            last_cell[0], last_digit[0] = c, d
             vals[c], cand[c] = d, 0
             for x in p.peer_list[c]:
                 cand[x] &= ~(1 << (d - 1))
@@ -237,6 +261,8 @@ def band_path(
             CB.rg_apply(rgc, N, m.get("rfx"))
         if shading:  # colour effects travel with the region relations
             CB.shade_apply(shade, m.get("rfx"))
+        if auxs:  # unknowns' values too
+            CB.aux_apply(aux, m.get("rfx"))
         if ids:  # class joins and differences; a placement may free a class
             CB.id_apply(idc, vals, m.get("idfx"))
 
@@ -245,7 +271,7 @@ def band_path(
             m["place"]
             or m["elim"]
             or (chaos and (m.get("lplace") or m.get("lelim") or m.get("rfx")))
-            or (shading and m.get("rfx"))
+            or ((shading or auxs) and m.get("rfx"))
             or (ids and CB.id_changes(m.get("idfx")))
         )
 
@@ -284,9 +310,10 @@ def band_path(
             break
         q.givens = {c: v for c, v in enumerate(vals) if v}
         mask = [cand[c] if not vals[c] else 1 << (vals[c] - 1) for c in range(N)]
-        if allowed0 and rng is None:
+        if allowed0 and rng is None and not (attend or amodel):
             # Very Easy phase in ONE engine call: singles until none are left (90%+ of all steps). The engine
             # orders singles by price, not by study order, so only which single gets which label can differ.
+            # (With an attention order on, singles go through the listing too: the order is the point.)
             key0 = ("b0", tuple(vals), tuple(cand), frozenset(off0), lkey()) if _CACHE is not None else None
             batch = _CACHE.get(key0) if key0 is not None else None
             if batch is None:
@@ -308,7 +335,7 @@ def band_path(
                                 "lelim": list(getattr(x.move, "lelim", ())),
                                 "rfx": list(getattr(x.move, "rfx", None) or ()),
                             }
-                            if chaos or shading
+                            if chaos or shading or auxs
                             else {}
                         ),
                         **({"idfx": list(getattr(x.move, "idfx", None) or ())} if ids else {}),
@@ -349,7 +376,7 @@ def band_path(
                                 "lelims": list(m.get("lelim") or ()),
                                 "rfx": list(m.get("rfx") or ()),
                             }
-                            if chaos or shading
+                            if chaos or shading or auxs
                             else {}
                         ),
                         **({"idfx": list(m.get("idfx") or ())} if ids else {}),
@@ -380,7 +407,7 @@ def band_path(
                         q,
                         Pb,
                         disabled=set(S.TECH_NAMES) - allowed,
-                        limit_per_tech=8,
+                        limit_per_tech=40 if attend else 8,
                         details=True,
                         cpuzzle=cp,
                         cand=mask,
@@ -398,7 +425,35 @@ def band_path(
                         continue
                     if mb <= b:
                         hit = 0 if target is not None and m["place"] and m["place"][0] == target else 1
-                        key = (mb, hit, rng.random()) if rng is not None else (mb, hit, _order(code), m["d"])
+                        # params attend_local (off by default): within a band and a study level, a placement in a
+                        # house of the last placement first -- hosts' next placement shares a house with the last
+                        # 60% of the time, 28% by chance (runs/replay/pooled.py, 2026-11-10)
+                        near = 0
+                        if attend and last_cell[0] is not None and m["place"]:
+                            near = -int(m["place"][0] in p.peer_list[last_cell[0]])
+                        key = (
+                            (mb, hit, rng.random())
+                            if rng is not None
+                            else (mb, hit, near, _order(code), m["d"])
+                            if attend == 2  # attend_local 2: nearness before the study order (experiment)
+                            else (mb, hit, _order(code), near, m["d"])
+                        )
+                        if amodel and rng is None:
+                            key = (mb, hit, 1) + key[2:]
+                            if m["place"]:
+                                c_, d_ = m["place"]
+                                emp = min(
+                                    (sum(1 for x in p.groups[gi].cells if not vals[x]) for gi in p.groups_of[c_]
+                                     if p.groups[gi].complete), default=0)  # fmt: skip
+                                lc = last_cell[0]
+                                xf = [mb, math.log1p(max(m["d"] or 0, 0)),
+                                      float(lc is not None and c_ in p.peer_list[lc]), float(d_ == last_digit[0]),
+                                      emp, bin(cand[c_]).count("1")]  # fmt: skip
+                                sc = sum(
+                                    w_ * (x_ - mu_) / sd_
+                                    for w_, x_, mu_, sd_ in zip(amodel["w"], xf, amodel["mu"], amodel["sd"])
+                                )
+                                key = (mb, hit, 0, -sc)
                         cands.append((key, code, name, mb, m))  # rng: any move of the lowest band (other solvers)
                 return min(cands, key=lambda x: x[0]) if cands else None
 
@@ -455,7 +510,7 @@ def band_path(
                                 "lelim": list(x.move.lelim),
                                 "rfx": list(getattr(x.move, "rfx", None) or ()),
                             }
-                            if chaos or shading
+                            if chaos or shading or auxs
                             else {}
                         ),
                         **({"idfx": list(getattr(x.move, "idfx", None) or ())} if ids else {}),
@@ -489,7 +544,7 @@ def band_path(
                 "d": m.get("d"),
                 **(
                     {"lplace": m.get("lplace"), "lelims": list(m.get("lelim") or ()), "rfx": list(m.get("rfx") or ())}
-                    if chaos or shading
+                    if chaos or shading or auxs
                     else {}
                 ),
                 **({"idfx": list(m.get("idfx") or ())} if ids else {}),
@@ -612,6 +667,7 @@ def _states(p, steps):
     idc = [0] * N
     rgc = CB.rg_seed(p) if chaos else None  # regions to find: the relation layer
     shade = CB.shade_seed(p)  # shading: colour per cell
+    aux = CB.aux_seed(p)  # unknowns / layers: value flags
     for st in steps:
         q = copy.copy(p)
         q.givens = {c: v for c, v in enumerate(vals) if v}
@@ -623,8 +679,10 @@ def _states(p, steps):
                 list(idc) if ids else None,
                 list(rgc) if chaos else None,
                 list(shade) if shade is not None else None,
+                list(aux[0]) if aux is not None else None,
+                list(aux[2]) if aux is not None else None,
             )
-            if chaos or ids or shade is not None
+            if chaos or ids or shade is not None or aux is not None
             else None
         )
         yield q
@@ -647,6 +705,8 @@ def _states(p, steps):
             CB.rg_apply(rgc, N, st.get("rfx"))
         if shade is not None:
             CB.shade_apply(shade, st.get("rfx"))
+        if aux is not None:
+            CB.aux_apply(aux, st.get("rfx"))
         if ids:
             CB.id_apply(idc, vals, st.get("idfx"))
 

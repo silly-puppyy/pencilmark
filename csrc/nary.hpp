@@ -99,6 +99,7 @@ struct NSpec {
     std::vector<int> def_lines, def_regs;  ///< derived leftovers: the defining lines / regions
     std::vector<int> totals;  ///< sum with an unknown total from this set (incomplete clue); empty = total
     bool named = false;       ///< table with a rule name (moves coded 6000 + index)
+    bool custom = false;      ///< a custom rule's table (a one-off rule: read by enumeration, params custom_table_w)
     /// table: a lemma rule (a fact derived from a puzzle rule, docs/research/engine_aux_lemma_design.md): its moves
     /// cost lemma_setup the first time any rule of lemma_id is used in a route, lemma_use afterwards
     int lemma_id = -1;

@@ -48,11 +48,25 @@ def to_internal(doc):
     regions = [dict({"kind": k, "cells": [B.name(c) for c in cells]}, **kw) for k, cells, kw in houses]
     boxes = [set(cells) for k, cells, kw in houses if k == "box"]
     out["regions"] = regions
+    from ..rules import values as VR
+
+    if any(VR.is_values_rule(r) for r in rules):  # clues read the cells' values (docs/research/values_rule.md)
+        cells = [B.name(i) for i in range(len(B.coords))]
+        box_of = {B.name(c): j for j, bx in enumerate(boxes) for c in bx}
+        lowered = VR.lower(rules, VR.value_map(rules, cells), box_of)  # a clue may lower to several rules (links)
+        rules = [x for r in lowered for x in (r if isinstance(r, list) else [r])]
+        # the houses again: a cage with a total is a house summing DIGITS; lowered, it no longer is
+        houses, areas = read_houses(rules, B)
+        regions = [dict({"kind": k, "cells": [B.name(c) for c in cells]}, **kw) for k, cells, kw in houses]
+        boxes = [set(cells) for k, cells, kw in houses if k == "box"]
+        out["regions"] = regions
     ctx = _ReadCtx(B, rules, areas, boxes, regions)
     internal = []
     done = set()
     for i, r in enumerate(rules):
         if i in done:
+            continue
+        if r["type"] == "custom" and r.get("kind") == "values":  # read into the clues above (VR.lower)
             continue
         if r["type"] == "fog":  # how the puzzle is played, not a constraint: kept beside the rules (puzzle_json "fog")
             if not doc.get("solution"):

@@ -231,7 +231,10 @@ def visible_rules(rules, lit, D, above=(), line_len=None):
                 for x in (v if isinstance(v, list) else [v])
                 for c in (x if isinstance(x, list) else [x])
             ]
-            if not every or all(c in L for c in every):
+            # a rule over every cell ("one doubler per row, column and box", "each digit doubled once") is in the
+            # rules text, not drawn: stated, seen under the fog like the houses
+            whole = {_name(r, c) for r in range(D) for c in range(D)} <= set(every)
+            if not every or whole or all(c in L for c in every):
                 out.append(k)
         else:
             every = cells + [c for x in (k.get("bulb") or []) for c in ([x] if isinstance(x, str) else x)]

@@ -26,6 +26,8 @@ from .notes import (
     _h_wing,
 )
 from .records import (
+    _h_aux,
+    _h_aux_house,
     _h_band_logic,
     _h_chute_rp,
     _h_class_colour,
@@ -36,15 +38,19 @@ from .records import (
     _h_combo_positions,
     _h_domino,
     _h_empty_rect,
+    _h_eqsum_values,
     _h_fireworks,
     _h_forcing,
+    _h_house_cages,
     _h_line_clues,
     _h_line_sets,
     _h_medusa,
     _h_mental_notes,
+    _h_mod_cage,
     _h_nishio,
     _h_pattern_named,
     _h_region,
+    _h_rule_case,
     _h_rule_intersect,
     _h_shading,
     _h_snyder,
@@ -351,6 +357,78 @@ _X_HANDLERS = {
         (
             "A rule over the shading",
             "A rule reading the shading, tried with every digit and colour its cells can take.",
+        ),
+    ),
+    "AUX_RULE": (
+        _h_aux,
+        "aux_rule",
+        (
+            "A rule over unknowns or modifiers",
+            "A rule reading the puzzle's unknowns or its cells' modifiers (doublers, negators), tried with every digit"
+            " and value its cells and unknowns can take.",
+        ),
+    ),
+    "LAYER_COUNT": (
+        _h_aux,
+        "layer_count",
+        (
+            "A layer counted in a house",
+            "A rule counting a layer in a house (one doubler per row): once the count is met the other cells lose it,"
+            " and when only that many cells can have it they all do.",
+        ),
+    ),
+    "LAYER_TRIAL": (
+        _h_aux,
+        "layer_trial",
+        (
+            "A layer value tried against the house counts",
+            "Assume a cell takes this layer value (a doubler, say): the rules between neighboring cells narrow the"
+            " others, and some house can then no longer hold its count, so the value is out.",
+        ),
+    ),
+    "AUX_HOUSE": (
+        _h_aux_house,
+        "aux_house",
+        (
+            "Unknown totals in a house",
+            "Rules whose cells add up to an unknown, inside one house: together with the house total they narrow the"
+            " unknowns and the house's other cells.",
+        ),
+    ),
+    "MOD_CAGE": (
+        _h_mod_cage,
+        "aux_house",
+        (
+            "Cages with modifiers",
+            "A cage adds up its cells' values, each digit as its modifier makes it (doubled, negated): only some"
+            " digits, with or without the modifier, reach the total.",
+        ),
+    ),
+    "EQSUM_VALUES": (
+        _h_eqsum_values,
+        "aux_house",
+        (
+            "Equal sums on values",
+            "Segments that share one total (a region-sum line's boxes), their cells counted as values: only totals"
+            " every segment can make, and only the fillings that make one, remain.",
+        ),
+    ),
+    "HOUSE_CAGES": (
+        _h_house_cages,
+        "aux_rule",
+        (
+            "Cages of a house together",
+            "The rules inside one house read together: its cells hold different digits, so its cages need"
+            " combinations that share no digit.",
+        ),
+    ),
+    "RULE_CASE": (
+        _h_rule_case,
+        "combo_positions",
+        (
+            "Rule options against the houses",
+            "Assume the candidate: the rule then has only a few options, and each of them, followed by singles in"
+            " the houses, leaves a cell or a house with no place -- so the candidate goes.",
         ),
     ),
     "SHADE_TRIAL": (

@@ -224,7 +224,7 @@ def _rate_one(args):
                 explain=explain,
                 quality=_quality_arg(a.quality),
                 alternatives=not a.no_alternatives,
-                coloring=bool(getattr(a, "coloring", False)),
+                coloring={"on": True, "off": False}.get(getattr(a, "coloring", "auto")),
                 techniques=a.techniques.split(",") if getattr(a, "techniques", None) is not None else None,
             )
         except (api.NotUnique, api.NoSolution) as e:
@@ -402,8 +402,10 @@ def main(argv=None):
     )
     r.add_argument(
         "--coloring",
-        action="store_true",
-        help="opt in to coloring as a solving method (colors kept through the solve); off by default",
+        choices=("auto", "on", "off"),
+        default="auto",
+        help="coloring as a solving method (colors kept through the solve): auto (default) = on for variant puzzles, off "
+        "for plain classic",
     )
     r.add_argument(
         "--techniques",

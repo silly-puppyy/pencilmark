@@ -365,7 +365,8 @@ class _Writer:
         if compiled:
             comp, comp_cons, _ = PJ._compiled_extras(p)
             for k in range(len(rels) - 1, -1, -1):  # compiled relations come last (finalize appends them)
-                if comp[rels[k]] > 0:
+                # (a custom pair rule's relation carries its table, a list: never a compiled line's)
+                if not any(isinstance(x, list) for x in rels[k]) and comp[rels[k]] > 0:
                     comp[rels[k]] -= 1
                     drop_rel[k] = True
             cc = Counter(comp_cons)

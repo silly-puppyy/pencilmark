@@ -92,6 +92,9 @@ static Params params_from(const py::dict& P) {
     if (P.contains("mental_floor") && !P["mental_floor"].is_none()) pr.mental_floor = P["mental_floor"].cast<bool>();
     if (P.contains("theta_full_v2") && !P["theta_full_v2"].is_none()) pr.theta_full_v2 = P["theta_full_v2"].cast<bool>();
     if (P.contains("dc_lines") && !P["dc_lines"].is_none()) pr.dc_lines = P["dc_lines"].cast<bool>();
+    if (P.contains("cf_nary") && !P["cf_nary"].is_none()) pr.cf_nary = P["cf_nary"].cast<bool>();
+    if (P.contains("custom_table_w") && !P["custom_table_w"].is_none())
+        pr.custom_table_w = P["custom_table_w"].cast<double>();
     if (P.contains("case_rounds") && !P["case_rounds"].is_none()) pr.case_rounds = P["case_rounds"].cast<int>();
     if (P.contains("case_cands") && !P["case_cands"].is_none()) pr.case_cands = P["case_cands"].cast<int>();
     if (P.contains("case_light") && !P["case_light"].is_none()) pr.case_light = P["case_light"].cast<int>();
@@ -266,6 +269,12 @@ static NSpec parse_constraint(const py::dict& d) {
             prog->aux_n = ax["n"].cast<int>();
             prog->aux_read = ax["read"].cast<std::vector<int>>();
         }
+        if (d.contains("lin") && !d["lin"].is_none()) {  // {"coef": [per variable], "const": c, "u": unknown}
+            auto ln = d["lin"].cast<py::dict>();
+            prog->lin_coef = ln["coef"].cast<std::vector<int>>();
+            prog->lin_const = ln["const"].cast<long long>();
+            prog->lin_u = ln["u"].cast<int>();
+        }
         s.expr = prog;
     } else if (t == "contains") {  // {"cells": [source, target, ...]}: the source digit appears among the targets
         s.type = NT_CONTAINS;
@@ -306,6 +315,7 @@ static NSpec parse_constraint(const py::dict& d) {
         s.lemma_use = lm["use"].cast<double>();
     }
     if (d.contains("gated") && !d["gated"].is_none()) s.gated = d["gated"].cast<bool>();
+    if (d.contains("custom") && !d["custom"].is_none()) s.custom = d["custom"].cast<bool>();
     if (d.contains("offset") && !d["offset"].is_none()) {  // the rule is on (digit - offset): shifted universes
         const int off = d["offset"].cast<int>();
         if (s.type == NT_SUM) {
@@ -484,6 +494,12 @@ static py::tuple py_solve(const Puzzle& p, const std::vector<std::pair<int, int>
                 auto sh = lt[3].cast<std::vector<int>>();
                 s.shade_override.assign(sh.begin(), sh.end());
             }
+            if (py::len(lt) > 4 && !lt[4].is_none()) {  // unknowns / layers: a flag per (variable, value)
+                auto af = lt[4].cast<std::vector<int>>();
+                s.auxf_override.assign(af.begin(), af.end());
+            }
+            if (py::len(lt) > 5 && !lt[5].is_none())  // joint candidates: the pairs ruled out per variable
+                s.jx_override = lt[5].cast<std::vector<uint64_t>>();
         }
         if (!idc.is_none()) {  // identity layer: a mid-solve state's colour classes
             py::gil_scoped_acquire acq;
@@ -516,7 +532,7 @@ static py::tuple py_solve(const Puzzle& p, const std::vector<std::pair<int, int>
         auto row = py::make_tuple(alts, st.chosen, place, el, py::make_tuple(st.move.nk, st.move.na, st.move.nb),
                                   st.move.d, st.mode, st.n_empty, st.erasures, st.notes_written, xm, st.move.code,
                                   pats, exs, st.n_cands);
-        if (!p.chaos.empty() || P.id_layer || p.shading) {  // annotations: a 16th element, the step's effects as (kind, cell, arg)
+        if (!p.chaos.empty() || P.id_layer || p.shading || !p.aux_values.empty()) {  // annotations: a 16th element, the step's effects as (kind, cell, arg)
             py::tuple ae(st.move.aeff_n);
             for (int i = 0; i < st.move.aeff_n; ++i) {
                 const AEff& e = r.aeffs[st.move.aeff_off + i];
@@ -554,6 +570,13 @@ static py::list py_refute_profile(const Puzzle& p, const std::vector<std::pair<i
 }
 
 // every move available at one state (any technique family), priced: (tech, code, place, elims, d)
+// diagnostics (PENCILMARK_SOLVE_STATS=1): per-strategy timings of every state_moves call, summed (state_moves_stats)
+static SolveResult g_state_stats;
+static const bool g_state_stats_on = [] {
+    const char* e = std::getenv("PENCILMARK_SOLVE_STATS");
+    return e && e[0] == '1';
+}();
+
 static py::list py_state_moves(const Puzzle& p, const std::vector<std::pair<int, int>>& givens, const py::dict& params,
                                const std::vector<int>& disabled, const py::object& solution, bool assume_unique,
                                int limit_per_tech, const py::object& written, bool details, const py::object& cand,
@@ -587,6 +610,12 @@ static py::list py_state_moves(const Puzzle& p, const std::vector<std::pair<int,
                 auto sh = lt[3].cast<std::vector<int>>();
                 s.shade_override.assign(sh.begin(), sh.end());
             }
+            if (py::len(lt) > 4 && !lt[4].is_none()) {  // unknowns / layers: a flag per (variable, value)
+                auto af = lt[4].cast<std::vector<int>>();
+                s.auxf_override.assign(af.begin(), af.end());
+            }
+            if (py::len(lt) > 5 && !lt[5].is_none())  // joint candidates: the pairs ruled out per variable
+                s.jx_override = lt[5].cast<std::vector<uint64_t>>();
         }
         if (!idc.is_none()) {  // identity layer: a mid-solve state's colour classes
             py::gil_scoped_acquire acq;
@@ -594,6 +623,7 @@ static py::list py_state_moves(const Puzzle& p, const std::vector<std::pair<int,
         }
         s.lcache = true;
         s.lcache_params = phash;
+        if (g_state_stats_on) s.time_strategies(&g_state_stats);
         s.state_moves(givens, b, limit_per_tech);
     }
     py::list out;
@@ -606,7 +636,7 @@ static py::list py_state_moves(const Puzzle& p, const std::vector<std::pair<int,
             el.append(py::make_tuple((int)(e / 32), (int)(e % 32)));
         }
         py::object labfx = py::none();  // annotations: the move's effects as (kind, cell, arg), appended last
-        const bool ann = !p.chaos.empty() || P.id_layer || p.shading;
+        const bool ann = !p.chaos.empty() || P.id_layer || p.shading || !p.aux_values.empty();
         if (ann) {
             py::tuple ae(m.aeff_n);
             for (int i = 0; i < m.aeff_n; ++i) {
@@ -719,7 +749,8 @@ PYBIND11_MODULE(_csolver, m) {
     py::class_<Puzzle, std::shared_ptr<Puzzle>>(m, "Puzzle")
         .def_readonly("N", &Puzzle::N)
         .def_readonly("D", &Puzzle::D)
-        .def_readonly("has_cages", &Puzzle::has_cages);
+        .def_readonly("has_cages", &Puzzle::has_cages)
+        .def_readonly("nary_dropped", &Puzzle::nary_dropped);
     m.def("make_puzzle", &make_puzzle);
     m.def("set_placed", [](Puzzle& p, const std::vector<int>& cells) { p.placed = cells; },
           "cells the solver placed (not givens): pencilmark JSON `placed`");
@@ -730,6 +761,14 @@ PYBIND11_MODULE(_csolver, m) {
     m.def("listing_cache", [](bool on) { listing_cache_enable(on); }, py::arg("on"),
           "state_moves reuses each strategy's moves at a state it listed before (on by default; off: compute every "
           "listing, for tests). Either way the cache is emptied.");
+    m.def("state_moves_stats", []() {
+              py::dict st;
+              for (auto& kv : g_state_stats.stats)
+                  st[py::str(kv.first)] = py::make_tuple(kv.second.ms, kv.second.calls, kv.second.hits);
+              return st;
+          },
+          "PENCILMARK_SOLVE_STATS=1: per strategy (ms, calls, calls that found moves) over every state_moves call");
+    m.def("aux_memo_stats", []() { return aux_memo_stats(); }, "AuxRule memo (hits, misses) on this thread");
     m.def("listing_cache_stats", []() { return listing_cache_stats(); },
           "[hits, misses, generation turns] of the listing cache, then of the per-digit memo (this thread)");
     m.def("solve", &py_solve, py::arg("puzzle"), py::arg("givens"), py::arg("params"), py::arg("disabled"),
@@ -740,6 +779,40 @@ PYBIND11_MODULE(_csolver, m) {
     m.def("cases_memo_clear", &cases_memo_clear, "forget the cases memo (another puzzle: other houses)");
     m.def("cases_alive", &py_cases_alive, py::arg("puzzle"), py::arg("cand"), py::arg("budget") = 200000,
           "the cases of each cases rule still possible on these candidates: [(spec index, [case indices])]");
+    m.def(
+        "rule_lemmas",
+        [](py::dict d, int D, std::vector<uint32_t> dom, std::vector<std::vector<int>> var_houses,
+           std::vector<std::vector<int>> aux_dom, std::vector<int> gcell) {
+            // the rule analysis of one custom rule (absint.cpp): d is its expression constraint (custom.py _expr)
+            ExprProgram prog;
+            prog.root = parse_expr(d["ir"]);
+            prog.layered = expr_layered(prog.root);
+            for (auto x : d["lists"].cast<py::list>()) prog.lists.push_back(parse_expr_list(x));
+            prog.nslots = d["nslots"].cast<int>();
+            for (auto rc : d["pos"].cast<py::list>()) {
+                auto p = rc.cast<std::vector<int>>();
+                prog.row.push_back(p[0]);
+                prog.col.push_back(p[1]);
+            }
+            auto box = d["box"].cast<std::vector<int>>();
+            prog.box_h = box[0], prog.box_w = box[1];
+            prog.gcell = gcell;  // variable -> board cell (layer reads)
+            if (d.contains("aux") && !d["aux"].is_none()) {
+                auto ax = d["aux"].cast<py::dict>();
+                prog.aux_u = ax["u"].cast<int>();
+                prog.aux_n = ax["n"].cast<int>();
+                prog.aux_read = ax["read"].cast<std::vector<int>>();
+            }
+            py::list out;
+            for (const RuleLemma& L : expr_rule_lemmas(prog, D, dom, var_houses, aux_dom)) {
+                py::dict r;
+                r["conj"] = L.conj, r["param"] = L.param, r["value"] = L.value, r["kind"] = L.kind, r["total"] = L.total;
+                r["cells"] = L.cells, r["allowed"] = L.allowed, r["negative"] = L.negative;
+                out.append(r);
+            }
+            return out;
+        },
+        py::arg("expr"), py::arg("D"), py::arg("dom"), py::arg("var_houses"), py::arg("aux_dom"), py::arg("gcell"));
     m.def("brute_solve", &py_brute, py::arg("puzzle"), py::arg("givens"), py::arg("limit"), py::arg("node_limit"),
           py::arg("start") = py::none(), py::arg("with_status") = false);
     m.def("puzzle_info", &puzzle_info, py::arg("puzzle"), py::arg("disabled") = std::vector<int>());
@@ -752,6 +825,40 @@ PYBIND11_MODULE(_csolver, m) {
         py::arg("spec"), py::arg("digits"),
         "does a custom rule's expression constraint hold for these digits (one per cell, in its order)? For tests: the "
         "C++ evaluator against the Python reference");
+    m.def(
+        "case_yield",
+        [](const Puzzle& p, const std::vector<std::pair<int, int>>& givens, const py::dict& params, const py::object& cand,
+           const py::object& labels, int ceiling) {
+            Params P = params_from(params);
+            SolveOptions o;
+            std::vector<std::array<int, 5>> out;
+            std::vector<uint32_t> cd;
+            if (!cand.is_none()) cd = cand.cast<std::vector<uint32_t>>();
+            std::vector<char> af;
+            std::vector<uint64_t> jw;
+            if (!labels.is_none()) {
+                py::tuple lt = labels.cast<py::tuple>();
+                if (py::len(lt) > 4 && !lt[4].is_none()) {
+                    auto v = lt[4].cast<std::vector<int>>();
+                    af.assign(v.begin(), v.end());
+                }
+                if (py::len(lt) > 5 && !lt[5].is_none()) jw = lt[5].cast<std::vector<uint64_t>>();
+            }
+            {
+                py::gil_scoped_release rel;
+                Solver s(p, P, o);
+                if ((int)cd.size() == p.N) s.cand_override = cd;
+                s.auxf_override = af, s.jx_override = jw;
+                s.case_yield(givens, ceiling, out);
+            }
+            py::list l;
+            for (auto& r : out) l.append(py::make_tuple(r[0], r[1], r[2], r[3], r[4]));
+            return l;
+        },
+        py::arg("puzzle"), py::arg("givens"), py::arg("params"), py::arg("cand") = py::none(),
+        py::arg("labels") = py::none(), py::arg("ceiling") = 0,
+        "diagnostics (stage 5 yield): each two-way fact's branches from this state, followed by light propagation with "
+        "no step cap: (kind, cell / variable, digit / value index, contradiction round or 0, steps)");
     m.def("refute_profile", &py_refute_profile, py::arg("puzzle"), py::arg("givens"), py::arg("params"), py::arg("solution"),
           py::arg("max_stuck") = 400, py::arg("K") = 0);
     m.def("state_moves", &py_state_moves, py::arg("puzzle"), py::arg("givens"), py::arg("params"),

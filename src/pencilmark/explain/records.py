@@ -327,6 +327,12 @@ def _h_class_count(ctx):
             "the parities of a sum's digits must add up to its total's parity; every other cell's parity is "
             "already known, which fixes this one"
         )
+    elif kind == 4:
+        why = (
+            f"{nm.unit(units[0]) if units else 'the house'} holds every digit once, so its digits' parities add up to"
+            f" a known parity; the sums inside it ({nm.cells(pc)}) have known parities too, which fixes the parity of"
+            " the one cell left"
+        )
     else:
         cls = "odd / even" if kind == 0 else "low / middle / high"
         why = (
@@ -467,6 +473,8 @@ def _h_sum_algebra(ctx):
     eng, xm = ctx.raw_engine, ctx.xm or {}
     head, goal = _x_head(ctx)
     pc = eng.get("pattern_cells") or []
+    if xm.get("cross"):  # rows against columns, the rules' sums cancelled (Solver::cross_sums)
+        return _h_cross_sums(ctx, xm, head, goal, pc)
     base = eng.get("base") or {}
     hn = [u["name"] for u in base.get("units") or [] if u and u.get("name")]
     units = _x_units(ctx, hn)
@@ -483,6 +491,30 @@ def _h_sum_algebra(ctx):
     teach = f"{why}. So {goal}."
     J = _J(ctx, base_units=units, base_cells=pc)
     return _result(ctx, J, f"{head}: the maths of {region}", teach, bool(pc), extra_cells=pc)
+
+
+def _h_cross_sums(ctx, xm, head, goal, pc):
+    """columns C hold |C| sets of the digits, rows R |R| sets: the cells only in the columns add up to K more than the
+    cells only in the rows once the arrows (line on one side, circle on the other) and cages (on one side) are taken
+    out; the two sides' smallest / largest distinct digits leave each cell only some digits"""
+    D = ctx.p.D
+    rows = [i + 1 for i in range(D) if xm.get("rows", 0) >> i & 1]
+    cols = [i + 1 for i in range(D) if xm.get("cols", 0) >> i & 1]
+    lst = lambda w, xs: f"{w}{'s' if len(xs) > 1 else ''} " + ", ".join(map(str, xs))
+    k, nm, nl = xm.get("k", 0), xm.get("n_more", 0), xm.get("n_less", 0)
+    tot = D * (D + 1) // 2
+    more = lambda v: f"{v} more than" if v > 0 else f"{-v} less than" if v < 0 else "as much as"
+    why = (
+        f"{_cap(lst('column', cols))} hold{'s' if len(cols) == 1 else ''} {len(cols)} set{'s' if len(cols) > 1 else ''} "
+        f"of the digits and {lst('row', rows)} {len(rows)}, so the cells only in those columns add up to "
+        f"{more(tot * (len(cols) - len(rows)))} the cells only in those rows. An arrow with its line on one side "
+        f"and its circle on the other adds the same to both, and a cage on one side adds its total: taking them out "
+        f"leaves {nm} cells that add up to {more(k)} {nl} cells. Their smallest and largest different digits "
+        f"allow only some digits in each"
+    )
+    J = _J(ctx, base_cells=pc)
+    return _result(ctx, J, f"{head}: columns against rows, the arrows cancelled", f"{why}. So {goal}.", bool(pc),
+                   extra_cells=pc)  # fmt: skip
 
 
 def _band_equation(ctx, house_names, cage_names):
@@ -782,11 +814,28 @@ def _h_clue_facts(ctx):
         )
         title = "the clues' shape"
     else:
-        why = (
-            f"Look at the rules on {nm.cells(pc)} alone, before any digit is placed: where a cell sits on its rule limits "
-            "what it can hold (a thermometer cell needs room for the cells above and below it, a German whisper cell "
-            "cannot be 5, a dot pair only takes certain digits)"
-        )
+        from .clue_facts import covering, rule_kinds
+        from .facts import RULE_FACTS
+
+        facts, left = covering(nm.p, ctx.elims)
+        kinds = rule_kinds(nm.p, [c for c, _ in left]) if left else []
+        if facts and not left:  # every elimination is a fact solvers learn (docs/grades/clue-facts.md)
+            why = f"Look at the rules on {nm.cells(pc)} alone, before any digit is placed. " + " ".join(
+                f.text for f in facts
+            )
+            why = why.rstrip(".")
+        elif kinds:  # a rule over more cells: its statement, then every way to fill it on the empty grid
+            why = (
+                f"Look at the rules on {nm.cells(pc)} alone, before any digit is placed. "
+                + " ".join([f.text for f in facts] + [RULE_FACTS[k] for k in kinds])
+                + " Of all the ways to fill them, none puts these digits here"
+            )
+        else:
+            why = (
+                f"Look at the rules on {nm.cells(pc)} alone, before any digit is placed: where a cell sits on its rule "
+                "limits what it can hold (a thermometer cell needs room for the cells above and below it, a German "
+                "whisper cell cannot be 5, a dot pair only takes certain digits)"
+            )
         title = "the clues alone"
     J = _J(ctx, base_cells=pc)
     return _result(ctx, J, f"{head}: {title}", f"{why}. So {goal}.", bool(pc), extra_cells=pc)
@@ -865,6 +914,85 @@ def _h_region(ctx):
     return _result(ctx, J, f"{head}: {title}", f"{why}. So {goal}.", bool(pc), extra_cells=pc)
 
 
+def _h_aux(ctx):
+    """AuxRule (the file's unknowns / layers): a custom rule reading them, tried with every digit and value its cells
+    and unknowns can still take"""
+    nm = ctx.nm
+    pc = (ctx.raw_engine or {}).get("pattern_cells") or _changed_cells(ctx)
+    head, goal = _x_head(ctx)
+    why = (
+        f"Try the rule on {nm.cells(pc)} with every digit its cells and every value its unknowns can still take: some "
+        "never satisfy it"
+    )
+    return _result(ctx, _J(ctx, base_cells=pc), f"{head}: a rule over unknowns or modifiers", f"{why}. So {goal}.", bool(pc),
+                   extra_cells=pc)  # fmt: skip
+
+
+def _h_aux_house(ctx):
+    """AuxHouse: rules "these cells add up to an unknown" inside one house, added up against the house total"""
+    nm = ctx.nm
+    pc = (ctx.raw_engine or {}).get("pattern_cells") or _changed_cells(ctx)
+    head, goal = _x_head(ctx)
+    why = (
+        f"The rules adding up to unknowns inside {nm.cells(pc)} together with the rest of that house make the house"
+        " total: only some values of the unknowns, and some digits of the other cells, fit"
+    )
+    return _result(ctx, _J(ctx, base_cells=pc), f"{head}: unknown totals in a house", f"{why}. So {goal}.", bool(pc),
+                   extra_cells=pc)  # fmt: skip
+
+
+def _h_mod_cage(ctx):
+    """ModifierCage: a cage whose total counts modified values (doublers, negators), read whole"""
+    nm = ctx.nm
+    pc = (ctx.raw_engine or {}).get("pattern_cells") or _changed_cells(ctx)
+    head, goal = _x_head(ctx)
+    why = (
+        f"The cage on {nm.cells(pc)} adds up its cells' values, each digit counted as its modifier makes it: only some"
+        " digits, with or without the modifier, reach the total"
+    )
+    return _result(ctx, _J(ctx, base_cells=pc), f"{head}: a cage with modifiers", f"{why}. So {goal}.", bool(pc),
+                   extra_cells=pc)  # fmt: skip
+
+
+def _h_eqsum_values(ctx):
+    """EqualSumValues: segments sharing one total (region-sum lines), their cells counted as values"""
+    nm = ctx.nm
+    pc = (ctx.raw_engine or {}).get("pattern_cells") or _changed_cells(ctx)
+    head, goal = _x_head(ctx)
+    why = (
+        f"The segments on {nm.cells(pc)} all have the same sum of values: only totals every segment can make are"
+        " possible, and only the fillings that make one of them"
+    )
+    return _result(ctx, _J(ctx, base_cells=pc), f"{head}: equal sums on values", f"{why}. So {goal}.", bool(pc),
+                   extra_cells=pc)  # fmt: skip
+
+
+def _h_house_cages(ctx):
+    """HouseCages: the layer rules inside one house (its cages and its count) read together"""
+    nm = ctx.nm
+    pc = (ctx.raw_engine or {}).get("pattern_cells") or _changed_cells(ctx)
+    head, goal = _x_head(ctx)
+    why = (
+        f"The rules inside the house of {nm.cells(pc)} read together: their cells hold different digits, so the cages"
+        " need combinations that do not share a digit, and only some do"
+    )
+    return _result(ctx, _J(ctx, base_cells=pc), f"{head}: the cages of a house together", f"{why}. So {goal}.",
+                   bool(pc), extra_cells=pc)  # fmt: skip
+
+
+def _h_rule_case(ctx):
+    """RuleCase: a candidate whose every option of one rule breaks a house within a few singles"""
+    nm = ctx.nm
+    pc = (ctx.raw_engine or {}).get("pattern_cells") or _changed_cells(ctx)
+    head, goal = _x_head(ctx)
+    why = (
+        f"With it, the rule on {nm.cells(pc)} has only a few ways left; each of them, followed by singles in the "
+        "houses, leaves a cell or a house with no place"
+    )
+    return _result(ctx, _J(ctx, base_cells=pc), f"{head}: every option of a rule breaks a house", f"{why}. So {goal}.",
+                   bool(pc), extra_cells=pc)  # fmt: skip
+
+
 def _h_shading(ctx):
     """ShadeLocal / ShadeConnect (yin-yang): the 2x2 rule, the checkerboard, a colour's single exit, a cut cell, the
     border's colour runs"""
@@ -933,6 +1061,8 @@ def _h_class_colour(ctx):
         1: ", and counting fixes which is which: a house holds only so many digits of each kind",
         2: "; either way round, the colored cells fill a house's share of one kind, so the house's other cells cannot "
         "have it",
+        3: "; either way round, cells of one color fill a house's share of their kind, so they hold exactly those "
+        "digits, and a cell joined by rules to all of them must suit each one",
     }.get(xm.get("why"), "")
     J = _J(ctx, base_cells=pc)
     res = _result(
@@ -1007,10 +1137,16 @@ def _class_substeps(ctx, cc, a, b, kind):
             }
         )
     adj = defaultdict(list)
+    counted = {}  # two colorings joined by counting a house: (x, y) -> the house
     for lk in cc["links"]:
         x, y = lk["cells"]
         adj[x].append(y)
         adj[y].append(x)
+        if lk.get("count_house"):
+            h = lk["count_house"]
+            counted[(x, y)] = counted[(y, x)] = (
+                nm.unit(ctx.gi(h["name"])) if ctx.gi(h["name"]) is not None else h["name"]
+            )
     if start is None:
         start = min(sides, key=lambda c: nm.p.coords[c])
         out.append({"text": f"Start with {nm.cell(start)}: {col(start)}.", "annotations": [ann(start)]})
@@ -1022,13 +1158,25 @@ def _class_substeps(ctx, cc, a, b, kind):
                 continue
             seen.add(y)
             queue.append(y)
-            rule = rel_label(nm.p, x, y) or "rule"
-            if runs and runs[-1]["rule"] == rule and runs[-1]["cells"][-1] == x:
+            rule = f"count:{counted[(x, y)]}" if (x, y) in counted else rel_label(nm.p, x, y) or "rule"
+            if runs and runs[-1]["rule"] == rule and runs[-1]["cells"][-1] == x and not rule.startswith("count:"):
                 runs[-1]["cells"].append(y)
             else:
                 runs.append({"rule": rule, "from": x, "cells": [y]})
     for r in runs:
         x, cs, rule = r["from"], r["cells"], r["rule"]
+        if rule.startswith("count:"):
+            h, y = rule[6:], cs[0]
+            other = "the same color as" if sides[x] == sides[y] else "the other color from"
+            out.append(
+                {
+                    "text": f"{_cap(nm.cell(y))}'s line and {nm.cell(x)}'s meet in {h}: colored the other way round, "
+                    f"{h} would need more digits of one kind than it has, so {nm.cell(y)} is {other} {nm.cell(x)} "
+                    f"({col(y)}).",
+                    "annotations": [ann(y)],
+                }
+            )
+            continue
         if len(cs) == 1:
             text = f"{_cap(nm.cell(cs[0]))} is joined to {nm.cell(x)} ({col(x)}) by the {rule}, so it is {col(cs[0])}."
         else:

@@ -3,7 +3,10 @@
 // cells' colours (AE_SHADE, arg = the colour). Each colour is orthogonally connected and no 2x2 block is one colour.
 #include <algorithm>
 #include <functional>
+#include <string>
+#include <unordered_map>
 #include <vector>
+#include "deadline.hpp"
 #include "expr.hpp"
 #include "portable.hpp"
 #include "solver.hpp"
@@ -165,6 +168,13 @@ void Solver::shade_connect(MoveBuf& out) {
 // "a cage's shaded digits sum to ...") read on its own, like RegionRule: the combinations of the digits and colours it
 // actually reads that satisfy it, found lazily within a budget; a digit no combination uses is removed, a colour that
 // every combination gives is set (7331). Nothing is removed when the budget runs out.
+// a rule's reading depends only on its cells (digit or candidates, colour): kept per (puzzle, rule, that state) --
+// shade_trial's propagation re-reads every rule at every round (61% of a shading puzzle's grade)
+namespace {
+struct ShadeMemo { bool complete; std::vector<std::pair<int, int>> dout, sout; };
+thread_local std::unordered_map<std::string, ShadeMemo> g_shade_memo;
+}  // namespace
+
 void Solver::shade_rule(MoveBuf& out) {
     if (!has_shading() || disabled[SHADE_RULE]) return;
     constexpr long BUDGET = 20000;
@@ -181,6 +191,29 @@ void Solver::shade_rule(MoveBuf& out) {
             const int c = cellv[i] = k.vars[i];
             dg[i] = vals[c] ? vals[c] : -1;
             sh[i] = shade[c] ? shade[c] : -1;
+        }
+        std::string key;
+        {
+            auto put = [&](uint64_t x) { key.append(reinterpret_cast<const char*>(&x), sizeof x); };
+            put(p.uid), put((uint64_t)(uintptr_t)&k);
+            for (int i = 0; i < nv; ++i)
+                put(vals[cellv[i]] ? (1ull << 40 | (uint64_t)vals[cellv[i]]) : cand[cellv[i]]), put((uint64_t)shade[cellv[i]]);
+        }
+        auto emit_rule = [&](const std::vector<std::pair<int, int>>& dout, const std::vector<std::pair<int, int>>& sout) {
+            if (dout.empty() && sout.empty()) return;
+            Move& m = new_move(out, SHADE_RULE, 1.0, (int)(dout.size() + sout.size()));
+            for (auto& e : dout) add_elim(out, m, e.first, e.second);
+            for (auto& e : sout) set_colour(out, m, e.first, e.second);
+            set_pattern(out, m, std::vector<int>(cellv, cellv + nv));
+            m.nk = NM_NARY;
+            m.code = 7331;
+        };
+        if (!memo_off("shade")) {
+            auto it = g_shade_memo.find(key);
+            if (it != g_shade_memo.end()) {
+                if (it->second.complete) emit_rule(it->second.dout, it->second.sout);
+                continue;
+            }
         }
         long budget = BUDGET;
         bool complete = true;
@@ -222,7 +255,11 @@ void Solver::shade_rule(MoveBuf& out) {
             }
         };
         go();
-        if (!complete) continue;
+        if (g_shade_memo.size() > 200000) g_shade_memo.clear();
+        if (!complete) {
+            if (!deadline_passed()) g_shade_memo[key] = ShadeMemo{false, {}, {}};
+            continue;
+        }
         std::vector<std::pair<int, int>> dout;
         std::vector<std::pair<int, int>> sout;
         for (int i = 0; i < nv; ++i) {
@@ -235,13 +272,8 @@ void Solver::shade_rule(MoveBuf& out) {
         dout.erase(std::unique(dout.begin(), dout.end()), dout.end());
         std::sort(sout.begin(), sout.end());
         sout.erase(std::unique(sout.begin(), sout.end()), sout.end());
-        if (dout.empty() && sout.empty()) continue;
-        Move& m = new_move(out, SHADE_RULE, 1.0, (int)(dout.size() + sout.size()));
-        for (auto& e : dout) add_elim(out, m, e.first, e.second);
-        for (auto& e : sout) set_colour(out, m, e.first, e.second);
-        set_pattern(out, m, std::vector<int>(cellv, cellv + nv));
-        m.nk = NM_NARY;
-        m.code = 7331;
+        g_shade_memo[key] = ShadeMemo{true, dout, sout};
+        emit_rule(dout, sout);
     }
 }
 

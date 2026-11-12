@@ -164,7 +164,7 @@ def rate(
     explain: bool | str | list[str] | None = None,
     quality: dict | None = None,
     alternatives: bool = True,
-    coloring: bool = False,
+    coloring: bool | None = None,
     techniques: list[str] | None = None,
     format: str | None = None,  # noqa: A002
 ) -> dict:
@@ -199,10 +199,11 @@ def rate(
     alternatives : bool
         False skips the search for interchangeable techniques (each chip in contains lists one code). Band, difficulty
         and time are the same either way, and the card comes much faster.
-    coloring : bool
-        Opt in to coloring as a solving method: colors kept through the solve (Color Fill, Color Single, Color
-        Pair, ...; docs/grades/techniques.md, Coloring). Off by default: most solvers do not color, and with it
-        the hardest puzzles take much longer to grade.
+    coloring : bool, optional
+        Coloring as a solving method: colors kept through the solve (Color Fill, Color Single, Color Pair, ...;
+        docs/grades/techniques.md, Coloring). None (default): ON for variant puzzles -- solvers of hard variants color
+        constantly (87% of Cracking the Cryptic solves color five cells or more) -- and off for plain classic sudoku;
+        True / False force it either way.
     techniques : list of str, optional
         Grade for a solver who knows only these techniques: a whitelist of technique codes (docs/grades/techniques.md),
         singles always included. A puzzle that needs more gets band "Unknown" with the reason. A code found by a wider
@@ -242,9 +243,6 @@ def rate(
 
         puzzle = auto(puzzle, format=format)
     p = _load(puzzle)
-    # rules no human technique reasons with yet: the puzzle is still proven unique (or refused as a wrong input), then
-    # its card is band Unknown with the reason (user 2026-11-06: "Unknown if unknown, error if a reader mistake")
-    no_route = "unknowns / layers (custom rules): no human technique for them yet" if getattr(p, "aux", None) else None
     import time
 
     from . import cbackend as CB
@@ -267,6 +265,8 @@ def rate(
                 want,
                 f"max_seconds ({max_seconds}) passed before uniqueness was proven"
                 if hit
+                else "uniqueness search limit reached (the C++ search, then CP-SAT, within the time limit)"
+                if V.have_ortools()
                 else 'uniqueness search limit reached; OR-Tools (pip install "pencilmark[verify]") settles most',
             )
             if max_seconds is not None:
@@ -275,12 +275,11 @@ def rate(
         if not sols:
             raise NoSolution("no solution")
         p._pm_solution = list(sols[0])  # proven unique: later stages reuse it instead of searching again
+        if coloring is None:  # variants: on (how their solvers solve); plain classic: off
+            from .interop import _plain_ok
+
+            coloring = not _plain_ok(p) or bool(getattr(p, "fog", None)) or bool(getattr(p, "aux", None))
         P = dict(_params(mode), allow_guess=bool(allow_guessing), quality=quality, colouring=int(bool(coloring)))
-        if no_route:
-            g = EX.unknown_card(want, no_route)
-            if "elapsed" in want:
-                g["elapsed"] = round(time.perf_counter() - t_call, 3)
-            return g
         if getattr(p, "fog", None):  # a fog rule is part of the puzzle: graded under the fog (export.grade_fog)
             g = EX.grade_fog(p, puzzle, P, fields=sorted(want))
             if max_seconds is not None:  # the fog route stops at the engine deadline: Unknown, not completed
@@ -354,7 +353,7 @@ def rate_many(
     explain: bool | str | list[str] | None = None,
     quality: dict | None = None,
     alternatives: bool = True,
-    coloring: bool = False,
+    coloring: bool | None = None,
     techniques: list[str] | None = None,
 ) -> list[dict]:
     """Cards for many puzzles, in input order.
@@ -417,7 +416,9 @@ def solve(puzzle: str | dict | Path, *, format: str | None = None) -> list[int]:
         raise NotUnique("more than one solution")
     if not decided:
         raise Undecided(
-            'search limit reached without a verdict; install OR-Tools (pip install "pencilmark[verify]") '
+            "search limit reached without a verdict (the C++ search, then CP-SAT)"
+            if V.have_ortools()
+            else 'search limit reached without a verdict; install OR-Tools (pip install "pencilmark[verify]") '
             "for the CP-SAT fallback"
         )
     if not sols:

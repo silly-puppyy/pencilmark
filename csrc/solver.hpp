@@ -1,9 +1,11 @@
+#include <cstdlib>
 /// @file
 /// Two-phase logical solver: technique ids, moves, pricing parameters and the Solver class (solver.cpp and the
 /// technique files).
 #pragma once
 #include "portable.hpp"
 #include <array>
+#include <bitset>
 #include <chrono>
 #include <cstdint>
 #include <functional>
@@ -17,8 +19,10 @@
 
 #include "model.hpp"
 #include "deadline.hpp"
+#include <cmath>
 
 namespace cs {
+
 
 
 /// technique codes (grader.solver)
@@ -103,8 +107,16 @@ enum Tech {
     SHADE_CONNECT = 122,  ///< shading: a colour's single exit, a cut cell, the border's colour runs
     SHADE_RULE = 123,     ///< shading: a custom rule reading shaded() on its own: digits / colours no combination uses
     SHADE_TRIAL = 124,    ///< shading: a colour assumed leads to a contradiction within a few rounds: the other colour
+    AUX_RULE = 125,       ///< unknowns / layers: a custom rule reading them on its own: digits / values no combination uses
+    AUX_HOUSE = 126,      ///< unknowns: rules "cells == U" inside one house added up against the house total
+    LAYER_COUNT = 127,    ///< a layer counted in a house ("one doubler per row"): the house's other cells / its last place
+    LAYER_TRIAL = 128,    ///< a layer value tried: the pair rules on layers once, then every house count -- one fails
+    MOD_CAGE = 129,       ///< a cage of modified values (doublers, negators) read whole: priced as AUX_HOUSE
+    EQSUM_VALUES = 130,   ///< segments with equal sums of values (region-sum lines, modifiers): priced as AUX_HOUSE
+    HOUSE_CAGES = 131,    ///< the layer rules of one house read together (its cages need different digits): as AUX_RULE
+    RULE_CASE = 132,      ///< a candidate whose every option of one rule breaks a house within a few singles (designer D5)
     MENTAL_NOTES = 84,    ///< single after notes logic done in the head (subset / pointing / combination on the mental view)    // line consistency on 3-cell windows (local scan of a long line)  // both options of a 2-way choice lead to the same placement / elimination  // short chain (<= 5 links) on the no-notes mental view, leading to a single  // bounded case split: bivalue cell, contradiction within a few direct rounds
-    N_TECH = 128
+    N_TECH = 136
 };
 inline bool is_direct(int t) {
     return t == FULL_HOUSE || t == NAKED_D || t == HIDDEN_D || t == NAKED_DL || t == HIDDEN_DL || t == INNIE_D ||
@@ -123,7 +135,10 @@ struct Move;
 /// relies on the class anchored at cell (no state change: route accounting charges the joins that built it)
 enum AEffKind { AE_LABEL_PLACE = 1, AE_LABEL_ELIM = 2, AE_ID_JOIN = 3, AE_ID_NEQ = 4, AE_ID_USE = 5,
                 AE_REG_JOIN = 6, AE_REG_NEQ = 7,  ///< regions to find: two cells share / do not share a region
-                AE_SHADE = 8 };  ///< shading: the cell takes colour arg (1 shaded, 2 unshaded)
+                AE_SHADE = 8,  ///< shading: the cell takes colour arg (1 shaded, 2 unshaded)
+                AE_AUX = 9,  ///< unknowns / layers: variable `cell` loses the value at index arg (p.aux_values order)
+                AE_JOINT = 10 };  ///< joint candidates: layer variable `cell` (its cell) loses the PAIR (digit, value):
+                                  ///< arg = digit * 16 + value index -- "r8c3 is not a cold 5"
 struct AEff {
     int kind, cell, arg;
     bool operator<(const AEff& o) const {
@@ -332,6 +347,9 @@ struct Params {
     int case_light = 0;  ///< params case_light: CaseAnalysis cases also run light techniques (intersections, pairs)
     int case_rounds = 0, case_cands = 4;  ///< params case_rounds (default 0 = off until a refit prices descriptors; 3 = on), case_cands
     bool dc_lines = true;  ///< params dc_lines: DigitCount uses line rules' must-contain digits
+    double custom_table_w = 0.0;  ///< params custom_table_w: a one-off rule's table read costs x (1 + w log2 rows)
+    bool cf_nary = false;  ///< params cf_nary: ClueFacts / ClueShape also read the standard rules over more cells (a cage's
+                           ///< combinations, a renban's range, its forced digits leaving a house), each clue alone
     bool mental_floor = false;  ///< params mental_floor: mental moves priced >= their written counterpart
     bool theta_full_v2 = false; ///< params theta_full_v2: meta_theta_full uses log1p(links); the mental floor's written
                                 /// counterpart also sets coverage (desc[7]) = 1
@@ -444,7 +462,8 @@ struct Flags {
 void listing_cache_enable(bool on);  ///< on by default; off: every listing is computed (tests compare the two)
 /// drops every cached listing and per-digit memo
 void listing_cache_clear();
-std::vector<pm_long> listing_cache_stats();  ///< hits, misses, generation turns: listing cache, then digit memo
+std::vector<pm_long> listing_cache_stats();
+std::vector<pm_long> aux_memo_stats();  ///< hits, misses, generation turns: listing cache, then digit memo
 /// per-digit memo of single-digit techniques (listing_cache.cpp): tag = the technique and its settings, bits = the cells
 /// where digit v is still a candidate; get appends the stored moves and returns true on a hit
 bool digit_memo_get(const Puzzle& p, uint64_t tag, int v, const std::vector<uint64_t>& bits, MoveBuf& out);
@@ -517,6 +536,65 @@ public:
     /// shading (yin-yang): colour per cell, 0 unknown, 1 shaded, 2 unshaded
     std::vector<uint8_t> shade;
     std::vector<uint8_t> shade_override;  ///< a mid-solve state's colours (band_path)
+    /// unknowns / layers: a flag per (variable, value), variable a's values at [aux_off[a], aux_off[a + 1])
+    std::vector<char> auxf, auxf_override;  ///< override: a mid-solve state's flags (band_path)
+    /// joint candidates (design review stage 4): per aux variable, the (digit, value) pairs ruled out -- bit
+    /// jbit(d, vi). A pair is live while its digit is a candidate of the variable's cell, its value is open and its bit
+    /// is clear; removed pairs only grow. Layer variables only (unknowns have no cell).
+    /// (a variable's pairs as bits: digit d, value index vi at jbit(d, vi); layers of up to 16 values -- a move's pair
+    /// argument is d * 16 + vi)
+    using JMask = std::bitset<144>;
+    std::vector<JMask> jx;
+    std::vector<uint64_t> jx_override;  ///< a mid-solve state's pairs: JW words per variable (band_path)
+    static constexpr int JW = 3;
+    static int jbit(int d, int vi) { return (d - 1) * 16 + vi; }
+    static uint64_t jword(const JMask& m, int w) {  // bits 64w .. 64w + 63
+        uint64_t x = 0;
+        for (int b = 0; b < 64 && 64 * w + b < 144; ++b) x |= (uint64_t)m[64 * w + b] << b;
+        return x;
+    }
+    bool joint_ok(int a) const { return a >= p.aux_u && a < (int)p.aux_values.size() && p.D <= 9 &&
+                                        p.aux_values[a].size() <= 16; }
+    int aux_cell(int a) const { return a >= p.aux_u ? (a - p.aux_u) % p.N : -1; }
+    bool joint_live(int a, int d, int vi) const {
+        if (!joint_ok(a)) {  // no pair state: the digit is a candidate and the value is open (unknowns: no cell)
+            if (a < p.aux_u || a >= (int)p.aux_values.size()) return true;
+            const int c = aux_cell(a);
+            return (vals[c] ? vals[c] == d : (cand[c] & (1u << (d - 1)))) && auxf[aux_off[a] + vi];
+        }
+        const int c = aux_cell(a);
+        if (vals[c] ? vals[c] != d : !(cand[c] & (1u << (d - 1)))) return false;
+        if (!auxf[aux_off[a] + vi]) return false;
+        return !jx[a][jbit(d, vi)];
+    }
+    std::vector<int> aux_off;
+    bool has_aux() const { return !p.aux_values.empty(); }
+    void aux_rule(MoveBuf& out);
+    bool sees_same(const NConstraint& k, const std::vector<int>& dg, int i) const;
+    /// a custom rule read abstractly to a fixpoint: each open digit of its cells (dm, per rule variable) and each open
+    /// value of the aux variables it reads (ad) stays while the rule can still hold; false: nothing fits (variant_logic)
+    bool rule_narrow(const NConstraint& k, std::vector<uint32_t>& dm, std::vector<std::vector<int>>& ad) const;
+    void aux_house(MoveBuf& out);
+    void layer_count(MoveBuf& out);
+    void unknown_trial(MoveBuf& out);  ///< a case split on an unknown's few values, propagated a few rounds
+    void joint_houses(MoveBuf& out);
+    void equal_products(MoveBuf& out);  ///< lines with one product: equal counts of each large prime digit
+    void chain_rule(MoveBuf& out);      ///< a path of two-cell rules read as one (with houses and layer houses)
+    /// rules read together by tuple search: pairs on shared cells (houses false, AuxRule) or a house's layer rules
+    void rule_pair(MoveBuf& out, bool houses);
+    void rule_case(MoveBuf& out);       ///< RULE_CASE: one rule's options, each followed by house singles
+    void equal_sums(MoveBuf& out);      ///< segments with equal sums (region-sum lines): one shared set of totals
+    void budget_fish(MoveBuf& out);     ///< houses whose digit needs a shared exactly-one layer literal
+    void value_class(MoveBuf& out);     ///< class coloring over (digit, layer value) options: the value's parity
+    void mod_cage(MoveBuf& out);        ///< distinct-digit cages summing modified values, read exactly
+    void modifier_equiv(MoveBuf& out);  ///< set equivalence with modifiers: house groups vs value-sum cages  ///< joint candidates: exactly-one count rules as houses of (cell, digit, value)
+    void layer_trial(MoveBuf& out);
+    void layer_fish(MoveBuf& out, const std::vector<const NConstraint*>& counts, const std::vector<std::vector<int>>& dom0,
+                    const std::function<std::vector<uint32_t>(const NConstraint&)>& digits);
+    std::vector<int> expr_par;      ///< per n-ary rule: the parity of its cells' sum when its rule fixes it (-1 not)
+    uint64_t expr_par_uid = 0;      ///< the puzzle expr_par was read for
+    bool aux_eq(const NConstraint& k, const std::vector<int>& auxv, std::vector<std::pair<int, int>>& dout,
+                std::vector<std::pair<int, int>>& aout);
     bool has_shading() const { return p.shading; }
     bool shade_light = false;  ///< inside a colour trial: the cheap shading techniques only
     void shade_local(MoveBuf& out);
@@ -580,6 +658,7 @@ public:
     bool exhaust(MoveBuf& out);
     /// n-ary constraints
     void nary_combination(MoveBuf& out, int part = 0);  ///< part 0: all but set equivalences, 1: only those, 2: all
+    void sameset_counts(MoveBuf& out);  ///< set equivalences carrying the digits one side's cages must contain
     /// n-ary combination locks: a digit in every consistent assignment, or forced into a rule by a house
     void combo_lock(MoveBuf& out);
     /// no-notes read of a rule with one empty cell whose digit the arithmetic / set rule forces
@@ -612,6 +691,7 @@ public:
     void rule_intersect(MoveBuf& out);
     /// interval algebra over house totals, cages and segments in a band or stack; adds the eliminations
     void sum_algebra(MoveBuf& out);
+    void cross_sums(MoveBuf& out);  ///< rows against columns with arrows / cages cancelled: bounded sum identities
     /// a band's lines, boxes and rules taken together as a sub-puzzle; eliminations that hold in all its fillings
     void band_logic(MoveBuf& out);
     void describe(Move& m, const MoveBuf& b);  ///< structural descriptors (desc.cpp)
@@ -752,6 +832,7 @@ public:
     void sum_bound(MoveBuf& out);
     /// odd / even (and thirds) counting in houses and sum parity; eliminates digits of a full class
     void class_count(MoveBuf& out);
+    void class_count_units(MoveBuf& out);  ///< class counts over houses / bands with dominoes' min / max
     /// class colouring: low / high or odd / even links between cells, sides fixed by known cells or house counts
     void class_colour(MoveBuf& out);
     // ---- regions to find (chaos_logic.cpp) ----
@@ -766,6 +847,7 @@ public:
     void region_group(MoveBuf& out);  ///< the relation layer's groups: size cap, sealed, one way out, equal digits
     /// facts read off the clues alone (relations on an empty grid; with line shape): fires once as one step
     void clue_facts(MoveBuf& out);
+    std::vector<uint32_t> cf_m1, cf_m2;  ///< clue_facts: the masks after level 1 / level 2 (structure only: computed once)
     /// relation dominoes: a digit every allowed pair uses leaves common houses; two dominoes locking four digits
     void domino(MoveBuf& out);
     /// forcing chains (forcing.cpp)
@@ -777,6 +859,8 @@ public:
     /// notes logic done in the head on the no-notes view (rule combinations, intersections, pairs): a single
     void mental_notes(MoveBuf& out);
     int fc_ceiling_now = -1, fc_kmax_now = -1, fc_tech_now = -1, fc_step_cap = 0, fc_view = -1;
+    int tier_front = 0;  ///< tiers inserted before the standard ones (regions, shading, unknowns): positions count after them
+    std::vector<int> tier_rank;  ///< per tier: its rank among the standard tiers (-1 before them); ceilings read ranks
     int fc_level_now = -1;  ///< forcing fallback: level allowed for this call (overrides params forcing_level)
     pm_long fc_steps_total = 0;  ///< branch propagation steps of forcing() calls (fallback work budget)
     /// true while the forcing fallback has work budget left (boards up to 9x9)
@@ -827,7 +911,12 @@ public:
     bool grid_valid() const;
     /// every move available at the current state (direct and notes families; tiers ungated), priced;
     /// at most limit_per_tech per technique (0 = all)
-    void state_moves(const std::vector<std::pair<int, int>>& givens, MoveBuf& b, int limit_per_tech);  ///< every cell filled consistently with every rule
+    void state_moves(const std::vector<std::pair<int, int>>& givens, MoveBuf& b, int limit_per_tech);
+    /// diagnostics (stage 5 yield): from this state, every two-way fact's branches followed by light propagation
+    /// (placements, the layer readings, rank <= ceiling tiers, values / pairs applied), no step cap: per branch
+    /// (kind 0 cell / 1 house place / 2 layer value, cell or variable, digit or value index, contradiction round, steps)
+    void case_yield(const std::vector<std::pair<int, int>>& givens, int ceiling, std::vector<std::array<int, 5>>& out);  ///< every cell filled consistently with every rule
+    void time_strategies(SolveResult* r) { stats_out = r; }  ///< per-strategy timings into r (diagnostics)
     /// resets the state to the givens (all candidates, then the givens placed)
     void init_state(const std::vector<std::pair<int, int>>& givens);
 
@@ -882,10 +971,23 @@ private:
     int loc_d = 0;  ///< digit of the previous route placement, for params digit_cont
     std::vector<int> lemma_seen;  ///< lemma ids a route step has used (their next moves cost lemma_use)
     /// a lemma table's move: its own price (setup the first time its lemma is used in the route, use afterwards)
+    /// a one-off custom rule's table (not a lemma), when params custom_table_w prices reading it as enumeration: its
+    /// moves are coded 6990 (the route's "Enumerating a one-off rule", band Medium)
+    bool one_off_table(const NConstraint& k) const {
+        if (k.type != NT_TABLE || k.named || P.custom_table_w <= 0 || k.index < 0 || k.index >= (int)p.nary_specs.size())
+            return false;
+        const NSpec& s = p.nary_specs[k.index];
+        return s.custom && s.lemma_id < 0;
+    }
     void lemma_price(Move& m) const {
         if (m.nk != NM_NARY || m.na < 0 || m.na >= (int)p.nary_specs.size()) return;
         const NSpec& s = p.nary_specs[m.na];
-        if (s.lemma_id < 0) return;
+        if (s.lemma_id < 0) {
+            // a one-off rule's table is read by enumerating it, not known by heart as a killer combination is
+            if (s.custom && s.type == NT_TABLE && P.custom_table_w > 0 && s.rows.size() > 1)
+                m.d *= 1.0 + P.custom_table_w * std::log2((double)s.rows.size());
+            return;
+        }
         m.d = std::find(lemma_seen.begin(), lemma_seen.end(), s.lemma_id) != lemma_seen.end() ? s.lemma_use : s.lemma_setup;
     }
     int loc_pc = -1;  ///< cell of the previous route placement, for params spot_w
@@ -924,6 +1026,9 @@ private:
     /// provenance: step of the non-single move that eliminated (cell, digit), -1 none (reveal depth)
     std::vector<int> adv_src;
     SolveResult* stats_out = nullptr;
+    int in_branch = 0;  ///< inside a forcing / case branch's technique listing (fc_propagate)
+    bool branch_full = false;  ///< diagnostics (case_yield): branches run every reader, not the branch-light ones
+    bool fc_aux_on = false;  ///< an unknown's trial: branch moves apply value / pair effects too (fc_propagate)
     /// runs f, adding its time, calls and hits to the stats when they are recorded
     void timed(const char* name, MoveBuf& b, const std::function<void()>& f);
     int step_fails = 0;        ///< families searched and found empty before the step's first success

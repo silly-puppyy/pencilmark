@@ -488,6 +488,35 @@ bool expr_holds_lazy(const ExprProgram& prog, const int* digits, const int* labe
 
 bool expr_layered(const ExprNode& e) { return layered_node(e); }
 
+int expr_eq_unknown(const ExprProgram& prog) {
+    const ExprNode& r = prog.root;
+    if (r.op != X_EQ || r.kids.size() != 2) return -1;
+    for (int s = 0; s < 2; ++s)
+        if (r.kids[s].op == X_AUX && r.kids[1 - s].op != X_AUX) return s;
+    return -1;
+}
+
+bool expr_side_value(const ExprProgram& prog, int side, const int* digits, const int* aux, long long& value) {
+    Ev ev(prog, digits, nullptr, nullptr, aux);
+    Val v = ev.eval(prog.root.kids[1 - side]);
+    if (v.k == Val::CELL) v = Val::num(v.n);
+    if (v.k != Val::NUM || v.d != 1) return false;
+    value = v.n;
+    return true;
+}
+
+bool expr_slot_value(const ExprProgram& prog, const ExprNode& body, int slot, int var, const int* digits, const int* aux,
+                     long long& value) {
+    Ev ev(prog, digits, nullptr, nullptr, aux);
+    if (slot < 0 || slot >= (int)ev.slots.size()) return false;
+    ev.slots[slot] = ev.cell(var);
+    Val v = ev.eval(body);
+    if (v.k == Val::CELL) v = Val::num(v.n);
+    if (v.k != Val::NUM || v.d != 1) return false;
+    value = v.n;
+    return true;
+}
+
 namespace {
 bool calls(const ExprNode& e, int fn) {
     if (e.op == X_CALL && e.v == fn) return true;

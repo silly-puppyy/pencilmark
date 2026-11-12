@@ -71,6 +71,12 @@ def _shape_code(name, sl):
             if size in sl:
                 return code
         return None
+    if name == "LayerCount":  # joint candidates (design review stage 4): in a row / column / box, or a digit inventory
+        if "inventory" in sl or "in the grid" in sl:
+            return "LIV"
+        if "layer literal" in sl or "layer house" in sl:
+            return "LJH"
+        return "LYC"
     if name == "LawOfLeftovers":
         if "phistomefel" in sl:
             return "PHV" if "variant" in sl else "PHI"
@@ -622,7 +628,14 @@ FIELDS = [
     ("time", _f_time),
     ("time_*", _f_time_stat),
     ("time_dist", _f_time_dist),
-    ("band", lambda c: {"band": "Unknown" if c.unknown else c.bp["band"]}),
+    (
+        "band",
+        lambda c: (
+            {"band": "Unknown", "reason": "human logic ran out: no technique applies (computer search needed)"}
+            if c.unknown
+            else {"band": c.bp["band"]}
+        ),
+    ),
     ("band_index", lambda c: {"band_index": None if c.unknown else c.bp["band_index"]}),
     ("contains", _f_contains),
     ("issues", _f_issues),
@@ -662,6 +675,7 @@ def grade(p, P, card=None, with_steps=None, max_seconds=None, fields=None, expla
                 g[k] = None
         if "band" in g:
             g["band"] = "Unknown"
+            g["reason"] = "time limit (max_seconds) reached before the difficulty route finished"
         g["completed"] = False
     if (
         fields is not None and "elapsed" in fields
@@ -840,7 +854,7 @@ def grade_fog(p, source, P, fields=None):
 
 
 def unknown_card(want, reason):
-    """the card of a puzzle no human route can grade yet (shading, unknowns / layers): band Unknown, difficulty and
+    """the card of a puzzle whose uniqueness could not be settled: band Unknown, difficulty and
     time null, no techniques, and the reason"""
     g = {
         "format": "pencilmark-grade",

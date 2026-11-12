@@ -76,6 +76,7 @@ module.exports = {
       {type: 'doc', id: 'grades/philosophy', className: 'pm-ico-philosophy', label: 'Philosophy'},
       {type: 'doc', id: 'grades/model', className: 'pm-ico-model', label: 'How a card is computed'},
       {type: 'doc', id: 'grades/techniques', className: 'pm-ico-techniques', label: 'Techniques'},
+      {type: 'doc', id: 'grades/clue-facts', className: 'pm-ico-techniques', label: 'Clue facts'},
       {type: 'doc', id: 'grades/benchmark', className: 'pm-ico-benchmark', label: 'Benchmark'},
       {type: 'doc', id: 'grades/experiments', className: 'pm-ico-experiments', label: 'Experiment log'},
       {type: 'doc', id: 'grades/glossary', className: 'pm-ico-glossary', label: 'Glossary'},

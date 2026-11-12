@@ -30,7 +30,10 @@ bool fc_skip(const char* n) {
                                 "nestedforcing", "nishio", "gurth", "pom", "pom2", "whatif", "humancase",
                                 "idprop", "classsingle", "classpair", "classtrap",
                                 // shading: colours are not branch state either (a colour trial at every node cost 30 s)
-                                "shadelocal", "shadeconnect", "shaderule", "shadetrial"};
+                                "shadelocal", "shadeconnect", "shaderule", "shadetrial",
+                                // layers: a layer value tried is a trial of its own (38 s per case analysis listing
+                                // on Reversing Valve, 2026-11-09)
+                                "layertrial"};
     for (const char* b : bad)
         if (!std::strcmp(n, b)) return true;
     return false;
@@ -52,13 +55,29 @@ int Solver::fc_propagate(int level, int& steps, std::vector<int>* log) {
         bool found = false;
         const int ceiling = fc_ceiling_now >= 0 ? fc_ceiling_now : P.fc_ceiling;
         if (fc_step_cap && steps > fc_step_cap) return 0;  // bounded (human what-if): stop following
-        for (size_t ti = 0; ti < tiers.size() && (int)ti <= ceiling && !found; ++ti) {
+        if (!branch_full) ++in_branch;  // AuxRule reads its rules without trying values inside a branch
+        // a move counts when it changes the branch's state: digits, or (an unknown's trial: fc_aux_on) values and
+        // pairs -- a values-only move otherwise changes nothing here and was re-listed up to 200 times per case
+        auto moves_state = [&](const MoveBuf& mb) {
+            for (const Move& m : mb.moves) {
+                if (m.el_n > 0 || m.pc >= 0) return true;
+                if (fc_aux_on)
+                    for (int k = 0; k < m.aeff_n; ++k) {
+                        const AEff& e = mb.aeffs[m.aeff_off + k];
+                        if (e.kind == AE_AUX && auxf[aux_off[e.cell] + e.arg]) return true;
+                        if (e.kind == AE_JOINT && joint_ok(e.cell) && joint_live(e.cell, e.arg / 16, e.arg % 16)) return true;
+                    }
+            }
+            return false;
+        };
+        for (size_t ti = 0; ti < tiers.size() && tier_rank[ti] <= ceiling && !found; ++ti) {
             b.clear();
             for (auto& s : tiers[ti])
                 if (!fc_skip(s->name())) s->collect(*this, b);
             filter(b);
-            found = !b.moves.empty();
+            found = moves_state(b);
         }
+        if (!branch_full) --in_branch;
         if (!found && level >= 2) {
             b.clear();
             forcing(b, level - 1, true);
@@ -72,6 +91,18 @@ int Solver::fc_propagate(int level, int& steps, std::vector<int>* log) {
                 uint32_t e = b.elims[m.el_off + k];
                 cand[e / 32] &= ~bit((int)(e % 32));
             }
+            if (fc_aux_on && has_aux())  // an unknown's trial: values and pairs are the branch's too
+                for (int k = 0; k < m.aeff_n; ++k) {
+                    const AEff& e = b.aeffs[m.aeff_off + k];
+                    if (e.kind == AE_AUX) {
+                        auxf[aux_off[e.cell] + e.arg] = 0;
+                        bool left = false;
+                        for (int i = aux_off[e.cell]; i < aux_off[e.cell + 1]; ++i) left |= auxf[i] != 0;
+                        if (!left) { ++version; return it + 1; }  // a variable without a value: contradiction
+                    } else if (e.kind == AE_JOINT && joint_ok(e.cell)) {
+                        jx[e.cell].set(jbit(e.arg / 16, e.arg % 16));
+                    }
+                }
             if (m.pc >= 0) pl.push_back({m.pc, m.pv});
             if (log) log->insert(log->end(), {EV_TECH, it + 1, m.pc, m.tech, m.el_n});
             ++steps;
@@ -372,7 +403,8 @@ void Solver::mental_notes(MoveBuf& out) {
         if (!vals[c]) cand[c] = md[c];
     ++version;
     MoveBuf b;
-    for (size_t ti = 1; ti < tiers.size() && ti <= 3; ++ti)
+    for (size_t ti = 0; ti < tiers.size(); ++ti)
+        if (tier_rank[ti] >= 1 && tier_rank[ti] <= 3)
         for (auto& s : tiers[ti])
             if (std::string(s->name()) != "ur" && std::string(s->name()) != "bug" && std::string(s->name()) != "xur" &&
                 std::string(s->name()) != "gurth")
@@ -436,4 +468,155 @@ void Solver::mental_notes(MoveBuf& out) {
     }
 }
 
+
+void Solver::case_yield(const std::vector<std::pair<int, int>>& givens, int ceiling, std::vector<std::array<int, 5>>& out) {
+    init_state(givens);
+    if ((int)cand_override.size() == p.N)
+        for (int c = 0; c < p.N; ++c)
+            if (!vals[c]) cand[c] &= cand_override[c];
+    compute_empties();
+    fc_ceiling_now = ceiling, fc_step_cap = 0, fc_aux_on = true;
+    branch_full = std::getenv("PENCILMARK_YIELD_FULL") != nullptr;  // every reader inside the cases
+    auto branch = [&](auto&& apply) {  // follow one assumption from this state; restore after
+        std::vector<uint8_t> sv = vals;
+        std::vector<uint32_t> sc = cand, sg = placed_g;
+        std::vector<char> sa = auxf;
+        std::vector<JMask> sj = jx;
+        ++version;
+        apply();
+        int steps = 0;
+        const int r = fc_propagate(1, steps, nullptr);
+        vals.swap(sv), cand.swap(sc), placed_g.swap(sg), auxf.swap(sa), jx.swap(sj);
+        ++version;
+        return std::make_pair(r, steps);
+    };
+    for (int c = 0; c < p.N && !deadline_passed(); ++c) {  // two-candidate cells
+        if (vals[c] || popc(cand[c]) != 2) continue;
+        for (uint32_t m = cand[c]; m; m &= m - 1) {
+            const int v = lowdigit(m);
+            auto [r, s] = branch([&] { place(c, v); });
+            out.push_back({0, c, v, r, s});
+        }
+    }
+    for (int gi : p.houses) {  // digits with two places in a house
+        const Group& G = p.groups[gi];
+        for (int d = 1; d <= p.D && !deadline_passed(); ++d) {
+            std::vector<int> pl;
+            bool done = false;
+            for (int c : G.cells) {
+                if (vals[c] == d) done = true;
+                if (!vals[c] && (cand[c] & bit(d))) pl.push_back(c);
+            }
+            if (done || pl.size() != 2) continue;
+            for (int c : pl) {
+                auto [r, s] = branch([&] { place(c, d); });
+                out.push_back({1, c, d, r, s});
+            }
+        }
+    }
+    for (int a = p.aux_u; a < (int)p.aux_values.size() && !deadline_passed(); ++a) {  // layer cells with two values
+        int n = 0;
+        for (int i = aux_off[a]; i < aux_off[a + 1]; ++i) n += auxf[i];
+        if (n != 2) continue;
+        for (int i = aux_off[a]; i < aux_off[a + 1]; ++i) {
+            if (!auxf[i]) continue;
+            auto [r, s] = branch([&] {
+                for (int j = aux_off[a]; j < aux_off[a + 1]; ++j) auxf[j] = j == i;
+            });
+            out.push_back({2, a, i - aux_off[a], r, s});
+        }
+    }
+    for (int a = 0; a < p.aux_u && !deadline_passed(); ++a) {  // unknowns with two values (kind 3)
+        int n = 0;
+        for (int i = aux_off[a]; i < aux_off[a + 1]; ++i) n += auxf[i];
+        if (n != 2) continue;
+        for (int i = aux_off[a]; i < aux_off[a + 1]; ++i) {
+            if (!auxf[i]) continue;
+            auto [r, s] = branch([&] {
+                for (int j = aux_off[a]; j < aux_off[a + 1]; ++j) auxf[j] = j == i;
+            });
+            out.push_back({3, a, i - aux_off[a], r, s});
+        }
+    }
+    // rules whose remaining tuples (digits, with the values they read) make exactly two digit combinations: each
+    // combination is a case, its cells held to that combination's tuples (kind 4: cell = the rule's index)
+    const int NA = (int)p.aux_values.size();
+    for (const std::vector<NConstraint>* L : {&p.nary, &p.nary_big})
+        for (const NConstraint& k : *L) {
+            if (deadline_passed()) break;
+            if (k.type != NT_EXPR || !k.expr || k.nv() < 2 || k.nv() > 8) continue;
+            const int nv = k.nv();
+            long long combos = 1;
+            for (int i = 0; i < nv; ++i) combos *= vals[k.vars[i]] ? 1 : popc(cand[k.vars[i]]);
+            std::vector<int> ar;
+            for (int a : k.expr->aux_read) {
+                if (a < 0 || a >= NA) continue;
+                int n = 0;
+                for (int i = aux_off[a]; i < aux_off[a + 1]; ++i) n += auxf[i];
+                combos *= std::max(1, n);
+                ar.push_back(a);
+            }
+            if (combos > 20000) continue;
+            std::map<uint32_t, std::vector<std::pair<std::vector<int>, std::vector<int>>>> by;  // digit set -> tuples
+            std::vector<int> dg(nv), av(NA, AUX_UNSET);
+            for (int a = 0; a < NA; ++a) {
+                int n = 0, last = 0;
+                for (int i = aux_off[a]; i < aux_off[a + 1]; ++i)
+                    if (auxf[i]) ++n, last = p.aux_values[a][i - aux_off[a]];
+                if (n == 1) av[a] = last;
+            }
+            std::function<void(int)> go = [&](int j) {
+                if (j < nv) {
+                    const int c = k.vars[j];
+                    for (uint32_t m = vals[c] ? bit(vals[c]) : cand[c]; m; m &= m - 1) dg[j] = lowdigit(m), go(j + 1);
+                    return;
+                }
+                const int q = j - nv;
+                if (q < (int)ar.size()) {
+                    const int a = ar[q];
+                    const int keep = av[a];
+                    for (int i = aux_off[a]; i < aux_off[a + 1]; ++i) {
+                        if (!auxf[i]) continue;
+                        av[a] = p.aux_values[a][i - aux_off[a]];
+                        bool ok = true;  // the pair is live where the layer belongs to one of the rule's cells
+                        if (joint_ok(a))
+                            for (int t = 0; t < nv && ok; ++t)
+                                if (k.vars[t] == aux_cell(a)) ok = joint_live(a, dg[t], i - aux_off[a]);
+                        if (ok) go(j + 1);
+                    }
+                    av[a] = keep;
+                    return;
+                }
+                if (!expr_holds(*k.expr, dg.data(), nullptr, nullptr, av.data())) return;
+                uint32_t set = 0;
+                for (int x : dg) set |= bit(x);
+                std::vector<int> vv;
+                for (int a : ar) vv.push_back(av[a]);
+                by[set].push_back({dg, vv});
+            };
+            go(0);
+            if (by.size() != 2) continue;
+            for (auto& [set, tuples] : by) {
+                auto [r, s] = branch([&] {
+                    for (int t = 0; t < nv; ++t) {  // each cell: the digits this combination's tuples give it
+                        uint32_t m = 0;
+                        for (auto& tp : tuples) m |= bit(tp.first[t]);
+                        if (!vals[k.vars[t]]) cand[k.vars[t]] &= m;
+                    }
+                    for (size_t q = 0; q < ar.size(); ++q) {  // each value read: those the tuples use
+                        const int a = ar[q];
+                        for (int i = aux_off[a]; i < aux_off[a + 1]; ++i) {
+                            bool used = false;
+                            for (auto& tp : tuples) used |= tp.second[q] == p.aux_values[a][i - aux_off[a]];
+                            if (!used) auxf[i] = 0;
+                        }
+                    }
+                });
+                out.push_back({4, k.index, (int)set, r, s});
+            }
+        }
+    fc_ceiling_now = -1, fc_aux_on = false, branch_full = false;
+}
+
 }  // namespace cs
+

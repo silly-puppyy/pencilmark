@@ -37,7 +37,8 @@ struct Brute {
     // ---- shading (yin-yang, format 6.19): a colour per cell beside its digit (0 unknown, 1 shaded, 2 unshaded) ----
     bool shade_on = false;
     std::vector<std::vector<uint8_t>> ss;  // colour per cell, per depth
-    std::vector<int> layered;              // custom rules reading region() / shaded() (indices into p.nary)
+    std::vector<const NConstraint*> layered;  // custom rules reading region() / shaded()
+    std::vector<const NConstraint*> big;      // custom rules over more than 64 cells reading digits only (p.nary_big)
     // one-cell rules reading shaded() ("even digits in a cage are shaded"): allowed digits per colour, so a colour
     // removes digits and digits that all imply one colour set it
     struct Coupling { int cell; uint32_t ok[3]; };  // ok[1]: digits allowed shaded, ok[2]: unshaded
@@ -46,7 +47,7 @@ struct Brute {
     bool aux_on = false;
     std::vector<int> aoff;                  // flag offset per aux variable (values in p.aux_values order)
     std::vector<std::vector<char>> as;      // flags per depth
-    std::vector<int> aux_rules;             // custom rules reading aux variables (indices into p.nary)
+    std::vector<const NConstraint*> aux_rules;  // custom rules reading aux variables
     std::vector<char> aux_read_any;         // aux variable read by some rule
     std::vector<int> auxv;                  // scratch: value per aux variable (AUX_UNSET when open)
 
@@ -56,22 +57,24 @@ struct Brute {
             if (p.groups[gi].has_total) cages.push_back(gi);
         chaos_on = !p.chaos.empty();
         shade_on = p.shading;
-        for (size_t ki = 0; ki < p.nary.size(); ++ki)
-            if (p.nary[ki].type == NT_EXPR && !p.nary[ki].expr->aux_read.empty()) aux_rules.push_back((int)ki);
-            else if (p.nary[ki].type == NT_EXPR && p.nary[ki].expr->layered) layered.push_back((int)ki);
+        for (const std::vector<NConstraint>* L : {&p.nary, &p.nary_big})
+            for (const NConstraint& k : *L)
+                if (k.type == NT_EXPR && !k.expr->aux_read.empty()) aux_rules.push_back(&k);
+                else if (k.type == NT_EXPR && k.expr->layered) layered.push_back(&k);
+                else if (L == &p.nary_big) big.push_back(&k);
         aux_on = !p.aux_values.empty();
         if (aux_on) {
             int off = 0;
             for (const auto& vals : p.aux_values) aoff.push_back(off), off += (int)vals.size();
             aoff.push_back(off);
             aux_read_any.assign(p.aux_values.size(), 0);
-            for (int ki : aux_rules)
-                for (int a : p.nary[ki].expr->aux_read) aux_read_any[a] = 1;
+            for (const NConstraint* k : aux_rules)
+                for (int a : k->expr->aux_read) aux_read_any[a] = 1;
             auxv.assign(p.aux_values.size(), AUX_UNSET);
         }
         if (shade_on)
-            for (int ki : layered) {
-                const NConstraint& k = p.nary[ki];
+            for (const NConstraint* kp : layered) {
+                const NConstraint& k = *kp;
                 if (k.nv() != 1) continue;
                 Coupling cp{k.vars[0], {0, 0, 0}};
                 for (int col = 1; col <= 2; ++col)
@@ -170,10 +173,24 @@ struct Brute {
         return true;
     }
     // custom rules reading region() / shaded(): each one whose cells' digits (and layers) are all known must hold
+    std::vector<int> dgv, lbv, sdv;  // scratch for rules over more than 64 cells
+    // custom rules over more than 64 cells reading digits only: checked once all their cells are fixed
+    bool big_ok(const uint8_t* vals) {
+        for (const NConstraint* k : big) {
+            dgv.resize(k->nv());
+            bool ready = true;
+            for (int i = 0; i < k->nv() && ready; ++i) ready = (dgv[i] = vals[k->vars[i]]) != 0;
+            if (ready && !expr_holds(*k->expr, dgv.data(), nullptr, nullptr)) return false;
+        }
+        return true;
+    }
     bool layered_ok(const uint8_t* vals, const uint8_t* lab, const uint8_t* sh) {
-        for (int ki : layered) {
-            const NConstraint& k = p.nary[ki];
-            int dg[64], lb[64], sd[64];
+        for (const NConstraint* kp : layered) {
+            const NConstraint& k = *kp;
+            dgv.resize(k.nv()), lbv.resize(k.nv()), sdv.resize(k.nv());
+            int* dg = dgv.data();
+            int* lb = lbv.data();
+            int* sd = sdv.data();
             if (!sh && k.nv() <= 64) {  // regions only: read lazily, so a rule already settled by what is known prunes
                 for (int i = 0; i < k.nv(); ++i) {  // now (a sight line stops at its first other region), not at the end
                     const int c = k.vars[i];
@@ -214,18 +231,23 @@ struct Brute {
                         if (f[i]) auxv[a] = p.aux_values[a][i - aoff[a]];
                 if (!aux_count(f, (int)a)) return false;
             }
-            for (int ki : aux_rules) {
-                const NConstraint& k = p.nary[ki];
-                int dg[64];
+            for (const NConstraint* kp : aux_rules) {
+                if (deadline_passed()) {  // max_seconds inside one node's aux propagation: give up (undecided)
+                    limited = true;
+                    return false;
+                }
+                const NConstraint& k = *kp;
+                std::vector<int> dgk(k.nv());
+                int* dg = dgk.data();
                 std::vector<int> fd;  // open digit cells of the rule (variable positions)
                 for (int i = 0; i < k.nv(); ++i)
                     if (!(dg[i] = vals[k.vars[i]])) fd.push_back(i);
                 if (fd.size() > 2) continue;  // read once at most two of its digits are open
                 std::vector<int> fr;
-                pm_long combos = 1;
-                for (int i : fd) combos *= popc(cand[k.vars[i]]);
+                pm_long combos = 1;  // saturating: a product over many unknowns overflowed and passed the cap
+                for (int i : fd) combos = std::min<pm_long>(combos * popc(cand[k.vars[i]]), 1 << 20);
                 for (int a : k.expr->aux_read)
-                    if (auxv[a] == AUX_UNSET) fr.push_back(a), combos *= aux_count(f, a);
+                    if (auxv[a] == AUX_UNSET) fr.push_back(a), combos = std::min<pm_long>(combos * aux_count(f, a), 1 << 20);
                 if (combos > 4096) continue;
                 std::vector<std::vector<char>> sup(fr.size());
                 for (size_t j = 0; j < fr.size(); ++j) sup[j].assign(aoff[fr[j] + 1] - aoff[fr[j]], 0);
@@ -597,7 +619,10 @@ struct Brute {
     void rec(int depth) {
         ++nodes;
         if ((int)sols.size() >= limit) return;
-        if (nodes > node_limit || ((nodes & 15) == 0 && deadline_passed())) {   // node budget or max_seconds
+        // node budget or max_seconds: every 16 nodes, or every node where a node is slow (regions to find, shading,
+        // unknowns, wide rules: seconds each on an 81-cell custom rule -- 16 of them passed max_seconds by minutes)
+        const bool slow = chaos_on || shade_on || aux_on || !layered.empty() || !big.empty();
+        if (nodes > node_limit || (((nodes & 15) == 0 || slow) && deadline_passed())) {
             limited = true;
             return;
         }
@@ -605,6 +630,10 @@ struct Brute {
         uint32_t* cand = cs[depth].data();
         const int N = p.N, D = p.D;
     top:
+        if (slow && deadline_passed()) {  // each round of the propagation below can be slow too
+            limited = true;
+            return;
+        }
         bool changed = true;
         while (changed) {
             changed = false;
@@ -777,6 +806,7 @@ struct Brute {
         if (!layered.empty() &&
             !layered_ok(vals, chaos_on ? ls[depth].data() : nullptr, shade_on ? ss[depth].data() : nullptr))
             return;
+        if (!big.empty() && !big_ok(vals)) return;
         if (aux_on) {
             bool dch = false;
             if (!aux_prop(vals, cand, as[depth].data(), dch)) return;

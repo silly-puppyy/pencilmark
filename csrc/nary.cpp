@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include "portable.hpp"
 #include "nary.hpp"
+#include "expr.hpp"
 #include "deadline.hpp"
 
 #include <algorithm>
@@ -1168,7 +1169,7 @@ static void cases_gac_memo(const NConstraint& k, const uint32_t* dom, pm_long bu
         put(-1), put(c.circle), put(c.total), put(c.distinct);
         for (int v : c.cells) put(v);
     }
-    auto it = g_cases_memo.find(key);
+    auto it = memo_off("cases") ? g_cases_memo.end() : g_cases_memo.find(key);
     if (it != g_cases_memo.end()) {
         out = it->second;
         return;
@@ -1245,6 +1246,18 @@ void nary_gac_plain(const NConstraint& k, const uint32_t* dom, const std::vector
         alldiff_gac(k, dom, req, D, out);
         return;
     }
+    if (k.type == NT_EXPR && k.expr && k.expr->layered) {
+        // a rule reading unknowns / layers / regions: the digit search treats every filling as consistent (the layer
+        // values are decided elsewhere), so the support search can remove nothing -- every value is supported, no
+        // count (it cost seconds per step on layer rules, through ComboLock)
+        for (int i = 0; i < nv; ++i) out.sup[i] = dom[i];
+        out.count = 0;
+        out.complete = false;
+        out.set_unique = false;
+        out.any = true;
+        out.must = 0;
+        return;
+    }
     if (long_tree_line(k) && req.empty()) {
         // the pair relations already propagate a tree-shaped line; the whole-line search over this many cells costs
         // seconds per call and the head reasoning gives up on it anyway (incomplete): no information
@@ -1278,6 +1291,16 @@ void nary_gac_plain(const NConstraint& k, const uint32_t* dom, const std::vector
             uint32_t b = m & (~m + 1);
             if (out.sup[i] & b) continue;
             d2[i] = b;
+            if (k.type == NT_EXPR && k.expr && nv > 12 && req.empty() &&
+                expr_may_hold(*k.expr, d2.data(), std::vector<std::vector<int>>())) {
+                // a wide rule ("32 cells add up to a square"): a value its abstract reading allows is kept without a
+                // search per value (32 x 9 searches cost seconds per listing on Squircles; a search out of budget
+                // kept it anyway)
+                out.sup[i] |= b;
+                out.any = true;
+                d2[i] = dom[i];
+                continue;
+            }
             Enum f(k, d2.data(), req, budget, D);
             f.stop_first = true;
             f.run();

@@ -6,6 +6,8 @@
 #include <functional>
 #include <map>
 #include <set>
+#include <string>
+#include <unordered_map>
 #include "expr.hpp"
 #include "portable.hpp"
 #include "solver.hpp"
@@ -362,16 +364,66 @@ void Solver::pocket(MoveBuf& out) {
 // first border and cells used only as cells never branch on their digit), within a budget; a candidate digit or label
 // that no combination uses is removed. Sound: a satisfying combination that never read a value supports all its
 // candidates, extra (non-canonical) label combinations only add support, and nothing is removed when the budget runs out.
+// RegionRule's reading of one rule, by what it reads: per cell its digit / candidates, label / label candidates, which
+// of the rule's cells share its region group, and the pairs known to differ (thread-local, cleared when large)
+namespace {
+struct RegMemo {
+    std::vector<std::pair<int, int>> d_off, l_off, joins, neqs;
+};
+thread_local std::unordered_map<std::string, RegMemo> g_reg_memo;
+}  // namespace
+
 void Solver::region_rule(MoveBuf& out) {
     if (!has_regions() || disabled[REGION_RULE]) return;
     constexpr long BUDGET = 20000;  // satisfiability checks per rule and step
     for (const NConstraint& k : p.nary) {
         if (k.type != NT_EXPR || !k.expr || !k.expr->layered) continue;
+        if (deadline_passed()) return;  // max_seconds: 144 rules x the budget below took minutes per listing
         const int nv = k.nv();
         if (nv > 64) continue;
         // a rule comparing regions only (==, !=) reads which cells share a region: regions are named freely as the
         // search meets them (partitions), so it learns "same region" / "different regions" while every label is open
         const bool rel = expr_region_relational(k.expr->root);
+        auto emit = [&](const RegMemo& r) {
+            const int n = (int)(r.d_off.size() + r.l_off.size() + r.joins.size() + r.neqs.size());
+            if (!n) return;
+            Move& m = new_move(out, REGION_RULE, 1.0, n);
+            for (auto [c, d] : r.d_off) add_elim(out, m, c, d);
+            for (auto [c, l] : r.l_off) add_lel(out, m, c, l);
+            for (auto [a, b] : r.joins) add_aeff(out, m, AE_REG_JOIN, a, b);
+            for (auto [a, b] : r.neqs) add_aeff(out, m, AE_REG_NEQ, a, b);
+            set_pattern(out, m, k.vars);
+            m.nk = NM_NARY;  // the rule (explanations name it)
+            m.na = k.index;
+            m.nb = k.group;
+            m.code = 7190;
+        };
+        std::string key;
+        {
+            auto put = [&](uint64_t x) { key.append(reinterpret_cast<const char*>(&x), sizeof x); };
+            put(p.uid), put((uint64_t)(uintptr_t)&k);
+            for (int i = 0; i < nv; ++i) {
+                const int c = k.vars[i];
+                put(vals[c] ? (1ull << 40 | (uint64_t)vals[c]) : cand[c]);
+                put(p.chaos_of[c] < 0 ? 0 : lab[c] ? (1ull << 40 | (uint64_t)lab[c]) : lcand[c]);
+                int first = i;  // the first of the rule's cells in its region group
+                for (int j = 0; j < i; ++j)
+                    if (p.chaos_of[k.vars[j]] >= 0 && p.chaos_of[c] >= 0 && rg_anchor(k.vars[j]) == rg_anchor(c)) {
+                        first = j;
+                        break;
+                    }
+                put((uint64_t)first);
+                uint64_t dif = 0;
+                for (int j = 0; j < i; ++j)
+                    if (p.chaos_of[k.vars[j]] >= 0 && p.chaos_of[c] >= 0 && rg_differ(k.vars[j], c)) dif |= 1ull << j;
+                put(dif);
+            }
+        }
+        if (auto it = memo_off("region") ? g_reg_memo.end() : g_reg_memo.find(key); it != g_reg_memo.end()) {
+            emit(it->second);
+            continue;
+        }
+        if (g_reg_memo.size() > 50000) g_reg_memo.clear();
         int dg[64], lb[64];
         uint32_t dsup[64] = {0}, lsup[64] = {0};
         bool dall[64] = {false}, lall[64] = {false};
@@ -388,7 +440,7 @@ void Solver::region_rule(MoveBuf& out) {
         bool complete = true;
         std::function<void()> go = [&]() {
             if (!complete) return;
-            if (--budget < 0) {
+            if (--budget < 0 || ((budget & 255) == 0 && deadline_passed())) {
                 complete = false;
                 return;
             }
@@ -472,8 +524,16 @@ void Solver::region_rule(MoveBuf& out) {
             }
         };
         go();
-        if (!complete) continue;
-        std::vector<std::pair<int, int>> d_off, l_off, joins, neqs;
+        if (!complete) {
+            if (!deadline_passed()) g_reg_memo[key];  // the budget ran out: nothing, every time
+            continue;
+        }
+        RegMemo& r = g_reg_memo[key];
+        r = RegMemo();  // a fresh reading (PENCILMARK_NO_MEMO skips the lookup, not the entry)
+        auto& d_off = r.d_off;
+        auto& l_off = r.l_off;
+        auto& joins = r.joins;
+        auto& neqs = r.neqs;
         for (int i = 0; i < nv; ++i) {
             const int c = cellv[i];
             if (!vals[c] && !dall[i])
@@ -490,18 +550,7 @@ void Solver::region_rule(MoveBuf& out) {
                     if ((same[i] & bj) && !(diff[i] & bj) && rg_anchor(a) != rg_anchor(b)) joins.push_back({a, b});
                     if ((diff[i] & bj) && !(same[i] & bj) && !rg_differ(a, b)) neqs.push_back({a, b});
                 }
-        const int n = (int)(d_off.size() + l_off.size() + joins.size() + neqs.size());
-        if (!n) continue;
-        Move& m = new_move(out, REGION_RULE, 1.0, n);
-        for (auto [c, d] : d_off) add_elim(out, m, c, d);
-        for (auto [c, l] : l_off) add_lel(out, m, c, l);
-        for (auto [a, b] : joins) add_aeff(out, m, AE_REG_JOIN, a, b);
-        for (auto [a, b] : neqs) add_aeff(out, m, AE_REG_NEQ, a, b);
-        set_pattern(out, m, k.vars);
-        m.nk = NM_NARY;  // the rule (explanations name it)
-        m.na = k.index;
-        m.nb = k.group;
-        m.code = 7190;
+        emit(r);
     }
 }
 

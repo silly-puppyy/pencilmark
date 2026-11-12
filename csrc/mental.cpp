@@ -80,7 +80,12 @@ bool Solver::compute_mental(int level) {
                 any_empty |= !vals[k.vars[i]];
             }
             if (!any_empty) continue;
-            const GacOut& o = gac_cached(k, dom);
+            // a custom expression: only a complete reading counts here, and completeness is settled by the first
+            // (2000-node) enumeration -- the full-budget support search behind it is wasted (seconds per step on wide
+            // rules over unknowns), so read it with that budget (same result when complete)
+            GacOut ox;
+            if (k.type == NT_EXPR) gac_prop(k, dom, 2000, ox);
+            const GacOut& o = k.type == NT_EXPR ? ox : gac_cached(k, dom);
             if (!o.any && o.complete) continue;  // inconsistent view: leave it to the notes phase
             // a whole-rule reading without notes is human only while the rule has few consistent fillings;
             // above T = 50 (or unknown) it is left to the notes phase (combination moves priced by size).
@@ -450,7 +455,7 @@ int Solver::case_split(int c0, int v0, int max_rounds, int& placed, std::vector<
         uint64_t h = 1469598103934665603ULL;
         for (int x = 0; x < p.N; ++x) h = (h ^ ((uint64_t)vals[x] << 32 | cand[x])) * 1099511628211ULL;
         sig = h ^ ((uint64_t)c0 << 8) ^ ((uint64_t)v0 << 20) ^ ((uint64_t)max_rounds << 40);
-        auto it = split_memo.find(sig);
+        auto it = memo_off("split") ? split_memo.end() : split_memo.find(sig);
         if (it != split_memo.end() && it->second.vals == vals && it->second.cand == cand && it->second.c0 == c0 &&
             it->second.v0 == v0 && it->second.rounds == max_rounds) {
             placed = it->second.placed;

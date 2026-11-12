@@ -82,7 +82,9 @@ def test_route_codes_complete():
     """the codes a route step can carry: technique chips, pattern codes, shape codes -- each has a name, a band and an
     SE rating (a number, or "-": SE has no such technique), and codes.csv lists nothing else"""
     tech = {t.code: t.band for t in T if t.role == "logic"}
-    route = set(tech) | {p.code for p in R.patterns() if p.code} | _shape_codes() | {"SWF", "FRK"}
+    route = (
+        set(tech) | {p.code for p in R.patterns() if p.code} | _shape_codes() | {"SWF", "FRK", "TBX"}
+    )  # band_path.classify
     assert route == set(C), f"carried but missing: {route - set(C)}; listed but never carried: {set(C) - route}"
     for code, c in C.items():
         assert c.name, code
@@ -179,3 +181,38 @@ def test_line_kinds_table_matches():
     text = (ROOT / "csrc" / "nary.hpp").read_text(encoding="utf-8")
     table = text[text.index("#define PM_LINE_KINDS(X)") : text.index("enum LineKind")]
     assert tuple(re.findall(r'X\(LK_\w+, "(\w+)"\)', table)) == M.LINE_KINDS
+
+
+def test_a_technique_that_never_fires_changes_no_route(monkeypatch):
+    """tiers are read by rank, never by position (the forcing ceiling, the mental notes' tiers): a tier whose strategy
+    never fires, inserted anywhere, leaves every route as it was (two layer tiers at the front once moved a puzzle from
+    Expert to Extreme; design review stage 1, 2026-11-10)"""
+    import json
+
+    import pencilmark as pm
+
+    G = {}
+    for line in (ROOT / "tests" / "golden" / "inputs.jsonl").read_text(encoding="utf-8").splitlines():
+        d = json.loads(line)
+        G[d["name"]] = d["puzzle"]
+    rows = [[f"r{r}c{c}" for c in range(1, 10)] for r in range(1, 10)]
+    layered = {"format": "pencilmark-puzzle", "format_version": 1, "board": {"rows": 9, "cols": 9}, "digits": 9,
+               "givens": G["gen-9x9-classic-veryhard"]["givens"], "layers": {"shift": {"values": [-1, 0, 1]}},
+               "rules": [{"type": "box_grid", "box": [3, 3], "count": [3, 3]},
+                         {"type": "custom", "cells": {"H": rows}, "each": "H",
+                          "holds": "count(shift(x) == 1 for x in H) == 1"}]}  # fmt: skip
+
+    def route(p):
+        c = pm.rate(p, fields=["band", "difficulty", "steps"])
+        return (
+            c.get("band"),
+            c.get("difficulty"),
+            [(s.get("code"), s.get("placement"), s.get("text")) for s in c["steps"]],
+        )
+
+    for p in (G["gen-9x9-classic-veryhard"], G["gen-9x9-killer-hard"], G["gen-9x9-thermo-medium"], layered):
+        monkeypatch.delenv("PENCILMARK_TEST_IDLE_TIER", raising=False)
+        base = route(p)
+        for at in (0, 3, 8, 20):
+            monkeypatch.setenv("PENCILMARK_TEST_IDLE_TIER", str(at))
+            assert route(p) == base, at

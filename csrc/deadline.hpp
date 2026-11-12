@@ -1,5 +1,7 @@
 #pragma once
 #include <chrono>
+#include <cstdlib>
+#include <string>
 
 namespace cs {
 
@@ -20,6 +22,20 @@ inline void set_deadline(double seconds) {
     if (g_deadline_on)
         g_deadline = std::chrono::steady_clock::now() +
                      std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<double>(seconds));
+}
+
+/// diagnostics (PENCILMARK_NO_MEMO=1, or a comma list of names: aux, region, cases, gac, split, listing, shade, eqsums,
+/// modcage): those
+/// state-keyed memos miss, so a route can be compared with caching off (a cache must never change the route:
+/// checklist H, stage 0)
+inline bool memo_off(const char* which) {
+    static const std::string e = [] {
+        const char* v = std::getenv("PENCILMARK_NO_MEMO");
+        return std::string(v ? v : "");
+    }();
+    if (e.empty()) return false;
+    if (e == "1") return true;
+    return ("," + e + ",").find("," + std::string(which) + ",") != std::string::npos;
 }
 
 }  // namespace cs

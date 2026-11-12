@@ -183,7 +183,7 @@ def test_max_seconds_unknown_when_time_runs_out():
     card = pencilmark.rate(EASTER_MONSTER, max_seconds=5)
     assert time.time() - t < 8, time.time() - t
     assert card["band"] == "Unknown" and card["difficulty"] is None and card["time"] is None, card
-    assert card["completed"] is False, card
+    assert card["completed"] is False and "max_seconds" in card["reason"], card
 
 
 def test_max_seconds_bounds_the_call():
@@ -413,17 +413,21 @@ def test_params_follow_in_place_setting_changes():
         api._PARAMS = (None, None)
 
 
-def test_colouring_is_opt_in(variants):
-    """rate(coloring=True) puts kept colors on the route (Vudoku: Color Fill / Single / Pair take it from Hard to
-    Medium); the default leaves the color-only techniques out"""
+def test_colouring_defaults_on_for_variants(variants):
+    """coloring (kept colors: Color Fill / Single / Pair) is ON by default for variant puzzles -- solvers of hard
+    variants color constantly (user 2026-11-10) -- and off for plain classic; coloring=False leaves the color-only
+    techniques out (Vudoku: Medium with colors, Hard without)"""
     import pencilmark
 
     vudoku = next(v["puzzle"] for v in variants if v["name"].startswith("Vudoku"))
     colour_only = {"CFL", "CSG", "CPR", "CTR", "CPT", "CFS", "CCM", "CCX"}
-    off = pencilmark.rate(vudoku, fields=["band", "contains"])
-    on = pencilmark.rate(vudoku, fields=["band", "contains"], coloring=True)
+    off = pencilmark.rate(vudoku, fields=["band", "contains"], coloring=False)
+    auto = pencilmark.rate(vudoku, fields=["band", "contains"])
     assert not colour_only & {c["code"] for c in off["contains"]}
-    assert colour_only & {c["code"] for c in on["contains"]} and on["band"] != off["band"]
+    assert colour_only & {c["code"] for c in auto["contains"]} and auto["band"] != off["band"]
+    assert pencilmark.rate(vudoku, fields=["band", "contains"], coloring=True) == auto
+    classic = pencilmark.rate(CLASSIC, fields=["band", "difficulty"])
+    assert classic == pencilmark.rate(CLASSIC, fields=["band", "difficulty"], coloring=False)  # classic: off
 
 
 def test_techniques_whitelist():

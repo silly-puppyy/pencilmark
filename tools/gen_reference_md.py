@@ -25,20 +25,21 @@ PAGES = {
         "Formats",
         "Reading, checking, writing and drawing puzzles and generator requests; the rule families and the variant names.",
         ["read", "write", "errors", "exchange/__init__", "exchange/common", "exchange/board", "exchange/validate", "exchange/read",
-         "exchange/write", "exchange/canonical", "rules/__init__", "rules/line", "rules/edge", "rules/cell", "rules/custom", "rules/region", "rules/shading",
+         "exchange/write", "exchange/canonical", "rules/__init__", "rules/line", "rules/edge", "rules/cell", "rules/custom", "rules/values", "rules/region", "rules/shading",
          "puzzle_json", "interop", "spec_format", "variants", "render"],
     ),
     "engine": (
         "The engine interface",
         "The Python side of the C++ engine: the puzzle model, the calls into the engine, its move records, the "
         "technique registry.",
-        ["model", "layers", "cbackend", "engine_records", "solver", "registry", "cpsat_verify", "_data"],
+        ["model", "layers", "cbackend", "engine_records", "solver", "registry", "cpsat_verify", "rule_lemmas", "_data"],
     ),
     "explain": (
         "Explanations",
         "The step explanations: one handler per technique, on a replayed grid.",
         ["explain/__init__", "explain/base", "explain/dispatch", "explain/grid", "explain/catalog", "explain/singles",
-         "explain/combos", "explain/notes", "explain/chains", "explain/trial", "explain/records", "explain/facts"],
+         "explain/combos", "explain/notes", "explain/chains", "explain/trial", "explain/records", "explain/facts",
+         "explain/clue_facts"],
     ),
     "fog": (
         "Fog of war",

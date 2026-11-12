@@ -201,6 +201,13 @@ class _Item:  # an element of a comprehension: its value, and the condition it e
         self.value, self.cond = value, cond
 
 
+class _Maybe:  # a number that may be ABSENT (custom.py): its value where defined, and the Boolean "defined"
+    __slots__ = ("value", "defined", "lo", "hi")
+
+    def __init__(self, value, defined, lo=None, hi=None):
+        self.value, self.defined, self.lo, self.hi = value, defined, lo, hi
+
+
 class _Fn:  # a lambda: its parameter slots, body and the scope it was made in
     __slots__ = ("params", "body", "scope")
 
@@ -208,23 +215,51 @@ class _Fn:  # a lambda: its parameter slots, body and the scope it was made in
         self.params, self.body, self.scope = params, body, scope
 
 
+class _AuxVars:
+    """the file's unknowns and layers as CP-SAT variables over their values, made when a rule first reads one (an
+    unknown by index; a layer's value at a board cell, fixed where the file gives it)"""
+
+    def __init__(self, m, aux, n_cells):
+        self.m, self.aux, self.N, self.v = m, aux, n_cells, {}
+
+    def _make(self, key, values):
+        from ortools.sat.python import cp_model
+
+        if key not in self.v:
+            self.v[key] = self.m.NewIntVarFromDomain(cp_model.Domain.FromValues(sorted(set(values))), "")
+        return self.v[key]
+
+    def var(self, i):
+        return self._make(("u", i), self.aux["unknowns"][i]["values"])
+
+    def layer(self, li, cell):
+        L = self.aux["layers"][li]
+        g = L["given"].get(cell)
+        return self._make(("l", li, cell), [g] if g is not None else L["values"])
+
+
 class _ExprCP:
     """a custom rule's expression (its IR, custom.to_ir) as CP-SAT constraints: constants, linear expressions and
     Booleans; comprehensions over cell lists (with an optional condition), if-then-else, comparisons, and / or / not,
     + - and products with a constant, sum, count, len, abs, odd, even, num, all, any, shaded(), region() (the label
-    Booleans of the regions to find), take_while with a lambda. Anything else raises _Unmodelled (the model is then
+    Booleans of the regions to find), take_while with a lambda, L[i] with a variable i, position(L, f), defined(x),
+    ranges with variable ends (over known bounds). A value that may be ABSENT is a _Maybe: comparisons with it hold
+    only where it is defined, arithmetic carries the definedness. Anything else raises _Unmodelled (the model is then
     unsupported and the C++ search decides)."""
 
     BIG = 10_000
 
-    def __init__(self, m, con, x, shading, labels=None):
+    def __init__(self, m, con, x, shading, labels=None, aux=None, D=9):
         from .rules import custom as CU
 
         self.m, self.x, self.sh, self.CU = m, x, shading, CU
+        self.aux = aux  # the file's unknowns / layers (_AuxVars), or None
         self.lab = labels or {}  # cell -> its D label Booleans (regions to find)
         self.cells, self.lists, self.ir = con["cells"], con["lists"], con["ir"]
+        self.pos, self.box = con.get("pos") or [], con.get("box") or (3, 3)  # per variable [row, col]; box size
         self.op = {i: o for o, i in CU.OPCODE.items()}
         self.fn = {i: f for f, i in CU.FNCODE.items()}
+        self.D = D
 
     def holds(self):
         v = self.ev(self.ir, {})
@@ -238,7 +273,49 @@ class _ExprCP:
             return self.x[self.cells[v.var]]
         if isinstance(v, bool):
             return int(v)
+        if isinstance(v, _Maybe):
+            raise _Unmodelled("a value that may be absent, here")
         return v
+
+    def split(self, *vs):
+        """values that may be absent -> (plain values, the Boolean "all defined": True when none may be absent)"""
+        out, defs = [], []
+        for v in vs:
+            if isinstance(v, _Maybe):
+                defs.append(v.defined)
+                v = v.value
+            out.append(v)
+        return out, (self.logic("and", defs) if defs else True)
+
+    def bounds(self, v):
+        """constant bounds of a value, where known: a constant, a cell (1..D), a _Maybe made with bounds, +- constant"""
+        if isinstance(v, bool):
+            return int(v), int(v)
+        if isinstance(v, int):
+            return v, v
+        if isinstance(v, _Cell):
+            return 1, self.D
+        if isinstance(v, _Maybe) and v.lo is not None:
+            return v.lo, v.hi
+        return None
+
+    def member(self, v, values):
+        """a Boolean: the expression v takes one of the constant values (v within -BIG..BIG)"""
+        from ortools.sat.python import cp_model
+
+        w = self.m.NewIntVar(-self.BIG, self.BIG, "")
+        self.m.Add(w == v)
+        dom = cp_model.Domain.FromValues(sorted(set(values)))
+        b = self.m.NewBoolVar("")
+        self.m.AddLinearExpressionInDomain(w, dom).OnlyEnforceIf(b)
+        self.m.AddLinearExpressionInDomain(w, dom.complement().intersection_with(
+            cp_model.Domain(-self.BIG, self.BIG))).OnlyEnforceIf(b.Not())  # fmt: skip
+        return b
+
+    @staticmethod
+    def is_cond(v):
+        """a condition (a Python or CP-SAT Boolean), not a number or a cell"""
+        return isinstance(v, bool) or getattr(v, "is_boolean", None) is True or type(v).__name__ == "NotBooleanVariable"
 
     def boolean(self, v):
         if isinstance(v, bool):
@@ -248,6 +325,9 @@ class _ExprCP:
         return v
 
     def compare(self, o, a, b):
+        (a, b), d = self.split(a, b)
+        if d is not True:  # with ABSENT a comparison is false (!= too)
+            return self.logic("and", [d, self.compare(o, a, b)])
         a, b = self.num(a), self.num(b)
         if isinstance(a, int) and isinstance(b, int):
             return {"==": a == b, "!=": a != b, "<": a < b, "<=": a <= b, ">": a > b, ">=": a >= b}[o]
@@ -314,6 +394,51 @@ class _ExprCP:
             return scope[a[0]]
         if o == "list":
             return [self.ev(y, scope) for y in a]
+        if o == "index":  # L[i] (1-based); a variable i picks under indicators, outside the list the value is absent
+            its = self.items(self.ev(a[0], scope))
+            (i,), di = self.split(self.ev(a[1], scope))
+            i = self.num(i)
+            if isinstance(i, int) and di is True:
+                if not 1 <= i <= len(its):
+                    return _Maybe(0, False, 0, 0)  # outside the list: ABSENT
+                if its[i - 1].cond is not None:
+                    raise _Unmodelled("index")
+                return its[i - 1].value
+            if not its or any(it.cond is not None for it in its):
+                raise _Unmodelled("a variable index into a filtered list")
+            vals = [self.num(it.value) for it in its]
+            v = self.m.NewIntVar(-self.BIG, self.BIG, "")
+            ins = []
+            for k, w in enumerate(vals, 1):
+                e = self.compare("==", i, k)
+                if e is False:
+                    continue
+                if e is True:
+                    return its[k - 1].value if di is True else _Maybe(its[k - 1].value, di)
+                self.m.Add(v == w).OnlyEnforceIf(e)
+                ins.append(e)
+            if not ins:
+                raise _Unmodelled("index")
+            d = self.logic("or", ins)
+            if di is not True:
+                d = self.logic("and", [d, di])
+            lo = [self.bounds(it.value) for it in its]
+            return _Maybe(v, d, *((min(x[0] for x in lo), max(x[1] for x in lo)) if all(lo) else (None, None)))
+        if o == "range":  # {a..b}: constant ends, or ends of known bounds (each element under "lo <= k <= hi")
+            ends = [self.ev(a[0], scope), self.ev(a[1], scope)]
+            (lo, hi), d = self.split(*ends)
+            lo, hi = self.num(lo), self.num(hi)
+            if isinstance(lo, int) and isinstance(hi, int) and d is True:
+                return list(range(lo, hi + 1))
+            bl, bh = self.bounds(ends[0]), self.bounds(ends[1])
+            if bl is None or bh is None or bh[1] - bl[0] > 200:
+                raise _Unmodelled("a range with a variable end")
+            out = []
+            for k in range(bl[0], bh[1] + 1):
+                c = self.logic("and", [d, self.compare("<=", lo, k), self.compare("<=", k, hi)])
+                if c is not False:
+                    out.append(_Item(k, None if c is True else c))
+            return out
         if o == "comp":
             slot, src, body, cond = a
             out = []
@@ -330,27 +455,92 @@ class _ExprCP:
             return out
         if o == "let":
             return self.ev(a[2], {**scope, a[0]: self.ev(a[1], scope)})
+        if o == "letfn":  # let f(a, b) = body; rest
+            fslot, ps, body, rest = a
+            fn = _Fn(ps, body, dict(scope))
+            fn.scope[fslot] = fn
+            return self.ev(rest, {**scope, fslot: fn})
+        if o == "callfn":
+            fn = scope.get(a[0])
+            if not isinstance(fn, _Fn) or len(fn.params) != len(a) - 1:
+                raise _Unmodelled("callfn")
+            args = [self.ev(y, scope) for y in a[1:]]
+            return self.ev(fn.body, {**fn.scope, **dict(zip(fn.params, args))})
+        if o == "slice":  # L[i:j] with constant ends (1-based, clamped as the language does)
+            its = self.items(self.ev(a[0], scope))
+            i, j = self.num(self.ev(a[1], scope)), self.num(self.ev(a[2], scope))
+            if not (isinstance(i, int) and isinstance(j, int)):
+                raise _Unmodelled("slice")
+            i, j = max(i, 1), min(j, len(its))
+            return its[i - 1 : j] if i <= j else []
+        if o in ("div", "mod"):  # by a positive constant: v = k * q + r, 0 <= r < k (floor division)
+            v, k = self.num(self.ev(a[0], scope)), self.num(self.ev(a[1], scope))
+            if isinstance(v, int) and isinstance(k, int) and k:
+                return v // k if o == "div" else v % k
+            if not (isinstance(k, int) and k > 0):
+                raise _Unmodelled(o)
+            q, r = self.m.NewIntVar(-self.BIG, self.BIG, ""), self.m.NewIntVar(0, k - 1, "")
+            self.m.Add(v == k * q + r)
+            return q if o == "div" else r
         if o == "if":
             return self.ite(self.ev(a[0], scope), self.ev(a[1], scope), self.ev(a[2], scope))
         if o in ("and", "or", "not"):
             return self.logic(o, [self.ev(y, scope) for y in a])
         if o in ("==", "!=", "<", "<=", ">", ">="):
             return self.compare(o, self.ev(a[0], scope), self.ev(a[1], scope))
-        if o in ("+", "-"):
-            l, r = self.num(self.ev(a[0], scope)), self.num(self.ev(a[1], scope))
-            return l + r if o == "+" else l - r
-        if o == "neg":
-            return -self.num(self.ev(a[0], scope))
-        if o == "*":
-            l, r = self.num(self.ev(a[0], scope)), self.num(self.ev(a[1], scope))
-            if not (isinstance(l, int) or isinstance(r, int)):
-                raise _Unmodelled("a product of two unknowns")
-            return l * r
+        if o in ("in", "not in"):  # membership: a domain for constant lists, else one of the equalities
+            v, its = self.num(self.ev(a[0], scope)), self.items(self.ev(a[1], scope))
+            if any(it.cond is not None for it in its):
+                raise _Unmodelled("in over a filtered list")
+            vals = [self.num(it.value) for it in its]
+            if all(isinstance(w, int) for w in vals):
+                b = v in vals if isinstance(v, int) else self.member(v, vals)
+            else:
+                b = self.logic("or", [self.compare("==", v, w) for w in vals]) if vals else False
+            return self.logic("not", [b]) if o == "not in" else b
+        if o in ("+", "-", "*", "neg"):  # a value that may be absent carries its definedness
+            vs = [self.ev(y, scope) for y in a]
+            if any(isinstance(v, _Maybe) for v in vs):
+                bs = [self.bounds(v) for v in vs]
+                plain, d = self.split(*vs)
+                v = self.arith(o, [self.num(w) for w in plain])
+                lo = hi = None
+                if all(bs) and o in ("+", "-", "neg"):
+                    if o == "neg":
+                        lo, hi = -bs[0][1], -bs[0][0]
+                    else:
+                        lo = bs[0][0] + (bs[1][0] if o == "+" else -bs[1][1])
+                        hi = bs[0][1] + (bs[1][1] if o == "+" else -bs[1][0])
+                return _Maybe(v, d, lo, hi)
+            return self.arith(o, [self.num(v) for v in vs])
+        if o == "aux":  # an unknown: one CP variable per model over its values
+            if self.aux is None:
+                raise _Unmodelled("aux")
+            return self.aux.var(a[0])
+        if o == "auxcell":  # a layer's value at a cell
+            v = self.ev(a[1], scope)
+            if self.aux is None or not isinstance(v, _Cell):
+                raise _Unmodelled("auxcell")
+            return self.aux.layer(a[0], self.cells[v.var])
         if o == "lambda":
             return _Fn(a[0], a[1], scope)
         if o == "call":
             return self.call(self.fn[a[0]], [self.ev(y, scope) for y in a[1:]])
         raise _Unmodelled(o)
+
+    def arith(self, o, vs):
+        if o == "neg":
+            return -vs[0]
+        l, r = vs
+        if o == "+":
+            return l + r
+        if o == "-":
+            return l - r
+        if not (isinstance(l, int) or isinstance(r, int)):  # two variables: a product variable
+            t = self.m.NewIntVar(-(10**12), 10**12, "")
+            self.m.AddMultiplicationEquality(t, [l, r])
+            return t
+        return l * r
 
     def take_while(self, L, f):
         """the leading elements meeting f: each kept under "every element so far met f" (a Boolean chain)"""
@@ -375,11 +565,56 @@ class _ExprCP:
             return sum((k + 1) * b for k, b in enumerate(self.lab[self.cells[v.var]]))
         if f == "take_while":
             return self.take_while(args[0], args[1])
+        if f == "defined":
+            return args[0].defined if isinstance(args[0], _Maybe) else True
+        if f == "position":  # the first element meeting f (1-based), absent if none: "first k" Booleans
+            fn = args[1]
+            if not isinstance(fn, _Fn) or len(fn.params) != 1:
+                raise _Unmodelled("position without a one-parameter lambda")
+            its = self.items(args[0])
+            if any(it.cond is not None for it in its):
+                raise _Unmodelled("position over a filtered list")
+            none_yet, terms, firsts = True, 0, []
+            for k, it in enumerate(its, 1):
+                b = self.boolean(self.ev(fn.body, {**fn.scope, fn.params[0]: it.value}))
+                first = self.logic("and", [none_yet, b])
+                if first is True:
+                    return k if not firsts else _Maybe(terms + k, True, 1, len(its))
+                if first is not False:
+                    firsts.append(first)
+                    terms = terms + k * first
+                none_yet = self.logic("and", [none_yet, self.logic("not", [b])])
+                if none_yet is False:
+                    break
+            if not firsts:
+                raise _Unmodelled("position: never found")
+            return _Maybe(terms, self.logic("or", firsts), 1, len(its))
         if f == "shaded":
             v = args[0]
             if not isinstance(v, _Cell) or self.cells[v.var] not in self.sh:
                 raise _Unmodelled("shaded() without shading")
             return self.sh[self.cells[v.var]]
+        if f == "count" and not any(self.is_cond(it.value) for it in self.items(args[0])):
+            # numbers / cells: count() counts the elements (custom.py), each under its condition
+            return sum(1 if it.cond is None else self.ite(it.cond, 1, 0) for it in self.items(args[0]))
+        if f == "reverse":  # of an unconditional list
+            its = self.items(args[0])
+            if any(it.cond is not None for it in its):
+                raise _Unmodelled("reverse over a filtered list")
+            return [it.value for it in reversed(its)]
+        if f == "sum" and any(isinstance(it.value, _Maybe) for it in self.items(args[0])):
+            # an element that may be ABSENT: the sum is absent where a present element (its condition holds) is
+            total, defs = 0, []
+            for item in self.items(args[0]):
+                (val,), d = self.split(item.value)
+                term = self.num(val)
+                if item.cond is not None:
+                    term = self.ite(item.cond, term, 0)
+                    d = d if d is True else self.logic("or", [self.logic("not", [item.cond]), d])
+                total = total + term
+                defs.append(d)
+            d = self.logic("and", defs)
+            return total if d is True else _Maybe(total, d)
         if f in ("sum", "count", "len"):
             total = 0
             for item in self.items(args[0]):
@@ -420,6 +655,49 @@ class _ExprCP:
         if f == "num":
             b = self.boolean(args[0])
             return int(b) if isinstance(b, bool) else b
+        if f in ("row", "col", "box"):  # a cell's position: constants of the rule (custom.py, 1-based)
+            v = args[0]
+            if not isinstance(v, _Cell):
+                raise _Unmodelled(f + "() of a value")
+            r, c = self.pos[v.var]
+            bh, bw = self.box
+            return {"row": r, "col": c, "box": (r - 1) // bh * bh + (c - 1) // bw + 1}[f]
+        if f in ("min", "max"):  # of an unconditional list, or of several arguments
+            its = self.items(args[0]) if len(args) == 1 else [_Item(x, None) for x in args]
+            if not its or any(it.cond is not None for it in its):
+                raise _Unmodelled(f + " over a filtered list")
+            vals = [self.num(it.value) for it in its]
+            if all(isinstance(w, int) for w in vals):
+                return min(vals) if f == "min" else max(vals)
+            t = self.m.NewIntVar(-self.BIG, self.BIG, "")
+            (self.m.AddMinEquality if f == "min" else self.m.AddMaxEquality)(t, vals)
+            return t
+        if f == "prime":  # membership in the primes up to BIG
+            v = self.num(args[0])
+            if isinstance(v, int):
+                return self.CU.is_prime(v)
+            return self.member(v, [n for n in range(2, self.BIG + 1) if self.CU.is_prime(n)])
+        if f == "all_different":  # pairwise different (an unconditional list)
+            its = self.items(args[0])
+            if any(it.cond is not None for it in its):
+                raise _Unmodelled("all_different over a filtered list")
+            vs = [it.value for it in its]
+            return self.logic("and", [self.compare("!=", vs[i], vs[j]) for i in range(len(vs))
+                                      for j in range(i + 1, len(vs))]) if len(vs) > 1 else True  # fmt: skip
+        if f == "product":  # of an unconditional list: constants fold, two unknown factors make a product variable
+            its = self.items(args[0])
+            if any(it.cond is not None for it in its):
+                raise _Unmodelled("product over a filtered list")
+            acc = 1
+            for it in its:
+                v = self.num(it.value)
+                if isinstance(v, int) or isinstance(acc, int):
+                    acc = acc * v
+                    continue
+                t = self.m.NewIntVar(-(10**12), 10**12, "")
+                self.m.AddMultiplicationEquality(t, [acc, v])
+                acc = t
+            return acc
         raise _Unmodelled(f)
 
 
@@ -727,10 +1005,12 @@ def build_model(p):
     shading = {}
     if has_shading(p):
         _add_yin_yang(m, p, shading)
+    aux = _AuxVars(m, p.aux, p.N) if getattr(p, "aux", None) else None
+    m.pm_aux = aux  # unknowns / layers: their variables (tools read the solution's values)
     for con in p.constraints:
         if con.get("type") == "expr":
             try:
-                m.Add(_ExprCP(m, con, x, shading, labels).holds() == 1)
+                m.Add(_ExprCP(m, con, x, shading, labels, aux, p.D).holds() == 1)
             except _Unmodelled:
                 return None, None
     return m, x
@@ -823,7 +1103,7 @@ def _decide(p, limit, node_limit, time_limit):
     if ortools:
         # regions to find / shading: large label models where CP-SAT's portfolio pays (a chaos puzzle with one sight
         # rule: 103 s on one worker, 4.6 s on eight); everything else stays on one worker (rate_many runs processes)
-        heavy = has_chaos(p) or has_shading(p)
+        heavy = has_chaos(p) or has_shading(p) or bool(getattr(p, "aux", None))  # unknowns / layers: label-like too
         workers = min(8, os.cpu_count() or 1) if heavy else 1
         s = cpsat_solutions(p, limit=limit, time_limit=time_limit, workers=workers)
         if s is not None:

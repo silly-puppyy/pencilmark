@@ -423,6 +423,13 @@ def from_json(obj) -> M.Puzzle:
             named = REGION_RULES.get(t) or SHADING_RULES.get(t)
             parts = named(r, set(coords)) if named else [r]
             compiled = [x for part in parts for x in CU.compile_rule(part, Bc, D, layers)]
+            for g in (x for x in compiled if x["type"] == "group"):  # all_different(L): an extra house
+                cs = tuple(ci(x) for x in g["cells"])
+                p.groups.append(M.Group(r.get("label") or f"custom{len(p.groups)}", cs, "region", len(cs) == D))
+            compiled = [x for x in compiled if x["type"] != "group"]
+            for x in compiled:  # a one-off rule's tables (priced as enumeration: params custom_table_w)
+                if x["type"] == "table" and t == "custom":
+                    x["custom"] = True
             width, height = max(c for _, c in coords) + 1, max(rr for rr, _ in coords) + 1
             shape = ["".join("#" if (y, x) in cid else "." for x in range(width)) for y in range(height)]
             q = from_json({"digits": D, "shape": shape, "regions": [], "rules": compiled})
@@ -447,6 +454,7 @@ def from_json(obj) -> M.Puzzle:
     for (r, a, b), (a2, b2) in zip(marks, ends):
         if r["type"] in NAMED_RULES:
             _remember(p, r, p.relations[a:a2], p.constraints[b:b2])
+    custom_spans = [(r, b, b2) for (r, a, b), (a2, b2) in zip(marks, ends) if r["type"] == "custom"]
     if d.get("drawn"):
         p.drawn = d["drawn"]
     if d.get("unknowns") or d.get("layers"):  # aux variables: unknowns first, then each layer per cell
@@ -467,6 +475,10 @@ def from_json(obj) -> M.Puzzle:
             "unknowns": [{"name": n, "values": list(v)} for n, v in (d.get("unknowns") or {}).items()],
             "layers": lay,
         }
+    from . import rule_lemmas as RL
+
+    if RL.ENABLED[0] and custom_spans:  # what the one-off rules imply, as priced lemma rules (experimental)
+        RL.add(p, d, custom_spans)
     return p
 
 

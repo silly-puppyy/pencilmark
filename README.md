@@ -27,6 +27,8 @@ The engine is written in C++ ([pybind11](https://github.com/pybind/pybind11)). R
 
 - **Grade** classic and variant sudoku the way people solve them: band, difficulty, predicted solve time and the
   techniques needed, each step explained in words, with sub-steps and drawing annotations on request.
+  Variant solves follow the steps Cracking the Cryptic hosts take, coloring included: checked against 572 of their
+  solves, the engine's hardest step tracks how long the host thought.
 - **Check before publishing**: decorative rules, mostly-given grids, trial and error, thin logic and an unusual
   difficulty for the band, with presets and adjustable limits.
 - **Solve and count**: the solution, uniqueness proofs (with OR-Tools for hard variants), solution counts.

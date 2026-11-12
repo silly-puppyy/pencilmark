@@ -92,6 +92,15 @@ SHADE_LOCAL = 121  # a 2x2 with three of a colour, or the checkerboard it must n
 SHADE_CONNECT = 122  # a colour's single exit, a cut cell, the border's colour runs
 SHADE_RULE = 123  # a rule reading shaded() on its own: digits / colours no combination of what it reads supports
 SHADE_TRIAL = 124  # a colour assumed leads to a contradiction within a few rounds: the cell is the other colour
+# unknowns / layers (the file's `unknowns` and `layers`): a value per variable, read by custom rules
+AUX_RULE = 125  # a custom rule reading them on its own: digits / values no combination of what it reads supports
+AUX_HOUSE = 126  # rules "cells == unknown" inside one house added up against the house total
+LAYER_COUNT = 127  # a layer counted in a house ("one doubler per row"): read like a house
+LAYER_TRIAL = 128  # a layer value tried: the pair rules on layers once, then every house count
+MOD_CAGE = 129  # a cage of modified values read whole (priced as AUX_HOUSE)
+EQSUM_VALUES = 130  # segments with equal sums of values (priced as AUX_HOUSE)
+HOUSE_CAGES = 131  # the layer rules of one house read together (priced as AUX_RULE)
+RULE_CASE = 132  # a candidate whose every option of one rule breaks a house within a few singles
 # identity layer (C++ only, params coloring): persistent color classes of cells holding one unknown digit
 CLASS_SINGLE = 110  # in a house only one cell can hold a class's digit (the others see a member): it joins the class
 ID_PROPAGATE = 111  # a class member's lost candidate leaves every member; a placed member places the others

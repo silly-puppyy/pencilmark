@@ -258,6 +258,10 @@ class Puzzle:
                 segs.append(cur)
                 if len(segs) > 1:
                     self.constraints.append({"type": "equal_sum", "segments": segs, "line_kind": kind})
+                    # the line's one-cell segments hold one digit (CtC 7UZKP82Em14: "this line enters box 4, box 7 and
+                    # box 2 once each, so these three digits are the same")
+                    ones = [sg[0] for sg in segs if len(sg) == 1]
+                    R += [("eq", a, b) for a, b in zip(ones, ones[1:]) if a != b]
             else:
                 raise ValueError(f"unknown line kind {kind!r}")
 

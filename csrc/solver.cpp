@@ -35,6 +35,26 @@ double Params::difficulty(const Move& m, const Cover* covers, int D) const {
     if (m.tech == TAKE_NOTES || m.tech == SNYDER_MARKS) return B[m.tech];
     // proof by full search where a guess would go (exhaust(), extra = -1): at least what guessing that cell costs
     if (m.tech == TRIAL && m.extra < 0) return B[GUESS] * size(D) * (1.0 + guess_k * (double)m.meta[0] / 10.0);
+    // trial floor (designer's fourth pass; PENCILMARK_TRIAL_FLOOR=1 while measured): a reading that combines rules
+    // (codes 7421-7431: confined facts, set equivalences, chains, equal sums, budgets, ...) is a one-off pattern nobody
+    // knows in advance -- it costs at least the case analysis that proves the same fact (a 5501 refutation with this
+    // move's size)
+    static const bool trial_floor = std::getenv("PENCILMARK_TRIAL_FLOOR") != nullptr;
+    static thread_local bool in_tfloor = false;
+    if (trial_floor && !in_tfloor && m.code >= 7421 && m.code <= 7431) {
+        in_tfloor = true;
+        const double base = difficulty(m, covers, D);
+        Move w = m;
+        w.tech = HUMAN_CASE;
+        w.code = 5501;
+        w.has_meta = true;
+        w.meta[0] = std::max(1, std::min(D * D, (int)m.pat_n));  // cells: the reading's pattern
+        w.meta[1] = 1, w.meta[2] = 2, w.meta[3] = 3;             // one branch, two options, a few rounds
+        w.meta[4] = w.meta[5] = w.meta[6] = 0, w.meta[7] = 1;
+        const double trial = difficulty(w, covers, D);
+        in_tfloor = false;
+        return std::max(base, trial);
+    }
     // params mental_floor: a move done in the head (no notes) costs at least its written counterpart -- the same
     // pattern priced with notes (MentalNotesSingle: the notes technique it runs in the head, its 'extra')
     static thread_local bool in_floor = false;
@@ -197,7 +217,7 @@ static bool strategy_off(const char* name, const Flags& disabled) {
         {"digitcount", {DIGIT_COUNT}}, {"equaldigits", {EQUAL_DIGITS, CHAIN_COLOUR}}, {"colouralgebra", {COLOUR_ALGEBRA}}, {"classcolour", {CLASS_COLOUR}}, {"cluefacts", {CLUE_FACTS, CLUE_SHAPE}},
         {"ruleintersect", {RULE_INTERSECT}}, {"regioncap", {REGION_CAP}}, {"regionexcl", {REGION_EXCL}},
         {"regionreach", {REGION_REACH}}, {"deadend", {DEAD_END}}, {"regionexit", {REGION_EXIT}},
-        {"regiondigit", {REGION_DIGIT}}, {"pocket", {POCKET}}, {"regionrule", {REGION_RULE}}, {"regiongroup", {REGION_GROUP}}, {"shadelocal", {SHADE_LOCAL}}, {"shadeconnect", {SHADE_CONNECT}}, {"shaderule", {SHADE_RULE}}, {"shadetrial", {SHADE_TRIAL}}, {"shorttrial", {SHORT_TRIAL}}, {"humancase", {HUMAN_CASE}},
+        {"regiondigit", {REGION_DIGIT}}, {"pocket", {POCKET}}, {"regionrule", {REGION_RULE}}, {"regiongroup", {REGION_GROUP}}, {"shadelocal", {SHADE_LOCAL}}, {"shadeconnect", {SHADE_CONNECT}}, {"shaderule", {SHADE_RULE}}, {"shadetrial", {SHADE_TRIAL}}, {"auxrule", {AUX_RULE}}, {"housecages", {HOUSE_CAGES}}, {"rulecase", {RULE_CASE}}, {"auxhouse", {AUX_HOUSE}}, {"layercount", {LAYER_COUNT, MOD_CAGE, EQSUM_VALUES}}, {"layertrial", {LAYER_TRIAL}}, {"shorttrial", {SHORT_TRIAL}}, {"humancase", {HUMAN_CASE}},
         {"whatif", {WHAT_IF}}, {"eitherway", {EITHER_WAY}}};
     auto it = TECHS.find(name);
     if (it == TECHS.end()) return false;
@@ -227,10 +247,10 @@ std::vector<Tier> default_notes_tiers() {
         {S("locked", [](Solver& s, MoveBuf& b) { s.locked(b); }),
          // set equivalences (law of leftovers, Phistomefel, set theory) compete on price with pointing / claiming
          // (a one-line-vs-one-box LoL is pointing in disguise)
-         S("leftovers", [](Solver& s, MoveBuf& b) { s.nary_combination(b, 1); }),
+         S("leftovers", [](Solver& s, MoveBuf& b) { s.nary_combination(b, 1); s.sameset_counts(b); }),
          S("pairarc", [](Solver& s, MoveBuf& b) { s.pairarc(b); }),
          S("domino", [](Solver& s, MoveBuf& b) { s.domino(b); }),
-         S("classcount", [](Solver& s, MoveBuf& b) { s.class_count(b); }),
+         S("classcount", [](Solver& s, MoveBuf& b) { s.class_count(b); s.class_count_units(b); }),
          S("classcolour", [](Solver& s, MoveBuf& b) { s.class_colour(b); }),
          S("innie", [](Solver& s, MoveBuf& b) { s.innies(b, true); }),
          S("combolock", [](Solver& s, MoveBuf& b) { s.combo_lock(b); }),
@@ -273,8 +293,10 @@ std::vector<Tier> default_notes_tiers() {
          S("alsxy", [](Solver& s, MoveBuf& b) { s.als_xywing(b); }),
          S("blossom", [](Solver& s, MoveBuf& b) { s.death_blossom(b); })},
         {S("alsaic", [](Solver& s, MoveBuf& b) { s.als_aic(b, 13); })},
-        {S("ruleintersect", [](Solver& s, MoveBuf& b) { s.rule_intersect(b); })},
-        {S("sumalgebra", [](Solver& s, MoveBuf& b) { s.sum_algebra(b); }),
+        {S("ruleintersect", [](Solver& s, MoveBuf& b) { s.rule_intersect(b); }),
+         S("housecages", [](Solver& s, MoveBuf& b) { s.rule_pair(b, true); }),  // a house's layer rules together
+         S("rulecase", [](Solver& s, MoveBuf& b) { s.rule_case(b); })},  // one rule's options against the houses
+        {S("sumalgebra", [](Solver& s, MoveBuf& b) { s.sum_algebra(b); s.cross_sums(b); }),
          S("weightedsums", [](Solver& s, MoveBuf& b) { s.weighted_sums(b); })},
         {S("bandlogic", [](Solver& s, MoveBuf& b) { s.band_logic(b); })},
         {S("humancase", [](Solver& s, MoveBuf& b) { s.human_case(b); })},
@@ -323,6 +345,7 @@ Solver::Solver(const Puzzle& pz, const Params& prm, const SolveOptions& o)
     lock_mask.assign(p.N, 0);
     cs_cache.assign(p.G, {});
     tiers = default_notes_tiers();
+    tier_front = 0;
     if (P.sets_first) {  // human route preference: set arithmetic (rule intersections, sum algebra, band logic)
         // before chains / ALS: those strategies move to new tiers right after "bandlogic" (colouring stays)
         static const std::set<std::string> late = {"chains3-5", "chains7-9", "chains11+", "alsxz", "alsxy", "blossom",
@@ -354,6 +377,7 @@ Solver::Solver(const Puzzle& pz, const Params& prm, const SolveOptions& o)
             const char* name() const override { return n; }
             void collect(Solver& s, MoveBuf& b) override { f(s, b); }
         };
+        ++tier_front;
         tiers.insert(tiers.begin(),
                      Tier{std::make_shared<Fn>("regioncap", [](Solver& s, MoveBuf& b) { s.region_cap(b); }),
                           std::make_shared<Fn>("regionexcl", [](Solver& s, MoveBuf& b) { s.region_excl(b); }),
@@ -375,6 +399,7 @@ Solver::Solver(const Puzzle& pz, const Params& prm, const SolveOptions& o)
             const char* name() const override { return n; }
             void collect(Solver& s, MoveBuf& b) override { f(s, b); }
         };
+        ++tier_front;
         tiers.insert(tiers.begin(),
                      Tier{std::make_shared<Fn>("shadelocal", [](Solver& s, MoveBuf& b) { s.shade_local(b); }),
                           std::make_shared<Fn>("shadeconnect", [](Solver& s, MoveBuf& b) { s.shade_connect(b); }),
@@ -383,6 +408,24 @@ Solver::Solver(const Puzzle& pz, const Params& prm, const SolveOptions& o)
         for (int t : {UNIQUE_RECT, BUG_PLUS1, GURTH}) disabled.set(t, 1);
         any_disabled = true;
     }
+    if (has_aux()) {  // unknowns / layers: the rules reading them, first (as the shading's colour moves)
+        // first, as the shading's colour moves; tier_front keeps the positional ceilings (forcing, mental notes)
+        // counting from the standard tiers
+        tier_front += 4;
+        tiers.insert(tiers.begin(), {Tier{S("layercount", [](Solver& s, MoveBuf& b) { s.layer_count(b); })},
+                                     Tier{S("auxrule", [](Solver& s, MoveBuf& b) { s.aux_rule(b); })},
+                                     Tier{S("layertrial", [](Solver& s, MoveBuf& b) { s.layer_trial(b); })},
+                                     Tier{S("auxhouse", [](Solver& s, MoveBuf& b) { s.aux_house(b); })}});
+        for (int t : {UNIQUE_RECT, BUG_PLUS1, GURTH}) disabled.set(t, 1);
+        any_disabled = true;
+    }
+    if (std::getenv("PENCILMARK_ROC_EARLY"))  // experiment (D5.1 calibration): RuleCase beside the killers' combo positions
+        for (auto& t : tiers)
+            for (auto& st : t)
+                if (std::string(st->name()) == "combopos") {
+                    t.push_back(S("rulecase2", [](Solver& s, MoveBuf& b) { s.rule_case(b); }));
+                    break;
+                }
     if (id_on()) {  // identity layer: propagation competes with the singles, ClassSingle sits beside EqualDigits
         for (auto& t : tiers) {
             bool sg = false, eq = false;
@@ -397,6 +440,17 @@ Solver::Solver(const Puzzle& pz, const Params& prm, const SolveOptions& o)
                 t.push_back(S("classtrap", [](Solver& s, MoveBuf& b) { s.class_trap(b); }));
             }
         }
+    }
+    // each tier's rank among the standard tiers (-1: a tier set before them -- regions, shading, unknowns, layers);
+    // the forcing ceiling and the mental notes' tiers read ranks, never positions
+    tier_rank.assign(tiers.size(), -1);
+    for (size_t ti = tier_front; ti < tiers.size(); ++ti) tier_rank[ti] = (int)(ti - tier_front);
+    if (const char* e = std::getenv("PENCILMARK_TEST_IDLE_TIER")) {
+        // diagnostics: a tier whose strategy never fires, at this position (rank -2: no ceiling counts it); a route
+        // must not change (test_registry: inserting a technique that never fires changes no route)
+        const size_t at = std::min(tiers.size(), (size_t)std::atoi(e));
+        tiers.insert(tiers.begin() + at, Tier{S("idle", [](Solver&, MoveBuf&) {})});
+        tier_rank.insert(tier_rank.begin() + at, -2);
     }
     canon = !disabled[CANONICAL];
 }
@@ -436,8 +490,42 @@ void Solver::init_state(const std::vector<std::pair<int, int>>& givens) {
         if ((int)shade_override.size() == p.N) shade = shade_override;
         else for (int c = 0; c < p.N; ++c) shade[c] = p.shade_given[c];
     }
+    aux_off.clear(), auxf.clear();  // unknowns / layers: the given values, or a mid-solve state's flags
+    if (has_aux()) {
+        int off = 0;
+        for (const auto& v : p.aux_values) aux_off.push_back(off), off += (int)v.size();
+        aux_off.push_back(off);
+        jx.assign(p.aux_values.size(), JMask());
+        if (jx_override.size() == p.aux_values.size() * JW)
+            for (size_t a = 0; a < jx.size(); ++a)
+                for (int w = 0; w < JW; ++w)
+                    for (int b = 0; b < 64 && 64 * w + b < 144; ++b)
+                        if ((jx_override[a * JW + w] >> b) & 1) jx[a].set(64 * w + b);
+        if ((int)auxf_override.size() == off) {
+            auxf = auxf_override;
+        } else {
+            auxf.assign(off, 1);
+            for (size_t a = 0; a < p.aux_values.size(); ++a)
+                if (p.aux_given[a] != AUX_UNSET)
+                    for (int i = aux_off[a]; i < aux_off[a + 1]; ++i)
+                        auxf[i] = p.aux_values[a][i - aux_off[a]] == p.aux_given[a];
+        }
+    }
     idc.assign(id_on() ? p.N : 0, 0);
     if (id_on() && (int)idc_override.size() >= p.N) idc = idc_override;  // classes, then differences
+    if (id_on()) {  // (also over a carried state: the band route rebuilds its solvers with the classes so far)
+        // cells a rule makes equal outright (a palindrome's mirror cells, a region-sum line's one-cell segments) start
+        // as one color: the rule says so (CtC 7UZKP82Em14: "these three digits are the same", colored at once)
+        const int D = p.D;
+        for (int c = 0; c < p.N; ++c)
+            for (size_t j = 0; j < p.rel[c].size(); ++j) {
+                const int b = p.rel[c][j];
+                if (b <= c) continue;
+                bool same = true;
+                for (int v = 1; v <= D && same; ++v) same = (p.full & ~p.rel_out[c][j * (D + 1) + v]) == bit(v);
+                if (same && id_live() < ID_CAP) id_join(c, b);
+            }
+    }
     id_normalize();
 }
 
@@ -1665,6 +1753,9 @@ void Solver::solve(const std::vector<std::pair<int, int>>& givens, SolveResult& 
                     if (pass == 1 && e.kind == AE_REG_JOIN && has_regions()) rg_join(e.cell, e.arg);
                     if (pass == 1 && e.kind == AE_REG_NEQ && has_regions()) rg_neq(e.cell, e.arg);
                     if (pass == 1 && e.kind == AE_SHADE && has_shading() && !shade[e.cell]) shade[e.cell] = (uint8_t)e.arg;
+                    if (pass == 0 && e.kind == AE_AUX && has_aux()) auxf[aux_off[e.cell] + e.arg] = 0;
+                    if (pass == 0 && e.kind == AE_JOINT && has_aux() && joint_ok(e.cell))
+                        jx[e.cell].set(jbit(e.arg / 16, e.arg % 16));
                 }
             if (has_regions()) label_normalize();
         }

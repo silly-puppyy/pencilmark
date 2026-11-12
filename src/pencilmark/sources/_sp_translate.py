@@ -724,10 +724,14 @@ QUAD_NEG = re.compile(
 )
 QUAD_TEXT = re.compile(
     r"quadruple|(?:surrounding|touching|around|adjacent to)(?: the| that| this)? (?:four|4) cells|"
-    r"(?:four|4) (?:surrounding|adjacent|touching) cells|(?:four|4) cells (?:surrounding|around) the circle|"
+    r"(?:four|4) (?:surrounding|adjacent|touching) cells|(?:four|4) cells (?:surrounding|around) (?:the|that|this|each|a) circle|"
     r"\bquads?\s*:|(?:four|4) cells (?:the|that|this|it) (?:circle )?touch|"  # "Quads: ..." (000RL6, 000QJZ)
     r"(?:digits?|numbers?) (?:in|inside) (?:a|the) circle[^.]{0,60}\bcells? touching|in a cell touching the circle|"
     r"(?:digits?|numbers?) in (?:\w+ )?circles?[^.]{0,60}\bcells? (?:that|which) touch (?:the|that|this) circle|"  # 000VCI
+    # "Digits in circles must appear in the surrounding cells" (_qIBjkX1TMk); "... in at least one of the surrounding
+    # cells" (A58FX-83D6g): circles on cell corners (quadruples() reads only those)
+    r"(?:digits?|numbers?) (?:shown )?(?:in|inside) (?:a |the )?circles?[^.]{0,30}\bappear in (?:at least one of )?"
+    r"the (?:surrounding|adjacent|touching) cells|"
     r"(?:digits?|numbers?) in (?:a|the) circle[^.]{0,40}\b(?:assigned|placed|put) (?:to|in|into) (?:one of )?the (?:surrounding|adjacent|touching) cells"
 )
 
@@ -1308,6 +1312,36 @@ def chess_other(t):
     return None
 
 
+# disjoint groups by name or spelled out ("cells in the same position in two 3x3 boxes may not contain the same digit")
+DISJOINT = re.compile(
+    r"\bdisjoint (?:groups?|subsets?|sets?)\b"
+    r"|each digit (?:must )?(?:occupy|occupies|appear in|appears in) each (?:possible )?position (?:in|within|of) "
+    r"(?:a |the )?(?:3x3 )?(?:box|region|nonet)"
+    r"|(?:same|identical|corresponding) (?:relative )?positions? (?:in|within|of) (?:any |two |different |each |all |a )*"
+    r"(?:3x3 |3 ?by ?3 )?(?:box(?:es)?|regions?|nonets?)[^.]{0,40}(?:not|\bnever|\bno)\b"
+    r"|(?:not|\bnever|\bno)\b[^.]{0,60}(?:same|identical|corresponding) (?:relative )?positions? (?:in|within|of) "
+    r"(?:any |two |different |each |all |a )*(?:3x3 |3 ?by ?3 )?(?:box(?:es)?|regions?|nonets?)"
+)
+_ADJ = r"(?:share an edge|sharing an edge|orthogonally (?:adjacent|connected|neighbou?ring)|adjacent|neighbou?ring)"
+_SUMS = r"(?:sum(?:ming)? to|add(?:ing)? (?:up )?to|totall?ing) (\d+)(?:,? (?:or|and|nor) (\d+))?"
+
+
+def anti_sums(t):
+    """totals no two orthogonally adjacent cells may reach, with no marker drawn for them ("No two cells which share an
+    edge may contain digits adding to 5 or 10"; "No two orthogonally connected cells can sum to 5"). A sentence about
+    unmarked pairs is the markers' negative constraint, read elsewhere."""
+    out = set()
+    for sent in re.split(r"[.;\n]", t):
+        if re.search(r"\bunmarked\b|\bwithout\b|\bnot (?:marked|given)\b|\bexcept\b|\bunless\b", sent):
+            continue
+        m = re.search(rf"\bno (?:two|pair of)\b[^.]{{0,40}}{_ADJ}[^.]{{0,40}}?{_SUMS}", sent) or re.search(
+            rf"{_ADJ} (?:cells|digits)[^.]{{0,10}}(?:can ?not|may not|must not|never) {_SUMS}", sent
+        )
+        if m:
+            out |= {int(x) for x in m.groups() if x}
+    return sorted(out)
+
+
 def rule_flags(rules):
     t = (rules or "").lower()
     neg = negative_markers(rules)
@@ -1341,6 +1375,8 @@ def rule_flags(rules):
                 t,
             )
         ),
+        "disjoint": bool(DISJOINT.search(t)),
+        "anti_sums": anti_sums(t),
         "kropki_negative": {"white", "black"} <= neg,
         "xv_negative": {"x", "v"} <= neg,
         "killer_distinct": not re.search(r"digits? (may|can) repeat (in|within) (a )?cage", t),
@@ -1519,7 +1555,11 @@ def line_cells(wp):
     cells = []
     for a, b in zip(wp, wp[1:]):
         steps = max(abs(b[0] - a[0]), abs(b[1] - a[1]))
-        n = max(1, int(round(steps)))
+        # one sample per cell crossed: lines drawn from a circle's edge (0.8 -> 2.3, GuJdAmwSonI; 1.8 -> 4.2,
+        # toRVKc3uty4) have fractional lengths, and rounding 1.4999.. down skipped the cell between
+        n = max(1, int(math.ceil(steps - 1e-6)))
+        if abs(b[0] - a[0]) < 1e-6 or abs(b[1] - a[1]) < 1e-6:  # straight: finer still, nothing to cut a corner
+            n = max(n, int(math.ceil(steps * 4)))
         for k in range(n + 1):
             pt = (a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n)
             c = cell_of(pt)
@@ -2394,6 +2434,23 @@ def translate(sp, page_text=None, overrides=None):
         q = M.add_nonconsecutive(M.Puzzle(D=n, coords=p.coords), n)
         p.relations += [r_ for r_ in q.relations if tuple(sorted(r_[1:3])) not in dotted]
         used["nonconsec"] += 1
+    if flags["disjoint"] and not used["disjoint"]:
+        from ..puzzle_json import BOXES
+
+        bh, bw = BOXES.get(n, (0, 0))
+        if bh and len([g for g in p.groups if g.kind == "box"]) == n:
+            for i in range(bh):
+                for j in range(bw):
+                    cs = tuple(r * n + c for r in range(n) for c in range(n) if r % bh == i and c % bw == j)
+                    p.groups.append(M.Group(f"dj{i}{j}", cs, "extra", True))
+            used["disjoint"] += 1
+    if flags["anti_sums"] and not used["xv"]:
+        from .. import puzzle_json as PJ
+
+        tot = " or ".join(f"a + b == {k}" for k in flags["anti_sums"])
+        PJ.add_named(p, {"type": "custom", "holds": f"(a, b) => not ({tot})", "label": "anti-sum",
+                         "scope": {"pairs": "orthogonal"}})  # fmt: skip
+        used["anti_sum"] += 1
     # a negative rule also binds marker types absent from the grid ("all dots are given" with only white
     # dots drawn -> no 2:1 pairs either), but only within a marker family that is present at all, or, for X / V, that
     # the rules define as a rule although none is drawn ("digits separated by a V sum to 5 ... all X and V are given":
@@ -3463,6 +3520,16 @@ def parity_shapes(P, n, p, rules, used, idx, inside):
         x for con in p.constraints for x in (con.get("cells") or con.get("line") or []) + list(con.get("circle") or [])
     }
     taken |= {x for r_ in p.relations for x in r_[1:3] if r_[0] in ("lt", "le", "diffge", "eq", "parity")}
+    # a circle drawn as a rule's own circle (a thermo bulb, an arrow's circle, a between line's ends) never carries a
+    # cell clue ("a digit in a gray circle (not a thermo bulb) is odd", BWmCfbOal0M); a square there does (rvDqc6G3dbU)
+    bulbish = set()
+    for con in p.constraints:
+        cs = list(con.get("cells") or con.get("line") or [])
+        if con.get("type") == "line" and con.get("kind") in ("thermo", "slow_thermo") and cs:
+            bulbish.add(cs[0])
+        elif con.get("type") == "line" and con.get("kind") == "between" and cs:
+            bulbish |= {cs[0], cs[-1]}
+        bulbish |= set(con.get("circle") or [])
     shapes = []
     for lay in (P.get("underlays") or []) + (P.get("overlays") or []):
         if not isinstance(lay, dict) or "center" not in lay or _text_of(lay).strip():
@@ -3476,7 +3543,9 @@ def parity_shapes(P, n, p, rules, used, idx, inside):
         ):
             continue
         rc = cell_of((cx, cy))
-        if inside(rc) and idx(rc) not in taken:
+        # a shape on a line / rule cell (a thermo bulb) is that rule's, unless the text gives its color a meaning
+        # ("digits in red circles are high": 73bGFkFsrao's circles sit on whispers): tk marks those
+        if inside(rc) and not (lay.get("rounded") and idx(rc) in bulbish):  # a square under an arrow circle counts
             shapes.append(
                 (
                     "cell"
@@ -3488,9 +3557,14 @@ def parity_shapes(P, n, p, rules, used, idx, inside):
                     else "square",
                     color_name(lay.get("backgroundColor") or lay.get("borderColor")),
                     idx(rc),
+                    idx(rc) in taken,
                 )
             )
-    if not shapes or len(shapes) > n * n * 3 // 4:  # more is decorative shading
+    if not [s_ for s_ in shapes if not s_[3]] and not any(
+        re.search(rf"\b{c}\b", t) for c in {s_[1] for s_ in shapes} if c
+    ):
+        return
+    if len(shapes) > n * n * 3 // 4:  # more is decorative shading
         return
     odd = sum(1 << (v - 1) for v in range(1, n + 1, 2))
     # clauses: sentences, then ", (and)" outside braces ("orange circles contain {1, 2, 3}, blue squares {4, 5, 6}")
@@ -3503,9 +3577,35 @@ def parity_shapes(P, n, p, rules, used, idx, inside):
         if re.search(r"count|number of|how many|sum|total|lots", sent):
             continue
         shp = [s_ for s_ in ("circle", "square", "diamond") if re.search(rf"\b{s_}s?\b", sent)]
-        dset = re.search(r"\{\s*(\d(?:\s*,\s*\d)+)\s*\}", sent) or re.search(
-            r"\b(\d'?s(?:,? (?:and |or )?\d'?s)+) (?:are|is) (?:marked|shown|placed|drawn) (?:with|in|by)", sent
-        )  # "1s, 2s, and 3s are marked with circles"
+        dset = (
+            re.search(r"\{\s*(\d(?:\s*,\s*\d)+)\s*\}", sent)
+            or re.search(r"\b(?:are|is|must be) (?:high|low|small|big|large)\s*\((\d(?:\s*,\s*\d)+)\)", sent)
+            or re.search(
+                r"\b(\d'?s(?:,? (?:and |or )?\d'?s)+) (?:are|is) (?:marked|shown|placed|drawn) (?:with|in|by)", sent
+            )
+        )  # "1s, 2s, and 3s are marked with circles"; "digits in red circles are high (6,7,8,9)"
+        # "grey cells contain a prime" (0cLFwxKRDbQ: unread, the puzzle stayed unique but graded without its clue)
+        prime = not dset and re.search(r"\b(?:are|is|must be|contains?|hold) (?:a |an )?(?:prime|primes)\b", sent)
+        if prime and not re.search(r"\b(?:are|is|must be|contains?|hold)(?: not|n't)\b|\bnon-?primes?\b", sent):
+            shp_p = shp or (["cell", "square", "circle"] if re.search(r"\bcells?\b", sent) else [])
+            col_ = {{"gray": "grey"}.get(c, c) for c in COLOR_WORDS if re.search(rf"\b{c}\b", sent)}
+            got = [c for kind, col, c, tk in shapes if kind in shp_p and (col in col_ if col_ else not tk)]
+            ds = [v for v in range(2, n + 1) if all(v % q for q in range(2, int(v**0.5) + 1))]
+            if got and (shp or col_):
+                _cell_clue(p, {"type": "digit_class", "digits": "".join(map(str, ds))}, got,
+                           sum(1 << (v - 1) for v in ds))  # fmt: skip
+                used["digit_set_prime"] += len(got)
+                continue
+        hl = not dset and re.search(r"\b(?:are|is|must be|contain) (?:a )?(high|low)(?: digits?)?\b(?!\s*\()", sent)
+        if hl and shp and len(shp) == 1 and n == 9:  # "digits in yellow circles are low": CtC's 1-4 / 6-9
+            ds = [6, 7, 8, 9] if hl.group(1) == "high" else [1, 2, 3, 4]
+            col_ = {{"gray": "grey"}.get(c, c) for c in COLOR_WORDS if re.search(rf"\b{c}\b", sent)}
+            got = [c for kind, col, c, tk in shapes if kind == shp[0] and (col in col_ if col_ else not tk)]
+            if got and col_:
+                _cell_clue(p, {"type": "digit_class", "digits": "".join(map(str, ds))}, got,
+                           sum(1 << (v - 1) for v in ds))  # fmt: skip
+                used["digit_set_" + shp[0]] += len(got)
+                continue
         gt = re.search(
             r"\b(?:are|must be|contain (?:digits|numbers)) (greater|larger|higher|bigger|less|smaller|lower) than (\d)",
             sent,
@@ -3518,7 +3618,7 @@ def parity_shapes(P, n, p, rules, used, idx, inside):
                 if (v > k_ if gt.group(1) in ("greater", "larger", "higher", "bigger") else v < k_)
             ]
             col_ = {{"gray": "grey"}.get(c, c) for c in COLOR_WORDS if re.search(rf"\b{c}\b", sent)}
-            got = [c for kind, col, c in shapes if (not shp or kind in shp) and (not col_ or col in col_)]
+            got = [c for kind, col, c, tk in shapes if (not shp or kind in shp) and (col in col_ if col_ else not tk)]
             if ds_ and got and (shp or col_):
                 _cell_clue(p, {"type": "digit_class", "digits": "".join(map(str, ds_))}, got,
                            sum(1 << (v - 1) for v in ds_))  # fmt: skip
@@ -3528,7 +3628,7 @@ def parity_shapes(P, n, p, rules, used, idx, inside):
             ds = [int(x) for x in re.findall(r"\d", dset.group(1))]
             col_ = {{"gray": "grey"}.get(c, c) for c in COLOR_WORDS if re.search(rf"\b{c}\b", sent)}
             m_ = sum(1 << (v - 1) for v in ds if 1 <= v <= n)
-            got = [c for kind, col, c in shapes if kind == shp[0] and (not col_ or col in col_)]
+            got = [c for kind, col, c, tk in shapes if kind == shp[0] and (col in col_ if col_ else not tk)]
             if got:
                 _cell_clue(p, {"type": "digit_class", "digits": "".join(map(str, ds))}, got, m_)
                 used["digit_set_" + shp[0]] += len(got)
@@ -3542,7 +3642,7 @@ def parity_shapes(P, n, p, rules, used, idx, inside):
         if not shp or len(par) != 1 or (len(shp) > 1 and not cols):
             continue
         for kind in shp:
-            got = [c for k_, col, c in shapes if k_ == kind and (not cols or col in cols)]
+            got = [c for k_, col, c, tk in shapes if k_ == kind and (col in cols if cols else not tk)]
             if got:
                 _cell_clue(p, {"type": "parity", "parity": par[0]}, got, odd if par[0] == "odd" else p.full & ~odd)
                 used[par[0] + "_" + kind] += len(got)

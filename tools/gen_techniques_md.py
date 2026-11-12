@@ -36,10 +36,21 @@ COLOURING_INTRO = [
     "Coloring, Multi-Colouring, 3D Medusa) is a classic chain technique and is listed under Chains and coloring.",
     "",
     "Every coloring technique is Medium or harder: coloring is a concept to learn, not a first step. The route",
-    "parameter `coloring` keeps colors in the solve path; it is opt in (`rate(puzzle, coloring=True)`, CLI",
-    "`--coloring`), since most solvers do not color (sudoku.coach comments: 4% of classics, 10% overall). Without it, Same Color and Chain Color",
-    "still remove candidates but keep no color, and Color Fill, Color Single, Color Pointing, Color Pair, Color",
-    "Trap, Color Clash, Color Fish and Complete Colors do not occur.",
+    "parameter `coloring` keeps colors in the solve path. It is on by default for variant puzzles, whose solvers",
+    "color constantly (87% of Cracking the Cryptic solves color five cells or more), and off for plain classic sudoku,",
+    "where few do (sudoku.coach comments: 4% of classics); `rate(puzzle, coloring=True / False)` and CLI",
+    "`--coloring on / off` force it. Without it, Same Color and Chain Color still remove candidates but keep no color,",
+    "and Color Fill, Color Single, Color Pointing, Color Pair, Color Trap, Color Clash, Color Fish and Complete Colors",
+    "do not occur.",
+    "",
+    "Colors come from where a solver gets them. Cells a rule makes equal outright start as one color (a palindrome's",
+    "mirror cells, clones, the one-cell segments of a region-sum line). A single cell's digit can be followed through",
+    "the houses when a rule rules out places (*the center digit can't go on its own line, so in this row it goes",
+    "there*): cells of one thermometer, renban or cage, an arrow's circle and its arrow, a zipper's center and its line",
+    "count as different digits. Class Coloring colors rule links that always join a low and a high digit (or an odd",
+    "and an even one) and counts each house's share of a class, joining separate lines' colorings by counting. A color",
+    "step costs the same however many cells carry the color: following one symbol is the work, which is why coloring",
+    "makes most variant puzzles easier.",
     "",
 ]
 # link icon per site (website/static/img/sites, made by tools/site_icons.py); a site without one gets a text badge
@@ -54,6 +65,7 @@ SITES = {
     "logic-masters.de": ("Logic Masters Germany", "logicmasters.png"),
     "sudopedia.sudocue.net": ("Sudopedia", "sudopedia.png"),
     "lisudoku.xyz": ("lisudoku", "lisudoku.png"),
+    "www.stolaf.edu": ("Sudoku Assistant (St. Olaf)", "stolaf.png"),
     "www.sugurupuzzles.com": ("sugurupuzzles.com", None),
 }
 LINKS = ROOT / "docs" / "technique_links.csv"  # more explainer pages per code, beside the explanation catalog's
