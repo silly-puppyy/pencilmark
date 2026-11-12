@@ -131,6 +131,7 @@ struct AV {
     static AV of_list(std::vector<AV> xs, std::vector<char> o) {
         AV a;
         a.k = LIST, a.list = std::make_shared<std::vector<AV>>(std::move(xs)), a.opt = std::move(o);
+        a.opt.resize(a.list->size(), 0);  // one flag per element (a list built without flags has none optional)
         return a;
     }
     bool num() const { return k == NUM; }
@@ -316,6 +317,7 @@ struct AEv {
     bool seq(const AV& v, std::vector<AV>& xs, std::vector<char>& o) {
         if (v.k == AV::LIST) {
             xs = *v.list, o = v.opt;
+            o.resize(xs.size(), 0);  // a list with no optional element carries no flags: one per element, none set
             return true;
         }
         if (v.k == AV::NUM && v.var >= 0) {
@@ -1268,7 +1270,7 @@ CountMoves expr_count_moves(const ExprProgram& prog, int D, const std::vector<ui
                 return;
             }
             if (n->op == X_CALL && n->v == ALL && n->kids.size() == 1 && n->kids[0].op == X_COMP &&
-                n->kids[0].kids[2].op == X_NONE) {
+                n->kids[0].kids.size() >= 3 && n->kids[0].kids[2].op == X_NONE) {
                 const ExprNode& comp = n->kids[0];
                 AEv ev(prog, dm.data(), ad);
                 ev.D = D;

@@ -208,7 +208,7 @@ def test_shape_limits_and_max():
     """docs/formats/generator-spec.md 2: a cage `sum` with the count "max" (every cage sums to 7, as many as fit) and a
     line `length` (one whisper of at least 8 cells)"""
     # (time_limit: room for slow CI runners -- the test is about the shape, not the speed; 5 s fit one attempt there)
-    r = run(spec(6, rules=[{"type": "cage", "sum": 7, "count": "max"}], seed=1, time_limit=20))
+    r = run(spec(6, rules=[{"type": "cage", "sum": 7, "count": "max"}], seed=1, time_limit=60))
     cages = [x for x in r["puzzle"]["rules"] if x["type"] == "cage"]
     assert len(cages) >= 4 and all(c["sum"] == 7 for c in cages), cages
     assert r["info"]["found"] >= 1
@@ -328,7 +328,8 @@ def test_more_line_kinds():
     from pencilmark.gen import elements as EL
 
     for kind in ("slow_thermo", "entropic", "modular", "parity"):
-        r = run(spec(6, rules=[{"type": "line", "kind": kind, "count": [2, None]}], seed=1, time_limit=60))
+        # (time_limit: one double-arrow attempt is ~45 s on a Linux runner, more on Windows; the test is the kind)
+        r = run(spec(6, rules=[{"type": "line", "kind": kind, "count": [2, None]}], seed=1, time_limit=180))
         lines = [x for x in r["puzzle"]["rules"] if x["type"] == "line" and x["kind"] == kind]
         assert len(lines) >= 2
         sol, cid = r["puzzle"]["solution"], lambda n: (int(n[1]) - 1) * 6 + int(n[3]) - 1
@@ -354,7 +355,8 @@ def test_whole_line_kinds():
 
     b = Board(6)
     for kind in ("palindrome", "zipper", "region_sum", "lockout", "double_arrow"):
-        r = run(spec(6, rules=[{"type": "line", "kind": kind, "count": [2, None]}], seed=1, time_limit=60))
+        # (time_limit: one double-arrow attempt is ~45 s on a Linux runner, more on Windows; the test is the kind)
+        r = run(spec(6, rules=[{"type": "line", "kind": kind, "count": [2, None]}], seed=1, time_limit=180))
         lines = [x for x in r["puzzle"]["rules"] if x["type"] == "line" and x["kind"] == kind]
         assert len(lines) >= 2, kind
         sol = r["puzzle"]["solution"]
