@@ -4296,7 +4296,7 @@ void Solver::joint_houses(MoveBuf& out) {
         for (int c : h.cells) {
             const int a = avar(h, c);
             bool any = false, is_sure = false;
-            for (size_t b = h.pmask._Find_first(); b < h.pmask.size(); b = h.pmask._Find_next(b)) {
+            for (size_t b = 0; b < h.pmask.size(); ++b) if (h.pmask[b]) {  // (portable: _Find_first is libstdc++ only)
                 const int d = (int)b / 16 + 1, vi = (int)b % 16;
                 if (!joint_live(a, d, vi)) continue;
                 any = true;
@@ -4311,7 +4311,7 @@ void Solver::joint_houses(MoveBuf& out) {
             // line is a shifted 1, so the grid's one shifted 1 is on the line")
             std::vector<std::tuple<int, int, int>> pairs;  // (cell, digit, value index)
             for (int c : lc)
-                for (size_t b = h.pmask._Find_first(); b < h.pmask.size(); b = h.pmask._Find_next(b)) {
+                for (size_t b = 0; b < h.pmask.size(); ++b) if (h.pmask[b]) {  // (portable: _Find_first is libstdc++ only)
                     const int d = (int)b / 16 + 1, vi = (int)b % 16;
                     if (joint_live(avar(h, c), d, vi)) pairs.emplace_back(c, d, vi);
                 }
@@ -4339,7 +4339,7 @@ void Solver::joint_houses(MoveBuf& out) {
         if (nsure == 1) {  // decided: the house's other cells lose its pairs
             for (int c : lc)
                 if (c != surec)
-                    for (size_t b = h.pmask._Find_first(); b < h.pmask.size(); b = h.pmask._Find_next(b)) {
+                    for (size_t b = 0; b < h.pmask.size(); ++b) if (h.pmask[b]) {  // (portable: _Find_first is libstdc++ only)
                         kills.emplace_back(avar(h, c), (int)b / 16 + 1, (int)b % 16);
                     }
             emit(wide ? 7415 : 7412, kills, -1, 0, -1, 0, h.cells);
@@ -4363,7 +4363,7 @@ void Solver::joint_houses(MoveBuf& out) {
             std::vector<std::tuple<int, int, int>> pairs;
             bool sure_any = false;
             for (int c : h.cells)
-                for (size_t b = h.pmask._Find_first(); b < h.pmask.size(); b = h.pmask._Find_next(b)) {
+                for (size_t b = 0; b < h.pmask.size(); ++b) if (h.pmask[b]) {  // (portable: _Find_first is libstdc++ only)
                     const int d = (int)b / 16 + 1, vi = (int)b % 16;
                     if (!joint_live(avar(h, c), d, vi)) continue;
                     pairs.emplace_back(c, d, vi);
